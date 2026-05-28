@@ -57,6 +57,7 @@ import 'package:vocabulary_sleep_app/src/ui/pages/practice_notebook_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/practice_review_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/practice_session_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/recognition_settings_page.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/settings_home_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_human_tests.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_life_tools.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_page.dart';
@@ -455,6 +456,77 @@ void main() {
       },
     );
 
+    testWidgets('settings exposes bottom navigation auto-hide toggle', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const SettingsHomePage());
+
+      final tile = find
+          .ancestor(
+            of: find.text('Auto-hide bottom navigation on scroll'),
+            matching: find.byType(SwitchListTile),
+          )
+          .first;
+      expect(tile, findsOneWidget);
+
+      await tester.tap(tile);
+      await tester.pump();
+
+      expect(state.bottomNavigationAutoHideEnabled, isTrue);
+    });
+
+    testWidgets(
+      'app shell reveals auto-hidden bottom navigation on tap or upward scroll',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final state = _FakeAppState.sample(
+          uiLanguage: 'en',
+          startupPage: AppHomeTab.toolbox,
+          bottomNavigationAutoHideEnabled: true,
+        );
+        await _pumpAppShell(tester, state: state);
+
+        final navigationOpacityFinder = find.byKey(
+          const ValueKey<String>('app-shell-bottom-navigation-opacity'),
+        );
+        double navigationOpacity() {
+          return tester
+              .widget<AnimatedOpacity>(navigationOpacityFinder)
+              .opacity;
+        }
+
+        expect(navigationOpacity(), 1);
+
+        final scrollable = find.byType(Scrollable).first;
+        await tester.drag(scrollable, const Offset(0, -520));
+        await tester.pump();
+
+        expect(navigationOpacity(), 0);
+
+        await tester.pump(const Duration(milliseconds: 320));
+
+        expect(navigationOpacity(), 0);
+
+        await tester.tapAt(const Offset(24, 120));
+        await tester.pump();
+
+        expect(navigationOpacity(), 1);
+
+        await tester.drag(scrollable, const Offset(0, -420));
+        await tester.pump();
+
+        expect(navigationOpacity(), 0);
+
+        await tester.drag(scrollable, const Offset(0, 180));
+        await tester.pump();
+
+        expect(navigationOpacity(), 1);
+      },
+    );
+
     testWidgets('app shell blocks exit dialog while focus lock is active', (
       tester,
     ) async {
@@ -811,6 +883,55 @@ void main() {
       expect(find.text('Scoreboard'), findsWidgets);
     });
 
+    testWidgets('app shell keeps bottom navigation inside life tools', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        startupPage: AppHomeTab.toolbox,
+      );
+      await _pumpAppShell(tester, state: state);
+
+      expect(find.byType(NavigationBar), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.text('Life tool hub'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      final lifeHubCard = find
+          .ancestor(
+            of: find.text('Life tool hub'),
+            matching: find.byType(InkWell),
+          )
+          .first;
+      await tester.tap(lifeHubCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Life tools'), findsWidgets);
+      expect(find.byType(NavigationBar), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField).first, 'Date calculator');
+      await tester.pumpAndSettle();
+
+      final dateCard = find.byKey(
+        const ValueKey<String>('life_tool_card_date_calculator'),
+      );
+      await tester.tap(dateCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('life-date-calculator-page')),
+        findsOneWidget,
+      );
+      expect(find.byType(NavigationBar), findsOneWidget);
+    });
+
     testWidgets('life tools opens timeline and periodic visualizations', (
       tester,
     ) async {
@@ -1071,12 +1192,9 @@ void main() {
       await tester.enterText(find.byType(TextField).first, 'Date calculator');
       await tester.pumpAndSettle();
 
-      final dateCard = find
-          .ancestor(
-            of: find.text('Date calculator'),
-            matching: find.byType(Card),
-          )
-          .first;
+      final dateCard = find.byKey(
+        const ValueKey<String>('life_tool_card_date_calculator'),
+      );
       await tester.tap(dateCard, warnIfMissed: false);
       await tester.pumpAndSettle();
 
@@ -6416,6 +6534,7 @@ class _FakeAppState extends ChangeNotifier
     bool startupTodoPromptEnabled = false,
     bool todoSystemRemindersEnabled = false,
     bool toolboxAutoAdjustSystemVolumeEnabled = false,
+    bool bottomNavigationAutoHideEnabled = false,
     String? startupDailyQuote,
     bool startupDailyQuoteLoading = false,
     List<TodoItem>? todayActiveTodos,
@@ -6507,6 +6626,7 @@ class _FakeAppState extends ChangeNotifier
       .._todoSystemRemindersEnabled = todoSystemRemindersEnabled
       .._toolboxAutoAdjustSystemVolumeEnabled =
           toolboxAutoAdjustSystemVolumeEnabled
+      .._bottomNavigationAutoHideEnabled = bottomNavigationAutoHideEnabled
       .._startupDailyQuote = startupDailyQuote
       .._startupDailyQuoteLoading = startupDailyQuoteLoading
       .._todayActiveTodos = List<TodoItem>.from(
@@ -6574,6 +6694,7 @@ class _FakeAppState extends ChangeNotifier
   bool _startupTodoPromptEnabled = false;
   bool _todoSystemRemindersEnabled = false;
   bool _toolboxAutoAdjustSystemVolumeEnabled = false;
+  bool _bottomNavigationAutoHideEnabled = false;
   String? _startupDailyQuote;
   bool _startupDailyQuoteLoading = false;
   List<TodoItem> _todayActiveTodos = <TodoItem>[];
@@ -7046,6 +7167,9 @@ class _FakeAppState extends ChangeNotifier
   @override
   bool get toolboxAutoAdjustSystemVolumeEnabled =>
       _toolboxAutoAdjustSystemVolumeEnabled;
+
+  @override
+  bool get bottomNavigationAutoHideEnabled => _bottomNavigationAutoHideEnabled;
 
   @override
   bool get shouldShowStartupTodoPromptToday => _startupTodoPromptEnabled;
@@ -8528,6 +8652,12 @@ class _FakeAppState extends ChangeNotifier
   @override
   void setToolboxAutoAdjustSystemVolumeEnabled(bool enabled) {
     _toolboxAutoAdjustSystemVolumeEnabled = enabled;
+    notifyListeners();
+  }
+
+  @override
+  void setBottomNavigationAutoHideEnabled(bool enabled) {
+    _bottomNavigationAutoHideEnabled = enabled;
     notifyListeners();
   }
 

@@ -30,6 +30,8 @@ extension _AppStateStartup on AppState {
 
       _config = _settings.loadPlayConfig();
       _playback.updateRuntimeConfig(_config);
+      _bottomNavigationAutoHideEnabled = _settings
+          .loadBottomNavigationAutoHideEnabled();
       final languageSetting = _settings.loadUiLanguage();
       if (languageSetting == SettingsService.uiLanguageSystem) {
         _uiLanguageFollowsSystem = true;
@@ -326,6 +328,15 @@ extension _AppStateStartup on AppState {
       return;
     }
     _settings.saveToolboxAutoAdjustSystemVolumeEnabled(enabled);
+    _notifyStateChanged();
+  }
+
+  void _setBottomNavigationAutoHideEnabledImpl(bool enabled) {
+    if (_bottomNavigationAutoHideEnabled == enabled) {
+      return;
+    }
+    _bottomNavigationAutoHideEnabled = enabled;
+    _settings.saveBottomNavigationAutoHideEnabled(enabled);
     _notifyStateChanged();
   }
 

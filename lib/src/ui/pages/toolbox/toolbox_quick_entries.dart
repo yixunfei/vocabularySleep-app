@@ -15,12 +15,14 @@ class ToolboxQuickEntryPanel extends StatelessWidget {
     required this.state,
     required this.quickEntries,
     required this.availableEntries,
+    this.onOpenEntry,
   });
 
   final AppI18n i18n;
   final AppState state;
   final List<ToolboxEntryData> quickEntries;
   final List<ToolboxEntryData> availableEntries;
+  final ValueChanged<ToolboxEntryData>? onOpenEntry;
 
   @override
   Widget build(BuildContext context) {
@@ -128,7 +130,11 @@ class ToolboxQuickEntryPanel extends StatelessWidget {
                     runSpacing: 10,
                     children: <Widget>[
                       for (final entry in quickEntries)
-                        _QuickEntryChip(entry: entry, state: state),
+                        _QuickEntryChip(
+                          entry: entry,
+                          state: state,
+                          onOpenEntry: onOpenEntry,
+                        ),
                     ],
                   ),
               ],
@@ -271,10 +277,15 @@ class ToolboxQuickEntryPanel extends StatelessWidget {
 }
 
 class _QuickEntryChip extends StatelessWidget {
-  const _QuickEntryChip({required this.entry, required this.state});
+  const _QuickEntryChip({
+    required this.entry,
+    required this.state,
+    this.onOpenEntry,
+  });
 
   final ToolboxEntryData entry;
   final AppState state;
+  final ValueChanged<ToolboxEntryData>? onOpenEntry;
 
   @override
   Widget build(BuildContext context) {
@@ -284,6 +295,11 @@ class _QuickEntryChip extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(ToolboxUiTokens.pillRadius),
         onTap: () {
+          final onOpenEntry = this.onOpenEntry;
+          if (onOpenEntry != null) {
+            onOpenEntry(entry);
+            return;
+          }
           pushModuleRoute<void>(
             context,
             state: state,

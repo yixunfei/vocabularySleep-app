@@ -5,6 +5,26 @@ import '../ui_copy.dart';
 import '../widgets/page_header.dart';
 import 'toolbox/toolbox_ui_tokens.dart';
 
+class ToolboxEmbeddedNavigation extends InheritedWidget {
+  const ToolboxEmbeddedNavigation({
+    super.key,
+    required this.onBack,
+    required super.child,
+  });
+
+  final VoidCallback onBack;
+
+  static ToolboxEmbeddedNavigation? maybeOf(BuildContext context) {
+    return context
+        .dependOnInheritedWidgetOfExactType<ToolboxEmbeddedNavigation>();
+  }
+
+  @override
+  bool updateShouldNotify(ToolboxEmbeddedNavigation oldWidget) {
+    return onBack != oldWidget.onBack;
+  }
+}
+
 class ToolboxToolPage extends StatelessWidget {
   const ToolboxToolPage({
     super.key,
@@ -27,9 +47,21 @@ class ToolboxToolPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final embeddedNavigation = ToolboxEmbeddedNavigation.maybeOf(context);
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(title: Text(title), actions: appBarActions),
+      appBar: AppBar(
+        automaticallyImplyLeading: embeddedNavigation == null,
+        leading: embeddedNavigation == null
+            ? null
+            : IconButton(
+                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                onPressed: embeddedNavigation.onBack,
+                icon: const Icon(Icons.arrow_back_rounded),
+              ),
+        title: Text(title),
+        actions: appBarActions,
+      ),
       floatingActionButton: floatingActionButton,
       body: ListView(
         controller: scrollController,

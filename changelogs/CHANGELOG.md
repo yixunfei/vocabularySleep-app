@@ -1,3 +1,70 @@
+## [Unreleased-PLAN_285-BOTTOM-NAV-AUTO-HIDE] - 2026-05-28
+
+### 原因
+- 用户反馈 `工具箱-生活实用` UI 修改后出现底部导航菜单栏消失/不可稳定触达的问题，并希望支持下滑隐藏、点击屏幕或上滑显示，同时可在全局设置中开关该能力。
+
+### 新增
+- `plans/PLAN_285_底部导航滚动显隐与全局开关修复.md`
+  - 记录本轮只收束全局底部导航显隐与设置开关，不回退用户已有生活实用 UI 文案调整。
+- `SettingsService` 新增 `bottom_navigation_auto_hide_enabled_v1` 持久化开关。
+- 全局设置页新增“下滑时自动隐藏底部导航”开关，默认关闭以保持主入口始终可见；开启后下滑隐藏，上滑或点击屏幕显示。
+
+### 修改
+- `lib/src/ui/app_shell.dart`
+  - 底部导航改为由全局纵向滚动通知和屏幕点击驱动：启用后下滑收起，上滑或点击屏幕显示，不再因滚动停止自动显示。
+  - 迷你播放器与悬浮环境音入口统一使用当前导航占位高度计算底部避让，避免导航隐藏/显示时遮挡。
+- `lib/src/state/app_state.dart` / `lib/src/state/app_state_startup.dart`
+  - 底部导航滚动隐藏开关改为 `AppState` 内存缓存，初始化前默认关闭，数据库初始化后再恢复持久化值，避免首帧构建提前读取未初始化数据库。
+- `test/ui_smoke_test.dart`
+  - 补充测试替身字段与设置页开关 smoke test。
+- `test/app_state_init_test.dart`
+  - 补充启动期回归断言，覆盖开关初始化前默认值与初始化后持久化恢复。
+- `PROJECT_DOMAIN.md`
+  - 同步记录底部导航全局显隐行为、默认常驻策略和避让边界。
+
+### 修复
+- 修复 `AppShell.build` 在数据库初始化完成前读取新增全局设置导致的 `LateInitializationError: Field '_db' has not been initialized`。
+- 修复底部导航自动隐藏开关变更后状态未即时驱动导航行为的问题。
+
+### 风险变更
+- 本轮仅新增可关闭的全局导航显隐行为；默认关闭，不改变既有导航常驻体验。
+- 滚动监听只处理纵向滚动通知，降低对横向工具条和生活实用内部连续手势的干扰。
+
+### 验证
+- `dart format lib/src/ui/app_shell.dart lib/src/services/settings_service.dart lib/src/state/app_state.dart lib/src/state/app_state_startup.dart lib/src/ui/pages/settings_home_page.dart test/settings_service_test.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/ui/app_shell.dart lib/src/services/settings_service.dart lib/src/state/app_state.dart lib/src/state/app_state_startup.dart lib/src/ui/pages/settings_home_page.dart test/settings_service_test.dart test/ui_smoke_test.dart test/app_state_init_test.dart`（通过；仅余 `test/ui_smoke_test.dart` 既有 info 级 const/final 提示）
+- `flutter test test/settings_service_test.dart`
+- `flutter test test/app_state_init_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "settings exposes bottom navigation auto-hide toggle"`
+
+### 追加修复
+- 修复生活实用模块仍然没有底部导航栏的问题：工具箱内打开 `Life tool hub` 时不再压入新路由，而是在工具箱页内嵌展示，保留 `AppShell` 的 `NavigationBar`。
+- 修复生活实用 Hub 内部子工具继续通过 `Navigator.push` 打开导致底部导航被盖住的问题；子工具改为 Hub 内部状态切换，并通过嵌入式返回入口回到 Hub。
+
+### 追加修改
+- `lib/src/ui/pages/toolbox_tool_shell.dart`
+  - 新增 `ToolboxEmbeddedNavigation`，为内嵌工具页提供本地返回行为。
+- `lib/src/ui/pages/toolbox_page.dart`
+  - 工具箱内对生活实用入口使用内嵌工具视图，其它模块仍保持原有路由行为。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart`
+  - 生活实用子工具改为 `_activeTool` 状态驱动，并为工具卡片补充稳定 key，避免测试和交互误命中搜索框文本。
+- `lib/src/ui/app_shell.dart`
+  - 移除停止滚动后的自动显示计时器，新增轻量点击识别：点击屏幕显示底部导航，拖拽滚动不会被误判为点击。
+- `lib/src/ui/pages/settings_home_page.dart` / `PROJECT_DOMAIN.md`
+  - 同步更新导航自动隐藏说明，明确恢复方式为上滑或点击屏幕。
+
+### 追加验证
+- `dart format lib/src/ui/pages/toolbox_tool_shell.dart lib/src/ui/pages/toolbox_page.dart lib/src/ui/pages/toolbox/toolbox_page_widgets.dart lib/src/ui/pages/toolbox/toolbox_quick_entries.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/ui/pages/toolbox_tool_shell.dart lib/src/ui/pages/toolbox_page.dart lib/src/ui/pages/toolbox/toolbox_page_widgets.dart lib/src/ui/pages/toolbox/toolbox_quick_entries.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/app_shell.dart test/ui_smoke_test.dart`（通过；仅保留 `test/ui_smoke_test.dart` 既有 info 级 const/final 提示）
+- `flutter test test/ui_smoke_test.dart --plain-name "app shell keeps bottom navigation inside life tools"`
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page opens life tool hub module"`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens date calculator progress and candle tabs"`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens timeline and periodic visualizations"`
+- `flutter test test/ui_smoke_test.dart --plain-name "settings exposes bottom navigation auto-hide toggle"`
+- `flutter test test/ui_smoke_test.dart --plain-name "app shell reveals auto-hidden bottom navigation on tap or upward scroll"`
+- `flutter test test/app_state_init_test.dart`
+- `flutter test test/settings_service_test.dart`
+
 ## [Unreleased-PLAN_284-LIFE-RULER-PROTRACTOR-READABILITY] - 2026-05-28
 
 ### 原因

@@ -14,6 +14,7 @@ import 'toolbox/toolbox_page_widgets.dart';
 import 'toolbox/toolbox_quick_entries.dart';
 import 'toolbox/toolbox_ui_components.dart';
 import 'toolbox/toolbox_ui_tokens.dart';
+import 'toolbox_tool_shell.dart';
 
 class ToolboxPage extends ConsumerStatefulWidget {
   const ToolboxPage({super.key});
@@ -25,6 +26,7 @@ class ToolboxPage extends ConsumerStatefulWidget {
 class _ToolboxPageState extends ConsumerState<ToolboxPage> {
   bool _editing = false;
   bool _layoutDragActive = false;
+  ToolboxEntryData? _activeEntry;
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +67,10 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
       isModuleEnabled: isEnabled,
     );
 
-    final body = _editing
+    final activeEntry = _activeEntry;
+    final body = activeEntry != null
+        ? _buildEmbeddedToolView(activeEntry)
+        : _editing
         ? _buildEditingView(
             context: context,
             i18n: i18n,
@@ -81,17 +86,34 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
             visibleEntries: visibleEntries,
             hiddenEntries: hiddenEntries,
             quickEntries: quickEntries,
+            onOpenEntry: _openEntry,
           );
 
     return PopScope(
-      canPop: !_editing,
+      canPop: !_editing && activeEntry == null,
       onPopInvokedWithResult: (didPop, _) {
-        if (didPop || !_editing) {
+        if (didPop) {
           return;
         }
-        _exitEditMode();
+        if (activeEntry != null) {
+          _closeActiveEntry();
+          return;
+        }
+        if (_editing) {
+          _exitEditMode();
+        }
       },
       child: body,
+    );
+  }
+
+  Widget _buildEmbeddedToolView(ToolboxEntryData entry) {
+    return ToolboxEmbeddedNavigation(
+      onBack: _closeActiveEntry,
+      child: KeyedSubtree(
+        key: ValueKey<String>('toolbox_embedded_${entry.moduleId}'),
+        child: entry.pageBuilder(),
+      ),
     );
   }
 
@@ -102,6 +124,7 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
     required List<ToolboxEntryData> visibleEntries,
     required List<ToolboxEntryData> hiddenEntries,
     required List<ToolboxEntryData> quickEntries,
+    required ValueChanged<ToolboxEntryData> onOpenEntry,
   }) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(
@@ -128,6 +151,7 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
                   state: state,
                   quickEntries: quickEntries,
                   availableEntries: visibleEntries,
+                  onOpenEntry: onOpenEntry,
                 ),
                 const SizedBox(height: ToolboxUiTokens.sectionSpacing),
                 if (visibleEntries.isEmpty)
@@ -141,6 +165,7 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
                     section: homeSection,
                     enableQuickDrag: true,
                     onEntryLongPress: (_) => _enterEditMode(),
+                    onEntryOpen: onOpenEntry,
                   ),
               ],
             ),
@@ -341,6 +366,37 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
     setState(() {
       _editing = false;
       _layoutDragActive = false;
+    });
+  }
+
+  void _openEntry(ToolboxEntryData entry) {
+    final state = ref.read(appStateProvider);
+    if (!ensureModuleRouteAccess(
+      context,
+      state: state,
+      moduleId: entry.moduleId,
+    )) {
+      return;
+    }
+    if (entry.moduleId == ModuleIds.toolboxLifeTools) {
+      setState(() {
+        _editing = false;
+        _layoutDragActive = false;
+        _activeEntry = entry;
+      });
+      return;
+    }
+    pushModuleRoute<void>(
+      context,
+      state: state,
+      moduleId: entry.moduleId,
+      builder: (_) => entry.pageBuilder(),
+    );
+  }
+
+  void _closeActiveEntry() {
+    setState(() {
+      _activeEntry = null;
     });
   }
 

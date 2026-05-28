@@ -37,12 +37,17 @@ class AppShell extends ConsumerStatefulWidget {
 
 class _AppShellState extends ConsumerState<AppShell> {
   static const double _navigationBarHeight = 80;
+  static const Duration _navigationChromeDuration = Duration(milliseconds: 250);
+  static const double _navigationTapSlop = 12;
 
   int _index = 0;
   List<AppHomeTab> _visibleTabs = List<AppHomeTab>.from(AppHomeTab.values);
   StudyStartupTab _studyTab = StudyStartupTab.play;
   double _miniPlayerReservedHeight = 0;
   double _soothingMiniPlayerReservedHeight = 0;
+  Offset? _navigationPointerStart;
+  bool _navigationPointerMoved = false;
+  bool _navigationBarVisible = true;
   VoidCallback? _scrollLibraryToTop;
   bool _exitDialogVisible = false;
   bool _startupPromptShown = false;
@@ -69,6 +74,11 @@ class _AppShellState extends ConsumerState<AppShell> {
         });
       });
     });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   List<AppHomeTab> _resolveVisibleTabs(AppState state) {
@@ -210,6 +220,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 
   void _setIndex(int index) {
+    _setNavigationBarVisible(true);
     final currentTab = _tabAt(_index);
     final nextTab = _tabAt(index);
     if (_index == index) {
@@ -237,6 +248,90 @@ class _AppShellState extends ConsumerState<AppShell> {
       _studyTab = tab;
     });
     ref.read(appStateProvider).setStudyStartupTab(tab);
+  }
+
+  void _setNavigationBarVisible(bool visible) {
+    if (_navigationBarVisible == visible || !mounted) {
+      return;
+    }
+    setState(() {
+      _navigationBarVisible = visible;
+    });
+  }
+
+  void _handleNavigationPointerDown(
+    PointerDownEvent event,
+    bool autoHideEnabled,
+  ) {
+    if (!autoHideEnabled) {
+      _clearNavigationPointerTracking();
+      return;
+    }
+    _navigationPointerStart = event.position;
+    _navigationPointerMoved = false;
+  }
+
+  void _handleNavigationPointerMove(PointerMoveEvent event) {
+    final start = _navigationPointerStart;
+    if (start == null || _navigationPointerMoved) {
+      return;
+    }
+    final offset = event.position - start;
+    if (offset.distanceSquared > _navigationTapSlop * _navigationTapSlop) {
+      _navigationPointerMoved = true;
+    }
+  }
+
+  void _handleNavigationPointerUp(bool autoHideEnabled) {
+    final shouldReveal =
+        autoHideEnabled &&
+        _navigationPointerStart != null &&
+        !_navigationPointerMoved;
+    _clearNavigationPointerTracking();
+    if (shouldReveal) {
+      _setNavigationBarVisible(true);
+    }
+  }
+
+  void _clearNavigationPointerTracking() {
+    _navigationPointerStart = null;
+    _navigationPointerMoved = false;
+  }
+
+  bool _handleNavigationScrollNotification(
+    ScrollNotification notification,
+    bool autoHideEnabled,
+  ) {
+    if (notification.metrics.axis != Axis.vertical) {
+      return false;
+    }
+    if (!autoHideEnabled) {
+      if (!_navigationBarVisible) {
+        _setNavigationBarVisible(true);
+      }
+      return false;
+    }
+
+    if (notification is ScrollStartNotification) {
+      return false;
+    }
+
+    if (notification is ScrollUpdateNotification) {
+      final delta = notification.scrollDelta ?? 0;
+      if (delta > 4 && notification.metrics.extentAfter > 0) {
+        _setNavigationBarVisible(false);
+      } else if (delta < -2) {
+        _setNavigationBarVisible(true);
+      }
+      return false;
+    }
+
+    if (notification is OverscrollNotification && notification.overscroll < 0) {
+      _setNavigationBarVisible(true);
+      return false;
+    }
+
+    return false;
   }
 
   void _handlePendingTodoReminderLaunch(AppState state) {
@@ -308,6 +403,55 @@ class _AppShellState extends ConsumerState<AppShell> {
         label: pageLabelMore(i18n),
       ),
     };
+  }
+
+  Widget _buildBottomNavigationChrome({
+    required double height,
+    required double bottomInset,
+    required int selectedIndex,
+    required AppI18n i18n,
+    required bool visible,
+  }) {
+    return AnimatedContainer(
+      key: const ValueKey<String>('app-shell-bottom-navigation-chrome'),
+      duration: _navigationChromeDuration,
+      curve: Curves.easeOutCubic,
+      height: height,
+      child: ClipRect(
+        child: Stack(
+          clipBehavior: Clip.hardEdge,
+          children: <Widget>[
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: bottomInset,
+              child: AnimatedOpacity(
+                key: const ValueKey<String>(
+                  'app-shell-bottom-navigation-opacity',
+                ),
+                duration: _navigationChromeDuration,
+                curve: Curves.easeOutCubic,
+                opacity: visible ? 1 : 0,
+                child: IgnorePointer(
+                  ignoring: !visible,
+                  child: NavigationBar(
+                    key: const ValueKey<String>(
+                      'app-shell-bottom-navigation-bar',
+                    ),
+                    height: _navigationBarHeight,
+                    selectedIndex: selectedIndex,
+                    onDestinationSelected: _setIndex,
+                    destinations: _visibleTabs
+                        .map((tab) => _buildNavigationDestination(tab, i18n))
+                        .toList(growable: false),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _handleMiniPlayerPresentation(
@@ -823,15 +967,26 @@ class _AppShellState extends ConsumerState<AppShell> {
     final currentTab = _tabAt(safeIndex);
     final media = MediaQuery.of(context);
     final bottomInset = media.padding.bottom;
-    final navigationChromeHeight = _navigationBarHeight + bottomInset;
+    final message = state.error;
+    final isInitializing = state.initializing && !state.initialized;
+    final shellRouteIsCurrent = ModalRoute.of(context)?.isCurrent ?? true;
+    final navigationAutoHideEnabled = state.bottomNavigationAutoHideEnabled;
+    final navigationContentVisible =
+        !navigationAutoHideEnabled || isInitializing || _navigationBarVisible;
+    final navigationChromeHeight =
+        bottomInset + (navigationContentVisible ? _navigationBarHeight : 0);
     final combinedMiniPlayerHeight =
         _miniPlayerReservedHeight + _soothingMiniPlayerReservedHeight;
     final ambientLauncherBottomClearance =
         navigationChromeHeight +
         (combinedMiniPlayerHeight > 0 ? combinedMiniPlayerHeight + 18 : 18);
-    final message = state.error;
-    final isInitializing = state.initializing && !state.initialized;
-    final shellRouteIsCurrent = ModalRoute.of(context)?.isCurrent ?? true;
+    if ((!navigationAutoHideEnabled || isInitializing) &&
+        !_navigationBarVisible) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _setNavigationBarVisible(true);
+      });
+    }
     if (message != null && message.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -855,168 +1010,184 @@ class _AppShellState extends ConsumerState<AppShell> {
       child: Scaffold(
         body: AppBackground(
           appearance: state.config.appearance,
-          child: Stack(
-            children: <Widget>[
-              SafeArea(
-                bottom: false,
-                child: Column(
-                  children: <Widget>[
-                    Expanded(
-                      child: AnimatedPadding(
-                        duration: const Duration(milliseconds: 240),
-                        curve: Curves.easeOutCubic,
-                        padding: EdgeInsets.only(
-                          bottom: combinedMiniPlayerHeight,
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (notification) =>
+                _handleNavigationScrollNotification(
+                  notification,
+                  navigationAutoHideEnabled && !isInitializing,
+                ),
+            child: Listener(
+              behavior: HitTestBehavior.translucent,
+              onPointerDown: (event) => _handleNavigationPointerDown(
+                event,
+                navigationAutoHideEnabled && !isInitializing,
+              ),
+              onPointerMove: _handleNavigationPointerMove,
+              onPointerUp: (_) => _handleNavigationPointerUp(
+                navigationAutoHideEnabled && !isInitializing,
+              ),
+              onPointerCancel: (_) => _clearNavigationPointerTracking(),
+              child: Stack(
+                children: <Widget>[
+                  SafeArea(
+                    bottom: false,
+                    child: Column(
+                      children: <Widget>[
+                        Expanded(
+                          child: AnimatedPadding(
+                            duration: const Duration(milliseconds: 240),
+                            curve: Curves.easeOutCubic,
+                            padding: EdgeInsets.only(
+                              bottom: combinedMiniPlayerHeight,
+                            ),
+                            child: isInitializing
+                                ? _buildInitializingView(context, i18n)
+                                : IndexedStack(
+                                    index: safeIndex,
+                                    children: _visibleTabs
+                                        .map(_buildPageForTab)
+                                        .toList(growable: false),
+                                  ),
+                          ),
                         ),
-                        child: isInitializing
-                            ? _buildInitializingView(context, i18n)
-                            : IndexedStack(
-                                index: safeIndex,
-                                children: _visibleTabs
-                                    .map(_buildPageForTab)
-                                    .toList(growable: false),
-                              ),
-                      ),
-                    ),
-                    SizedBox(
-                      height: navigationChromeHeight,
-                      child: Padding(
-                        padding: EdgeInsets.only(bottom: bottomInset),
-                        child: NavigationBar(
-                          height: _navigationBarHeight,
+                        _buildBottomNavigationChrome(
+                          height: navigationChromeHeight,
+                          bottomInset: bottomInset,
                           selectedIndex: safeIndex,
-                          onDestinationSelected: _setIndex,
-                          destinations: _visibleTabs
-                              .map(
-                                (tab) => _buildNavigationDestination(tab, i18n),
-                              )
-                              .toList(growable: false),
+                          i18n: i18n,
+                          visible: navigationContentVisible,
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: bottomInset + _navigationBarHeight + 8,
-                child: MiniPlayer(
-                  state: state,
-                  i18n: i18n,
-                  onOpenPractice: () => _setTab(AppHomeTab.practice),
-                  onOpenLibrary: () {
-                    _setTab(AppHomeTab.study);
-                    _setStudyTab(StudyStartupTab.library);
-                  },
-                  onPresentationChanged: _handleMiniPlayerPresentation,
-                ),
-              ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom:
-                    bottomInset +
-                    _navigationBarHeight +
-                    (_miniPlayerReservedHeight > 0
-                        ? _miniPlayerReservedHeight + 16
-                        : 8),
-                child: ValueListenableBuilder<int>(
-                  valueListenable: SoothingMusicRuntimeStore.revision,
-                  builder: (context, _, _) {
-                    final visible =
-                        !isInitializing &&
-                        shellRouteIsCurrent &&
-                        currentTab != AppHomeTab.toolbox &&
-                        SoothingMiniPlayer.isVisible;
-                    final reservedHeight = visible ? 86.0 : 0.0;
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (!mounted) return;
-                      _handleSoothingMiniPlayerPresentation(
-                        visible,
-                        reservedHeight,
-                      );
-                    });
-                    if (!visible) {
-                      return const SizedBox.shrink();
-                    }
-                    return SoothingMiniPlayer(
+                  ),
+                  AnimatedPositioned(
+                    duration: _navigationChromeDuration,
+                    curve: Curves.easeOutCubic,
+                    left: 0,
+                    right: 0,
+                    bottom: navigationChromeHeight + 8,
+                    child: MiniPlayer(
+                      state: state,
                       i18n: i18n,
-                      onOpen: () {
-                        pushModuleRoute<void>(
-                          context,
-                          state: state,
-                          moduleId: ModuleIds.toolboxSoothingMusic,
-                          settings: const RouteSettings(name: 'soothing_music'),
-                          builder: (_) => const SoothingMusicV2Page(),
+                      onOpenPractice: () => _setTab(AppHomeTab.practice),
+                      onOpenLibrary: () {
+                        _setTab(AppHomeTab.study);
+                        _setStudyTab(StudyStartupTab.library);
+                      },
+                      onPresentationChanged: _handleMiniPlayerPresentation,
+                    ),
+                  ),
+                  AnimatedPositioned(
+                    duration: _navigationChromeDuration,
+                    curve: Curves.easeOutCubic,
+                    left: 0,
+                    right: 0,
+                    bottom:
+                        navigationChromeHeight +
+                        (_miniPlayerReservedHeight > 0
+                            ? _miniPlayerReservedHeight + 16
+                            : 8),
+                    child: ValueListenableBuilder<int>(
+                      valueListenable: SoothingMusicRuntimeStore.revision,
+                      builder: (context, _, _) {
+                        final visible =
+                            !isInitializing &&
+                            shellRouteIsCurrent &&
+                            currentTab != AppHomeTab.toolbox &&
+                            SoothingMiniPlayer.isVisible;
+                        final reservedHeight = visible ? 86.0 : 0.0;
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (!mounted) return;
+                          _handleSoothingMiniPlayerPresentation(
+                            visible,
+                            reservedHeight,
+                          );
+                        });
+                        if (!visible) {
+                          return const SizedBox.shrink();
+                        }
+                        return SoothingMiniPlayer(
+                          i18n: i18n,
+                          onOpen: () {
+                            pushModuleRoute<void>(
+                              context,
+                              state: state,
+                              moduleId: ModuleIds.toolboxSoothingMusic,
+                              settings: const RouteSettings(
+                                name: 'soothing_music',
+                              ),
+                              builder: (_) => const SoothingMusicV2Page(),
+                            );
+                          },
+                          onTogglePlayback: () async {
+                            final player =
+                                SoothingMusicRuntimeStore.retainedPlayer;
+                            if (player == null) {
+                              _setTab(AppHomeTab.toolbox);
+                              return;
+                            }
+                            if (SoothingMusicRuntimeStore.activePlaying) {
+                              await player.pause();
+                              SoothingMusicRuntimeStore.activePlaying = false;
+                            } else {
+                              await player.resume();
+                              SoothingMusicRuntimeStore.activePlaying = true;
+                            }
+                            SoothingMusicRuntimeStore.notifyChanged();
+                          },
                         );
                       },
-                      onTogglePlayback: () async {
-                        final player = SoothingMusicRuntimeStore.retainedPlayer;
-                        if (player == null) {
-                          _setTab(AppHomeTab.toolbox);
-                          return;
-                        }
-                        if (SoothingMusicRuntimeStore.activePlaying) {
-                          await player.pause();
-                          SoothingMusicRuntimeStore.activePlaying = false;
-                        } else {
-                          await player.resume();
-                          SoothingMusicRuntimeStore.activePlaying = true;
-                        }
-                        SoothingMusicRuntimeStore.notifyChanged();
-                      },
-                    );
-                  },
-                ),
-              ),
-              if (!isInitializing)
-                Positioned.fill(
-                  child: AmbientFloatingDock(
-                    state: state,
-                    i18n: i18n,
-                    bottomClearance: ambientLauncherBottomClearance,
+                    ),
                   ),
-                ),
-              if (!isInitializing &&
-                  (state.wordbookImportActive ||
-                      state.remotePrewarmActive ||
-                      state.remotePrewarmFailed))
-                Positioned(
-                  top: media.padding.top + 10,
-                  left: 16,
-                  right: 16,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      if (state.wordbookImportActive)
-                        _buildWordbookImportBanner(i18n, state),
-                      if (state.wordbookImportActive &&
-                          (state.remotePrewarmActive ||
-                              state.remotePrewarmFailed))
-                        const SizedBox(height: 8),
-                      if (state.remotePrewarmActive ||
-                          state.remotePrewarmFailed)
-                        _buildRemotePrewarmBanner(i18n, state),
-                    ],
+                  if (!isInitializing)
+                    Positioned.fill(
+                      child: AmbientFloatingDock(
+                        state: state,
+                        i18n: i18n,
+                        bottomClearance: ambientLauncherBottomClearance,
+                      ),
+                    ),
+                  if (!isInitializing &&
+                      (state.wordbookImportActive ||
+                          state.remotePrewarmActive ||
+                          state.remotePrewarmFailed))
+                    Positioned(
+                      top: media.padding.top + 10,
+                      left: 16,
+                      right: 16,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          if (state.wordbookImportActive)
+                            _buildWordbookImportBanner(i18n, state),
+                          if (state.wordbookImportActive &&
+                              (state.remotePrewarmActive ||
+                                  state.remotePrewarmFailed))
+                            const SizedBox(height: 8),
+                          if (state.remotePrewarmActive ||
+                              state.remotePrewarmFailed)
+                            _buildRemotePrewarmBanner(i18n, state),
+                        ],
+                      ),
+                    ),
+                  BusyOverlay(
+                    visible: state.busy,
+                    message: state.busyMessage ?? i18n.t('processing'),
+                    detail: _busyDetail(i18n, state),
+                    progress: state.busyProgress,
                   ),
-                ),
-              BusyOverlay(
-                visible: state.busy,
-                message: state.busyMessage ?? i18n.t('processing'),
-                detail: _busyDetail(i18n, state),
-                progress: state.busyProgress,
+                  ValueListenableBuilder<int>(
+                    valueListenable: state.focusService.viewRevision,
+                    builder: (context, _, _) {
+                      if (!state.focusService.lockScreenActive) {
+                        return const SizedBox.shrink();
+                      }
+                      return const Positioned.fill(child: FocusLockOverlay());
+                    },
+                  ),
+                ],
               ),
-              ValueListenableBuilder<int>(
-                valueListenable: state.focusService.viewRevision,
-                builder: (context, _, _) {
-                  if (!state.focusService.lockScreenActive) {
-                    return const SizedBox.shrink();
-                  }
-                  return const Positioned.fill(child: FocusLockOverlay());
-                },
-              ),
-            ],
+            ),
           ),
         ),
       ),

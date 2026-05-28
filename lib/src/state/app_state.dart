@@ -211,6 +211,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   bool _uiLanguageFollowsSystem = true;
   ModuleToggleState _moduleToggleState = ModuleToggleState.defaults;
   ToolboxLayoutState _toolboxLayoutState = ToolboxLayoutState.defaults;
+  bool _bottomNavigationAutoHideEnabled = false;
   bool _remotePrewarmActive = false;
   bool _remotePrewarmCompleted = false;
   bool _remotePrewarmFailed = false;
@@ -318,6 +319,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _focusService.todoSystemRemindersEnabled;
   bool get toolboxAutoAdjustSystemVolumeEnabled =>
       _settings.loadToolboxAutoAdjustSystemVolumeEnabled();
+  bool get bottomNavigationAutoHideEnabled => _bottomNavigationAutoHideEnabled;
   bool get shouldShowStartupTodoPromptToday =>
       _startupStore.startupTodoPromptEnabled &&
       _startupStore.startupTodoPromptSuppressedDate != _todayDateKey();
@@ -817,6 +819,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   void setToolboxAutoAdjustSystemVolumeEnabled(bool enabled) =>
       _setToolboxAutoAdjustSystemVolumeEnabledImpl(enabled);
+
+  void setBottomNavigationAutoHideEnabled(bool enabled) =>
+      _setBottomNavigationAutoHideEnabledImpl(enabled);
 
   void suppressStartupTodoPromptForToday() =>
       _suppressStartupTodoPromptForTodayImpl();
@@ -2849,6 +2854,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _toolboxLayoutState = _settings.loadToolboxLayoutState().normalizedFor(
       ModuleIds.toolboxModules,
     );
+    _bottomNavigationAutoHideEnabled = _settings
+        .loadBottomNavigationAutoHideEnabled();
     _rememberedWords = _settings.loadRememberedWords();
     _playbackStore.playbackProgressByWordbookPath = _settings
         .loadPlaybackProgressByWordbook();

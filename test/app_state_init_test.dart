@@ -294,6 +294,7 @@ void main() {
       settings.saveStartupTodoPromptEnabled(true);
       settings.saveStartupTodoPromptSuppressedDate(_dateKey(DateTime.now()));
       settings.saveRememberedWords(<String>{'Alpha'});
+      settings.saveBottomNavigationAutoHideEnabled(true);
       settings.saveTestModeState(
         const TestModeState(enabled: true, revealed: true, hintRevealed: false),
       );
@@ -308,6 +309,8 @@ void main() {
         weatherService: weather,
       );
 
+      expect(state.bottomNavigationAutoHideEnabled, isFalse);
+
       await state.init();
       await pumpEventQueue();
 
@@ -321,6 +324,7 @@ void main() {
       expect(state.weatherEnabled, isTrue);
       expect(state.startupTodoPromptEnabled, isTrue);
       expect(state.shouldShowStartupTodoPromptToday, isFalse);
+      expect(state.bottomNavigationAutoHideEnabled, isTrue);
       expect(state.testModeEnabled, isTrue);
       expect(state.testModeRevealed, isTrue);
       expect(state.testModeHintRevealed, isFalse);

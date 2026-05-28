@@ -83,6 +83,7 @@ class ToolboxSection extends StatelessWidget {
     this.enableQuickDrag = false,
     this.onEntryLongPress,
     this.onEntryRemove,
+    this.onEntryOpen,
     this.dragTooltip = '',
     this.removeTooltip = '',
   });
@@ -92,6 +93,7 @@ class ToolboxSection extends StatelessWidget {
   final bool enableQuickDrag;
   final ValueChanged<ToolboxEntryData>? onEntryLongPress;
   final ValueChanged<ToolboxEntryData>? onEntryRemove;
+  final ValueChanged<ToolboxEntryData>? onEntryOpen;
   final String dragTooltip;
   final String removeTooltip;
 
@@ -127,6 +129,7 @@ class ToolboxSection extends StatelessWidget {
                         onRemove: onEntryRemove == null
                             ? null
                             : () => onEntryRemove!(entry),
+                        onOpen: onEntryOpen,
                         dragTooltip: dragTooltip,
                         removeTooltip: removeTooltip,
                       ),
@@ -148,6 +151,7 @@ class _ToolboxEntryTile extends StatelessWidget {
     required this.enableQuickDrag,
     required this.onLongPress,
     required this.onRemove,
+    required this.onOpen,
     required this.dragTooltip,
     required this.removeTooltip,
   });
@@ -157,6 +161,7 @@ class _ToolboxEntryTile extends StatelessWidget {
   final bool enableQuickDrag;
   final VoidCallback? onLongPress;
   final VoidCallback? onRemove;
+  final ValueChanged<ToolboxEntryData>? onOpen;
   final String dragTooltip;
   final String removeTooltip;
 
@@ -167,6 +172,7 @@ class _ToolboxEntryTile extends StatelessWidget {
       editing: editing,
       onLongPress: onLongPress,
       onRemove: onRemove,
+      onOpen: onOpen,
       dragTooltip: dragTooltip,
       removeTooltip: removeTooltip,
     );
@@ -196,6 +202,7 @@ class ToolboxEntryCard extends ConsumerStatefulWidget {
     this.editing = false,
     this.onLongPress,
     this.onRemove,
+    this.onOpen,
     this.dragHandle,
     this.dragTooltip = '',
     this.removeTooltip = '',
@@ -205,6 +212,7 @@ class ToolboxEntryCard extends ConsumerStatefulWidget {
   final bool editing;
   final VoidCallback? onLongPress;
   final VoidCallback? onRemove;
+  final ValueChanged<ToolboxEntryData>? onOpen;
   final Widget? dragHandle;
   final String dragTooltip;
   final String removeTooltip;
@@ -267,6 +275,11 @@ class _ToolboxEntryCardState extends ConsumerState<ToolboxEntryCard> {
             },
             onTap: () {
               if (widget.editing) {
+                return;
+              }
+              final onOpen = widget.onOpen;
+              if (onOpen != null) {
+                onOpen(entry);
                 return;
               }
               final appState = ref.read(appStateProvider);

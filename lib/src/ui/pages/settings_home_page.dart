@@ -160,6 +160,56 @@ class SettingsHomePage extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
+                    pickUiText(i18n, zh: '导航体验', en: 'Navigation behavior'),
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    pickUiText(
+                      i18n,
+                      zh: '控制全局底部导航栏在滚动页面中的显示方式。',
+                      en: 'Control how the global bottom navigation behaves while pages scroll.',
+                    ),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    value: state.bottomNavigationAutoHideEnabled,
+                    title: Text(
+                      pickUiText(
+                        i18n,
+                        zh: '下滑时自动隐藏底部导航',
+                        en: 'Auto-hide bottom navigation on scroll',
+                      ),
+                    ),
+                    subtitle: Text(
+                      state.bottomNavigationAutoHideEnabled
+                          ? pickUiText(
+                              i18n,
+                              zh: '已开启。页面下滑时收起底部导航，上滑或点击屏幕后显示。',
+                              en: 'Enabled. The bottom navigation hides on downward scroll and returns when you scroll up or tap the screen.',
+                            )
+                          : pickUiText(
+                              i18n,
+                              zh: '已关闭。底部导航会始终保留，适合优先保持入口可见。',
+                              en: 'Disabled. The bottom navigation stays visible so the main entry points remain available.',
+                            ),
+                    ),
+                    onChanged: state.setBottomNavigationAutoHideEnabled,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
                     pickUiText(
                       i18n,
                       zh: '权限与系统操作',

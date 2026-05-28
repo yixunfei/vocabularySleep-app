@@ -111,13 +111,16 @@ void main() {
 
     expect(settings.loadTodoSystemRemindersEnabled(), isFalse);
     expect(settings.loadToolboxAutoAdjustSystemVolumeEnabled(), isFalse);
+    expect(settings.loadBottomNavigationAutoHideEnabled(), isFalse);
 
     settings.saveTodoSystemRemindersEnabled(true);
     settings.saveToolboxAutoAdjustSystemVolumeEnabled(true);
+    settings.saveBottomNavigationAutoHideEnabled(true);
 
     final restored = createSettings(store);
     expect(restored.loadTodoSystemRemindersEnabled(), isTrue);
     expect(restored.loadToolboxAutoAdjustSystemVolumeEnabled(), isTrue);
+    expect(restored.loadBottomNavigationAutoHideEnabled(), isTrue);
   });
 
   test('remembered words persist through SettingsService', () {

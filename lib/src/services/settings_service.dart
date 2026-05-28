@@ -28,6 +28,8 @@ class SettingsService {
       'todo_system_reminders_enabled_v1';
   static const String toolboxAutoAdjustSystemVolumeEnabledKey =
       'toolbox_auto_adjust_system_volume_enabled_v1';
+  static const String bottomNavigationAutoHideEnabledKey =
+      'bottom_navigation_auto_hide_enabled_v1';
 
   final SettingsStoreRepository _store;
 
@@ -133,6 +135,14 @@ class SettingsService {
       toolboxAutoAdjustSystemVolumeEnabledKey,
       enabled ? '1' : '0',
     );
+  }
+
+  bool loadBottomNavigationAutoHideEnabled() {
+    return _store.getSetting(bottomNavigationAutoHideEnabledKey) == '1';
+  }
+
+  void saveBottomNavigationAutoHideEnabled(bool enabled) {
+    _store.setSetting(bottomNavigationAutoHideEnabledKey, enabled ? '1' : '0');
   }
 
   String? loadStartupTodoPromptSuppressedDate() {

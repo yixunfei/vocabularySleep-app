@@ -11,6 +11,7 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
   String _query = '';
   final Set<String> _expandedCategories = <String>{};
   final List<String> _quickAccessIds = <String>[];
+  _LifeTool? _activeTool;
 
   static const _categoryOrder = <String>[
     'display',
@@ -82,14 +83,16 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
   };
 
   List<_LifeTool> get _filteredTools {
-    return _lifeTools.where((tool) {
-      if (_query.trim().isEmpty) return true;
-      final q = _query.toLowerCase();
-      return tool.titleZh.toLowerCase().contains(q) ||
-          tool.titleEn.toLowerCase().contains(q) ||
-          tool.summaryZh.toLowerCase().contains(q) ||
-          tool.summaryEn.toLowerCase().contains(q);
-    }).toList(growable: false);
+    return _lifeTools
+        .where((tool) {
+          if (_query.trim().isEmpty) return true;
+          final q = _query.toLowerCase();
+          return tool.titleZh.toLowerCase().contains(q) ||
+              tool.titleEn.toLowerCase().contains(q) ||
+              tool.summaryZh.toLowerCase().contains(q) ||
+              tool.summaryEn.toLowerCase().contains(q);
+        })
+        .toList(growable: false);
   }
 
   Map<String, List<_LifeTool>> _groupedTools() {
@@ -167,10 +170,9 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Theme.of(sheetContext)
-                        .colorScheme
-                        .onSurfaceVariant
-                        .withValues(alpha: 0.3),
+                    color: Theme.of(
+                      sheetContext,
+                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
@@ -178,15 +180,9 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
-                    _lifeText(
-                      sheetContext,
-                      zh: '添加快捷工具',
-                      en: 'Add quick tool',
-                    ),
-                    style:
-                        Theme.of(sheetContext).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
+                    _lifeText(sheetContext, zh: '添加快捷工具', en: 'Add quick tool'),
+                    style: Theme.of(sheetContext).textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w800),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -275,11 +271,7 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
             const Spacer(),
             if (quickTools.isNotEmpty)
               Text(
-                _lifeText(
-                  context,
-                  zh: '长按图标可删除',
-                  en: 'Long press to remove',
-                ),
+                _lifeText(context, zh: '长按图标可删除', en: 'Long press to remove'),
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                 ),
@@ -295,9 +287,7 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
             separatorBuilder: (_, __) => const SizedBox(width: 8),
             itemBuilder: (context, index) {
               if (index == 0) {
-                return _AddQuickAccessButton(
-                  onTap: _showAddQuickAccessSheet,
-                );
+                return _AddQuickAccessButton(onTap: _showAddQuickAccessSheet);
               }
               final tool = quickTools[index - 1];
               final meta = _categoryMeta[tool.category]!;
@@ -320,11 +310,7 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
       builder: (dialogContext) {
         return AlertDialog(
           title: Text(
-            _lifeText(
-              dialogContext,
-              zh: '移除快捷入口',
-              en: 'Remove quick access',
-            ),
+            _lifeText(dialogContext, zh: '移除快捷入口', en: 'Remove quick access'),
           ),
           content: Text(
             _lifeText(
@@ -336,18 +322,14 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: Text(
-                _lifeText(dialogContext, zh: '取消', en: 'Cancel'),
-              ),
+              child: Text(_lifeText(dialogContext, zh: '取消', en: 'Cancel')),
             ),
             TextButton(
               onPressed: () {
                 _removeFromQuickAccess(tool.id);
                 Navigator.pop(dialogContext);
               },
-              child: Text(
-                _lifeText(dialogContext, zh: '移除', en: 'Remove'),
-              ),
+              child: Text(_lifeText(dialogContext, zh: '移除', en: 'Remove')),
             ),
           ],
         );
@@ -357,6 +339,26 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
 
   @override
   Widget build(BuildContext context) {
+    final activeTool = _activeTool;
+    if (activeTool != null) {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (didPop) {
+            return;
+          }
+          _closeTool();
+        },
+        child: ToolboxEmbeddedNavigation(
+          onBack: _closeTool,
+          child: KeyedSubtree(
+            key: ValueKey<String>('life_tool_${activeTool.id}'),
+            child: _buildToolPage(activeTool),
+          ),
+        ),
+      );
+    }
+
     final theme = Theme.of(context);
     final grouped = _groupedTools();
     final isSearching = _query.trim().isNotEmpty;
@@ -365,8 +367,8 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
       title: _lifeText(context, zh: '生活实用', en: 'Life tools'),
       subtitle: _lifeText(
         context,
-        zh: '${_lifeTools.length} 个独立功能入口，一期优先落地可本地实现能力，并补全公开资源来源说明。',
-        en: '${_lifeTools.length} standalone entries with local-first phase-1 implementations and source attributions.',
+        zh: '${_lifeTools.length} 个实用工具，按 7 大分类整理，支持搜索和快捷入口。',
+        en: '${_lifeTools.length} handy tools organized in 7 categories with search and quick access.',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -423,8 +425,9 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
                     Icon(
                       Icons.search_off_rounded,
                       size: 48,
-                      color: theme.colorScheme.onSurfaceVariant
-                          .withValues(alpha: 0.4),
+                      color: theme.colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.4,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -442,78 +445,85 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
               ),
             )
           else
-            ..._categoryOrder
-                .where((c) => grouped.containsKey(c))
-                .map((category) {
-                  final tools = grouped[category]!;
-                  final meta = _categoryMeta[category]!;
-                  final expanded = _expandedCategories.contains(category);
-                  return _CategoryDrawer(
-                    category: category,
-                    tools: tools,
-                    meta: meta,
-                    isExpanded: expanded,
-                    forceExpand: isSearching,
-                    onToggle: () => setState(() {
-                      if (expanded) {
-                        _expandedCategories.remove(category);
-                      } else {
-                        _expandedCategories.add(category);
-                      }
-                    }),
-                    onToolTap: _openTool,
-                  );
+            ..._categoryOrder.where((c) => grouped.containsKey(c)).map((
+              category,
+            ) {
+              final tools = grouped[category]!;
+              final meta = _categoryMeta[category]!;
+              final expanded = _expandedCategories.contains(category);
+              return _CategoryDrawer(
+                category: category,
+                tools: tools,
+                meta: meta,
+                isExpanded: expanded,
+                forceExpand: isSearching,
+                onToggle: () => setState(() {
+                  if (expanded) {
+                    _expandedCategories.remove(category);
+                  } else {
+                    _expandedCategories.add(category);
+                  }
                 }),
+                onToolTap: _openTool,
+              );
+            }),
         ],
       ),
     );
   }
 
   void _openTool(_LifeTool tool) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => switch (tool.id) {
-          'time_screen' => const _TimeScreenToolPage(),
-          'barrage' => const _BarrageToolPage(),
-          'ruler' => const _RulerToolPage(),
-          'scoreboard' => const _ScoreboardToolPage(),
-          'color_helper' => const _ColorHelperToolPage(),
-          'wallpaper_helper' => const _WallpaperHelperToolPage(),
-          'postal_code' => const _PostalLookupToolPage(),
-          'reverse_image' => const _ReverseImageToolPage(),
-          'garbage' => const _GarbageSortingToolPage(),
-          'relatives' => const _RelativesToolPage(),
-          'mind_map' => const _MindMapToolPage(),
-          'timeline_periodic' => const _TimelinePeriodicToolPage(),
-          'compass' => const _CompassToolPage(),
-          'level' => const _LevelToolPage(),
-          'vibration' => const _VibrationToolPage(),
-          'device_frame' => const _DeviceFrameToolPage(),
-          'notify_me' => const _NotifyMeToolPage(),
-          'fake_call' => const _FakeCallToolPage(),
-          'id_photo' => const _IdPhotoToolPage(),
-          'ai_interview' => const _AiInterviewToolPage(),
-          'sup_sub' => const _NumberMarksPage(),
-          'meme_maker' => const _MemeMakerToolPage(),
-          'text_count' ||
-          'text_encoding' ||
-          'unit_converter' ||
-          'work_worth' ||
-          'city_compare' ||
-          'offer_select' ||
-          'mortgage' ||
-          'date_calculator' ||
-          'world_clock' ||
-          'bmi' ||
-          'short_link' ||
-          'qr' ||
-          'image_transform' ||
-          'image_to_web' =>
-            _LifeUtilityToolPage(tool: tool),
-          _ => _LifeToolInfoPage(tool: tool),
-        },
-      ),
-    );
+    setState(() {
+      _activeTool = tool;
+    });
+  }
+
+  void _closeTool() {
+    setState(() {
+      _activeTool = null;
+    });
+  }
+
+  Widget _buildToolPage(_LifeTool tool) {
+    return switch (tool.id) {
+      'time_screen' => const _TimeScreenToolPage(),
+      'barrage' => const _BarrageToolPage(),
+      'ruler' => const _RulerToolPage(),
+      'scoreboard' => const _ScoreboardToolPage(),
+      'color_helper' => const _ColorHelperToolPage(),
+      'wallpaper_helper' => const _WallpaperHelperToolPage(),
+      'postal_code' => const _PostalLookupToolPage(),
+      'reverse_image' => const _ReverseImageToolPage(),
+      'garbage' => const _GarbageSortingToolPage(),
+      'relatives' => const _RelativesToolPage(),
+      'mind_map' => const _MindMapToolPage(),
+      'timeline_periodic' => const _TimelinePeriodicToolPage(),
+      'compass' => const _CompassToolPage(),
+      'level' => const _LevelToolPage(),
+      'vibration' => const _VibrationToolPage(),
+      'device_frame' => const _DeviceFrameToolPage(),
+      'notify_me' => const _NotifyMeToolPage(),
+      'fake_call' => const _FakeCallToolPage(),
+      'id_photo' => const _IdPhotoToolPage(),
+      'ai_interview' => const _AiInterviewToolPage(),
+      'sup_sub' => const _NumberMarksPage(),
+      'meme_maker' => const _MemeMakerToolPage(),
+      'text_count' ||
+      'text_encoding' ||
+      'unit_converter' ||
+      'work_worth' ||
+      'city_compare' ||
+      'offer_select' ||
+      'mortgage' ||
+      'date_calculator' ||
+      'world_clock' ||
+      'bmi' ||
+      'short_link' ||
+      'qr' ||
+      'image_transform' ||
+      'image_to_web' => _LifeUtilityToolPage(tool: tool),
+      _ => _LifeToolInfoPage(tool: tool),
+    };
   }
 }
 
@@ -599,9 +609,7 @@ class _QuickAccessChip extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             color: accent.withValues(alpha: 0.08),
-            border: Border.all(
-              color: accent.withValues(alpha: 0.20),
-            ),
+            border: Border.all(color: accent.withValues(alpha: 0.20)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -711,13 +719,15 @@ class _CategoryDrawerState extends State<_CategoryDrawer>
                       borderRadius: BorderRadius.circular(14),
                       color: effectiveExpanded
                           ? meta.color.withValues(alpha: 0.06)
-                          : colorScheme.surfaceContainerLow
-                              .withValues(alpha: 0.4),
+                          : colorScheme.surfaceContainerLow.withValues(
+                              alpha: 0.4,
+                            ),
                       border: Border.all(
                         color: effectiveExpanded
                             ? meta.color.withValues(alpha: 0.28)
-                            : colorScheme.outlineVariant
-                                .withValues(alpha: 0.10),
+                            : colorScheme.outlineVariant.withValues(
+                                alpha: 0.10,
+                              ),
                       ),
                       boxShadow: effectiveExpanded
                           ? <BoxShadow>[
@@ -761,11 +771,9 @@ class _CategoryDrawerState extends State<_CategoryDrawer>
                                     width: 40,
                                     height: 40,
                                     decoration: BoxDecoration(
-                                      borderRadius:
-                                          BorderRadius.circular(11),
+                                      borderRadius: BorderRadius.circular(11),
                                       color: meta.color.withValues(
-                                        alpha:
-                                            effectiveExpanded ? 0.22 : 0.10,
+                                        alpha: effectiveExpanded ? 0.22 : 0.10,
                                       ),
                                     ),
                                     child: Icon(
@@ -791,7 +799,8 @@ class _CategoryDrawerState extends State<_CategoryDrawer>
                                                   en: meta.labelEn,
                                                 ),
                                                 style: theme
-                                                    .textTheme.titleSmall
+                                                    .textTheme
+                                                    .titleSmall
                                                     ?.copyWith(
                                                       fontWeight:
                                                           FontWeight.w800,
@@ -800,42 +809,38 @@ class _CategoryDrawerState extends State<_CategoryDrawer>
                                             ),
                                             const SizedBox(width: 8),
                                             AnimatedContainer(
-                                              duration:
-                                                  AppDurations.standard,
+                                              duration: AppDurations.standard,
                                               curve: AppEasing.standard,
                                               padding:
-                                                  const EdgeInsets
-                                                      .symmetric(
-                                                horizontal: 8,
-                                                vertical: 2,
-                                              ),
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 2,
+                                                  ),
                                               decoration: BoxDecoration(
                                                 borderRadius:
-                                                    BorderRadius.circular(
-                                                  999,
-                                                ),
+                                                    BorderRadius.circular(999),
                                                 color: effectiveExpanded
-                                                    ? meta.color
-                                                        .withValues(
-                                                          alpha: 0.16,
-                                                        )
+                                                    ? meta.color.withValues(
+                                                        alpha: 0.16,
+                                                      )
                                                     : colorScheme
-                                                        .surfaceContainerHighest
-                                                        .withValues(
-                                                          alpha: 0.6,
-                                                        ),
+                                                          .surfaceContainerHighest
+                                                          .withValues(
+                                                            alpha: 0.6,
+                                                          ),
                                               ),
                                               child: Text(
                                                 '${widget.tools.length}',
                                                 style: theme
-                                                    .textTheme.labelSmall
+                                                    .textTheme
+                                                    .labelSmall
                                                     ?.copyWith(
                                                       fontWeight:
                                                           FontWeight.w700,
                                                       color: effectiveExpanded
                                                           ? meta.color
                                                           : colorScheme
-                                                              .onSurfaceVariant,
+                                                                .onSurfaceVariant,
                                                     ),
                                               ),
                                             ),
@@ -866,8 +871,7 @@ class _CategoryDrawerState extends State<_CategoryDrawer>
                                       child: AnimatedRotation(
                                         duration: AppDurations.standard,
                                         curve: AppEasing.standard,
-                                        turns:
-                                            effectiveExpanded ? 0.5 : 0,
+                                        turns: effectiveExpanded ? 0.5 : 0,
                                         child: AnimatedContainer(
                                           duration: AppDurations.standard,
                                           curve: AppEasing.standard,
@@ -880,19 +884,15 @@ class _CategoryDrawerState extends State<_CategoryDrawer>
                                                     alpha: 0.12,
                                                   )
                                                 : colorScheme
-                                                    .surfaceContainerHighest
-                                                    .withValues(
-                                                      alpha: 0.5,
-                                                    ),
+                                                      .surfaceContainerHighest
+                                                      .withValues(alpha: 0.5),
                                           ),
                                           child: Icon(
-                                            Icons
-                                                .keyboard_arrow_down_rounded,
+                                            Icons.keyboard_arrow_down_rounded,
                                             size: 20,
                                             color: effectiveExpanded
                                                 ? meta.color
-                                                : colorScheme
-                                                    .onSurfaceVariant,
+                                                : colorScheme.onSurfaceVariant,
                                           ),
                                         ),
                                       ),
@@ -915,34 +915,32 @@ class _CategoryDrawerState extends State<_CategoryDrawer>
                     ? CrossFadeState.showFirst
                     : CrossFadeState.showSecond,
                 firstChild: Padding(
-                  padding: const EdgeInsets.only(
-                    top: 10,
-                    left: 6,
-                    right: 6,
-                  ),
+                  padding: const EdgeInsets.only(top: 10, left: 6, right: 6),
                   child: LayoutBuilder(
                     builder: (context, constraints) {
-                      final isExpandedWidth =
-                          AppWidthBreakpoints.tierFor(constraints.maxWidth)
-                              .isExpanded;
+                      final isExpandedWidth = AppWidthBreakpoints.tierFor(
+                        constraints.maxWidth,
+                      ).isExpanded;
                       final columns = isExpandedWidth ? 2 : 1;
                       const spacing = 10.0;
                       final cardWidth =
                           (constraints.maxWidth - spacing * (columns - 1)) /
-                              columns;
+                          columns;
                       return Wrap(
                         spacing: spacing,
                         runSpacing: spacing,
-                        children: widget.tools.map((tool) {
-                          return SizedBox(
-                            width: cardWidth,
-                            child: _ToolDrawerCard(
-                              tool: tool,
-                              accent: meta.color,
-                              onTap: () => widget.onToolTap(tool),
-                            ),
-                          );
-                        }).toList(growable: false),
+                        children: widget.tools
+                            .map((tool) {
+                              return SizedBox(
+                                width: cardWidth,
+                                child: _ToolDrawerCard(
+                                  tool: tool,
+                                  accent: meta.color,
+                                  onTap: () => widget.onToolTap(tool),
+                                ),
+                              );
+                            })
+                            .toList(growable: false),
                       );
                     },
                   ),
@@ -986,8 +984,15 @@ class _ToolDrawerCardState extends State<_ToolDrawerCard> {
       scale: _pressed ? 0.975 : 1,
       duration: AppDurations.quick,
       curve: AppEasing.snappy,
-      child: Material(
+      child: Card(
+        key: ValueKey<String>('life_tool_card_${tool.id}'),
+        margin: EdgeInsets.zero,
+        elevation: 0,
         color: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onHighlightChanged: (value) {
@@ -1028,15 +1033,9 @@ class _ToolDrawerCardState extends State<_ToolDrawerCard> {
                   height: 40,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
-                    color: accent.withValues(
-                      alpha: _pressed ? 0.22 : 0.10,
-                    ),
+                    color: accent.withValues(alpha: _pressed ? 0.22 : 0.10),
                   ),
-                  child: Icon(
-                    tool.icon,
-                    color: accent,
-                    size: 20,
-                  ),
+                  child: Icon(tool.icon, color: accent, size: 20),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -1044,11 +1043,7 @@ class _ToolDrawerCardState extends State<_ToolDrawerCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        _lifeText(
-                          context,
-                          zh: tool.titleZh,
-                          en: tool.titleEn,
-                        ),
+                        _lifeText(context, zh: tool.titleZh, en: tool.titleEn),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodyMedium?.copyWith(
@@ -1116,8 +1111,8 @@ class _LifeToolInfoPage extends StatelessWidget {
             child: Text(
               _lifeText(
                 context,
-                zh: '一期版本已创建独立入口。该功能当前以稳定入口和资源桥接为主，后续会继续补充更完整的本地实现。',
-                en: 'Phase-1 provides an independent entry. This tool currently focuses on stable access and resource bridging, and will be extended with deeper local implementation.',
+                zh: '该工具以提供公开资源链接和信息参考为主，详细功能可在相关来源网站使用。',
+                en: 'This tool provides public resource links and information references. For detailed features, please refer to the source websites.',
               ),
             ),
           ),
@@ -1164,8 +1159,8 @@ Future<void> _openExternal(BuildContext context, String url) async {
   final uri = Uri.parse(url);
   final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
   if (!ok && context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('无法打开链接: $url')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('无法打开链接: $url')));
   }
 }
