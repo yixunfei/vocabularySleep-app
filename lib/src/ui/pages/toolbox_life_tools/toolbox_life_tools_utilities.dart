@@ -9,31 +9,34 @@ class _LifeUtilityToolPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (tool.id) {
       'text_count' => const _TextCounterPage(),
-      'text_encoding' => const _TextEncodingPage(),
-      'rc4' => const _TextEncodingPage(),
-      'sup_sub' => const _SupSubPage(),
-      'unit_converter' => const _UnitConverterPage(),
+      'text_encoding' => const _TextTransformPage(),
+      'sup_sub' => const _NumberMarksPage(),
+      'unit_converter' => const _UnitConverterToolPage(),
       'work_worth' => const _WorkWorthPage(),
-      'mortgage' => const _MortgagePage(),
+      'offer_select' => const _OfferSelectToolPage(),
+      'city_compare' => const _CitySalaryComparePage(),
+      'mortgage' => const _MortgageProPage(),
       'date_calculator' => const _DateCalculatorPage(),
-      'bmi' => const _BmiPage(),
+      'world_clock' => const _WorldClockToolPage(),
+      'bmi' => const _BmiToolPage(),
       'short_link' => const _ShortLinkPage(),
       'qr' => const _QrPage(),
-      'image_compress' => const _ImageCompressPage(),
-      'pinyin' => const _PinyinPage(),
+      'image_transform' => const _ImageTransformPage(),
+      'image_to_web' => const _ImageToWebToolPage(),
+      'id_photo' => const _IdPhotoToolPage(),
       _ => _LifeToolInfoPage(tool: tool),
     };
   }
 }
 
-class _TextCounterPage extends StatefulWidget {
-  const _TextCounterPage();
+class _LegacyTextCounterPage extends StatefulWidget {
+  const _LegacyTextCounterPage();
 
   @override
-  State<_TextCounterPage> createState() => _TextCounterPageState();
+  State<_LegacyTextCounterPage> createState() => _LegacyTextCounterPageState();
 }
 
-class _TextCounterPageState extends State<_TextCounterPage> {
+class _LegacyTextCounterPageState extends State<_LegacyTextCounterPage> {
   final TextEditingController _controller = TextEditingController();
 
   @override
@@ -150,8 +153,8 @@ class _TextEncodingPageState extends State<_TextEncodingPage> {
       title: _lifeText(context, zh: '文本编码', en: 'Text encoding'),
       subtitle: _lifeText(
         context,
-        zh: '趣味编码 + Base64 + MD5 + SHA256 + RC4。',
-        en: 'Fun codes + Base64 + MD5 + SHA256 + RC4.',
+        zh: '趣味编码 + Base64 + MD5 + SHA256 + Morse + 兽语。',
+        en: 'Fun codes + Base64 + MD5 + SHA256 + Morse + Beast.',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,14 +367,14 @@ class _UnitConverterPageState extends State<_UnitConverterPage> {
   }
 }
 
-class _WorkWorthPage extends StatefulWidget {
-  const _WorkWorthPage();
+class _LegacyWorkWorthPage extends StatefulWidget {
+  const _LegacyWorkWorthPage();
 
   @override
-  State<_WorkWorthPage> createState() => _WorkWorthPageState();
+  State<_LegacyWorkWorthPage> createState() => _LegacyWorkWorthPageState();
 }
 
-class _WorkWorthPageState extends State<_WorkWorthPage> {
+class _LegacyWorkWorthPageState extends State<_LegacyWorkWorthPage> {
   final TextEditingController _salary = TextEditingController(text: '20000');
   final TextEditingController _cost = TextEditingController(text: '9000');
   final TextEditingController _insurance = TextEditingController(text: '3500');
@@ -466,18 +469,25 @@ class _MortgagePageState extends State<_MortgagePage> {
 
   void _calc() {
     final p = double.tryParse(_principal.text) ?? 0;
-    final annual = (double.tryParse(_rate.text) ?? 0) / 100;
-    final n = (int.tryParse(_years.text) ?? 0) * 12;
-    final r = annual / 12;
-    if (p <= 0 || n <= 0 || r <= 0) {
+    final annualRatePercent = double.tryParse(_rate.text) ?? -1;
+    final years = int.tryParse(_years.text) ?? 0;
+    if (p <= 0 || years <= 0 || annualRatePercent < 0) {
       setState(() => _result = '参数无效');
       return;
     }
-    final m = p * r * math.pow(1 + r, n) / (math.pow(1 + r, n) - 1);
-    final total = m * n;
+    final result = const ToolboxMortgageService().calculate(
+      MortgageInput(
+        repaymentMethod: MortgageRepaymentMethod.equalInstallment,
+        calculationMode: MortgageCalculationMode.loanAmount,
+        termYears: years,
+        annualRatePercent: annualRatePercent,
+        firstPaymentDate: DateTime.now(),
+        loanAmountYuan: p,
+      ),
+    );
     setState(() {
       _result =
-          '月供：${m.toStringAsFixed(2)}\n总还款：${total.toStringAsFixed(2)}\n总利息：${(total - p).toStringAsFixed(2)}';
+          '月供：${result.firstMonthlyPayment.toStringAsFixed(2)}\n总还款：${result.contractTotalPayment.toStringAsFixed(2)}\n总利息：${result.contractTotalInterest.toStringAsFixed(2)}';
     });
   }
 
@@ -526,370 +536,6 @@ class _MortgagePageState extends State<_MortgagePage> {
           ),
           const SizedBox(height: 8),
           SelectableText(_result),
-        ],
-      ),
-    );
-  }
-}
-
-class _DateCalculatorPage extends StatefulWidget {
-  const _DateCalculatorPage();
-
-  @override
-  State<_DateCalculatorPage> createState() => _DateCalculatorPageState();
-}
-
-class _DateCalculatorPageState extends State<_DateCalculatorPage> {
-  DateTime _start = DateTime.now().subtract(const Duration(days: 1));
-  DateTime _end = DateTime.now();
-  String _result = '';
-
-  void _recompute() {
-    final diff = _end.difference(_start);
-    final now = DateTime.now();
-    final endOfWeek = now.add(Duration(days: 7 - now.weekday));
-    final endOfMonth = DateTime(now.year, now.month + 1, 1);
-    final endOfYear = DateTime(now.year + 1, 1, 1);
-    setState(() {
-      _result =
-          '相差：${diff.inDays} 天 ${diff.inHours % 24} 小时 ${diff.inMinutes % 60} 分 ${diff.inSeconds % 60} 秒\n'
-          '本周剩余：${endOfWeek.difference(now).inHours} 小时\n'
-          '本月剩余：${endOfMonth.difference(now).inDays} 天\n'
-          '本年剩余：${endOfYear.difference(now).inDays} 天';
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ToolboxToolPage(
-      title: _lifeText(context, zh: '日期计算器', en: 'Date calculator'),
-      subtitle: _lifeText(
-        context,
-        zh: '计算时间差与阶段剩余时长。',
-        en: 'Compute date diff and time remaining.',
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          FilledButton.tonal(
-            onPressed: () async {
-              final date = await showDatePicker(
-                context: context,
-                firstDate: DateTime(1900),
-                lastDate: DateTime(2200),
-                initialDate: _start,
-              );
-              if (date != null) {
-                setState(() => _start = date);
-                _recompute();
-              }
-            },
-            child: Text(
-              _lifeText(
-                context,
-                zh: '起始：${_start.toIso8601String().split('T').first}',
-                en: 'Start: ${_start.toIso8601String().split("T").first}',
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          FilledButton.tonal(
-            onPressed: () async {
-              final date = await showDatePicker(
-                context: context,
-                firstDate: DateTime(1900),
-                lastDate: DateTime(2200),
-                initialDate: _end,
-              );
-              if (date != null) {
-                setState(() => _end = date);
-                _recompute();
-              }
-            },
-            child: Text(
-              _lifeText(
-                context,
-                zh: '结束：${_end.toIso8601String().split('T').first}',
-                en: 'End: ${_end.toIso8601String().split("T").first}',
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          FilledButton(
-            onPressed: _recompute,
-            child: Text(_lifeText(context, zh: '计算', en: 'Calculate')),
-          ),
-          const SizedBox(height: 8),
-          SelectableText(_result),
-        ],
-      ),
-    );
-  }
-}
-
-class _BmiPage extends StatefulWidget {
-  const _BmiPage();
-
-  @override
-  State<_BmiPage> createState() => _BmiPageState();
-}
-
-class _BmiPageState extends State<_BmiPage> {
-  final TextEditingController _height = TextEditingController(text: '170');
-  final TextEditingController _weight = TextEditingController(text: '65');
-  String _result = '';
-
-  void _compute() {
-    final h = (double.tryParse(_height.text) ?? 0) / 100;
-    final w = double.tryParse(_weight.text) ?? 0;
-    if (h <= 0 || w <= 0) {
-      setState(() => _result = '参数无效');
-      return;
-    }
-    final bmi = w / (h * h);
-    final tag = bmi < 18.5
-        ? '偏瘦'
-        : (bmi < 24 ? '正常' : (bmi < 28 ? '超重' : '肥胖'));
-    setState(() => _result = 'BMI = ${bmi.toStringAsFixed(2)} ($tag)');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ToolboxToolPage(
-      title: _lifeText(context, zh: 'BMI 计算器', en: 'BMI'),
-      subtitle: _lifeText(
-        context,
-        zh: '身体质量指数计算。',
-        en: 'Body mass index calculator.',
-      ),
-      child: Column(
-        children: <Widget>[
-          TextField(
-            controller: _height,
-            decoration: InputDecoration(
-              labelText: _lifeText(context, zh: '身高 cm', en: 'Height cm'),
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _weight,
-            decoration: InputDecoration(
-              labelText: _lifeText(context, zh: '体重 kg', en: 'Weight kg'),
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 8),
-          FilledButton(
-            onPressed: _compute,
-            child: Text(_lifeText(context, zh: '计算', en: 'Calculate')),
-          ),
-          const SizedBox(height: 8),
-          Text(_result),
-        ],
-      ),
-    );
-  }
-}
-
-class _ShortLinkPage extends StatefulWidget {
-  const _ShortLinkPage();
-
-  @override
-  State<_ShortLinkPage> createState() => _ShortLinkPageState();
-}
-
-class _ShortLinkPageState extends State<_ShortLinkPage> {
-  final TextEditingController _url = TextEditingController();
-  String _short = '';
-  String _resolved = '';
-
-  Future<void> _shorten() async {
-    final target = _url.text.trim();
-    if (target.isEmpty) {
-      return;
-    }
-    final uri = Uri.parse(
-      'https://tinyurl.com/api-create.php?url=${Uri.encodeComponent(target)}',
-    );
-    final response = await http.get(uri);
-    if (!mounted) {
-      return;
-    }
-    setState(() => _short = response.body.trim());
-  }
-
-  Future<void> _resolve() async {
-    final target = _url.text.trim();
-    if (target.isEmpty) {
-      return;
-    }
-    final response = await http.get(
-      Uri.parse(target),
-      headers: const <String, String>{'User-Agent': 'Mozilla/5.0'},
-    );
-    if (!mounted) {
-      return;
-    }
-    setState(() => _resolved = response.request?.url.toString() ?? '');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ToolboxToolPage(
-      title: _lifeText(context, zh: '短链接工具', en: 'Short link tool'),
-      subtitle: _lifeText(
-        context,
-        zh: '使用公开 API 创建短链并解析跳转目标。',
-        en: 'Create tiny URL and resolve destination.',
-      ),
-      child: Column(
-        children: <Widget>[
-          TextField(
-            controller: _url,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: _lifeText(context, zh: '网址', en: 'URL'),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: FilledButton.tonal(
-                  onPressed: _shorten,
-                  child: Text(_lifeText(context, zh: '生成短链', en: 'Shorten')),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: FilledButton.tonal(
-                  onPressed: _resolve,
-                  child: Text(_lifeText(context, zh: '解析短链', en: 'Resolve')),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          SelectableText(_short),
-          const SizedBox(height: 8),
-          SelectableText(_resolved),
-        ],
-      ),
-    );
-  }
-}
-
-class _QrPage extends StatefulWidget {
-  const _QrPage();
-
-  @override
-  State<_QrPage> createState() => _QrPageState();
-}
-
-class _QrPageState extends State<_QrPage> {
-  final TextEditingController _controller = TextEditingController(
-    text: 'https://example.com',
-  );
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final query = Uri.encodeComponent(
-      _controller.text.trim().isEmpty ? ' ' : _controller.text.trim(),
-    );
-    final url =
-        'https://api.qrserver.com/v1/create-qr-code/?size=420x420&data=$query';
-    return ToolboxToolPage(
-      title: _lifeText(context, zh: '二维码生成', en: 'QR generator'),
-      subtitle: _lifeText(
-        context,
-        zh: '输入内容后即时生成二维码。',
-        en: 'Generate QR from input content.',
-      ),
-      child: Column(
-        children: <Widget>[
-          TextField(
-            controller: _controller,
-            decoration: const InputDecoration(border: OutlineInputBorder()),
-          ),
-          const SizedBox(height: 8),
-          FilledButton(
-            onPressed: () => setState(() {}),
-            child: Text(_lifeText(context, zh: '生成', en: 'Generate')),
-          ),
-          const SizedBox(height: 12),
-          Image.network(url, height: 240, width: 240),
-        ],
-      ),
-    );
-  }
-}
-
-class _PinyinPage extends StatefulWidget {
-  const _PinyinPage();
-
-  @override
-  State<_PinyinPage> createState() => _PinyinPageState();
-}
-
-class _PinyinPageState extends State<_PinyinPage> {
-  final TextEditingController _controller = TextEditingController();
-  String _output = '';
-  static const Map<String, String> _map = <String, String>{
-    '你': 'ni',
-    '好': 'hao',
-    '我': 'wo',
-    '们': 'men',
-    '中': 'zhong',
-    '国': 'guo',
-    '生': 'sheng',
-    '活': 'huo',
-    '工': 'gong',
-    '具': 'ju',
-  };
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ToolboxToolPage(
-      title: _lifeText(context, zh: '中文转拼音', en: 'Chinese to pinyin'),
-      subtitle: _lifeText(
-        context,
-        zh: '一期内置常用字映射，未覆盖字符会原样保留。',
-        en: 'Phase-1 includes common-character mapping; unknown chars remain unchanged.',
-      ),
-      child: Column(
-        children: <Widget>[
-          TextField(
-            controller: _controller,
-            maxLines: 4,
-            decoration: const InputDecoration(border: OutlineInputBorder()),
-          ),
-          const SizedBox(height: 8),
-          FilledButton(
-            onPressed: () {
-              setState(() {
-                _output = _controller.text
-                    .split('')
-                    .map((char) => _map[char] ?? char)
-                    .join(' ');
-              });
-            },
-            child: Text(_lifeText(context, zh: '转换', en: 'Convert')),
-          ),
-          const SizedBox(height: 8),
-          SelectableText(_output),
         ],
       ),
     );

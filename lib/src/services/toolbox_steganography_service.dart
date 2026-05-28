@@ -180,17 +180,23 @@ class ToolboxSteganographyCapacityCheck {
     required this.capacityBytes,
     required this.requiredBytes,
     required this.minimumPixels,
+    this.mediaKind = ToolboxSteganographyMediaKind.image,
+    this.carrierLabel,
+    this.minimumCarrierBytes,
     this.perLayerCapacityBytes,
     this.coverRequiredBytes,
     this.hiddenRequiredBytes,
   });
 
   final bool dualLayer;
+  final ToolboxSteganographyMediaKind mediaKind;
   final int width;
   final int height;
   final int capacityBytes;
   final int requiredBytes;
   final int minimumPixels;
+  final String? carrierLabel;
+  final int? minimumCarrierBytes;
   final int? perLayerCapacityBytes;
   final int? coverRequiredBytes;
   final int? hiddenRequiredBytes;
@@ -199,7 +205,10 @@ class ToolboxSteganographyCapacityCheck {
     if (!dualLayer) {
       return requiredBytes <= capacityBytes;
     }
-    final layerCapacity = perLayerCapacityBytes ?? 0;
+    final layerCapacity = perLayerCapacityBytes;
+    if (layerCapacity == null) {
+      return requiredBytes <= capacityBytes;
+    }
     return (coverRequiredBytes ?? 0) <= layerCapacity &&
         (hiddenRequiredBytes ?? 0) <= layerCapacity;
   }
@@ -217,6 +226,12 @@ class ToolboxSteganographyService {
   static final List<int> _protectedBlockMagic = ascii.encode('VSSG2');
   static final List<int> _tailMagic = ascii.encode('VSSGT1');
   static final List<int> _imagePolicyMagic = ascii.encode('VSSGP2');
+  static final List<int> _riffMagic = ascii.encode('RIFF');
+  static final List<int> _waveMagic = ascii.encode('WAVE');
+  static final List<int> _wavFmtMagic = ascii.encode('fmt ');
+  static final List<int> _wavDataMagic = ascii.encode('data');
+  static final List<int> _mediaPolicyMagic = ascii.encode('VSSGM2');
+  static final List<int> _mp4StegoBoxType = ascii.encode('free');
   static const int _protectedBlockTailLength = 16;
   static const int _imageMagicLength = 16;
   static const int _imageNonceLength = 16;
@@ -224,6 +239,15 @@ class ToolboxSteganographyService {
       _imageMagicLength + _imageNonceLength + 4;
   static const int _imagePolicyChecksumLength = 16;
   static const int _imagePolicyHeaderLength = 23;
+  static const int _mediaPolicyChecksumLength = 16;
+  static const int _mediaPolicyHeaderLength = 23;
+  static const int _mediaMagicLength = 16;
+  static const int _mediaNonceLength = 16;
+  static const int _mediaHeaderLength =
+      _mediaMagicLength + _mediaNonceLength + 4;
+  static const int _mp4StegoBoxOverhead = 8;
+  static const int _mp4MaxPaddingLength = 255;
+  static const int _mp4MaxBoxScanDepth = 128;
   static final math.Random _secureRandom = math.Random.secure();
   final ToolboxCryptoService _cryptoService = ToolboxCryptoService();
 
@@ -271,11 +295,6 @@ class ToolboxSteganographyService {
           'Dual-layer passphrases must be different.',
         );
       }
-      if (mediaKind != ToolboxSteganographyMediaKind.image) {
-        throw const ToolboxSteganographyException(
-          'Dual-layer mode currently supports image carriers only.',
-        );
-      }
     } else if (text.isEmpty) {
       throw const ToolboxSteganographyException('Secret text is empty.');
     }
@@ -316,7 +335,8 @@ class ToolboxSteganographyService {
         maxErrorAttempts: maxErrorAttempts,
         maxSuccessfulReveals: maxSuccessfulReveals,
       );
-      return _checkDualImageCapacity(
+      return _checkDualCapacity(
+        mediaKind: mediaKind,
         carrierBytes: carrierBytes,
         coverRequiredBytes: coverRequired,
         hiddenRequiredBytes: hiddenRequired,
@@ -335,22 +355,37 @@ class ToolboxSteganographyService {
       maxErrorAttempts: maxErrorAttempts,
       maxSuccessfulReveals: maxSuccessfulReveals,
     );
-    return _checkSingleImageCapacity(
-      carrierBytes: carrierBytes,
-      requiredBytes: requiredBytes,
-    );
+    return switch (mediaKind) {
+      ToolboxSteganographyMediaKind.image => _checkSingleImageCapacity(
+        carrierBytes: carrierBytes,
+        requiredBytes: requiredBytes,
+      ),
+      ToolboxSteganographyMediaKind.audio => _checkAudioCapacity(
+        carrierBytes: carrierBytes,
+        requiredBytes: requiredBytes,
+      ),
+      ToolboxSteganographyMediaKind.video => _checkVideoCapacity(
+        carrierBytes: carrierBytes,
+        requiredBytes: requiredBytes,
+      ),
+    };
   }
 
   ToolboxSteganographyCapacityCheck checkFileWriteCapacity({
     required ToolboxSteganographyMediaKind mediaKind,
     required Uint8List carrierBytes,
     required Uint8List fileBytes,
+    bool dualLayerEnabled = false,
+    Uint8List? coverFileBytes,
     required ToolboxCryptoAlgorithm encryption,
     required String passphrase,
+    String coverPassphrase = '',
     ToolboxCryptoStrength strength = ToolboxCryptoStrength.standard,
     Uint8List? keyFileBytes,
     String? fileName,
     String? mediaType,
+    String? coverFileName,
+    String? coverMediaType,
     List<ToolboxCryptoCascadeCipher>? cascade,
     ToolboxCryptoKeyBits keyBits = ToolboxCryptoKeyBits.bits256,
     ToolboxCryptoMacAlgorithm macAlgorithm = ToolboxCryptoMacAlgorithm.sha256,
@@ -364,6 +399,21 @@ class ToolboxSteganographyService {
     if (fileBytes.isEmpty) {
       throw const ToolboxSteganographyException('Secret file is empty.');
     }
+    if (dualLayerEnabled) {
+      if (coverFileBytes == null || coverFileBytes.isEmpty) {
+        throw const ToolboxSteganographyException('Cover file is empty.');
+      }
+      if (coverPassphrase.trim().isEmpty || passphrase.trim().isEmpty) {
+        throw const ToolboxSteganographyException(
+          'Dual-layer mode requires both passphrases.',
+        );
+      }
+      if (coverPassphrase == passphrase) {
+        throw const ToolboxSteganographyException(
+          'Dual-layer passphrases must be different.',
+        );
+      }
+    }
     if (encryption.requiresSecret &&
         passphrase.trim().isEmpty &&
         (keyFileBytes == null || keyFileBytes.isEmpty)) {
@@ -375,6 +425,43 @@ class ToolboxSteganographyService {
     _validateMaxErrorAttempts(maxErrorAttempts);
     _validateMaxSuccessfulReveals(maxSuccessfulReveals);
     _ensureCarrierIsWritable(mediaKind: mediaKind, carrierBytes: carrierBytes);
+
+    if (dualLayerEnabled) {
+      final coverRequired = _estimatedBlockLength(
+        payloadKind: ToolboxSteganographyPayloadKind.file,
+        plainBytesLength: coverFileBytes!.length,
+        encryption: encryption,
+        strength: strength,
+        fileName: coverFileName,
+        mediaType: coverMediaType,
+        cascade: cascade,
+        keyBits: keyBits,
+        macAlgorithm: macAlgorithm,
+        signatureMode: signatureMode,
+        maxErrorAttempts: maxErrorAttempts,
+        maxSuccessfulReveals: maxSuccessfulReveals,
+      );
+      final hiddenRequired = _estimatedBlockLength(
+        payloadKind: ToolboxSteganographyPayloadKind.file,
+        plainBytesLength: fileBytes.length,
+        encryption: encryption,
+        strength: strength,
+        fileName: fileName,
+        mediaType: mediaType,
+        cascade: cascade,
+        keyBits: keyBits,
+        macAlgorithm: macAlgorithm,
+        signatureMode: signatureMode,
+        maxErrorAttempts: maxErrorAttempts,
+        maxSuccessfulReveals: maxSuccessfulReveals,
+      );
+      return _checkDualCapacity(
+        mediaKind: mediaKind,
+        carrierBytes: carrierBytes,
+        coverRequiredBytes: coverRequired,
+        hiddenRequiredBytes: hiddenRequired,
+      );
+    }
 
     final requiredBytes = _estimatedBlockLength(
       payloadKind: ToolboxSteganographyPayloadKind.file,
@@ -390,10 +477,20 @@ class ToolboxSteganographyService {
       maxErrorAttempts: maxErrorAttempts,
       maxSuccessfulReveals: maxSuccessfulReveals,
     );
-    return _checkSingleImageCapacity(
-      carrierBytes: carrierBytes,
-      requiredBytes: requiredBytes,
-    );
+    return switch (mediaKind) {
+      ToolboxSteganographyMediaKind.image => _checkSingleImageCapacity(
+        carrierBytes: carrierBytes,
+        requiredBytes: requiredBytes,
+      ),
+      ToolboxSteganographyMediaKind.audio => _checkAudioCapacity(
+        carrierBytes: carrierBytes,
+        requiredBytes: requiredBytes,
+      ),
+      ToolboxSteganographyMediaKind.video => _checkVideoCapacity(
+        carrierBytes: carrierBytes,
+        requiredBytes: requiredBytes,
+      ),
+    };
   }
 
   ToolboxSteganographyEmbedResult embedText({
@@ -463,13 +560,27 @@ class ToolboxSteganographyService {
         locatorAlgorithm: locatorAlgorithm,
         locatorStrength: locatorStrength,
       ),
-      ToolboxSteganographyMediaKind.audio ||
-      ToolboxSteganographyMediaKind.video => _embedInTail(
-        mediaKind: mediaKind,
+      ToolboxSteganographyMediaKind.audio => _embedInAudio(
         carrierBytes: carrierBytes,
         block: block,
         envelope: envelope,
         sourceExtension: sourceExtension,
+        passphrase: passphrase,
+        keyFileBytes: keyFileBytes,
+        maxErrorAttempts: maxErrorAttempts,
+        locatorAlgorithm: locatorAlgorithm,
+        locatorStrength: locatorStrength,
+      ),
+      ToolboxSteganographyMediaKind.video => _embedInVideo(
+        carrierBytes: carrierBytes,
+        block: block,
+        envelope: envelope,
+        sourceExtension: sourceExtension,
+        passphrase: passphrase,
+        keyFileBytes: keyFileBytes,
+        maxErrorAttempts: maxErrorAttempts,
+        locatorAlgorithm: locatorAlgorithm,
+        locatorStrength: locatorStrength,
       ),
     };
   }
@@ -572,11 +683,32 @@ class ToolboxSteganographyService {
         locatorAlgorithm: locatorAlgorithm,
         locatorStrength: locatorStrength,
       ),
-      ToolboxSteganographyMediaKind.audio ||
-      ToolboxSteganographyMediaKind.video =>
-        throw const ToolboxSteganographyException(
-          'Dual-layer mode currently supports image carriers only.',
-        ),
+      ToolboxSteganographyMediaKind.audio => _embedDualBlocksInAudio(
+        carrierBytes: carrierBytes,
+        coverBlock: coverBlock,
+        hiddenBlock: hiddenBlock,
+        hiddenCipherPreview: hiddenEnvelope.cipherPreview,
+        sourceExtension: sourceExtension,
+        coverPassphrase: coverPassphrase,
+        hiddenPassphrase: hiddenPassphrase,
+        hiddenKeyFileBytes: hiddenKeyFileBytes,
+        maxErrorAttempts: maxErrorAttempts,
+        locatorAlgorithm: locatorAlgorithm,
+        locatorStrength: locatorStrength,
+      ),
+      ToolboxSteganographyMediaKind.video => _embedDualBlocksInVideo(
+        carrierBytes: carrierBytes,
+        coverBlock: coverBlock,
+        hiddenBlock: hiddenBlock,
+        hiddenCipherPreview: hiddenEnvelope.cipherPreview,
+        sourceExtension: sourceExtension,
+        coverPassphrase: coverPassphrase,
+        hiddenPassphrase: hiddenPassphrase,
+        hiddenKeyFileBytes: hiddenKeyFileBytes,
+        maxErrorAttempts: maxErrorAttempts,
+        locatorAlgorithm: locatorAlgorithm,
+        locatorStrength: locatorStrength,
+      ),
     };
   }
 
@@ -651,13 +783,162 @@ class ToolboxSteganographyService {
         locatorAlgorithm: locatorAlgorithm,
         locatorStrength: locatorStrength,
       ),
-      ToolboxSteganographyMediaKind.audio ||
-      ToolboxSteganographyMediaKind.video => _embedInTail(
-        mediaKind: mediaKind,
+      ToolboxSteganographyMediaKind.audio => _embedInAudio(
         carrierBytes: carrierBytes,
         block: block,
         envelope: envelope,
         sourceExtension: sourceExtension,
+        passphrase: passphrase,
+        keyFileBytes: keyFileBytes,
+        maxErrorAttempts: maxErrorAttempts,
+        locatorAlgorithm: locatorAlgorithm,
+        locatorStrength: locatorStrength,
+      ),
+      ToolboxSteganographyMediaKind.video => _embedInVideo(
+        carrierBytes: carrierBytes,
+        block: block,
+        envelope: envelope,
+        sourceExtension: sourceExtension,
+        passphrase: passphrase,
+        keyFileBytes: keyFileBytes,
+        maxErrorAttempts: maxErrorAttempts,
+        locatorAlgorithm: locatorAlgorithm,
+        locatorStrength: locatorStrength,
+      ),
+    };
+  }
+
+  ToolboxSteganographyEmbedResult embedDualFile({
+    required ToolboxSteganographyMediaKind mediaKind,
+    required Uint8List carrierBytes,
+    required Uint8List coverFileBytes,
+    required Uint8List hiddenFileBytes,
+    required ToolboxCryptoAlgorithm encryption,
+    required String coverPassphrase,
+    required String hiddenPassphrase,
+    ToolboxCryptoStrength strength = ToolboxCryptoStrength.standard,
+    Uint8List? hiddenKeyFileBytes,
+    String? sourceExtension,
+    String? coverFileName,
+    String? coverMediaType,
+    String? hiddenFileName,
+    String? hiddenMediaType,
+    List<ToolboxCryptoCascadeCipher>? cascade,
+    ToolboxCryptoKeyBits keyBits = ToolboxCryptoKeyBits.bits256,
+    ToolboxCryptoMacAlgorithm macAlgorithm = ToolboxCryptoMacAlgorithm.sha256,
+    ToolboxCryptoSignatureMode signatureMode = ToolboxCryptoSignatureMode.none,
+    int maxErrorAttempts = 0,
+    int maxSuccessfulReveals = 0,
+    ToolboxSteganographyLocatorAlgorithm locatorAlgorithm =
+        ToolboxSteganographyLocatorAlgorithm.sha256,
+    ToolboxSteganographyLocatorStrength locatorStrength =
+        ToolboxSteganographyLocatorStrength.standard,
+  }) {
+    if (carrierBytes.isEmpty) {
+      throw const ToolboxSteganographyException('Source media is empty.');
+    }
+    if (coverFileBytes.isEmpty || hiddenFileBytes.isEmpty) {
+      throw const ToolboxSteganographyException('Secret file is empty.');
+    }
+    if (coverPassphrase.trim().isEmpty || hiddenPassphrase.trim().isEmpty) {
+      throw const ToolboxSteganographyException(
+        'Dual-layer mode requires both passphrases.',
+      );
+    }
+    if (coverPassphrase == hiddenPassphrase) {
+      throw const ToolboxSteganographyException(
+        'Dual-layer passphrases must be different.',
+      );
+    }
+    if (encryption.requiresSecret &&
+        hiddenPassphrase.trim().isEmpty &&
+        (hiddenKeyFileBytes == null || hiddenKeyFileBytes.isEmpty)) {
+      throw const ToolboxSteganographyException(
+        'This encryption mode requires a passphrase or key file.',
+      );
+    }
+    _validateMediaWriteBackend(mediaKind);
+    _validateMaxErrorAttempts(maxErrorAttempts);
+    _validateMaxSuccessfulReveals(maxSuccessfulReveals);
+    _ensureCarrierIsWritable(mediaKind: mediaKind, carrierBytes: carrierBytes);
+
+    final coverEnvelope = _buildEnvelope(
+      payloadKind: ToolboxSteganographyPayloadKind.file,
+      plainBytes: coverFileBytes,
+      encryption: encryption,
+      passphrase: coverPassphrase,
+      strength: strength,
+      keyFileBytes: null,
+      fileName: coverFileName,
+      mediaType: coverMediaType,
+      cascade: cascade,
+      keyBits: keyBits,
+      macAlgorithm: macAlgorithm,
+      signatureMode: signatureMode,
+    );
+    final hiddenEnvelope = _buildEnvelope(
+      payloadKind: ToolboxSteganographyPayloadKind.file,
+      plainBytes: hiddenFileBytes,
+      encryption: encryption,
+      passphrase: hiddenPassphrase,
+      strength: strength,
+      keyFileBytes: hiddenKeyFileBytes,
+      fileName: hiddenFileName,
+      mediaType: hiddenMediaType,
+      cascade: cascade,
+      keyBits: keyBits,
+      macAlgorithm: macAlgorithm,
+      signatureMode: signatureMode,
+    );
+    final coverBlock = _buildBlock(
+      coverEnvelope.jsonBytes,
+      maxErrorAttempts: maxErrorAttempts,
+      maxSuccessfulReveals: maxSuccessfulReveals,
+    );
+    final hiddenBlock = _buildBlock(
+      hiddenEnvelope.jsonBytes,
+      maxErrorAttempts: maxErrorAttempts,
+      maxSuccessfulReveals: maxSuccessfulReveals,
+    );
+
+    return switch (mediaKind) {
+      ToolboxSteganographyMediaKind.image => _embedDualBlocksInImage(
+        carrierBytes: carrierBytes,
+        coverBlock: coverBlock,
+        hiddenBlock: hiddenBlock,
+        hiddenCipherPreview: hiddenEnvelope.cipherPreview,
+        coverPassphrase: coverPassphrase,
+        hiddenPassphrase: hiddenPassphrase,
+        hiddenKeyFileBytes: hiddenKeyFileBytes,
+        maxErrorAttempts: maxErrorAttempts,
+        locatorAlgorithm: locatorAlgorithm,
+        locatorStrength: locatorStrength,
+      ),
+      ToolboxSteganographyMediaKind.audio => _embedDualBlocksInAudio(
+        carrierBytes: carrierBytes,
+        coverBlock: coverBlock,
+        hiddenBlock: hiddenBlock,
+        hiddenCipherPreview: hiddenEnvelope.cipherPreview,
+        sourceExtension: sourceExtension,
+        coverPassphrase: coverPassphrase,
+        hiddenPassphrase: hiddenPassphrase,
+        hiddenKeyFileBytes: hiddenKeyFileBytes,
+        maxErrorAttempts: maxErrorAttempts,
+        locatorAlgorithm: locatorAlgorithm,
+        locatorStrength: locatorStrength,
+      ),
+      ToolboxSteganographyMediaKind.video => _embedDualBlocksInVideo(
+        carrierBytes: carrierBytes,
+        coverBlock: coverBlock,
+        hiddenBlock: hiddenBlock,
+        hiddenCipherPreview: hiddenEnvelope.cipherPreview,
+        sourceExtension: sourceExtension,
+        coverPassphrase: coverPassphrase,
+        hiddenPassphrase: hiddenPassphrase,
+        hiddenKeyFileBytes: hiddenKeyFileBytes,
+        maxErrorAttempts: maxErrorAttempts,
+        locatorAlgorithm: locatorAlgorithm,
+        locatorStrength: locatorStrength,
       ),
     };
   }
@@ -684,8 +965,20 @@ class ToolboxSteganographyService {
         locatorAlgorithm: locatorAlgorithm,
         locatorStrength: locatorStrength,
       ),
-      ToolboxSteganographyMediaKind.audio ||
-      ToolboxSteganographyMediaKind.video => _extractTailBlock(carrierBytes),
+      ToolboxSteganographyMediaKind.audio => _extractAudioBlock(
+        carrierBytes,
+        passphrase: passphrase,
+        keyFileBytes: keyFileBytes,
+        locatorAlgorithm: locatorAlgorithm,
+        locatorStrength: locatorStrength,
+      ),
+      ToolboxSteganographyMediaKind.video => _extractVideoBlock(
+        carrierBytes,
+        passphrase: passphrase,
+        keyFileBytes: keyFileBytes,
+        locatorAlgorithm: locatorAlgorithm,
+        locatorStrength: locatorStrength,
+      ),
     };
     final map = _parseBlock(block);
     final envelope = _parseEnvelope(
@@ -726,8 +1019,20 @@ class ToolboxSteganographyService {
         locatorAlgorithm: locatorAlgorithm,
         locatorStrength: locatorStrength,
       ),
-      ToolboxSteganographyMediaKind.audio ||
-      ToolboxSteganographyMediaKind.video => _extractTailBlock(carrierBytes),
+      ToolboxSteganographyMediaKind.audio => _extractAudioBlock(
+        carrierBytes,
+        passphrase: passphrase,
+        keyFileBytes: keyFileBytes,
+        locatorAlgorithm: locatorAlgorithm,
+        locatorStrength: locatorStrength,
+      ),
+      ToolboxSteganographyMediaKind.video => _extractVideoBlock(
+        carrierBytes,
+        passphrase: passphrase,
+        keyFileBytes: keyFileBytes,
+        locatorAlgorithm: locatorAlgorithm,
+        locatorStrength: locatorStrength,
+      ),
     };
     final map = _parseBlock(block);
     final envelope = _parseFileEnvelope(
@@ -767,6 +1072,18 @@ class ToolboxSteganographyService {
         return publicPolicy;
       }
     }
+    if (mediaKind == ToolboxSteganographyMediaKind.audio) {
+      final publicPolicy = _inspectAudioPolicyHeader(carrierBytes);
+      if (publicPolicy != null) {
+        return publicPolicy;
+      }
+    }
+    if (mediaKind == ToolboxSteganographyMediaKind.video) {
+      final publicPolicy = _inspectVideoPayload(carrierBytes)?.policy;
+      if (publicPolicy != null) {
+        return publicPolicy;
+      }
+    }
     final block = switch (mediaKind) {
       ToolboxSteganographyMediaKind.image => _extractImageBlock(
         carrierBytes,
@@ -775,8 +1092,20 @@ class ToolboxSteganographyService {
         locatorAlgorithm: locatorAlgorithm,
         locatorStrength: locatorStrength,
       ),
-      ToolboxSteganographyMediaKind.audio ||
-      ToolboxSteganographyMediaKind.video => _extractTailBlock(carrierBytes),
+      ToolboxSteganographyMediaKind.audio => _extractAudioBlock(
+        carrierBytes,
+        passphrase: passphrase,
+        keyFileBytes: keyFileBytes,
+        locatorAlgorithm: locatorAlgorithm,
+        locatorStrength: locatorStrength,
+      ),
+      ToolboxSteganographyMediaKind.video => _extractVideoBlock(
+        carrierBytes,
+        passphrase: passphrase,
+        keyFileBytes: keyFileBytes,
+        locatorAlgorithm: locatorAlgorithm,
+        locatorStrength: locatorStrength,
+      ),
     };
     return _readBlockPolicy(block);
   }
@@ -802,10 +1131,19 @@ class ToolboxSteganographyService {
         locatorAlgorithm: locatorAlgorithm,
         locatorStrength: locatorStrength,
       ),
-      ToolboxSteganographyMediaKind.audio ||
-      ToolboxSteganographyMediaKind.video => _stripTailPayload(
+      ToolboxSteganographyMediaKind.audio => _stripAudioPayload(
         carrierBytes,
-        mediaKind: mediaKind,
+        passphrase: passphrase,
+        keyFileBytes: keyFileBytes,
+        locatorAlgorithm: locatorAlgorithm,
+        locatorStrength: locatorStrength,
+      ),
+      ToolboxSteganographyMediaKind.video => _stripVideoPayload(
+        carrierBytes,
+        passphrase: passphrase,
+        keyFileBytes: keyFileBytes,
+        locatorAlgorithm: locatorAlgorithm,
+        locatorStrength: locatorStrength,
       ),
     };
   }
@@ -833,11 +1171,21 @@ class ToolboxSteganographyService {
           locatorAlgorithm: locatorAlgorithm,
           locatorStrength: locatorStrength,
         ),
-      ToolboxSteganographyMediaKind.audio ||
-      ToolboxSteganographyMediaKind.video =>
-        _applySuccessfulTailRevealProtection(
+      ToolboxSteganographyMediaKind.audio =>
+        _applySuccessfulAudioRevealProtection(
           carrierBytes,
-          mediaKind: mediaKind,
+          passphrase: passphrase,
+          keyFileBytes: keyFileBytes,
+          locatorAlgorithm: locatorAlgorithm,
+          locatorStrength: locatorStrength,
+        ),
+      ToolboxSteganographyMediaKind.video =>
+        _applySuccessfulVideoRevealProtection(
+          carrierBytes,
+          passphrase: passphrase,
+          keyFileBytes: keyFileBytes,
+          locatorAlgorithm: locatorAlgorithm,
+          locatorStrength: locatorStrength,
         ),
     };
   }
@@ -845,15 +1193,9 @@ class ToolboxSteganographyService {
   void _validateMediaWriteBackend(ToolboxSteganographyMediaKind mediaKind) {
     switch (mediaKind) {
       case ToolboxSteganographyMediaKind.image:
-        return;
       case ToolboxSteganographyMediaKind.audio:
-        throw const ToolboxSteganographyException(
-          'Audio steganography requires a frequency-domain backend before new payloads can be generated.',
-        );
       case ToolboxSteganographyMediaKind.video:
-        throw const ToolboxSteganographyException(
-          'Video steganography requires a frame-level or motion-vector backend before new payloads can be generated.',
-        );
+        return;
     }
   }
 
@@ -924,8 +1266,12 @@ class ToolboxSteganographyService {
     final occupied = switch (mediaKind) {
       ToolboxSteganographyMediaKind.image =>
         _inspectImagePolicyHeader(carrierBytes) != null,
-      ToolboxSteganographyMediaKind.audio ||
-      ToolboxSteganographyMediaKind.video => _hasTailPayload(carrierBytes),
+      ToolboxSteganographyMediaKind.audio =>
+        _inspectAudioPolicyHeader(carrierBytes) != null ||
+            _hasTailPayload(carrierBytes),
+      ToolboxSteganographyMediaKind.video =>
+        _inspectVideoPayload(carrierBytes) != null ||
+            _hasTailPayload(carrierBytes),
     };
     if (occupied) {
       throw const ToolboxSteganographyException(
@@ -951,11 +1297,13 @@ class ToolboxSteganographyService {
     }
     return ToolboxSteganographyCapacityCheck(
       dualLayer: false,
+      mediaKind: ToolboxSteganographyMediaKind.image,
       width: image.width,
       height: image.height,
       capacityBytes: capacity,
       requiredBytes: requiredBytes,
       minimumPixels: _minimumSingleLayerPixels(requiredBytes),
+      carrierLabel: 'PNG image randomized LSB',
     );
   }
 
@@ -988,6 +1336,7 @@ class ToolboxSteganographyService {
     final requiredBytes = math.max(coverRequiredBytes, hiddenRequiredBytes);
     return ToolboxSteganographyCapacityCheck(
       dualLayer: true,
+      mediaKind: ToolboxSteganographyMediaKind.image,
       width: image.width,
       height: image.height,
       capacityBytes: coverCapacity + hiddenCapacity,
@@ -996,6 +1345,156 @@ class ToolboxSteganographyService {
       coverRequiredBytes: coverRequiredBytes,
       hiddenRequiredBytes: hiddenRequiredBytes,
       minimumPixels: _minimumDualLayerPixels(requiredBytes),
+      carrierLabel: 'PNG image dual randomized LSB',
+    );
+  }
+
+  ToolboxSteganographyCapacityCheck _checkDualCapacity({
+    required ToolboxSteganographyMediaKind mediaKind,
+    required Uint8List carrierBytes,
+    required int coverRequiredBytes,
+    required int hiddenRequiredBytes,
+  }) {
+    return switch (mediaKind) {
+      ToolboxSteganographyMediaKind.image => _checkDualImageCapacity(
+        carrierBytes: carrierBytes,
+        coverRequiredBytes: coverRequiredBytes,
+        hiddenRequiredBytes: hiddenRequiredBytes,
+      ),
+      ToolboxSteganographyMediaKind.audio => _checkDualAudioCapacity(
+        carrierBytes: carrierBytes,
+        coverRequiredBytes: coverRequiredBytes,
+        hiddenRequiredBytes: hiddenRequiredBytes,
+      ),
+      ToolboxSteganographyMediaKind.video => _checkDualVideoCapacity(
+        carrierBytes: carrierBytes,
+        coverRequiredBytes: coverRequiredBytes,
+        hiddenRequiredBytes: hiddenRequiredBytes,
+      ),
+    };
+  }
+
+  ToolboxSteganographyCapacityCheck _checkAudioCapacity({
+    required Uint8List carrierBytes,
+    required int requiredBytes,
+  }) {
+    final wav = _parseWavCarrier(carrierBytes);
+    final capacity = _wavBlockCapacity(wav);
+    if (capacity <= 0) {
+      throw const ToolboxSteganographyException('Audio carrier is too small.');
+    }
+    return ToolboxSteganographyCapacityCheck(
+      dualLayer: false,
+      mediaKind: ToolboxSteganographyMediaKind.audio,
+      width: 0,
+      height: 0,
+      capacityBytes: capacity,
+      requiredBytes: requiredBytes,
+      minimumPixels: _minimumWavSamples(requiredBytes),
+      minimumCarrierBytes: _minimumWavCarrierBytes(wav, requiredBytes),
+      carrierLabel: 'WAV/PCM ${wav.bitsPerSample}-bit randomized sample LSB',
+    );
+  }
+
+  ToolboxSteganographyCapacityCheck _checkDualAudioCapacity({
+    required Uint8List carrierBytes,
+    required int coverRequiredBytes,
+    required int hiddenRequiredBytes,
+  }) {
+    final wav = _parseWavCarrier(carrierBytes);
+    final policySamples = _wavPolicySamples(carrierBytes, wav);
+    final coverCapacity = _wavSlotCapacity(
+      wav,
+      1,
+      policySamples: policySamples,
+    );
+    final hiddenCapacity = _wavSlotCapacity(
+      wav,
+      0,
+      policySamples: policySamples,
+    );
+    final capacity = coverCapacity + hiddenCapacity;
+    final perLayerCapacity = math.min(coverCapacity, hiddenCapacity);
+    final requiredBytes = math.max(coverRequiredBytes, hiddenRequiredBytes);
+    if (perLayerCapacity <= 0) {
+      throw const ToolboxSteganographyException('Audio carrier is too small.');
+    }
+    return ToolboxSteganographyCapacityCheck(
+      dualLayer: true,
+      mediaKind: ToolboxSteganographyMediaKind.audio,
+      width: 0,
+      height: 0,
+      capacityBytes: capacity,
+      requiredBytes: requiredBytes,
+      perLayerCapacityBytes: perLayerCapacity,
+      coverRequiredBytes: coverRequiredBytes,
+      hiddenRequiredBytes: hiddenRequiredBytes,
+      minimumPixels: _minimumDualWavSamples(requiredBytes),
+      minimumCarrierBytes: _minimumDualWavCarrierBytes(wav, requiredBytes),
+      carrierLabel:
+          'WAV/PCM ${wav.bitsPerSample}-bit dual randomized sample LSB',
+    );
+  }
+
+  ToolboxSteganographyCapacityCheck _checkVideoCapacity({
+    required Uint8List carrierBytes,
+    required int requiredBytes,
+  }) {
+    final mp4 = _parseMp4Carrier(carrierBytes);
+    final capacity = _mp4BlockCapacity(carrierBytes.length);
+    if (capacity <= 0) {
+      throw const ToolboxSteganographyException('Video carrier is too large.');
+    }
+    return ToolboxSteganographyCapacityCheck(
+      dualLayer: false,
+      mediaKind: ToolboxSteganographyMediaKind.video,
+      width: 0,
+      height: 0,
+      capacityBytes: capacity,
+      requiredBytes: requiredBytes,
+      minimumPixels: 0,
+      minimumCarrierBytes:
+          carrierBytes.length +
+          _mp4GrowthForBlock(requiredBytes, useMaxPadding: true),
+      carrierLabel: mp4.majorBrand == null
+          ? 'MP4/QuickTime container free box'
+          : 'MP4/QuickTime ${mp4.majorBrand} container free box',
+    );
+  }
+
+  ToolboxSteganographyCapacityCheck _checkDualVideoCapacity({
+    required Uint8List carrierBytes,
+    required int coverRequiredBytes,
+    required int hiddenRequiredBytes,
+  }) {
+    final mp4 = _parseMp4Carrier(carrierBytes);
+    final coverGrowth = _mp4GrowthForBlock(
+      coverRequiredBytes,
+      useMaxPadding: true,
+    );
+    final hiddenGrowth = _mp4GrowthForBlock(
+      hiddenRequiredBytes,
+      useMaxPadding: true,
+    );
+    final requiredBytes = coverGrowth + hiddenGrowth;
+    final capacity = maxTailCarrierBytes - carrierBytes.length;
+    if (capacity <= 0) {
+      throw const ToolboxSteganographyException('Video carrier is too large.');
+    }
+    return ToolboxSteganographyCapacityCheck(
+      dualLayer: true,
+      mediaKind: ToolboxSteganographyMediaKind.video,
+      width: 0,
+      height: 0,
+      capacityBytes: capacity,
+      requiredBytes: requiredBytes,
+      coverRequiredBytes: coverRequiredBytes,
+      hiddenRequiredBytes: hiddenRequiredBytes,
+      minimumPixels: 0,
+      minimumCarrierBytes: carrierBytes.length + requiredBytes,
+      carrierLabel: mp4.majorBrand == null
+          ? 'MP4/QuickTime dual container free box'
+          : 'MP4/QuickTime ${mp4.majorBrand} dual container free box',
     );
   }
 
@@ -1127,6 +1626,32 @@ class ToolboxSteganographyService {
     required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
     required ToolboxSteganographyLocatorStrength locatorStrength,
   }) {
+    return _embedDualBlocksInImage(
+      carrierBytes: carrierBytes,
+      coverBlock: coverBlock,
+      hiddenBlock: hiddenBlock,
+      hiddenCipherPreview: hiddenEnvelope.cipherPreview,
+      coverPassphrase: coverPassphrase,
+      hiddenPassphrase: hiddenPassphrase,
+      hiddenKeyFileBytes: hiddenKeyFileBytes,
+      maxErrorAttempts: maxErrorAttempts,
+      locatorAlgorithm: locatorAlgorithm,
+      locatorStrength: locatorStrength,
+    );
+  }
+
+  ToolboxSteganographyEmbedResult _embedDualBlocksInImage({
+    required Uint8List carrierBytes,
+    required Uint8List coverBlock,
+    required Uint8List hiddenBlock,
+    required String hiddenCipherPreview,
+    required String coverPassphrase,
+    required String hiddenPassphrase,
+    required Uint8List? hiddenKeyFileBytes,
+    required int maxErrorAttempts,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+  }) {
     final image = _decodeCarrierImage(
       carrierBytes,
       failureMessage:
@@ -1187,44 +1712,218 @@ class ToolboxSteganographyService {
       payloadBytes: coverBlock.length + hiddenBlock.length,
       sourceBytes: carrierBytes.length,
       outputBytes: output.length,
-      cipherPreview: hiddenEnvelope.cipherPreview,
+      cipherPreview: hiddenCipherPreview,
       carrierDetail:
           '${image.width}x${image.height}, dual-layer randomized LSB capacity ${_formatBytes(math.min(coverCapacity, hiddenCapacity))} per layer',
       capacityBytes: coverCapacity + hiddenCapacity,
     );
   }
 
-  ToolboxSteganographyEmbedResult _embedInTail({
-    required ToolboxSteganographyMediaKind mediaKind,
+  ToolboxSteganographyEmbedResult _embedInAudio({
     required Uint8List carrierBytes,
     required Uint8List block,
     required _EnvelopeBuildResult envelope,
     String? sourceExtension,
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required int maxErrorAttempts,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
   }) {
-    _validateTailCarrierSize(carrierBytes);
-    final output = Uint8List(
-      carrierBytes.length + block.length + 4 + _tailMagic.length,
+    final wav = _parseWavCarrier(carrierBytes);
+    final capacity = _wavBlockCapacity(wav);
+    if (block.length > capacity) {
+      throw ToolboxSteganographyException(
+        'Secret payload is too large for this audio. Capacity: $capacity B, need: ${block.length} B.',
+      );
+    }
+    final output = Uint8List.fromList(carrierBytes);
+    _writeRandomizedWavBlock(
+      output,
+      wav,
+      block,
+      passphrase: passphrase,
+      keyFileBytes: keyFileBytes,
+      locatorAlgorithm: locatorAlgorithm,
+      locatorStrength: locatorStrength,
+      maxErrorAttempts: maxErrorAttempts,
     );
-    var offset = 0;
-    output.setRange(offset, offset + carrierBytes.length, carrierBytes);
-    offset += carrierBytes.length;
-    output.setRange(offset, offset + block.length, block);
-    offset += block.length;
-    output.setRange(offset, offset + 4, _uint32Bytes(block.length));
-    offset += 4;
-    output.setRange(offset, offset + _tailMagic.length, _tailMagic);
-
-    final fallbackExtension = mediaKind == ToolboxSteganographyMediaKind.audio
-        ? 'wav'
-        : 'mp4';
     return ToolboxSteganographyEmbedResult(
       bytes: output,
-      outputExtension: cleanExtension(sourceExtension) ?? fallbackExtension,
+      outputExtension: cleanExtension(sourceExtension) ?? 'wav',
       payloadBytes: block.length,
       sourceBytes: carrierBytes.length,
       outputBytes: output.length,
       cipherPreview: envelope.cipherPreview,
-      carrierDetail: 'tail payload +${_formatBytes(block.length)}',
+      carrierDetail:
+          'WAV/PCM ${wav.bitsPerSample}-bit randomized sample LSB capacity ${_formatBytes(capacity)}',
+      capacityBytes: capacity,
+    );
+  }
+
+  ToolboxSteganographyEmbedResult _embedDualBlocksInAudio({
+    required Uint8List carrierBytes,
+    required Uint8List coverBlock,
+    required Uint8List hiddenBlock,
+    required String hiddenCipherPreview,
+    String? sourceExtension,
+    required String coverPassphrase,
+    required String hiddenPassphrase,
+    required Uint8List? hiddenKeyFileBytes,
+    required int maxErrorAttempts,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+  }) {
+    final wav = _parseWavCarrier(carrierBytes);
+    final policySamples = _wavPolicySamples(carrierBytes, wav);
+    final coverCapacity = _wavSlotCapacity(
+      wav,
+      1,
+      policySamples: policySamples,
+    );
+    final hiddenCapacity = _wavSlotCapacity(
+      wav,
+      0,
+      policySamples: policySamples,
+    );
+    if (coverBlock.length > coverCapacity ||
+        hiddenBlock.length > hiddenCapacity) {
+      throw ToolboxSteganographyException(
+        'Secret payload is too large for this audio. Capacity: ${math.min(coverCapacity, hiddenCapacity)} B per layer.',
+      );
+    }
+    final output = Uint8List.fromList(carrierBytes);
+    _writeRandomizedWavBlockInSlot(
+      output,
+      wav,
+      hiddenBlock,
+      passphrase: hiddenPassphrase,
+      keyFileBytes: hiddenKeyFileBytes,
+      locatorAlgorithm: locatorAlgorithm,
+      locatorStrength: locatorStrength,
+      slot: 0,
+      policySamples: policySamples,
+    );
+    _writeRandomizedWavBlockInSlot(
+      output,
+      wav,
+      coverBlock,
+      passphrase: coverPassphrase,
+      keyFileBytes: null,
+      locatorAlgorithm: locatorAlgorithm,
+      locatorStrength: locatorStrength,
+      slot: 1,
+      policySamples: policySamples,
+    );
+    _writeWavBytesAtSamples(
+      output,
+      wav,
+      _buildMediaPolicyHeader(maxErrorAttempts: maxErrorAttempts),
+      policySamples,
+    );
+    return ToolboxSteganographyEmbedResult(
+      bytes: output,
+      outputExtension: cleanExtension(sourceExtension) ?? 'wav',
+      payloadBytes: coverBlock.length + hiddenBlock.length,
+      sourceBytes: carrierBytes.length,
+      outputBytes: output.length,
+      cipherPreview: hiddenCipherPreview,
+      carrierDetail:
+          'WAV/PCM ${wav.bitsPerSample}-bit dual randomized sample LSB capacity ${_formatBytes(math.min(coverCapacity, hiddenCapacity))} per layer',
+      capacityBytes: coverCapacity + hiddenCapacity,
+    );
+  }
+
+  ToolboxSteganographyEmbedResult _embedInVideo({
+    required Uint8List carrierBytes,
+    required Uint8List block,
+    required _EnvelopeBuildResult envelope,
+    String? sourceExtension,
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required int maxErrorAttempts,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+  }) {
+    final mp4 = _parseMp4Carrier(carrierBytes);
+    final capacity = _mp4BlockCapacity(carrierBytes.length);
+    if (block.length > capacity) {
+      throw ToolboxSteganographyException(
+        'Secret payload is too large for this video. Capacity: $capacity B, need: ${block.length} B.',
+      );
+    }
+    final output = _appendMp4StegoBox(
+      carrierBytes: carrierBytes,
+      block: block,
+      passphrase: passphrase,
+      keyFileBytes: keyFileBytes,
+      locatorAlgorithm: locatorAlgorithm,
+      locatorStrength: locatorStrength,
+      maxErrorAttempts: maxErrorAttempts,
+    );
+    return ToolboxSteganographyEmbedResult(
+      bytes: output,
+      outputExtension: cleanExtension(sourceExtension) ?? 'mp4',
+      payloadBytes: block.length,
+      sourceBytes: carrierBytes.length,
+      outputBytes: output.length,
+      cipherPreview: envelope.cipherPreview,
+      carrierDetail: mp4.majorBrand == null
+          ? 'MP4/QuickTime free-box payload +${_formatBytes(output.length - carrierBytes.length)}'
+          : 'MP4/QuickTime ${mp4.majorBrand} free-box payload +${_formatBytes(output.length - carrierBytes.length)}',
+      capacityBytes: capacity,
+    );
+  }
+
+  ToolboxSteganographyEmbedResult _embedDualBlocksInVideo({
+    required Uint8List carrierBytes,
+    required Uint8List coverBlock,
+    required Uint8List hiddenBlock,
+    required String hiddenCipherPreview,
+    String? sourceExtension,
+    required String coverPassphrase,
+    required String hiddenPassphrase,
+    required Uint8List? hiddenKeyFileBytes,
+    required int maxErrorAttempts,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+  }) {
+    final mp4 = _parseMp4Carrier(carrierBytes);
+    final basePrefixDigest = _mp4PrefixDigest(
+      carrierBytes,
+      carrierBytes.length,
+    );
+    final hiddenOutput = _appendMp4StegoBox(
+      carrierBytes: carrierBytes,
+      block: hiddenBlock,
+      passphrase: hiddenPassphrase,
+      keyFileBytes: hiddenKeyFileBytes,
+      locatorAlgorithm: locatorAlgorithm,
+      locatorStrength: locatorStrength,
+      maxErrorAttempts: maxErrorAttempts,
+      prefixDigest: basePrefixDigest,
+    );
+    final output = _appendMp4StegoBox(
+      carrierBytes: hiddenOutput,
+      block: coverBlock,
+      passphrase: coverPassphrase,
+      keyFileBytes: null,
+      locatorAlgorithm: locatorAlgorithm,
+      locatorStrength: locatorStrength,
+      maxErrorAttempts: maxErrorAttempts,
+      prefixDigest: basePrefixDigest,
+    );
+    return ToolboxSteganographyEmbedResult(
+      bytes: output,
+      outputExtension: cleanExtension(sourceExtension) ?? 'mp4',
+      payloadBytes: coverBlock.length + hiddenBlock.length,
+      sourceBytes: carrierBytes.length,
+      outputBytes: output.length,
+      cipherPreview: hiddenCipherPreview,
+      carrierDetail: mp4.majorBrand == null
+          ? 'MP4/QuickTime dual free-box payload +${_formatBytes(output.length - carrierBytes.length)}'
+          : 'MP4/QuickTime ${mp4.majorBrand} dual free-box payload +${_formatBytes(output.length - carrierBytes.length)}',
+      capacityBytes: maxTailCarrierBytes - carrierBytes.length,
     );
   }
 
@@ -1256,6 +1955,54 @@ class ToolboxSteganographyService {
     return Uint8List.fromList(
       carrierBytes.sublist(tailInfo.offset, tailInfo.offset + tailInfo.length),
     );
+  }
+
+  Uint8List _extractAudioBlock(
+    Uint8List carrierBytes, {
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+  }) {
+    try {
+      final wav = _parseWavCarrier(carrierBytes);
+      return _readRandomizedWavBlock(
+        carrierBytes,
+        wav,
+        passphrase: passphrase,
+        keyFileBytes: keyFileBytes,
+        locatorAlgorithm: locatorAlgorithm,
+        locatorStrength: locatorStrength,
+      ).block;
+    } on ToolboxSteganographyException {
+      if (_hasTailPayload(carrierBytes)) {
+        return _extractTailBlock(carrierBytes);
+      }
+      rethrow;
+    }
+  }
+
+  Uint8List _extractVideoBlock(
+    Uint8List carrierBytes, {
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+  }) {
+    final stegoBox = _readMp4StegoBox(
+      carrierBytes,
+      passphrase: passphrase,
+      keyFileBytes: keyFileBytes,
+      locatorAlgorithm: locatorAlgorithm,
+      locatorStrength: locatorStrength,
+    );
+    if (stegoBox != null) {
+      return stegoBox.block;
+    }
+    if (_hasTailPayload(carrierBytes)) {
+      return _extractTailBlock(carrierBytes);
+    }
+    throw const ToolboxSteganographyException('No hidden payload found.');
   }
 
   bool _hasTailPayload(Uint8List carrierBytes) {
@@ -1496,6 +2243,1308 @@ class ToolboxSteganographyService {
       removed: false,
       remainingSuccessfulReveals: remaining - 1,
     );
+  }
+
+  ToolboxSteganographySanitizeResult _stripAudioPayload(
+    Uint8List carrierBytes, {
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+  }) {
+    if (_hasTailPayload(carrierBytes)) {
+      return _stripTailPayload(
+        carrierBytes,
+        mediaKind: ToolboxSteganographyMediaKind.audio,
+      );
+    }
+    final wav = _parseWavCarrier(carrierBytes);
+    final output = Uint8List.fromList(carrierBytes);
+    var removed = false;
+    try {
+      removed = _clearRandomizedWavBlock(
+        output,
+        wav,
+        passphrase: passphrase,
+        keyFileBytes: keyFileBytes,
+        locatorAlgorithm: locatorAlgorithm,
+        locatorStrength: locatorStrength,
+      );
+    } on ToolboxSteganographyException {
+      if (_readWavPolicyHeader(carrierBytes, wav) != null) {
+        _clearAllWavSampleLsbs(output, wav);
+        removed = true;
+      }
+    }
+    return ToolboxSteganographySanitizeResult(
+      bytes: removed ? output : Uint8List.fromList(carrierBytes),
+      outputExtension: 'wav',
+      removed: removed,
+    );
+  }
+
+  ToolboxSteganographySanitizeResult _stripVideoPayload(
+    Uint8List carrierBytes, {
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+  }) {
+    final stegoBox = _readMp4StegoBox(
+      carrierBytes,
+      passphrase: passphrase,
+      keyFileBytes: keyFileBytes,
+      locatorAlgorithm: locatorAlgorithm,
+      locatorStrength: locatorStrength,
+    );
+    if (stegoBox != null) {
+      return ToolboxSteganographySanitizeResult(
+        bytes: _removeMp4Box(carrierBytes, stegoBox.offset, stegoBox.size),
+        outputExtension: 'mp4',
+        removed: true,
+      );
+    }
+    if (_hasTailPayload(carrierBytes)) {
+      return _stripTailPayload(
+        carrierBytes,
+        mediaKind: ToolboxSteganographyMediaKind.video,
+      );
+    }
+    return ToolboxSteganographySanitizeResult(
+      bytes: Uint8List.fromList(carrierBytes),
+      outputExtension: 'mp4',
+      removed: false,
+    );
+  }
+
+  ToolboxSteganographySuccessfulRevealProtectionResult
+  _applySuccessfulAudioRevealProtection(
+    Uint8List carrierBytes, {
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+  }) {
+    if (_hasTailPayload(carrierBytes)) {
+      return _applySuccessfulTailRevealProtection(
+        carrierBytes,
+        mediaKind: ToolboxSteganographyMediaKind.audio,
+      );
+    }
+    final wav = _parseWavCarrier(carrierBytes);
+    final read = _readRandomizedWavBlock(
+      carrierBytes,
+      wav,
+      passphrase: passphrase,
+      keyFileBytes: keyFileBytes,
+      locatorAlgorithm: locatorAlgorithm,
+      locatorStrength: locatorStrength,
+    );
+    final policy = _readBlockPolicy(read.block);
+    final remaining = policy.remainingSuccessfulReveals;
+    if (remaining <= 0) {
+      return ToolboxSteganographySuccessfulRevealProtectionResult(
+        bytes: Uint8List.fromList(carrierBytes),
+        outputExtension: 'wav',
+        changed: false,
+        removed: false,
+        remainingSuccessfulReveals: 0,
+      );
+    }
+    if (remaining == 1) {
+      final stripped = _stripAudioPayload(
+        carrierBytes,
+        passphrase: passphrase,
+        keyFileBytes: keyFileBytes,
+        locatorAlgorithm: locatorAlgorithm,
+        locatorStrength: locatorStrength,
+      );
+      return ToolboxSteganographySuccessfulRevealProtectionResult(
+        bytes: stripped.bytes,
+        outputExtension: stripped.outputExtension,
+        changed: stripped.removed,
+        removed: stripped.removed,
+        remainingSuccessfulReveals: 0,
+      );
+    }
+    final updatedBlock = _managedBlockWithSuccessfulRevealCount(
+      read.block,
+      remaining - 1,
+    );
+    final output = Uint8List.fromList(carrierBytes);
+    _writeWavBytesAtSamples(output, wav, updatedBlock, read.payloadSamples);
+    return ToolboxSteganographySuccessfulRevealProtectionResult(
+      bytes: output,
+      outputExtension: 'wav',
+      changed: true,
+      removed: false,
+      remainingSuccessfulReveals: remaining - 1,
+    );
+  }
+
+  ToolboxSteganographySuccessfulRevealProtectionResult
+  _applySuccessfulVideoRevealProtection(
+    Uint8List carrierBytes, {
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+  }) {
+    final stegoBox = _readMp4StegoBox(
+      carrierBytes,
+      passphrase: passphrase,
+      keyFileBytes: keyFileBytes,
+      locatorAlgorithm: locatorAlgorithm,
+      locatorStrength: locatorStrength,
+    );
+    if (stegoBox == null) {
+      return _applySuccessfulTailRevealProtection(
+        carrierBytes,
+        mediaKind: ToolboxSteganographyMediaKind.video,
+      );
+    }
+    final policy = _readBlockPolicy(stegoBox.block);
+    final remaining = policy.remainingSuccessfulReveals;
+    if (remaining <= 0) {
+      return ToolboxSteganographySuccessfulRevealProtectionResult(
+        bytes: Uint8List.fromList(carrierBytes),
+        outputExtension: 'mp4',
+        changed: false,
+        removed: false,
+        remainingSuccessfulReveals: 0,
+      );
+    }
+    if (remaining == 1) {
+      final stripped = _stripVideoPayload(
+        carrierBytes,
+        passphrase: passphrase,
+        keyFileBytes: keyFileBytes,
+        locatorAlgorithm: locatorAlgorithm,
+        locatorStrength: locatorStrength,
+      );
+      return ToolboxSteganographySuccessfulRevealProtectionResult(
+        bytes: stripped.bytes,
+        outputExtension: stripped.outputExtension,
+        changed: stripped.removed,
+        removed: stripped.removed,
+        remainingSuccessfulReveals: 0,
+      );
+    }
+    final updatedBlock = _managedBlockWithSuccessfulRevealCount(
+      stegoBox.block,
+      remaining - 1,
+    );
+    final updatedBox = _buildMp4StegoBox(
+      block: updatedBlock,
+      passphrase: passphrase,
+      keyFileBytes: keyFileBytes,
+      locatorAlgorithm: locatorAlgorithm,
+      locatorStrength: locatorStrength,
+      maxErrorAttempts: policy.maxErrorAttempts,
+      prefixDigest: stegoBox.prefixDigest,
+      nonce: stegoBox.nonce,
+      paddingLength: stegoBox.paddingLength,
+    );
+    final output = Uint8List.fromList(carrierBytes);
+    output.setRange(
+      stegoBox.offset,
+      stegoBox.offset + updatedBox.length,
+      updatedBox,
+    );
+    return ToolboxSteganographySuccessfulRevealProtectionResult(
+      bytes: output,
+      outputExtension: 'mp4',
+      changed: true,
+      removed: false,
+      remainingSuccessfulReveals: remaining - 1,
+    );
+  }
+
+  _WavCarrierInfo _parseWavCarrier(Uint8List carrierBytes) {
+    _validateTailCarrierSize(carrierBytes);
+    if (carrierBytes.length < 44 ||
+        !_rangeEquals(carrierBytes, 0, _riffMagic) ||
+        !_rangeEquals(carrierBytes, 8, _waveMagic)) {
+      throw const ToolboxSteganographyException(
+        'Unsupported audio format. Pick WAV/PCM audio.',
+      );
+    }
+
+    int? audioFormat;
+    int? channels;
+    int? blockAlign;
+    int? bitsPerSample;
+    int? dataOffset;
+    int? dataLength;
+    var offset = 12;
+    while (offset + 8 <= carrierBytes.length) {
+      final chunkSize = _readUint32Little(carrierBytes, offset + 4);
+      final chunkDataOffset = offset + 8;
+      final nextOffset =
+          chunkDataOffset + chunkSize + (chunkSize.isOdd ? 1 : 0);
+      if (chunkSize < 0 || chunkDataOffset + chunkSize > carrierBytes.length) {
+        throw const ToolboxSteganographyException(
+          'Audio carrier is damaged or incomplete.',
+        );
+      }
+      if (_rangeEquals(carrierBytes, offset, _wavFmtMagic)) {
+        if (chunkSize < 16) {
+          throw const ToolboxSteganographyException(
+            'Audio carrier is damaged or incomplete.',
+          );
+        }
+        audioFormat = _readUint16Little(carrierBytes, chunkDataOffset);
+        channels = _readUint16Little(carrierBytes, chunkDataOffset + 2);
+        blockAlign = _readUint16Little(carrierBytes, chunkDataOffset + 12);
+        bitsPerSample = _readUint16Little(carrierBytes, chunkDataOffset + 14);
+      } else if (_rangeEquals(carrierBytes, offset, _wavDataMagic)) {
+        dataOffset ??= chunkDataOffset;
+        dataLength ??= chunkSize;
+      }
+      offset = nextOffset;
+    }
+
+    if (audioFormat != 1 ||
+        channels == null ||
+        channels <= 0 ||
+        blockAlign == null ||
+        blockAlign <= 0 ||
+        bitsPerSample == null ||
+        bitsPerSample % 8 != 0 ||
+        !<int>{8, 16, 24, 32}.contains(bitsPerSample) ||
+        dataOffset == null ||
+        dataLength == null ||
+        dataLength <= 0) {
+      throw const ToolboxSteganographyException(
+        'Unsupported audio format. Pick WAV/PCM audio.',
+      );
+    }
+    final bytesPerSample = bitsPerSample ~/ 8;
+    if (dataLength < bytesPerSample) {
+      throw const ToolboxSteganographyException('Audio carrier is too small.');
+    }
+    return _WavCarrierInfo(
+      dataOffset: dataOffset,
+      dataLength: dataLength,
+      channels: channels,
+      blockAlign: blockAlign,
+      bitsPerSample: bitsPerSample,
+      bytesPerSample: bytesPerSample,
+      sampleCount: dataLength ~/ bytesPerSample,
+    );
+  }
+
+  int _wavBlockCapacity(_WavCarrierInfo wav) {
+    return (wav.sampleCount -
+            ((_mediaPolicyHeaderLength + _mediaHeaderLength) * 8)) ~/
+        8;
+  }
+
+  int _minimumWavSamples(int requiredBytes) {
+    return (requiredBytes * 8) +
+        ((_mediaPolicyHeaderLength + _mediaHeaderLength) * 8);
+  }
+
+  int _minimumWavCarrierBytes(_WavCarrierInfo wav, int requiredBytes) {
+    return wav.dataOffset +
+        (_minimumWavSamples(requiredBytes) * wav.bytesPerSample);
+  }
+
+  int _wavSlotCapacity(
+    _WavCarrierInfo wav,
+    int slot, {
+    required List<int> policySamples,
+  }) {
+    final slotSamples = (wav.sampleCount + (slot == 0 ? 1 : 0)) ~/ 2;
+    final reservedPolicy = policySamples
+        .where((sample) => sample.isEven == (slot == 0))
+        .length;
+    return (slotSamples - reservedPolicy - (_mediaHeaderLength * 8)) ~/ 8;
+  }
+
+  int _minimumDualWavSamples(int requiredBytes) {
+    final policyBits = _mediaPolicyHeaderLength * 8;
+    final requiredSlotBits =
+        (requiredBytes * 8) +
+        (_mediaHeaderLength * 8) +
+        ((policyBits + 1) ~/ 2);
+    return requiredSlotBits * 2;
+  }
+
+  int _minimumDualWavCarrierBytes(_WavCarrierInfo wav, int requiredBytes) {
+    return wav.dataOffset +
+        (_minimumDualWavSamples(requiredBytes) * wav.bytesPerSample);
+  }
+
+  void _writeRandomizedWavBlock(
+    Uint8List carrierBytes,
+    _WavCarrierInfo wav,
+    Uint8List block, {
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+    required int maxErrorAttempts,
+  }) {
+    final locatorSecret = _locatorSecret(
+      passphrase,
+      keyFileBytes,
+      algorithm: locatorAlgorithm,
+      strength: locatorStrength,
+    );
+    final carrierDigest = _wavCarrierDigest(carrierBytes, wav);
+    final nonce = _randomBytes(_mediaNonceLength);
+    final policySamples = _wavPolicySamples(carrierBytes, wav);
+    final header = _buildMediaHeader(
+      locatorSecret: locatorSecret,
+      nonce: nonce,
+      payloadLength: block.length,
+      carrierDigest: carrierDigest,
+      purpose: 'audio',
+    );
+    final headerSamples = _selectPositions(
+      total: wav.sampleCount,
+      count: header.length * 8,
+      seed: _mediaPositionSeed(
+        locatorSecret: locatorSecret,
+        purpose: 'audio-header',
+        carrierDigest: carrierDigest,
+      ),
+      excluded: Set<int>.from(policySamples),
+    );
+    final payloadSamples = _selectPositions(
+      total: wav.sampleCount,
+      count: block.length * 8,
+      seed: _mediaPositionSeed(
+        locatorSecret: locatorSecret,
+        purpose: 'audio-payload',
+        carrierDigest: carrierDigest,
+        nonce: nonce,
+      ),
+      excluded: <int>{...policySamples, ...headerSamples},
+    );
+    _writeWavBytesAtSamples(carrierBytes, wav, header, headerSamples);
+    _writeWavBytesAtSamples(carrierBytes, wav, block, payloadSamples);
+    _writeWavBytesAtSamples(
+      carrierBytes,
+      wav,
+      _buildMediaPolicyHeader(maxErrorAttempts: maxErrorAttempts),
+      policySamples,
+    );
+  }
+
+  void _writeRandomizedWavBlockInSlot(
+    Uint8List carrierBytes,
+    _WavCarrierInfo wav,
+    Uint8List block, {
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+    required int slot,
+    required List<int> policySamples,
+  }) {
+    final locatorSecret = _locatorSecret(
+      passphrase,
+      keyFileBytes,
+      algorithm: locatorAlgorithm,
+      strength: locatorStrength,
+    );
+    final carrierDigest = _wavCarrierDigest(carrierBytes, wav);
+    final nonce = _randomBytes(_mediaNonceLength);
+    final header = _buildMediaHeader(
+      locatorSecret: locatorSecret,
+      nonce: nonce,
+      payloadLength: block.length,
+      carrierDigest: carrierDigest,
+      purpose: 'audio-slot-$slot',
+    );
+    final headerSamples = _selectSlotPositions(
+      total: wav.sampleCount,
+      count: header.length * 8,
+      seed: _mediaPositionSeed(
+        locatorSecret: locatorSecret,
+        purpose: 'audio-header-slot-$slot',
+        carrierDigest: carrierDigest,
+      ),
+      slot: slot,
+      excluded: Set<int>.from(policySamples),
+    );
+    final payloadSamples = _selectSlotPositions(
+      total: wav.sampleCount,
+      count: block.length * 8,
+      seed: _mediaPositionSeed(
+        locatorSecret: locatorSecret,
+        purpose: 'audio-payload-slot-$slot',
+        carrierDigest: carrierDigest,
+        nonce: nonce,
+      ),
+      slot: slot,
+      excluded: <int>{...policySamples, ...headerSamples},
+    );
+    _writeWavBytesAtSamples(carrierBytes, wav, header, headerSamples);
+    _writeWavBytesAtSamples(carrierBytes, wav, block, payloadSamples);
+  }
+
+  _WavBlockReadResult _readRandomizedWavBlock(
+    Uint8List carrierBytes,
+    _WavCarrierInfo wav, {
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+  }) {
+    final errors = <Object>[];
+    for (final slot in <int?>[null, 0, 1]) {
+      try {
+        return _readRandomizedWavBlockDetails(
+          carrierBytes,
+          wav,
+          passphrase: passphrase,
+          keyFileBytes: keyFileBytes,
+          locatorAlgorithm: locatorAlgorithm,
+          locatorStrength: locatorStrength,
+          slot: slot,
+        );
+      } on Object catch (error) {
+        errors.add(error);
+      }
+    }
+    final last = errors.isEmpty ? null : errors.last;
+    if (last is ToolboxSteganographyException) {
+      throw last;
+    }
+    throw const ToolboxSteganographyException('No hidden payload found.');
+  }
+
+  _WavBlockReadResult _readRandomizedWavBlockDetails(
+    Uint8List carrierBytes,
+    _WavCarrierInfo wav, {
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+    int? slot,
+  }) {
+    final locatorSecret = _locatorSecret(
+      passphrase,
+      keyFileBytes,
+      algorithm: locatorAlgorithm,
+      strength: locatorStrength,
+    );
+    final carrierDigest = _wavCarrierDigest(carrierBytes, wav);
+    final policySamples = _wavPolicySamples(carrierBytes, wav);
+    final headerSeed = _mediaPositionSeed(
+      locatorSecret: locatorSecret,
+      purpose: slot == null ? 'audio-header' : 'audio-header-slot-$slot',
+      carrierDigest: carrierDigest,
+    );
+    final headerSamples = slot == null
+        ? _selectPositions(
+            total: wav.sampleCount,
+            count: _mediaHeaderLength * 8,
+            seed: headerSeed,
+            excluded: Set<int>.from(policySamples),
+          )
+        : _selectSlotPositions(
+            total: wav.sampleCount,
+            count: _mediaHeaderLength * 8,
+            seed: headerSeed,
+            slot: slot,
+            excluded: Set<int>.from(policySamples),
+          );
+    final header = _readWavBytesAtSamples(
+      carrierBytes,
+      wav,
+      byteCount: _mediaHeaderLength,
+      samples: headerSamples,
+    );
+    final nonce = Uint8List.fromList(
+      header.sublist(_mediaMagicLength, _mediaMagicLength + _mediaNonceLength),
+    );
+    final expectedMagic = _mediaMagic(
+      locatorSecret: locatorSecret,
+      nonce: nonce,
+      carrierDigest: carrierDigest,
+      purpose: slot == null ? 'audio' : 'audio-slot-$slot',
+    );
+    if (!_bytesEqual(header.sublist(0, _mediaMagicLength), expectedMagic)) {
+      throw const ToolboxSteganographyException('No hidden payload found.');
+    }
+    final maskedLength = _readUint32(
+      header,
+      _mediaMagicLength + _mediaNonceLength,
+    );
+    final payloadLength =
+        maskedLength ^
+        _mediaLengthMask(
+          locatorSecret: locatorSecret,
+          nonce: nonce,
+          carrierDigest: carrierDigest,
+          purpose: slot == null ? 'audio' : 'audio-slot-$slot',
+        );
+    final capacity = slot == null
+        ? _wavBlockCapacity(wav)
+        : _wavSlotCapacity(wav, slot, policySamples: policySamples);
+    if (payloadLength <= 0 || payloadLength > capacity) {
+      throw const ToolboxSteganographyException(
+        'Hidden payload is damaged or incomplete.',
+      );
+    }
+    final payloadSeed = _mediaPositionSeed(
+      locatorSecret: locatorSecret,
+      purpose: slot == null ? 'audio-payload' : 'audio-payload-slot-$slot',
+      carrierDigest: carrierDigest,
+      nonce: nonce,
+    );
+    final payloadSamples = slot == null
+        ? _selectPositions(
+            total: wav.sampleCount,
+            count: payloadLength * 8,
+            seed: payloadSeed,
+            excluded: <int>{...policySamples, ...headerSamples},
+          )
+        : _selectSlotPositions(
+            total: wav.sampleCount,
+            count: payloadLength * 8,
+            seed: payloadSeed,
+            slot: slot,
+            excluded: <int>{...policySamples, ...headerSamples},
+          );
+    return _WavBlockReadResult(
+      block: _readWavBytesAtSamples(
+        carrierBytes,
+        wav,
+        byteCount: payloadLength,
+        samples: payloadSamples,
+      ),
+      headerSamples: headerSamples,
+      payloadSamples: payloadSamples,
+      policySamples: policySamples,
+      slot: slot,
+    );
+  }
+
+  bool _clearRandomizedWavBlock(
+    Uint8List carrierBytes,
+    _WavCarrierInfo wav, {
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+  }) {
+    final read = _readRandomizedWavBlock(
+      carrierBytes,
+      wav,
+      passphrase: passphrase,
+      keyFileBytes: keyFileBytes,
+      locatorAlgorithm: locatorAlgorithm,
+      locatorStrength: locatorStrength,
+    );
+    final samples = read.slot == null
+        ? <int>[
+            ...read.policySamples,
+            ...read.headerSamples,
+            ...read.payloadSamples,
+          ]
+        : <int>[...read.headerSamples, ...read.payloadSamples];
+    for (final sample in samples) {
+      _setWavLsbAtSample(carrierBytes, wav, sample, 0);
+    }
+    return true;
+  }
+
+  ToolboxSteganographyProtectionPolicy? _inspectAudioPolicyHeader(
+    Uint8List carrierBytes,
+  ) {
+    try {
+      final wav = _parseWavCarrier(carrierBytes);
+      return _readWavPolicyHeader(carrierBytes, wav);
+    } on ToolboxSteganographyException {
+      return null;
+    }
+  }
+
+  ToolboxSteganographyProtectionPolicy? _readWavPolicyHeader(
+    Uint8List carrierBytes,
+    _WavCarrierInfo wav,
+  ) {
+    try {
+      final header = _readWavBytesAtSamples(
+        carrierBytes,
+        wav,
+        byteCount: _mediaPolicyHeaderLength,
+        samples: _wavPolicySamples(carrierBytes, wav),
+      );
+      return _readMediaPolicyHeader(header);
+    } on ToolboxSteganographyException {
+      return null;
+    }
+  }
+
+  List<int> _wavPolicySamples(Uint8List carrierBytes, _WavCarrierInfo wav) {
+    if (wav.sampleCount < _mediaPolicyHeaderLength * 8) {
+      throw const ToolboxSteganographyException('Audio carrier is too small.');
+    }
+    return _selectPositions(
+      total: wav.sampleCount,
+      count: _mediaPolicyHeaderLength * 8,
+      seed: _wavCarrierDigest(
+        carrierBytes,
+        wav,
+        purpose: 'audio-public-policy',
+      ),
+    );
+  }
+
+  void _writeWavBytesAtSamples(
+    Uint8List carrierBytes,
+    _WavCarrierInfo wav,
+    Uint8List bytes,
+    List<int> samples,
+  ) {
+    final totalBits = bytes.length * 8;
+    if (samples.length < totalBits) {
+      throw const ToolboxSteganographyException(
+        'Hidden payload is damaged or incomplete.',
+      );
+    }
+    for (var bitIndex = 0; bitIndex < totalBits; bitIndex += 1) {
+      _setWavLsbAtSample(
+        carrierBytes,
+        wav,
+        samples[bitIndex],
+        _bitAt(bytes, bitIndex),
+      );
+    }
+  }
+
+  Uint8List _readWavBytesAtSamples(
+    Uint8List carrierBytes,
+    _WavCarrierInfo wav, {
+    required int byteCount,
+    required List<int> samples,
+  }) {
+    final totalBits = byteCount * 8;
+    if (samples.length < totalBits) {
+      throw const ToolboxSteganographyException(
+        'Hidden payload is damaged or incomplete.',
+      );
+    }
+    final output = Uint8List(byteCount);
+    for (var bitIndex = 0; bitIndex < totalBits; bitIndex += 1) {
+      output[bitIndex >> 3] |=
+          _wavLsbAtSample(carrierBytes, wav, samples[bitIndex]) <<
+          (7 - (bitIndex & 7));
+    }
+    return output;
+  }
+
+  void _setWavLsbAtSample(
+    Uint8List carrierBytes,
+    _WavCarrierInfo wav,
+    int sample,
+    int bit,
+  ) {
+    final offset = wav.dataOffset + (sample * wav.bytesPerSample);
+    if (sample < 0 || offset >= wav.dataOffset + wav.dataLength) {
+      throw const ToolboxSteganographyException(
+        'Hidden payload is damaged or incomplete.',
+      );
+    }
+    carrierBytes[offset] = (carrierBytes[offset] & 0xfe) | bit;
+  }
+
+  int _wavLsbAtSample(Uint8List carrierBytes, _WavCarrierInfo wav, int sample) {
+    final offset = wav.dataOffset + (sample * wav.bytesPerSample);
+    if (sample < 0 || offset >= wav.dataOffset + wav.dataLength) {
+      throw const ToolboxSteganographyException(
+        'Hidden payload is damaged or incomplete.',
+      );
+    }
+    return carrierBytes[offset] & 1;
+  }
+
+  void _clearAllWavSampleLsbs(Uint8List carrierBytes, _WavCarrierInfo wav) {
+    for (var sample = 0; sample < wav.sampleCount; sample += 1) {
+      _setWavLsbAtSample(carrierBytes, wav, sample, 0);
+    }
+  }
+
+  Uint8List _wavCarrierDigest(
+    Uint8List carrierBytes,
+    _WavCarrierInfo wav, {
+    String purpose = 'audio-carrier',
+  }) {
+    final output = _DigestSink();
+    final input = sha256.startChunkedConversion(output);
+    input.add(<int>[
+      ...utf8.encode('vocabulary_sleep_stego_wav_digest_v1'),
+      0,
+      ...utf8.encode(purpose),
+      0,
+      ..._uint32Bytes(wav.channels),
+      ..._uint32Bytes(wav.bitsPerSample),
+      ..._uint32Bytes(wav.blockAlign),
+      ..._uint32Bytes(wav.dataLength),
+      0,
+    ]);
+    if (wav.dataOffset > 0) {
+      input.add(carrierBytes.sublist(0, wav.dataOffset));
+    }
+    const chunkSize = 8192;
+    final dataEnd = wav.dataOffset + wav.dataLength;
+    for (var offset = wav.dataOffset; offset < dataEnd; offset += chunkSize) {
+      final end = math.min(offset + chunkSize, dataEnd).toInt();
+      final chunk = Uint8List.fromList(carrierBytes.sublist(offset, end));
+      for (
+        var sampleOffset = 0;
+        sampleOffset < chunk.length;
+        sampleOffset += wav.bytesPerSample
+      ) {
+        chunk[sampleOffset] &= 0xfe;
+      }
+      input.add(chunk);
+    }
+    if (dataEnd < carrierBytes.length) {
+      input.add(carrierBytes.sublist(dataEnd));
+    }
+    input.close();
+    return Uint8List.fromList(output.value.bytes);
+  }
+
+  _Mp4CarrierInfo _parseMp4Carrier(Uint8List carrierBytes) {
+    _validateTailCarrierSize(carrierBytes);
+    final boxes = _mp4TopLevelBoxes(carrierBytes);
+    final ftyp = boxes.cast<_Mp4Box?>().firstWhere(
+      (box) => box?.type == 'ftyp',
+      orElse: () => null,
+    );
+    if (ftyp == null || ftyp.dataLength < 8) {
+      throw const ToolboxSteganographyException(
+        'Unsupported video format. Pick MP4/MOV video.',
+      );
+    }
+    final majorBrand = _asciiBoxString(
+      carrierBytes,
+      ftyp.dataOffset,
+      ftyp.dataOffset + 4,
+    );
+    return _Mp4CarrierInfo(majorBrand: majorBrand, boxes: boxes);
+  }
+
+  int _mp4BlockCapacity(int carrierLength) {
+    return maxTailCarrierBytes -
+        carrierLength -
+        _mp4StegoBoxOverhead -
+        _mediaPolicyHeaderLength -
+        _mediaHeaderLength -
+        _mp4MaxPaddingLength;
+  }
+
+  int _mp4GrowthForBlock(int blockLength, {required bool useMaxPadding}) {
+    return _mp4StegoBoxOverhead +
+        _mediaPolicyHeaderLength +
+        _mediaHeaderLength +
+        blockLength +
+        (useMaxPadding ? _mp4MaxPaddingLength : 0);
+  }
+
+  Uint8List _appendMp4StegoBox({
+    required Uint8List carrierBytes,
+    required Uint8List block,
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+    required int maxErrorAttempts,
+    Uint8List? prefixDigest,
+  }) {
+    final paddingLength = _secureRandom.nextInt(_mp4MaxPaddingLength + 1);
+    final effectivePrefixDigest =
+        prefixDigest ?? _mp4PrefixDigest(carrierBytes, carrierBytes.length);
+    final box = _buildMp4StegoBox(
+      block: block,
+      passphrase: passphrase,
+      keyFileBytes: keyFileBytes,
+      locatorAlgorithm: locatorAlgorithm,
+      locatorStrength: locatorStrength,
+      maxErrorAttempts: maxErrorAttempts,
+      prefixDigest: effectivePrefixDigest,
+      nonce: _randomBytes(_mediaNonceLength),
+      paddingLength: paddingLength,
+      randomizePadding: true,
+    );
+    if (carrierBytes.length + box.length > maxTailCarrierBytes) {
+      throw const ToolboxSteganographyException('Payload is too large.');
+    }
+    final output = Uint8List(carrierBytes.length + box.length);
+    output.setRange(0, carrierBytes.length, carrierBytes);
+    output.setRange(carrierBytes.length, output.length, box);
+    return output;
+  }
+
+  Uint8List _buildMp4StegoBox({
+    required Uint8List block,
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+    required int maxErrorAttempts,
+    required Uint8List prefixDigest,
+    required Uint8List nonce,
+    required int paddingLength,
+    bool randomizePadding = false,
+  }) {
+    final locatorSecret = _locatorSecret(
+      passphrase,
+      keyFileBytes,
+      algorithm: locatorAlgorithm,
+      strength: locatorStrength,
+    );
+    final header = _buildMediaHeader(
+      locatorSecret: locatorSecret,
+      nonce: nonce,
+      payloadLength: block.length,
+      carrierDigest: prefixDigest,
+      purpose: 'video',
+    );
+    final maskedBlock = _maskMediaBlock(
+      block,
+      locatorSecret: locatorSecret,
+      nonce: nonce,
+      purpose: 'video',
+    );
+    final padding = randomizePadding
+        ? _randomBytes(paddingLength)
+        : Uint8List(paddingLength);
+    final payload = Uint8List.fromList(<int>[
+      ..._buildMediaPolicyHeader(
+        maxErrorAttempts: maxErrorAttempts,
+        magic: _mp4PolicyMagic(prefixDigest),
+      ),
+      ...header,
+      ...maskedBlock,
+      ...padding,
+    ]);
+    final size = _mp4StegoBoxOverhead + payload.length;
+    if (size > 0xffffffff) {
+      throw const ToolboxSteganographyException('Payload is too large.');
+    }
+    return Uint8List.fromList(<int>[
+      ..._uint32Bytes(size),
+      ..._mp4StegoBoxType,
+      ...payload,
+    ]);
+  }
+
+  _Mp4PublicPayload? _inspectVideoPayload(Uint8List carrierBytes) {
+    try {
+      _parseMp4Carrier(carrierBytes);
+      final boxes = _mp4TopLevelBoxes(carrierBytes);
+      for (final box in boxes) {
+        if (box.type != 'free' ||
+            box.dataLength < _mediaPolicyHeaderLength + _mediaHeaderLength) {
+          continue;
+        }
+        for (final prefixDigest in _mp4PrefixDigestCandidates(
+          carrierBytes,
+          box,
+          boxes,
+        )) {
+          final policy = _readMp4PolicyHeader(carrierBytes, box, prefixDigest);
+          if (policy != null) {
+            return _Mp4PublicPayload(
+              offset: box.offset,
+              size: box.size,
+              prefixDigest: prefixDigest,
+              policy: policy,
+            );
+          }
+        }
+      }
+    } on ToolboxSteganographyException {
+      return null;
+    }
+    return null;
+  }
+
+  _Mp4StegoBoxReadResult? _readMp4StegoBox(
+    Uint8List carrierBytes, {
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required ToolboxSteganographyLocatorAlgorithm locatorAlgorithm,
+    required ToolboxSteganographyLocatorStrength locatorStrength,
+  }) {
+    _parseMp4Carrier(carrierBytes);
+    final locatorSecret = _locatorSecret(
+      passphrase,
+      keyFileBytes,
+      algorithm: locatorAlgorithm,
+      strength: locatorStrength,
+    );
+    final boxes = _mp4TopLevelBoxes(carrierBytes);
+    for (final box in boxes.reversed) {
+      if (box.type != 'free' ||
+          box.dataLength < _mediaPolicyHeaderLength + _mediaHeaderLength) {
+        continue;
+      }
+      for (final prefixDigest in _mp4PrefixDigestCandidates(
+        carrierBytes,
+        box,
+        boxes,
+      )) {
+        final policy = _readMp4PolicyHeader(carrierBytes, box, prefixDigest);
+        if (policy == null) {
+          continue;
+        }
+        final headerOffset = box.dataOffset + _mediaPolicyHeaderLength;
+        final header = Uint8List.fromList(
+          carrierBytes.sublist(headerOffset, headerOffset + _mediaHeaderLength),
+        );
+        final nonce = Uint8List.fromList(
+          header.sublist(
+            _mediaMagicLength,
+            _mediaMagicLength + _mediaNonceLength,
+          ),
+        );
+        final expectedMagic = _mediaMagic(
+          locatorSecret: locatorSecret,
+          nonce: nonce,
+          carrierDigest: prefixDigest,
+          purpose: 'video',
+        );
+        if (!_bytesEqual(header.sublist(0, _mediaMagicLength), expectedMagic)) {
+          continue;
+        }
+        final maskedLength = _readUint32(
+          header,
+          _mediaMagicLength + _mediaNonceLength,
+        );
+        final payloadLength =
+            maskedLength ^
+            _mediaLengthMask(
+              locatorSecret: locatorSecret,
+              nonce: nonce,
+              carrierDigest: prefixDigest,
+              purpose: 'video',
+            );
+        final available =
+            box.dataLength - _mediaPolicyHeaderLength - _mediaHeaderLength;
+        if (payloadLength <= 0 || payloadLength > available) {
+          throw const ToolboxSteganographyException(
+            'Hidden payload is damaged or incomplete.',
+          );
+        }
+        final payloadOffset = headerOffset + _mediaHeaderLength;
+        final maskedBlock = Uint8List.fromList(
+          carrierBytes.sublist(payloadOffset, payloadOffset + payloadLength),
+        );
+        return _Mp4StegoBoxReadResult(
+          block: _maskMediaBlock(
+            maskedBlock,
+            locatorSecret: locatorSecret,
+            nonce: nonce,
+            purpose: 'video',
+          ),
+          offset: box.offset,
+          size: box.size,
+          nonce: nonce,
+          paddingLength: available - payloadLength,
+          prefixDigest: prefixDigest,
+          policy: policy,
+        );
+      }
+    }
+    return null;
+  }
+
+  List<Uint8List> _mp4PrefixDigestCandidates(
+    Uint8List carrierBytes,
+    _Mp4Box box,
+    List<_Mp4Box> boxes,
+  ) {
+    final offsets = <int>{box.offset};
+    for (final previous in boxes) {
+      if (previous.offset >= box.offset) {
+        break;
+      }
+      offsets.add(previous.offset);
+    }
+    return offsets
+        .map((offset) => _mp4PrefixDigest(carrierBytes, offset))
+        .toList(growable: false);
+  }
+
+  ToolboxSteganographyProtectionPolicy? _readMp4PolicyHeader(
+    Uint8List carrierBytes,
+    _Mp4Box box,
+    Uint8List prefixDigest,
+  ) {
+    try {
+      final header = Uint8List.fromList(
+        carrierBytes.sublist(
+          box.dataOffset,
+          box.dataOffset + _mediaPolicyHeaderLength,
+        ),
+      );
+      return _readMediaPolicyHeader(
+        header,
+        magic: _mp4PolicyMagic(prefixDigest),
+      );
+    } on ToolboxSteganographyException {
+      return null;
+    }
+  }
+
+  Uint8List _removeMp4Box(Uint8List carrierBytes, int offset, int size) {
+    if (offset < 0 || size <= 0 || offset + size > carrierBytes.length) {
+      throw const ToolboxSteganographyException(
+        'Hidden payload is damaged or incomplete.',
+      );
+    }
+    return Uint8List.fromList(<int>[
+      ...carrierBytes.sublist(0, offset),
+      ...carrierBytes.sublist(offset + size),
+    ]);
+  }
+
+  List<_Mp4Box> _mp4TopLevelBoxes(Uint8List carrierBytes) {
+    final boxes = <_Mp4Box>[];
+    var offset = 0;
+    while (offset + 8 <= carrierBytes.length &&
+        boxes.length < _mp4MaxBoxScanDepth) {
+      final size32 = _readUint32(carrierBytes, offset);
+      final type = _asciiBoxString(carrierBytes, offset + 4, offset + 8);
+      var headerLength = 8;
+      var size = size32;
+      if (size32 == 1) {
+        if (offset + 16 > carrierBytes.length) {
+          throw const ToolboxSteganographyException(
+            'Video carrier is damaged or incomplete.',
+          );
+        }
+        size = _readUint64(carrierBytes, offset + 8);
+        headerLength = 16;
+      } else if (size32 == 0) {
+        size = carrierBytes.length - offset;
+      }
+      if (size < headerLength || offset + size > carrierBytes.length) {
+        throw const ToolboxSteganographyException(
+          'Video carrier is damaged or incomplete.',
+        );
+      }
+      boxes.add(
+        _Mp4Box(
+          offset: offset,
+          size: size,
+          type: type,
+          dataOffset: offset + headerLength,
+        ),
+      );
+      offset += size;
+    }
+    if (boxes.isEmpty) {
+      throw const ToolboxSteganographyException(
+        'Unsupported video format. Pick MP4/MOV video.',
+      );
+    }
+    return boxes;
+  }
+
+  String _asciiBoxString(Uint8List bytes, int start, int end) {
+    if (start < 0 || end > bytes.length || start >= end) {
+      throw const ToolboxSteganographyException(
+        'Video carrier is damaged or incomplete.',
+      );
+    }
+    final chars = bytes.sublist(start, end);
+    if (chars.any((byte) => byte < 0x20 || byte > 0x7e)) {
+      return '';
+    }
+    return ascii.decode(chars);
+  }
+
+  Uint8List _mp4PrefixDigest(Uint8List bytes, int endOffset) {
+    final output = _DigestSink();
+    final input = sha256.startChunkedConversion(output);
+    input.add(utf8.encode('vocabulary_sleep_stego_mp4_prefix_v1'));
+    input.add(<int>[0, ..._uint32Bytes(endOffset)]);
+    const chunkSize = 8192;
+    for (var offset = 0; offset < endOffset; offset += chunkSize) {
+      input.add(bytes.sublist(offset, math.min(offset + chunkSize, endOffset)));
+    }
+    input.close();
+    return Uint8List.fromList(output.value.bytes);
+  }
+
+  Uint8List _mp4PolicyMagic(Uint8List prefixDigest) {
+    return Uint8List.fromList(
+      sha256
+          .convert(<int>[
+            ...utf8.encode('vocabulary_sleep_stego_mp4_policy_v1'),
+            0,
+            ...prefixDigest,
+          ])
+          .bytes
+          .sublist(0, _mediaPolicyMagic.length),
+    );
+  }
+
+  Uint8List _buildMediaPolicyHeader({
+    required int maxErrorAttempts,
+    List<int>? magic,
+  }) {
+    _validateMaxErrorAttempts(maxErrorAttempts);
+    final prefix = Uint8List.fromList(<int>[
+      ...(magic ?? _mediaPolicyMagic),
+      maxErrorAttempts,
+    ]);
+    return Uint8List.fromList(<int>[
+      ...prefix,
+      ..._mediaPolicyChecksum(prefix),
+    ]);
+  }
+
+  ToolboxSteganographyProtectionPolicy? _readMediaPolicyHeader(
+    Uint8List header, {
+    List<int>? magic,
+  }) {
+    final expectedMagic = magic ?? _mediaPolicyMagic;
+    if (header.length != _mediaPolicyHeaderLength ||
+        !_startsWith(header, expectedMagic)) {
+      return null;
+    }
+    final maxAttempts = header[expectedMagic.length];
+    final prefixLength = expectedMagic.length + 1;
+    final prefix = header.sublist(0, prefixLength);
+    final actualChecksum = header.sublist(prefixLength);
+    if (!_bytesEqual(actualChecksum, _mediaPolicyChecksum(prefix))) {
+      return null;
+    }
+    return ToolboxSteganographyProtectionPolicy(
+      maxErrorAttempts: maxAttempts,
+      hasTamperCheck: true,
+    );
+  }
+
+  Uint8List _mediaPolicyChecksum(List<int> prefix) {
+    return Uint8List.fromList(
+      sha256
+          .convert(<int>[
+            ...utf8.encode('vocabulary_sleep_stego_media_policy_v1'),
+            0,
+            ...prefix,
+          ])
+          .bytes
+          .sublist(0, _mediaPolicyChecksumLength),
+    );
+  }
+
+  Uint8List _buildMediaHeader({
+    required Uint8List locatorSecret,
+    required Uint8List nonce,
+    required int payloadLength,
+    required Uint8List carrierDigest,
+    required String purpose,
+  }) {
+    final maskedLength =
+        payloadLength ^
+        _mediaLengthMask(
+          locatorSecret: locatorSecret,
+          nonce: nonce,
+          carrierDigest: carrierDigest,
+          purpose: purpose,
+        );
+    return Uint8List.fromList(<int>[
+      ..._mediaMagic(
+        locatorSecret: locatorSecret,
+        nonce: nonce,
+        carrierDigest: carrierDigest,
+        purpose: purpose,
+      ),
+      ...nonce,
+      ..._uint32Bytes(maskedLength),
+    ]);
+  }
+
+  Uint8List _mediaMagic({
+    required Uint8List locatorSecret,
+    required Uint8List nonce,
+    required Uint8List carrierDigest,
+    required String purpose,
+  }) {
+    return Uint8List.fromList(
+      sha256
+          .convert(<int>[
+            ...locatorSecret,
+            0,
+            ...nonce,
+            0,
+            ...carrierDigest,
+            0,
+            ...utf8.encode('$purpose-magic'),
+          ])
+          .bytes
+          .sublist(0, _mediaMagicLength),
+    );
+  }
+
+  int _mediaLengthMask({
+    required Uint8List locatorSecret,
+    required Uint8List nonce,
+    required Uint8List carrierDigest,
+    required String purpose,
+  }) {
+    final digest = sha256.convert(<int>[
+      ...locatorSecret,
+      0,
+      ...nonce,
+      0,
+      ...carrierDigest,
+      0,
+      ...utf8.encode('$purpose-length'),
+    ]).bytes;
+    return _readUint32(digest, 0);
+  }
+
+  Uint8List _mediaPositionSeed({
+    required Uint8List locatorSecret,
+    required String purpose,
+    required Uint8List carrierDigest,
+    Uint8List? nonce,
+  }) {
+    return Uint8List.fromList(
+      sha256.convert(<int>[
+        ...locatorSecret,
+        0,
+        ...utf8.encode(purpose),
+        0,
+        ...carrierDigest,
+        0,
+        if (nonce != null) ...nonce,
+      ]).bytes,
+    );
+  }
+
+  Uint8List _maskMediaBlock(
+    Uint8List input, {
+    required Uint8List locatorSecret,
+    required Uint8List nonce,
+    required String purpose,
+  }) {
+    final maskKey = Uint8List.fromList(
+      sha256.convert(<int>[
+        ...utf8.encode('vocabulary_sleep_stego_media_mask_v1'),
+        0,
+        ...utf8.encode(purpose),
+        0,
+        ...locatorSecret,
+        0,
+        ...nonce,
+      ]).bytes,
+    );
+    return _xorWithSha256Stream(input, maskKey, nonce);
   }
 
   _EnvelopeBuildResult _buildEnvelope({
@@ -2887,6 +4936,34 @@ class ToolboxSteganographyService {
     ]);
   }
 
+  int _readUint16Little(List<int> bytes, int offset) {
+    if (offset < 0 || offset + 2 > bytes.length) {
+      throw const ToolboxSteganographyException('Payload length is missing.');
+    }
+    return bytes[offset] | (bytes[offset + 1] << 8);
+  }
+
+  int _readUint32Little(List<int> bytes, int offset) {
+    if (offset < 0 || offset + 4 > bytes.length) {
+      throw const ToolboxSteganographyException('Payload length is missing.');
+    }
+    return bytes[offset] |
+        (bytes[offset + 1] << 8) |
+        (bytes[offset + 2] << 16) |
+        (bytes[offset + 3] << 24);
+  }
+
+  int _readUint64(List<int> bytes, int offset) {
+    if (offset < 0 || offset + 8 > bytes.length) {
+      throw const ToolboxSteganographyException('Payload length is missing.');
+    }
+    var value = 0;
+    for (var index = 0; index < 8; index += 1) {
+      value = (value << 8) | bytes[offset + index];
+    }
+    return value;
+  }
+
   Uint8List _uint64Bytes(int value) {
     return Uint8List.fromList(
       List<int>.generate(8, (index) => (value >> ((7 - index) * 8)) & 255),
@@ -3011,6 +5088,99 @@ class _ImageBlockReadResult {
   final int? slot;
 }
 
+class _WavCarrierInfo {
+  const _WavCarrierInfo({
+    required this.dataOffset,
+    required this.dataLength,
+    required this.channels,
+    required this.blockAlign,
+    required this.bitsPerSample,
+    required this.bytesPerSample,
+    required this.sampleCount,
+  });
+
+  final int dataOffset;
+  final int dataLength;
+  final int channels;
+  final int blockAlign;
+  final int bitsPerSample;
+  final int bytesPerSample;
+  final int sampleCount;
+}
+
+class _WavBlockReadResult {
+  const _WavBlockReadResult({
+    required this.block,
+    required this.headerSamples,
+    required this.payloadSamples,
+    required this.policySamples,
+    required this.slot,
+  });
+
+  final Uint8List block;
+  final List<int> headerSamples;
+  final List<int> payloadSamples;
+  final List<int> policySamples;
+  final int? slot;
+}
+
+class _Mp4CarrierInfo {
+  const _Mp4CarrierInfo({required this.majorBrand, required this.boxes});
+
+  final String? majorBrand;
+  final List<_Mp4Box> boxes;
+}
+
+class _Mp4Box {
+  const _Mp4Box({
+    required this.offset,
+    required this.size,
+    required this.type,
+    required this.dataOffset,
+  });
+
+  final int offset;
+  final int size;
+  final String type;
+  final int dataOffset;
+
+  int get dataLength => size - (dataOffset - offset);
+}
+
+class _Mp4PublicPayload {
+  const _Mp4PublicPayload({
+    required this.offset,
+    required this.size,
+    required this.prefixDigest,
+    required this.policy,
+  });
+
+  final int offset;
+  final int size;
+  final Uint8List prefixDigest;
+  final ToolboxSteganographyProtectionPolicy policy;
+}
+
+class _Mp4StegoBoxReadResult {
+  const _Mp4StegoBoxReadResult({
+    required this.block,
+    required this.offset,
+    required this.size,
+    required this.nonce,
+    required this.paddingLength,
+    required this.prefixDigest,
+    required this.policy,
+  });
+
+  final Uint8List block;
+  final int offset;
+  final int size;
+  final Uint8List nonce;
+  final int paddingLength;
+  final Uint8List prefixDigest;
+  final ToolboxSteganographyProtectionPolicy policy;
+}
+
 class _TailBlockRange {
   const _TailBlockRange({required this.offset, required this.length});
 
@@ -3095,5 +5265,26 @@ class _HmacSha256Csprng {
     return Uint8List.fromList(
       List<int>.generate(8, (index) => (value >> ((7 - index) * 8)) & 255),
     );
+  }
+}
+
+class _DigestSink implements Sink<Digest> {
+  Digest? _value;
+
+  Digest get value => _value!;
+
+  @override
+  void add(Digest data) {
+    if (_value != null) {
+      throw StateError('Digest added more than once.');
+    }
+    _value = data;
+  }
+
+  @override
+  void close() {
+    if (_value == null) {
+      throw StateError('Digest was not added.');
+    }
   }
 }

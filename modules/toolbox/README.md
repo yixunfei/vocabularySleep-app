@@ -243,22 +243,144 @@
 - PNG encoding now supports writing DPI metadata through PNG physical pixel dimensions.
 - Encoding detail now includes preprocess/DPI trace tokens (for example `gray`, `bw@0.50`, `dpi144(png-only)`).
 
+## Image Compression / Upscale Merge Update (2026-05-27)
+- `image_transform` now replaces the separate `image_compress` and `image_upscale` entries in life tools.
+- The merged page keeps two fast-switch tabs inside one tool: `Compress` and `Upscale`.
+- The upscale workspace now adds a custom scale input and a lighter low-CPU algorithm option: `Fast duplicate`.
+- Transparent and solid-color canvas expansion now prefer library canvas expansion paths to reduce manual per-pixel work.
+- Boundary note: the module still performs local resize/interpolation/canvas expansion only; it is not a generative AI super-resolution model and cannot recreate true missing detail from a tiny source image.
+
+## Life Tools AI Interview (2026-05-27)
+- `ai_interview` now opens `_AiInterviewToolPage` instead of the placeholder source entry.
+- The module references `Zippland/Snap-Solver` for question input, model preference, and prompt-configuration ideas, but the implementation is a local practice and review tool rather than a screen-capture or real-time answer assistant.
+- `lib/src/services/toolbox_ai_interview_service.dart` provides pure Dart heuristic analysis for behavioral, technical, system-design, product/case, and HR/motivation questions.
+- The page first shows detected type, readiness score, current question, and next state, then groups question material, interview setup, answer frame, draft check, follow-up questions, prompt draft, next steps, and boundaries.
+- Inputs include target role, company/team, resume highlights, and answer draft; controls cover question type, depth, language, tone, follow-ups, and scoring strictness.
+- Risk boundary: generated content is a structure draft for rehearsal. It does not call a remote AI by default, and users should remove sensitive resume, salary, customer, company-confidential, or NDA material before copying the prompt to any third-party model.
+
+## Life Tools Image To Web (2026-05-27)
+- `image_to_web` now opens `_ImageToWebToolPage` instead of the placeholder source entry.
+- The page generates a single-file HTML preview from a picked local image. The HTML embeds the image as a Base64 data URI and supports title, alt text, contain/cover/natural fit, and light/dark/checker backgrounds.
+- Users can save the generated `.html` file or copy the HTML source. Save dialog fallback writes to the app documents directory under `life_tools/image_to_web`.
+- The same page adds temporary image sharing through Uguu: it uploads the original image with `POST https://uguu.se/upload` and form field `files[]`, then displays copy/open actions for the returned URL.
+- Reference boundary: `Vim-cn/elimage` is used as an image upload service reference shape, while this implementation is local HTML generation plus Uguu temporary sharing rather than an embedded server clone.
+- Risk boundary: local HTML generation does not upload the image. Uguu sharing uploads the original image to a third-party public temporary file host; the current public FAQ says files are deleted after about 3 hours and active-file records include name, hash, IP, and upload time until expiry. Availability, limits, policy, and retention behavior can change. Users should not upload IDs, private screenshots, or sensitive images.
+
+## Life Tools Short Link / QR Generator (2026-05-27)
+- `short_link` now opens `_ShortLinkPage` as a mobile workbench instead of the previous lightweight placeholder.
+- Short links support TinyURL, is.gd, v.gd, CleanURI, optional aliases, URL normalization, redirect-chain restore, result copy, and a deterministic local alias fallback for offline or API-failure cases.
+- `qr` now opens `_QrPage` with local preview and export. It supports text, URL, Wi-Fi, vCard, email, SMS, phone, geo, calendar, and tiny image Data URL payload builders.
+- QR generation supports QR Code plus Data Matrix, Aztec, and PDF417 through local rendering dependencies. QR Code mode adds correction level, expanded exact version choice from auto/V1-V40, quiet zone, visual style presets, center image import, and PNG export through `RepaintBoundary`.
+- Image QR boundary: encoding an imported image as a Data URL is intended only for tiny icons, signatures, or thumbnails. For branding or avatar overlays, the center-image mode is safer and more scannable.
+- Image Data URL import now auto-compresses readable sources up to a 32MB hard limit toward a QR-friendly 2.2KB payload target. The page displays original dimensions/size, final thumbnail dimensions/size, Data URL size, and a warning if the smallest candidate still exceeds the target.
+- If the image Data URL still exceeds the current QR Code version/error-correction capacity, the page retries stricter thumbnail targets before showing the capacity error.
+- QArt-style visual fusion now supports imported images in two non-payload modes: halftone art samples image brightness, edges, and stable dithering to redraw the QR as an image-aware module field, while transparent art keeps more of the sampled image visible. Art image import auto-compresses large sources into a rendering-friendly JPEG copy before preview, without writing the image into the QR payload. Finder, timing, alignment, format, and version areas stay high-contrast, and scan protection / image contrast / module spacing controls help preserve readability. A low-correction V25 art preset is available for denser module fields, but it lowers damage tolerance and must be scan-tested. This is a Flutter rendering-layer art fusion, not a full QArt encoder that rewrites QR data bits.
+- QR Code preview now performs a forced capacity check before rendering. If the payload is too long for the selected version/error-correction level, the preview shows an error panel and disables export instead of letting `QrImageView` throw during layout.
+- Risk boundary: public short-link APIs may change, rate-limit, or become unreachable; local aliases are not public short URLs. Redirect restore only follows and displays the chain, and it does not audit whether the final target is safe.
+- Compatibility boundary: Wi-Fi, calendar, contact payloads, and non-QR standards vary across scanner apps, so generated codes should be tested with the target devices before use.
+
+## Life Tools Timeline / Periodic Table (2026-05-27)
+- `timeline_periodic` now opens `_TimelinePeriodicToolPage` instead of a placeholder source entry.
+- Timeline mode embeds coarse, low-dispute historical anchors and now defaults to a vertical story axis so deep-time events have enough room on mobile screens.
+- The timeline data now merges the original 31 deep-time/science anchors with 68 baseline human-history anchors, 57 dense premodern anchors, and 46 dense modern anchors, for 202 total macro events covering prehistory, early civilizations, classical worlds, religions and ideas, medieval exchange, early modern globalization, industrialization, world wars, decolonization, global governance, digital society, and recent science.
+- The old logarithmic horizontal axis remains available as the optional `Map` view, with a wider canvas, safer edge padding, and a fullscreen action.
+- Immersive timeline mode uses a dedicated fullscreen route with vertical scrolling, clear exit control, and category-aware backdrops.
+- Atmosphere images come from public/clearly attributed sources such as NASA Image Library, USGS public geology media, and Wikimedia Commons artifact files; remote image loads now use a short timeout, memory cache, and local-gradient fallback so network failures do not surface as Flutter image-service errors.
+- Periodic-table mode embeds 118 element records prepared from PubChem PUG REST data, with IUPAC and CIAAW references kept in the source panel.
+
+## Life Tools World Clock (2026-05-27)
+- `world_clock` is added under life tools immediately after `date_calculator`.
+- The page provides local time, pinned clocks, city search, region filters, business-hours filtering, local time difference, day-shift labels, and DST markers.
+- The service uses built-in common city data and basic daylight-saving rules, so it works offline and does not upload location data.
+- Boundary: it is intended for current-time lookup, not historical timezone auditing or future policy-change guarantees.
+
+## Life Tools Date Calculator (2026-05-27)
+- `date_calculator` now opens a dedicated `_DateCalculatorPage` instead of the old placeholder embedded in utilities.
+- Calculation logic lives in `lib/src/services/toolbox_date_calculator_service.dart`, keeping date math, period progress, target progress, and life-candle progress testable outside the UI.
+- The page contains four tabs: `Diff`, `Add`, `Progress`, and `Candle`.
+- Diff mode supports second-level start/end time selection and shows both calendar breakdown and total seconds/days/years.
+- Add mode supports years, months, days, hours, minutes, and seconds; years accept decimals or percentages such as `0.5` and `50%`.
+- Progress mode shows a custom target timeline plus dynamic remaining progress for the current year, month, week, day, and hour, with lower-level units collapsible on mobile.
+- Candle mode visualizes expected lifetime as a burning candle, using 79 years as the default expected life value.
+- Boundary: whole years/months use calendar-aware movement and clamp month-end dates; fractional years/months are converted by the current natural year/month length. Life candle is a time-awareness view, not a medical or actuarial prediction.
+
+## Life Tools Notify / Meme Update (2026-05-27)
+- `通知自己`
+  - 页面现已收口为提醒工作台本身，首屏展示当前预览、触发/提醒时间、下一条提醒、原生投递状态与日历镜像状态。
+  - 创建区支持 `状态栏通知 / 锁屏提醒`、`指定时间 / 倒计时`、预设或自定义提前分钟、自定义倒计时分钟、状态栏常驻、进入应用取消和系统日历镜像。
+  - 已创建列表会保留未完成和已触发提醒，并提供完成、稍后 10 分钟、稍后 1 小时、套用配置和删除操作。
+  - Android 原生提醒链路支持状态栏常驻、进入应用取消、勾选完成、稍后 10 分钟、手动忽略与系统日历镜像；底层元数据继续复用 `toolbox_life_notify_service.dart`。
+  - 风险边界：通知和锁屏提醒完整能力仍主要依赖 Android 权限、精确闹钟能力和厂商后台策略；其他平台以页面列表和系统日历镜像为主。
+- `模拟来电`
+  - 现已从 `通知自己` 中拆分为并列独立工具，使用单独的 `life_fake_call` 分类管理待办与列表展示。
+  - 页面已移除触发前的来电主舞台预览，创建区聚焦姓名/号码、指定时间或手动倒计时输入、单位选择和系统日历镜像；真正的来电效果只在到点触发时全屏播放。
+  - Android 原生提醒链路保留全屏来电 Activity、锁屏唤起、系统来电铃声/振动，以及姓名、号码、归属地、标签等字段透传；fake call 调度优先使用 `AlarmManager.setAlarmClock`，再回落到普通提醒调度。
+  - 铃声与震动会持续到用户在全屏来电页接听或拒绝；列表侧删除、完成、稍后提醒会立即刷新当前页面。
+  - 风险边界：完整锁屏/全屏/来电体验当前主要落在 Android；Android 14+ 与部分厂商系统仍可能要求用户允许通知、全屏通知或闹钟相关权限。
+- `表情包制作`
+  - 页面已升级为基于文字图层的本地编辑器，支持选中图层、预览区拖动、双指缩放、基础字号、图层缩放、文字边距、对齐方式、字体家族、粗体/斜体和层级顺序控制。
+  - 预览区已改为与导出共用同一套 Canvas 渲染链路，并补上描边安全边距与整体视图缩放/平移，避免“控件调了但字高被截断、预览和导出不一致”。
+  - 当前支持的字体族为通用 `Sans / Serif / Mono`，适合跨平台基础样式定制；暂未引入额外字体资产包与动图时间轴编辑。
+- The periodic table supports group-block filtering, standard-state filtering, zoom/pan navigation, selected-element details, and a compact legend.
+- Runtime boundary: the module uses local constants and does not add a new runtime network dependency; external URLs are source-review exits only.
+- Risk boundary: historical dates are approximate consensus anchors, and element facts can be revised by authoritative tables, so the page is a reference visualization rather than an exam-grade source of truth.
+
+## Life Tools Fake Call Follow-up (2026-05-27)
+- `模拟来电` 页面进一步围绕“谁来电、何时触发、到点全屏播放”收口：已移除触发前的来电主舞台预览，联系人姓名/号码成为主输入。
+- 管理名称已改为可选；未填写时会自动用来电姓名或号码生成 `life_fake_call` 待办标题，避免把普通提醒标题误当成核心信息。
+- 倒计时改为手动输入时长并选择秒/分钟/小时单位，便于短时真机测试和长时使用。
+- Android 触发链路新增独立 `todo_fake_incoming_call` 通知渠道，并改为 `AlarmManager.setAlarmClock` + `CATEGORY_CALL + setFullScreenIntent` 的 high-priority call notification 拉起 `FakeIncomingCallActivity`；原有直接 `startActivity` 保留为兜底。
+- 全屏 Activity 会在拒绝或接听后停止铃声/振动并取消对应通知；来电通知不再 45 秒自动超时，铃声和震动持续到用户关闭。
+- `通知自己` 保持提醒模块职责，不再承载模拟来电配置；二者只共享 todo reminder 调度与 `LifeNotifyMetadata` 元数据解析。
+- 风险边界：Android 14+ 与部分厂商系统仍可能要求用户允许全屏通知、通知权限或闹钟相关权限；页面会显示通知权限和精确闹钟状态，真机锁屏表现需按设备回归。
+
+## Life Tools Text Transform (2026-05-27)
+- `text_encoding` keeps its existing tool id but now presents itself as `Text transform` / `文本转换`.
+- The page is no longer the old one-screen button bundle in `toolbox_life_tools_utilities.dart`; it now routes to a dedicated local page with grouped modes.
+- The old standalone pinyin entry is merged into this page. Current grouped transforms now cover pinyin/zhuyin, simplified/traditional conversion, Arabic-number writing (Roman numerals, Chinese numerals, RMB uppercase), solar/lunar/almanac lookup, ganzhi/four-pillars/sixty-jiazi helpers, language code lookup, plus Base64, URL, HTML, Unicode, JSON, Morse, beast text, RC4 legacy, Mars text, zero-width hidden text, vertical text layout, mojibake candidate repair, code-point inspection, ASCII table, and common representation snapshots.
+- Conditional-field rule: only the inputs needed by the current mode are shown. RC4 modes reveal a key field, hidden-text embed reveals a secondary payload field, lunar conversion reveals lunar-date controls, and vertical-layout mode reveals rows/columns/border options.
+- Mars text is currently implemented with a lightweight local mapping plus simple simplified/traditional fallback rather than a full third-party phrase library.
+- Mojibake repair is intentionally framed as “common reinterpretation candidates” instead of a guaranteed one-click fix because many garbled strings need original encoding context to judge the correct result.
+- Calendar / ganzhi / BaZi / sixty-jiazi / locale-name outputs are positioned as local reference helpers. The page defaults to Beijing time and Beijing true-solar-time assistance, and BaZi reverse search is intentionally limited to bounded year-range candidate enumeration rather than a full authoritative reverse database.
+
+## Life Tools Compass / Level / Vibration (2026-05-27)
+- `compass`, `level`, and `vibration` are no longer placeholder-grade utility pages; each now opens with a dedicated first-screen stage, status pills, and usage guidance aligned with the toolbox mobile-first layout baseline.
+- `compass` now combines magnetometer and accelerometer data with tilt compensation and smoothed heading transitions; the page surfaces heading, tilt, and magnetic-field quality together instead of only a bare dial.
+- Compass boundary: readings are intended for rough handheld orientation only. Magnetic cases, nearby electronics, vehicle mounts, and strong local interference can distort the result, so the page explicitly exposes “stable / tilted / disturbed” states instead of implying survey-grade accuracy.
+- `level` now provides separate `Level` and `Plumb` modes, a larger stage with centered bubble feedback, pitch/roll metrics, and tighter status thresholds (`ready / almost / adjust`) tuned for handheld use.
+- Level boundary: the tool depends on the phone's accelerometer and the physical flatness of the device body or case. It is suitable for quick alignment checks, not calibrated construction measurement.
+- `vibration` now exposes structured rhythm presets, pulse width, gap, cycle count, and a visual pattern preview instead of only repeating coarse `HapticFeedback` taps.
+- Android vibration now uses a dedicated `vocabulary_sleep/life_device` method channel and native `Vibrator/VibrationEffect` waveform playback when available; unsupported targets degrade to lightweight system haptics or preview-only mode.
+- Vibration boundary: amplitude control is platform dependent, and silent/test environments may expose no usable vibration motor at all, so the page keeps capability messaging visible on the first screen.
+
+## Crypto Security (2026-05-28)
+- Entry: `CryptoSecurityHubPage`, registered as `toolbox.crypto_security` and surfaced from the toolbox homepage as `加密安全` / `Crypto security`.
+- Page orchestration lives in `lib/src/ui/pages/toolbox_crypto_security.dart`, with the hub in `toolbox_crypto_security_hub.dart`.
+- The hub is designed as an expandable security workspace with standalone submodule cards, not a tab strip, so future encryption, decryption, key, certificate, verification, and signature tools can join as independent modules.
+- The first migrated submodule is media steganography (`图片/音频/视频隐写` / `Media steganography`), moved from Life Tools into `lib/src/ui/pages/toolbox_crypto_security/toolbox_crypto_security_steganography.dart`.
+- Life Tools no longer lists the `steganography` card or route. The steganography service boundary remains `ToolboxSteganographyService` plus `ToolboxCryptoService`; storage/export fallback paths that still use `life_tools/steganography` are kept for compatibility.
+- Risk boundary: this migration changes module ownership and navigation only. It does not change encryption, reveal, capacity, key-file, or media payload algorithms.
+
 ## Life Tools Steganography (2026-05-26)
+- Migration note: as of 2026-05-28 this implementation opens from the Crypto Security hub, while the historical details below describe the same media steganography feature set.
 - `steganography` now opens a local media steganography page instead of a placeholder entry.
-- Supports image modes with shared encryption and restore workflow; audio/video legacy reveal remains available, but new writes are disabled until real frequency-domain or frame-level backends are connected.
-- Image steganography decodes the carrier and exports lossless PNG with RGB LSB payload, now using a key-derived header plus CSPRNG-derived randomized pixel/channel order.
-- Audio/video steganography no longer appends new tail payloads; the old structured tail parser is retained only for compatibility with previously generated media.
+- Supports image, WAV/PCM audio, and MP4/MOV video carriers with the shared encryption and restore workflow; old audio/video structured tail payloads remain reveal/cleanup compatible.
+- Image steganography decodes the carrier and exports lossless PNG with RGB LSB payload, using a key-derived header plus CSPRNG-derived randomized pixel/channel order.
+- Audio steganography supports uncompressed WAV/PCM carriers by writing a key-derived header, public policy hint, and protected payload into randomized sample LSB positions. It is not resilient to MP3/AAC or other lossy transcoding.
+- Video steganography supports MP4/MOV containers by writing a protected payload into a container-level `free` box with key-derived locator data, masked length, and random padding. It is not resilient to remuxing tools that strip `free` boxes or to video re-encoding.
 - Encryption is now delegated to `ToolboxCryptoService`, a reusable local crypto library for toolbox modules.
 - Supported enabled encryption options: `AES-GCM`, `Twofish-GCM`, `Camellia-GCM`, fixed cascades, user-defined cascades, `SHA-256/RSA`, `ECDSA`, `Whirlpool`, and `No encryption`; `SHA256 stream` and `RC4 legacy` are reveal-only for old payloads.
 - Serpent/Kuznyechik placeholders were removed and replaced with implemented `SHA-256/RSA`, `ECDSA`, and `Whirlpool` layers: RSA/ECDSA are verification/signature modes, and Whirlpool is available for hashing/MAC.
 - Strength options: `standard` = scrypt N=2^16, `strong` = 2^17, and `extreme` = 2^18; encrypted modes use random salt, built-in password mixing, random-length padding, at least 256-bit per-stage key material, and optional key-file material.
-- The file workspace now encrypts file bytes and embeds the encrypted payload into an image carrier, then restores the original bytes from generated stego media.
+- The file workspace now encrypts file bytes and embeds the encrypted payload into image, WAV/PCM, or MP4/MOV carriers, then restores the original bytes from generated stego media.
+- Dual-layer mode now supports both text and file payloads across image, WAV/PCM, and MP4/MOV carriers: image uses separated pixel slots, WAV/PCM uses separated randomized sample slots, and MP4/MOV writes paired protected `free` boxes. The cover passphrase restores only the cover layer, while the hidden passphrase restores only the hidden layer.
+- Text and file embed flows expose a write preview action before generation, showing carrier type, available capacity, estimated payload demand, estimated output size, and dual-layer notes.
 - Key files are now controlled by a dedicated switch; when enabled, users can import one or more key files, generate random key files from a compact dialog, export generated material, or clear the selection.
 - Multiple key files are sorted by lowercase file name, SHA-256 digest, and byte length before being combined into deterministic key material for encryption and reveal.
 - The mobile page keeps advanced crypto settings collapsed by default, hides empty preview panels, and differentiates media/file/keyfile actions with separate button hierarchy to reduce accidental choices.
 - The same page also exposes hash calculation (`SHA-256`, `SHA-512`, `SHA3`, `BLAKE2b`, `Whirlpool`).
 - VeraCrypt boundary: the module borrows the cascade, independent-stage-key, KDF/hash, and keyfile strategy, but it does not create VeraCrypt-compatible volumes, headers, or XTS devices.
-- Risk boundary: image outputs must not be re-saved as lossy JPEG; audio/video writes require future DCT/DWT/echo-hiding or frame/motion-vector backends before being re-enabled.
+- Risk boundary: image outputs must not be re-saved as lossy JPEG; WAV/PCM payloads are not resilient to lossy audio transcoding, and MP4/MOV `free` box payloads can be stripped by remuxing or re-encoding tools.
 - Risk boundary: losing the key file makes any payload encrypted with it unrecoverable, even if the passphrase is known.
 
 ## 生活实用（新增：亲戚关系计算器）
@@ -282,3 +404,98 @@
 - 全屏便捷模式：进入独立全屏画布后可直接拖拽节点；顶部紧凑图标支持编辑标题、添加子节点、添加同级、删除节点、吸附网格开关、一键自动重排和节点位置保留。
 - 导出能力：支持复制 Markdown 大纲；支持通过 `RepaintBoundary` 导出 PNG，保存对话框不可用时回退到应用文档目录 `life_tools/mind_map`。
 - 交互边界：默认页面画布仍保持点击式编辑，拖拽仅在全屏画布内启用，避免窄屏真机上与页面纵向滚动产生手势冲突；节点较多时可自动重排，完整长标题由结构大纲兜底。
+
+## 生活实用（通知自己 / 模拟来电 / 数字转标 / 表情包制作）
+- `通知自己`
+  - 已从占位入口升级为真实提醒页，复用 `FocusService` 现有 todo reminder 与系统日历镜像链路。
+  - 现阶段聚焦提醒本身，支持标题、说明、日期时间、通知/锁屏模式、提前提醒、状态栏锁定、进入应用取消和系统日历同步。
+  - 首屏展示应用提醒能力状态、状态栏/锁屏文案预览，以及已创建提醒的完成/稍后提醒/删除操作。
+- `模拟来电`
+  - 已从 `通知自己` 中拆为独立工具页，支持可选管理名称、说明、指定时间/倒计时、姓名、号码、归属地、标签与系统日历镜像。
+  - 页面聚焦创建表单与已创建列表；倒计时由用户手动输入长度并选择秒/分钟/小时单位，未填写管理名称时会自动用姓名或号码作为列表标题。
+  - Android 触发时优先走闹钟级调度、独立来电通知渠道与 full-screen intent，全屏来电 Activity、系统铃声/振动和直接 Activity 兜底共同组成触发链路；列表侧支持完成、稍后提醒和删除并即时刷新。
+- `数字转标`
+  - 已从基础替换演示升级为多模式文本转换页，支持上标、下标、带圈、括号编号、全角和反向还原。
+  - 转换逻辑已下沉为 `toolbox_number_mark_service.dart`，支持多字符最长匹配，便于后续扩展更多 Unicode 标记模式。
+  - 页面支持示例填充、实时输出、复制结果与未覆盖字符统计。
+- `表情包制作`
+  - 已从占位入口升级为本地图文叠加工具，支持导入本地图片、实时预览顶部/底部文案与贴纸短句。
+  - 支持经典白字黑边、字幕卡片、贴纸感三种样式、图层层级、拖动缩放、预览缩放与位置控制。
+  - 预览和导出共用 Flutter Canvas 渲染链路，保存对话框不可用时回退到应用文档目录 `life_tools/meme_maker`。
+
+## 生活实用（带壳截图 / 全能单位换算 / BMI 计算器）
+- `尺子和量角器`
+  - `ruler` 提供手动校准、横屏边缘直尺和相机背景量角器。
+  - 量角器全屏刻度层已增加半透明深色测量盘、深色描边、暖色主刻度和浅蓝灰次刻度，避免浅色相机画面与白色刻度混在一起。
+  - 本轮只调整视觉承托与刻度可读性，不改变相机权限、横屏沉浸、返回恢复、尺子校准和角度刻度逻辑。
+- `带壳截图`
+  - `device_frame` 已从占位说明页升级为本地可用页面：`_DeviceFrameToolPage`。
+  - 页面已收口为 `截图舞台 → 构图设置 → 状态栏设置 → 使用边界`：首屏直接呈现本地导入、当前预览、导出 PNG 和关键状态，不再把素材、预览与设置分散堆叠。
+  - 支持导入本地截图、原创前视机模切换、背景氛围切换、截图适配、状态栏覆盖、炫光控制和 PNG 导出。
+  - 当前机模扩展为 `Poster card / Titanium island / Obsidian island / Graphite hole-punch / Frost hole-punch` 五种展示风格，并修复资源侧按钮外鼓导致的窄屏偏移观感。
+  - 截图适配支持 `裁切填满 / 完整显示`：原图比例与机模屏幕不一致时会给出提示，方便在真实展示感与完整内容之间切换。
+  - 状态栏现支持时间文案、电量百分比、电池状态、蜂窝信号强度、Wi-Fi 强度与网络制式（E / 4G / 5G / LTE / Wi-Fi only）定制。
+  - 状态栏右侧状态组会贴近外壳内侧边框并限制在屏幕宽度一半以内；电池模拟按 `充电中 / 正常 / 低电量（<30%）/ 电量不足（<15%）` 使用不同图标与语义色。
+  - 导入阶段非 Web 优先使用 read stream 或文件路径读取，并增加 32MB 大图闸门，避免移动端直接预读过大图片。
+  - 导出使用 `RepaintBoundary -> toImage -> PNG` 本地链路，保存对话框不可用时回退到应用文档目录 `life_tools/device_frame`。
+  - 风险边界：当前以仓库内原创机模资源提升真实展示感，不对应厂商官方营销素材或精确 OEM 尺寸，定位仍是社交分享和展示卡片。
+- `全能单位换算`
+  - `unit_converter` 已从简版字符串演示升级为独立换算页：`_UnitConverterToolPage`。
+  - 支持长度、重量、温度、面积、体积、速度、力、密度、功率、热量/能量、数据、时间与 CSS 尺寸多类别单位换算，以及源值/目标值双向输入。
+  - 现有类别补齐了光年、天文单位、里、微米、纳米、市斤、微克、海里/小时等高频单位，并保留窄宽度下拉框收缩，避免手机小宽度下的选择溢出。
+  - 新增证件照尺寸参考模式，可查看 `1寸 / 小1寸 / 2寸 / 大1寸 / 护照 / 2x2 签证照` 的英制别名、公制尺寸与指定 DPI 下的像素结果。
+  - 温度以开尔文作中间基准；CSS 尺寸保留 `96px = 1in` 的常见浏览器口径，并允许通过基准字号换算 `px / rem / em`。
+- `BMI 计算器`
+  - `bmi` 已从极简数值页升级为独立健康页：`_BmiToolPage`。
+  - 计算逻辑已抽出为 `toolbox_bmi_service.dart`，并内置 CDC BMI-for-age LMS 数据，便于对成人和 2-19 岁儿童青少年使用不同判断口径。
+  - 支持公制/英制输入、年龄、性别、中国成人/WHO 成人分界切换、腰围、臀围和活动水平配置。
+  - 成人首屏展示 BMI、分类、健康体重区间和回到中位参考值的大致差量；儿童青少年展示 BMI-for-age 百分位、年龄段和 P5-P85 参考体重区间。
+  - 新增腰高比、腰臀比、Mifflin-St Jeor 基础代谢和按活动水平估算的日常总消耗，作为日常趋势管理辅助。
+  - 风险边界：BMI、围度和能量消耗均为参考估算，不替代医生、营养师或儿保评估；2 岁以下、孕期、运动员、健身增肌和特殊病史场景应结合更具体指标或专业建议。
+
+## 生活实用（工作性价比计算器）
+- `work_worth` 已从简版占位升级为本地可用页面：`_WorkWorthPage`。
+- 计算服务位于 `lib/src/services/toolbox_work_worth_service.dart`，保持纯计算输入输出，方便后续替换 PPP、城市成本或行业参数。
+- 当前口径参考 `zippland/worth-calculator` 的日薪、工作日、工时、通勤、环境、学历和经验预期思路，并新增生活开销、住房成本、税费、五险一金、公积金、现金化福利、加班补偿、奖金确定性与工作环境健康损耗预算。
+- 页面首屏展示综合价值分、月可支配、PPP 标准化日薪和健康损耗/月；下方按收入开销、时间成本、工作环境健康层级、稳定性与背景、参考标准值分组。
+- 工作环境健康层级从“拿命换 / 有害健康 / 高压消耗 / 普通办公 / 平衡友好 / 自由舒适”映射为环境系数和健康预留比例。
+- 关键项已扩展到无偿加班、成长性/技能复利、下班边界、心理安全感与自主权，并以“参考标准值”面板给出标准工时、通勤、年假、公共假期、现金安全垫和健康损耗预留的校准口径。
+- 风险边界：分数仅用于岗位或 offer 横向比较，不构成财务、医疗或职业建议；真实地区 PPP、税费、公积金比例和行业薪资预期需由用户结合实际修正。
+
+## 生活实用（Offer 选择助手）
+- `offer_select` 已从 `https://offerselect.zippland.com/` 外部占位入口升级为本地可用页面：`_OfferSelectToolPage`。
+- 计算服务位于 `lib/src/services/toolbox_offer_select_service.dart`，复用 `ToolboxWorkWorthService` 的收入、扣款、生活成本、时间成本、环境健康和成长口径。
+- 页面保留参考页的个人履历、工作机会、月 Base、发薪月数、其他奖金、薪资评级、福利、社保、工作强度、WLB、地点、优点、缺点和已婉拒输入语义，并补充月税费、五险一金、住房/生活成本、奖金确定性、Offer 确定性和城市适配等本地估算字段。
+- 首屏展示当前推荐、综合分、月可支配、工作性价比和领先差距；排序区按现金流、时间成本、健康边界、成长匹配、稳定性和城市适配六维拆分每个 Offer。
+- 决策报告会展示首选优势、风险旗标和非首选追平首选所需的月 Base 加薪估算；若非薪资维度差距过大，追平项会提示不适合只靠薪资解决。
+- 页面保留占位页底部的 Offer 打分、城市对比和 AI 笔试/面试参考工具链：可跳转外部来源，也可进入本地工作性价比与城市薪资对比工具。
+- 风险边界：本模块不上传 Offer 数据，不写入学习记录；评分仅用于横向比较和谈薪准备，不替代职业、法律、税务或财务建议。合同主体、试用期、年终奖/股票兑现、社保缴纳和真实工资条仍需用户自行核验。
+
+## 生活实用（证件照生成）
+- `id_photo` 已从 QQ 浏览器证件照网页占位入口升级为本地可用页面：`_IdPhotoToolPage`。
+- 处理服务位于 `lib/src/services/toolbox_id_photo_service.dart`，负责图片解码、EXIF 方向烘焙、按目标比例裁切、缩放、四角取样简易换底色和 PNG/JPEG 编码。
+- 页面首屏聚焦照片舞台、当前规格、输出像素和底色；下方提供规格、DPI、底色、导出格式、裁切缩放、横纵位置、背景容差和替换强度。
+- 预置 `1 寸 / 小 1 寸 / 大 1 寸 / 2 寸 / 护照 / 2x2 签证照` 常见规格，并在结果区展示输出体积、裁切区域和换底像素数，便于用户核对生成结果。
+- 隐私边界：本模块全程本地处理，不上传用户照片，不写入主数据库或学习记录；导出保存对话框不可用时回退到应用文档目录 `life_tools/id_photo`。
+- 风险边界：简易换底色依赖照片四角取样，仅适合纯色或接近纯色背景；复杂背景、发丝边缘、阴影和严格证件审核场景仍需专业抠图与机构规范校验。
+
+## 生活实用（城市薪资对比工具）
+- `city_compare` 已从参考入口升级为本地可用页面：`_CitySalaryComparePage`。
+- 计算服务位于 `lib/src/services/toolbox_city_compare_service.dart`，内置参考项目 `Zippland/city_compare` 的静态城市成本样本，并将生活方式配置抽象为住房、餐饮、通勤、教育、健身和娱乐六类输入。
+- 页面首屏直接给出“在目标城市维持当前生活方式与月结余所需税前月薪”，并同时展示当前城市现状、同薪资搬去目标城市后的结余变化，以及目标城市保本薪资。
+- 工资侧采用简化个税与五险一金估算，成本侧拆出住房、餐饮、交通、教育、水电网话、健身和娱乐，便于用户看到影响最大的成本项。
+- 参考页中的细分原始字段也已纳入页面，包括社保基数上下限、市中心/郊区一居与三居租金、市中心/郊区房价、在家做饭/外食月均、便宜餐/中档餐、手机套餐、宽带、各教育阶段、健身和电影票。
+- 页面新增“对比分析”和“参考细分条目”两层内容：前者自动总结最大差异项、同薪资迁移结果和重点原始条目，后者用于核对参考页静态样本本身。
+- 页面现已支持按类目微调预设基准，包括住房、餐饮、交通、教育、水电网话、健身与娱乐倍数；同时支持对健身月费与电影票价做单项覆盖，方便用户修正模糊消费项。
+- 页面现已支持新增“自定义月支出”条目，并按生活、家庭、通勤、健康、债务和其他分类集中计入双城对比结果，用于覆盖宠物、保姆、订阅、康复、贷款等参考页没有统一标准的开销。
+- 风险边界：城市价格样本不是实时数据，不适合替代房源、学位、税务或工资条核算；它更适合在调岗、跳槽、迁居前做一轮同口径横向估算。
+- 风险边界补充：倍数微调、单项覆盖和自定义支出属于“个人校准层”，用于把静态参考样本修正得更贴近个人现实，不代表官方统计均值或实时市场报价。
+
+## 生活实用（房贷计算器）
+- `mortgage` 已从等额本息占位估算升级为本地可用页面：`_MortgageProPage`。
+- 计算服务位于 `lib/src/services/toolbox_mortgage_service.dart`，保持纯输入输出模型，便于单测覆盖等额本息、等额本金、面积反推和提前还款口径。
+- 页面首屏聚焦下期月供、贷款金额、合同总利息、剩余本金和还要还多久；下方按贷款配置、还款进度与费用、详细结果、后续还款明细和使用边界组织。
+- 支持按贷款金额直接计算，也支持按住房面积、单价、首付比例或自定义首付金额反推贷款本金。
+- 支持首次还款时间、已还期数、提前还本金、月供降低/期限缩短两种提前还款估算、每月附加费用和一次性费用。
+- 结果展示合同期限、合同总费用、已还本金/利息/费用、剩余本金、剩余利息、剩余总成本、预计结清日期和后续 12 期还款明细。
+- 风险边界：房贷结果是本地估算，不替代银行合同、征信审批、LPR 调整、组合贷规则、地区税费政策或提前还款违约金规则。

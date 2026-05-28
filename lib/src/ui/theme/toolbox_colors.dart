@@ -17,4 +17,5 @@ abstract class ToolboxColors {
   static const zenAccent = Color(0xFFC6A96A);
   static const decisionAccent = Color(0xFFE08B58);
   static const lifeAccent = Color(0xFF4E8A67);
+  static const cryptoAccent = Color(0xFF286F7D);
 }

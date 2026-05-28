@@ -63,6 +63,7 @@ class _HandEyePlayStage extends StatelessWidget {
           math.max(1, size.height - top - bottom),
         );
         return _HumanPointerDragBoundary(
+          enabled: state._active,
           onPointerDown: (event) => state._handleStageTap(
             activeSize,
             event.localPosition - activeOrigin,
@@ -135,6 +136,9 @@ class _HandEyePlayStage extends StatelessWidget {
                             state._phase == _HandEyePhase.done))
                       Center(
                         child: _HumanActionButton(
+                          key: const ValueKey<String>(
+                            'hand_eye_stage_start_button',
+                          ),
                           label: pickUiText(
                             i18n,
                             zh: '开始',
@@ -330,13 +334,13 @@ class _HandEyeFullscreenViewState extends State<_HandEyeFullscreenView>
   }
 
   void _tick() {
-    if (state._phase == _HandEyePhase.visible) {
+    if (state._active && state._phase == _HandEyePhase.visible) {
       state._notifyView();
     }
   }
 
   void _syncTicker() {
-    final shouldRun = state._phase == _HandEyePhase.visible;
+    final shouldRun = state._active && state._phase == _HandEyePhase.visible;
     if (shouldRun && !_fullscreenTicker.isAnimating) {
       _fullscreenTicker.repeat();
       return;
@@ -656,35 +660,9 @@ class _HandEyeFullscreenViewState extends State<_HandEyeFullscreenView>
                                 key: const ValueKey<String>(
                                   'hand_eye_fullscreen_start_button',
                                 ),
-                                onPressed: state._active ? null : state._start,
-                                icon: Icon(
-                                  state._active
-                                      ? Icons.track_changes_rounded
-                                      : Icons.play_arrow_rounded,
-                                ),
-                                label: Text(
-                                  state._active
-                                      ? pickUiText(
-                                          i18n,
-                                          zh: '进行中',
-                                          en: 'Running',
-                                          ja: 'Running',
-                                          de: 'Running',
-                                          fr: 'Courir',
-                                          es: 'Corriendo',
-                                          ru: 'бегать',
-                                        )
-                                      : pickUiText(
-                                          i18n,
-                                          zh: '开始',
-                                          en: 'Start',
-                                          ja: 'Start',
-                                          de: 'Start',
-                                          fr: 'Démarrer',
-                                          es: 'Comienzo',
-                                          ru: 'Начинать',
-                                        ),
-                                ),
+                                onPressed: state._handlePrimaryAction,
+                                icon: Icon(state._primaryActionIcon()),
+                                label: Text(state._primaryActionLabel(i18n)),
                                 style: FilledButton.styleFrom(
                                   minimumSize: const Size(108, 48),
                                   textStyle: const TextStyle(

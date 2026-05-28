@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import '../models/todo_item.dart';
 import 'database_service.dart';
+import 'toolbox_life_notify_service.dart';
 
 abstract interface class SystemCalendarService {
   Future<void> syncTodo(TodoItem item);
@@ -171,7 +172,7 @@ class PlatformSystemCalendarService implements SystemCalendarService {
   String? _buildTodoDescription(TodoItem item) {
     final lines = <String>[];
     final category = item.category?.trim() ?? '';
-    final note = item.note?.trim() ?? '';
+    final note = buildLifeNotifyTodoViewData(item).calendarDescription ?? '';
     if (category.isNotEmpty) {
       lines.add('Category: $category');
     }

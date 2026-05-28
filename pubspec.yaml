@@ -64,7 +64,13 @@ dependencies:
   nippon_colors: ^0.2.2
   kinship_calculator: ^4.0.0
   image: ^4.8.0
+  locale_names: ^1.1.1
   pointycastle: ^4.0.0
+  pinyin: ^3.3.0
+  sensors_plus: ^6.1.1
+  sxwnl_spa_dart: ^0.18.5
+  qr_flutter: ^4.1.0
+  barcode_widget: ^2.0.4
 
 dev_dependencies:
   flutter_test:
@@ -115,6 +121,7 @@ flutter:
     - assets/en_zh_15000_wordbook.json
     - assets/toolbox/beads/
     - assets/toolbox/colors/
+    - assets/toolbox/device_frames/
     - assets/toolbox/games/roulette/
 
   # To add assets to your application, add an assets section, like this:

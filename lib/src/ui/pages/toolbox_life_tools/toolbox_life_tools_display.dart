@@ -668,28 +668,74 @@ class _EdgeRulerPainter extends CustomPainter {
 class _ProtractorPainter extends CustomPainter {
   const _ProtractorPainter();
 
+  static const Color _plateDark = Color(0xE60B1220);
+  static const Color _plateMid = Color(0xAA142033);
+  static const Color _plateEdge = Color(0x221E293B);
+  static const Color _outlineColor = Color(0xE6050A12);
+  static const Color _majorColor = Color(0xFFFFD166);
+  static const Color _minorColor = Color(0xFFE0E7FF);
+  static const Color _guideColor = Color(0xFF7DD3FC);
+
   @override
   void paint(Canvas canvas, Size size) {
     final linePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.95)
-      ..strokeWidth = 2;
+      ..color = _majorColor.withValues(alpha: 0.98)
+      ..strokeWidth = 2.2
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    final guidePaint = Paint()
+      ..color = _guideColor.withValues(alpha: 0.94)
+      ..strokeWidth = 1.6
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
     final minorPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.68)
-      ..strokeWidth = 1;
+      ..color = _minorColor.withValues(alpha: 0.82)
+      ..strokeWidth = 1.1
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
     final center = Offset(size.width * 0.5, size.height * 0.87);
     final radius = math.min(size.width * 0.44, size.height * 0.72);
     final rect = Rect.fromCircle(center: center, radius: radius);
+    final plateRadius = radius + 34;
+    final plateRect = Rect.fromCircle(center: center, radius: plateRadius);
 
+    final platePaint = Paint()
+      ..shader = const RadialGradient(
+        colors: <Color>[_plateDark, _plateMid, _plateEdge],
+        stops: <double>[0.0, 0.74, 1.0],
+      ).createShader(plateRect);
+
+    canvas.drawCircle(center, plateRadius, platePaint);
     canvas.drawCircle(
       center,
-      radius + 22,
-      Paint()..color = Colors.black.withValues(alpha: 0.10),
+      radius + 25,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..color = Colors.white.withValues(alpha: 0.16),
     );
-    canvas.drawArc(rect, math.pi, math.pi, false, linePaint);
-    canvas.drawLine(
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius - 32),
+      math.pi,
+      math.pi,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..color = _guideColor.withValues(alpha: 0.38),
+    );
+    _drawOutlinedArc(canvas, rect, math.pi, math.pi, linePaint);
+    _drawOutlinedLine(
+      canvas,
       Offset(center.dx - radius, center.dy),
       Offset(center.dx + radius, center.dy),
       linePaint,
+    );
+    _drawOutlinedLine(
+      canvas,
+      center,
+      Offset(center.dx, center.dy - radius + 10),
+      guidePaint,
     );
 
     for (var degree = 0; degree <= 180; degree += 2) {
@@ -701,37 +747,98 @@ class _ProtractorPainter extends CustomPainter {
       final outerY = center.dy - radius * math.sin(math.pi - rad);
       final innerX = center.dx + (radius - tick) * math.cos(math.pi - rad);
       final innerY = center.dy - (radius - tick) * math.sin(math.pi - rad);
-      canvas.drawLine(
+      _drawOutlinedLine(
+        canvas,
         Offset(outerX, outerY),
         Offset(innerX, innerY),
         isMajor ? linePaint : minorPaint,
+        outlineExtra: isMajor ? 3.4 : 2.4,
       );
 
       if (isMajor) {
         final labelX = center.dx + (radius - 36) * math.cos(math.pi - rad);
         final labelY = center.dy - (radius - 36) * math.sin(math.pi - rad);
-        final label =
-            ui.ParagraphBuilder(
-                ui.ParagraphStyle(fontSize: 11, textAlign: TextAlign.center),
-              )
-              ..pushStyle(
-                const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ).getTextStyle(),
-              )
-              ..addText('$degree');
-        final paragraph = label.build()
-          ..layout(const ui.ParagraphConstraints(width: 34));
-        canvas.drawParagraph(paragraph, Offset(labelX - 17, labelY - 8));
+        _drawDegreeLabel(canvas, '$degree', Offset(labelX - 17, labelY - 8));
       }
     }
 
+    canvas.drawCircle(center, 7, Paint()..color = _outlineColor);
     canvas.drawCircle(
       center,
-      3.5,
-      Paint()..color = Colors.white.withValues(alpha: 0.96),
+      4,
+      Paint()..color = _majorColor.withValues(alpha: 0.98),
     );
+  }
+
+  void _drawOutlinedArc(
+    Canvas canvas,
+    Rect rect,
+    double startAngle,
+    double sweepAngle,
+    Paint paint,
+  ) {
+    canvas.drawArc(
+      rect,
+      startAngle,
+      sweepAngle,
+      false,
+      Paint()
+        ..color = _outlineColor
+        ..strokeWidth = paint.strokeWidth + 3.8
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke,
+    );
+    canvas.drawArc(rect, startAngle, sweepAngle, false, paint);
+  }
+
+  void _drawOutlinedLine(
+    Canvas canvas,
+    Offset start,
+    Offset end,
+    Paint paint, {
+    double outlineExtra = 3.0,
+  }) {
+    canvas.drawLine(
+      start,
+      end,
+      Paint()
+        ..color = _outlineColor
+        ..strokeWidth = paint.strokeWidth + outlineExtra
+        ..strokeCap = StrokeCap.round,
+    );
+    canvas.drawLine(start, end, paint);
+  }
+
+  void _drawDegreeLabel(Canvas canvas, String text, Offset offset) {
+    final shadow =
+        ui.ParagraphBuilder(
+            ui.ParagraphStyle(fontSize: 11, textAlign: TextAlign.center),
+          )
+          ..pushStyle(
+            const TextStyle(
+              color: _outlineColor,
+              fontWeight: FontWeight.w900,
+            ).getTextStyle(),
+          )
+          ..addText(text);
+    final shadowParagraph = shadow.build()
+      ..layout(const ui.ParagraphConstraints(width: 34));
+    canvas.drawParagraph(shadowParagraph, offset + const Offset(1.2, 1.2));
+
+    final label =
+        ui.ParagraphBuilder(
+            ui.ParagraphStyle(fontSize: 11, textAlign: TextAlign.center),
+          )
+          ..pushStyle(
+            const TextStyle(
+              color: _majorColor,
+              fontWeight: FontWeight.w800,
+            ).getTextStyle(),
+          )
+          ..addText(text);
+    final paragraph = label.build()
+      ..layout(const ui.ParagraphConstraints(width: 34));
+    canvas.drawParagraph(paragraph, offset);
   }
 
   @override

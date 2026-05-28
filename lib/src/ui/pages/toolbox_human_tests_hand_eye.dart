@@ -124,7 +124,14 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
 
   Timer? _spawnTimer;
   Timer? _visibleTimer;
+  DateTime? _spawnScheduledAt;
+  Duration? _spawnWaitDuration;
+  Duration? _pausedSpawnRemaining;
+  Duration? _pausedVisibleRemaining;
+  Duration _targetElapsedBase = Duration.zero;
+  double? _pausedMotionValue;
   int _token = 0;
+  bool _paused = false;
   bool _reportDialogOpen = false;
 
   int _roundCount = 12;
@@ -152,8 +159,14 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
       const <_HandEyeDistractorTarget>[];
   final List<_HandEyeRoundResult> _results = <_HandEyeRoundResult>[];
 
-  bool get _active =>
+  bool get _inSession =>
       _phase == _HandEyePhase.waiting || _phase == _HandEyePhase.visible;
+
+  bool get _active => _inSession && !_paused;
+
+  bool get _settingsLocked => _inSession;
+
+  Duration get _targetElapsed => _targetElapsedBase + _targetStopwatch.elapsed;
 
   bool get _targetMotionEnabled => _movementAmplitude > 0 && _movementSpeed > 0;
 
@@ -234,12 +247,19 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
     _token += 1;
     _spawnTimer?.cancel();
     _visibleTimer?.cancel();
+    _spawnScheduledAt = null;
+    _spawnWaitDuration = null;
+    _pausedSpawnRemaining = null;
+    _pausedVisibleRemaining = null;
+    _pausedMotionValue = null;
+    _targetElapsedBase = Duration.zero;
     _targetController.stop();
     _notifyView();
     _targetStopwatch
       ..stop()
       ..reset();
     _updateView(() {
+      _paused = false;
       _phase = _HandEyePhase.waiting;
       _targetTaps = 0;
       _roundBlankTaps = 0;
@@ -257,12 +277,19 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
     _token += 1;
     _spawnTimer?.cancel();
     _visibleTimer?.cancel();
+    _spawnScheduledAt = null;
+    _spawnWaitDuration = null;
+    _pausedSpawnRemaining = null;
+    _pausedVisibleRemaining = null;
+    _pausedMotionValue = null;
+    _targetElapsedBase = Duration.zero;
     _targetController.stop();
     _notifyView();
     _targetStopwatch
       ..stop()
       ..reset();
     _updateView(() {
+      _paused = false;
       _phase = _HandEyePhase.idle;
       _targetTaps = 0;
       _roundBlankTaps = 0;
@@ -275,8 +302,8 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
     });
   }
 
-  void _scheduleNextTarget() {
-    if (!mounted || _phase == _HandEyePhase.done) {
+  void _scheduleNextTarget({Duration? waitOverride}) {
+    if (!mounted || _paused || _phase == _HandEyePhase.done) {
       return;
     }
     if (_results.length >= _roundCount) {
@@ -285,12 +312,17 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
       return;
     }
     final token = _token;
-    final wait = Duration(milliseconds: 280 + _random.nextInt(950));
+    final wait =
+        waitOverride ?? Duration(milliseconds: 280 + _random.nextInt(950));
+    _spawnScheduledAt = DateTime.now();
+    _spawnWaitDuration = wait;
     _updateView(() => _phase = _HandEyePhase.waiting);
     _spawnTimer = Timer(wait, () {
       if (!mounted || token != _token || _phase != _HandEyePhase.waiting) {
         return;
       }
+      _spawnScheduledAt = null;
+      _spawnWaitDuration = null;
       _showTarget();
     });
   }
@@ -378,6 +410,12 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
   }
 
   void _showTarget() {
+    _spawnScheduledAt = null;
+    _spawnWaitDuration = null;
+    _pausedSpawnRemaining = null;
+    _pausedVisibleRemaining = null;
+    _pausedMotionValue = null;
+    _targetElapsedBase = Duration.zero;
     final randomAmplitude = 0.72 + _random.nextDouble() * 0.62;
     final randomSpeed = 0.78 + _random.nextDouble() * 0.52;
     final targetEdge = (_targetDiameter / 320).clamp(0.07, 0.16);
@@ -424,6 +462,7 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
       targetEnd: end,
     );
     _updateView(() {
+      _paused = false;
       _phase = _HandEyePhase.visible;
       _targetStart = start;
       _targetEnd = end;
@@ -434,16 +473,26 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
       _firstReaction = null;
       _distractors = distractors;
     });
-    final token = _token;
-    _visibleTimer?.cancel();
     if (_visibleMode == _HandEyeVisibleMode.timed) {
-      _visibleTimer = Timer(Duration(milliseconds: _displayMs), () {
-        if (!mounted || token != _token || _phase != _HandEyePhase.visible) {
-          return;
-        }
-        _completeTarget(success: false);
-      });
+      _scheduleVisibleTimeout(Duration(milliseconds: _displayMs));
     }
+  }
+
+  void _scheduleVisibleTimeout(Duration duration) {
+    final token = _token;
+    final remaining = duration <= Duration.zero
+        ? const Duration(milliseconds: 1)
+        : duration;
+    _visibleTimer?.cancel();
+    _visibleTimer = Timer(remaining, () {
+      if (!mounted ||
+          token != _token ||
+          _paused ||
+          _phase != _HandEyePhase.visible) {
+        return;
+      }
+      _completeTarget(success: false);
+    });
   }
 
   Duration _motionDuration() {
@@ -456,11 +505,14 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
   }
 
   double _targetMotionValue() {
+    if (_paused && _phase == _HandEyePhase.visible) {
+      return _pausedMotionValue ?? _targetController.value;
+    }
     if (_phase != _HandEyePhase.visible || !_targetStopwatch.isRunning) {
       return _targetController.value;
     }
     final durationMicros = math.max(1, _motionDuration().inMicroseconds);
-    final elapsedMicros = _targetStopwatch.elapsedMicroseconds;
+    final elapsedMicros = _targetElapsed.inMicroseconds;
     if (!_targetMotionEnabled) {
       return (elapsedMicros / durationMicros).clamp(0.0, 1.0).toDouble();
     }
@@ -473,7 +525,7 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
   }
 
   void _resumeTargetMotionDriverAfterFullscreen() {
-    if (!mounted || _phase != _HandEyePhase.visible) {
+    if (!mounted || _paused || _phase != _HandEyePhase.visible) {
       return;
     }
     _targetController.duration = _motionDuration();
@@ -530,10 +582,16 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
 
   void _completeTarget({required bool success}) {
     _visibleTimer?.cancel();
+    _spawnScheduledAt = null;
+    _spawnWaitDuration = null;
+    _pausedSpawnRemaining = null;
+    _pausedVisibleRemaining = null;
+    _pausedMotionValue = null;
     _targetController.stop();
     _notifyView();
+    final visibleFor = _targetElapsed;
     _targetStopwatch.stop();
-    final visibleFor = _targetStopwatch.elapsed;
+    _targetElapsedBase = visibleFor;
     final result = _HandEyeRoundResult(
       success: success,
       taps: _targetTaps,
@@ -546,6 +604,7 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
     );
     var done = false;
     _updateView(() {
+      _paused = false;
       _results.add(result);
       _phase = _results.length >= _roundCount
           ? _HandEyePhase.done
@@ -560,6 +619,100 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
     }
   }
 
+  void _pause() {
+    if (!_active) {
+      return;
+    }
+    _token += 1;
+    _spawnTimer?.cancel();
+    _visibleTimer?.cancel();
+    Duration? spawnRemaining;
+    Duration? visibleRemaining;
+    double? motionValue;
+    if (_phase == _HandEyePhase.waiting) {
+      final scheduledAt = _spawnScheduledAt;
+      final waitDuration = _spawnWaitDuration;
+      if (scheduledAt != null && waitDuration != null) {
+        spawnRemaining = waitDuration - DateTime.now().difference(scheduledAt);
+      }
+      if (spawnRemaining == null ||
+          spawnRemaining <= Duration.zero ||
+          spawnRemaining > (_spawnWaitDuration ?? spawnRemaining)) {
+        spawnRemaining = const Duration(milliseconds: 160);
+      }
+    } else if (_phase == _HandEyePhase.visible) {
+      motionValue = _targetMotionValue();
+      _targetElapsedBase = _targetElapsed;
+      _targetStopwatch
+        ..stop()
+        ..reset();
+      if (_visibleMode == _HandEyeVisibleMode.timed) {
+        visibleRemaining =
+            Duration(milliseconds: _displayMs) - _targetElapsedBase;
+        if (visibleRemaining <= Duration.zero) {
+          visibleRemaining = const Duration(milliseconds: 1);
+        }
+      }
+      _targetController.stop();
+    }
+    _updateView(() {
+      _paused = true;
+      _pausedSpawnRemaining = spawnRemaining;
+      _pausedVisibleRemaining = visibleRemaining;
+      _pausedMotionValue = motionValue;
+    });
+  }
+
+  void _resume() {
+    if (!_paused || !_inSession) {
+      return;
+    }
+    _token += 1;
+    if (_phase == _HandEyePhase.waiting) {
+      final remaining =
+          _pausedSpawnRemaining ?? const Duration(milliseconds: 160);
+      _updateView(() {
+        _paused = false;
+        _pausedSpawnRemaining = null;
+      });
+      _scheduleNextTarget(waitOverride: remaining);
+      return;
+    }
+    if (_phase == _HandEyePhase.visible) {
+      _targetController.duration = _motionDuration();
+      _targetStopwatch
+        ..reset()
+        ..start();
+      if (_targetMotionEnabled) {
+        _targetController.repeat(reverse: true);
+      } else {
+        _targetController.forward(from: _pausedMotionValue ?? 0);
+      }
+      final visibleRemaining = _pausedVisibleRemaining;
+      _updateView(() {
+        _paused = false;
+        _pausedVisibleRemaining = null;
+        _pausedMotionValue = null;
+      });
+      if (_visibleMode == _HandEyeVisibleMode.timed &&
+          visibleRemaining != null) {
+        _scheduleVisibleTimeout(visibleRemaining);
+      }
+    }
+  }
+
+  void _handlePrimaryAction() {
+    if (_paused) {
+      _resume();
+      return;
+    }
+    if (_active) {
+      _pause();
+      return;
+    }
+    _start();
+  }
+
   void _handleStageTap(Size size, Offset localPosition) {
     if (!_active) {
       return;
@@ -570,7 +723,7 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
     }
     final center = _targetCenter(size);
     if ((localPosition - center).distance <= _hitRadius) {
-      _firstReaction ??= _targetStopwatch.elapsed;
+      _firstReaction ??= _targetElapsed;
       _targetTaps += 1;
       if (_targetTaps >= _requiredTaps) {
         _completeTarget(success: true);
@@ -747,6 +900,18 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
   }
 
   String _phaseText(AppI18n i18n) {
+    if (_paused) {
+      return pickUiText(
+        i18n,
+        zh: '已暂停，点击继续恢复本轮测试。',
+        en: 'Paused. Press Continue to resume this round.',
+        ja: 'Paused. Press Continue to resume this round.',
+        de: 'Paused. Press Continue to resume this round.',
+        fr: 'En pause. Appuyez sur Continuer pour reprendre ce tour.',
+        es: 'Pausado. Pulsa Continuar para reanudar esta ronda.',
+        ru: 'Пауза. Нажмите «Продолжить», чтобы возобновить раунд.',
+      );
+    }
     return switch (_phase) {
       _HandEyePhase.idle => pickUiText(
         i18n,
@@ -788,6 +953,64 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
         es: 'Prueba completa. Reiniciar o empezar de nuevo.',
         ru: 'Тест завершен. Перезагрузить или начать заново.',
       ),
+    };
+  }
+
+  String _primaryActionLabel(AppI18n i18n) {
+    if (_paused) {
+      return pickUiText(
+        i18n,
+        zh: '继续',
+        en: 'Continue',
+        ja: 'Continue',
+        de: 'Continue',
+        fr: 'Continuer',
+        es: 'Continuar',
+        ru: 'Продолжить',
+      );
+    }
+    return switch (_phase) {
+      _HandEyePhase.idle => pickUiText(
+        i18n,
+        zh: '开始',
+        en: 'Start',
+        ja: 'Start',
+        de: 'Start',
+        fr: 'Démarrer',
+        es: 'Comienzo',
+        ru: 'Начинать',
+      ),
+      _HandEyePhase.waiting || _HandEyePhase.visible => pickUiText(
+        i18n,
+        zh: '暂停',
+        en: 'Pause',
+        ja: 'Pause',
+        de: 'Pause',
+        fr: 'Pause',
+        es: 'Pausa',
+        ru: 'Пауза',
+      ),
+      _HandEyePhase.done => pickUiText(
+        i18n,
+        zh: '重新开始',
+        en: 'Restart',
+        ja: 'Restart',
+        de: 'Restart',
+        fr: 'Redémarrer',
+        es: 'Restart',
+        ru: 'Перезапустить',
+      ),
+    };
+  }
+
+  IconData _primaryActionIcon() {
+    if (_paused) {
+      return Icons.play_arrow_rounded;
+    }
+    return switch (_phase) {
+      _HandEyePhase.idle => Icons.play_arrow_rounded,
+      _HandEyePhase.waiting || _HandEyePhase.visible => Icons.pause_rounded,
+      _HandEyePhase.done => Icons.restart_alt_rounded,
     };
   }
 
@@ -944,31 +1167,10 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
           runSpacing: 10,
           children: <Widget>[
             _HumanActionButton(
-              label: _active
-                  ? pickUiText(
-                      i18n,
-                      zh: '进行中',
-                      en: 'Running',
-                      ja: 'Running',
-                      de: 'Running',
-                      fr: 'Courir',
-                      es: 'Corriendo',
-                      ru: 'бегать',
-                    )
-                  : pickUiText(
-                      i18n,
-                      zh: '重新开始',
-                      en: 'Restart',
-                      ja: 'Restart',
-                      de: 'Restart',
-                      fr: 'Redémarrer',
-                      es: 'Restart',
-                      ru: 'Перезапустить',
-                    ),
-              icon: _active
-                  ? Icons.track_changes_rounded
-                  : Icons.restart_alt_rounded,
-              onPressed: _active ? null : _start,
+              key: const ValueKey<String>('hand_eye_primary_start_button'),
+              label: _primaryActionLabel(i18n),
+              icon: _primaryActionIcon(),
+              onPressed: _handlePrimaryAction,
             ),
             OutlinedButton.icon(
               onPressed: _reset,

@@ -58,6 +58,7 @@ import 'package:vocabulary_sleep_app/src/ui/pages/practice_review_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/practice_session_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/recognition_settings_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_human_tests.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_life_tools.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_soothing_music/runtime_store.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_soothing_music_v2_page.dart';
@@ -810,6 +811,1077 @@ void main() {
       expect(find.text('Scoreboard'), findsWidgets);
     });
 
+    testWidgets('life tools opens timeline and periodic visualizations', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'Timeline');
+      await tester.pumpAndSettle();
+
+      final timelineCard = find
+          .ancestor(
+            of: find.text('Timeline and periodic table'),
+            matching: find.byType(Card),
+          )
+          .first;
+      await tester.tap(timelineCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('timeline-periodic-page')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('history-timeline-stage')),
+        findsOneWidget,
+      );
+      expect(find.text('Timeline filters'), findsOneWidget);
+      expect(find.text('Story'), findsOneWidget);
+
+      final immersiveButton = find.byKey(
+        const ValueKey<String>('timeline-immersive-open'),
+      );
+      await tester.ensureVisible(immersiveButton);
+      await tester.pumpAndSettle();
+      await tester.tap(immersiveButton);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('timeline-immersive-page')),
+        findsOneWidget,
+      );
+      await tester.tap(
+        find.byKey(const ValueKey<String>('timeline-immersive-close')),
+      );
+      await tester.pumpAndSettle();
+
+      final elementsChip = find.widgetWithText(ChoiceChip, 'Elements');
+      await tester.ensureVisible(elementsChip);
+      await tester.pumpAndSettle();
+      await tester.tap(elementsChip);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('periodic-table-stage')),
+        findsOneWidget,
+      );
+      expect(find.text('H · Hydrogen'), findsOneWidget);
+    });
+
+    testWidgets('life tools opens work worth calculator and updates score', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'Work value');
+      await tester.pumpAndSettle();
+
+      final workWorthCard = find
+          .ancestor(
+            of: find.text('Work value calculator'),
+            matching: find.byType(Card),
+          )
+          .first;
+      await tester.tap(workWorthCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('work-worth-stage')),
+        findsOneWidget,
+      );
+      expect(find.text('Job value score'), findsOneWidget);
+      expect(find.text('Income and costs'), findsOneWidget);
+      expect(find.text('Work environment'), findsOneWidget);
+      expect(find.text('Reference standards'), findsOneWidget);
+
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Monthly salary'),
+        '30000',
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('PPP daily'), findsOneWidget);
+    });
+
+    testWidgets('life tools opens AI interview practice desk', (tester) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'AI interview');
+      await tester.pumpAndSettle();
+
+      final aiInterviewCard = find
+          .ancestor(of: find.text('AI interview'), matching: find.byType(Card))
+          .first;
+      await tester.tap(aiInterviewCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('life-ai-interview-stage')),
+        findsOneWidget,
+      );
+      expect(find.text('Interview readiness'), findsOneWidget);
+      expect(find.text('Question and material'), findsOneWidget);
+      expect(find.text('Answer frame'), findsOneWidget);
+      expect(find.text('Prompt draft'), findsOneWidget);
+    });
+
+    testWidgets(
+      'life tools opens city salary compare and updates target salary',
+      (tester) async {
+        final state = _FakeAppState.sample(uiLanguage: 'en');
+        await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+        await tester.enterText(find.byType(TextField).first, 'City salary');
+        await tester.pumpAndSettle();
+
+        final cityCompareCard = find
+            .ancestor(
+              of: find.text('City salary compare'),
+              matching: find.byType(Card),
+            )
+            .first;
+        await tester.tap(cityCompareCard, warnIfMissed: false);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const ValueKey<String>('city-compare-stage')),
+          findsOneWidget,
+        );
+        expect(find.text('Equivalent target salary'), findsOneWidget);
+        expect(find.text('Cities and salary'), findsOneWidget);
+        expect(find.text('Lifestyle profile'), findsOneWidget);
+
+        await tester.enterText(
+          find.byKey(const ValueKey<String>('city-compare-salary-field')),
+          '30000',
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const ValueKey<String>('city-compare-required-card')),
+          findsOneWidget,
+        );
+        expect(find.text('Target salary to match'), findsOneWidget);
+        expect(find.text('Comparison insights'), findsOneWidget);
+        expect(find.text('Reference detail items'), findsOneWidget);
+        expect(find.text('Adjustments and custom expenses'), findsOneWidget);
+
+        await tester.enterText(
+          find.byKey(
+            const ValueKey<String>('city-compare-custom-expense-label-field'),
+          ),
+          'Pet care',
+        );
+        await tester.enterText(
+          find.byKey(
+            const ValueKey<String>('city-compare-custom-expense-amount-field'),
+          ),
+          '800',
+        );
+        await tester.tap(
+          find.byKey(const ValueKey<String>('city-compare-add-custom-expense')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Pet care'), findsOneWidget);
+      },
+    );
+
+    testWidgets('life tools opens offer selector and updates an offer', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'Offer selector');
+      await tester.pumpAndSettle();
+
+      final offerCard = find
+          .ancestor(
+            of: find.text('Offer selector'),
+            matching: find.byType(Card),
+          )
+          .first;
+      await tester.tap(offerCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('offer-select-stage')),
+        findsOneWidget,
+      );
+      expect(find.text('Current pick'), findsOneWidget);
+      expect(find.text('Decision weights'), findsOneWidget);
+      expect(find.text('Ranking breakdown'), findsOneWidget);
+      expect(find.text('Reference toolchain'), findsOneWidget);
+
+      final salaryField = find.byKey(
+        const ValueKey<String>('offer-select-offer_a-monthly-base'),
+      );
+      await tester.ensureVisible(salaryField);
+      await tester.enterText(salaryField, '36000');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Offer A'), findsWidgets);
+      expect(find.text('Decision report'), findsOneWidget);
+    });
+
+    testWidgets('life tools opens mortgage calculator and switches mode', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'Mortgage');
+      await tester.pumpAndSettle();
+
+      final mortgageCard = find
+          .ancestor(
+            of: find.text('Mortgage calculator'),
+            matching: find.byType(Card),
+          )
+          .first;
+      await tester.tap(mortgageCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('life-mortgage-page')),
+        findsOneWidget,
+      );
+      expect(find.text('Loan setup'), findsOneWidget);
+      expect(find.text('Progress and fees'), findsOneWidget);
+      expect(find.text('Remaining principal'), findsWidgets);
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Housing area'));
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(TextField, 'Unit price'), findsOneWidget);
+      expect(find.text('Property total'), findsOneWidget);
+    });
+
+    testWidgets('life tools opens date calculator progress and candle tabs', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'Date calculator');
+      await tester.pumpAndSettle();
+
+      final dateCard = find
+          .ancestor(
+            of: find.text('Date calculator'),
+            matching: find.byType(Card),
+          )
+          .first;
+      await tester.tap(dateCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('life-date-calculator-page')),
+        findsOneWidget,
+      );
+      expect(find.text('Second-level difference'), findsOneWidget);
+      expect(find.text('Multi-unit date math'), findsNothing);
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Add'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Multi-unit date math'), findsOneWidget);
+      expect(find.widgetWithText(TextField, 'Years'), findsOneWidget);
+
+      await tester.enterText(find.widgetWithText(TextField, 'Years'), '50%');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Result'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Progress'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Target progress'), findsOneWidget);
+      expect(find.text('Current period left'), findsOneWidget);
+      expect(find.text('This year left'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Candle'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Life candle'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('date-life-candle')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+      'life tools opens text transform modes and conditional fields',
+      (tester) async {
+        final state = _FakeAppState.sample(uiLanguage: 'en');
+        await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+        await tester.enterText(find.byType(TextField).first, 'Text transform');
+        await tester.pumpAndSettle();
+
+        final textTransformCard = find
+            .ancestor(
+              of: find.text('Text transform'),
+              matching: find.byType(Card),
+            )
+            .first;
+        await tester.tap(textTransformCard, warnIfMissed: false);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Current tool'), findsOneWidget);
+        expect(find.text('Category'), findsOneWidget);
+        expect(find.text('Mode'), findsOneWidget);
+        expect(find.text('Input area'), findsOneWidget);
+        expect(find.text('Results'), findsOneWidget);
+        expect(find.text('Pinyin and zhuyin'), findsOneWidget);
+        expect(find.text('Number writing'), findsOneWidget);
+        expect(find.text('Solar to lunar'), findsOneWidget);
+        expect(find.text('Language code lookup'), findsOneWidget);
+        expect(find.text('Chinese to pinyin'), findsNothing);
+        expect(
+          find.byKey(const ValueKey<String>('life_text_transform_input_field')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey<String>('life_text_transform_key_field')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(
+            const ValueKey<String>('life_text_transform_secondary_field'),
+          ),
+          findsNothing,
+        );
+
+        await tester.tap(find.widgetWithText(ChoiceChip, 'Phonetic').first);
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.widgetWithText(ChoiceChip, 'Pinyin and zhuyin').first,
+        );
+        await tester.pumpAndSettle();
+
+        await tester.enterText(
+          find.byKey(const ValueKey<String>('life_text_transform_input_field')),
+          '中文',
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Pinyin without tone'), findsOneWidget);
+        expect(find.text('Zhuyin'), findsOneWidget);
+
+        await tester.tap(find.widgetWithText(ChoiceChip, 'Hidden').first);
+        await tester.pumpAndSettle();
+        await tester.tap(find.widgetWithText(ChoiceChip, 'Hide text').first);
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(
+            const ValueKey<String>('life_text_transform_secondary_field'),
+          ),
+          findsOneWidget,
+        );
+
+        await tester.enterText(
+          find.byKey(const ValueKey<String>('life_text_transform_input_field')),
+          'cover',
+        );
+        await tester.enterText(
+          find.byKey(
+            const ValueKey<String>('life_text_transform_secondary_field'),
+          ),
+          'secret',
+        );
+        await tester.pumpAndSettle();
+        expect(find.textContaining('cover'), findsWidgets);
+
+        await tester.tap(find.widgetWithText(ChoiceChip, 'Number').first);
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.widgetWithText(ChoiceChip, 'Number writing').first,
+        );
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.byKey(const ValueKey<String>('life_text_transform_input_field')),
+          '2024',
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Roman numeral'), findsOneWidget);
+        expect(find.text('Chinese numerals'), findsOneWidget);
+        expect(find.text('RMB uppercase'), findsOneWidget);
+        expect(find.text('English words'), findsOneWidget);
+        expect(find.byIcon(Icons.copy_rounded), findsWidgets);
+
+        await tester.tap(find.widgetWithText(ChoiceChip, 'Encoding').first);
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.widgetWithText(ChoiceChip, 'RC4 legacy encode').first,
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const ValueKey<String>('life_text_transform_key_field')),
+          findsOneWidget,
+        );
+
+        await tester.enterText(
+          find.byKey(const ValueKey<String>('life_text_transform_input_field')),
+          'hello',
+        );
+        await tester.enterText(
+          find.byKey(const ValueKey<String>('life_text_transform_key_field')),
+          'k',
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('RC4 Base64'), findsOneWidget);
+
+        await tester.tap(find.widgetWithText(ChoiceChip, 'Calendar').first);
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.widgetWithText(ChoiceChip, 'Solar to lunar').first,
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Lunar date'), findsOneWidget);
+
+        await tester.tap(find.widgetWithText(ChoiceChip, 'Style').first);
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.widgetWithText(ChoiceChip, 'Vertical layout').first,
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(
+            const ValueKey<String>('life_text_transform_vertical_columns'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(
+            const ValueKey<String>('life_text_transform_vertical_rows'),
+          ),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets('life tools opens compass stage with heading status', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'Compass');
+      await tester.pumpAndSettle();
+
+      final compassCard = find
+          .ancestor(of: find.text('Compass'), matching: find.byType(Card))
+          .first;
+      await tester.tap(compassCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Direction stage'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('life-compass-stage')),
+        findsOneWidget,
+      );
+      expect(find.text('Usage notes'), findsOneWidget);
+      expect(find.text('Field'), findsOneWidget);
+    });
+
+    testWidgets('life tools opens level stage with mode controls', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'Level meter');
+      await tester.pumpAndSettle();
+
+      final levelCard = find
+          .ancestor(of: find.text('Level meter'), matching: find.byType(Card))
+          .first;
+      await tester.tap(levelCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Mode and stage'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('life-level-stage')),
+        findsOneWidget,
+      );
+      expect(find.text('Level'), findsWidgets);
+      expect(find.text('Plumb'), findsWidgets);
+      expect(find.text('Reading notes'), findsOneWidget);
+    });
+
+    testWidgets('life tools opens vibration stage with pattern controls', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'Vibration tool');
+      await tester.pumpAndSettle();
+
+      final vibrationCard = find
+          .ancestor(
+            of: find.text('Vibration tool'),
+            matching: find.byType(Card),
+          )
+          .first;
+      await tester.tap(vibrationCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Current rhythm'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('life-vibration-stage')),
+        findsOneWidget,
+      );
+      expect(find.text('Pattern settings'), findsOneWidget);
+      expect(find.text('Pulse width'), findsOneWidget);
+      expect(find.text('Gap'), findsOneWidget);
+      expect(find.text('Test'), findsOneWidget);
+    });
+
+    testWidgets('life tools opens notify me and creates a reminder', (
+      tester,
+    ) async {
+      final focusService = _FakeFocusService(
+        todos: const <TodoItem>[],
+        todoSystemRemindersEnabled: true,
+      );
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        focusService: focusService,
+        todoSystemRemindersEnabled: true,
+      );
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'Notify me');
+      await tester.pumpAndSettle();
+
+      final notifyCard = find
+          .ancestor(of: find.text('Notify me'), matching: find.byType(Card))
+          .first;
+      await tester.tap(notifyCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('life-notify-page')),
+        findsOneWidget,
+      );
+
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('life-notify-title')),
+        'Pay rent',
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('life-notify-note')),
+        'Before 6 PM',
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(
+        find.byKey(const ValueKey<String>('life-notify-create-button')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey<String>('life-notify-create-button')),
+        warnIfMissed: false,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pay rent'), findsWidgets);
+      expect(
+        focusService.getTodos().where(
+          (item) => item.category == 'life_notify_me',
+        ),
+        hasLength(1),
+      );
+    });
+
+    testWidgets('life tools opens fake incoming call and starts a session', (
+      tester,
+    ) async {
+      _mockSystemChromeForFullscreenTest();
+      final focusService = _FakeFocusService(
+        todos: const <TodoItem>[],
+        todoSystemRemindersEnabled: true,
+      );
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        focusService: focusService,
+        todoSystemRemindersEnabled: true,
+      );
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(
+        find.byType(TextField).first,
+        'Fake incoming call',
+      );
+      await tester.pumpAndSettle();
+
+      final fakeCallCard = find
+          .ancestor(
+            of: find.text('Fake incoming call'),
+            matching: find.byType(Card),
+          )
+          .first;
+      await tester.tap(fakeCallCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('life-fake-call-page')),
+        findsOneWidget,
+      );
+      expect(find.text('Call preview'), findsOneWidget);
+      expect(
+        find.byKey(
+          const ValueKey<String>('life-fake-call-incoming-background-button'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(
+          const ValueKey<String>('life-fake-call-incall-background-button'),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('life-fake-call-caller-name')),
+        'Manager',
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(
+        find.byKey(const ValueKey<String>('life-fake-call-preview-button')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey<String>('life-fake-call-preview-button')),
+        warnIfMissed: false,
+      );
+      await _pumpUntilFound(tester, find.text('Incoming call'));
+      await tester.tap(
+        find.byKey(const ValueKey<String>('life-fake-call-accept-button')),
+        warnIfMissed: false,
+      );
+      await tester.pump(const Duration(milliseconds: 320));
+      expect(find.text('In call'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('life-fake-call-call-duration')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life-fake-call-incall-animation')),
+        findsOneWidget,
+      );
+      await tester.tap(
+        find.byKey(const ValueKey<String>('life-fake-call-hangup-button')),
+        warnIfMissed: false,
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey<String>('life-fake-call-page')),
+        findsOneWidget,
+      );
+
+      await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Countdown'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.widgetWithText(ChoiceChip, 'Countdown'),
+        warnIfMissed: false,
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('life-fake-call-countdown-value')),
+        '30',
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey<String>('life-fake-call-countdown-unit')),
+        warnIfMissed: false,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Seconds').last, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(
+        find.byKey(const ValueKey<String>('life-fake-call-start-button')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey<String>('life-fake-call-start-button')),
+        warnIfMissed: false,
+      );
+      await _pumpUntilFound(tester, find.text('Cancel call'));
+
+      expect(find.text('Manager'), findsWidgets);
+      expect(find.text('Cancel call'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('life-fake-call-remaining')),
+        findsOneWidget,
+      );
+      expect(
+        focusService.getTodos().where(
+          (item) => item.category == 'life_fake_call',
+        ),
+        isEmpty,
+      );
+
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('life tools opens number marks and converts text', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(
+        find.byType(TextField).first,
+        'Super or subscript',
+      );
+      await tester.pumpAndSettle();
+
+      final markCard = find
+          .ancestor(
+            of: find.text('Super or subscript'),
+            matching: find.byType(Card),
+          )
+          .first;
+      await tester.tap(markCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('life-number-marks-page')),
+        findsOneWidget,
+      );
+
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('life-number-marks-input')),
+        '12',
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('¹²'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Circled').first);
+      await tester.pumpAndSettle();
+      expect(find.text('⑫'), findsOneWidget);
+    });
+
+    testWidgets('life tools opens short link tool controls', (tester) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'Short link tool');
+      await tester.pumpAndSettle();
+
+      final shortLinkCard = find
+          .ancestor(
+            of: find.text('Short link tool'),
+            matching: find.byType(Card),
+          )
+          .first;
+      await tester.tap(shortLinkCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Link workspace'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('life-short-link-url-field')),
+        findsOneWidget,
+      );
+      expect(find.text('Local alias'), findsOneWidget);
+      expect(find.text('Resolve'), findsOneWidget);
+    });
+
+    testWidgets('life tools opens QR generator rich controls', (tester) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'QR generator');
+      await tester.pumpAndSettle();
+
+      final qrCard = find
+          .ancestor(of: find.text('QR generator'), matching: find.byType(Card))
+          .first;
+      await tester.tap(qrCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('life-qr-page')),
+        findsOneWidget,
+      );
+      expect(find.text('Data Matrix'), findsOneWidget);
+      expect(find.text('Image payload'), findsOneWidget);
+      expect(find.text('QArt style'), findsOneWidget);
+      expect(find.text('Halftone art'), findsOneWidget);
+      expect(find.text('Transparent art'), findsOneWidget);
+      expect(find.text('Art QR preset'), findsOneWidget);
+      expect(find.text('Apply low-correction V25'), findsOneWidget);
+      expect(find.text('Exact QR version'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Wi-Fi').first);
+      await tester.pumpAndSettle();
+      expect(find.text('Wi-Fi SSID'), findsOneWidget);
+      expect(find.text('Encryption'), findsOneWidget);
+    });
+
+    testWidgets('life tools QR shows capacity error instead of throwing', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'QR generator');
+      await tester.pumpAndSettle();
+
+      final qrCard = find
+          .ancestor(of: find.text('QR generator'), matching: find.byType(Card))
+          .first;
+      await tester.tap(qrCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('life-qr-url-field')),
+        List<String>.filled(20000, 'A').join(),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Payload is too large'), findsWidgets);
+      expect(find.textContaining('Cannot render'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('life tools opens meme maker controls', (tester) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'Meme maker');
+      await tester.pumpAndSettle();
+
+      final memeCard = find
+          .ancestor(of: find.text('Meme maker'), matching: find.byType(Card))
+          .first;
+      await tester.tap(memeCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('life-meme-page')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life-meme-pick-button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life-meme-top-text')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life-meme-empty')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('life tools opens device frame controls', (tester) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'Device frame shot');
+      await tester.pumpAndSettle();
+
+      final frameCard = find
+          .ancestor(
+            of: find.text('Device frame shot'),
+            matching: find.byType(Card),
+          )
+          .first;
+      await tester.tap(frameCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('life-device-frame-page')),
+        findsOneWidget,
+      );
+      expect(find.text('Screenshot stage'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('life-device-frame-preview-stage')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life-device-frame-pick-button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life-device-frame-status-switch')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life-device-frame-empty')),
+        findsOneWidget,
+      );
+
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey<String>('life-device-frame-status-switch')),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('life-device-frame-status-switch')),
+        warnIfMissed: false,
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('life-device-frame-time-field')),
+        findsOneWidget,
+      );
+      expect(find.text('Obsidian island'), findsOneWidget);
+      expect(find.text('Frost hole-punch'), findsOneWidget);
+      expect(find.text('Fit whole image'), findsOneWidget);
+      expect(find.text('Battery state'), findsOneWidget);
+      expect(find.text('Charging'), findsOneWidget);
+    });
+
+    testWidgets('life tools converts default unit inputs', (tester) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'Unit converter');
+      await tester.pumpAndSettle();
+
+      final unitCard = find
+          .ancestor(
+            of: find.text('Unit converter'),
+            matching: find.byType(Card),
+          )
+          .first;
+      await tester.tap(unitCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('life-unit-converter-page')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life-unit-converter-source')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life-unit-converter-target')),
+        findsOneWidget,
+      );
+
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('life-unit-converter-source')),
+        '10',
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('10 m = 1000 cm'), findsOneWidget);
+      expect(find.text('CSS size'), findsOneWidget);
+      expect(find.text('ID photo size'), findsOneWidget);
+    });
+
+    testWidgets('life tools recalculates bmi classification', (tester) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'BMI calculator');
+      await tester.pumpAndSettle();
+
+      final bmiCard = find
+          .ancestor(
+            of: find.text('BMI calculator'),
+            matching: find.byType(Card),
+          )
+          .first;
+      await tester.tap(bmiCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('life-bmi-page')),
+        findsOneWidget,
+      );
+      expect(find.text('BMI 22.49'), findsOneWidget);
+      expect(find.text('Healthy'), findsOneWidget);
+
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('life-bmi-weight-kg')),
+        '80',
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('BMI 27.68'), findsOneWidget);
+      expect(find.text('Overweight'), findsOneWidget);
+      expect(find.text('Waist/height'), findsOneWidget);
+      expect(find.text('BMR'), findsOneWidget);
+
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('life-bmi-age')),
+        '10',
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('life-bmi-height-cm')),
+        '140',
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('life-bmi-weight-kg')),
+        '45',
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('BMI 22.96'), findsOneWidget);
+      expect(find.text('Child'), findsOneWidget);
+      expect(find.text('Percentile'), findsOneWidget);
+    });
+
+    testWidgets('life tools opens world clock and filters cities', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'World clock');
+      await tester.pumpAndSettle();
+
+      final worldClockCard = find
+          .ancestor(of: find.text('World clock'), matching: find.byType(Card))
+          .first;
+      await tester.tap(worldClockCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('life-world-clock-page')),
+        findsOneWidget,
+      );
+      expect(find.text('Local time'), findsOneWidget);
+      expect(find.text('Pinned clocks'), findsOneWidget);
+      expect(find.text('City list'), findsOneWidget);
+
+      await tester.enterText(
+        find.byKey(const ValueKey<String>('life-world-clock-search')),
+        'London',
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('London'), findsWidgets);
+
+      final businessFilter = find.byKey(
+        const ValueKey<String>('life-world-clock-business-filter'),
+      );
+      await tester.ensureVisible(businessFilter);
+      await tester.pumpAndSettle();
+      await tester.tap(businessFilter);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Business hours now'), findsOneWidget);
+    });
+
     testWidgets('life tools exposes deep time screen and barrage controls', (
       tester,
     ) async {
@@ -1280,7 +2352,9 @@ void main() {
       });
     });
 
-    testWidgets('life tools opens image compression controls', (tester) async {
+    testWidgets('life tools opens image compression slash upscale controls', (
+      tester,
+    ) async {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const ToolboxPage());
 
@@ -1301,27 +2375,45 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.scrollUntilVisible(
-        find.text('Image compression'),
+        find.text('Image compression / upscale'),
         300,
         scrollable: find.byType(Scrollable).last,
       );
       await tester.pumpAndSettle();
 
-      final imageCompressCard = find
+      final imageTransformCard = find
           .ancestor(
-            of: find.text('Image compression'),
+            of: find.text('Image compression / upscale'),
             matching: find.byType(Card),
           )
           .first;
-      await tester.ensureVisible(imageCompressCard);
-      await tester.pumpAndSettle();
-      await tester.tap(imageCompressCard, warnIfMissed: false);
+      await tester.ensureVisible(imageTransformCard);
+      await tester.tap(imageTransformCard, warnIfMissed: false);
       await tester.pumpAndSettle();
 
-      expect(find.text('Source image'), findsOneWidget);
-      expect(find.text('Compression settings'), findsOneWidget);
-      expect(find.text('Compression result'), findsOneWidget);
-      expect(find.text('Preview'), findsOneWidget);
+      expect(find.text('Tool tabs'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('life_image_transform_tab_field')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(
+            const ValueKey<String>('life_image_transform_tab_field'),
+          ),
+          matching: find.text('Compress'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(
+            const ValueKey<String>('life_image_transform_tab_field'),
+          ),
+          matching: find.text('Upscale'),
+        ),
+        findsOneWidget,
+      );
       expect(
         find.byKey(const ValueKey<String>('life_image_compress_pick_button')),
         findsOneWidget,
@@ -1334,65 +2426,169 @@ void main() {
         find.byKey(const ValueKey<String>('life_image_compress_save_button')),
         findsOneWidget,
       );
-      expect(find.text('By ratio'), findsOneWidget);
-      expect(find.text('By width'), findsOneWidget);
-      expect(find.text('Auto best'), findsOneWidget);
-      expect(find.text('JPEG balanced'), findsOneWidget);
-      expect(find.text('JPEG aggressive'), findsOneWidget);
-      expect(find.text('PNG lossless'), findsOneWidget);
-      expect(find.text('GIF indexed'), findsOneWidget);
-      expect(find.text('Lossy preprocess'), findsOneWidget);
-      expect(find.text('Original color'), findsOneWidget);
-      expect(find.text('Grayscale'), findsOneWidget);
-      expect(find.text('Black/white'), findsOneWidget);
-      expect(find.text('DPI option'), findsOneWidget);
-      expect(find.text('No custom DPI'), findsOneWidget);
-      expect(find.text('Write PNG DPI'), findsOneWidget);
+
+      await tester.tap(find.text('Upscale').last, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('life_image_upscale_pick_button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life_image_upscale_run_button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life_image_upscale_save_button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life_image_upscale_mode_field')),
+        findsOneWidget,
+      );
       expect(
         find.byKey(
-          const ValueKey<String>('life_image_compress_color_mode_field'),
+          const ValueKey<String>('life_image_upscale_custom_scale_field'),
         ),
         findsOneWidget,
       );
       expect(
         find.byKey(
-          const ValueKey<String>('life_image_compress_dpi_mode_field'),
+          const ValueKey<String>('life_image_upscale_algorithm_field'),
         ),
         findsOneWidget,
       );
-      expect(find.text('JPEG quality'), findsOneWidget);
+      expect(find.text('Fast duplicate'), findsWidgets);
+      expect(
+        find.byKey(const ValueKey<String>('life_image_upscale_format_field')),
+        findsOneWidget,
+      );
       expect(find.text('No image selected yet.'), findsOneWidget);
     });
 
-    testWidgets('life tools opens steganography controls', (tester) async {
+    testWidgets('life tools opens id photo generator controls', (tester) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'ID photo');
+      await tester.pumpAndSettle();
+
+      final idPhotoCard = find
+          .ancestor(of: find.text('ID photo'), matching: find.byType(Card))
+          .first;
+      await tester.tap(idPhotoCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('life-id-photo-page')),
+        findsOneWidget,
+      );
+      expect(find.text('Photo stage'), findsOneWidget);
+      expect(find.text('Generation settings'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('life_id_photo_pick_button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life_id_photo_preset_field')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(
+          const ValueKey<String>('life_id_photo_replace_background_switch'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life_id_photo_generate_button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life_id_photo_save_button')),
+        findsOneWidget,
+      );
+      expect(find.text('No photo selected yet.'), findsOneWidget);
+    });
+
+    testWidgets('life tools opens image to webpage controls', (tester) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'Image to webpage');
+      await tester.pumpAndSettle();
+
+      final imageToWebCard = find
+          .ancestor(
+            of: find.text('Image to webpage'),
+            matching: find.byType(Card),
+          )
+          .first;
+      await tester.tap(imageToWebCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('life-image-to-web-page')),
+        findsOneWidget,
+      );
+      expect(find.text('Image stage'), findsOneWidget);
+      expect(find.text('Page settings'), findsOneWidget);
+      expect(find.text('Local webpage'), findsOneWidget);
+      expect(find.text('Temporary image share'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('life_image_to_web_pick_button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(
+          const ValueKey<String>('life_image_to_web_save_html_button'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('life_image_to_web_upload_button')),
+        findsOneWidget,
+      );
+      expect(find.text('No image selected yet.'), findsOneWidget);
+      expect(find.text('Contain'), findsWidgets);
+      expect(find.text('Cover'), findsWidgets);
+      expect(find.text('Checker'), findsWidgets);
+    });
+
+    testWidgets('crypto security opens steganography controls', (tester) async {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const ToolboxPage());
 
       await tester.scrollUntilVisible(
-        find.text('Life tool hub'),
+        find.text('Crypto security hub'),
         300,
         scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
 
-      final lifeHubCard = find
+      final cryptoHubCard = find
           .ancestor(
-            of: find.text('Life tool hub'),
+            of: find.text('Crypto security hub'),
             matching: find.byType(InkWell),
           )
           .first;
-      await tester.tap(lifeHubCard, warnIfMissed: false);
+      await tester.tap(cryptoHubCard, warnIfMissed: false);
       await tester.pumpAndSettle();
 
+      expect(find.text('Security workspace'), findsOneWidget);
+      expect(find.text('Available modules'), findsOneWidget);
+
       await tester.scrollUntilVisible(
-        find.text('Steganography'),
+        find.text('Media steganography'),
         300,
         scrollable: find.byType(Scrollable).last,
       );
       await tester.pumpAndSettle();
 
       final stegoCard = find
-          .ancestor(of: find.text('Steganography'), matching: find.byType(Card))
+          .ancestor(
+            of: find.text('Media steganography').last,
+            matching: find.byType(InkWell),
+          )
           .first;
       await tester.ensureVisible(stegoCard);
       await tester.tap(stegoCard, warnIfMissed: false);
@@ -1530,6 +2726,17 @@ void main() {
         find.byKey(const ValueKey<String>('life_crypto_hash_run_button')),
         findsOneWidget,
       );
+    });
+
+    testWidgets('life tools no longer lists steganography entry', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      expect(find.text('Steganography'), findsNothing);
+      expect(find.text('Media steganography'), findsNothing);
+      expect(find.text('Image compression / upscale'), findsOneWidget);
     });
 
     testWidgets('life tools opens simple mind map and edits nodes', (
@@ -2236,6 +3443,15 @@ void main() {
       expect(find.text('Success'), findsOneWidget);
       expect(find.text('Missed'), findsOneWidget);
       expect(find.text('Blanks'), findsOneWidget);
+      expect(find.text('Restart'), findsNothing);
+      expect(
+        find.byKey(const ValueKey<String>('hand_eye_stage_start_button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('hand_eye_primary_start_button')),
+        findsOneWidget,
+      );
 
       await tester.tap(find.text('Target settings'));
       await tester.pumpAndSettle();
@@ -2273,10 +3489,35 @@ void main() {
         scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
-      await tester.tap(startButton, warnIfMissed: false);
+      await tester.tap(
+        find.byKey(const ValueKey<String>('hand_eye_stage_start_button')),
+        warnIfMissed: false,
+      );
       await tester.pump();
 
       expect(find.text('Waiting for target'), findsOneWidget);
+      expect(find.text('Pause'), findsOneWidget);
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('hand_eye_primary_start_button')),
+        warnIfMissed: false,
+      );
+      await tester.pump();
+
+      expect(
+        find.text('Paused. Press Continue to resume this round.'),
+        findsOneWidget,
+      );
+      expect(find.text('Continue'), findsOneWidget);
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('hand_eye_primary_start_button')),
+        warnIfMissed: false,
+      );
+      await tester.pump();
+
+      expect(find.text('Waiting for target'), findsOneWidget);
+      expect(find.text('Pause'), findsOneWidget);
     });
 
     testWidgets('hand-eye completion report fits narrow viewport', (

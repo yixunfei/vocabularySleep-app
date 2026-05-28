@@ -34,6 +34,7 @@ class _LifeColorOption {
 
 class _LifeSettingsPanel extends StatelessWidget {
   const _LifeSettingsPanel({
+    super.key,
     required this.title,
     this.subtitle,
     required this.children,

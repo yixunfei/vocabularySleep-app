@@ -89,6 +89,11 @@ class ModuleRegistry {
       group: ModuleGroup.toolbox,
       parentId: ModuleIds.toolbox,
     ),
+    ModuleDescriptor(
+      id: ModuleIds.toolboxCryptoSecurity,
+      group: ModuleGroup.toolbox,
+      parentId: ModuleIds.toolbox,
+    ),
   ];
 
   static final Map<String, ModuleDescriptor> _byId = <String, ModuleDescriptor>{

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import '../models/todo_item.dart';
+import 'toolbox_life_notify_service.dart';
 
 abstract interface class TodoReminderService {
   Future<void> syncTodo(TodoItem item);
@@ -78,6 +79,7 @@ class PlatformTodoReminderService implements TodoReminderService {
       }
 
       final dueAt = item.dueAt!;
+      final lifeNotify = buildLifeNotifyTodoViewData(item);
       final minutesBefore =
           item.systemCalendarAlertMode == TodoSystemCalendarAlertMode.alarm
           ? item.systemCalendarAlarmMinutesBefore
@@ -88,10 +90,17 @@ class PlatformTodoReminderService implements TodoReminderService {
       await _invokeReminderMethod('upsertTodoReminder', <String, Object?>{
         'todoId': todoId,
         'title': item.content,
-        'description': item.note?.trim(),
+        'description': lifeNotify.metadata.note.trim(),
         'triggerAtMillis': triggerAt.millisecondsSinceEpoch,
         'dueAtMillis': dueAt.millisecondsSinceEpoch,
         'mode': item.systemCalendarAlertMode.name,
+        'presentationType': lifeNotify.metadata.presentationType.name,
+        'stickyNotification': lifeNotify.metadata.stickyNotification,
+        'cancelOnOpen': lifeNotify.metadata.cancelOnOpen,
+        'callerName': lifeNotify.metadata.callerName.trim(),
+        'callerNumber': lifeNotify.metadata.callerNumber.trim(),
+        'callerLocation': lifeNotify.metadata.callerLocation.trim(),
+        'callerTag': lifeNotify.metadata.callerTag.trim(),
       });
     });
   }

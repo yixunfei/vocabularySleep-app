@@ -56,8 +56,8 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
       title: _lifeText(context, zh: '生活实用', en: 'Life tools'),
       subtitle: _lifeText(
         context,
-        zh: '37 个独立功能入口，一期优先落地可本地实现能力，并补全公开资源来源说明。',
-        en: '37 standalone entries with local-first phase-1 implementations and source attributions.',
+        zh: '${_lifeTools.length} 个独立功能入口，一期优先落地可本地实现能力，并补全公开资源来源说明。',
+        en: '${_lifeTools.length} standalone entries with local-first phase-1 implementations and source attributions.',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,21 +132,32 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
           'reverse_image' => const _ReverseImageToolPage(),
           'garbage' => const _GarbageSortingToolPage(),
           'relatives' => const _RelativesToolPage(),
-          'steganography' => const _SteganographyToolPage(),
           'mind_map' => const _MindMapToolPage(),
+          'timeline_periodic' => const _TimelinePeriodicToolPage(),
+          'compass' => const _CompassToolPage(),
+          'level' => const _LevelToolPage(),
+          'vibration' => const _VibrationToolPage(),
+          'device_frame' => const _DeviceFrameToolPage(),
+          'notify_me' => const _NotifyMeToolPage(),
+          'fake_call' => const _FakeCallToolPage(),
+          'id_photo' => const _IdPhotoToolPage(),
+          'ai_interview' => const _AiInterviewToolPage(),
+          'sup_sub' => const _NumberMarksPage(),
+          'meme_maker' => const _MemeMakerToolPage(),
           'text_count' ||
           'text_encoding' ||
-          'rc4' ||
-          'sup_sub' ||
           'unit_converter' ||
           'work_worth' ||
+          'city_compare' ||
+          'offer_select' ||
           'mortgage' ||
           'date_calculator' ||
+          'world_clock' ||
           'bmi' ||
           'short_link' ||
           'qr' ||
-          'image_compress' ||
-          'pinyin' => _LifeUtilityToolPage(tool: tool),
+          'image_transform' ||
+          'image_to_web' => _LifeUtilityToolPage(tool: tool),
           _ => _LifeToolInfoPage(tool: tool),
         },
       ),

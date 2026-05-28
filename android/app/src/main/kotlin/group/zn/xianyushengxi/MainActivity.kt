@@ -42,8 +42,10 @@ class MainActivity : FlutterActivity() {
     private val systemSpeechChannelName = "vocabulary_sleep/system_speech"
     private val systemCalendarChannelName = "vocabulary_sleep/system_calendar"
     private val todoReminderChannelName = "vocabulary_sleep/todo_reminder"
+    private val fakeCallChannelName = "vocabulary_sleep/fake_call"
     private val systemAudioChannelName = "vocabulary_sleep/system_audio"
     private val lifeDisplayChannelName = "vocabulary_sleep/life_display"
+    private val lifeDeviceChannelName = "vocabulary_sleep/life_device"
 
     private val reminderHandler = Handler(Looper.getMainLooper())
     private val speechHandler = Handler(Looper.getMainLooper())
@@ -182,6 +184,16 @@ class MainActivity : FlutterActivity() {
                             triggerAtMillis = triggerAtMillis,
                             dueAtMillis = dueAtMillis,
                             mode = (arguments?.get("mode") as? String)?.trim().orEmpty(),
+                            presentationType = (arguments?.get("presentationType") as? String)
+                                ?.trim()
+                                .orEmpty(),
+                            stickyNotification =
+                                (arguments?.get("stickyNotification") as? Boolean) == true,
+                            cancelOnOpen = (arguments?.get("cancelOnOpen") as? Boolean) != false,
+                            callerName = (arguments?.get("callerName") as? String)?.trim(),
+                            callerNumber = (arguments?.get("callerNumber") as? String)?.trim(),
+                            callerLocation = (arguments?.get("callerLocation") as? String)?.trim(),
+                            callerTag = (arguments?.get("callerTag") as? String)?.trim(),
                         ),
                     )
                     result.success(null)
@@ -210,9 +222,7 @@ class MainActivity : FlutterActivity() {
                 }
 
                 "consumePendingTodoLaunchId" -> {
-                    val pending = pendingTodoLaunchId
-                    pendingTodoLaunchId = null
-                    result.success(pending)
+                    result.success(pendingTodoLaunchId)
                 }
 
                 "consumePendingTodoAction" -> {
@@ -233,6 +243,72 @@ class MainActivity : FlutterActivity() {
                             ),
                         )
                     }
+                }
+
+                else -> result.notImplemented()
+            }
+        }
+
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            fakeCallChannelName,
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "scheduleFakeCall" -> {
+                    val spec = readFakeCallSpec(call.arguments as? Map<*, *>)
+                    if (spec == null) {
+                        result.success(
+                            mapOf(
+                                "nativeScheduled" to false,
+                                "errorCode" to "invalid_args",
+                            ),
+                        )
+                        return@setMethodCallHandler
+                    }
+                    val scheduled = FakeCallScheduler.schedule(applicationContext, spec)
+                    result.success(
+                        mapOf(
+                            "nativeScheduled" to scheduled,
+                            "errorCode" to if (scheduled) null else "schedule_failed",
+                        ),
+                    )
+                }
+
+                "cancelFakeCall" -> {
+                    val arguments = call.arguments as? Map<*, *>
+                    val callId = (arguments?.get("callId") as? Number)?.toInt() ?: 0
+                    if (callId > 0) {
+                        FakeCallScheduler.cancel(applicationContext, callId)
+                    }
+                    result.success(null)
+                }
+
+                "showFakeCallNow" -> {
+                    val spec = readFakeCallSpec(call.arguments as? Map<*, *>)
+                    if (spec == null) {
+                        result.success(false)
+                        return@setMethodCallHandler
+                    }
+                    val intent = FakeCallScheduler.buildActivityIntent(applicationContext, spec)
+                    try {
+                        startActivity(intent)
+                        result.success(true)
+                    } catch (_: Throwable) {
+                        result.success(false)
+                    }
+                }
+
+                "getFakeCallCapability" -> {
+                    result.success(buildFakeCallCapability())
+                }
+
+                "requestFakeCallNotificationPermission" -> {
+                    requestTodoReminderNotificationPermission(result)
+                }
+
+                "openFakeCallExactAlarmSettings" -> {
+                    openTodoReminderExactAlarmSettings()
+                    result.success(null)
                 }
 
                 else -> result.notImplemented()
@@ -279,7 +355,30 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            lifeDeviceChannelName,
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "getVibrationCapability" -> {
+                    result.success(buildLifeVibrationCapability())
+                }
+
+                "playVibrationPattern" -> {
+                    result.success(playLifeVibrationPattern(call.arguments as? Map<*, *>))
+                }
+
+                "cancelVibration" -> {
+                    cancelLifeVibration()
+                    result.success(null)
+                }
+
+                else -> result.notImplemented()
+            }
+        }
         TodoReminderScheduler.ensureNotificationChannels(applicationContext)
+        FakeCallScheduler.ensureNotificationChannel(applicationContext)
 
     }
 
@@ -428,6 +527,38 @@ class MainActivity : FlutterActivity() {
                 (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU),
             "exactAlarmGranted" to exactAlarmGranted,
             "exactAlarmSettingsAvailable" to exactAlarmSettingsAvailable,
+        )
+    }
+
+    private fun buildFakeCallCapability(): Map<String, Any?> {
+        return buildTodoReminderCapability() + mapOf(
+            "nativeFullScreenSupported" to true,
+        )
+    }
+
+    private fun readFakeCallSpec(arguments: Map<*, *>?): FakeCallSpec? {
+        if (arguments == null) {
+            return null
+        }
+        val callId = (arguments["callId"] as? Number)?.toInt() ?: 0
+        val triggerAtMillis = (arguments["triggerAtMillis"] as? Number)?.toLong()
+            ?: System.currentTimeMillis()
+        if (callId <= 0) {
+            return null
+        }
+        return FakeCallSpec(
+            callId = callId,
+            triggerAtMillis = triggerAtMillis,
+            callerName = (arguments["callerName"] as? String)?.trim(),
+            callerNumber = (arguments["callerNumber"] as? String)?.trim(),
+            callerLocation = (arguments["callerLocation"] as? String)?.trim(),
+            callerTag = (arguments["callerTag"] as? String)?.trim(),
+            ringtoneEnabled = (arguments["ringtoneEnabled"] as? Boolean) != false,
+            vibrationEnabled = (arguments["vibrationEnabled"] as? Boolean) != false,
+            incomingBackgroundPath = (arguments["incomingBackgroundPath"] as? String)?.trim(),
+            incomingBackgroundStyle = (arguments["incomingBackgroundStyle"] as? String)?.trim(),
+            inCallBackgroundPath = (arguments["inCallBackgroundPath"] as? String)?.trim(),
+            inCallBackgroundStyle = (arguments["inCallBackgroundStyle"] as? String)?.trim(),
         )
     }
 
@@ -1434,6 +1565,78 @@ class MainActivity : FlutterActivity() {
         } else {
             @Suppress("DEPRECATION")
             getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+        }
+    }
+
+    private fun buildLifeVibrationCapability(): Map<String, Any?> {
+        val vibrator = resolveVibrator()
+        return mapOf(
+            "platform" to "android",
+            "hasVibrator" to (vibrator?.hasVibrator() == true),
+            "supportsWaveform" to (vibrator?.hasVibrator() == true),
+            "supportsAmplitudeControl" to
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator?.hasAmplitudeControl() == true
+                } else {
+                    false
+                },
+        )
+    }
+
+    private fun playLifeVibrationPattern(arguments: Map<*, *>?): Boolean {
+        val vibrator = resolveVibrator() ?: return false
+        if (!vibrator.hasVibrator()) {
+            return false
+        }
+
+        val timings = (arguments?.get("timingsMs") as? List<*>)?.mapNotNull {
+            when (it) {
+                is Number -> it.toLong().coerceAtLeast(0L)
+                else -> it?.toString()?.trim()?.toLongOrNull()?.coerceAtLeast(0L)
+            }
+        } ?: emptyList()
+        if (timings.isEmpty()) {
+            return false
+        }
+
+        val amplitudes = (arguments?.get("amplitudes") as? List<*>)?.mapNotNull {
+            when (it) {
+                is Number -> it.toInt().coerceIn(0, 255)
+                else -> it?.toString()?.trim()?.toIntOrNull()?.coerceIn(0, 255)
+            }
+        } ?: emptyList()
+
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val amplitudeArray =
+                    LongArray(timings.size) { index ->
+                        timings[index]
+                    }
+                val amplitudeControl =
+                    IntArray(timings.size) { index ->
+                        amplitudes.getOrNull(index) ?: if (index % 2 == 0) 0 else VibrationEffect.DEFAULT_AMPLITUDE
+                    }
+                vibrator.vibrate(
+                    VibrationEffect.createWaveform(amplitudeArray, amplitudeControl, -1),
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(
+                    timings.toLongArray(),
+                    -1,
+                )
+            }
+            true
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    private fun cancelLifeVibration() {
+        try {
+            resolveVibrator()?.cancel()
+        } catch (_: Throwable) {
+            // Best-effort cleanup only.
         }
     }
 

@@ -1,3 +1,1406 @@
+## [Unreleased-PLAN_284-LIFE-RULER-PROTRACTOR-READABILITY] - 2026-05-28
+
+### 原因
+- 用户反馈 `工具箱-生活实用-尺子和量角器` 中量角器背景与刻度都是白色，浅色相机画面下难以辨认。
+
+### 新增
+- `plans/PLAN_284_生活实用尺子量角器刻度可读性优化.md`
+  - 记录本轮只优化量角器展示层、不改相机权限、路由、校准和业务逻辑的边界。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_display.dart`
+  - 量角器全屏刻度层增加半透明深色测量盘、外圈承托与中心参考线。
+  - 主刻度与角度数字改为暖色高亮，次刻度改为浅蓝灰，并为刻度、弧线和数字增加深色描边，避免白纸、白墙或明亮桌面背景吞掉刻度。
+- `PROJECT_DOMAIN.md`
+- `modules/toolbox/README.md`
+  - 同步记录尺子和量角器的量角器可读性优化与风险边界。
+
+### 风险变更
+- 本轮只调整 `CustomPainter` 视觉表达，不改变相机预览、权限请求、横屏沉浸、返回恢复、尺子校准和量角器角度刻度逻辑。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_display.dart`
+- `dart analyze lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_display.dart test/ui_smoke_test.dart`（通过；仅余 `test/ui_smoke_test.dart` 既有 info 级 const/final 提示）
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens ruler and protractor utility page"`
+
+## [Unreleased-PLAN_283-LIFE-FAKE-CALL-INCALL-STAGE] - 2026-05-28
+
+### 原因
+- 用户反馈模拟来电接听后的通话中动画需要展示到中间或全屏，不能只像普通信息区一样停留在上方。
+
+### 新增
+- `plans/PLAN_283_生活实用模拟来电通话中动画舞台.md`
+  - 记录接听中动画舞台居中/全屏展示、Flutter/Android 双端同步和验证范围。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_fake_call.dart`
+  - 应用内兜底通话态新增居中大面积波纹通话舞台，接听后动画继续运行，计时保留在上方，挂断按钮保留在底部。
+  - 通话舞台根据可用高度动态缩放，避免在较矮屏幕或测试视口中遮挡内容。
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/FakeIncomingCallActivity.kt`
+  - Android 原生接听态新增居中脉冲通话舞台，使用原生 View 动画展示扩散光环。
+  - 挂断、拒绝和 Activity 销毁时取消通话动画，避免动画资源泄漏。
+- `test/ui_smoke_test.dart`
+  - 模拟来电 smoke 增加通话动画舞台断言。
+- `PROJECT_DOMAIN.md`
+  - 同步模拟来电通话态动画舞台展示边界。
+
+### 风险变更
+- 通话中动画会持续运行到挂断，已限制为轻量圆环动画，并在销毁时清理。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_fake_call.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_fake_call.dart test/ui_smoke_test.dart`（通过；仅余 `test/ui_smoke_test.dart` 既有 info 级 const/final 提示）
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens fake incoming call and starts a session"`
+- `flutter build apk --debug`
+
+## [Unreleased-PLAN_282-LIFE-FAKE-CALL-ANSWER-BACKGROUND] - 2026-05-28
+
+### 原因
+- 用户要求继续完善 `工具箱-生活实用-模拟来电`：触发后的全屏来电需要真正支持接听、通话效果和挂断退出，并允许来电中与接听后的通话背景分别自定义图片和样式。
+
+### 新增
+- `plans/PLAN_282_生活实用模拟来电接听挂断与背景样式.md`
+  - 记录接听/挂断状态机、双背景配置、Android 返回桌面和验证范围。
+
+### 修改
+- `lib/src/services/toolbox_fake_call_service.dart`
+  - `ToolboxFakeCallSpec` 增加来电背景路径/样式与通话背景路径/样式字段，并通过 `vocabulary_sleep/fake_call` MethodChannel 下发。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_fake_call.dart`
+  - 新增“背景样式”设置区，支持分别选择/清除来电背景与通话背景，并提供 Cover、Dim、Blur 三种显示样式。
+  - 应用内全屏兜底页改为来电态/通话态两段流程：接听停止铃声和震动并进入通话计时，挂断退出全屏页。
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/FakeCallScheduler.kt`
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/FakeCallReceiver.kt`
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/MainActivity.kt`
+  - 持久化、广播、立即预览和 Activity Intent 全链路透传双背景配置。
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/FakeIncomingCallActivity.kt`
+  - 原生全屏 Activity 增加来电/通话状态机：拒绝或挂断清理通知并最佳努力返回桌面，接听后停止来电效果并显示通话计时。
+  - 背景图片使用全屏 `ImageView` centerCrop 渲染；Android 12+ 对 Blur 样式使用系统 `RenderEffect`，旧系统回退暗化遮罩。
+- `test/ui_smoke_test.dart`
+  - 扩展模拟来电 smoke，覆盖背景按钮、应用内预览接听、通话中状态和挂断返回页面。
+- `PROJECT_DOMAIN.md`
+  - 同步模拟来电接听/通话/挂断闭环、双背景样式和风险边界。
+
+### 风险变更
+- Android “返回桌面”仍受 Activity 启动栈、厂商后台策略和系统版本影响，本轮采用 `moveTaskToBack(true)` + `finish()` 的最佳努力处理。
+- 自定义背景图片依赖用户所选本地路径可读性；Flutter 和 Android 均在图片不可用时回退默认渐变背景。
+
+### 验证
+- `dart format lib/src/services/toolbox_fake_call_service.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_fake_call.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/services/toolbox_fake_call_service.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_fake_call.dart test/ui_smoke_test.dart`（通过；仅余 `test/ui_smoke_test.dart` 既有 info 级 const/final 提示）
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens fake incoming call and starts a session"`
+- `flutter build apk --debug`
+
+## [Unreleased-PLAN_281-TOOLBOX-CRYPTO-SECURITY] - 2026-05-28
+
+### 原因
+- 用户希望工具箱新增“加密安全”独立模块，并将 `生活实用` 中的图片/音频/视频隐写迁移到其中；该模块后续会承载大量加密解密相关子模块，因此不能用轻量页签作为总模块结构。
+
+### 新增
+- `plans/PLAN_281_工具箱加密安全模块与隐写迁移.md`
+  - 记录加密安全模块新增、隐写归属迁移、非页签式 hub 结构和验证风险。
+- `lib/src/ui/pages/toolbox_crypto_security.dart`
+- `lib/src/ui/pages/toolbox_crypto_security/toolbox_crypto_security_hub.dart`
+- `lib/src/ui/pages/toolbox_crypto_security/toolbox_crypto_security_shared.dart`
+- `lib/src/ui/pages/toolbox_crypto_security/toolbox_crypto_security_steganography.dart`
+  - 新增加密安全中心，以独立子模块卡片接入“图片/音频/视频隐写”，并预留后续加密、解密、密钥、证书、校验、签名等模块空间。
+
+### 修改
+- `lib/src/core/module_system/module_id.dart`
+- `lib/src/core/module_system/module_registry.dart`
+- `lib/src/ui/module/module_access.dart`
+- `lib/src/ui/theme/toolbox_colors.dart`
+  - 注册 `toolbox.crypto_security` 模块 ID、模块管理文案和加密安全主题色。
+- `lib/src/ui/pages/toolbox/toolbox_page_content.dart`
+  - 工具箱首页新增“加密安全”分组与“加密安全中心”入口；生活实用计数同步从 37 调整为 36。
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart`
+  - 移除生活实用中的 `steganography` 入口与路由，由加密安全中心打开媒体隐写页面。
+- `modules/toolbox/README.md`
+- `PROJECT_DOMAIN.md`
+  - 补充 Crypto Security 归属、入口、文件边界和兼容路径说明，并给旧 Life Tools Steganography 段落增加迁移备注。
+- `test/ui_smoke_test.dart`
+  - 隐写 smoke 改为从工具箱首页进入 Crypto Security hub，再打开 Media steganography。
+  - 新增生活实用不再展示隐写入口的回归断言。
+
+### 风险变更
+- 本轮只迁移模块归属与导航入口，不修改 `ToolboxSteganographyService`、`ToolboxCryptoService` 的加密、还原、容量、密钥文件或媒体载荷算法。
+- 隐写页面内部仍保留部分 `life_stego_*` key 与 `life_tools/steganography` 存储/导出兜底路径，用于兼容既有测试、持久化和导出行为。
+
+### 验证
+- `dart format lib/src/core/module_system/module_id.dart lib/src/core/module_system/module_registry.dart lib/src/ui/module/module_access.dart lib/src/ui/theme/toolbox_colors.dart lib/src/ui/pages/toolbox/toolbox_page_content.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_crypto_security.dart lib/src/ui/pages/toolbox_crypto_security/toolbox_crypto_security_hub.dart lib/src/ui/pages/toolbox_crypto_security/toolbox_crypto_security_shared.dart lib/src/ui/pages/toolbox_crypto_security/toolbox_crypto_security_steganography.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/core/module_system/module_id.dart lib/src/core/module_system/module_registry.dart lib/src/ui/module/module_access.dart lib/src/ui/theme/toolbox_colors.dart lib/src/ui/pages/toolbox/toolbox_page_content.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_crypto_security.dart test/ui_smoke_test.dart`（通过；仅余 `test/ui_smoke_test.dart` 既有 info 级 const/final 提示）
+- `flutter test test/toolbox_steganography_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "crypto security opens steganography controls"`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools no longer lists steganography entry"`
+
+## [Unreleased-PLAN_279-LIFE-FAKE-CALL-INDEPENDENT-REDESIGN] - 2026-05-28
+
+### 原因
+- 用户反馈 `工具箱-生活实用-模拟来电` 当前实现走成了基于日历/通知的提醒工具，核心需求应是点击开始后在指定时间全屏播放模拟来电动画、铃声和震动。
+
+### 新增
+- `plans/PLAN_279_生活实用模拟来电独立重做.md`
+  - 记录模拟来电从 todo reminder / calendar 剥离、独立调度、全屏触发和验证风险。
+- `lib/src/services/toolbox_fake_call_service.dart`
+  - 新增 `vocabulary_sleep/fake_call` 平台服务，支持能力检查、调度、取消、立即预览和权限入口，并带 2 秒超时兜底。
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/FakeCallScheduler.kt`
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/FakeCallReceiver.kt`
+  - 新增独立模拟来电原生调度、持久化、通知渠道、full-screen intent 和触发接收器。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_fake_call.dart`
+  - 页面重做为来电预览主舞台、来电信息、触发时间、来电效果、开始/取消和投递能力结构。
+  - 点击开始后只启动一次模拟来电会话，不再创建待办、不展示提醒列表、不写入系统日历。
+  - Android 原生不可用或无响应时进入应用内前台全屏兜底，支持立即预览。
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/FakeIncomingCallActivity.kt`
+  - 接入独立 `callId`、铃声开关和震动开关，结束时清理对应模拟来电通知。
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/MainActivity.kt`
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/TodoReminderBootReceiver.kt`
+- `android/app/src/main/AndroidManifest.xml`
+  - 注册 fake-call MethodChannel、Receiver、通知渠道初始化和开机/时间变化重调度。
+- `test/ui_smoke_test.dart`
+  - 模拟来电 smoke 改为验证开始一次会话并确认不会创建 `life_fake_call` 待办。
+- `PROJECT_DOMAIN.md`
+  - 同步模拟来电独立模块边界、原生触发链路和平台风险。
+
+### 风险变更
+- Android 后台/锁屏全屏唤起仍受通知权限、精确闹钟权限、full-screen notification 设置和厂商后台策略影响。
+- 非 Android 或原生通道不可用时只提供应用内前台兜底，用户需要保持页面打开。
+
+### 验证
+- `dart format lib/src/services/toolbox_fake_call_service.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_fake_call.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/services/toolbox_fake_call_service.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_fake_call.dart test/ui_smoke_test.dart`（通过；仅余 `test/ui_smoke_test.dart` 既有 info 级 const/final 提示）
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens fake incoming call and starts a session"`
+- `flutter build apk --debug`（通过；仅余 Java 8 source/target 过时警告）
+
+## [Unreleased-PLAN_277-LIFE-QR-ART-COMPRESS-VERSION] - 2026-05-28
+
+### 原因
+- 用户希望二维码艺术图片过大时也能自动压缩，并增加更多 QR 版本选择与弱纠错定位码版本样式，方便生成更接近艺术二维码的模块密度。
+
+### 新增
+- `plans/PLAN_277_生活实用二维码艺术图压缩与版本预设.md`
+  - 记录艺术图渲染压缩、扩展版本选择、弱纠错艺术预设和可扫性风险。
+- `lib/src/services/toolbox_qr_service.dart`
+  - 新增艺术图预览压缩结果模型与 `prepareArtImage`，将大艺术源图压缩为渲染友好的 JPEG 副本。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_qr.dart`
+  - 艺术图导入改为 isolate 自动压缩，并展示源图尺寸/体积、艺术图尺寸/体积、压缩摘要和 SHA。
+  - QR 版本选择扩展为快捷档 + Auto/V1-V40 精确下拉。
+  - 新增“弱纠错 V25”艺术二维码预设：低纠错、大版本、强定位保护、关闭中心图并收紧模块留白。
+- `test/toolbox_qr_service_test.dart`
+  - 增加艺术图预览压缩服务测试。
+- `test/ui_smoke_test.dart`
+  - 增加艺术二维码预设和精确版本控件断言。
+- `modules/toolbox/README.md`
+- `PROJECT_DOMAIN.md`
+  - 同步艺术图压缩、V1-V40 版本选择、弱纠错预设和风险边界。
+
+### 风险变更
+- 艺术图压缩只用于预览渲染，不改变 QR payload；压缩过强时图片轮廓可能变弱。
+- 弱纠错 V25 预设更适合半调艺术效果，但抗污损、遮挡和低对比能力更弱，正式分享前必须使用目标扫码器实测。
+
+### 验证
+- `dart format lib/src/services/toolbox_qr_service.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_qr.dart test/toolbox_qr_service_test.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/services/toolbox_qr_service.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_qr.dart test/toolbox_qr_service_test.dart`
+- `flutter test test/toolbox_qr_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens QR generator rich controls"`
+- `dart analyze lib/src/services/toolbox_qr_service.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_qr.dart test/toolbox_qr_service_test.dart test/ui_smoke_test.dart`（未通过：当前工作树中 `lib/src/ui/pages/toolbox_life_tools.dart` 存在与本轮 QR 改动无关的 `toolbox_fake_call_service.dart` 未使用导入 warning；另有 `test/ui_smoke_test.dart` 既有 info 级 const/final 提示）
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools QR shows capacity error instead of throwing"`
+
+## [Unreleased-PLAN_279-HUMAN-HAND-EYE-PAUSE-CONTROL] - 2026-05-28
+
+### 原因
+- 用户希望工具箱-人类测试中心-手眼协调测试底部主操作从“开始/进行中”扩展为可实际控制的开始/暂停功能。
+
+### 新增
+- `plans/PLAN_279_人类测试手眼协调开始暂停控制.md`
+  - 记录手眼协调开始、暂停、继续的状态流、计时恢复和验证范围。
+
+### 修改
+- `lib/src/ui/pages/toolbox_human_tests_hand_eye.dart`
+  - 新增暂停状态，底部主按钮现在按阶段显示开始、暂停、继续、重新开始。
+  - 暂停时会停止随机出靶 timer、目标显示 timer、目标运动和反应计时；继续时恢复等待剩余时间或目标剩余显示窗口。
+  - 暂停中舞台显示独立提示，且本轮设置继续锁定，避免恢复时参数变化影响计时与目标判定。
+- `lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart`
+  - 全屏底部主按钮复用同一套开始/暂停/继续逻辑；暂停时全屏动画 ticker 不再推动目标运动。
+- `lib/src/ui/pages/toolbox_human_tests_hand_eye_settings.dart`
+  - 手眼协调设置锁定条件从仅运行中改为整个会话中，暂停也不会开放参数编辑。
+- `test/ui_smoke_test.dart`
+  - 扩展手眼协调 smoke，覆盖开始后显示暂停、暂停后显示继续、继续后回到等待状态。
+
+### 风险变更
+- 暂停/继续会尽量恢复剩余等待和目标显示窗口；若等待剩余时间已经不可用，会用短等待兜底，避免恢复后立即出现不稳定状态。
+- 暂停不清空成绩，重置仍是清空本轮的唯一入口。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_settings.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过；仅余 `test/ui_smoke_test.dart` 既有 info 级 const/final 提示）
+- `flutter test test/ui_smoke_test.dart --plain-name "hand-eye coordination exposes target settings"`
+
+## [Unreleased-PLAN_278-HUMAN-HAND-EYE-START-FIX] - 2026-05-28
+
+### 原因
+- 用户反馈工具箱-人类测试中心-手眼协调测试中，舞台中心开始按钮点击无效，且下侧初始操作状态错误显示为重新开始。
+
+### 新增
+- `plans/PLAN_278_人类测试手眼协调开始状态修复.md`
+  - 记录手眼协调舞台触控边界、底部主操作状态和回归验证范围。
+
+### 修改
+- `lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart`
+  - 舞台触控边界仅在等待目标或目标可见阶段启用，避免空闲/完成态抢占中央开始按钮点击。
+- `lib/src/ui/pages/toolbox_human_tests_hand_eye.dart`
+  - 下侧主按钮按空闲、运行、完成三种阶段分别显示开始、进行中、重新开始。
+- `test/ui_smoke_test.dart`
+  - 补充手眼协调初始态不显示 Restart、中央开始按钮可触发等待状态、运行态显示 Running 的回归断言。
+
+### 修复
+- 修复手眼协调测试舞台中心开始按钮被舞台手势边界拦截导致无法启动的问题。
+- 修复下侧主操作按钮在初始空闲态错误显示重新开始的问题。
+
+### 风险变更
+- 目标点击和等待阶段仍保留原有手势接管，避免真机窄屏下被父级滚动抢走触点；本轮只放开非运行阶段的按钮点击。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests_hand_eye.dart lib/src/ui/pages/toolbox_human_tests_hand_eye_parts.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart test/ui_smoke_test.dart`（通过；仅余 `test/ui_smoke_test.dart` 既有 info 级 const/final 提示）
+- `flutter test test/ui_smoke_test.dart --plain-name "hand-eye coordination exposes target settings"`
+
+## [Unreleased-PLAN_276-LIFE-QR-QART-HALFTONE] - 2026-05-28
+
+### 原因
+- 用户反馈当前二维码艺术化效果仍像破碎背景贴图，无法达到参考 QArt 示例那种图像与二维码模块融合的艺术二维码观感。
+
+### 新增
+- `plans/PLAN_276_生活实用二维码艺术化半调升级.md`
+  - 记录半调融合、QR 功能区保护、非完整 QArt 编码优化算法边界与验证范围。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_qr.dart`
+  - 将 QArt 图片取色模式升级为“半调画像”：按导入图片的亮度、边缘和稳定抖动值计算模块墨量，让图像轮廓真正参与二维码视觉主体。
+  - 艺术 QR 预览保护 finder、timing、alignment、format/version 等功能区，保持高对比黑白结构，降低艺术化破坏可扫性的风险。
+  - 调整默认可扫性保护、图像对比和模块留白参数，并更新控件文案。
+- `test/ui_smoke_test.dart`
+  - 更新 QR rich controls smoke 中的 QArt 模式断言。
+- `modules/toolbox/README.md`
+- `PROJECT_DOMAIN.md`
+  - 同步半调艺术融合能力、功能区保护和非完整 QArt 编码优化算法说明。
+
+### 风险变更
+- 半调融合仍是渲染层艺术化，不会重写 QR 编码数据位；极复杂或低反差图片仍可能轮廓不清，正式分享前需要用目标扫码器实测。
+- 透明融合和低保护设置会提升图像存在感，但可能降低小尺寸预览和低端摄像头下的识别稳定性。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_qr.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_qr.dart`
+- `dart analyze lib/src/services/toolbox_qr_service.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_qr.dart test/toolbox_qr_service_test.dart test/ui_smoke_test.dart`（通过；仅余 `test/ui_smoke_test.dart` 既有 info 级 const/final 提示）
+- `flutter test test/toolbox_qr_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens QR generator rich controls"`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools QR shows capacity error instead of throwing"`
+
+## [Unreleased-PLAN_275-LIFE-QR-QART-IMAGE-FUSION] - 2026-05-27
+
+### 原因
+- 用户澄清希望实现 QArt、QRImage、qrcode-art 方向的艺术二维码：二维码模块本身与导入图片融合，而不是简单将图片作为背景或海报贴图；同时要求图片二维码化内容超出承载范围时继续压缩处理。
+
+### 新增
+- `plans/PLAN_275_生活实用二维码图片背景与贴图.md`
+  - 记录 QArt 风格图片融合、容量回退压缩和可扫性风险边界。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_qr.dart`
+  - 新增 QArt 风格模式：关闭、图片取色、透明融合。
+  - 新增导入艺术图、清除图片、可扫性保护层、艺术取色强度和模块留白控制。
+  - 新增自绘艺术 QR 预览：从导入图采样颜色，暗模块压暗并保留图像色彩，浅模块保留透明/融合感，定位角强制高对比。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_qr.dart`
+  - 图片 Data URL payload 生成后会按当前 QR 版本/容错能力做容量校验；若仍超出承载范围，会继续尝试更小的 Data URL 目标体积。
+- `test/ui_smoke_test.dart`
+  - QR rich controls smoke 增加 QArt 风格控件断言。
+- `modules/toolbox/README.md`
+- `PROJECT_DOMAIN.md`
+  - 同步 QArt 风格图片融合、非完整 QArt 编码算法说明和超容量继续压缩边界。
+
+### 风险变更
+- QArt 风格图片融合会改变二维码视觉对比度，复杂、低反差或暗色图片可能降低扫码成功率；正式分享前仍需用目标设备实测。
+- 当前实现是 Flutter 本地“图片采样 + module 艺术绘制”的可扫版本，不是 Qart Go 原版那种通过编码值优化图像匹配的完整算法。
+- 图片内容写入二维码依然受 QR 容量限制。自动压缩会尽力缩小缩略图，但不把大图传输包装成二维码文件传输能力。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_qr_service.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_qr.dart test/toolbox_qr_service_test.dart test/ui_smoke_test.dart`
+- `flutter test test/toolbox_qr_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens QR generator rich controls"`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools QR shows capacity error instead of throwing"`
+
+## [Unreleased-PLAN_274-LIFE-QR-CAPACITY-PREVIEW-GUARD] - 2026-05-27
+
+### 原因
+- 用户反馈二维码图片二维码化后出现 `QrInputTooLongException: Input too long. 17260 > 10208`，说明超容量 payload 仍进入了 `QrImageView` 预览渲染阶段并触发未捕获框架异常。
+
+### 新增
+- `plans/PLAN_274_生活实用二维码超容量预览防崩.md`
+  - 记录 QR 超容量预览防崩、懒加载校验风险和 UI 验证范围。
+- `test/ui_smoke_test.dart`
+  - 新增超长 QR 内容 smoke，验证页面显示容量错误且 `tester.takeException()` 为空。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_qr.dart`
+  - 新增安全 QR 校验流程：`QrValidator.validate` 后主动构造 `QrPainter.withQr`，提前触发 QR 库懒加载容量异常。
+  - 预览区在校验失败时显示错误面板，不再创建 `QrImageView`；导出按钮继续按校验状态禁用。
+  - 有效 QR 预览改为使用已校验的 `QrCode` 构建 `QrImageView.withQr`，降低二次懒校验风险。
+- `modules/toolbox/README.md`
+- `PROJECT_DOMAIN.md`
+  - 同步 QR 超容量预览防崩和导出禁用边界。
+
+### 风险变更
+- 超容量内容仍无法生成 QR Code，这是二维码标准容量限制；页面现在稳定提示用户缩短内容、降低容错/版本限制或改用中心图，而不是发生框架异常。
+- Data Matrix、Aztec、PDF417 仍由 `barcode_widget` 自身 errorBuilder 承接渲染错误。
+
+### 验证
+- `dart analyze lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_qr.dart test/ui_smoke_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools QR shows capacity error instead of throwing"`
+
+## [Unreleased-PLAN_273-LIFE-QR-IMAGE-AUTO-COMPRESS] - 2026-05-27
+
+### 原因
+- 用户指出二维码模块在“图片二维码化”时，较大图片会直接异常，用户难以判断文件大小限制；需要参照图片压缩能力自动压缩到适合二维码写入的大小。
+
+### 新增
+- `plans/PLAN_273_生活实用二维码图片自动压缩.md`
+  - 记录图片二维码化自动压缩目标、读取硬上限、容量风险和验证范围。
+- `test/toolbox_qr_service_test.dart`
+  - 新增 noisy 大图自动压缩测试，验证大图会多档回退到目标 Data URL 体积内。
+
+### 修改
+- `lib/src/services/toolbox_qr_service.dart`
+  - `encodeImageToDataUrl` 增加 QR payload 专用自动压缩策略：先按用户当前参数编码，若 Data URL 超过目标体积，则自动尝试更小最长边和更低 JPEG 质量，优先选取满足目标的候选。
+  - 二维码图片结果新增源图尺寸/体积、目标 Data URL 体积、尝试次数、自动压缩状态和压缩摘要，便于 UI 解释处理结果。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_qr.dart`
+  - 图片二维码化导入从 12MB 直接拒绝改为 32MB 读取硬上限内自动压缩。
+  - 页面补充自动压缩说明、原图与结果体积展示，以及最小候选仍超目标时的扫码稳定性警告。
+- `modules/toolbox/README.md`
+- `PROJECT_DOMAIN.md`
+  - 同步二维码图片自动压缩能力、32MB 硬上限、2.2KB 目标和中心图兜底建议。
+
+### 风险变更
+- 自动压缩降低了大图导入失败概率，但二维码本身容量仍有限；复杂图片即使压到很小也可能导致扫码不稳定。
+- 超过 32MB 的源图仍会被拒绝，以避免移动端解码和内存压力；这类图片需要先裁切或使用图片压缩页处理。
+- 若 Data URL 最小候选仍超出建议体积，应优先改用中心图模式，而不是把图片内容硬写入二维码。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_qr_service.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_qr.dart test/toolbox_qr_service_test.dart`
+- `flutter test test/toolbox_qr_service_test.dart`
+
+## [Unreleased-PLAN_272-LIFE-OFFER-SELECT] - 2026-05-27
+
+### 原因
+- 用户要求参考当前占位网页内容，完成 `工具箱-生活实用-Offer 选择助手` 模块，而不是继续停留在外部资源入口。
+
+### 新增
+- `plans/PLAN_272_生活实用Offer选择助手模块.md`
+  - 记录参考页字段、六维评分、谈薪追平、隐私和职业决策风险边界。
+- `lib/src/services/toolbox_offer_select_service.dart`
+  - 新增纯计算服务，复用工作性价比服务的收入、成本、工时、环境和成长口径，输出综合分、六维分、风险旗标、优势项和非首选追平首选所需月 Base 加薪估算。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_offer_select.dart`
+  - 新增 Offer 选择助手页面，支持个人履历、多个工作机会、薪资/WLB 评级、福利、社保、工作强度、地点、优缺点、已婉拒、决策权重、排序拆解、决策报告和参考工具链。
+- `test/toolbox_offer_select_service_test.dart`
+  - 覆盖未婉拒排序、权重翻转、谈薪追平和高风险旗标。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart`
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart`
+  - 将 `offer_select` 从占位说明页切换为本地工具页，更新入口摘要、分类和来源说明。
+- `test/ui_smoke_test.dart`
+  - 新增 life tools Offer 选择助手 smoke，覆盖入口打开、首屏舞台、权重区、排序区、参考工具链和薪资字段更新。
+- `modules/toolbox/README.md`
+- `PROJECT_DOMAIN.md`
+  - 同步 Offer 选择助手的本地能力、参考页关系、风险边界和版本历史。
+
+### 风险变更
+- Offer 评分只做透明横向比较和谈薪准备，不构成职业、法律、税务或财务建议。
+- 页面不上传 Offer 数据，不写入学习记录；合同主体、试用期、奖金/股票兑现、社保缴纳和真实工资条仍需用户自行核验。
+- 当非薪资维度差距过大时，追平金额可能提示不适合只靠加薪解决。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_offer_select_service.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_offer_select.dart test/toolbox_offer_select_service_test.dart test/ui_smoke_test.dart`（通过；仅余既有 info 级 lint）
+- `flutter test test/toolbox_offer_select_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens offer selector and updates an offer"`
+
+## [Unreleased-PLAN_269-LIFE-SHORT-LINK-QR] - 2026-05-27
+
+### 原因
+- 用户要求丰富并完善 `工具箱-生活实用` 下的短链接生成与还原、二维码生成能力，增加样式、内容模板、编码标准，并支持基于用户导入图片的二维码化。
+
+### 新增
+- `plans/PLAN_269_生活实用短链接与二维码增强.md`
+  - 记录短链接多服务、二维码模板/样式/标准、图片二维码化和移动端风险边界。
+- `lib/src/services/toolbox_short_link_service.dart`
+  - 新增 URL 规范化、TinyURL/is.gd/v.gd/CleanURI 多服务生成、自定义别名清理、本地短码和重定向链路还原。
+- `lib/src/services/toolbox_qr_service.dart`
+  - 新增文本、URL、Wi-Fi、vCard、邮件、短信、电话、地理位置、日历和图片 Data URL payload 构建，提供容量提示。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_short_link.dart`
+  - 新增短链接工作台，支持服务选择、别名、生成、还原链路、复制和本地短码兜底反馈。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_qr.dart`
+  - 新增本地二维码/二维条码生成页，支持 QR Code、Data Matrix、Aztec、PDF417、内容模板、样式、中心图、图片二维码化和 PNG 导出。
+- `test/toolbox_short_link_service_test.dart`
+- `test/toolbox_qr_service_test.dart`
+  - 覆盖短链接服务基础行为和二维码 payload 构建。
+
+### 修改
+- `pubspec.yaml` / `pubspec.lock`
+  - 增加 `qr_flutter` 与 `barcode_widget` 依赖，用于本地 QR 和多标准二维条码渲染。
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart`
+  - 将 `short_link`、`qr` 从旧占位实现切换到独立工具页，并更新入口摘要、来源与 part 接入。
+- `test/ui_smoke_test.dart`
+  - 新增 life tools 短链接和二维码工具 smoke 覆盖。
+- `modules/toolbox/README.md`
+- `PROJECT_DOMAIN.md`
+  - 同步短链接/二维码增强能力、依赖来源、图片二维码容量和扫码兼容边界。
+
+### 风险变更
+- 公开短链接服务可能变更 API、限流或不可达，页面提供多服务和本地短码兜底，但本地短码不是公网可访问短链接。
+- 重定向链路还原只展示跳转过程，不判断最终目标是否安全。
+- 图片 Data URL 二维码容量很小，只适合极小头像、图标或签名图；品牌露出更建议使用中心图叠加。
+- Wi-Fi、日历、联系人和非 QR 标准在不同扫码器上的兼容性不同，正式使用前需要用目标设备实测。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_short_link_service.dart lib/src/services/toolbox_qr_service.dart test/toolbox_short_link_service_test.dart test/toolbox_qr_service_test.dart`
+- `flutter test test/toolbox_short_link_service_test.dart test/toolbox_qr_service_test.dart`
+- `dart analyze test/ui_smoke_test.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_short_link.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_qr.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens short link tool controls"`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens QR generator rich controls"`
+
+## [Unreleased-PLAN_270-LIFE-ID-PHOTO-GENERATOR] - 2026-05-27
+
+### 原因
+- 用户要求参考当前占位入口网页完成 `工具箱-生活实用-证件照生成` 模块，将外部入口升级为本地可用工具。
+
+### 新增
+- `plans/PLAN_270_生活实用证件照生成模块.md`
+  - 记录证件照生成的本地实现目标、参考网页流程、背景替换边界和验证范围。
+- `lib/src/services/toolbox_id_photo_service.dart`
+  - 新增纯 Dart 证件照生成服务，支持常见规格毫米转像素、EXIF 方向烘焙、按目标比例裁切、缩放、四角取样简易换底色和 PNG/JPEG 编码。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_id_photo.dart`
+  - 新增证件照生成页面，支持选择本地图片、配置规格、DPI、底色、导出格式、裁切缩放、位置偏移、背景容差和替换强度。
+  - 页面展示源图、生成结果、输出像素、文件体积、裁切区域、换底像素和使用边界说明。
+- `test/toolbox_id_photo_service_test.dart`
+  - 覆盖规格尺寸换算、纯色背景替换和 JPEG 导出。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart`
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart`
+  - 将 `id_photo` 从占位来源入口切换为 `_IdPhotoToolPage`，并更新入口摘要与图像分类。
+- `test/ui_smoke_test.dart`
+  - 新增 life tools 证件照 smoke，覆盖入口打开、照片舞台、参数面板、选择、生成与导出按钮。
+- `modules/toolbox/README.md`
+- `PROJECT_DOMAIN.md`
+  - 同步证件照生成的本地离线处理能力、参考规格范围和简易换底色风险边界。
+
+### 风险变更
+- 当前证件照生成全程本地处理，不上传照片；简易换底色通过照片四角取样匹配相近背景，不等同 AI 人像分割或专业抠图。复杂背景、头发边缘、阴影和机构强规范场景仍需以办事机构要求和专业修图结果为准。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_id_photo_service.dart lib/src/ui/pages/toolbox_life_tools.dart test/toolbox_id_photo_service_test.dart test/ui_smoke_test.dart`（通过；仅余既有 `test/ui_smoke_test.dart` info 级 const/final 提示）
+- `flutter test test/toolbox_id_photo_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens id photo generator controls"`
+
+## [Unreleased-PLAN_271-LIFE-AI-INTERVIEW] - 2026-05-27
+
+### 原因
+- 用户要求参考当前占位来源项目完成 `工具箱-生活实用-AI 面试` 模块，而不是继续停留在资源入口。
+
+### 新增
+- `plans/PLAN_271_生活实用AI面试训练模块.md`
+  - 记录 AI 面试从占位升级为本地训练工作台的目标、参考边界、隐私风险和验证范围。
+- `lib/src/services/toolbox_ai_interview_service.dart`
+  - 新增本地面试题分析服务，支持自动识别行为面试、技术问答、系统设计、产品/业务 case 和 HR/动机题。
+  - 新增回答框架、草稿准备度评分、草稿体检、模拟追问、提示词草稿、下一步清单和合规边界提示。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_ai_interview.dart`
+  - 新增 AI 面试训练页面，首屏展示题型、准备度、当前题目和下一步状态。
+  - 支持输入面试题、岗位、公司/团队、简历亮点和回答草稿，并配置题型、分析深度、输出语言、表达风格、追问和评分严格度。
+- `test/toolbox_ai_interview_service_test.dart`
+  - 覆盖题型识别、系统设计输出、STAR 草稿评分和合规提示词边界。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart`
+  - 将 `ai_interview` 入口从占位说明页切换为独立本地页面，并更新摘要、分类和 Snap-Solver 来源说明。
+- `test/ui_smoke_test.dart`
+  - 新增 life tools AI 面试 smoke，覆盖入口打开、首屏舞台、题目素材、回答框架和提示词草稿。
+- `modules/toolbox/README.md`
+- `PROJECT_DOMAIN.md`
+  - 同步 AI 面试本地训练能力、参考项目关系和隐私/合规边界。
+
+### 风险变更
+- 当前模块是本地启发式训练与答案组织工具，不接入远程 AI，也不实现屏幕捕获、后台监听或实时代答。若用户复制提示词到第三方 AI，应先移除敏感简历、薪资、客户资料、公司保密题和 NDA 内容。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_ai_interview_service.dart test/toolbox_ai_interview_service_test.dart`
+- `dart analyze lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_ai_interview.dart`
+- `dart analyze lib/src/services/toolbox_ai_interview_service.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_ai_interview.dart test/toolbox_ai_interview_service_test.dart test/ui_smoke_test.dart`（通过；仅余 `test/ui_smoke_test.dart` 既有 info 级 const/final 提示）
+- `flutter test test/toolbox_ai_interview_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens AI interview practice desk"`
+
+## [Unreleased-PLAN_268-LIFE-IMAGE-TO-WEB-UGUU] - 2026-05-27
+
+### 原因
+- 用户要求基于占位参考项目完成 `工具箱-生活实用-图片转网页`，并在该功能模块下新增基于 `https://uguu.se` 的临时图片上传分享。
+
+### 新增
+- `plans/PLAN_268_生活实用图片转网页与临时分享.md`
+  - 记录图片转网页、Uguu 临时分享、第三方接口变化和敏感图片上传风险。
+- `lib/src/services/toolbox_image_to_web_service.dart`
+  - 新增图片 MIME 识别、单文件 HTML 生成、文件名清理和 Uguu JSON 上传响应解析。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_image_to_web.dart`
+  - 新增图片转网页页面，支持选择本地图片、配置标题/替代文本/图片适配/背景、保存或复制 HTML。
+  - 新增 Uguu 临时分享区，使用 `POST https://uguu.se/upload` 的 `files[]` 表单字段上传原图并显示可复制/可打开的临时 URL。
+- `test/toolbox_image_to_web_service_test.dart`
+  - 覆盖 HTML 生成、Uguu JSON 解析和常见图片 MIME 识别。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 接入图片转网页服务与页面 part，更新 `image_to_web` 入口摘要和来源说明。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart`
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart`
+  - 将 `image_to_web` 从占位说明页切换到 `_ImageToWebToolPage`。
+- `test/ui_smoke_test.dart`
+  - 新增 life tools 图片转网页 smoke，覆盖入口打开、核心面板和本地/上传操作按钮。
+- `modules/toolbox/README.md`
+- `PROJECT_DOMAIN.md`
+  - 同步图片转网页本地 HTML 能力、Uguu 临时分享和隐私/过期边界。
+
+### 风险变更
+- 本地 HTML 生成不会上传图片；Uguu 分享会把原图上传到第三方公开临时文件服务。Uguu 当前公开 API 页声明上传端点为 `https://uguu.se/upload`，FAQ 当前声明文件约 3 小时后删除，并保留活动文件的名称、hash、IP 和上传时间到文件过期；接口、可达性、限额和保留策略都可能变化。
+- 单文件 HTML 会把图片转为 Base64，文件体积会大于原图；大图复制 HTML 文本可能较慢，建议优先保存为 `.html` 文件。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_image_to_web_service.dart lib/src/ui/pages/toolbox_life_tools.dart test/toolbox_image_to_web_service_test.dart test/ui_smoke_test.dart`（通过；仅余既有 `test/ui_smoke_test.dart` info 级 const/final 提示）
+- `flutter test test/toolbox_image_to_web_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens image to webpage controls"`
+
+## [Unreleased-PLAN_268-LIFE-STEGANOGRAPHY-DUAL-FILE-PREVIEW] - 2026-05-27
+
+### 原因
+- 用户指出隐写模块仍缺少文件双层加密模式和写入预览，导致 UI 暗示的高级能力没有真正闭环。
+
+### 新增
+- `plans/PLAN_268_生活实用隐写文件双层与写入预览补齐.md`
+  - 记录文件双层、音视频双层槽位、写入预览和验证范围。
+- `lib/src/services/toolbox_steganography_service.dart`
+  - 新增 `embedDualFile`，文件载荷支持图片双槽、WAV/PCM 样本双槽、MP4/MOV 双 `free` box 写入。
+  - 文件容量预检支持双层参数，返回表层/深层所需容量、总容量、每层容量和预计媒介边界。
+- `test/toolbox_steganography_service_test.dart`
+  - 覆盖图片、音频、视频的双层文本往返和双层文件往返，验证表层/深层口令分别还原对应层。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+  - 文件写入模式接入双层开关，新增表层文件选择、表层口令输入和双层文件请求参数。
+  - 文本/文件写入新增“预览写入”按钮，生成前展示媒介、容量、预计载荷、预计输出和双层提示。
+- `modules/toolbox/README.md`
+- `PROJECT_DOMAIN.md`
+  - 同步隐写模块文件双层和写入预览能力边界。
+
+### 风险变更
+- WAV/PCM 双层仍不抗有损转码；MP4/MOV 双 `free` box 仍可能被重封装工具移除。写入预览为容量估算，实际生成后仍以结果面板的真实输出大小为准。
+
+### 验证
+- `dart format lib/src/services/toolbox_steganography_service.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart test/toolbox_steganography_service_test.dart`
+- `dart analyze lib/src/services/toolbox_steganography_service.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart test/toolbox_steganography_service_test.dart`
+- `flutter test test/toolbox_steganography_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens steganography controls"`
+
+## [Unreleased-PLAN_267-LIFE-STEGANOGRAPHY-AUDIO-VIDEO-WRITE] - 2026-05-27
+
+### 原因
+- 用户指出图片隐写核心能力已完善，但音频、视频媒介以及写入文件仍是简单实现，需要优化到与图片隐写安全强度和性能基本对齐。
+
+### 新增
+- `plans/PLAN_267_生活实用隐写音视频与导出优化.md`
+  - 记录 WAV/PCM、MP4/MOV 容器写入、导出可靠性和格式边界风险。
+- `lib/src/services/toolbox_steganography_service.dart`
+  - 新增 WAV/PCM 音频样本 LSB 后端：使用口令/keyfile 派生定位头、随机样本顺序、公开策略头、容量预检、重复写入拒绝、隐藏载荷清理和成功还原次数消费。
+  - 新增 MP4/MOV 容器 `free` box 后端：新写入不再使用裸尾部追加，载荷带密钥定位头、长度掩码、随机 padding、公开策略头、重复写入拒绝和成功次数清理。
+- `test/toolbox_steganography_service_test.dart`
+  - 覆盖 WAV 文本往返、MP4 文本往返、音视频文件 payload 往返、WAV 成功次数清理、MP4 重复写入拒绝和 WAV 容量预检。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+  - 音频/视频写入按钮不再被旧“等待后端”逻辑禁用。
+  - 保存 keyfile、隐写媒体和文件结果时，平台返回可写路径后主动 `writeAsBytes` 落盘；未返回路径时继续使用应用文档目录兜底，Web 保持浏览器下载。
+  - 容量不足提示按图片、WAV/PCM 和 MP4/MOV 分别说明可用容量、所需容量和载体建议。
+- `modules/toolbox/README.md`
+- `PROJECT_DOMAIN.md`
+  - 同步音视频隐写后端、旧尾部载荷兼容和转码/重封装边界。
+
+### 风险变更
+- WAV/PCM 样本 LSB 不抗 MP3/AAC 等有损转码；MP4/MOV `free` box 不抗会剥离自由 box 的重封装或平台二次处理。真正的数据认证仍来自 crypto envelope 的 MAC/AEAD，公开策略头和次数限制仍只是本机当前文件的最佳努力提示与清理。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_steganography_service.dart`
+- `dart analyze lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_steganography.dart`
+- `dart analyze test/toolbox_steganography_service_test.dart`
+- `flutter test test/toolbox_steganography_service_test.dart`
+
+## [Unreleased-PLAN_266-LIFE-MORTGAGE-PRO] - 2026-05-27
+
+### 原因
+- 用户要求完成 `工具箱-生活实用-房贷计算器`，在等额本息/等额本金、贷款年限、计算方式、贷款金额、利率和首次还款时间基础上，提供比参考网页更专业且可自定义的本地测算能力。
+### 新增
+- `plans/PLAN_266_生活实用房贷计算器专业化实现.md`
+  - 记录房贷计算器专业化实现目标、公式口径、移动端 UI 边界和风险说明。
+- `lib/src/services/toolbox_mortgage_service.dart`
+  - 新增纯计算服务，覆盖等额本息、等额本金、贷款金额/住房面积两种计算方式、首付比例/首付金额、首次还款日、已还期数、提前还本金、月供降低/期限缩短和费用统计。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mortgage.dart`
+  - 新增专业房贷工作台，展示下期月供、贷款金额、合同总利息、剩余本金、剩余时间、合同费用、已还/剩余明细和后续 12 期还款计划。
+- `test/toolbox_mortgage_service_test.dart`
+  - 覆盖等额本息、等额本金、面积反推贷款额、费用统计和提前还款缩短期限。
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 接入房贷计算服务与新页面 part。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart`
+  - 将 `mortgage` 路由从旧占位页切换到 `_MortgageProPage`。
+- `test/ui_smoke_test.dart`
+  - 新增 life tools 房贷计算器 smoke，覆盖入口打开与住房面积模式切换。
+- `modules/toolbox/README.md`
+- `PROJECT_DOMAIN.md`
+  - 同步房贷计算器能力范围、可自定义参数和估算边界。
+### 风险变更
+- 房贷测算结果按本地公式估算，实际扣款仍可能受银行合同、放款日、计息起点、LPR 调整、商贷/公积金组合、地区税费、保险评估费和提前还款违约金影响。
+### 验证
+- `dart analyze lib/src/services/toolbox_mortgage_service.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mortgage.dart test/toolbox_mortgage_service_test.dart test/ui_smoke_test.dart`（通过；仅余既有 `test/ui_smoke_test.dart` info 级 const/final 提示）
+- `flutter test test/toolbox_mortgage_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens mortgage calculator and switches mode"` 未通过：当前工作树中 `lib/src/services/toolbox_steganography_service.dart` 缺失音视频隐写相关私有类型/方法（如 `_WavCarrierInfo`、`_Mp4CarrierInfo`），导致 `ui_smoke_test.dart` 编译在进入房贷用例前失败；另一次并行 `flutter test` 触发 Windows `native_assets.json` 文件锁，已改为单独重跑房贷服务测试并通过。
+
+## [Unreleased-PLAN_264-LIFE-DATE-CALCULATOR-PROGRESS] - 2026-05-27
+
+### 原因
+- 用户要求优化完善 `工具箱-生活实用-日期计算器`，原实现只是简单占位，需要支持秒级选择、多单位计算、周期剩余进度、目标日期进度和生命烛光图形化展示。
+
+### 新增
+- `plans/PLAN_264_生活实用日期计算器专业化增强.md`
+  - 记录日期计算器从占位升级为时间工作台的目标、步骤、年份/月度计算风险和验证边界。
+- `lib/src/services/toolbox_date_calculator_service.dart`
+  - 新增纯 Dart 日期计算服务，支持日历时间差、日期加减、分数/百分比年数、当前周期进度、目标日期进度和生命烛光进度。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_date_calculator.dart`
+  - 新增独立日期计算器页面，提供 `时间差 / 加减 / 进度 / 烛光` 四个页签。
+  - 起止时间和目标时间支持日期、时分与秒级选择；加减模式支持年、月、天、小时、分钟、秒多单位输入，年可输入 `0.5` 或 `50%`。
+  - 进度页展示目标日期进度，以及今年、本月、本周、本日、本小时的动态剩余进度；低层级条目可折叠查看。
+  - 烛光页按出生时间和预期寿命展示生命烛光燃烧比例、剩余蜡身、预计终点、已过与剩余时长。
+- `test/toolbox_date_calculator_service_test.dart`
+  - 覆盖秒级时间差、百分比年、日历月夹取、周期剩余、目标进度和生命烛光比例。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 接入日期计算服务与独立页面 part。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart`
+  - 移除旧占位 `_DateCalculatorPage`，保留路由分发到新独立页面。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_shared.dart`
+  - `_LifeSettingsPanel` 支持传入 `key`，供日期页签切换保持稳定动画状态。
+- `test/ui_smoke_test.dart`
+  - 新增 life tools 日期计算器 smoke，覆盖四个页签、百分比年输入、周期进度与生命烛光入口。
+- `modules/toolbox/README.md`
+- `PROJECT_DOMAIN.md`
+  - 同步日期计算器能力、计算口径和非医学预测边界。
+
+### 风险变更
+- 整数年/月使用日历推进，月末会按目标月最后一天夹取；小数年/月按对应自然年/月长度折算为秒，避免把所有月份粗略当成固定 30 天。
+- 生命烛光默认预期寿命使用 79 年，仅作为时间感知与提醒工具，不构成医学或寿命预测。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_date_calculator_service.dart lib/src/ui/pages/toolbox_life_tools.dart test/toolbox_date_calculator_service_test.dart test/ui_smoke_test.dart`（通过；仅余既有 `test/ui_smoke_test.dart` 信息级 lint）
+- `flutter test test/toolbox_date_calculator_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens date calculator progress and candle tabs"`
+
+## [Unreleased-PLAN_263-LIFE-BMI-PROFESSIONAL] - 2026-05-27
+
+### 原因
+- 用户要求优化完善 `工具箱-生活实用-BMI 计算器`，当前模块只有简单计算，需要参考专业资料加入儿童、青少年、成人、性别等差异，并增加更多相关实用工具。
+
+### 新增
+- `plans/PLAN_263_生活实用BMI计算器专业化增强.md`
+  - 记录 BMI 专业化增强的成人/儿童青少年口径、资料来源、围度与能量估算边界。
+- `lib/src/services/toolbox_bmi_service.dart`
+  - 新增纯计算服务，覆盖成人中国/WHO BMI 分类、CDC 2-19 岁 BMI-for-age 百分位、腰高比、腰臀比、Mifflin-St Jeor 基础代谢和活动水平 TDEE 估算。
+- `lib/src/services/toolbox_bmi_cdc_data.dart`
+  - 内置 CDC `bmiagerev.csv` LMS 参考数据，运行时无需联网即可估算儿童青少年 BMI-for-age 百分位。
+- `test/toolbox_bmi_service_test.dart`
+  - 覆盖成人中国口径、WHO 肥胖等级、儿童 BMI-for-age 和 2 岁以下不适用边界。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_bmi.dart`
+  - BMI 页面重构为 `结果摘要 → 输入参数 → 专业辅助工具 → 参考说明`。
+  - 新增年龄、性别、中国成人/WHO 国际成人口径、腰围、臀围和活动水平输入。
+  - 成人显示分类、健康体重区间和目标差量；儿童青少年显示 CDC BMI-for-age 百分位与年龄段；专业工具区展示腰高比、腰臀比、BMR 和 TDEE。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart`
+  - 移除已不再使用的旧简版 `_BmiPage`。
+  - 沿用当前工作树已接入的房贷服务计算等额本息结果，避免 `toolbox_mortgage_service.dart` 引用悬空。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_date_calculator.dart`
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mortgage.dart`
+  - 补齐当前 life tools 主文件已引用但缺失的日期/房贷 part 壳，避免阻塞 BMI 定向分析和 smoke。
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 更新 BMI 入口摘要和权威来源入口。
+- `test/ui_smoke_test.dart`
+  - BMI smoke 覆盖腰高比/BMR 展示和儿童百分位入口。
+- `modules/toolbox/README.md`
+- `PROJECT_DOMAIN.md`
+  - 同步 BMI 新口径、辅助工具和非医学诊断边界。
+
+### 风险变更
+- 儿童青少年 BMI 使用 CDC 2-19 岁参考数据，并不代表本地儿科诊断标准；2 岁以下不做 BMI-for-age 分类。
+- BMR/TDEE、腰高比和腰臀比均为估算辅助，孕期、运动员、增肌、疾病恢复期或特殊病史人群仍应优先使用专业评估。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_bmi_service.dart lib/src/services/toolbox_bmi_cdc_data.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_bmi.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_date_calculator.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_mortgage.dart test/toolbox_bmi_service_test.dart test/ui_smoke_test.dart`（通过；仍有既有信息级 lint 提示）
+- `flutter test test/toolbox_bmi_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools recalculates bmi classification"`
+
+## [Unreleased-PLAN_265-LIFE-WORLD-CLOCK] - 2026-05-27
+
+### 原因
+- 用户要求在 `工具箱-生活实用` 中新增 `世界时钟` 模块，并放在 `日期计算器` 下方。
+
+### 新增
+- `plans/PLAN_265_生活实用世界时钟模块实现.md`
+  - 记录世界时钟入口顺序、内置城市、时区规则、页面拆分和验证边界。
+- `lib/src/services/toolbox_world_clock_service.dart`
+  - 新增常用城市静态数据、UTC 偏移计算、基础夏令时规则、本地时差、办公时段和搜索筛选能力。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_world_clock.dart`
+  - 新增世界时钟页面，包含本地时间主舞台、搜索/地区/办公时间筛选、收藏时钟、城市列表和使用边界说明。
+- `test/toolbox_world_clock_service_test.dart`
+  - 覆盖时区偏移、南北半球夏令时、搜索和办公时段筛选。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 注册 `world_clock` 工具入口，顺序放在 `date_calculator` 下方。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart`
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart`
+  - 接入世界时钟路由分发。
+- `test/ui_smoke_test.dart`
+  - 新增 life tools 世界时钟打开与筛选 smoke。
+- `modules/toolbox/README.md`
+- `PROJECT_DOMAIN.md`
+  - 同步世界时钟能力与内置时区规则风险。
+
+### 风险变更
+- 世界时钟使用内置常见城市和基础 DST 规则，适合当前时间速查；不覆盖历史时区校验、政策变化后的新规则或所有城市。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_world_clock_service.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_shared.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_world_clock.dart test/toolbox_world_clock_service_test.dart test/ui_smoke_test.dart`（通过；仅余既有 utilities/test 文件 info 级提示）
+- `flutter test test/toolbox_world_clock_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens world clock and filters cities"`
+
+## [Unreleased-PLAN_262-LIFE-FAKE-CALL-TRIGGER-FIX] - 2026-05-27
+
+### 原因
+- 用户进一步反馈 `工具箱-生活实用-模拟来电` 不需要触发前来电主舞台，只需要到点全屏播放来电特效；同时存在倒计时输入不符合预期、删除不实时刷新、铃声震动会自动停止和测试到点未触发的问题。
+
+### 新增
+- `plans/PLAN_262_生活实用模拟来电触发与倒计时输入修复.md`
+  - 记录本轮页面收口、倒计时输入、列表刷新、Android 闹钟级调度和持续响铃震动的修复边界。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_fake_call.dart`
+  - 移除触发前的来电主舞台预览，页面改为新建模拟来电、触发能力、已创建来电列表。
+  - 倒计时改为用户手动输入时长并选择秒/分钟/小时单位，创建时校验正数与最长 7 天边界。
+  - 已创建来电的完成、稍后 10 分钟和删除操作后立即刷新当前列表。
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/TodoReminderScheduler.kt`
+  - `fakeCall` 调度优先使用 `AlarmManager.setAlarmClock`，提升短时测试和锁屏/待机状态下的到点触发可靠性。
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/TodoReminderReceiver.kt`
+  - 移除模拟来电通知的 45 秒 timeout，通知保持到用户处理。
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/FakeIncomingCallActivity.kt`
+  - 移除 45 秒自动关闭，铃声与震动持续到用户接听或拒绝。
+- `test/ui_smoke_test.dart`
+  - 模拟来电 smoke 覆盖手动倒计时、秒单位选择、创建后删除并立即回到空态。
+- `modules/toolbox/README.md`
+- `PROJECT_DOMAIN.md`
+  - 同步模拟来电最新模块边界、闹钟级触发链路和权限风险。
+
+### 风险变更
+- `setAlarmClock` 更适合准点触发，但部分设备仍可能受通知、全屏通知、闹钟展示或厂商后台策略影响。
+- 铃声与震动持续到手动关闭，若用户把来电页切到后台但不接听/拒绝，也会继续播放直到 Activity 销毁或用户关闭。
+
+### 验证
+- `dart analyze lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_fake_call.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_notify_me.dart lib/src/services/toolbox_life_notify_service.dart lib/src/services/todo_reminder_service.dart test/ui_smoke_test.dart`（通过；仅余既有 `test/ui_smoke_test.dart` const/final 信息级提示）
+- `./gradlew.bat :app:compileDebugKotlin`（通过；仅保留 Android 全屏沉浸旧 API deprecation warning）
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens fake incoming call and creates an item"`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens notify me and creates a reminder"`
+
+## [Unreleased-PLAN_261-LIFE-DEVICE-FRAME-STATUS-BAR-REALISM] - 2026-05-27
+
+### 原因
+- 用户反馈 `工具箱-生活实用-带壳截图` 状态栏不够拟真：电池状态没有区分低电量/电量不足，右侧状态组比例偏大且未贴近外壳内侧边框。
+
+### 新增
+- `plans/PLAN_261_生活实用带壳截图状态栏拟真优化.md`
+  - 记录状态栏拟真、电池语义色、右侧布局比例与验证范围。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_device_frame_preview.dart`
+  - 右侧状态组改为靠右对齐，并通过最大宽度 48% 与 `FittedBox` 限制整体比例，避免超过屏幕的一半。
+  - 电池图标与电量文字新增语义色：充电为绿色，低于 30% 为低电量琥珀色，低于 15% 为电量不足红色。
+  - 电量不足时使用 `battery_alert` 图标，低电量时使用低电量电池图标，整体字号和图标尺寸同步缩小，更接近真实状态栏比例。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_device_frame.dart`
+  - 状态栏设置区将充电入口前置为 `电池状态 / Battery state` 分段设置。
+  - 电量摘要补充 `正常 / 低电量 / 电量不足 / 充电中` 状态文案。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_device_frame_labels.dart`
+  - 新增电池状态标签函数，统一中英文状态文案。
+- `test/ui_smoke_test.dart`
+  - 补充 `toolbox_life_notify_service.dart` import，修复既有模拟来电 smoke 编译符号缺失。
+  - 带壳截图 smoke 增加 `Battery state` 与 `Charging` 设置入口断言。
+- `modules/toolbox/README.md`
+- `PROJECT_DOMAIN.md`
+  - 同步状态栏拟真、低电量阈值和右侧比例约束。
+
+### 风险变更
+- 状态栏拟真属于展示模拟，不读取真实设备电量、网络或充电状态；所有值仍由用户在页面手动配置。
+
+### 验证
+- `dart analyze lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_device_frame.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_device_frame_labels.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_device_frame_preview.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_device_frame_models.dart lib/src/ui/pages/toolbox_life_tools.dart test/device_frame_assets_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens device frame controls"`
+- `flutter test test/device_frame_assets_test.dart`
+
+## [Unreleased-PLAN_260-LIFE-DEVICE-FRAME-FOCUS-FIX] - 2026-05-27
+
+### 原因
+- 用户反馈 `工具箱-生活实用-带壳截图` 模块重点与功能结构错乱，需要围绕“导入截图 → 带壳预览 → 构图调整 → PNG 导出”重新收口。
+
+### 新增
+- `plans/PLAN_260_生活实用带壳截图模块收敛与导出优化.md`
+  - 记录带壳截图主舞台重整、导入导出边界、文件拆分和验证口径。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_device_frame_models.dart`
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_device_frame_labels.dart`
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_device_frame_preview.dart`
+  - 拆出机模数据、展示文案和预览渲染，避免主页面继续膨胀并降低后续样式迭代扩散风险。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_device_frame.dart`
+  - 页面重排为 `截图舞台 → 构图设置 → 状态栏设置 → 使用边界`，首屏直接展示下一步动作、当前预览、导出按钮和关键状态。
+  - 新增 `裁切填满 / 完整显示` 截图适配模式，并在原图比例与机模屏幕比例不一致时给出独立提示。
+  - 图片导入改为优先走 Web bytes、非 Web read stream / 文件路径读取，并增加 32MB 大图闸门，减少 file picker 直接预读整文件造成的移动端压力。
+  - 导出逻辑区分保存对话框取消与平台不可用兜底，继续保留 `RepaintBoundary -> PNG` 与应用文档目录 fallback。
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 注册带壳截图拆分后的 model、label、preview part。
+- `test/ui_smoke_test.dart`
+  - 带壳截图 smoke 增加截图舞台、预览舞台 key 与“完整显示”适配入口断言。
+- `modules/toolbox/README.md`
+- `PROJECT_DOMAIN.md`
+  - 同步带壳截图主流程、导入导出边界和原创机模风险说明。
+
+### 风险变更
+- `完整显示` 模式会保留原图完整内容，但当原图比例与机模屏幕差异较大时会出现屏幕内留边；`裁切填满` 更像真机展示，但可能裁掉边缘内容。
+- PNG 导出继续依赖 Flutter 渲染树截图与平台保存能力，Web 或移动端保存路径仍可能因平台能力不同而表现不同。
+
+### 验证
+- `dart analyze lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_device_frame.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_device_frame_labels.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_device_frame_models.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_device_frame_preview.dart lib/src/ui/pages/toolbox_life_tools.dart test/device_frame_assets_test.dart`
+- `flutter test test/device_frame_assets_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens device frame controls"`
+
+## [Unreleased-PLAN_258-LIFE-NOTIFY-ME-CONTROL-FIX] - 2026-05-27
+
+### 原因
+- 用户反馈 `工具箱-生活实用-通知自己` 功能混乱、控制粒度不足且存在 bug，需要全面收敛提醒工作台、补齐控制项并修复原生通知动作边界。
+
+### 新增
+- `plans/PLAN_258_生活实用通知自己功能收敛与提醒控制完善.md`
+  - 记录通知自己页面收敛、提醒控制粒度、Android 通知动作和验证边界。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_notify_me_widgets.dart`
+  - 拆出通知自己首屏总览、状态 chip、时间信息块、分钟输入、摘要条和提醒列表卡片，避免主页面 part 超过项目文件大小规范。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_notify_me.dart`
+  - 页面重构为 `首屏状态总览 → 投递能力 → 新建提醒 → 已创建提醒` 的工作台结构，首屏直接展示当前预览、触发时间、实际提醒时间、下一条提醒、原生能力和日历镜像状态。
+  - 创建表单补齐自定义提前分钟、自定义倒计时分钟、状态栏常驻、进入应用取消、系统日历镜像等细粒度控制，并在提前提醒会落到过去时阻止创建。
+  - 已创建提醒列表新增已触发状态识别、稍后 10 分钟、稍后 1 小时、套用配置和删除操作。
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 注册通知自己拆分后的 widgets part。
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/TodoReminderReceiver.kt`
+  - 通知动作新增 `Snooze 10m` 与 `Dismiss`；`Open detail` 不再强制取消通知，修复“进入应用取消”关闭后仍被移除的问题。
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/MainActivity.kt`
+  - `consumePendingTodoLaunchId` 改为只读取待跳转 id，不提前清空原生动作，避免 complete/snooze/open 等动作在 Focus 页消费前丢失。
+- `modules/toolbox/README.md`
+  - 同步通知自己工作台结构、控制粒度、原生动作能力和平台风险边界。
+- `PROJECT_DOMAIN.md`
+  - 同步 `notify_me` 模块能力边界与 Android 原生提醒动作限制。
+
+### 风险变更
+- `通知自己` 继续复用 todo reminder 存储与 Android 原生调度；完整通知、锁屏、精确触发仍受通知权限、精确闹钟权限、Android 版本和厂商后台策略影响。
+- 原生 `Dismiss` 只负责移除当前通知，不会删除应用内提醒条目；需要彻底关闭提醒仍应在列表中删除或完成。
+
+### 验证
+- `dart analyze lib/src/ui/pages/toolbox_life_tools.dart lib/src/services/toolbox_life_notify_service.dart lib/src/services/todo_reminder_service.dart lib/src/services/system_calendar_service.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens notify me and creates a reminder"`
+
+## [Unreleased-PLAN_259-LIFE-FAKE-CALL-FOCUS-FULLSCREEN] - 2026-05-27
+
+### 原因
+- 用户反馈 `工具箱-生活实用-模拟来电` 当前重点和模块职责错乱，需要围绕指定时间触发全屏模拟来电重新修复和收口。
+
+### 新增
+- `plans/PLAN_259_生活实用模拟来电模块收口与全屏触发修复.md`
+  - 记录本轮模拟来电页面职责、Android full-screen notification 触发路径、风险边界与验证口径。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_fake_call.dart`
+  - 首屏改为来电主舞台，优先展示来电对象、触发时间、全屏投递状态和来电预览。
+  - 联系人姓名/号码前置为核心输入，管理名称改为可选；未填写时自动用姓名或号码生成 `life_fake_call` 待办标题。
+  - 倒计时预设补充 1 分钟与 3 分钟，便于真机快速验证。
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/TodoReminderScheduler.kt`
+  - 新增独立 `todo_fake_incoming_call` 通知渠道，使用系统来电铃声、振动与公开锁屏可见性。
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/TodoReminderReceiver.kt`
+  - 模拟来电触发改为 high-priority `CATEGORY_CALL` 通知 + `setFullScreenIntent` 拉起全屏 Activity，并保留直接 `startActivity` 兜底。
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/FakeIncomingCallActivity.kt`
+  - 全屏来电页补充中英本地化文案、底部接听/拒绝操作、圆角操作按钮，并在结束或超时后取消对应通知。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_notify_me.dart`
+  - 修复恢复提醒页时的 `meta.presentationType.isFakeCall` 错误引用，确保 `通知自己` 保持普通提醒/锁屏提醒职责。
+- `test/ui_smoke_test.dart`
+  - 模拟来电 smoke 改为验证“只填写来电姓名也能创建条目”，覆盖管理名称可选的新语义。
+- `modules/toolbox/README.md`
+- `PROJECT_DOMAIN.md`
+  - 同步 `模拟来电` 模块边界、Android full-screen intent 触发链路与真机权限风险。
+
+### 风险变更
+- `模拟来电` 完整全屏体验仍以 Android 为主；Android 14+ 与部分厂商系统可能要求用户允许全屏通知、通知权限或精确闹钟权限。
+- `模拟来电` 继续复用 todo reminder 存储与调度，列表隔离依赖 `life_fake_call` 分类和 fake-call 元数据双重识别。
+
+### 验证
+- `dart analyze lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_fake_call.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_notify_me.dart lib/src/services/toolbox_life_notify_service.dart lib/src/services/todo_reminder_service.dart`
+- `./gradlew.bat :app:compileDebugKotlin`（通过；仅保留 Android 全屏沉浸旧 API deprecation warning）
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens notify me and creates a reminder"`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens fake incoming call and creates an item"`
+
+## [Unreleased-PLAN_256-LIFE-CITY-COMPARE-CUSTOM-ADJUSTMENTS] - 2026-05-27
+
+### 原因
+- 用户希望“城市薪资对比工具”不要被静态参考样本锁死，尤其是健身、娱乐等没有统一标准的项目，需要支持个人化修正。
+
+### 新增
+- `plans/PLAN_256_生活实用城市薪资对比自定义支出与预设微调.md`
+  - 记录本轮自定义支出、预设微调与验证边界。
+
+### 修改
+- `lib/src/services/toolbox_city_compare_service.dart`
+  - 为 `CityCompareProfile` 增加住房、餐饮、交通、教育、水电网话、健身、娱乐倍数微调参数。
+  - 增加健身月费与电影票价单项覆盖值，以及自定义月支出模型与分类。
+  - 成本拆解现会把“预设样本 + 倍数微调 + 单项覆盖 + 自定义支出”统一纳入月成本计算。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_city_compare.dart`
+  - 页面新增 “Adjustments and custom expenses / 费用微调与自定义支出” 区块。
+  - 支持按类目调节预设倍数、覆盖健身/月费与电影票单价，并支持新增/删除自定义月支出。
+  - 为自定义支出输入框补充稳定 key，便于移动端 smoke 回归。
+- `test/toolbox_city_compare_service_test.dart`
+  - 新增自定义支出与倍数微调会影响成本拆解和总额的断言。
+- `test/ui_smoke_test.dart`
+  - 扩展城市薪资对比 smoke：覆盖微调区可见性、自定义支出录入与结果回显。
+- `modules/toolbox/README.md`
+  - 同步城市薪资对比工具新增的个人校准层能力与风险边界。
+- `PROJECT_DOMAIN.md`
+  - 同步 `city_compare` 的预设微调、自定义支出能力与版本记录。
+
+### 风险变更
+- 倍数微调、单项覆盖和自定义支出属于个人校准层，用于修正静态参考样本，不代表官方统计均值、实时租售价格或标准收费。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_city_compare_service.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_city_compare.dart test/toolbox_city_compare_service_test.dart`
+- `flutter test test/toolbox_city_compare_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens city salary compare and updates target salary"`
+
+## [Unreleased-PLAN_257-LIFE-DEVICE-FRAME-UNIT-EXPANSION] - 2026-05-27
+
+### 原因
+- 用户继续聚焦工具箱「生活实用」中的 `带壳截图`、`全能单位换算` 与 `BMI 计算器`，希望进一步修正带壳截图在手机窄屏上的偏移观感，补齐更接近主流真机展示感的机模与状态栏客制化，同时扩展单位换算的覆盖范围。
+
+### 新增
+- `plans/PLAN_257_生活实用带壳截图机模扩展与单位换算扩容.md`
+  - 记录本轮机模资源扩展、状态栏定制、单位分类扩容、证件照尺寸参考与验证范围。
+- `assets/toolbox/device_frames/iphone_obsidian_frame.png`
+- `assets/toolbox/device_frames/iphone_obsidian_shadow.png`
+- `assets/toolbox/device_frames/iphone_obsidian_glare.png`
+- `assets/toolbox/device_frames/android_frost_frame.png`
+- `assets/toolbox/device_frames/android_frost_shadow.png`
+- `assets/toolbox/device_frames/android_frost_glare.png`
+  - 新增两套原创前视机模资源，分别补充深色灵动岛与浅色挖孔屏风格。
+
+### 修改
+- `scripts/generate_device_frame_assets.ps1`
+  - 修正机模侧键的圆角半径计算，避免按钮在窄屏预览里出现外鼓导致的视觉偏移，并同步生成新增机模资源。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_device_frame.dart`
+  - 扩展为五套机模预设，补齐窄屏自适应居中预览，并新增时间、电量、充电态、蜂窝信号、Wi-Fi 与网络制式等状态栏定制能力。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_unit_converter.dart`
+  - 扩展长度、重量、温度、面积、体积、速度、力、密度、功率、热量/能量、数据、时间与 CSS 尺寸换算，并新增证件照尺寸参考模式与 DPI 像素换算。
+- `test/device_frame_assets_test.dart`
+  - 覆盖新增的 `iphone_obsidian_*` 与 `android_frost_*` 资源打包校验。
+- `test/ui_smoke_test.dart`
+  - 更新带壳截图与单位换算 smoke，用例覆盖新状态栏设置入口与新增分类入口。
+- `modules/toolbox/README.md`
+- `PROJECT_DOMAIN.md`
+  - 同步带壳截图增强点、单位换算扩容范围与版本记录。
+
+### 风险变更
+- `带壳截图` 仍以仓库内原创展示机模为边界，目标是提升真实展示感，而不是复刻某个厂商的官方营销图或精确 OEM 尺寸。
+- `全能单位换算` 的 CSS 与证件照能力属于本地参考换算：`rem/em` 依赖基准字号口径，证件照“寸”属于常见市场别名，结果适合设计、排版和日常核对，不替代专业规范文件。
+
+### 验证
+- `dart analyze lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_device_frame.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_unit_converter.dart test/device_frame_assets_test.dart test/ui_smoke_test.dart`
+- `flutter test test/device_frame_assets_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens device frame controls"`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools converts default unit inputs"`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools recalculates bmi classification"`
+
+## [Unreleased-PLAN_256-LIFE-FAKE-CALL-SPLIT-MEME-REAL-PREVIEW] - 2026-05-27
+
+### 原因
+- 用户追加要求两点修正：`模拟来电` 必须从 `通知自己` 中拆成平行独立模块；`表情包制作` 的预览必须改为真实渲染，修复文本框与字体大小不匹配、字高截断，以及预览缩放能力不足的问题。
+
+### 新增
+- `plans/PLAN_256_生活实用模拟来电独立模块与表情包真实预览修正.md`
+  - 记录本轮结构修正、风险边界与验证口径。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_fake_call.dart`
+  - 新增独立 `模拟来电` 工具页，支持指定时间/倒计时、姓名、号码、归属地、标签、预览与创建后列表管理。
+
+### 修改
+- `lib/src/services/toolbox_life_notify_service.dart`
+  - 新增 `life_fake_call` 分类兼容，并让提醒解析同时识别提醒页与模拟来电页的元数据来源。
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 将 `fake_call` 注册为 life tools 独立入口，并接入新页面 `part`。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart`
+  - 为 life tools 总览接入 `模拟来电` 路由，并让入口数量改为跟随 `_lifeTools.length` 自动显示。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_notify_me.dart`
+  - 页面收口为提醒工作台本身，仅保留 `状态栏通知 / 锁屏提醒`、状态栏锁定、进入应用取消、指定时间/倒计时与系统日历同步。
+- `lib/src/services/toolbox_meme_service.dart`
+  - 预览与导出统一复用同一套 Canvas 绘制函数，并补上经典描边文本的安全边距，避免描边和字高被裁切。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_meme_maker.dart`
+  - 预览舞台改为 `CustomPaint + ToolboxMemeService.paint(...)` 真实渲染；支持空白区整体缩放/平移、图层命中选中、拖动与双指缩放。
+- `test/ui_smoke_test.dart`
+  - 新增 `模拟来电` 工具入口与创建 smoke 用例。
+- `modules/toolbox/README.md`
+  - 同步 `通知自己 / 模拟来电 / 表情包制作` 的最新结构边界与能力说明。
+
+### 风险变更
+- `模拟来电` 底层仍复用 todo reminder 与 Android 原生提醒调度；旧的 fake-call todo 若仍保存在 `life_notify_me` 分类，页面列表会按元数据语义兼容识别。
+- `表情包制作` 当前已统一静态 PNG 预览与导出，但仍不包含 GIF/APNG 时间轴、多帧编辑与额外字体资产包。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_life_notify_service.dart lib/src/services/toolbox_meme_service.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_notify_me.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_fake_call.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_meme_maker.dart test/toolbox_meme_service_test.dart`
+- `flutter test test/toolbox_meme_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens notify me and creates a reminder"` 未通过：被项目内既有的 `toolbox_life_tools_text_transform.dart` 缺失私有成员编译错误阻塞，非本轮改动引入。
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens fake incoming call and creates an item"` 未通过：同样被 `toolbox_life_tools_text_transform.dart` 现有编译错误阻塞。
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens meme maker controls"` 未通过：同样被 `toolbox_life_tools_text_transform.dart` 现有编译错误阻塞。
+
+## [Unreleased-PLAN_255-LIFE-CITY-COMPARE-REFERENCE-ANALYSIS] - 2026-05-27
+
+### 原因
+- 用户希望继续为“城市薪资对比工具”补充更多细分参考资料条目，并在页面中直接做对比分析，而不是只给出汇总结果。
+
+### 新增
+- `plans/PLAN_255_生活实用城市薪资对比参考条目扩展与分析.md`
+  - 记录本轮细分条目扩展、参考来源与分析目标。
+
+### 修改
+- `lib/src/services/toolbox_city_compare_service.dart`
+  - 新增参考条目模型与自动分析模型，补充社保基数、不同租房档位、房价、餐饮、手机套餐、宽带、教育、健身和电影票等原始字段对比。
+  - 新增自动分析结论，概括最大差异项、同薪资迁移结果、重点原始条目和目标薪资解释。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_city_compare.dart`
+  - 页面新增 “Comparison insights / 对比分析” 与 “Reference detail items / 参考细分条目” 区域。
+  - 口径说明补充参考项目 README、`public/city_data.csv` 与 Numbeo 公共数据说明。
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 为 `city_compare` 条目补充 web 与 Numbeo 参考来源。
+- `modules/toolbox/README.md`
+  - 同步城市薪资对比工具新增的细分参考项与自动分析能力。
+- `PROJECT_DOMAIN.md`
+  - 同步 `city_compare` 新版参考字段与分析边界。
+- `test/toolbox_city_compare_service_test.dart`
+  - 新增参考条目与分析结论断言。
+- `test/ui_smoke_test.dart`
+  - 新增对比分析区与参考细分条目区的 smoke 可见性覆盖。
+
+### 风险变更
+- 新增细分条目会提高页面信息密度，但这些字段仍然来自静态参考样本，不代表实时价格或官方收费标准。
+- 自动分析属于基于当前样本和简化模型的解释层，不替代真实城市调研、学区核验或税务测算。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_city_compare_service.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_city_compare.dart test/toolbox_city_compare_service_test.dart`
+- `flutter test test/toolbox_city_compare_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens city salary compare and updates target salary"`
+
+## [Unreleased-PLAN_255-LIFE-DEVICE-FRAME-MOCKUP] - 2026-05-27
+
+### 原因
+- 用户反馈工具箱「生活实用」中的 `带壳截图` 与真实手机展示稿差距较大，并提供参考 APK 与商店应用方向，希望把当前通用壳体升级为更接近真实设备展示的出图体验；同时本轮回归也需要确认 `全能单位换算` 与 `BMI 计算器` 继续稳定。
+
+### 新增
+- `plans/PLAN_255_生活实用带壳截图真实机模重构.md`
+  - 记录本轮原创机模重构、风险边界与回归范围。
+- `assets/toolbox/device_frames/`
+  - 新增两套原创前视机模资源及对应阴影/炫光图层：`iphone_titanium_*` 与 `android_graphite_*`。
+- `scripts/generate_device_frame_assets.ps1`
+  - 新增可复跑的资源生成脚本，便于后续继续补机模或微调质感。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_device_frame.dart`
+  - 将 `device_frame` 从通用 Flutter 绘制壳体重构为资产化机模合成，支持 `海报卡片 / 钛金灵动岛 / 石墨挖孔屏` 三种风格，并保留本地导入、状态栏补齐、背景切换和 PNG 导出链路。
+  - 新增炫光开关、优化预览舞台文案与导出命名，让带壳截图更接近真实棚拍展示稿。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_unit_converter.dart`
+  - 为单位下拉框补上 `isExpanded + ellipsis` 收口，修复窄宽度测试视口下的横向溢出。
+- `pubspec.yaml`
+  - 注册 `assets/toolbox/device_frames/` 资源目录，供生活实用带壳截图页面加载。
+- `PROJECT_DOMAIN.md`
+  - 同步 `device_frame` 从通用绘制壳体升级为原创机模展示方案，并记录单位换算的窄宽度收口。
+- `modules/toolbox/README.md`
+  - 同步带壳截图的资源化机模能力、导出边界与单位换算的窄屏适配说明。
+
+### 风险变更
+- `带壳截图` 当前虽然已明显提升真实展示感，但仍属于仓库内原创展示机模，不对应任何厂商官方营销图、真实营销渲染管线或精确 OEM 尺寸。
+- `全能单位换算` 与 `BMI 计算器` 的计算口径未改变：前者继续依赖本地静态单位表，后者继续仅用于成年人日常自查辅助。
+
+### 验证
+- `dart analyze lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_device_frame.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens device frame controls"`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools converts default unit inputs"`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools recalculates bmi classification"`
+
+## [Unreleased-PLAN_252-LIFE-NOTIFY-FAKE-CALL-MEME-LAYERS] - 2026-05-27
+
+### 原因
+- 用户要求继续深挖工具箱「生活实用」中的 `通知自己` 与 `表情包制作`：`通知自己` 需要补到状态栏锁定、勾选完成、进入应用取消、模拟来电和锁屏全屏展示；`表情包制作` 需要补到可拖动、可缩放、可调字体样式与层级，且当前字号/边距等控件必须真实生效。
+
+### 新增
+- `plans/PLAN_252_生活实用通知自己模拟来电与表情包图层交互增强.md`
+  - 记录本轮原生提醒扩展、模拟来电、图层交互与导出一致性的目标、风险与验证口径。
+- `lib/src/services/toolbox_life_notify_service.dart`
+  - 新增「通知自己」元数据编解码能力，统一承载提醒说明、提醒展示类型、倒计时、状态栏锁定和模拟来电字段。
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/FakeIncomingCallActivity.kt`
+  - 新增 Android 全屏模拟来电界面，支持锁屏唤起、来电铃声与振动、姓名/号码/归属地/标签展示，以及接听/挂断交互。
+
+### 修改
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/TodoReminderScheduler.kt`
+  - 扩展原生提醒规格，支持 `presentationType`、`stickyNotification`、`cancelOnOpen` 和模拟来电字段透传与持久化。
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/TodoReminderReceiver.kt`
+  - 普通提醒支持状态栏常驻与“进入应用取消”语义；模拟来电在触发时改为直接拉起全屏来电 Activity。
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/MainActivity.kt`
+  - 原生提醒 MethodChannel 接口扩展为接收状态栏锁定、进入取消与模拟来电字段。
+- `android/app/src/main/AndroidManifest.xml`
+  - 注册全屏模拟来电 Activity，并声明锁屏展示/点亮屏幕能力。
+- `lib/src/services/todo_reminder_service.dart`
+  - 在同步本地提醒到 Android 原生调度时解析 `通知自己` 元数据，并下发状态栏锁定、模拟来电与来电信息字段。
+- `lib/src/services/system_calendar_service.dart`
+  - 系统日历镜像改为写入解析后的提醒说明，模拟来电会补充姓名/号码/归属地/标签摘要。
+- `lib/src/services/toolbox_meme_service.dart`
+  - 表情包服务重构为统一图层模型，支持字体家族、粗体/斜体、描边/卡片/贴纸气泡、缩放、边距、对齐和层级顺序，并让预览/导出共用同一套布局参数。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_notify_me.dart`
+  - 页面重做为真实提醒工作台：支持普通通知/锁屏提醒/模拟来电、指定时间/倒计时、状态栏锁定、进入应用取消、来电字段输入与更完整的列表展示。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_meme_maker.dart`
+  - 页面重做为图层编辑器：支持选中图层、预览区拖动与双指缩放、字体/对齐/层级设置，以及与导出一致的 PNG 生成。
+- `test/toolbox_meme_service_test.dart`
+  - 更新为新的图层渲染请求模型，覆盖多图层 PNG 导出的基本正确性。
+
+### 风险变更
+- `通知自己` 的状态栏常驻、锁屏提醒和模拟来电当前完整能力仍主要落在 Android；其他平台继续以页面管理和系统日历镜像为主。
+- `通知自己` 当前仍复用 todo 提醒基础设施，因此原生“完成”动作会通过应用回写待办完成状态，而不是纯原生静默完成。
+- `表情包制作` 当前已实现静态图文图层编辑与 PNG 导出一致性，但仍不包含 GIF/APNG 动图时间轴与多帧编辑链路。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_life_notify_service.dart lib/src/services/todo_reminder_service.dart lib/src/services/system_calendar_service.dart lib/src/services/toolbox_meme_service.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_notify_me.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_meme_maker.dart test/toolbox_meme_service_test.dart`
+- `flutter test test/toolbox_meme_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens notify me and creates a reminder"`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens meme maker controls"`
+- `android/gradlew.bat :app:compileDebugKotlin`
+
+## [Unreleased-PLAN_254-LIFE-CITY-COMPARE] - 2026-05-27
+
+### 原因
+- 用户要求专注于工具箱-生活实用中的“城市薪资对比工具”模块，基于模块内占位参考页完成真实实现，而不是继续停留在资料入口。
+
+### 新增
+- `plans/PLAN_254_生活实用城市薪资对比工具实现.md`
+  - 记录本轮目标、参考来源、生活方式配置口径与验证方式。
+- `lib/src/services/toolbox_city_compare_service.dart`
+  - 新增纯计算服务，内置静态城市成本样本，支持双城市成本拆解、简化税费/五险一金估算、同薪资迁移结余和目标月薪求解。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_city_compare.dart`
+  - 新增独立“城市薪资对比工具”页面，按首屏结论、城市与薪资输入、生活方式配置、双城拆解和口径说明组织移动端 UI。
+- `test/toolbox_city_compare_service_test.dart`
+  - 覆盖高成本城市迁移需要更高目标月薪、低成本城市迁移可降低目标月薪等核心计算行为。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 接入城市薪资对比服务与独立页面 part。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart`
+  - 将 `city_compare` 从占位信息页路由切换为真实可用页面。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart`
+  - 把 `city_compare` 纳入 life tools utility 路由分发。
+- `modules/toolbox/README.md`
+  - 同步城市薪资对比工具的能力范围、输入口径与风险边界。
+- `PROJECT_DOMAIN.md`
+  - 同步生活实用 `city_compare` 模块的产品边界与版本记录。
+- `test/ui_smoke_test.dart`
+  - 新增城市薪资对比页面入口与主舞台 smoke 覆盖。
+
+### 风险变更
+- 城市样本为静态参考数据，不代表实时租金、学费、交通或消费价格；页面结果适合横向估算，不适合替代真实报价或合同条款。
+- 税费与五险一金按统一简化模型估算，不会覆盖个税专项附加扣除、公司补贴、个体社保口径等个体差异。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_city_compare_service.dart test/toolbox_city_compare_service_test.dart`
+- `dart analyze lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_city_compare.dart`
+- `flutter test test/toolbox_city_compare_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens city salary compare and updates target salary"`
+
+## [Unreleased-PLAN_253-LIFE-WORK-WORTH] - 2026-05-27
+
+### 原因
+- 用户要求专注实现工具箱-生活实用中的“工作性价比计算器”，参考 `zippland/worth-calculator` / `worthjob.zippland.com`，并增加生活开销、保险公积金、工作环境健康层级等参数。
+
+### 新增
+- `plans/PLAN_253_生活实用工作性价比计算器增强.md`
+  - 记录本轮目标、计算口径、风险边界与验证方式。
+- `lib/src/services/toolbox_work_worth_service.dart`
+  - 新增纯计算服务，覆盖年收入、工作日、PPP 标准化日薪、月可支配、健康损耗预算、环境/生活现金系数、综合价值分与评级。
+  - 扩展关键计算项：奖金确定性、现金化福利、加班补偿、无偿加班、成长性、下班边界、心理安全感与自主权，并新增参考标准值模型。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_work_worth.dart`
+  - 新增独立工作性价比页面，按主舞台结果、收入与开销、时间成本、环境稳定性和口径说明组织移动端 UI。
+  - 新增参考标准值面板，展示标准工时、通勤、年假、公共假期、现金安全垫和健康损耗预留等校准口径。
+- `test/toolbox_work_worth_service_test.dart`
+  - 覆盖基础计算、生活成本、不健康环境惩罚，以及奖金/福利/加班/上下文因子对结果的影响。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 接入工作性价比计算服务与独立页面 part。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart`
+  - 保持 `work_worth` 路由不变，并将旧简版实现改名为 legacy，避免与新独立页面冲突。
+- `test/ui_smoke_test.dart`
+  - 增加工作性价比页面入口、主舞台和参考标准值面板 smoke 覆盖。
+
+### 风险变更
+- 该模块输出用于 offer/岗位横向比较，不构成财务、医疗或职业建议；PPP、城市、学历经验和健康损耗参数均为估算口径。
+- 工作环境、生活开销、税费与职业背景均采用估算系数；页面已展示口径说明，避免把分数当作绝对结论。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_work_worth_service.dart test/toolbox_work_worth_service_test.dart`
+- `dart analyze lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_work_worth.dart`
+- `flutter test test/toolbox_work_worth_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens work worth calculator and updates score"`
+
+## [Unreleased-PLAN_249-LIFE-NOTIFY-NUMBER-MARK-MEME] - 2026-05-27
+
+### 原因
+- 用户要求把工具箱「生活实用」中的 `通知自己`、`数字转标`、`表情包制作` 三个简单占位入口升级为真实可用模块，而不是继续停留在说明页或最小替换演示。
+
+### 新增
+- `plans/PLAN_249_生活实用通知自己数字转标表情包制作实现.md`
+  - 记录三模块实现目标、平台边界、图片导出风险和验证口径。
+- `lib/src/services/toolbox_number_mark_service.dart`
+  - 新增纯转换服务，支持上标、下标、带圈、括号编号、全角以及反向还原，并处理多字符最长匹配。
+- `lib/src/services/toolbox_meme_service.dart`
+  - 新增表情包位图渲染服务，支持顶部/底部标题、贴纸短句、经典描边字和 PNG 导出。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_notify_me.dart`
+  - 新增「通知自己」独立页面：提醒创建、状态栏/锁屏文案预览、应用提醒能力状态、系统日历镜像和提醒列表管理。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_number_marks.dart`
+  - 新增「数字转标」独立页面：多模式转换、反向还原、示例填充、复制结果和未覆盖字符统计。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_meme_maker.dart`
+  - 新增「表情包制作」独立页面：本地图片导入、实时预览、样式控制和 PNG 导出。
+- `test/toolbox_number_mark_service_test.dart`
+  - 覆盖上标转换、带圈多字符最长匹配和括号编号反向还原。
+- `test/toolbox_meme_service_test.dart`
+  - 覆盖表情包 PNG 渲染结果的基本正确性。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 为三个模块接入新的服务依赖和 part 文件，并更新 life tools 卡片摘要文案。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart`
+  - 将 `notify_me`、`sup_sub`、`meme_maker` 从占位/工具合集路由切换为真实独立页面。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart`
+  - 将 `sup_sub` 入口切换到新的数字转标页面。
+- `test/ui_smoke_test.dart`
+  - 新增 life tools smoke：通知自己创建提醒、数字转标转换、表情包制作页面打开。
+
+### 风险变更
+- `通知自己` 当前对状态栏/锁屏原生提醒的完整能力主要落在 Android；其他平台仍以系统日历镜像和应用内列表管理为主，页面已显式展示能力边界。
+- `数字转标` 依赖 Unicode 现成字符集，上下标天然覆盖不完整；未覆盖字符会保留原文并计入统计，避免静默误改。
+- `表情包制作` 当前使用 Flutter Canvas 重新渲染 PNG，适合本地静态图文叠加，不包含 GIF/APNG 动图导出链路。
+
+### 验证
+- `dart analyze lib/src/services/toolbox_number_mark_service.dart lib/src/services/toolbox_meme_service.dart lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_notify_me.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_number_marks.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_meme_maker.dart`
+- `dart analyze test/toolbox_number_mark_service_test.dart test/toolbox_meme_service_test.dart test/ui_smoke_test.dart`
+- `flutter test test/toolbox_number_mark_service_test.dart test/toolbox_meme_service_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens notify me and creates a reminder"`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens number marks and converts text"`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens meme maker controls"`
+
+## [Unreleased-PLAN_248-LIFE-COMPASS-LEVEL-VIBRATION-REDESIGN] - 2026-05-27
+
+### 原因
+- 用户要求专注处理工具箱-生活实用中的“指南针 / 水平仪 / 震动仪”三个模块，当前它们存在大量可用性和实现层问题，需要重新实现。
+
+### 新增
+- `plans/PLAN_248_生活实用指南针水平仪震动仪重做.md`
+  - 记录三模块重做目标、平台边界、风险与验证项。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_compass.dart`
+  - 重做指南针页面，新增首屏方向舞台、方向/倾斜/磁场状态 pill、平滑指针、磁场稳定度提示和使用说明。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_level.dart`
+  - 重做水平仪页面，新增 `Level / Plumb` 双模式、大舞台气泡反馈、俯仰/横滚读数、找平状态与读数说明。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_vibration.dart`
+  - 重做震动仪页面，新增节奏预设、强度/脉冲/间隔/循环参数、图形化波形预览、平台能力提示和测试按钮。
+- `test/ui_smoke_test.dart`
+  - 新增 `life tools opens compass stage with heading status`
+  - 新增 `life tools opens level stage with mode controls`
+  - 新增 `life tools opens vibration stage with pattern controls`
+- `android/app/src/main/kotlin/group/zn/xianyushengxi/MainActivity.kt`
+  - 新增 `vocabulary_sleep/life_device` 原生通道，提供震动能力查询、波形震动播放和停止能力。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 新增 life-device 通道与震动能力封装，供生活实用设备工具复用。
+- `PROJECT_DOMAIN.md`
+  - 同步生活实用三设备工具的新版能力边界与 Android 原生震动通道说明。
+- `modules/toolbox/README.md`
+  - 补充指南针、水平仪、震动仪的当前实现、能力边界和移动端使用风险。
+
+### 风险变更
+- 指南针与水平仪都依赖真机传感器，结果易受机身姿态、手机壳、桌面材质和周边电器影响，只适合做移动端快速判断，不是工程级测量工具。
+- 震动波形优先在 Android 通过原生 `Vibrator/VibrationEffect` 执行；其他平台会降级为轻量触感或仅保留节奏预览，幅度控制并不保证跨平台一致。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_compass.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_level.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_vibration.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_compass.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_level.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_vibration.dart test/ui_smoke_test.dart`
+  - 结果仅剩 `test/ui_smoke_test.dart` 既有 info 级提示，无新增 error。
+
+## [Unreleased-PLAN_247-LIFE-TEXT-TRANSFORM-EXPANSION] - 2026-05-27
+
+### 原因
+- 用户要求将工具箱-生活实用中的“中文转拼音”并入“文本转换”，并扩充为更完整的文本与历法转换入口，补齐拼音/注音、简繁转换、数字书写、农历公历、干支八字、六十甲子、语言代码，以及既有编码/隐藏/排版/乱码/码表能力。
+
+### 新增
+- `plans/PLAN_247_生活实用文本转换模块增强.md`
+  - 记录文本转换模块增强目标、风险边界与验证方式。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_text_transform.dart`
+  - 新增独立文本转换页面，按“拼音 / 数字 / 历法 / 干支 / 语言 / 编码 / 风格 / 隐藏 / 乱码 / 码表”分组承载多种文本处理模式。
+- `test/ui_smoke_test.dart`
+  - 更新 `life tools opens text transform modes and conditional fields`，覆盖拼音入口迁移、数字书写、历法分组可达，以及隐藏文本、RC4 密钥框与竖排参数按需显示。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 保持 `text_encoding` 工具 ID 不变，将入口标题改为“文本转换 / Text transform”，同步更新摘要与参考来源，并移除独立拼音入口。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart`
+  - 将 `text_encoding` 从旧的简版 `_TextEncodingPage` 路由切换到新的 `_TextTransformPage`，同时移除旧 `_PinyinPage` 路由实现。
+- `PROJECT_DOMAIN.md`
+  - 同步生活实用文本转换模块的扩展范围、按需字段规则与历法/干支参考边界。
+- `modules/toolbox/README.md`
+  - 补充文本转换模块的拼音并入、分组结构、条件字段策略与风险说明。
+
+### 风险变更
+- 火星文当前采用本地轻量字形映射和简繁兜底策略，覆盖常见字符但并非完整互联网火星文词库。
+- 农历、公历、干支、八字与六十甲子能力定位为本地参考工具：默认使用北京时间与北京真太阳时辅助计算，八字反查仅提供受限年份范围内的候选枚举，不替代权威历法或命理数据库。
+- 乱码修复只输出常见编码重解释候选，不承诺唯一正确结果；实际判断仍依赖原始来源编码上下文。
+- 竖排排版当前输出为文本版仿古排版结果，优先保证本地可复制、可预览，而非像素级书页排版还原。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_text_transform.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_text_transform.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens text transform modes and conditional fields"`
+  - 当前被工作树内既有 `toolbox_life_tools.dart` 编译断链阻塞：`toolbox_life_tools_vibration.dart` 缺失，且 `timeline_periodic` 相关 `part` 依赖未闭合；这些错误在本轮文本转换改动之外。
+
 ## [Unreleased-PLAN_246-LIFE-STEGANOGRAPHY-INTERACTION-MEMORY] - 2026-05-27
 
 ### 原因
@@ -31,6 +1434,134 @@
 - `flutter test test/toolbox_crypto_service_test.dart`
 - `flutter test test/toolbox_steganography_service_test.dart`
 - `flutter test test/ui_smoke_test.dart --plain-name "life tools opens steganography controls"`
+
+## [Unreleased-PLAN_251-LIFE-TIMELINE-HUMAN-HISTORY-EXPANSION] - 2026-05-27
+
+### 原因
+- 用户指出当前人类全历史时间轴仍过于简洁，希望在参考 history-map、ChronoZoom、Big History Online、Chronas、Histography 等项目/网站后，扩展成更完整的人类历史体系；同时测试时发现 Wikimedia Commons 远程背景图超时会触发 Flutter image service 异常。
+
+### 新增
+- `plans/PLAN_251_生活实用历史年表人类史扩容与背景兜底.md`
+  - 记录本轮人类史扩容、参考来源、远程背景图兜底和验证方式。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic_history_data.dart`
+  - 新增独立历史扩展数据 part，在保留原核心年表的基础上追加 68 个基础人类史节点。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic_history_dense_premodern_data.dart`
+  - 新增 57 个前现代密集节点，补齐旧石器、农业起源、青铜时代、古典帝国、宗教思想、中世纪欧亚非美洲和早期全球化前夜的宏观进程。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic_history_dense_modern_data.dart`
+  - 新增 46 个近现代密集节点，补齐早期现代帝国、革命、工业化、世界大战、冷战、去殖民化、全球治理、数字社会和当代科学节点。
+  - 全部历史节点合计为 202 个宏观事件，覆盖人类演化、史前定居、农业与城市文明、古典世界、宗教/思想、跨大陆交流、中世纪、早期现代、殖民与革命、工业化、世界大战、冷战、去殖民化、全球治理、数字时代与当代科技。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 注册新的历史扩展数据 part 与前现代/近现代密集数据 part。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic_data.dart`
+  - 将原 31 个节点改为 `_coreTimelineFacts`，由扩展数据 part 统一合并排序为 `_timelineFacts`。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic.dart`
+  - 将远程背景图从 `Image.network` 改为受控 `http.get` + 4 秒超时 + 内存缓存 + `Image.memory` 渲染；请求失败只显示本地渐变，避免 SocketException 进入 Flutter image resource service。
+
+### 风险变更
+- 当前“完整”是面向移动端可读性的精选宏观体系，不等同于专业历史数据库；后续若继续扩展到数千节点，应增加地区、文明、领域、搜索和数据包分层。
+- 部分年代采用约值或阶段起点，页面继续按参考型可视化处理，不作为专业断代唯一依据。
+- 背景图仍会按需发起远程请求，但失败不再阻断 UI 或向 image service 冒泡异常。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic_data.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic_history_data.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic_history_dense_premodern_data.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic_history_dense_modern_data.dart test/ui_smoke_test.dart`
+- 节点脚本核对：31 + 68 + 57 + 46 = 202 个 `_TimelineFact`，无重复 timeline id。
+- `flutter pub get`
+  - 补齐当前 `pubspec.yaml` 已声明但 lock 中缺失的 `locale_names`、`pinyin`、`sxwnl_spa_dart` 依赖。
+- `dart analyze lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic_data.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic_history_data.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic_history_dense_premodern_data.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic_history_dense_modern_data.dart`
+  - 当前被工作树内既有缺失 part 阻塞：`toolbox_life_tools_device_frame.dart`、`toolbox_life_tools_unit_converter.dart`、`toolbox_life_tools_bmi.dart` 不存在；这些错误在本轮历史年表数据与背景兜底改动之外。
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens timeline and periodic visualizations"`
+  - 同样被上述三个缺失 part 阻塞，测试未进入历史年表用例执行阶段。
+
+## [Unreleased-PLAN_250-LIFE-TIMELINE-IMMERSIVE-READABILITY] - 2026-05-27
+
+### 原因
+- 当前历史年表横向轴在“全部”范围下节点拥挤、标签遮挡，移动端阅读不清晰；用户希望优化展示，并考虑全屏沉浸或垂直下拉轴，同时引入宇宙、岩石、历史文物等公开资源背景。
+
+### 新增
+- `plans/PLAN_250_生活实用历史年表沉浸式清晰化.md`
+  - 记录本轮时间轴清晰化、全屏沉浸、公开媒体资源和移动端风险边界。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic_data.dart`
+  - 新增时间轴背景资源常量，包含 NASA Image Library、USGS/Wikimedia Commons 来源的宇宙、岩石、历史文物和地球图像入口。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic.dart`
+  - 新增默认“Story”纵向故事轴，节点以单列卡片、清晰时间线、主题标签、摘要和来源按钮展示。
+  - 新增“Immersive”沉浸全屏时间轴路由，使用独立全屏视图、主题背景、退出按钮和纵向滚动体验。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic.dart`
+  - 原横向缩放轴改为可选“Map”全景地图轴，增加公开图片背景、加宽舞台、提高时间线高度，并避免首尾标签被裁切。
+  - 时间轴筛选区新增浏览方式切换和沉浸全屏入口。
+- `test/ui_smoke_test.dart`
+  - 扩展历史年表 smoke 测试，覆盖默认 Story 轴、沉浸全屏打开/退出，以及返回后切换元素周期表。
+
+### 风险变更
+- 远程背景图仅作视觉氛围增强，加载失败时回退为本地渐变，不影响历史节点和来源文本阅读。
+- 背景资源来自 NASA Image Library、USGS 公开媒体说明和 Wikimedia Commons 文件页；运行时会按需请求远程图片，来源按钮保留核验入口。
+- 全屏沉浸视图会临时进入 immersive system UI，退出页面时恢复默认方向和系统 UI。
+
+### 验证
+- `dart analyze lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic_data.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens timeline and periodic visualizations"`
+
+## [Unreleased-PLAN_244-LIFE-TIMELINE-PERIODIC-VISUALIZATION] - 2026-05-27
+
+### 原因
+- 用户希望工具箱-生活实用中的“历史年表/元素周期表”不再停留在资料入口，而是基于真实可靠、低争议或共识性资料做成本地动态可视化展示。
+
+### 新增
+- `plans/PLAN_244_生活实用历史年表与元素周期表动态可视化.md`
+  - 记录本轮数据来源、交互范围、移动端手势风险和验证方式。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic_data.dart`
+  - 新增历史年表共识节点数据、118 个元素事实数据和统一资料来源列表；元素数据整理自 PubChem PUG REST，并在页面中保留 IUPAC/CIAAW 等参考入口。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic.dart`
+  - 新增历史年表/元素周期表动态页面：历史轴支持范围与主题筛选、对数时间轴、缩放拖动、节点详情和来源跳转；元素周期表支持族块与状态筛选、缩放拖动、元素详情和图例。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 将 `timeline_periodic` 从占位入口升级为“历史年表/元素周期表”，并挂载资料来源说明。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart`
+  - 将 `timeline_periodic` 路由接入新的本地可视化页面。
+- `test/ui_smoke_test.dart`
+  - 新增生活实用 smoke 测试，覆盖从 hub 搜索进入年表页面、切换元素周期表和关键舞台渲染。
+
+### 风险变更
+- 历史节点仅采用宏观、低争议的共识性锚点；年代以“约/范围”表达，不作为精细史学断代或考试唯一标准。
+- 元素原子量、发现年份和标准状态会随权威表修订或定义差异变化；页面展示为可核验参考值，并保留 PubChem/IUPAC/CIAAW 来源入口。
+- 横向缩放/拖动限定在可视化舞台内，仍需后续真机窄屏回归确认手势是否与页面纵向滚动冲突。
+
+### 验证
+- `dart analyze lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_timeline_periodic_data.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens timeline and periodic visualizations"`
+
+## [Unreleased-PLAN_242-LIFE-TEXT-COUNTER-SPLIT-COPY] - 2026-05-27
+
+### 原因
+- 用户希望在工具箱-生活实用-字数计算模块中，不只统计字数，还能按不同计数标准自动拆分长文本，并支持逐块一键复制。
+
+### 新增
+- `plans/PLAN_242_生活实用字数计算自动拆分复制.md`
+  - 记录本轮字数计算模块增强的目标、拆分边界、移动端风险与验证方式。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_text_counter.dart`
+  - 抽离字数计算子模块，新增按总字符、去符号、去空白、仅正文四种标准统计。
+  - 新增固定字数拆分与句末优先拆分，两种模式都会自动生成可单独复制的分块卡片。
+  - 新增原文复制、全部分块复制、单块复制与 Snackbar 反馈。
+- `test/toolbox_life_text_counter_test.dart`
+  - 覆盖去符号拆分保留原文标点、句末优先拆分、无句末符号时硬切分回退三类边界。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 将工具名称从“字数计算”升级为“字数拆分与统计”，并注册新的独立 part 文件。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart`
+  - 原有简版字数计算实现退役为 legacy 占位，避免与新模块重名冲突。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_text_counter.dart`
+  - 拆分能力改为独立开关，关闭时只做统计，打开后再展开拆分设置与结果。
+  - 每个分块卡片默认折叠，头部保留直接复制，展开后才显示全文，降低长文本时的滚动负担。
+  - 新增每块完成勾选，勾选后保留删除线和弱化样式，便于逐块处理与清理进度。
+
+### 风险变更
+- “句末优先拆分”属于尽量贴近句意的展示策略；若文本缺少结束符，仍会按字数上限强制切分。
+- “去符号 / 去空白 / 仅正文”只影响计数字段与拆分边界，不会改写输出内容本身，复制时仍保留原始文本格式。
 
 ## [Unreleased-PLAN_241-LIFE-STEGANOGRAPHY-FILE-PICKER-MEMORY] - 2026-05-27
 
@@ -5289,3 +6820,103 @@
 - `dart format lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_relatives.dart test/ui_smoke_test.dart`
 - `dart analyze lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_relatives.dart test/ui_smoke_test.dart`
 - `flutter test test/ui_smoke_test.dart --plain-name "life tools opens relatives calculator and builds chain"`
+## [Unreleased-PLAN_243-LIFE-IMAGE-UPSCALE] - 2026-05-27
+
+### 原因
+- 用户要求在工具箱「生活实用」中新增一个放在「图片压缩」下面的「图片扩大」模块，用于把较小图片转成指定更大像素尺寸，并提供常见高清化/扩边补像素处理。
+
+### 新增
+- `plans/PLAN_243_生活实用图片扩大高清化模块.md`
+  - 记录图片扩大子模块的目标、风险边界、移动端约束与验证项。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_image_upscale.dart`
+  - 新增本地图片扩大页面，支持选图、按倍率放大、按目标宽高放大、画布补像素扩展、结果预览与导出。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 注册 `toolbox_life_tools_image_upscale.dart` part，并新增 `image_upscale` 工具入口，放在 `image_compress` 下方。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart`
+  - 将 `image_upscale` 接入生活实用工具页路由分发。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart`
+  - 将 `image_upscale` 映射到独立 `_ImageUpscalePage`。
+- `test/ui_smoke_test.dart`
+  - 新增 `life tools opens image upscale controls`，覆盖入口可达与核心控件可见。
+- `modules/toolbox/README.md`
+  - 补充图片扩大模块能力边界、插值算法、补像素扩展模式与导出说明。
+- `PROJECT_DOMAIN.md`
+  - 同步记录 `image_upscale` 子模块能力与版本索引。
+
+### 风险变更
+- 当前“图片扩大”仅执行本地插值放大与画布扩展，不是生成式 AI 超分辨率，不能凭空恢复真实缺失细节。
+- 目标尺寸较大时会显著增加输出体积与内存/编码耗时；本次通过滑杆范围和错误提示做最佳努力约束。
+- 模块可作为后续隐写前的图像尺寸准备工具，但本身不承担隐写写入逻辑。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_image_upscale.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/ui/pages/toolbox_life_tools.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_image_upscale.dart test/ui_smoke_test.dart`
+- `flutter test test/ui_smoke_test.dart --plain-name "life tools opens image upscale controls"`
+## [Unreleased-PLAN_245-LIFE-IMAGE-TRANSFORM-MERGE-PERF] - 2026-05-27
+
+### 原因
+- 用户希望解决图片扩大流程中 CPU 负担明显偏高的问题，并将图片压缩与图片扩大合并为一个统一工具入口，支持双页签快速切换。
+
+### 新增
+- `plans/PLAN_245_生活实用图片压缩扩大合并与性能优化.md`
+  - 记录统一图片工具收口、低 CPU 扩大路径、自定义倍率与验证项。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_image_transform.dart`
+  - 新增统一“图片压缩/扩大”页面，内置 `Compress / Upscale` 双页签，并保持两个工作区独立切换。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 将 life tools 图片入口从 `image_compress` + `image_upscale` 收口为统一 `image_transform`。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart`
+  - 更新统一图片工具路由分发。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart`
+  - 将 utility 分发改为统一 `_ImageTransformPage`。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_image_compress.dart`
+  - 为压缩页增加可嵌入模式，供统一页签复用。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_image_upscale.dart`
+  - 为扩大页增加可嵌入模式、自定义倍率输入、`Fast duplicate` 低 CPU 算法，并将透明/纯色画布扩展切换为 `image.copyExpandCanvas` 优先路径。
+- `test/ui_smoke_test.dart`
+  - 将原本分离的图片压缩/扩大 smoke 用例合并为统一入口与双页签切换验证。
+- `modules/toolbox/README.md`
+  - 同步记录统一图片工具与扩大性能优化说明。
+- `PROJECT_DOMAIN.md`
+  - 同步更新 life tools 图片工具域模型说明。
+
+### 风险变更
+- `Fast duplicate` 以更低 CPU 占用优先，视觉质量会弱于 `Linear / Cubic` 等更重算法。
+- 画布扩展中的 `Edge / Mirror` 仍需逐像素采样填充，大尺寸边缘补像素场景下仍可能存在耗时，但透明/纯色路径已明显减轻负担。
+## [Unreleased-PLAN_252-LIFE-DEVICE-FRAME-UNIT-BMI] - 2026-05-27
+
+### 原因
+- 用户要求专注完善工具箱 - 生活实用中的 `带壳截图`、`全能单位换算`、`BMI 计算器` 三个模块；它们此前分别处于说明页或极简 demo 状态，缺少真正可用的本地工具体验。
+
+### 新增
+- `plans/PLAN_252_生活实用带壳截图单位换算BMI实现优化.md`
+  - 记录三个模块的目标、实现步骤、风险边界与验证路径。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_device_frame.dart`
+  - 新增 `device_frame` 独立页面，支持本地截图导入、通用手机壳样式、背景切换、状态栏覆盖和 PNG 导出。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_unit_converter.dart`
+  - 新增独立单位换算页，支持长度、重量、温度、面积、体积、速度、数据、时间多类别换算，以及源值/目标值双向输入。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_bmi.dart`
+  - 新增独立 BMI 页面，支持公制/英制输入、BMI 分类、健康体重区间和回到中位参考值的差量提示。
+- `test/ui_smoke_test.dart`
+  - 新增 life tools smoke 用例，覆盖带壳截图入口、单位换算默认链路与 BMI 分类实时变化。
+
+### 修改
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+  - 注册三个新页面 `part`，并清理一个未使用的 `toolbox_life_notify_service` 导入。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart`
+  - 将 `device_frame` 从占位说明页切换为真实页面路由。
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_utilities.dart`
+  - 将 `unit_converter` 与 `bmi` 的 utility 分发改为新的独立页面实现。
+- `modules/toolbox/README.md`
+  - 同步三个 life tools 子模块的能力范围、导出/换算边界与移动端定位。
+- `PROJECT_DOMAIN.md`
+  - 同步生活实用中带壳截图、单位换算与 BMI 工具的产品边界，并更新版本记录。
+
+### 风险变更
+- `带壳截图` 当前使用 Flutter 本地绘制的通用手机壳样式，不对应真实 OEM 机模，更适合社交分享和展示卡片，而不是严格设备营销图复刻。
+- `全能单位换算` 当前完全依赖本地静态单位表；温度走开尔文中间基准，数据类同时保留十进制与二进制口径，结果适合日常估算而非专业校准。
+- `BMI 计算器` 使用成年人常见参考阈值，仅做自查辅助；儿童、孕期、健身增肌和特殊病史场景不应把该结果当作唯一判断。
+- 当前 `flutter test test/ui_smoke_test.dart` 仍被项目内既有的 `toolbox_life_tools_text_transform.dart` 编译错误阻塞，本轮新增 smoke 已写入但无法在该阻塞修复前完成执行。

@@ -5,6 +5,7 @@ import '../../../i18n/app_i18n.dart';
 import '../../../models/settings_dto.dart';
 import '../../theme/toolbox_colors.dart';
 import '../../ui_copy.dart';
+import '../toolbox_crypto_security.dart';
 import '../toolbox_daily_choice_tool.dart';
 import '../toolbox_human_tests.dart';
 import '../toolbox_mini_games.dart';
@@ -326,12 +327,34 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
           title: pickUiText(i18n, zh: '生活实用中心', en: 'Life tool hub'),
           subtitle: pickUiText(
             i18n,
-            zh: '37 个独立功能入口，覆盖日常高频工具与在线资源助手。',
-            en: '37 standalone entries for daily practical tools and online resource helpers.',
+            zh: '36 个独立功能入口，覆盖日常高频工具与在线资源助手。',
+            en: '36 standalone entries for daily practical tools and online resource helpers.',
           ),
           icon: Icons.home_repair_service_rounded,
           accent: ToolboxColors.lifeAccent,
           pageBuilder: () => const LifeToolsHubPage(),
+        ),
+      ],
+    ),
+    ToolboxSectionData(
+      title: pickUiText(i18n, zh: '加密安全', en: 'Crypto security'),
+      subtitle: pickUiText(
+        i18n,
+        zh: '隐写、加密、解密、密钥和校验工具集中在独立安全工作台。',
+        en: 'Steganography, encryption, decryption, keys, and verification tools in a dedicated security workspace.',
+      ),
+      entries: <ToolboxEntryData>[
+        ToolboxEntryData(
+          moduleId: ModuleIds.toolboxCryptoSecurity,
+          title: pickUiText(i18n, zh: '加密安全中心', en: 'Crypto security hub'),
+          subtitle: pickUiText(
+            i18n,
+            zh: '先接入图片/音频/视频隐写，后续扩展更多加密解密子模块。',
+            en: 'Starts with media steganography and leaves room for more crypto submodules.',
+          ),
+          icon: Icons.enhanced_encryption_rounded,
+          accent: ToolboxColors.cryptoAccent,
+          pageBuilder: () => const CryptoSecurityHubPage(),
         ),
       ],
     ),

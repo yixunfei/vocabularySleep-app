@@ -83,6 +83,11 @@ String localizedModuleLabel(AppI18n i18n, String moduleId) {
       zh: '生活实用',
       en: 'Life tools',
     ),
+    ModuleIds.toolboxCryptoSecurity => pickUiText(
+      i18n,
+      zh: '加密安全',
+      en: 'Crypto security',
+    ),
     _ => moduleId,
   };
 }

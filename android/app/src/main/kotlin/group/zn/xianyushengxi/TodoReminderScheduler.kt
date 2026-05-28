@@ -19,6 +19,13 @@ data class TodoReminderSpec(
     val triggerAtMillis: Long,
     val dueAtMillis: Long,
     val mode: String,
+    val presentationType: String,
+    val stickyNotification: Boolean,
+    val cancelOnOpen: Boolean,
+    val callerName: String?,
+    val callerNumber: String?,
+    val callerLocation: String?,
+    val callerTag: String?,
 ) {
     fun toJson(): JSONObject {
         return JSONObject().apply {
@@ -28,6 +35,13 @@ data class TodoReminderSpec(
             put("triggerAtMillis", triggerAtMillis)
             put("dueAtMillis", dueAtMillis)
             put("mode", mode)
+            put("presentationType", presentationType)
+            put("stickyNotification", stickyNotification)
+            put("cancelOnOpen", cancelOnOpen)
+            put("callerName", callerName)
+            put("callerNumber", callerNumber)
+            put("callerLocation", callerLocation)
+            put("callerTag", callerTag)
         }
     }
 
@@ -38,6 +52,7 @@ data class TodoReminderSpec(
             val triggerAtMillis = json.optLong("triggerAtMillis", 0L)
             val dueAtMillis = json.optLong("dueAtMillis", 0L)
             val mode = json.optString("mode", "notification").trim()
+            val presentationType = json.optString("presentationType", mode).trim()
             if (todoId <= 0 || title.isEmpty() || triggerAtMillis <= 0L || dueAtMillis <= 0L) {
                 return null
             }
@@ -48,6 +63,13 @@ data class TodoReminderSpec(
                 triggerAtMillis = triggerAtMillis,
                 dueAtMillis = dueAtMillis,
                 mode = mode.ifEmpty { "notification" },
+                presentationType = presentationType.ifEmpty { mode.ifEmpty { "notification" } },
+                stickyNotification = json.optBoolean("stickyNotification", false),
+                cancelOnOpen = json.optBoolean("cancelOnOpen", true),
+                callerName = json.optString("callerName", "").trim().ifEmpty { null },
+                callerNumber = json.optString("callerNumber", "").trim().ifEmpty { null },
+                callerLocation = json.optString("callerLocation", "").trim().ifEmpty { null },
+                callerTag = json.optString("callerTag", "").trim().ifEmpty { null },
             )
         }
     }
@@ -58,6 +80,7 @@ object TodoReminderScheduler {
     private const val preferenceKey = "scheduled_items"
     const val notificationChannelId = "todo_reminder_notification"
     const val alarmChannelId = "todo_reminder_alarm"
+    const val fakeCallChannelId = "todo_fake_incoming_call"
 
     fun upsert(context: Context, spec: TodoReminderSpec) {
         storeSpec(context, spec)
@@ -142,6 +165,33 @@ object TodoReminderScheduler {
             }
             manager.createNotificationChannel(channel)
         }
+        if (manager.getNotificationChannel(fakeCallChannelId) == null) {
+            val ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            val channel = NotificationChannel(
+                fakeCallChannelId,
+                localizedText(context, zh = "模拟来电", en = "Fake incoming calls"),
+                NotificationManager.IMPORTANCE_HIGH,
+            ).apply {
+                description = localizedText(
+                    context,
+                    zh = "用于按时触发全屏模拟来电",
+                    en = "Full-screen fake incoming call alerts",
+                )
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 300, 220, 520)
+                setSound(
+                    ringtoneUri,
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build(),
+                )
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+            }
+            manager.createNotificationChannel(channel)
+        }
     }
 
     private fun schedule(
@@ -158,6 +208,21 @@ object TodoReminderScheduler {
         }
         val pendingIntent = buildPendingIntent(context, spec)
         cancelAlarm(context, spec.todoId)
+
+        if (spec.presentationType.equals("fakeCall", ignoreCase = true)) {
+            try {
+                alarmManager.setAlarmClock(
+                    AlarmManager.AlarmClockInfo(
+                        triggerAt,
+                        buildAlarmClockShowIntent(context, spec.todoId),
+                    ),
+                    pendingIntent,
+                )
+                return
+            } catch (_: Throwable) {
+                // Fall through to the regular reminder scheduling path.
+            }
+        }
 
         try {
             if (
@@ -241,6 +306,7 @@ object TodoReminderScheduler {
         val pendingIntent = buildPendingIntent(context, todoId)
         alarmManager.cancel(pendingIntent)
         pendingIntent.cancel()
+        buildAlarmClockShowIntent(context, todoId).cancel()
     }
 
     private fun buildPendingIntent(context: Context, spec: TodoReminderSpec): PendingIntent {
@@ -251,6 +317,13 @@ object TodoReminderScheduler {
             putExtra("description", spec.description)
             putExtra("dueAtMillis", spec.dueAtMillis)
             putExtra("mode", spec.mode)
+            putExtra("presentationType", spec.presentationType)
+            putExtra("stickyNotification", spec.stickyNotification)
+            putExtra("cancelOnOpen", spec.cancelOnOpen)
+            putExtra("callerName", spec.callerName)
+            putExtra("callerNumber", spec.callerNumber)
+            putExtra("callerLocation", spec.callerLocation)
+            putExtra("callerTag", spec.callerTag)
         }
         return PendingIntent.getBroadcast(
             context,
@@ -273,11 +346,42 @@ object TodoReminderScheduler {
         )
     }
 
+    private fun buildAlarmClockShowIntent(context: Context, todoId: Int): PendingIntent {
+        val intent = context.packageManager
+            .getLaunchIntentForPackage(context.packageName)
+            ?.apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                putExtra("todoId", todoId)
+                putExtra("todoAction", "open")
+            }
+            ?: Intent(context, MainActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                putExtra("todoId", todoId)
+                putExtra("todoAction", "open")
+            }
+        return PendingIntent.getActivity(
+            context,
+            todoId * 100 + 11,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or pendingIntentMutabilityFlag(),
+        )
+    }
+
     private fun pendingIntentMutabilityFlag(): Int {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             PendingIntent.FLAG_IMMUTABLE
         } else {
             0
         }
+    }
+
+    private fun localizedText(context: Context, zh: String, en: String): String {
+        val language = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            context.resources.configuration.locales[0]?.language.orEmpty()
+        } else {
+            @Suppress("DEPRECATION")
+            context.resources.configuration.locale.language.orEmpty()
+        }
+        return if (language.startsWith("zh")) zh else en
     }
 }

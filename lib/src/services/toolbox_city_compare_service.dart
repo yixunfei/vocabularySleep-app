@@ -1,0 +1,1073 @@
+import 'dart:math' as math;
+
+enum CityCompareHousingType {
+  centerOneBedroom,
+  suburbOneBedroom,
+  centerThreeBedroom,
+  suburbThreeBedroom,
+}
+
+enum CityCompareDiningType { homeFocused, balanced, dineOutOften }
+
+enum CityCompareTransportType { publicTransit, car }
+
+enum CityCompareEducationType {
+  none,
+  kindergarten,
+  primary,
+  middle,
+  high,
+  international,
+}
+
+enum CityCompareCustomExpenseCategory {
+  lifestyle,
+  family,
+  commute,
+  health,
+  debt,
+  other,
+}
+
+class CityCompareCustomExpense {
+  const CityCompareCustomExpense({
+    required this.label,
+    required this.amount,
+    required this.category,
+  });
+
+  final String label;
+  final double amount;
+  final CityCompareCustomExpenseCategory category;
+}
+
+class CityCompareCityData {
+  const CityCompareCityData({
+    required this.city,
+    required this.socialSecurityBaseMin,
+    required this.socialSecurityBaseMax,
+    required this.diningHome,
+    required this.diningOut,
+    required this.transportPublic,
+    required this.transportCar,
+    required this.rentCenterOneBedroom,
+    required this.rentCenterThreeBedroom,
+    required this.rentSuburbOneBedroom,
+    required this.rentSuburbThreeBedroom,
+    required this.housePriceCenter,
+    required this.housePriceSuburb,
+    required this.kindergarten,
+    required this.primary,
+    required this.middle,
+    required this.high,
+    required this.international,
+    required this.mealCheap,
+    required this.mealMid,
+    required this.utilities,
+    required this.mobilePlan,
+    required this.internet,
+    required this.fitness,
+    required this.cinema,
+  });
+
+  final String city;
+  final double socialSecurityBaseMin;
+  final double socialSecurityBaseMax;
+  final double diningHome;
+  final double diningOut;
+  final double transportPublic;
+  final double transportCar;
+  final double rentCenterOneBedroom;
+  final double rentCenterThreeBedroom;
+  final double rentSuburbOneBedroom;
+  final double rentSuburbThreeBedroom;
+  final double housePriceCenter;
+  final double housePriceSuburb;
+  final double kindergarten;
+  final double primary;
+  final double middle;
+  final double high;
+  final double international;
+  final double mealCheap;
+  final double mealMid;
+  final double utilities;
+  final double mobilePlan;
+  final double internet;
+  final double fitness;
+  final double cinema;
+}
+
+class CityCompareProfile {
+  const CityCompareProfile({
+    required this.housingType,
+    required this.diningType,
+    required this.transportType,
+    required this.educationType,
+    required this.includeFitness,
+    required this.monthlyCinemaTrips,
+    this.housingAdjustment = 1,
+    this.diningAdjustment = 1,
+    this.transportAdjustment = 1,
+    this.educationAdjustment = 1,
+    this.utilitiesAdjustment = 1,
+    this.fitnessAdjustment = 1,
+    this.leisureAdjustment = 1,
+    this.fitnessOverride,
+    this.cinemaTicketOverride,
+    this.customExpenses = const <CityCompareCustomExpense>[],
+  });
+
+  final CityCompareHousingType housingType;
+  final CityCompareDiningType diningType;
+  final CityCompareTransportType transportType;
+  final CityCompareEducationType educationType;
+  final bool includeFitness;
+  final int monthlyCinemaTrips;
+  final double housingAdjustment;
+  final double diningAdjustment;
+  final double transportAdjustment;
+  final double educationAdjustment;
+  final double utilitiesAdjustment;
+  final double fitnessAdjustment;
+  final double leisureAdjustment;
+  final double? fitnessOverride;
+  final double? cinemaTicketOverride;
+  final List<CityCompareCustomExpense> customExpenses;
+}
+
+class CityCompareCostBreakdown {
+  const CityCompareCostBreakdown({
+    required this.housing,
+    required this.dining,
+    required this.transport,
+    required this.education,
+    required this.utilities,
+    required this.digital,
+    required this.fitness,
+    required this.leisure,
+    required this.custom,
+    required this.total,
+  });
+
+  final double housing;
+  final double dining;
+  final double transport;
+  final double education;
+  final double utilities;
+  final double digital;
+  final double fitness;
+  final double leisure;
+  final double custom;
+  final double total;
+}
+
+class CityCompareSalarySnapshot {
+  const CityCompareSalarySnapshot({
+    required this.grossMonthlySalary,
+    required this.socialSecurityContribution,
+    required this.tax,
+    required this.netSalary,
+    required this.monthlyCost,
+    required this.monthlyBuffer,
+  });
+
+  final double grossMonthlySalary;
+  final double socialSecurityContribution;
+  final double tax;
+  final double netSalary;
+  final double monthlyCost;
+  final double monthlyBuffer;
+}
+
+class CityCompareReferenceItem {
+  const CityCompareReferenceItem({
+    required this.category,
+    required this.labelZh,
+    required this.labelEn,
+    required this.currentValue,
+    required this.targetValue,
+    required this.unitZh,
+    required this.unitEn,
+  });
+
+  final String category;
+  final String labelZh;
+  final String labelEn;
+  final double currentValue;
+  final double targetValue;
+  final String unitZh;
+  final String unitEn;
+
+  double get delta => targetValue - currentValue;
+  double get ratio => currentValue == 0 ? 0 : targetValue / currentValue;
+}
+
+class CityCompareInsight {
+  const CityCompareInsight({
+    required this.level,
+    required this.titleZh,
+    required this.titleEn,
+    required this.bodyZh,
+    required this.bodyEn,
+  });
+
+  final String level;
+  final String titleZh;
+  final String titleEn;
+  final String bodyZh;
+  final String bodyEn;
+}
+
+class CityCompareResult {
+  const CityCompareResult({
+    required this.currentCity,
+    required this.targetCity,
+    required this.currentBreakdown,
+    required this.targetBreakdown,
+    required this.currentSnapshot,
+    required this.sameSalaryTargetSnapshot,
+    required this.requiredTargetSnapshot,
+    required this.breakEvenTargetSnapshot,
+    required this.costRatio,
+    required this.referenceItems,
+    required this.insights,
+  });
+
+  final CityCompareCityData currentCity;
+  final CityCompareCityData targetCity;
+  final CityCompareCostBreakdown currentBreakdown;
+  final CityCompareCostBreakdown targetBreakdown;
+  final CityCompareSalarySnapshot currentSnapshot;
+  final CityCompareSalarySnapshot sameSalaryTargetSnapshot;
+  final CityCompareSalarySnapshot requiredTargetSnapshot;
+  final CityCompareSalarySnapshot breakEvenTargetSnapshot;
+  final double costRatio;
+  final List<CityCompareReferenceItem> referenceItems;
+  final List<CityCompareInsight> insights;
+}
+
+class ToolboxCityCompareService {
+  static const double _standardDeduction = 5000;
+  static const double _employeeSocialSecurityRate = 0.175;
+
+  static const List<CityCompareCityData> cities = <CityCompareCityData>[
+    CityCompareCityData(
+      city: '深圳',
+      socialSecurityBaseMin: 2360,
+      socialSecurityBaseMax: 31014,
+      diningHome: 1500,
+      diningOut: 2500,
+      transportPublic: 200,
+      transportCar: 1500,
+      rentCenterOneBedroom: 5388.89,
+      rentCenterThreeBedroom: 12473.68,
+      rentSuburbOneBedroom: 2882.35,
+      rentSuburbThreeBedroom: 6607.14,
+      housePriceCenter: 92101.73,
+      housePriceSuburb: 48476.44,
+      kindergarten: 3900,
+      primary: 5000,
+      middle: 6000,
+      high: 7000,
+      international: 13717.95,
+      mealCheap: 25,
+      mealMid: 200,
+      utilities: 487.37,
+      mobilePlan: 80.14,
+      internet: 101.32,
+      fitness: 315.35,
+      cinema: 50,
+    ),
+    CityCompareCityData(
+      city: '重庆',
+      socialSecurityBaseMin: 3760,
+      socialSecurityBaseMax: 19443,
+      diningHome: 1000,
+      diningOut: 1800,
+      transportPublic: 240,
+      transportCar: 1200,
+      rentCenterOneBedroom: 1828.57,
+      rentCenterThreeBedroom: 3400,
+      rentSuburbOneBedroom: 1040,
+      rentSuburbThreeBedroom: 2100,
+      housePriceCenter: 16754.60,
+      housePriceSuburb: 9526.36,
+      kindergarten: 2300,
+      primary: 3000,
+      middle: 3500,
+      high: 4000,
+      international: 16111.11,
+      mealCheap: 20,
+      mealMid: 150,
+      utilities: 310.72,
+      mobilePlan: 59.67,
+      internet: 63.20,
+      fitness: 147.50,
+      cinema: 37.5,
+    ),
+    CityCompareCityData(
+      city: '北京',
+      socialSecurityBaseMin: 3200,
+      socialSecurityBaseMax: 25000,
+      diningHome: 1300,
+      diningOut: 2200,
+      transportPublic: 250,
+      transportCar: 1400,
+      rentCenterOneBedroom: 6650.51,
+      rentCenterThreeBedroom: 15593.75,
+      rentSuburbOneBedroom: 3558.12,
+      rentSuburbThreeBedroom: 7714.29,
+      housePriceCenter: 105485.52,
+      housePriceSuburb: 50268.59,
+      kindergarten: 5514,
+      primary: 6000,
+      middle: 7000,
+      high: 8000,
+      international: 13431.37,
+      mealCheap: 30,
+      mealMid: 200,
+      utilities: 390.82,
+      mobilePlan: 67.45,
+      internet: 94.03,
+      fitness: 478.43,
+      cinema: 60,
+    ),
+    CityCompareCityData(
+      city: '上海',
+      socialSecurityBaseMin: 3500,
+      socialSecurityBaseMax: 27000,
+      diningHome: 1600,
+      diningOut: 2600,
+      transportPublic: 250,
+      transportCar: 1500,
+      rentCenterOneBedroom: 7356.25,
+      rentCenterThreeBedroom: 18979.41,
+      rentSuburbOneBedroom: 3805.88,
+      rentSuburbThreeBedroom: 9185.19,
+      housePriceCenter: 113981.50,
+      housePriceSuburb: 62896.55,
+      kindergarten: 8865,
+      primary: 7000,
+      middle: 8000,
+      high: 9000,
+      international: 18276.52,
+      mealCheap: 30,
+      mealMid: 250,
+      utilities: 400.52,
+      mobilePlan: 85.15,
+      internet: 120.64,
+      fitness: 394.01,
+      cinema: 60,
+    ),
+    CityCompareCityData(
+      city: '成都',
+      socialSecurityBaseMin: 2800,
+      socialSecurityBaseMax: 19000,
+      diningHome: 1200,
+      diningOut: 1800,
+      transportPublic: 200,
+      transportCar: 1200,
+      rentCenterOneBedroom: 2272.73,
+      rentCenterThreeBedroom: 4346.15,
+      rentSuburbOneBedroom: 1260,
+      rentSuburbThreeBedroom: 2258.33,
+      housePriceCenter: 29229.17,
+      housePriceSuburb: 15489.35,
+      kindergarten: 2729.63,
+      primary: 3500,
+      middle: 4500,
+      high: 5500,
+      international: 8854.17,
+      mealCheap: 20,
+      mealMid: 189.5,
+      utilities: 345,
+      mobilePlan: 93.71,
+      internet: 84.94,
+      fitness: 247.88,
+      cinema: 40,
+    ),
+    CityCompareCityData(
+      city: '广州',
+      socialSecurityBaseMin: 3000,
+      socialSecurityBaseMax: 23000,
+      diningHome: 1400,
+      diningOut: 2200,
+      transportPublic: 110,
+      transportCar: 1300,
+      rentCenterOneBedroom: 3833.33,
+      rentCenterThreeBedroom: 7961.54,
+      rentSuburbOneBedroom: 1833.33,
+      rentSuburbThreeBedroom: 4833.33,
+      housePriceCenter: 72107.62,
+      housePriceSuburb: 30376.90,
+      kindergarten: 3100,
+      primary: 4000,
+      middle: 5000,
+      high: 6000,
+      international: 9319.44,
+      mealCheap: 25,
+      mealMid: 190,
+      utilities: 474.69,
+      mobilePlan: 94.50,
+      internet: 91.07,
+      fitness: 206.48,
+      cinema: 50,
+    ),
+    CityCompareCityData(
+      city: '长沙',
+      socialSecurityBaseMin: 2600,
+      socialSecurityBaseMax: 18000,
+      diningHome: 1100,
+      diningOut: 1600,
+      transportPublic: 100,
+      transportCar: 1200,
+      rentCenterOneBedroom: 2300,
+      rentCenterThreeBedroom: 3716.67,
+      rentSuburbOneBedroom: 1233.33,
+      rentSuburbThreeBedroom: 3433.33,
+      housePriceCenter: 15036.36,
+      housePriceSuburb: 39222.22,
+      kindergarten: 2225,
+      primary: 3000,
+      middle: 3500,
+      high: 4000,
+      international: 5166.67,
+      mealCheap: 20,
+      mealMid: 145,
+      utilities: 285.44,
+      mobilePlan: 49.80,
+      internet: 97.50,
+      fitness: 466.42,
+      cinema: 40,
+    ),
+    CityCompareCityData(
+      city: '杭州',
+      socialSecurityBaseMin: 3100,
+      socialSecurityBaseMax: 24000,
+      diningHome: 1300,
+      diningOut: 2000,
+      transportPublic: 110,
+      transportCar: 1300,
+      rentCenterOneBedroom: 3745.93,
+      rentCenterThreeBedroom: 8054.81,
+      rentSuburbOneBedroom: 2038.35,
+      rentSuburbThreeBedroom: 4854.13,
+      housePriceCenter: 60407.46,
+      housePriceSuburb: 30427.34,
+      kindergarten: 2808.33,
+      primary: 4000,
+      middle: 5000,
+      high: 6000,
+      international: 19642.86,
+      mealCheap: 25,
+      mealMid: 180,
+      utilities: 348.07,
+      mobilePlan: 85.29,
+      internet: 114.78,
+      fitness: 300.11,
+      cinema: 45,
+    ),
+    CityCompareCityData(
+      city: '南京',
+      socialSecurityBaseMin: 3000,
+      socialSecurityBaseMax: 21000,
+      diningHome: 1200,
+      diningOut: 2000,
+      transportPublic: 200,
+      transportCar: 1300,
+      rentCenterOneBedroom: 3037.50,
+      rentCenterThreeBedroom: 6100,
+      rentSuburbOneBedroom: 2175,
+      rentSuburbThreeBedroom: 3800,
+      housePriceCenter: 43571.43,
+      housePriceSuburb: 25400,
+      kindergarten: 3749.68,
+      primary: 4500,
+      middle: 5500,
+      high: 6500,
+      international: 15833.33,
+      mealCheap: 20,
+      mealMid: 160,
+      utilities: 336.88,
+      mobilePlan: 87.89,
+      internet: 90,
+      fitness: 188.10,
+      cinema: 45,
+    ),
+    CityCompareCityData(
+      city: '武汉',
+      socialSecurityBaseMin: 2800,
+      socialSecurityBaseMax: 19000,
+      diningHome: 1100,
+      diningOut: 1800,
+      transportPublic: 260,
+      transportCar: 1200,
+      rentCenterOneBedroom: 2933.33,
+      rentCenterThreeBedroom: 5885.71,
+      rentSuburbOneBedroom: 1716.67,
+      rentSuburbThreeBedroom: 2583.33,
+      housePriceCenter: 27272.73,
+      housePriceSuburb: 16000,
+      kindergarten: 2357.14,
+      primary: 3500,
+      middle: 4500,
+      high: 5500,
+      international: 5250,
+      mealCheap: 25,
+      mealMid: 150,
+      utilities: 565,
+      mobilePlan: 49.80,
+      internet: 99.17,
+      fitness: 253.22,
+      cinema: 47.5,
+    ),
+  ];
+
+  CityCompareResult compare({
+    required String currentCityName,
+    required String targetCityName,
+    required double currentGrossMonthlySalary,
+    required CityCompareProfile profile,
+  }) {
+    final currentCity = cityByName(currentCityName);
+    final targetCity = cityByName(targetCityName);
+    final currentBreakdown = costBreakdown(currentCity, profile);
+    final targetBreakdown = costBreakdown(targetCity, profile);
+    final currentSnapshot = salarySnapshot(
+      city: currentCity,
+      grossMonthlySalary: currentGrossMonthlySalary,
+      monthlyCost: currentBreakdown.total,
+    );
+    final sameSalaryTargetSnapshot = salarySnapshot(
+      city: targetCity,
+      grossMonthlySalary: currentGrossMonthlySalary,
+      monthlyCost: targetBreakdown.total,
+    );
+    final requiredTargetGross = _solveGrossForTargetBuffer(
+      city: targetCity,
+      monthlyCost: targetBreakdown.total,
+      targetBuffer: currentSnapshot.monthlyBuffer,
+    );
+    final requiredTargetSnapshot = salarySnapshot(
+      city: targetCity,
+      grossMonthlySalary: requiredTargetGross,
+      monthlyCost: targetBreakdown.total,
+    );
+    final breakEvenTargetGross = _solveGrossForTargetBuffer(
+      city: targetCity,
+      monthlyCost: targetBreakdown.total,
+      targetBuffer: 0,
+    );
+    final breakEvenTargetSnapshot = salarySnapshot(
+      city: targetCity,
+      grossMonthlySalary: breakEvenTargetGross,
+      monthlyCost: targetBreakdown.total,
+    );
+    return CityCompareResult(
+      currentCity: currentCity,
+      targetCity: targetCity,
+      currentBreakdown: currentBreakdown,
+      targetBreakdown: targetBreakdown,
+      currentSnapshot: currentSnapshot,
+      sameSalaryTargetSnapshot: sameSalaryTargetSnapshot,
+      requiredTargetSnapshot: requiredTargetSnapshot,
+      breakEvenTargetSnapshot: breakEvenTargetSnapshot,
+      costRatio: targetBreakdown.total / math.max(1, currentBreakdown.total),
+      referenceItems: _referenceItems(currentCity, targetCity),
+      insights: _insights(
+        currentCity: currentCity,
+        targetCity: targetCity,
+        currentBreakdown: currentBreakdown,
+        targetBreakdown: targetBreakdown,
+        currentSnapshot: currentSnapshot,
+        sameSalaryTargetSnapshot: sameSalaryTargetSnapshot,
+        requiredTargetSnapshot: requiredTargetSnapshot,
+      ),
+    );
+  }
+
+  CityCompareCityData cityByName(String name) {
+    return cities.firstWhere(
+      (city) => city.city == name,
+      orElse: () => cities.first,
+    );
+  }
+
+  CityCompareCostBreakdown costBreakdown(
+    CityCompareCityData city,
+    CityCompareProfile profile,
+  ) {
+    final housing =
+        switch (profile.housingType) {
+          CityCompareHousingType.centerOneBedroom => city.rentCenterOneBedroom,
+          CityCompareHousingType.suburbOneBedroom => city.rentSuburbOneBedroom,
+          CityCompareHousingType.centerThreeBedroom =>
+            city.rentCenterThreeBedroom,
+          CityCompareHousingType.suburbThreeBedroom =>
+            city.rentSuburbThreeBedroom,
+        } *
+        profile.housingAdjustment;
+    final (homeFactor, outFactor) = switch (profile.diningType) {
+      CityCompareDiningType.homeFocused => (1.0, 0.35),
+      CityCompareDiningType.balanced => (1.0, 0.75),
+      CityCompareDiningType.dineOutOften => (0.8, 1.2),
+    };
+    final dining =
+        (city.diningHome * homeFactor + city.diningOut * outFactor) *
+        profile.diningAdjustment;
+    final transport =
+        switch (profile.transportType) {
+          CityCompareTransportType.publicTransit => city.transportPublic,
+          CityCompareTransportType.car => city.transportCar,
+        } *
+        profile.transportAdjustment;
+    final education =
+        switch (profile.educationType) {
+          CityCompareEducationType.none => 0.0,
+          CityCompareEducationType.kindergarten => city.kindergarten,
+          CityCompareEducationType.primary => city.primary,
+          CityCompareEducationType.middle => city.middle,
+          CityCompareEducationType.high => city.high,
+          CityCompareEducationType.international => city.international,
+        } *
+        profile.educationAdjustment;
+    final utilities = city.utilities * profile.utilitiesAdjustment;
+    final digital =
+        (city.mobilePlan + city.internet) * profile.utilitiesAdjustment;
+    final fitnessBase = profile.fitnessOverride ?? city.fitness;
+    final fitness = profile.includeFitness
+        ? fitnessBase * profile.fitnessAdjustment
+        : 0.0;
+    final cinemaTicket = profile.cinemaTicketOverride ?? city.cinema;
+    final leisure =
+        cinemaTicket * profile.monthlyCinemaTrips * profile.leisureAdjustment;
+    final custom = profile.customExpenses.fold<double>(
+      0,
+      (sum, item) => sum + math.max(0, item.amount),
+    );
+    final total =
+        housing +
+        dining +
+        transport +
+        education +
+        utilities +
+        digital +
+        fitness +
+        leisure +
+        custom;
+    return CityCompareCostBreakdown(
+      housing: housing,
+      dining: dining,
+      transport: transport,
+      education: education,
+      utilities: utilities,
+      digital: digital,
+      fitness: fitness,
+      leisure: leisure,
+      custom: custom,
+      total: total,
+    );
+  }
+
+  CityCompareSalarySnapshot salarySnapshot({
+    required CityCompareCityData city,
+    required double grossMonthlySalary,
+    required double monthlyCost,
+  }) {
+    final socialSecurityContribution = _socialSecurityContribution(
+      grossMonthlySalary,
+      city,
+    );
+    final tax = _monthlyTax(grossMonthlySalary, socialSecurityContribution);
+    final netSalary = grossMonthlySalary - socialSecurityContribution - tax;
+    return CityCompareSalarySnapshot(
+      grossMonthlySalary: grossMonthlySalary,
+      socialSecurityContribution: socialSecurityContribution,
+      tax: tax,
+      netSalary: netSalary,
+      monthlyCost: monthlyCost,
+      monthlyBuffer: netSalary - monthlyCost,
+    );
+  }
+
+  double _socialSecurityContribution(
+    double grossMonthlySalary,
+    CityCompareCityData city,
+  ) {
+    final base = grossMonthlySalary.clamp(
+      city.socialSecurityBaseMin,
+      city.socialSecurityBaseMax,
+    );
+    return base * _employeeSocialSecurityRate;
+  }
+
+  double _monthlyTax(double gross, double socialSecurityContribution) {
+    final taxable = gross - socialSecurityContribution - _standardDeduction;
+    if (taxable <= 0) {
+      return 0;
+    }
+    if (taxable <= 3000) {
+      return taxable * 0.03;
+    }
+    if (taxable <= 12000) {
+      return taxable * 0.10 - 210;
+    }
+    if (taxable <= 25000) {
+      return taxable * 0.20 - 1410;
+    }
+    if (taxable <= 35000) {
+      return taxable * 0.25 - 2660;
+    }
+    if (taxable <= 55000) {
+      return taxable * 0.30 - 4410;
+    }
+    if (taxable <= 80000) {
+      return taxable * 0.35 - 7160;
+    }
+    return taxable * 0.45 - 15160;
+  }
+
+  double _solveGrossForTargetBuffer({
+    required CityCompareCityData city,
+    required double monthlyCost,
+    required double targetBuffer,
+  }) {
+    var low = 0.0;
+    var high = 200000.0;
+    while (salarySnapshot(
+          city: city,
+          grossMonthlySalary: high,
+          monthlyCost: monthlyCost,
+        ).monthlyBuffer <
+        targetBuffer) {
+      high *= 1.5;
+      if (high > 1000000) {
+        break;
+      }
+    }
+    for (var index = 0; index < 50; index += 1) {
+      final mid = (low + high) / 2;
+      final snapshot = salarySnapshot(
+        city: city,
+        grossMonthlySalary: mid,
+        monthlyCost: monthlyCost,
+      );
+      if (snapshot.monthlyBuffer >= targetBuffer) {
+        high = mid;
+      } else {
+        low = mid;
+      }
+    }
+    return high;
+  }
+
+  List<CityCompareReferenceItem> _referenceItems(
+    CityCompareCityData currentCity,
+    CityCompareCityData targetCity,
+  ) {
+    return <CityCompareReferenceItem>[
+      CityCompareReferenceItem(
+        category: 'salary',
+        labelZh: '社保基数下限',
+        labelEn: 'Social security base min',
+        currentValue: currentCity.socialSecurityBaseMin,
+        targetValue: targetCity.socialSecurityBaseMin,
+        unitZh: '元/月',
+        unitEn: 'CNY / month',
+      ),
+      CityCompareReferenceItem(
+        category: 'salary',
+        labelZh: '社保基数上限',
+        labelEn: 'Social security base max',
+        currentValue: currentCity.socialSecurityBaseMax,
+        targetValue: targetCity.socialSecurityBaseMax,
+        unitZh: '元/月',
+        unitEn: 'CNY / month',
+      ),
+      CityCompareReferenceItem(
+        category: 'housing',
+        labelZh: '市中心一居租金',
+        labelEn: 'Center 1BR rent',
+        currentValue: currentCity.rentCenterOneBedroom,
+        targetValue: targetCity.rentCenterOneBedroom,
+        unitZh: '元/月',
+        unitEn: 'CNY / month',
+      ),
+      CityCompareReferenceItem(
+        category: 'housing',
+        labelZh: '郊区一居租金',
+        labelEn: 'Suburb 1BR rent',
+        currentValue: currentCity.rentSuburbOneBedroom,
+        targetValue: targetCity.rentSuburbOneBedroom,
+        unitZh: '元/月',
+        unitEn: 'CNY / month',
+      ),
+      CityCompareReferenceItem(
+        category: 'housing',
+        labelZh: '市中心三居租金',
+        labelEn: 'Center 3BR rent',
+        currentValue: currentCity.rentCenterThreeBedroom,
+        targetValue: targetCity.rentCenterThreeBedroom,
+        unitZh: '元/月',
+        unitEn: 'CNY / month',
+      ),
+      CityCompareReferenceItem(
+        category: 'housing',
+        labelZh: '郊区三居租金',
+        labelEn: 'Suburb 3BR rent',
+        currentValue: currentCity.rentSuburbThreeBedroom,
+        targetValue: targetCity.rentSuburbThreeBedroom,
+        unitZh: '元/月',
+        unitEn: 'CNY / month',
+      ),
+      CityCompareReferenceItem(
+        category: 'housing',
+        labelZh: '市中心房价',
+        labelEn: 'Center house price',
+        currentValue: currentCity.housePriceCenter,
+        targetValue: targetCity.housePriceCenter,
+        unitZh: '元/平方米',
+        unitEn: 'CNY / m²',
+      ),
+      CityCompareReferenceItem(
+        category: 'housing',
+        labelZh: '郊区房价',
+        labelEn: 'Suburb house price',
+        currentValue: currentCity.housePriceSuburb,
+        targetValue: targetCity.housePriceSuburb,
+        unitZh: '元/平方米',
+        unitEn: 'CNY / m²',
+      ),
+      CityCompareReferenceItem(
+        category: 'daily',
+        labelZh: '在家做饭月均',
+        labelEn: 'Home dining budget',
+        currentValue: currentCity.diningHome,
+        targetValue: targetCity.diningHome,
+        unitZh: '元/月',
+        unitEn: 'CNY / month',
+      ),
+      CityCompareReferenceItem(
+        category: 'daily',
+        labelZh: '外食月均',
+        labelEn: 'Dining out budget',
+        currentValue: currentCity.diningOut,
+        targetValue: targetCity.diningOut,
+        unitZh: '元/月',
+        unitEn: 'CNY / month',
+      ),
+      CityCompareReferenceItem(
+        category: 'daily',
+        labelZh: '便宜餐厅人均',
+        labelEn: 'Cheap meal',
+        currentValue: currentCity.mealCheap,
+        targetValue: targetCity.mealCheap,
+        unitZh: '元/次',
+        unitEn: 'CNY / meal',
+      ),
+      CityCompareReferenceItem(
+        category: 'daily',
+        labelZh: '中档餐厅双人餐',
+        labelEn: 'Mid meal',
+        currentValue: currentCity.mealMid,
+        targetValue: targetCity.mealMid,
+        unitZh: '元/次',
+        unitEn: 'CNY / meal',
+      ),
+      CityCompareReferenceItem(
+        category: 'daily',
+        labelZh: '水电气',
+        labelEn: 'Utilities',
+        currentValue: currentCity.utilities,
+        targetValue: targetCity.utilities,
+        unitZh: '元/月',
+        unitEn: 'CNY / month',
+      ),
+      CityCompareReferenceItem(
+        category: 'daily',
+        labelZh: '手机套餐',
+        labelEn: 'Mobile plan',
+        currentValue: currentCity.mobilePlan,
+        targetValue: targetCity.mobilePlan,
+        unitZh: '元/月',
+        unitEn: 'CNY / month',
+      ),
+      CityCompareReferenceItem(
+        category: 'daily',
+        labelZh: '宽带',
+        labelEn: 'Internet',
+        currentValue: currentCity.internet,
+        targetValue: targetCity.internet,
+        unitZh: '元/月',
+        unitEn: 'CNY / month',
+      ),
+      CityCompareReferenceItem(
+        category: 'transport',
+        labelZh: '公共交通',
+        labelEn: 'Public transit',
+        currentValue: currentCity.transportPublic,
+        targetValue: targetCity.transportPublic,
+        unitZh: '元/月',
+        unitEn: 'CNY / month',
+      ),
+      CityCompareReferenceItem(
+        category: 'transport',
+        labelZh: '私家车',
+        labelEn: 'Car commuting',
+        currentValue: currentCity.transportCar,
+        targetValue: targetCity.transportCar,
+        unitZh: '元/月',
+        unitEn: 'CNY / month',
+      ),
+      CityCompareReferenceItem(
+        category: 'family',
+        labelZh: '幼儿园',
+        labelEn: 'Kindergarten',
+        currentValue: currentCity.kindergarten,
+        targetValue: targetCity.kindergarten,
+        unitZh: '元/月',
+        unitEn: 'CNY / month',
+      ),
+      CityCompareReferenceItem(
+        category: 'family',
+        labelZh: '小学',
+        labelEn: 'Primary school',
+        currentValue: currentCity.primary,
+        targetValue: targetCity.primary,
+        unitZh: '元/月',
+        unitEn: 'CNY / month',
+      ),
+      CityCompareReferenceItem(
+        category: 'family',
+        labelZh: '初中',
+        labelEn: 'Middle school',
+        currentValue: currentCity.middle,
+        targetValue: targetCity.middle,
+        unitZh: '元/月',
+        unitEn: 'CNY / month',
+      ),
+      CityCompareReferenceItem(
+        category: 'family',
+        labelZh: '高中',
+        labelEn: 'High school',
+        currentValue: currentCity.high,
+        targetValue: targetCity.high,
+        unitZh: '元/月',
+        unitEn: 'CNY / month',
+      ),
+      CityCompareReferenceItem(
+        category: 'family',
+        labelZh: '国际学校',
+        labelEn: 'International school',
+        currentValue: currentCity.international,
+        targetValue: targetCity.international,
+        unitZh: '元/月',
+        unitEn: 'CNY / month',
+      ),
+      CityCompareReferenceItem(
+        category: 'leisure',
+        labelZh: '健身',
+        labelEn: 'Fitness',
+        currentValue: currentCity.fitness,
+        targetValue: targetCity.fitness,
+        unitZh: '元/月',
+        unitEn: 'CNY / month',
+      ),
+      CityCompareReferenceItem(
+        category: 'leisure',
+        labelZh: '电影票',
+        labelEn: 'Cinema',
+        currentValue: currentCity.cinema,
+        targetValue: targetCity.cinema,
+        unitZh: '元/张',
+        unitEn: 'CNY / ticket',
+      ),
+    ];
+  }
+
+  List<CityCompareInsight> _insights({
+    required CityCompareCityData currentCity,
+    required CityCompareCityData targetCity,
+    required CityCompareCostBreakdown currentBreakdown,
+    required CityCompareCostBreakdown targetBreakdown,
+    required CityCompareSalarySnapshot currentSnapshot,
+    required CityCompareSalarySnapshot sameSalaryTargetSnapshot,
+    required CityCompareSalarySnapshot requiredTargetSnapshot,
+  }) {
+    final costDiffs = <MapEntry<String, double>>[
+      MapEntry<String, double>(
+        '住房',
+        targetBreakdown.housing - currentBreakdown.housing,
+      ),
+      MapEntry<String, double>(
+        '餐饮',
+        targetBreakdown.dining - currentBreakdown.dining,
+      ),
+      MapEntry<String, double>(
+        '交通',
+        targetBreakdown.transport - currentBreakdown.transport,
+      ),
+      MapEntry<String, double>(
+        '教育',
+        targetBreakdown.education - currentBreakdown.education,
+      ),
+      MapEntry<String, double>(
+        '水电网话',
+        (targetBreakdown.utilities + targetBreakdown.digital) -
+            (currentBreakdown.utilities + currentBreakdown.digital),
+      ),
+      MapEntry<String, double>(
+        '健身娱乐',
+        (targetBreakdown.fitness + targetBreakdown.leisure) -
+            (currentBreakdown.fitness + currentBreakdown.leisure),
+      ),
+    ]..sort((left, right) => right.value.abs().compareTo(left.value.abs()));
+    final biggest = costDiffs.first;
+    final second = costDiffs.length > 1 ? costDiffs[1] : biggest;
+    final sameSalaryDelta =
+        sameSalaryTargetSnapshot.monthlyBuffer - currentSnapshot.monthlyBuffer;
+    final educationGap = targetCity.international - currentCity.international;
+    final centerRentRatio =
+        targetCity.rentCenterOneBedroom /
+        math.max(1, currentCity.rentCenterOneBedroom);
+
+    return <CityCompareInsight>[
+      CityCompareInsight(
+        level: 'primary',
+        titleZh: '最大差异项',
+        titleEn: 'Biggest delta',
+        bodyZh:
+            '${targetCity.city} 相比 ${currentCity.city}，你当前生活方式下变化最大的月度成本是${biggest.key}，差额约 ${biggest.value >= 0 ? '+' : ''}${biggest.value.toStringAsFixed(0)} 元；第二位是${second.key}。',
+        bodyEn:
+            'Under the current lifestyle, the biggest monthly delta from ${currentCity.city} to ${targetCity.city} is ${biggest.key} at about ${biggest.value >= 0 ? '+' : ''}${biggest.value.toStringAsFixed(0)} CNY, followed by ${second.key}.',
+      ),
+      CityCompareInsight(
+        level: sameSalaryDelta >= 0 ? 'positive' : 'warning',
+        titleZh: '同薪资迁移结果',
+        titleEn: 'Same-salary move',
+        bodyZh:
+            '如果税前月薪不变直接搬去 ${targetCity.city}，你的月结余会从 ${currentSnapshot.monthlyBuffer.toStringAsFixed(0)} 元变成 ${sameSalaryTargetSnapshot.monthlyBuffer.toStringAsFixed(0)} 元，变化约 ${sameSalaryDelta >= 0 ? '+' : ''}${sameSalaryDelta.toStringAsFixed(0)} 元。',
+        bodyEn:
+            'If your gross salary stays the same after moving to ${targetCity.city}, your monthly buffer changes from ${currentSnapshot.monthlyBuffer.toStringAsFixed(0)} to ${sameSalaryTargetSnapshot.monthlyBuffer.toStringAsFixed(0)} CNY, a delta of ${sameSalaryDelta >= 0 ? '+' : ''}${sameSalaryDelta.toStringAsFixed(0)} CNY.',
+      ),
+      CityCompareInsight(
+        level: 'neutral',
+        titleZh: '原始参考条目提示',
+        titleEn: 'Reference item note',
+        bodyZh:
+            '参考页里最能解释生活差异的原始条目，通常是租房、外食、通勤和教育。当前两城中，${targetCity.city} 的市中心一居租金是 ${currentCity.city} 的 ${centerRentRatio.toStringAsFixed(2)} 倍，国际学校月费差额约 ${educationGap >= 0 ? '+' : ''}${educationGap.toStringAsFixed(0)} 元。',
+        bodyEn:
+            'The raw reference items that usually explain lifestyle gaps best are rent, eating out, commuting, and education. Here, center 1BR rent in ${targetCity.city} is ${centerRentRatio.toStringAsFixed(2)}x of ${currentCity.city}, and the international-school monthly gap is about ${educationGap >= 0 ? '+' : ''}${educationGap.toStringAsFixed(0)} CNY.',
+      ),
+      CityCompareInsight(
+        level: 'primary',
+        titleZh: '维持当前结余所需月薪',
+        titleEn: 'Salary needed to match',
+        bodyZh:
+            '若你希望在 ${targetCity.city} 继续维持现在的月度结余，需要把税前月薪大致调整到 ${requiredTargetSnapshot.grossMonthlySalary.toStringAsFixed(0)} 元。这是基于参考页静态样本和统一税费模型给出的估算值。',
+        bodyEn:
+            'To keep your current monthly buffer in ${targetCity.city}, the rough gross monthly salary target is ${requiredTargetSnapshot.grossMonthlySalary.toStringAsFixed(0)} CNY. This remains an estimate based on static source data and a simplified tax model.',
+      ),
+    ];
+  }
+}

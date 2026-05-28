@@ -1,4 +1,4 @@
-﻿part of 'toolbox_human_tests.dart';
+part of 'toolbox_human_tests.dart';
 
 class _HandEyeSettingSlider extends StatelessWidget {
   const _HandEyeSettingSlider({
@@ -108,7 +108,7 @@ extension _HandEyeTapSettingsWidgets on _HandEyeCoordinationCardState {
           min: 1,
           max: 120,
           divisions: 119,
-          onChanged: _active ? null : _setRoundCount,
+          onChanged: _settingsLocked ? null : _setRoundCount,
         ),
         _HandEyeNumberInput(
           label: pickUiText(
@@ -132,7 +132,7 @@ extension _HandEyeTapSettingsWidgets on _HandEyeCoordinationCardState {
             es: 'rondas',
             ru: 'обход',
           ),
-          enabled: !_active,
+          enabled: !_settingsLocked,
           onCommit: () => _applyIntInput(
             controller: _roundCountController,
             min: 1,
@@ -156,7 +156,7 @@ extension _HandEyeTapSettingsWidgets on _HandEyeCoordinationCardState {
           min: 100,
           max: 5000,
           divisions: 49,
-          onChanged: _active ? null : _setDisplayMs,
+          onChanged: _settingsLocked ? null : _setDisplayMs,
         ),
         _HandEyeNumberInput(
           label: pickUiText(
@@ -171,7 +171,7 @@ extension _HandEyeTapSettingsWidgets on _HandEyeCoordinationCardState {
           ),
           controller: _displayMsController,
           suffix: 'ms',
-          enabled: !_active,
+          enabled: !_settingsLocked,
           onCommit: () => _applyIntInput(
             controller: _displayMsController,
             min: 80,
@@ -201,7 +201,9 @@ extension _HandEyeTapSettingsWidgets on _HandEyeCoordinationCardState {
                 (mode) => ChoiceChip(
                   label: Text(_visibleModeLabel(i18n, mode)),
                   selected: _visibleMode == mode,
-                  onSelected: _active ? null : (_) => _setVisibleMode(mode),
+                  onSelected: _settingsLocked
+                      ? null
+                      : (_) => _setVisibleMode(mode),
                 ),
               )
               .toList(growable: false),
@@ -223,7 +225,7 @@ extension _HandEyeTapSettingsWidgets on _HandEyeCoordinationCardState {
           min: 0,
           max: 2,
           divisions: 40,
-          onChanged: _active ? null : _setMovementAmplitude,
+          onChanged: _settingsLocked ? null : _setMovementAmplitude,
         ),
         _HandEyeNumberInput(
           label: pickUiText(
@@ -238,7 +240,7 @@ extension _HandEyeTapSettingsWidgets on _HandEyeCoordinationCardState {
           ),
           controller: _movementAmplitudeController,
           suffix: '%',
-          enabled: !_active,
+          enabled: !_settingsLocked,
           onCommit: () => _applyDoubleInput(
             controller: _movementAmplitudeController,
             min: 0,
@@ -274,7 +276,7 @@ extension _HandEyeTapSettingsWidgets on _HandEyeCoordinationCardState {
           min: 0,
           max: 6,
           divisions: 60,
-          onChanged: _active ? null : _setMovementSpeed,
+          onChanged: _settingsLocked ? null : _setMovementSpeed,
         ),
         _HandEyeNumberInput(
           label: pickUiText(
@@ -289,7 +291,7 @@ extension _HandEyeTapSettingsWidgets on _HandEyeCoordinationCardState {
           ),
           controller: _movementSpeedController,
           suffix: 'x',
-          enabled: !_active,
+          enabled: !_settingsLocked,
           onCommit: () => _applyDoubleInput(
             controller: _movementSpeedController,
             min: 0,
@@ -313,7 +315,7 @@ extension _HandEyeTapSettingsWidgets on _HandEyeCoordinationCardState {
           min: 1,
           max: 12,
           divisions: 11,
-          onChanged: _active ? null : _setRequiredTaps,
+          onChanged: _settingsLocked ? null : _setRequiredTaps,
         ),
         _HandEyeNumberInput(
           label: pickUiText(
@@ -337,7 +339,7 @@ extension _HandEyeTapSettingsWidgets on _HandEyeCoordinationCardState {
             es: 'grifos',
             ru: 'краны',
           ),
-          enabled: !_active,
+          enabled: !_settingsLocked,
           onCommit: () => _applyIntInput(
             controller: _requiredTapsController,
             min: 1,
@@ -361,7 +363,7 @@ extension _HandEyeTapSettingsWidgets on _HandEyeCoordinationCardState {
           min: 16,
           max: 96,
           divisions: 40,
-          onChanged: _active ? null : _setTargetDiameter,
+          onChanged: _settingsLocked ? null : _setTargetDiameter,
         ),
         _HandEyeNumberInput(
           label: pickUiText(
@@ -376,7 +378,7 @@ extension _HandEyeTapSettingsWidgets on _HandEyeCoordinationCardState {
           ),
           controller: _targetDiameterController,
           suffix: 'dp',
-          enabled: !_active,
+          enabled: !_settingsLocked,
           onCommit: () => _applyDoubleInput(
             controller: _targetDiameterController,
             min: 12,
@@ -395,7 +397,7 @@ extension _HandEyeTapSettingsWidgets on _HandEyeCoordinationCardState {
         SwitchListTile.adaptive(
           contentPadding: EdgeInsets.zero,
           value: _distractorEnabled,
-          onChanged: _active ? null : _setDistractorEnabled,
+          onChanged: _settingsLocked ? null : _setDistractorEnabled,
           title: Text(
             pickUiText(
               i18n,
@@ -437,7 +439,7 @@ extension _HandEyeTapSettingsWidgets on _HandEyeCoordinationCardState {
           min: 0,
           max: 1,
           divisions: 20,
-          onChanged: !_active && _distractorEnabled
+          onChanged: !_settingsLocked && _distractorEnabled
               ? _setDistractorChance
               : null,
         ),
@@ -454,7 +456,7 @@ extension _HandEyeTapSettingsWidgets on _HandEyeCoordinationCardState {
           ),
           controller: _distractorChanceController,
           suffix: '%',
-          enabled: !_active && _distractorEnabled,
+          enabled: !_settingsLocked && _distractorEnabled,
           onCommit: () => _applyDoubleInput(
             controller: _distractorChanceController,
             min: 0,
@@ -479,7 +481,7 @@ extension _HandEyeTapSettingsWidgets on _HandEyeCoordinationCardState {
           min: 1,
           max: 6,
           divisions: 5,
-          onChanged: !_active && _distractorEnabled
+          onChanged: !_settingsLocked && _distractorEnabled
               ? _setDistractorCount
               : null,
         ),
@@ -505,7 +507,7 @@ extension _HandEyeTapSettingsWidgets on _HandEyeCoordinationCardState {
             es: 'metas',
             ru: 'цели',
           ),
-          enabled: !_active && _distractorEnabled,
+          enabled: !_settingsLocked && _distractorEnabled,
           onCommit: () => _applyIntInput(
             controller: _distractorCountController,
             min: 1,

@@ -1,4 +1,4 @@
-part of '../toolbox_life_tools.dart';
+part of '../toolbox_crypto_security.dart';
 
 enum _StegoMode { embed, reveal }
 
@@ -85,13 +85,18 @@ class _StegoEmbedFileRequest {
     required this.mediaKind,
     required this.carrierBytes,
     required this.fileBytes,
+    required this.dualLayerEnabled,
+    required this.coverFileBytes,
     required this.fileName,
+    required this.coverFileName,
     required this.encryption,
     required this.passphrase,
+    required this.coverPassphrase,
     required this.strength,
     required this.keyFileBytes,
     required this.sourceExtension,
     required this.mediaType,
+    required this.coverMediaType,
     required this.cascade,
     required this.keyBits,
     required this.macAlgorithm,
@@ -105,13 +110,18 @@ class _StegoEmbedFileRequest {
   final ToolboxSteganographyMediaKind mediaKind;
   final Uint8List carrierBytes;
   final Uint8List fileBytes;
+  final bool dualLayerEnabled;
+  final Uint8List? coverFileBytes;
   final String? fileName;
+  final String? coverFileName;
   final ToolboxCryptoAlgorithm encryption;
   final String passphrase;
+  final String coverPassphrase;
   final ToolboxCryptoStrength strength;
   final Uint8List? keyFileBytes;
   final String? sourceExtension;
   final String? mediaType;
+  final String? coverMediaType;
   final List<ToolboxCryptoCascadeCipher>? cascade;
   final ToolboxCryptoKeyBits keyBits;
   final ToolboxCryptoMacAlgorithm macAlgorithm;
@@ -183,12 +193,17 @@ class _StegoFileCapacityRequest {
     required this.mediaKind,
     required this.carrierBytes,
     required this.fileBytes,
+    required this.dualLayerEnabled,
+    required this.coverFileBytes,
     required this.fileName,
+    required this.coverFileName,
     required this.encryption,
     required this.passphrase,
+    required this.coverPassphrase,
     required this.strength,
     required this.keyFileBytes,
     required this.mediaType,
+    required this.coverMediaType,
     required this.cascade,
     required this.keyBits,
     required this.macAlgorithm,
@@ -200,12 +215,17 @@ class _StegoFileCapacityRequest {
   final ToolboxSteganographyMediaKind mediaKind;
   final Uint8List carrierBytes;
   final Uint8List fileBytes;
+  final bool dualLayerEnabled;
+  final Uint8List? coverFileBytes;
   final String? fileName;
+  final String? coverFileName;
   final ToolboxCryptoAlgorithm encryption;
   final String passphrase;
+  final String coverPassphrase;
   final ToolboxCryptoStrength strength;
   final Uint8List? keyFileBytes;
   final String? mediaType;
+  final String? coverMediaType;
   final List<ToolboxCryptoCascadeCipher>? cascade;
   final ToolboxCryptoKeyBits keyBits;
   final ToolboxCryptoMacAlgorithm macAlgorithm;
@@ -275,6 +295,32 @@ ToolboxSteganographyRevealResult _runStegoRevealText(
 ToolboxSteganographyEmbedResult _runStegoEmbedFile(
   _StegoEmbedFileRequest request,
 ) {
+  if (request.dualLayerEnabled) {
+    return ToolboxSteganographyService().embedDualFile(
+      mediaKind: request.mediaKind,
+      carrierBytes: request.carrierBytes,
+      coverFileBytes: request.coverFileBytes ?? Uint8List(0),
+      hiddenFileBytes: request.fileBytes,
+      coverFileName: request.coverFileName,
+      hiddenFileName: request.fileName,
+      encryption: request.encryption,
+      coverPassphrase: request.coverPassphrase,
+      hiddenPassphrase: request.passphrase,
+      strength: request.strength,
+      hiddenKeyFileBytes: request.keyFileBytes,
+      sourceExtension: request.sourceExtension,
+      coverMediaType: request.coverMediaType,
+      hiddenMediaType: request.mediaType,
+      cascade: request.cascade,
+      keyBits: request.keyBits,
+      macAlgorithm: request.macAlgorithm,
+      signatureMode: request.signatureMode,
+      maxErrorAttempts: request.maxErrorAttempts,
+      maxSuccessfulReveals: request.maxSuccessfulReveals,
+      locatorAlgorithm: request.locatorAlgorithm,
+      locatorStrength: request.locatorStrength,
+    );
+  }
   return ToolboxSteganographyService().embedFile(
     mediaKind: request.mediaKind,
     carrierBytes: request.carrierBytes,
@@ -372,12 +418,17 @@ ToolboxSteganographyCapacityCheck _runStegoFileCapacityCheck(
     mediaKind: request.mediaKind,
     carrierBytes: request.carrierBytes,
     fileBytes: request.fileBytes,
+    dualLayerEnabled: request.dualLayerEnabled,
+    coverFileBytes: request.coverFileBytes,
     fileName: request.fileName,
+    coverFileName: request.coverFileName,
     encryption: request.encryption,
     passphrase: request.passphrase,
+    coverPassphrase: request.coverPassphrase,
     strength: request.strength,
     keyFileBytes: request.keyFileBytes,
     mediaType: request.mediaType,
+    coverMediaType: request.coverMediaType,
     cascade: request.cascade,
     keyBits: request.keyBits,
     macAlgorithm: request.macAlgorithm,
@@ -442,9 +493,14 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   String? _fileName;
   String? _fileExtension;
   Uint8List? _fileBytes;
+  String? _coverFileName;
+  String? _coverFileExtension;
+  Uint8List? _coverFileBytes;
   Uint8List? _fileOutputBytes;
   ToolboxSteganographyEmbedResult? _fileEmbedResult;
   ToolboxSteganographyFileRevealResult? _fileRevealResult;
+  ToolboxSteganographyCapacityCheck? _writePreview;
+  int? _writePreviewOutputBytes;
   ToolboxCryptoHashResult? _hashResult;
   Uint8List? _outputBytes;
   ui.Image? _sourcePreview;
@@ -717,8 +773,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                   icon: Icons.privacy_tip_rounded,
                   text: _lifeText(
                     context,
-                    zh: '双层模式仅支持图片载体。请保存原始载体；修改双层内容时应重新生成，不要重复写入同一隐写文件。',
-                    en: 'Dual-layer mode supports image carriers only. Keep the original carrier; regenerate from it instead of writing into an existing stego file.',
+                    zh: '双层模式会写入表层与深层两份载荷。请保存原始载体；修改双层内容时应重新生成，不要重复写入同一隐写文件。',
+                    en: 'Dual-layer mode writes cover and hidden payloads. Keep the original carrier; regenerate from it instead of writing into an existing stego file.',
                   ),
                 ),
               ],
@@ -1081,18 +1137,6 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                   },
           ),
           const SizedBox(height: 12),
-          if (_isUnsupportedMediaWrite) ...<Widget>[
-            _buildInlineNotice(
-              context,
-              icon: Icons.info_outline_rounded,
-              text: _lifeText(
-                context,
-                zh: '音频写入需要频域后端，视频写入需要帧内或运动矢量后端；当前仅保留旧载荷还原。',
-                en: 'Audio writes require a frequency-domain backend and video writes require frame-level or motion-vector support. Legacy reveal stays available.',
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
           if (!_isRevealMode) ...<Widget>[
             _LifeSegmentedField<ToolboxCryptoAlgorithm>(
               label: _lifeText(context, zh: '加密算法', en: 'Encryption'),
@@ -1408,6 +1452,20 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             ),
           ],
         ),
+        if (_mode == _StegoMode.embed) ...<Widget>[
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              key: const ValueKey<String>('life_stego_preview_write_button'),
+              onPressed: _busy || _sourceBytes == null
+                  ? null
+                  : _previewTextWrite,
+              icon: const Icon(Icons.fact_check_rounded),
+              label: Text(_lifeText(context, zh: '预览写入', en: 'Preview write')),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -1425,6 +1483,14 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     final fileText = hasFile
         ? '${_fileName ?? _lifeText(context, zh: '未命名文件', en: 'Unnamed file')} · ${_formatBytes(_fileBytes!.length)}'
         : _lifeText(context, zh: '尚未选择文件。', en: 'No file selected yet.');
+    final hasCoverFile = _coverFileBytes != null;
+    final coverFileText = hasCoverFile
+        ? '${_coverFileName ?? _lifeText(context, zh: '未命名表层文件', en: 'Unnamed cover file')} · ${_formatBytes(_coverFileBytes!.length)}'
+        : _lifeText(
+            context,
+            zh: '尚未选择表层文件。',
+            en: 'No cover file selected yet.',
+          );
     return _LifeSettingsPanel(
       title: _fileMode == _FileCryptoMode.encrypt
           ? _lifeText(context, zh: '文件写入媒体', en: 'File into media')
@@ -1513,6 +1579,52 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               ],
             ),
           ),
+          if (_dualLayerEnabled) ...<Widget>[
+            const SizedBox(height: 12),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: FilledButton.icon(
+                    key: const ValueKey<String>(
+                      'life_crypto_pick_cover_file_button',
+                    ),
+                    onPressed: _busy ? null : _pickCoverCryptoFile,
+                    style: _greenActionButtonStyle(context),
+                    icon: const Icon(Icons.layers_rounded),
+                    label: Text(
+                      _lifeText(context, zh: '选择表层文件', en: 'Pick cover file'),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                IconButton.filledTonal(
+                  tooltip: _lifeText(
+                    context,
+                    zh: '清空表层文件',
+                    en: 'Clear cover file',
+                  ),
+                  onPressed: _busy ? null : _resetCoverFileCrypto,
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            _LifePreviewFrame(
+              child: Row(
+                children: <Widget>[
+                  const Icon(Icons.layers_rounded),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      coverFileText,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
         const SizedBox(height: 12),
         TextField(
@@ -1523,7 +1635,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
             prefixIcon: const Icon(Icons.vpn_key_rounded),
-            labelText: _lifeText(context, zh: '口令', en: 'Passphrase'),
+            labelText: _dualLayerEnabled && _fileMode == _FileCryptoMode.encrypt
+                ? _lifeText(context, zh: '深层口令', en: 'Hidden passphrase')
+                : _lifeText(context, zh: '口令', en: 'Passphrase'),
             helperText: _lifeText(
               context,
               zh: '口令可与密钥文件叠加使用，解密时必须一致。',
@@ -1531,6 +1645,27 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             ),
           ),
         ),
+        if (_fileMode == _FileCryptoMode.encrypt &&
+            _dualLayerEnabled) ...<Widget>[
+          const SizedBox(height: 12),
+          TextField(
+            key: const ValueKey<String>('life_crypto_cover_passphrase_field'),
+            controller: _coverPassphraseController,
+            obscureText: true,
+            enableSuggestions: false,
+            autocorrect: false,
+            decoration: InputDecoration(
+              border: const OutlineInputBorder(),
+              prefixIcon: const Icon(Icons.key_rounded),
+              labelText: _lifeText(context, zh: '表层口令', en: 'Cover passphrase'),
+              helperText: _lifeText(
+                context,
+                zh: '表层口令只还原表层文件，并且不使用当前密钥文件。',
+                en: 'The cover passphrase reveals only the cover file and does not use the selected key file.',
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 10),
         _buildKeyFileRow(context),
         if (_fileMode == _FileCryptoMode.decrypt &&
@@ -1555,7 +1690,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                         (_fileMode == _FileCryptoMode.decrypt &&
                             _isDecodeLocked) ||
                         (_fileMode == _FileCryptoMode.encrypt &&
-                            _fileBytes == null)
+                            (_fileBytes == null ||
+                                (_dualLayerEnabled && _coverFileBytes == null)))
                     ? null
                     : (_fileMode == _FileCryptoMode.encrypt
                           ? _encryptFile
@@ -1593,6 +1729,24 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             ),
           ],
         ),
+        if (_fileMode == _FileCryptoMode.encrypt) ...<Widget>[
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              key: const ValueKey<String>('life_crypto_file_preview_button'),
+              onPressed:
+                  _busy ||
+                      _sourceBytes == null ||
+                      _fileBytes == null ||
+                      (_dualLayerEnabled && _coverFileBytes == null)
+                  ? null
+                  : _previewFileWrite,
+              icon: const Icon(Icons.fact_check_rounded),
+              label: Text(_lifeText(context, zh: '预览写入', en: 'Preview write')),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -1673,6 +1827,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     final embed = _embedResult;
     final reveal = _revealResult;
     if (embed == null && reveal == null) {
+      final preview = _writePreview;
+      if (_mode == _StegoMode.embed && preview != null) {
+        return _buildWritePreviewPanel(context, preview);
+      }
       return _LifeSettingsPanel(
         title: _lifeText(context, zh: '结果', en: 'Result'),
         subtitle: _lifeText(
@@ -1767,6 +1925,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     final embed = _fileEmbedResult;
     final reveal = _fileRevealResult;
     if (embed == null && reveal == null) {
+      final preview = _writePreview;
+      if (_fileMode == _FileCryptoMode.encrypt && preview != null) {
+        return _buildWritePreviewPanel(context, preview);
+      }
       return _LifeSettingsPanel(
         title: _lifeText(context, zh: '文件结果', en: 'File result'),
         subtitle: _lifeText(
@@ -1841,6 +2003,69 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               context,
               zh: '文件名: ${reveal.fileName}',
               en: 'File name: ${reveal.fileName}',
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildWritePreviewPanel(
+    BuildContext context,
+    ToolboxSteganographyCapacityCheck check,
+  ) {
+    final outputBytes = _writePreviewOutputBytes;
+    final usedBytes = check.dualLayer
+        ? (check.coverRequiredBytes ?? 0) + (check.hiddenRequiredBytes ?? 0)
+        : check.requiredBytes;
+    final capacityLabel = check.dualLayer && check.perLayerCapacityBytes != null
+        ? _lifeText(
+            context,
+            zh: '每层 ${_formatBytes(check.perLayerCapacityBytes!)}',
+            en: '${_formatBytes(check.perLayerCapacityBytes!)} per layer',
+          )
+        : _formatBytes(check.capacityBytes);
+    return _LifeSettingsPanel(
+      title: _lifeText(context, zh: '写入预览', en: 'Write preview'),
+      subtitle: _lifeText(
+        context,
+        zh: '预检已通过；生成前可核对容量、输出大小和层级。',
+        en: 'Preflight passed. Review capacity, output size, and layers before export.',
+      ),
+      children: <Widget>[
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: <Widget>[
+            ToolboxMetricCard(
+              label: _lifeText(context, zh: '媒介', en: 'Carrier'),
+              value:
+                  check.carrierLabel ?? _mediaLabel(context, check.mediaKind),
+            ),
+            ToolboxMetricCard(
+              label: _lifeText(context, zh: '容量', en: 'Capacity'),
+              value: capacityLabel,
+            ),
+            ToolboxMetricCard(
+              label: _lifeText(context, zh: '预计载荷', en: 'Payload est.'),
+              value: _formatBytes(usedBytes),
+            ),
+            if (outputBytes != null)
+              ToolboxMetricCard(
+                label: _lifeText(context, zh: '预计输出', en: 'Output est.'),
+                value: _formatBytes(outputBytes),
+              ),
+          ],
+        ),
+        if (check.dualLayer) ...<Widget>[
+          const SizedBox(height: 12),
+          _buildInlineNotice(
+            context,
+            icon: Icons.layers_rounded,
+            text: _lifeText(
+              context,
+              zh: '双层写入会生成表层与深层两份载荷；不同口令会还原不同层。',
+              en: 'Dual-layer writing creates cover and hidden payloads; different passphrases reveal different layers.',
             ),
           ),
         ],
@@ -1979,8 +2204,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         Text(
           _lifeText(
             context,
-            zh: '图片隐写采用密钥派生头和随机像素顺序的无损 PNG LSB；请不要再转存为 JPEG。音频/视频新写入等待频域、帧内或运动矢量后端，旧尾部载荷仅保留还原兼容。',
-            en: 'Image stego uses lossless PNG LSB with a key-derived header and randomized pixel order; do not re-save as JPEG. New audio/video writes wait for frequency-domain, frame-level, or motion-vector backends. Legacy tail payloads are reveal-only.',
+            zh: '图片使用无损 PNG 随机像素 LSB；音频支持 WAV/PCM 样本随机 LSB；视频支持 MP4/MOV 容器 free box 写入。不要把图片另存为 JPEG，不要把 WAV 转成 MP3，也不要重封装会剥离 free box 的视频。',
+            en: 'Images use lossless PNG randomized pixel LSB. Audio supports WAV/PCM randomized sample LSB. Video supports MP4/MOV container free-box payloads. Do not re-save images as JPEG, convert WAV to MP3, or remux video with tools that strip free boxes.',
           ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
@@ -2546,22 +2771,25 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     });
     try {
       final fileName = _keyFileName ?? 'vocabulary_sleep_keyfile.bin';
-      String? savedPath;
-      try {
-        savedPath = await FilePicker.platform.saveFile(
-          dialogTitle: _lifeText(context, zh: '保存密钥文件', en: 'Save key file'),
-          fileName: fileName,
-          type: FileType.custom,
-          allowedExtensions: <String>['bin'],
-          bytes: bytes,
-        );
-      } on UnimplementedError {
-        savedPath = null;
-      }
+      final pickedPath = await _pickSavePath(
+        dialogTitle: _lifeText(context, zh: '保存密钥文件', en: 'Save key file'),
+        fileName: fileName,
+        extension: 'bin',
+        bytes: bytes,
+      );
       if (!mounted) {
         return;
       }
-      if (savedPath == null || savedPath.trim().isEmpty) {
+      final savedPath = await _saveBytesWithFallback(
+        pickedPath: pickedPath,
+        bytes: bytes,
+        fallbackSegments: <String>['life_tools', 'keys'],
+        fallbackFileName: fileName,
+      );
+      if (!mounted) {
+        return;
+      }
+      if (savedPath == null) {
         if (kIsWeb) {
           setState(() {
             _statusMessage = _lifeText(
@@ -2572,19 +2800,6 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           });
           return;
         }
-        final appDir = await getApplicationDocumentsDirectory();
-        final exportDir = Directory(
-          path.join(appDir.path, 'life_tools', 'keys'),
-        );
-        if (!await exportDir.exists()) {
-          await exportDir.create(recursive: true);
-        }
-        final fallback = File(path.join(exportDir.path, fileName));
-        await fallback.writeAsBytes(bytes, flush: true);
-        if (!mounted) {
-          return;
-        }
-        setState(() => _savedPath = fallback.path);
         return;
       }
       setState(() => _savedPath = savedPath);
@@ -2617,6 +2832,20 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       },
       errorZh: '选择文件失败',
       errorEn: 'Failed to pick file',
+    );
+  }
+
+  Future<void> _pickCoverCryptoFile() async {
+    await _pickAnyFile(
+      maxBytes: ToolboxCryptoService.maxPlainBytes,
+      onPicked: (file, bytes) {
+        _coverFileName = file.name;
+        _coverFileExtension = file.extension;
+        _coverFileBytes = bytes;
+        _clearFileResults();
+      },
+      errorZh: '选择表层文件失败',
+      errorEn: 'Failed to pick cover file',
     );
   }
 
@@ -2746,6 +2975,53 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       throw const ToolboxSteganographyException('Selected file is empty.');
     }
     return builder.takeBytes();
+  }
+
+  Future<String?> _pickSavePath({
+    required String dialogTitle,
+    required String fileName,
+    required String extension,
+    required Uint8List bytes,
+  }) async {
+    try {
+      return await FilePicker.platform.saveFile(
+        dialogTitle: dialogTitle,
+        fileName: fileName,
+        type: FileType.custom,
+        allowedExtensions: <String>[extension],
+        bytes: bytes,
+      );
+    } on UnimplementedError {
+      return null;
+    }
+  }
+
+  Future<String?> _saveBytesWithFallback({
+    required String? pickedPath,
+    required Uint8List bytes,
+    required List<String> fallbackSegments,
+    required String fallbackFileName,
+  }) async {
+    final normalizedPath = pickedPath?.trim();
+    if (normalizedPath != null && normalizedPath.isNotEmpty) {
+      if (!kIsWeb) {
+        await File(normalizedPath).writeAsBytes(bytes, flush: true);
+      }
+      return normalizedPath;
+    }
+    if (kIsWeb) {
+      return null;
+    }
+    final appDir = await getApplicationDocumentsDirectory();
+    final exportDir = Directory(
+      path.joinAll(<String>[appDir.path, ...fallbackSegments]),
+    );
+    if (!await exportDir.exists()) {
+      await exportDir.create(recursive: true);
+    }
+    final fallback = File(path.join(exportDir.path, fallbackFileName));
+    await fallback.writeAsBytes(bytes, flush: true);
+    return fallback.path;
   }
 
   Future<bool> _confirmPlaintextIfNeeded() async {
@@ -2887,6 +3163,26 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           ],
         );
       },
+    );
+  }
+
+  Future<void> _previewTextWrite() async {
+    final source = _sourceBytes;
+    if (source == null) {
+      return;
+    }
+    final maxErrorAttempts = _readMaxErrorAttemptsSetting();
+    if (maxErrorAttempts == null) {
+      return;
+    }
+    final maxSuccessfulReveals = _readMaxSuccessfulRevealsSetting();
+    if (maxSuccessfulReveals == null) {
+      return;
+    }
+    await _ensureTextWriteCapacity(
+      source: source,
+      maxErrorAttempts: maxErrorAttempts,
+      maxSuccessfulReveals: maxSuccessfulReveals,
     );
   }
 
@@ -3049,10 +3345,54 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     }
   }
 
+  Future<void> _previewFileWrite() async {
+    final carrier = _sourceBytes;
+    final file = _fileBytes;
+    if (carrier == null || file == null) {
+      return;
+    }
+    if (_dualLayerEnabled &&
+        (_coverFileBytes == null || _coverFileBytes!.isEmpty)) {
+      setState(() {
+        _error = _lifeText(
+          context,
+          zh: '请先选择表层文件。',
+          en: 'Pick a cover file first.',
+        );
+      });
+      return;
+    }
+    final maxErrorAttempts = _readMaxErrorAttemptsSetting();
+    if (maxErrorAttempts == null) {
+      return;
+    }
+    final maxSuccessfulReveals = _readMaxSuccessfulRevealsSetting();
+    if (maxSuccessfulReveals == null) {
+      return;
+    }
+    await _ensureFileWriteCapacity(
+      carrier: carrier,
+      file: file,
+      maxErrorAttempts: maxErrorAttempts,
+      maxSuccessfulReveals: maxSuccessfulReveals,
+    );
+  }
+
   Future<void> _encryptFile() async {
     final carrier = _sourceBytes;
     final file = _fileBytes;
     if (carrier == null || file == null) {
+      return;
+    }
+    if (_dualLayerEnabled &&
+        (_coverFileBytes == null || _coverFileBytes!.isEmpty)) {
+      setState(() {
+        _error = _lifeText(
+          context,
+          zh: '请先选择表层文件。',
+          en: 'Pick a cover file first.',
+        );
+      });
       return;
     }
     final maxErrorAttempts = _readMaxErrorAttemptsSetting();
@@ -3088,13 +3428,18 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           mediaKind: _mediaKind,
           carrierBytes: carrier,
           fileBytes: file,
+          dualLayerEnabled: _dualLayerEnabled,
+          coverFileBytes: _coverFileBytes,
           encryption: _encryption,
           passphrase: _passphraseController.text,
+          coverPassphrase: _coverPassphraseController.text,
           strength: _strength,
           keyFileBytes: _activeKeyFileBytes,
           sourceExtension: _sourceExtension,
           fileName: _fileName,
           mediaType: _fileExtension,
+          coverFileName: _coverFileName,
+          coverMediaType: _coverFileExtension,
           cascade: _selectedCascade,
           keyBits: _keyBits,
           macAlgorithm: _macAlgorithm,
@@ -3265,24 +3610,28 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       final baseName = path.basenameWithoutExtension(sourceName);
       final fileName = '${baseName}_stego.${embed.outputExtension}';
 
-      String? savedPath;
-      try {
-        savedPath = await FilePicker.platform.saveFile(
-          dialogTitle: _lifeText(context, zh: '保存隐写媒体', en: 'Save stego media'),
-          fileName: fileName,
-          type: FileType.custom,
-          allowedExtensions: <String>[embed.outputExtension],
-          bytes: result,
-        );
-      } on UnimplementedError {
-        savedPath = null;
-      }
+      final pickedPath = await _pickSavePath(
+        dialogTitle: _lifeText(context, zh: '保存隐写媒体', en: 'Save stego media'),
+        fileName: fileName,
+        extension: embed.outputExtension,
+        bytes: result,
+      );
 
       if (!mounted) {
         return;
       }
 
-      if (savedPath == null || savedPath.trim().isEmpty) {
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final savedPath = await _saveBytesWithFallback(
+        pickedPath: pickedPath,
+        bytes: result,
+        fallbackSegments: <String>['life_tools', 'steganography'],
+        fallbackFileName: '${baseName}_$timestamp.${embed.outputExtension}',
+      );
+      if (!mounted) {
+        return;
+      }
+      if (savedPath == null) {
         if (kIsWeb) {
           setState(() {
             _statusMessage = _lifeText(
@@ -3293,27 +3642,6 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           });
           return;
         }
-        final appDir = await getApplicationDocumentsDirectory();
-        final exportDir = Directory(
-          path.join(appDir.path, 'life_tools', 'steganography'),
-        );
-        if (!await exportDir.exists()) {
-          await exportDir.create(recursive: true);
-        }
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final fallback = File(
-          path.join(
-            exportDir.path,
-            '${baseName}_$timestamp.${embed.outputExtension}',
-          ),
-        );
-        await fallback.writeAsBytes(result, flush: true);
-        if (!mounted) {
-          return;
-        }
-        setState(() {
-          _savedPath = fallback.path;
-        });
         return;
       }
 
@@ -3371,23 +3699,27 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           ? '${baseName}_file_stego.$outputExtension'
           : '${baseName}_revealed.$outputExtension';
 
-      String? savedPath;
-      try {
-        savedPath = await FilePicker.platform.saveFile(
-          dialogTitle: _lifeText(context, zh: '保存文件结果', en: 'Save file result'),
-          fileName: fileName,
-          type: FileType.custom,
-          allowedExtensions: <String>[outputExtension],
-          bytes: result,
-        );
-      } on UnimplementedError {
-        savedPath = null;
-      }
+      final pickedPath = await _pickSavePath(
+        dialogTitle: _lifeText(context, zh: '保存文件结果', en: 'Save file result'),
+        fileName: fileName,
+        extension: outputExtension,
+        bytes: result,
+      );
 
       if (!mounted) {
         return;
       }
-      if (savedPath == null || savedPath.trim().isEmpty) {
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final savedPath = await _saveBytesWithFallback(
+        pickedPath: pickedPath,
+        bytes: result,
+        fallbackSegments: <String>['life_tools', 'steganography'],
+        fallbackFileName: '${baseName}_$timestamp.$outputExtension',
+      );
+      if (!mounted) {
+        return;
+      }
+      if (savedPath == null) {
         if (kIsWeb) {
           ui.Image? oldSource;
           setState(() {
@@ -3409,34 +3741,6 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           oldSource?.dispose();
           return;
         }
-        final appDir = await getApplicationDocumentsDirectory();
-        final exportDir = Directory(
-          path.join(appDir.path, 'life_tools', 'steganography'),
-        );
-        if (!await exportDir.exists()) {
-          await exportDir.create(recursive: true);
-        }
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final fallback = File(
-          path.join(exportDir.path, '${baseName}_$timestamp.$outputExtension'),
-        );
-        await fallback.writeAsBytes(result, flush: true);
-        if (!mounted) {
-          return;
-        }
-        ui.Image? oldSource;
-        setState(() {
-          _savedPath = fallback.path;
-          if (shouldUnloadCarrier) {
-            oldSource = _detachCarrierState();
-            _statusMessage = _lifeText(
-              context,
-              zh: '文件已导出，载体已从内存卸载。',
-              en: 'The file was exported and the carrier has been unloaded from memory.',
-            );
-          }
-        });
-        oldSource?.dispose();
         return;
       }
       ui.Image? oldSource;
@@ -3492,6 +3796,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     _fileOutputBytes = null;
     _fileEmbedResult = null;
     _fileRevealResult = null;
+    _writePreview = null;
+    _writePreviewOutputBytes = null;
     _savedPath = null;
     _statusMessage = null;
     _error = null;
@@ -3558,6 +3864,15 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     });
   }
 
+  void _resetCoverFileCrypto() {
+    setState(() {
+      _coverFileName = null;
+      _coverFileExtension = null;
+      _coverFileBytes = null;
+      _clearFileResults();
+    });
+  }
+
   void _resetFileCarrier() {
     final oldSource = _sourcePreview;
     setState(() {
@@ -3576,6 +3891,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       _fileName = null;
       _fileExtension = null;
       _fileBytes = null;
+      _coverFileName = null;
+      _coverFileExtension = null;
+      _coverFileBytes = null;
       _hashResult = null;
       _savedPath = null;
       _statusMessage = null;
@@ -3673,14 +3991,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   }
 
   bool get _isUnsupportedMediaWrite {
-    if (_mediaKind == ToolboxSteganographyMediaKind.image) {
-      return false;
-    }
-    return switch (_workspace) {
-      _CryptoWorkspace.steganography => _mode == _StegoMode.embed,
-      _CryptoWorkspace.file => _fileMode == _FileCryptoMode.encrypt,
-      _CryptoWorkspace.hash => false,
-    };
+    return false;
   }
 
   int? _readMaxErrorAttemptsSetting() {
@@ -3765,19 +4076,33 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       }
       if (!check.fits) {
         setState(() {
+          _clearResults();
           _statusMessage = null;
+          _writePreview = null;
+          _writePreviewOutputBytes = null;
           _error = _capacityCheckText(context, check);
         });
         return false;
       }
-      setState(() => _statusMessage = null);
+      setState(() {
+        _clearResults();
+        _writePreview = check;
+        _writePreviewOutputBytes = _estimatedOutputBytes(
+          sourceBytes: source.length,
+          check: check,
+        );
+        _statusMessage = null;
+      });
       return true;
     } catch (error) {
       if (!mounted) {
         return false;
       }
       setState(() {
+        _clearResults();
         _statusMessage = null;
+        _writePreview = null;
+        _writePreviewOutputBytes = null;
         _error = _lifeText(
           context,
           zh: '写入前检查失败: ${_friendlyError(context, error)}',
@@ -3815,12 +4140,17 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           mediaKind: _mediaKind,
           carrierBytes: carrier,
           fileBytes: file,
+          dualLayerEnabled: _dualLayerEnabled,
+          coverFileBytes: _coverFileBytes,
           fileName: _fileName,
+          coverFileName: _coverFileName,
           encryption: _encryption,
           passphrase: _passphraseController.text,
+          coverPassphrase: _coverPassphraseController.text,
           strength: _strength,
           keyFileBytes: _activeKeyFileBytes,
           mediaType: _fileExtension,
+          coverMediaType: _coverFileExtension,
           cascade: _selectedCascade,
           keyBits: _keyBits,
           macAlgorithm: _macAlgorithm,
@@ -3834,19 +4164,33 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       }
       if (!check.fits) {
         setState(() {
+          _clearFileResults();
           _statusMessage = null;
+          _writePreview = null;
+          _writePreviewOutputBytes = null;
           _error = _capacityCheckText(context, check);
         });
         return false;
       }
-      setState(() => _statusMessage = null);
+      setState(() {
+        _clearFileResults();
+        _writePreview = check;
+        _writePreviewOutputBytes = _estimatedOutputBytes(
+          sourceBytes: carrier.length,
+          check: check,
+        );
+        _statusMessage = null;
+      });
       return true;
     } catch (error) {
       if (!mounted) {
         return false;
       }
       setState(() {
+        _clearFileResults();
         _statusMessage = null;
+        _writePreview = null;
+        _writePreviewOutputBytes = null;
         _error = _lifeText(
           context,
           zh: '写入前检查失败: ${_friendlyError(context, error)}',
@@ -3866,6 +4210,20 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     ToolboxSteganographyCapacityCheck check,
   ) {
     final side = math.max(1, math.sqrt(check.minimumPixels).ceil());
+    if (check.mediaKind == ToolboxSteganographyMediaKind.audio) {
+      return _lifeText(
+        context,
+        zh: '载荷超过当前 WAV/PCM 音频容量。当前最大 ${_formatBytes(check.capacityBytes)}，当前设置需要 ${_formatBytes(check.requiredBytes)}。请减少内容，或换用更长的未压缩 WAV 音频；建议载体至少 ${_formatBytes(check.minimumCarrierBytes ?? 0)}，文件不超过 ${_formatBytes(ToolboxSteganographyService.maxTailCarrierBytes)}。',
+        en: 'The payload exceeds this WAV/PCM audio capacity. Max: ${_formatBytes(check.capacityBytes)}; current settings need ${_formatBytes(check.requiredBytes)}. Reduce the content or use a longer uncompressed WAV file; suggested carrier size is at least ${_formatBytes(check.minimumCarrierBytes ?? 0)} and under ${_formatBytes(ToolboxSteganographyService.maxTailCarrierBytes)}.',
+      );
+    }
+    if (check.mediaKind == ToolboxSteganographyMediaKind.video) {
+      return _lifeText(
+        context,
+        zh: '载荷超过当前 MP4/MOV 容器写入上限。当前可追加 ${_formatBytes(check.capacityBytes)}，当前设置需要 ${_formatBytes(check.requiredBytes)}。请减少内容，或换用更小的 MP4/MOV 载体；输出文件需保持不超过 ${_formatBytes(ToolboxSteganographyService.maxTailCarrierBytes)}。',
+        en: 'The payload exceeds this MP4/MOV container capacity. Append capacity: ${_formatBytes(check.capacityBytes)}; current settings need ${_formatBytes(check.requiredBytes)}. Reduce the content or use a smaller MP4/MOV carrier; output must stay under ${_formatBytes(ToolboxSteganographyService.maxTailCarrierBytes)}.',
+      );
+    }
     if (check.dualLayer) {
       return _lifeText(
         context,
@@ -3878,6 +4236,26 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       zh: '载荷超过当前图片容量。当前图片 ${check.width}x${check.height}，最大 ${_formatBytes(check.capacityBytes)}；当前设置需要预留 ${_formatBytes(check.requiredBytes)}。请减少内容，或换用至少 $side x $side 像素、总像素不超过 ${ToolboxSteganographyService.maxImagePixels}、文件不超过 ${_formatBytes(ToolboxSteganographyService.maxImageCarrierBytes)} 的图片。',
       en: 'The payload exceeds this image capacity. Current image: ${check.width}x${check.height}, max: ${_formatBytes(check.capacityBytes)}; current settings need ${_formatBytes(check.requiredBytes)}. Reduce the content or use an image of at least $side x $side pixels, no more than ${ToolboxSteganographyService.maxImagePixels} total pixels, and under ${_formatBytes(ToolboxSteganographyService.maxImageCarrierBytes)}.',
     );
+  }
+
+  int _estimatedOutputBytes({
+    required int sourceBytes,
+    required ToolboxSteganographyCapacityCheck check,
+  }) {
+    return switch (check.mediaKind) {
+      ToolboxSteganographyMediaKind.image => sourceBytes,
+      ToolboxSteganographyMediaKind.audio => sourceBytes,
+      ToolboxSteganographyMediaKind.video =>
+        sourceBytes +
+            (check.dualLayer
+                ? check.requiredBytes
+                : _estimatedMp4Growth(check.requiredBytes)),
+    };
+  }
+
+  int _estimatedMp4Growth(int blockBytes) {
+    const overhead = 8 + 23 + 36 + 255;
+    return blockBytes + overhead;
   }
 
   String _maxErrorAttemptsRiskText(BuildContext context) {

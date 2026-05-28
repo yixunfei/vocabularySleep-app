@@ -31,7 +31,9 @@ class _ImageCompressCandidate {
 }
 
 class _ImageCompressPage extends StatefulWidget {
-  const _ImageCompressPage();
+  const _ImageCompressPage({this.embedded = false});
+
+  final bool embedded;
 
   @override
   State<_ImageCompressPage> createState() => _ImageCompressPageState();
@@ -88,6 +90,30 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.embedded) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          _buildSourcePanel(context),
+          const SizedBox(height: 12),
+          _buildConfigPanel(context),
+          const SizedBox(height: 12),
+          _buildActionRow(context),
+          if (_error != null) ...<Widget>[
+            const SizedBox(height: 10),
+            _buildErrorPanel(context),
+          ],
+          if (_savedPath != null) ...<Widget>[
+            const SizedBox(height: 10),
+            _buildSavedPanel(context),
+          ],
+          const SizedBox(height: 12),
+          _buildMetricsPanel(context),
+          const SizedBox(height: 12),
+          _buildPreviewPanel(context),
+        ],
+      );
+    }
     return ToolboxToolPage(
       title: _lifeText(context, zh: '图片压缩', en: 'Image compression'),
       subtitle: _lifeText(

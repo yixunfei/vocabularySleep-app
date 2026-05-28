@@ -79,6 +79,22 @@ packages:
       relative: true
     source: path
     version: "4.3.0"
+  barcode:
+    dependency: transitive
+    description:
+      name: barcode
+      sha256: "7b6729c37e3b7f34233e2318d866e8c48ddb46c1f7ad01ff7bb2a8de1da2b9f4"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.2.9"
+  barcode_widget:
+    dependency: "direct main"
+    description:
+      name: barcode_widget
+      sha256: "6f2c5b08659b1a5f4d88d183e6007133ea2f96e50e7b8bb628f03266c3931427"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.4"
   blockchain_utils:
     dependency: transitive
     description:
@@ -593,6 +609,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.0"
+  locale_names:
+    dependency: "direct main"
+    description:
+      name: locale_names
+      sha256: "7a89ca54072f4f13d0f5df5a9ba69337554bf2fd057d1dd2a238898f3f159374"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.1"
   logging:
     dependency: transitive
     description:
@@ -753,6 +777,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.2"
+  pinyin:
+    dependency: "direct main"
+    description:
+      name: pinyin
+      sha256: "240f271a3c71af20c8d2757756b5ee8e9d79a955d37abad4b3568fd406b22411"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.3.0"
   platform:
     dependency: transitive
     description:
@@ -817,6 +849,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.0"
+  qr:
+    dependency: transitive
+    description:
+      name: qr
+      sha256: "5a1d2586170e172b8a8c8470bbbffd5eb0cd38a66c0d77155ea138d3af3a4445"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.2"
+  qr_flutter:
+    dependency: "direct main"
+    description:
+      name: qr_flutter
+      sha256: "5095f0fc6e3f71d08adef8feccc8cea4f12eec18a2e31c2e8d82cb6019f4b097"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.1.0"
   record:
     dependency: "direct main"
     description:
@@ -897,6 +945,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.6.1"
+  sensors_plus:
+    dependency: "direct main"
+    description:
+      name: sensors_plus
+      sha256: "89e2bfc3d883743539ce5774a2b93df61effde40ff958ecad78cd66b1a8b8d52"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.1.2"
+  sensors_plus_platform_interface:
+    dependency: transitive
+    description:
+      name: sensors_plus_platform_interface
+      sha256: "58815d2f5e46c0c41c40fb39375d3f127306f7742efe3b891c0b1c87e2b5cd5d"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.1"
   sherpa_onnx:
     dependency: "direct main"
     description:
@@ -1046,6 +1110,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.1"
+  sxwnl_spa_dart:
+    dependency: "direct main"
+    description:
+      name: sxwnl_spa_dart
+      sha256: "41f222eca2e7fa8dade4fe9ee2928913e4f57822abc7c9d2acf31512c176c2f3"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.18.5"
   sync_http:
     dependency: transitive
     description:
@@ -1078,6 +1150,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.10"
+  tuple:
+    dependency: transitive
+    description:
+      name: tuple
+      sha256: a97ce2013f240b2f3807bcbaf218765b6f301c3eff91092bcfa23a039e7dd151
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.2"
   typed_data:
     dependency: transitive
     description:

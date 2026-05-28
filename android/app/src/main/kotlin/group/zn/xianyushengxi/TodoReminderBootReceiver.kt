@@ -11,7 +11,10 @@ class TodoReminderBootReceiver : BroadcastReceiver() {
             Intent.ACTION_MY_PACKAGE_REPLACED,
             Intent.ACTION_TIME_CHANGED,
             Intent.ACTION_TIMEZONE_CHANGED,
-            -> TodoReminderScheduler.rescheduleAll(context)
+            -> {
+                TodoReminderScheduler.rescheduleAll(context)
+                FakeCallScheduler.rescheduleAll(context)
+            }
         }
     }
 }

@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:barcode_widget/barcode_widget.dart';
 import 'package:camera/camera.dart';
 import 'package:crypto/crypto.dart';
 import 'package:file_picker/file_picker.dart';
@@ -15,14 +16,37 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 import 'package:kinship_calculator/kinship_calculator.dart' as kinship;
+import 'package:locale_names/locale_names.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
+import 'package:pinyin/pinyin.dart';
+import 'package:provider/provider.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:sensors_plus/sensors_plus.dart';
+import 'package:sxwnl_spa_dart/sxwnl_spa_dart.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../i18n/app_i18n.dart';
+import '../../models/todo_item.dart';
 import '../../services/app_log_service.dart';
-import '../../services/toolbox_crypto_service.dart';
-import '../../services/toolbox_steganography_service.dart';
+import '../../services/toolbox_ai_interview_service.dart';
+import '../../services/toolbox_fake_call_service.dart';
+import '../../services/toolbox_life_notify_service.dart';
+import '../../services/toolbox_meme_service.dart';
+import '../../services/toolbox_bmi_service.dart';
+import '../../services/toolbox_date_calculator_service.dart';
+import '../../services/toolbox_image_to_web_service.dart';
+import '../../services/toolbox_id_photo_service.dart';
+import '../../services/toolbox_number_mark_service.dart';
+import '../../services/toolbox_offer_select_service.dart';
+import '../../services/toolbox_qr_service.dart';
+import '../../services/toolbox_short_link_service.dart';
+import '../../services/toolbox_city_compare_service.dart';
+import '../../services/toolbox_mortgage_service.dart';
+import '../../services/toolbox_work_worth_service.dart';
+import '../../services/toolbox_world_clock_service.dart';
+import '../../services/todo_reminder_service.dart';
+import '../../state/app_state.dart';
 import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 import 'toolbox_tool_shell.dart';
@@ -41,21 +65,57 @@ part 'toolbox_life_tools/toolbox_life_tools_scoreboard_mixed.dart';
 part 'toolbox_life_tools/toolbox_life_tools_color_models.dart';
 part 'toolbox_life_tools/toolbox_life_tools_color_widgets.dart';
 part 'toolbox_life_tools/toolbox_life_tools_color.dart';
+part 'toolbox_life_tools/toolbox_life_tools_compass.dart';
+part 'toolbox_life_tools/toolbox_life_tools_level.dart';
+part 'toolbox_life_tools/toolbox_life_tools_vibration.dart';
 part 'toolbox_life_tools/toolbox_life_tools_wallpaper_cache.dart';
 part 'toolbox_life_tools/toolbox_life_tools_wallpaper.dart';
 part 'toolbox_life_tools/toolbox_life_tools_garbage.dart';
 part 'toolbox_life_tools/toolbox_life_tools_postal.dart';
 part 'toolbox_life_tools/toolbox_life_tools_reverse_image.dart';
+part 'toolbox_life_tools/toolbox_life_tools_text_counter.dart';
+part 'toolbox_life_tools/toolbox_life_tools_text_transform.dart';
+part 'toolbox_life_tools/toolbox_life_tools_work_worth.dart';
+part 'toolbox_life_tools/toolbox_life_tools_offer_select.dart';
+part 'toolbox_life_tools/toolbox_life_tools_mortgage.dart';
+part 'toolbox_life_tools/toolbox_life_tools_city_compare.dart';
+part 'toolbox_life_tools/toolbox_life_tools_timeline_periodic_data.dart';
+part 'toolbox_life_tools/toolbox_life_tools_timeline_periodic_history_dense_premodern_data.dart';
+part 'toolbox_life_tools/toolbox_life_tools_timeline_periodic_history_dense_modern_data.dart';
+part 'toolbox_life_tools/toolbox_life_tools_timeline_periodic_history_data.dart';
+part 'toolbox_life_tools/toolbox_life_tools_timeline_periodic.dart';
+part 'toolbox_life_tools/toolbox_life_tools_short_link.dart';
+part 'toolbox_life_tools/toolbox_life_tools_qr.dart';
 part 'toolbox_life_tools/toolbox_life_tools_utilities.dart';
+part 'toolbox_life_tools/toolbox_life_tools_device_frame_models.dart';
+part 'toolbox_life_tools/toolbox_life_tools_device_frame_labels.dart';
+part 'toolbox_life_tools/toolbox_life_tools_device_frame_preview.dart';
+part 'toolbox_life_tools/toolbox_life_tools_device_frame.dart';
+part 'toolbox_life_tools/toolbox_life_tools_unit_converter.dart';
+part 'toolbox_life_tools/toolbox_life_tools_date_calculator.dart';
+part 'toolbox_life_tools/toolbox_life_tools_bmi.dart';
+part 'toolbox_life_tools/toolbox_life_tools_world_clock.dart';
+part 'toolbox_life_tools/toolbox_life_tools_notify_me.dart';
+part 'toolbox_life_tools/toolbox_life_tools_notify_me_widgets.dart';
+part 'toolbox_life_tools/toolbox_life_tools_fake_call.dart';
+part 'toolbox_life_tools/toolbox_life_tools_number_marks.dart';
+part 'toolbox_life_tools/toolbox_life_tools_meme_maker.dart';
 part 'toolbox_life_tools/toolbox_life_tools_image_compress.dart';
-part 'toolbox_life_tools/toolbox_life_tools_steganography.dart';
+part 'toolbox_life_tools/toolbox_life_tools_image_upscale.dart';
+part 'toolbox_life_tools/toolbox_life_tools_image_transform.dart';
+part 'toolbox_life_tools/toolbox_life_tools_image_to_web.dart';
+part 'toolbox_life_tools/toolbox_life_tools_id_photo.dart';
 part 'toolbox_life_tools/toolbox_life_tools_relatives.dart';
 part 'toolbox_life_tools/toolbox_life_tools_mind_map.dart';
 part 'toolbox_life_tools/toolbox_life_tools_mind_map_canvas.dart';
 part 'toolbox_life_tools/toolbox_life_tools_mind_map_fullscreen.dart';
+part 'toolbox_life_tools/toolbox_life_tools_ai_interview.dart';
 
 const MethodChannel _lifeDisplayChannel = MethodChannel(
   'vocabulary_sleep/life_display',
+);
+const MethodChannel _lifeDeviceChannel = MethodChannel(
+  'vocabulary_sleep/life_device',
 );
 
 const List<DeviceOrientation> _lifeAllOrientations = <DeviceOrientation>[
@@ -101,6 +161,80 @@ Future<Map<String, Object?>> _setLifeWallpaper({
       'errorCode': error.code,
       'errorMessage': error.message,
     };
+  }
+}
+
+class _LifeVibrationCapability {
+  const _LifeVibrationCapability({
+    required this.platform,
+    required this.hasVibrator,
+    required this.supportsWaveform,
+    required this.supportsAmplitudeControl,
+  });
+
+  final String platform;
+  final bool hasVibrator;
+  final bool supportsWaveform;
+  final bool supportsAmplitudeControl;
+
+  bool get isSupported =>
+      hasVibrator || defaultTargetPlatform == TargetPlatform.iOS;
+
+  static const _LifeVibrationCapability fallback = _LifeVibrationCapability(
+    platform: 'fallback',
+    hasVibrator: false,
+    supportsWaveform: false,
+    supportsAmplitudeControl: false,
+  );
+}
+
+Future<_LifeVibrationCapability> _getLifeVibrationCapability() async {
+  try {
+    final raw = await _lifeDeviceChannel.invokeMethod<Map<Object?, Object?>>(
+      'getVibrationCapability',
+    );
+    if (raw == null) {
+      return _LifeVibrationCapability.fallback;
+    }
+    final capability = raw.map((key, value) => MapEntry(key.toString(), value));
+    return _LifeVibrationCapability(
+      platform: capability['platform'] as String? ?? 'unknown',
+      hasVibrator: capability['hasVibrator'] as bool? ?? false,
+      supportsWaveform: capability['supportsWaveform'] as bool? ?? false,
+      supportsAmplitudeControl:
+          capability['supportsAmplitudeControl'] as bool? ?? false,
+    );
+  } on MissingPluginException {
+    return _LifeVibrationCapability.fallback;
+  } on PlatformException {
+    return _LifeVibrationCapability.fallback;
+  }
+}
+
+Future<bool> _playLifeVibrationPattern({
+  required List<int> timingsMs,
+  required List<int> amplitudes,
+}) async {
+  try {
+    final played = await _lifeDeviceChannel.invokeMethod<bool>(
+      'playVibrationPattern',
+      <String, Object?>{'timingsMs': timingsMs, 'amplitudes': amplitudes},
+    );
+    return played ?? false;
+  } on MissingPluginException {
+    return false;
+  } on PlatformException {
+    return false;
+  }
+}
+
+Future<void> _cancelLifeVibration() async {
+  try {
+    await _lifeDeviceChannel.invokeMethod<void>('cancelVibration');
+  } on MissingPluginException {
+    // Tests and unsupported platforms can ignore this cleanup.
+  } on PlatformException {
+    // Best-effort stop only.
   }
 }
 
@@ -296,13 +430,14 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
     ],
   ),
   _LifeTool(
-    id: 'image_compress',
-    titleZh: '图片压缩',
-    titleEn: 'Image compression',
-    summaryZh: '按尺寸和质量压缩图片',
-    summaryEn: 'Resolution and ratio based compression',
+    id: 'image_transform',
+    titleZh: '图片压缩/扩大',
+    titleEn: 'Image compression / upscale',
+    summaryZh: '在同一工具内快速切换压缩与扩大，并提供更轻量的放大算法',
+    summaryEn:
+        'Switch quickly between compression and upscale with lighter upscale algorithms',
     category: 'image',
-    icon: Icons.compress_rounded,
+    icon: Icons.photo_size_select_large_rounded,
   ),
   _LifeTool(
     id: 'relatives',
@@ -321,10 +456,10 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
   ),
   _LifeTool(
     id: 'text_count',
-    titleZh: '字数计算',
-    titleEn: 'Text counter',
-    summaryZh: '统计字符、符号和空白信息',
-    summaryEn: 'Character and symbol statistics',
+    titleZh: '字数拆分与统计',
+    titleEn: 'Text split and count',
+    summaryZh: '统计字符并按规则拆分长文本',
+    summaryEn: 'Count text and split long content',
     category: 'text',
     icon: Icons.calculate_rounded,
   ),
@@ -341,52 +476,51 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
     id: 'timeline_periodic',
     titleZh: '历史年表/元素周期表',
     titleEn: 'Timeline and periodic table',
-    summaryZh: '快速查看历史年表和元素周期表',
-    summaryEn: 'Quick reference panel',
+    summaryZh: '动态查看共识历史节点与 118 元素数据',
+    summaryEn: 'Dynamic consensus timeline and 118-element data',
     category: 'study',
     icon: Icons.auto_graph_rounded,
+    sources: _timelinePeriodicSources,
   ),
   _LifeTool(
     id: 'text_encoding',
-    titleZh: '文本编码',
-    titleEn: 'Text encoding',
-    summaryZh: '趣味编码、哈希和 Base64 转换',
-    summaryEn: 'Fun encoding plus hash and base64',
+    titleZh: '文本转换',
+    titleEn: 'Text transform',
+    summaryZh: '拼音简繁、数字、农历干支、语言代码与常用文本转换',
+    summaryEn:
+        'Pinyin, number, calendar, ganzhi, language code, and common text transforms',
     category: 'text',
     icon: Icons.lock_rounded,
     sources: <_LifeToolSource>[
       _LifeToolSource(
-        name: 'Shouyin reference',
-        url: 'https://shouyinfanyi.com/',
+        name: 'Toolg Mars text',
+        url: 'https://www.toolg.cn/toolbox/hufont.html',
+      ),
+      _LifeToolSource(
+        name: 'Toolg hidden text',
+        url: 'https://www.toolg.cn/toolbox/txthidder.html',
+      ),
+      _LifeToolSource(
+        name: 'Toolg vertical text',
+        url: 'https://www.toolg.cn/toolbox/shutxt.html',
+      ),
+      _LifeToolSource(
+        name: 'Toolg Bazi',
+        url: 'https://www.toolg.cn/toolbox/bazi.html',
+      ),
+      _LifeToolSource(
+        name: 'Toolg Bazi to date',
+        url: 'https://www.toolg.cn/toolbox/bazi2date.html',
+      ),
+      _LifeToolSource(
+        name: 'Toolg Jiazi table',
+        url: 'https://www.toolg.cn/toolbox/jiazitable.html',
+      ),
+      _LifeToolSource(
+        name: 'Toolg language codes',
+        url: 'https://www.toolg.cn/toolbox/langcodes.html',
       ),
     ],
-  ),
-  _LifeTool(
-    id: 'steganography',
-    titleZh: '图片/音频/视频隐写',
-    titleEn: 'Steganography',
-    summaryZh: '文本加密后写入多媒体内容',
-    summaryEn: 'Hide encrypted text in image/audio/video',
-    category: 'image',
-    icon: Icons.hide_image_rounded,
-  ),
-  _LifeTool(
-    id: 'rc4',
-    titleZh: 'RC4 加密',
-    titleEn: 'RC4 cipher',
-    summaryZh: '基于密钥流的加密助手',
-    summaryEn: 'Key-stream encryption helper',
-    category: 'text',
-    icon: Icons.vpn_key_rounded,
-  ),
-  _LifeTool(
-    id: 'pinyin',
-    titleZh: '中文转拼音',
-    titleEn: 'Chinese to pinyin',
-    summaryZh: '常用汉字转拼音',
-    summaryEn: 'Phase-1 common-char mapping',
-    category: 'text',
-    icon: Icons.translate_rounded,
   ),
   _LifeTool(
     id: 'compass',
@@ -419,17 +553,27 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
     id: 'notify_me',
     titleZh: '通知自己',
     titleEn: 'Notify me',
-    summaryZh: '自定义提醒列表和通知模拟',
-    summaryEn: 'In-app reminder queue',
+    summaryZh: '定时提醒自己，并同步到状态栏、锁屏和系统日历',
+    summaryEn:
+        'Schedule self-reminders with notifications, lock-screen alerts, and calendar sync',
     category: 'device',
     icon: Icons.notifications_active_rounded,
+  ),
+  _LifeTool(
+    id: 'fake_call',
+    titleZh: '模拟来电',
+    titleEn: 'Fake incoming call',
+    summaryZh: '定时或倒计时触发全屏来电模拟，支持号码、归属地和标签',
+    summaryEn: 'Schedule a full-screen fake incoming call with caller details',
+    category: 'device',
+    icon: Icons.call_rounded,
   ),
   _LifeTool(
     id: 'sup_sub',
     titleZh: '数字转标',
     titleEn: 'Super or subscript',
-    summaryZh: '文本和数字转上标或下标',
-    summaryEn: 'Transform numbers to marks',
+    summaryZh: '支持上标、下标、带圈、括号编号和反向还原',
+    summaryEn: 'Convert text into number marks and normalize it back',
     category: 'text',
     icon: Icons.text_fields_rounded,
   ),
@@ -437,8 +581,8 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
     id: 'meme_maker',
     titleZh: '表情包制作',
     titleEn: 'Meme maker',
-    summaryZh: '导入图片并叠加文本',
-    summaryEn: 'Import image and overlay text',
+    summaryZh: '导入本地图片，叠加文案并导出 PNG 表情包',
+    summaryEn: 'Import an image, add captions, and export a PNG meme',
     category: 'image',
     icon: Icons.mood_rounded,
     sources: <_LifeToolSource>[
@@ -499,6 +643,15 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
         name: 'city_compare',
         url: 'https://github.com/Zippland/city_compare',
       ),
+      _LifeToolSource(
+        name: 'citycompare web',
+        url: 'https://citycompare.zippland.com/',
+      ),
+      _LifeToolSource(
+        name: 'Numbeo common data',
+        url: 'https://www.numbeo.com/common/',
+        copyrightNote: '参考项目 README 中声明的公开数据来源。',
+      ),
     ],
   ),
   _LifeTool(
@@ -526,26 +679,74 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
     icon: Icons.date_range_rounded,
   ),
   _LifeTool(
+    id: 'world_clock',
+    titleZh: '世界时钟',
+    titleEn: 'World clock',
+    summaryZh: '常用城市当前时间、本地时差和办公时段速查',
+    summaryEn: 'Current time, local difference, and business-hours lookup',
+    category: 'calc',
+    icon: Icons.public_rounded,
+  ),
+  _LifeTool(
     id: 'bmi',
     titleZh: 'BMI 计算器',
     titleEn: 'BMI calculator',
-    summaryZh: '计算 BMI 指数',
-    summaryEn: 'Height and weight calculator',
+    summaryZh: '成人/儿童青少年 BMI、围度和能量估算',
+    summaryEn: 'Adult/youth BMI, waist metrics, and energy estimates',
     category: 'calc',
     icon: Icons.monitor_weight_rounded,
+    sources: <_LifeToolSource>[
+      _LifeToolSource(
+        name: 'WHO obesity and overweight',
+        url:
+            'https://www.who.int/news-room/fact-sheets/detail/obesity-and-overweight',
+      ),
+      _LifeToolSource(
+        name: 'CDC adult BMI categories',
+        url: 'https://www.cdc.gov/bmi/adult-calculator/bmi-categories.html',
+      ),
+      _LifeToolSource(
+        name: 'CDC child and teen BMI categories',
+        url:
+            'https://www.cdc.gov/bmi/child-teen-calculator/bmi-categories.html',
+      ),
+      _LifeToolSource(
+        name: 'CDC BMI-for-age LMS data',
+        url: 'https://www.cdc.gov/growthcharts/data/zscore/bmiagerev.csv',
+      ),
+      _LifeToolSource(
+        name: 'WS/T 428-2013 adult weight criteria',
+        url:
+            'https://www.nhc.gov.cn/ewebeditor/uploadfile/2013/08/20130808135715967.pdf',
+      ),
+      _LifeToolSource(
+        name: 'Mifflin-St Jeor REE equation',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/2305711/',
+      ),
+      _LifeToolSource(
+        name: 'NICE waist-to-height guidance',
+        url: 'https://www.nice.org.uk/guidance/ng246/chapter/Recommendations',
+      ),
+    ],
   ),
   _LifeTool(
     id: 'image_to_web',
     titleZh: '图片转网页',
     titleEn: 'Image to webpage',
-    summaryZh: '把图片转换为网页预览',
-    summaryEn: 'Pixel to HTML preview',
+    summaryZh: '生成单文件图片网页，并可上传到 Uguu 临时分享',
+    summaryEn: 'Generate a single-file image page and share via Uguu',
     category: 'image',
     icon: Icons.web_rounded,
     sources: <_LifeToolSource>[
       _LifeToolSource(
         name: 'Vim-cn/elimage',
         url: 'https://github.com/Vim-cn/elimage',
+        copyrightNote: '作为图片上传服务形态参考；本页落地为本地 HTML 生成和 Uguu 临时分享。',
+      ),
+      _LifeToolSource(
+        name: 'Uguu API',
+        url: 'https://uguu.se/api',
+        copyrightNote: '第三方临时文件上传服务，当前公开站 FAQ 声明文件约 3 小时后删除。',
       ),
     ],
   ),
@@ -553,33 +754,43 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
     id: 'short_link',
     titleZh: '短链接生成与还原',
     titleEn: 'Short link tool',
-    summaryZh: '创建并解析短链接',
-    summaryEn: 'Create and resolve short links',
+    summaryZh: '多服务短链、本地短码与重定向链路还原',
+    summaryEn: 'Multi-service short links, local aliases, and redirect restore',
     category: 'web',
     icon: Icons.link_rounded,
     sources: <_LifeToolSource>[
       _LifeToolSource(name: 'TinyURL API', url: 'https://tinyurl.com/app/dev'),
+      _LifeToolSource(name: 'is.gd API', url: 'https://is.gd/developers.php'),
+      _LifeToolSource(name: 'v.gd API', url: 'https://v.gd/developers.php'),
+      _LifeToolSource(name: 'CleanURI API', url: 'https://cleanuri.com/docs'),
     ],
   ),
   _LifeTool(
     id: 'qr',
     titleZh: '二维码生成',
     titleEn: 'QR generator',
-    summaryZh: '输入内容生成二维码',
-    summaryEn: 'Generate QR from text',
+    summaryZh: '模板、样式、图片二维码化与多种二维编码标准',
+    summaryEn: 'Templates, styles, image QR, and multiple 2D code standards',
     category: 'web',
     icon: Icons.qr_code_2_rounded,
     sources: <_LifeToolSource>[
-      _LifeToolSource(name: 'goQR API', url: 'https://goqr.me/api/'),
+      _LifeToolSource(
+        name: 'qr_flutter',
+        url: 'https://pub.dev/packages/qr_flutter',
+      ),
+      _LifeToolSource(
+        name: 'barcode_widget',
+        url: 'https://pub.dev/packages/barcode_widget',
+      ),
     ],
   ),
   _LifeTool(
     id: 'id_photo',
     titleZh: '证件照生成',
     titleEn: 'ID photo',
-    summaryZh: '在线证件照工具入口',
-    summaryEn: 'ID photo online tool',
-    category: 'web',
+    summaryZh: '本地裁切、换底色并导出常见证件照规格',
+    summaryEn: 'Local crop, background color, and ID photo export',
+    category: 'image',
     icon: Icons.badge_rounded,
     sources: <_LifeToolSource>[
       _LifeToolSource(
@@ -592,14 +803,15 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
     id: 'ai_interview',
     titleZh: 'AI 面试',
     titleEn: 'AI interview',
-    summaryZh: '面试辅助入口',
-    summaryEn: 'Interview helper link',
-    category: 'web',
+    summaryZh: '本地题目拆解、答案框架、追问与提示词草稿',
+    summaryEn: 'Local interview practice, answer framing, follow-ups, prompts',
+    category: 'study',
     icon: Icons.record_voice_over_rounded,
     sources: <_LifeToolSource>[
       _LifeToolSource(
         name: 'Snap-Solver',
         url: 'https://github.com/Zippland/Snap-Solver/',
+        copyrightNote: '参考其题目输入、多模型偏好和提示词配置思路；本页落地为本地练习工具，不实现屏幕捕获或实时代答。',
       ),
     ],
   ),
@@ -607,14 +819,26 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
     id: 'offer_select',
     titleZh: 'Offer 选择助手',
     titleEn: 'Offer selector',
-    summaryZh: 'Offer 对比辅助入口',
-    summaryEn: 'Offer compare helper link',
-    category: 'web',
+    summaryZh: '多 Offer 本地评分、风险提示和谈薪追平测算',
+    summaryEn: 'Local multi-offer scoring, risk checks, and negotiation anchor',
+    category: 'calc',
     icon: Icons.checklist_rounded,
     sources: <_LifeToolSource>[
       _LifeToolSource(
         name: 'OfferSelect',
         url: 'https://offerselect.zippland.com/',
+      ),
+      _LifeToolSource(
+        name: 'worthjob web',
+        url: 'https://worthjob.zippland.com/',
+      ),
+      _LifeToolSource(
+        name: 'citycompare web',
+        url: 'https://citycompare.zippland.com/',
+      ),
+      _LifeToolSource(
+        name: 'Snap-Solver',
+        url: 'https://github.com/Zippland/Snap-Solver/',
       ),
     ],
   ),
