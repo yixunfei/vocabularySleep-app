@@ -591,7 +591,7 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
       _LifeToolSource(
         name: 'zhaoolee/ChineseBQB',
         url: 'https://github.com/zhaoolee/ChineseBQB',
-        copyrightNote: '仅用于用户在线获取原版素材，不直接引入项目；国内访问 GitHub 可能较慢。',
+        copyrightNote: '在线获取原版素材，不直接引入项目。',
       ),
     ],
   ),
@@ -675,7 +675,7 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
     id: 'date_calculator',
     titleZh: '日期计算器',
     titleEn: 'Date calculator',
-    summaryZh: '时间差与阶段剩余计算',
+    summaryZh: '日期差值与生命进度计算',
     summaryEn: 'Date diff and life progress',
     category: 'calc',
     icon: Icons.date_range_rounded,

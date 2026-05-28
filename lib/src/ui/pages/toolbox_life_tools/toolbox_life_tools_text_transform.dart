@@ -84,7 +84,7 @@ _textTransformDefinitions = <_TextTransformModeDefinition>[
     category: _TextTransformCategory.phonetic,
     labelZh: '拼音与注音',
     labelEn: 'Pinyin and zhuyin',
-    summaryZh: '将中文转成拼音、首字母、简拼和注音，并统一收口原独立拼音工具。',
+    summaryZh: '将中文转成拼音、首字母、简拼和注音。',
     summaryEn:
         'Convert Chinese into pinyin, initials, short pinyin, and zhuyin in one place.',
   ),
@@ -509,8 +509,8 @@ class _TextTransformPageState extends State<_TextTransformPage> {
       title: _lifeText(context, zh: '文本转换', en: 'Text transform'),
       subtitle: _lifeText(
         context,
-        zh: '把拼音、简繁、数字、农历干支、语言代码与常用编码工具收口到一个更清晰的移动端页面。',
-        en: 'Bring pinyin, script conversion, numerals, calendar tools, language codes, and common encoders into one clearer mobile-first page.',
+        zh: '整合拼音、简繁转换、数字转写、农历干支、语言代码与常用编码工具。',
+        en: 'Pinyin, script conversion, numerals, calendar tools, language codes, and common encoders in one place.',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -519,8 +519,8 @@ class _TextTransformPageState extends State<_TextTransformPage> {
             title: _lifeText(context, zh: '当前工具', en: 'Current tool'),
             subtitle: _lifeText(
               context,
-              zh: '中文转拼音已并入这里；先选分组，再选当前需要的具体转换。',
-              en: 'Chinese-to-pinyin is merged here. Choose a group first, then the specific transform you need.',
+              zh: '先选分组，再选需要的具体转换。',
+              en: 'Choose a group, then the specific transform you need.',
             ),
             children: <Widget>[
               Wrap(

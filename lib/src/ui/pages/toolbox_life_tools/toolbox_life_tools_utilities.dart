@@ -325,8 +325,8 @@ class _UnitConverterPageState extends State<_UnitConverterPage> {
       title: _lifeText(context, zh: '全能单位换算', en: 'Unit converter'),
       subtitle: _lifeText(
         context,
-        zh: '一期包含长度、重量、温度，后续继续扩展。',
-        en: 'Phase-1 includes length, weight, and temperature.',
+        zh: '支持长度、重量、温度等常见单位换算。',
+        en: 'Convert common units including length, weight, and temperature.',
       ),
       child: Column(
         children: <Widget>[
@@ -497,8 +497,8 @@ class _MortgagePageState extends State<_MortgagePage> {
       title: _lifeText(context, zh: '房贷计算器', en: 'Mortgage calculator'),
       subtitle: _lifeText(
         context,
-        zh: '一期实现等额本息快速估算。',
-        en: 'Phase-1 provides amortized quick estimate.',
+        zh: '等额本息快速估算月供和总利息。',
+        en: 'Quickly estimate monthly payments and total interest using equal installments.',
       ),
       child: Column(
         children: <Widget>[

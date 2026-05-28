@@ -318,8 +318,8 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
       title: pickUiText(i18n, zh: '生活实用', en: 'Life tools'),
       subtitle: pickUiText(
         i18n,
-        zh: '时间、弹幕、记分、查询、编码和计算工具集中在一个入口。',
-        en: 'Time, barrage, scoreboard, lookup, encoding, and calculators in one place.',
+        zh: '从屏幕测量到生活计算，日常高频工具集中在这里。',
+        en: 'Everyday tools from screen measurement to life calculators.',
       ),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(
@@ -327,8 +327,8 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
           title: pickUiText(i18n, zh: '生活实用中心', en: 'Life tool hub'),
           subtitle: pickUiText(
             i18n,
-            zh: '36 个独立功能入口，覆盖日常高频工具与在线资源助手。',
-            en: '36 standalone entries for daily practical tools and online resource helpers.',
+            zh: '几十种日常工具：屏幕展示、设备测量、图像处理、网络工具、文本编辑与生活计算。',
+            en: 'Dozens of daily tools: displays, device sensors, image tools, web utilities, text editing, and life calculators.',
           ),
           icon: Icons.home_repair_service_rounded,
           accent: ToolboxColors.lifeAccent,

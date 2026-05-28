@@ -144,8 +144,8 @@ class _WorkWorthPageState extends State<_WorkWorthPage> {
       title: _lifeText(context, zh: '工作性价比计算器', en: 'Work value calculator'),
       subtitle: _lifeText(
         context,
-        zh: '参考 worth-calculator 的工时与环境评估，并补入生活开销、五险一金和健康损耗。',
-        en: 'Worth-calculator style score with living cost, deductions, and health load.',
+        zh: '综合工时、环境、收入与生活开销的工作性价比评估。',
+        en: 'A work value assessment combining hours, environment, income, and living costs.',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,8 +270,8 @@ class _WorkWorthPageState extends State<_WorkWorthPage> {
       title: _lifeText(context, zh: '环境、稳定性与背景', en: 'Environment and context'),
       subtitle: _lifeText(
         context,
-        zh: '这里会影响健康损耗、环境加成，以及不同经验阶段的薪资预期。',
-        en: 'These affect health reserve, environment multiplier, and career-stage expectation.',
+        zh: '它们会影响健康损耗、环境系数，以及不同职业阶段的薪资预期。',
+        en: 'These affect health reserve, environment multiplier, and career-stage salary expectations.',
       ),
       children: <Widget>[
         _LifeSegmentedField<WorkWorthEnvironment>(
