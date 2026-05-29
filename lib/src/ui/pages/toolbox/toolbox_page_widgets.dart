@@ -14,63 +14,182 @@ class ToolboxIntroPanel extends StatelessWidget {
   const ToolboxIntroPanel({
     super.key,
     required this.title,
-    required this.subtitle,
+    required this.summary,
+    required this.details,
     required this.highlights,
+    required this.helpTooltip,
   });
 
   final String title;
-  final String subtitle;
+  final String summary;
+  final String details;
   final List<String> highlights;
+  final String helpTooltip;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     return ToolboxSurfaceCard(
-      padding: const EdgeInsets.all(18),
-      radius: ToolboxUiTokens.panelRadius,
+      key: const ValueKey<String>('toolbox_intro_panel'),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      radius: ToolboxUiTokens.shellCardRadius,
       gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: <Color>[
-          colorScheme.primaryContainer.withValues(alpha: 0.68),
+          colorScheme.primaryContainer.withValues(alpha: 0.44),
           colorScheme.surfaceContainerLowest,
-          colorScheme.secondaryContainer.withValues(alpha: 0.44),
+          colorScheme.secondaryContainer.withValues(alpha: 0.28),
         ],
       ),
-      borderColor: colorScheme.outlineVariant.withValues(alpha: 0.75),
+      borderColor: colorScheme.outlineVariant.withValues(alpha: 0.68),
       shadowColor: colorScheme.primary,
-      shadowOpacity: 0.08,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      shadowOpacity: 0.04,
+      shadowBlur: 14,
+      shadowOffsetY: 6,
+      child: Row(
         children: <Widget>[
-          Text(
-            title,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: colorScheme.surface.withValues(alpha: 0.72),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: colorScheme.primary.withValues(alpha: 0.14),
+              ),
+            ),
+            child: Icon(
+              Icons.dashboard_customize_rounded,
+              color: colorScheme.primary,
+              size: 20,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(subtitle, style: theme.textTheme.bodyMedium),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: highlights
-                .map(
-                  (item) => ToolboxInfoPill(
-                    text: item,
-                    accent: colorScheme.outlineVariant,
-                    backgroundColor: colorScheme.surface.withValues(
-                      alpha: 0.72,
-                    ),
-                    textColor: colorScheme.onSurface,
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
                   ),
-                )
-                .toList(growable: false),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  summary,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    height: 1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          Semantics(
+            button: true,
+            label: helpTooltip,
+            child: Tooltip(
+              message: helpTooltip,
+              child: IconButton.filledTonal(
+                key: const ValueKey<String>('toolbox_intro_help_button'),
+                onPressed: () => _showIntroDetails(context),
+                icon: const Icon(Icons.help_outline_rounded),
+                color: colorScheme.primary,
+                style: IconButton.styleFrom(
+                  backgroundColor: colorScheme.surface.withValues(alpha: 0.74),
+                  minimumSize: const Size(48, 48),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  void _showIntroDetails(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        final theme = Theme.of(context);
+        final colorScheme = theme.colorScheme;
+        return SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            children: <Widget>[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer.withValues(
+                        alpha: 0.58,
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(
+                      Icons.help_outline_rounded,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          title,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          details,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: highlights
+                    .map(
+                      (item) => ToolboxInfoPill(
+                        text: item,
+                        accent: colorScheme.outlineVariant,
+                        backgroundColor: colorScheme.surfaceContainerLow
+                            .withValues(alpha: 0.82),
+                        textColor: colorScheme.onSurface,
+                      ),
+                    )
+                    .toList(growable: false),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

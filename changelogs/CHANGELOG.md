@@ -1,3 +1,31 @@
+## [Unreleased-PLAN_288-TOOLBOX-HOME-TIP-COMPACT] - 2026-05-29
+
+### 原因
+- 用户反馈工具箱首页编辑说明提示在手机首屏占用接近三分之一空间，希望从 UX 屏幕效率出发压缩高度，并保留必要说明入口。
+
+### 新增
+- `plans/PLAN_288_工具箱首页提示压缩优化.md`
+  - 记录本轮只处理工具箱首页提示展示层，不修改排序、快速入口、隐藏恢复、路由和持久化逻辑。
+
+### 修改
+- `lib/src/ui/pages/toolbox/toolbox_page_widgets.dart`
+  - 将 `ToolboxIntroPanel` 从常驻大说明卡改为紧凑提示条，默认仅显示标题和一行操作摘要。
+  - 新增右侧说明按钮，按需展开底部说明面板，承载完整编辑规则和“长按编辑 / 拖动排序 / 快速入口 / 可恢复”标签。
+- `lib/src/ui/pages/toolbox_page.dart`
+  - 首页和编辑态提示上下间距由大段 section 间距收缩为卡片间距，让快速入口与工具列表更早进入首屏。
+- `test/ui_smoke_test.dart`
+  - 增加工具箱首页提示高度与说明展开 smoke test。
+
+### 风险变更
+- 本轮未修改工具箱首页布局状态、拖拽排序、快速入口保存、隐藏恢复、模块启停或页面路由逻辑。
+- 完整说明从常驻展示改为按需展开，首屏更省空间；用户仍可通过说明按钮查看完整规则。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_page.dart lib/src/ui/pages/toolbox/toolbox_page_widgets.dart test/ui_smoke_test.dart`
+- `dart analyze lib/src/ui/pages/toolbox_page.dart lib/src/ui/pages/toolbox/toolbox_page_widgets.dart test/ui_smoke_test.dart`（通过；保留 `test/ui_smoke_test.dart` 既有 info 级 const/final 提示）
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox intro stays compact and opens editing tips" --reporter compact`
+- `flutter test test/ui_smoke_test.dart --plain-name "toolbox page supports editable home layout" --reporter compact`
+
 ## [Unreleased-PLAN_285-BOTTOM-NAV-AUTO-HIDE] - 2026-05-28
 
 ### 原因

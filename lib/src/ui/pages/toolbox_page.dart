@@ -143,9 +143,9 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 _buildHeader(i18n),
-                const SizedBox(height: 18),
+                const SizedBox(height: ToolboxUiTokens.cardSpacing),
                 _buildIntroPanel(i18n),
-                const SizedBox(height: ToolboxUiTokens.sectionSpacing),
+                const SizedBox(height: ToolboxUiTokens.cardSpacing),
                 ToolboxQuickEntryPanel(
                   i18n: i18n,
                   state: state,
@@ -223,9 +223,9 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             _buildHeader(i18n),
-            const SizedBox(height: 18),
+            const SizedBox(height: ToolboxUiTokens.cardSpacing),
             _buildIntroPanel(i18n),
-            const SizedBox(height: ToolboxUiTokens.sectionSpacing),
+            const SizedBox(height: ToolboxUiTokens.cardSpacing),
             ToolboxQuickEntryPanel(
               i18n: i18n,
               state: state,
@@ -337,14 +337,21 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
         zh: _editing ? '正在编辑工具箱首页' : '常用工具随手打开',
         en: _editing ? 'Editing your Toolbox home' : 'Tools ready when needed',
       ),
-      subtitle: pickUiText(
+      summary: pickUiText(
+        i18n,
+        zh: _editing ? '拖动手柄排序，移除前会再次确认。' : '长按卡片编辑，拖进快速入口。',
+        en: _editing
+            ? 'Drag handles to reorder; removal asks first.'
+            : 'Long-press cards for layout and shortcuts.',
+      ),
+      details: pickUiText(
         i18n,
         zh: _editing
-            ? '拖动手柄调整顺序。长按卡片可拖到快速入口，移除前会再次确认。'
-            : '长按任意工具卡片可调整顺序，常用工具也可以放进快速入口。',
+            ? '拖动手柄调整首页顺序。长按卡片可拖到快速入口；移除入口只会隐藏首页卡片，之后可以恢复。'
+            : '长按任意工具卡片可进入编辑和排序；常用工具可以放进快速入口，隐藏入口后也能恢复。',
         en: _editing
-            ? 'Drag handles to reorder. Long-press a card to add it to shortcuts; removing asks first.'
-            : 'Long-press any tool card to rearrange it, or keep favorites in shortcuts.',
+            ? 'Drag handles to reorder the home page. Long-press a card to add it to shortcuts; removing only hides the home card and can be restored later.'
+            : 'Long-press any tool card to edit and reorder it. Keep favorites in shortcuts, and hidden home cards can be restored later.',
       ),
       highlights: <String>[
         pickUiText(i18n, zh: '长按编辑', en: 'Long press'),
@@ -352,6 +359,7 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
         pickUiText(i18n, zh: '快速入口', en: 'Shortcuts'),
         pickUiText(i18n, zh: '可恢复', en: 'Restorable'),
       ],
+      helpTooltip: pickUiText(i18n, zh: '查看编辑说明', en: 'View editing tips'),
     );
   }
 

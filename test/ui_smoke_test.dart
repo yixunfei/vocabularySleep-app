@@ -793,6 +793,39 @@ void main() {
       expect(find.text('Life tool hub'), findsOneWidget);
     });
 
+    testWidgets('toolbox intro stays compact and opens editing tips', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const ToolboxPage());
+
+      final introPanel = find.byKey(
+        const ValueKey<String>('toolbox_intro_panel'),
+      );
+      expect(introPanel, findsOneWidget);
+      expect(tester.getSize(introPanel).height, lessThan(92));
+      expect(
+        find.text('Long-press cards for layout and shortcuts.'),
+        findsOneWidget,
+      );
+      expect(find.text('Long press'), findsNothing);
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('toolbox_intro_help_button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.textContaining('Long-press any tool card to edit and reorder it.'),
+        findsOneWidget,
+      );
+      expect(find.text('Long press'), findsOneWidget);
+      expect(find.text('Shortcuts'), findsOneWidget);
+    });
+
     testWidgets('toolbox page opens human test hub', (tester) async {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const ToolboxPage());
