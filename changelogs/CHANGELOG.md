@@ -1,7 +1,42 @@
+## [Unreleased-PLAN_291-I18N-LOCALE-COMPLETION-REDO] - 2026-05-29
+
+### 原因
+- 用户指出历史补全无法真实覆盖全部内容且存在大量文本问题，要求不参考旧翻译库、旧脚本或历史提交，重新完整补全当前项目 i18n 语言文本。
+
+### 新增
+- `scripts/redo_i18n_locale_completion.py`
+  - 新增本轮返工专用补全脚本，支持占位符保护、静态 UI 词表、Bing 批量翻译缓存、分语言报告、空英文源过滤和最终审计。
+
+### 修改
+- `lib/l10n/catalog/app_text_registry.json`
+- `lib/l10n/catalog/app_texts_zh.json`
+- `lib/l10n/catalog/app_texts_ja.json`
+- `lib/l10n/catalog/app_texts_de.json`
+- `lib/l10n/catalog/app_texts_fr.json`
+- `lib/l10n/catalog/app_texts_es.json`
+- `lib/l10n/catalog/app_texts_ru.json`
+  - 重新补全真实运行时与显式 UI 文案的 zh/ja/de/fr/es/ru 本地化文本，不复用历史提交 `03300ca` 的翻译内容。
+  - 保留品牌、单位、音乐术语、格式串和合法同形词；对中文 `titleEn/titleZh`、`subtitleEn/subtitleZh` 等双语分支占位符做兼容处理。
+- `plans/PLAN_291_i18n_locale_completion_redo.md`
+  - 标记返工计划完成并记录校验结果。
+
+### 风险变更
+- 本轮仍不自动翻译 `dart_string_literal_candidate` 和 `platform_metadata_string`，避免资源路径、SQL、存储 key、日志、测试断言或内容数据污染用户 UI 文案。
+- 空英文源 ARB 资源仅保留集中登记，不再作为当前 runtime/UI 英文源缺翻统计对象。
+
+### 验证
+- `python -m py_compile scripts\redo_i18n_locale_completion.py`
+- `python -X utf8 scripts\redo_i18n_locale_completion.py --sync-only --replace-completion-summary --report-prefix completion_report_sync_final`
+- `collect_jobs(..., include_zh=True, force_runtime=False)` 为 0。
+- `audit(...).unresolvedCount` 为 0。
+- `app_text_registry.json` 与 7 个 `app_texts_*.json` 解析成功。
+- 非空英文源占位符兼容校验为 0 个不一致。
+
 ## [Unreleased-PLAN_290-I18N-LOCALE-COMPLETION] - 2026-05-29
 
 ### 原因
 - 用户要求在 JSON 文案表接入后，对 i18n 语言文本内容进行一轮本地化语言补全。
+- 本条记录对应旧补全方式，已被 `Unreleased-PLAN_291-I18N-LOCALE-COMPLETION-REDO` 返工替代。
 
 ### 修改
 - `lib/l10n/catalog/app_text_registry.json`
@@ -20,6 +55,7 @@
   - 标记计划已完成。
 
 ### 风险变更
+- 本条记录中的历史翻译复用策略已废弃，当前有效结果以 PLAN_291 返工记录为准。
 - 本轮补全优先恢复已有历史翻译，未对 `dart_string_literal_candidate` 和平台技术字符串做自动翻译，避免把资源路径、SQL、存储 key、日志和内容数据误标为 UI 本地化文本。
 - registry 中仍保留大量 `missingLocales`，主要对应 source-only 候选，后续应逐页确认是否用户可见后再翻译。
 
