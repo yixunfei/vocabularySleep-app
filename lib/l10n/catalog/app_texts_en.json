@@ -43289,5 +43289,7 @@
   "wordTransitionStyleNone": "None",
   "wordTransitionStylePageFlip": "Page flip",
   "wordTransitionStyleSmooth": "Smooth slide",
-  "zh": ""
+  "zh": "",
+  "@@completedAt": "2026-05-29",
+  "@@completionSource": "03300ca AppI18n maps + exact translation-memory merge"
 }

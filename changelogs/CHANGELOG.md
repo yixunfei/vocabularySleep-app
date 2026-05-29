@@ -1,3 +1,32 @@
+## [Unreleased-PLAN_290-I18N-LOCALE-COMPLETION] - 2026-05-29
+
+### 原因
+- 用户要求在 JSON 文案表接入后，对 i18n 语言文本内容进行一轮本地化语言补全。
+
+### 修改
+- `lib/l10n/catalog/app_text_registry.json`
+  - 合并回历史提交 `03300ca` 中已完成的 toolbox/focus 日语、德语、法语、西语、俄语翻译。
+  - 在 `summary.localeCompletion` 中记录补全来源、策略和各语言补全数量。
+- `lib/l10n/catalog/app_texts_ja.json`
+- `lib/l10n/catalog/app_texts_de.json`
+- `lib/l10n/catalog/app_texts_fr.json`
+- `lib/l10n/catalog/app_texts_es.json`
+- `lib/l10n/catalog/app_texts_ru.json`
+  - 同步写入对应语言补全文案。
+- `lib/l10n/catalog/app_texts_zh.json`
+- `lib/l10n/catalog/app_texts_en.json`
+  - 同步标记本轮补全元数据，正文文案不做无意义改写。
+- `plans/PLAN_290_i18n_json_catalog_runtime_and_locale_completion.md`
+  - 标记计划已完成。
+
+### 风险变更
+- 本轮补全优先恢复已有历史翻译，未对 `dart_string_literal_candidate` 和平台技术字符串做自动翻译，避免把资源路径、SQL、存储 key、日志和内容数据误标为 UI 本地化文本。
+- registry 中仍保留大量 `missingLocales`，主要对应 source-only 候选，后续应逐页确认是否用户可见后再翻译。
+
+### 验证
+- `node` 解析 `app_text_registry.json` 与 7 个 `app_texts_*.json` 成功。
+- 本轮补全统计：ja 4008、de 3976、fr 4008、es 4024、ru 3943 个表项获得补全文案。
+
 ## [Unreleased-PLAN_290-I18N-JSON-CATALOG-RUNTIME] - 2026-05-29
 
 ### 原因
