@@ -6,8 +6,8 @@ import '../../i18n/app_i18n.dart';
 import '../../models/sleep_profile.dart';
 import '../../state/app_state.dart';
 import '../module/module_access.dart';
-import 'sleep_assistant_ui_support.dart';
 import 'sleep_research_library.dart';
+import 'sleep_assistant_ui_support.dart';
 import 'toolbox_tool_shell.dart';
 
 class SleepAssessmentPage extends StatefulWidget {
@@ -142,7 +142,7 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          pickSleepText(i18n, zh: '睡眠评估已保存', en: 'Sleep assessment saved'),
+          i18n.t('toolbox.sleep.assessment.saved'),
         ),
       ),
     );
@@ -163,12 +163,8 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
     if (!appState.isModuleEnabled(ModuleIds.toolboxSleepAssistant)) {
       return themed(
         ToolboxToolPage(
-          title: pickSleepText(i18n, zh: '睡眠助手', en: 'Sleep assistant'),
-          subtitle: pickSleepText(
-            i18n,
-            zh: '模块已停用，无法继续访问睡眠助手页面。',
-            en: 'This module is disabled and unavailable right now.',
-          ),
+          title: i18n.t('toolbox.sleep.core.title'),
+          subtitle: i18n.t('toolbox.sleep.assessment.moduleDisabled'),
           child: ModuleDisabledView(
             i18n: i18n,
             moduleId: ModuleIds.toolboxSleepAssistant,
@@ -179,12 +175,8 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
     final adviceItems = buildSleepAssessmentAdvice(i18n, draft: _draft);
     return themed(
       ToolboxToolPage(
-        title: pickSleepText(i18n, zh: '睡眠评估', en: 'Sleep assessment'),
-        subtitle: pickSleepText(
-          i18n,
-          zh: '从问题类型、节律、环境和心理负荷一起识别当前最值得先改的主线。',
-          en: 'Assess issues, rhythm, environment, and activation to find the first high-leverage track.',
-        ),
+        title: i18n.t('toolbox.sleep.assessment.title'),
+        subtitle: i18n.t('toolbox.sleep.assessment.intro'),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -195,7 +187,7 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickSleepText(i18n, zh: '主要困扰', en: 'Main concerns'),
+                      i18n.t('toolbox.sleep.assessment.mainConcerns'),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 10),
@@ -233,18 +225,14 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickSleepText(i18n, zh: '基线作息', en: 'Baseline schedule'),
+                      i18n.t('toolbox.sleep.assessment.baselineSchedule'),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 12),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        pickSleepText(
-                          i18n,
-                          zh: '通常上床时间',
-                          en: 'Typical bedtime',
-                        ),
+                        i18n.t('toolbox.sleep.assessment.typicalBedtime'),
                       ),
                       subtitle: Text(sleepTimeOfDayLabel(_bedtime)),
                       trailing: const Icon(Icons.schedule_rounded),
@@ -253,11 +241,7 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        pickSleepText(
-                          i18n,
-                          zh: '通常起床时间',
-                          en: 'Typical wake time',
-                        ),
+                        i18n.t('toolbox.sleep.assessment.typicalWakeTime'),
                       ),
                       subtitle: Text(sleepTimeOfDayLabel(_wakeTime)),
                       trailing: const Icon(Icons.alarm_rounded),
@@ -268,16 +252,8 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                       controller: _goalController,
                       maxLines: 2,
                       decoration: InputDecoration(
-                        labelText: pickSleepText(
-                          i18n,
-                          zh: '当前目标',
-                          en: 'Current goal',
-                        ),
-                        hintText: pickSleepText(
-                          i18n,
-                          zh: '例如：先连续 7 天固定起床并减少夜醒挣扎',
-                          en: 'Example: keep a stable wake time for 7 days',
-                        ),
+                         labelText: i18n.t('toolbox.sleep.assessment.currentGoal'),
+                         hintText: i18n.t('toolbox.sleep.assessment.goalHint'),
                       ),
                     ),
                   ],
@@ -352,22 +328,14 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickSleepText(
-                        i18n,
-                        zh: '风险与场景因素',
-                        en: 'Risk and context',
-                      ),
+                      i18n.t('toolbox.sleep.assessment.riskAndContext'),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 12),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        pickSleepText(
-                          i18n,
-                          zh: '睡前经常脑内停不下来',
-                          en: 'Racing thoughts at night',
-                        ),
+                        i18n.t('toolbox.sleep.assessment.racingThoughts'),
                       ),
                       value: _hasRacingThoughts,
                       onChanged: (value) {
@@ -378,11 +346,7 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        pickSleepText(
-                          i18n,
-                          zh: '自觉对咖啡因更敏感',
-                          en: 'Sensitive to caffeine',
-                        ),
+                        i18n.t('toolbox.sleep.assessment.caffeineSensitive'),
                       ),
                       value: _caffeineSensitive,
                       onChanged: (value) {
@@ -393,11 +357,7 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                     DropdownButtonFormField<SleepRiskLevel>(
                       initialValue: _snoringRisk,
                       decoration: InputDecoration(
-                        labelText: pickSleepText(
-                          i18n,
-                          zh: '打鼾风险',
-                          en: 'Snoring risk',
-                        ),
+                         labelText: i18n.t('toolbox.sleep.assessment.snoringRisk'),
                       ),
                       items: SleepRiskLevel.values
                           .map(
@@ -419,11 +379,7 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        pickSleepText(
-                          i18n,
-                          zh: '卧室偏亮',
-                          en: 'Bedroom too bright',
-                        ),
+                        i18n.t('toolbox.sleep.assessment.bedroomBright'),
                       ),
                       value: _bedroomLightIssue,
                       onChanged: (value) {
@@ -434,11 +390,7 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        pickSleepText(
-                          i18n,
-                          zh: '卧室偏吵',
-                          en: 'Bedroom too noisy',
-                        ),
+                        i18n.t('toolbox.sleep.assessment.bedroomNoisy'),
                       ),
                       value: _bedroomNoiseIssue,
                       onChanged: (value) {
@@ -449,11 +401,7 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        pickSleepText(
-                          i18n,
-                          zh: '卧室温度不舒服',
-                          en: 'Bedroom temperature issue',
-                        ),
+                        i18n.t('toolbox.sleep.assessment.bedroomTemp'),
                       ),
                       value: _bedroomTempIssue,
                       onChanged: (value) {
@@ -464,11 +412,7 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        pickSleepText(
-                          i18n,
-                          zh: '近期有轮班或时差',
-                          en: 'Shift work or jet lag',
-                        ),
+                        i18n.t('toolbox.sleep.assessment.shiftWork'),
                       ),
                       value: _shiftWorkOrJetLag,
                       onChanged: (value) {
@@ -479,11 +423,7 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        pickSleepText(
-                          i18n,
-                          zh: '反酸或消化不适影响睡眠',
-                          en: 'Digestive discomfort affects sleep',
-                        ),
+                        i18n.t('toolbox.sleep.assessment.digestiveDiscomfort'),
                       ),
                       value: _refluxOrDigestiveDiscomfort,
                       onChanged: (value) {
@@ -494,11 +434,7 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        pickSleepText(
-                          i18n,
-                          zh: '噩梦或梦境困扰明显',
-                          en: 'Nightmares or dream distress',
-                        ),
+                        i18n.t('toolbox.sleep.assessment.nightmares'),
                       ),
                       value: _nightmaresOrDreamDistress,
                       onChanged: (value) {
@@ -518,7 +454,7 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickSleepText(i18n, zh: '直接建议', en: 'Direct advice'),
+                      i18n.t('toolbox.sleep.assessment.directAdvice'),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 12),
@@ -532,7 +468,7 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
               onPressed: _save,
               icon: const Icon(Icons.save_rounded),
               label: Text(
-                pickSleepText(i18n, zh: '保存评估', en: 'Save assessment'),
+                i18n.t('toolbox.sleep.assessment.save'),
               ),
             ),
           ],

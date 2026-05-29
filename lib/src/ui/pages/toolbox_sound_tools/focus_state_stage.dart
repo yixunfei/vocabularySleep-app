@@ -121,7 +121,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                   children: <Widget>[
                     _FocusStageBadge(
                       icon: Icons.route_rounded,
-                      label: pickUiText(i18n, zh: '节拍轨道', en: 'Beat path'),
+                      label: i18n.t('toolbox.sound.focus.stageBeatPath'),
                     ),
                     _FocusStageBadge(
                       icon: _soundKind.icon,
@@ -158,11 +158,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                         if (_subdivision > 1) ...<Widget>[
                           const SizedBox(height: 2),
                           Text(
-                            pickUiText(
-                              i18n,
-                              zh: '子拍 $subLabel',
-                              en: 'Sub $subLabel',
-                            ),
+                            i18n.t('toolbox.sound.focus.stageSubbeat', params: {'label': subLabel}),
                             style: Theme.of(context).textTheme.labelLarge
                                 ?.copyWith(
                                   color: _focusStagePaleMutedInk,
@@ -173,8 +169,8 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                         const SizedBox(height: 4),
                         Text(
                           _running
-                              ? pickUiText(i18n, zh: '轨道推进中', en: 'Moving')
-                              : pickUiText(i18n, zh: '轨道待命', en: 'Ready'),
+                              ? i18n.t('toolbox.sound.focus.stageMoving')
+                              : i18n.t('toolbox.sound.focus.stageReady'),
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: _focusStagePaleMutedInk),
                         ),
@@ -207,25 +203,13 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                                 ? Icons.graphic_eq_rounded
                                 : Icons.motion_photos_paused_rounded,
                             label: _running
-                                ? pickUiText(
-                                    i18n,
-                                    zh: '拍点正在推进',
-                                    en: 'Pulse in motion',
-                                  )
-                                : pickUiText(
-                                    i18n,
-                                    zh: '等待第一拍',
-                                    en: 'Waiting for beat one',
-                                  ),
+                                ? i18n.t('toolbox.sound.focus.stagePulseInMotion')
+                                : i18n.t('toolbox.sound.focus.stageWaitingBeatOne'),
                           ),
                           const Spacer(),
                           _FocusStageBadge(
                             icon: Icons.repeat_rounded,
-                            label: pickUiText(
-                              i18n,
-                              zh: '第 $cycleLabel 轮',
-                              en: 'Cycle $cycleLabel',
-                            ),
+                            label: i18n.t('toolbox.sound.focus.stageCycleLabel', params: {'label': cycleLabel}),
                           ),
                         ],
                       ),
@@ -238,33 +222,17 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                         children: <Widget>[
                           _FocusStageBadge(
                             icon: Icons.timeline_rounded,
-                            label: pickUiText(
-                              i18n,
-                              zh: '编排 $arrangementLabel',
-                              en: 'Pattern $arrangementLabel',
-                            ),
+                            label: i18n.t('toolbox.sound.focus.stagePatternLabel', params: {'label': arrangementLabel}),
                           ),
                           _FocusStageBadge(
                             icon: Icons.layers_rounded,
-                            label: pickUiText(
-                              i18n,
-                              zh: '段落 $segmentLabel',
-                              en: 'Phrase $segmentLabel',
-                            ),
+                            label: i18n.t('toolbox.sound.focus.stagePhraseLabel', params: {'label': segmentLabel}),
                           ),
                           _FocusStageBadge(
                             icon: Icons.touch_app_rounded,
                             label: _hapticsEnabled
-                                ? pickUiText(
-                                    i18n,
-                                    zh: '触感已启用',
-                                    en: 'Haptics on',
-                                  )
-                                : pickUiText(
-                                    i18n,
-                                    zh: '触感已关闭',
-                                    en: 'Haptics off',
-                                  ),
+                                ? i18n.t('toolbox.sound.focus.stageHapticsOn')
+                                : i18n.t('toolbox.sound.focus.stageHapticsOff'),
                           ),
                         ],
                       ),
@@ -300,7 +268,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
             SizedBox(
               width: 42,
               child: Text(
-                pickUiText(i18n, zh: '主拍', en: 'Beat'),
+                i18n.t('toolbox.sound.focus.stageBeatLabel'),
                 style: labelStyle,
               ),
             ),
@@ -378,7 +346,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
               SizedBox(
                 width: 42,
                 child: Text(
-                  pickUiText(i18n, zh: '子拍', en: 'Sub'),
+                  i18n.t('toolbox.sound.focus.stageSubLabel'),
                   style: labelStyle,
                 ),
               ),
@@ -456,7 +424,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
               ),
             ),
             child: Text(
-              '${pickUiText(previewI18n, zh: '段', en: 'S')}${index + 1} · ${previewSegmentBeats[index]} ${pickUiText(previewI18n, zh: '拍', en: 'beats')} · '
+              '${previewI18n.t('toolbox.sound.focus.stageSegmentS')}${index + 1} · ${previewSegmentBeats[index]} ${previewI18n.t('toolbox.sound.focus.stageBeatsUnit')} · '
               '${_focusBarsLabel(previewSegmentBeats[index] / _beatsPerBar)}',
               style: Theme.of(context).textTheme.labelMedium,
             ),
@@ -480,8 +448,8 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                   ? Icons.graphic_eq_rounded
                   : Icons.motion_photos_paused_rounded,
               label: _running
-                  ? pickUiText(i18n, zh: '节拍推进中', en: 'Pulse in motion')
-                  : pickUiText(i18n, zh: '轨道待命', en: 'Track ready'),
+                  ? i18n.t('toolbox.sound.focus.stagePulseMoving')
+                  : i18n.t('toolbox.sound.focus.stageTrackReady'),
               emphasized: _running,
               tone: _visualPalette(context).accent,
             ),
@@ -500,16 +468,8 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
         const SizedBox(height: 10),
         Text(
           _running
-              ? pickUiText(
-                  i18n,
-                  zh: '发音、触感和光点沿同一条节拍轨道推进，当前拍、重拍与子拍关系可以直接看见。',
-                  en: 'Clicks, haptics, and the light point move on one beat path so the beat, downbeat, and subdivisions stay visible.',
-                )
-              : pickUiText(
-                  i18n,
-                  zh: '先设定速度与拍号，再让光点从第一拍进入循环；其他设置保持折叠，不打断专注入口。',
-                  en: 'Set tempo and meter, then let the light point enter the loop from beat one. Secondary settings stay folded away.',
-                ),
+              ? i18n.t('toolbox.sound.focus.stageSummaryRunning')
+              : i18n.t('toolbox.sound.focus.stageSummaryIdle'),
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
             height: 1.45,
@@ -608,8 +568,8 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                       ? Icons.graphic_eq_rounded
                       : Icons.motion_photos_paused_rounded,
                   label: _running
-                      ? pickUiText(i18n, zh: '轨道推进中', en: 'Moving')
-                      : pickUiText(i18n, zh: '轨道待命', en: 'Ready'),
+                      ? i18n.t('toolbox.sound.focus.stageMoving')
+                      : i18n.t('toolbox.sound.focus.stageReady'),
                 ),
               ),
               Positioned(
@@ -663,7 +623,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
             SizedBox(
               width: 34,
               child: Text(
-                pickUiText(i18n, zh: '拍', en: 'Beat'),
+                i18n.t('toolbox.sound.focus.stageBeatShort'),
                 style: labelStyle,
               ),
             ),
@@ -704,7 +664,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
               SizedBox(
                 width: 34,
                 child: Text(
-                  pickUiText(i18n, zh: '分', en: 'Sub'),
+                  i18n.t('toolbox.sound.focus.stageSubShort'),
                   style: labelStyle,
                 ),
               ),
@@ -755,7 +715,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
         SizedBox(
           width: 34,
           child: Text(
-            pickUiText(i18n, zh: '段', en: 'Loop'),
+            i18n.t('toolbox.sound.focus.stageLoopLabel'),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: _focusStagePaleMutedInk,
               fontWeight: FontWeight.w800,
@@ -871,22 +831,14 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                               ),
                               const Spacer(),
                               IconButton.filledTonal(
-                                tooltip: pickUiText(
-                                  immersiveI18n,
-                                  zh: '唤起控制',
-                                  en: 'Open controls',
-                                ),
+                                tooltip: immersiveI18n.t('toolbox.sound.focus.immersiveOpenControls'),
                                 onPressed: _openImmersiveControlsSheet,
                                 icon: const Icon(Icons.tune_rounded),
                               ),
                               if (widget.onExitFullScreen != null) ...<Widget>[
                                 const SizedBox(width: 8),
                                 IconButton.filledTonal(
-                                  tooltip: pickUiText(
-                                    immersiveI18n,
-                                    zh: '退出全屏',
-                                    en: 'Exit full screen',
-                                  ),
+                                  tooltip: immersiveI18n.t('toolbox.sound.focus.immersiveExitFull'),
                                   onPressed: widget.onExitFullScreen,
                                   icon: const Icon(Icons.close_rounded),
                                 ),
@@ -936,16 +888,8 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                                     children: <Widget>[
                                       Text(
                                         _running
-                                            ? pickUiText(
-                                                immersiveI18n,
-                                                zh: '当前拍点 $immersiveBeatLabel',
-                                                en: 'Beat $immersiveBeatLabel',
-                                              )
-                                            : pickUiText(
-                                                immersiveI18n,
-                                                zh: '准备开始',
-                                                en: 'Ready',
-                                              ),
+                                            ? immersiveI18n.t('toolbox.sound.focus.immersiveCurrentBeat', params: {'label': immersiveBeatLabel})
+                                            : immersiveI18n.t('toolbox.sound.focus.immersiveReady'),
                                         style: Theme.of(context)
                                             .textTheme
                                             .labelLarge
@@ -956,11 +900,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        pickUiText(
-                                          immersiveI18n,
-                                          zh: '轻触显示控件，上滑打开完整菜单',
-                                          en: 'Tap for HUD, swipe up for full controls',
-                                        ),
+                                        immersiveI18n.t('toolbox.sound.focus.immersiveHint'),
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodySmall

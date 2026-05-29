@@ -86,10 +86,7 @@ class _SoundLocatorToolPageState extends ConsumerState<SoundLocatorToolPage>
         }
         setState(() {
           _starting = false;
-          _errorText = _copy(
-            zh: '麦克风权限被拒绝，无法进行声源采集。',
-            en: 'Microphone permission was denied.',
-          );
+                    _errorText = _copy(key: 'toolbox.sound.locator.error_mic_denied');
         });
         return;
       }
@@ -184,10 +181,7 @@ class _SoundLocatorToolPageState extends ConsumerState<SoundLocatorToolPage>
     final frame = _frame;
     if (frame == null || frame.inputRms <= 0) {
       setState(() {
-        _errorText = _copy(
-          zh: '还没有可记录的声音帧，请先开始监听并让目标声源持续发声。',
-          en: 'No usable audio frame yet. Start listening and keep the target sound active.',
-        );
+        _errorText = _copy(key: 'toolbox.sound.locator.error_no_frame');
       });
       return;
     }
@@ -212,9 +206,9 @@ class _SoundLocatorToolPageState extends ConsumerState<SoundLocatorToolPage>
     });
   }
 
-  String _copy({required String zh, required String en}) {
+  String _copy({required String key}) {
     final language = ref.read(appStateProvider).uiLanguage;
-    return pickUiText(AppI18n(language), zh: zh, en: en);
+    return AppI18n(language).t(key);
   }
 
   @override
@@ -225,7 +219,7 @@ class _SoundLocatorToolPageState extends ConsumerState<SoundLocatorToolPage>
     final confirmation = _locator.confirmFromMovementSamples(_anchorSamples);
     return Scaffold(
       appBar: AppBar(
-        title: Text(pickUiText(i18n, zh: '声源定位', en: 'Sound locator')),
+        title: Text(i18n.t('toolbox.sound.locator.page_title')),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
@@ -244,17 +238,9 @@ class _SoundLocatorToolPageState extends ConsumerState<SoundLocatorToolPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   PageHeader(
-                    eyebrow: pickUiText(
-                      i18n,
-                      zh: '工具箱 / 声学',
-                      en: 'Toolbox / Acoustic',
-                    ),
-                    title: pickUiText(i18n, zh: '声源定位', en: 'Sound locator'),
-                    subtitle: pickUiText(
-                      i18n,
-                      zh: '使用手机自带麦克风监听目标声源，并引导你移动到多个位置逐步确认声源区域。',
-                      en: 'Use the phone microphone, move through several positions, and confirm the source area step by step.',
-                    ),
+                    eyebrow: i18n.t('toolbox.sound.locator.page_eyebrow'),
+                    title: i18n.t('toolbox.sound.locator.page_title'),
+                    subtitle: i18n.t('toolbox.sound.locator.page_subtitle'),
                   ),
                   const SizedBox(height: 16),
                   _LocatorHeroPanel(
@@ -352,7 +338,7 @@ class _LocatorHeroPanel extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final primary = frame.primarySource;
     final direction = primary == null
-        ? pickUiText(i18n, zh: '等待声源', en: 'Awaiting source')
+        ? i18n.t('toolbox.sound.locator.awaiting_source')
         : _directionLabel(i18n, primary.azimuthDegrees);
     return ToolboxSurfaceCard(
       padding: EdgeInsets.zero,
@@ -491,10 +477,10 @@ class _LocatorHeroPanel extends StatelessWidget {
                     ),
                     label: Text(
                       monitoring
-                          ? pickUiText(i18n, zh: '停止监听', en: 'Stop monitor')
+                          ? i18n.t('toolbox.sound.locator.btn_stop_monitor')
                           : starting
-                          ? pickUiText(i18n, zh: '启动中', en: 'Starting')
-                          : pickUiText(i18n, zh: '开始定位', en: 'Start locating'),
+                          ? i18n.t('toolbox.sound.locator.btn_starting')
+                          : i18n.t('toolbox.sound.locator.btn_start_locating'),
                     ),
                   ),
                 ),
@@ -502,15 +488,11 @@ class _LocatorHeroPanel extends StatelessWidget {
                 IconButton.filledTonal(
                   onPressed: canCaptureAnchor ? onCaptureAnchor : null,
                   icon: const Icon(Icons.add_location_alt_rounded),
-                  tooltip: pickUiText(
-                    i18n,
-                    zh: '记录当前位置',
-                    en: 'Record position',
-                  ),
+                  tooltip: i18n.t('toolbox.sound.locator.btn_record_position'),
                 ),
                 const SizedBox(width: 10),
                 _MetricTile(
-                  label: pickUiText(i18n, zh: '信噪比', en: 'SNR'),
+                  label: i18n.t('toolbox.sound.locator.metric_snr'),
                   value: '${frame.snrDb.toStringAsFixed(1)} dB',
                   tint: _qualityColor(frame.quality),
                 ),
@@ -525,18 +507,14 @@ class _LocatorHeroPanel extends StatelessWidget {
   String _directionLabel(AppI18n i18n, double azimuth) {
     final abs = azimuth.abs();
     final side = azimuth > 8
-        ? pickUiText(i18n, zh: '右侧', en: 'right')
+        ? i18n.t('toolbox.sound.locator.direction_right')
         : azimuth < -8
-        ? pickUiText(i18n, zh: '左侧', en: 'left')
-        : pickUiText(i18n, zh: '正前方', en: 'front');
+        ? i18n.t('toolbox.sound.locator.direction_left')
+        : i18n.t('toolbox.sound.locator.direction_front');
     if (abs <= 8) {
-      return pickUiText(i18n, zh: '声源在正前方', en: 'Source in front');
+      return i18n.t('toolbox.sound.locator.source_in_front');
     }
-    return pickUiText(
-      i18n,
-      zh: '声源偏$side ${abs.toStringAsFixed(0)} 度',
-      en: 'Source ${abs.toStringAsFixed(0)} deg $side',
-    );
+    return i18n.t('toolbox.sound.locator.source_offset', params: <String, Object?>{'side': side, 'deg': abs.toStringAsFixed(0)});
   }
 
   String _statusLabel(
@@ -546,86 +524,42 @@ class _LocatorHeroPanel extends StatelessWidget {
     bool starting,
   ) {
     if (starting) {
-      return pickUiText(i18n, zh: '启动采集', en: 'Starting capture');
+      return i18n.t('toolbox.sound.locator.status_starting_capture');
     }
     if (!monitoring) {
-      return pickUiText(i18n, zh: '待机', en: 'Idle');
+      return i18n.t('toolbox.sound.locator.status_idle');
     }
     return switch (frame.quality) {
-      SoundLocatorQuality.professional => pickUiText(
-        i18n,
-        zh: '专业确认',
-        en: 'Professional lock',
-      ),
-      SoundLocatorQuality.strong => pickUiText(i18n, zh: '稳定追踪', en: 'Stable'),
-      SoundLocatorQuality.usable => pickUiText(i18n, zh: '可用估计', en: 'Usable'),
-      SoundLocatorQuality.poor => pickUiText(
-        i18n,
-        zh: '低置信度',
-        en: 'Low confidence',
-      ),
-      SoundLocatorQuality.unavailable => pickUiText(
-        i18n,
-        zh: '等待声源',
-        en: 'Listening',
-      ),
+      SoundLocatorQuality.professional => i18n.t('toolbox.sound.locator.status_professional'),
+      SoundLocatorQuality.strong => i18n.t('toolbox.sound.locator.status_stable'),
+      SoundLocatorQuality.usable => i18n.t('toolbox.sound.locator.status_usable'),
+      SoundLocatorQuality.poor => i18n.t('toolbox.sound.locator.status_low_confidence'),
+      SoundLocatorQuality.unavailable => i18n.t('toolbox.sound.locator.status_listening'),
     };
   }
 
   String _engineLabel(AppI18n i18n, SoundLocatorEngineMode mode) {
     return switch (mode) {
-      SoundLocatorEngineMode.mobileMove => pickUiText(
-        i18n,
-        zh: '手机移动确认',
-        en: 'Phone movement',
-      ),
-      SoundLocatorEngineMode.mobileStereo => pickUiText(
-        i18n,
-        zh: '手机双声道',
-        en: 'Phone stereo',
-      ),
-      SoundLocatorEngineMode.odasOptional => pickUiText(
-        i18n,
-        zh: '高级阵列可选',
-        en: 'Array optional',
-      ),
+      SoundLocatorEngineMode.mobileMove => i18n.t('toolbox.sound.locator.engine_mobile_move'),
+      SoundLocatorEngineMode.mobileStereo => i18n.t('toolbox.sound.locator.engine_mobile_stereo'),
+      SoundLocatorEngineMode.odasOptional => i18n.t('toolbox.sound.locator.engine_array_optional'),
     };
   }
 
   String _guidance(AppI18n i18n, SoundLocatorFrame frame, bool monitoring) {
     if (!monitoring) {
-      return pickUiText(
-        i18n,
-        zh: '点击开始后让目标声源持续发声，然后在当前位置记录一次采样。',
-        en: 'Start listening, keep the target sound active, then record this position.',
-      );
+      return i18n.t('toolbox.sound.locator.guidance_idle');
     }
     if (!frame.profile.canEstimateDirection) {
-      return pickUiText(
-        i18n,
-        zh: '单声道也可以使用：请记录当前位置，然后向左、向右或向前移动一步继续采样。',
-        en: 'Mono is still usable: record this spot, then move left, right, or forward and sample again.',
-      );
+      return i18n.t('toolbox.sound.locator.guidance_mono');
     }
     if (frame.reverbRisk > 0.72) {
-      return pickUiText(
-        i18n,
-        zh: '回响风险偏高，请靠近目标声源、避开墙角或降低背景噪声后重新确认。',
-        en: 'Reverb risk is high. Move closer to the source, avoid corners, or lower background noise.',
-      );
+      return i18n.t('toolbox.sound.locator.guidance_reverb');
     }
     if (frame.snrDb < 8) {
-      return pickUiText(
-        i18n,
-        zh: '信噪比偏低，多声源环境下请先让目标声源持续发声再锁定。',
-        en: 'SNR is low. In multi-source scenes, keep the target source continuous before locking.',
-      );
+      return i18n.t('toolbox.sound.locator.guidance_low_snr');
     }
-    return pickUiText(
-      i18n,
-      zh: '方向估计正在更新；请记录多个位置，系统会结合强度、信噪比和方位稳定性确认声源区域。',
-      en: 'Direction is updating. Record multiple positions so strength, SNR, and bearing stability can confirm the area.',
-    );
+    return i18n.t('toolbox.sound.locator.guidance_normal');
   }
 }
 
@@ -665,7 +599,7 @@ class _MovementConfirmationPanel extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  pickUiText(i18n, zh: '移动确认', en: 'Movement confirmation'),
+                  i18n.t('toolbox.sound.locator.movement_confirmation'),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
@@ -701,7 +635,7 @@ class _MovementConfirmationPanel extends StatelessWidget {
                   onPressed: onCapture,
                   icon: const Icon(Icons.add_location_alt_rounded),
                   label: Text(
-                    pickUiText(i18n, zh: '记录当前位置', en: 'Record position'),
+                    i18n.t('toolbox.sound.locator.btn_record_position'),
                   ),
                 ),
               ),
@@ -709,7 +643,7 @@ class _MovementConfirmationPanel extends StatelessWidget {
               IconButton.outlined(
                 onPressed: onReset,
                 icon: const Icon(Icons.refresh_rounded),
-                tooltip: pickUiText(i18n, zh: '重置采样', en: 'Reset samples'),
+                tooltip: i18n.t('toolbox.sound.locator.btn_reset_samples'),
               ),
             ],
           ),
@@ -731,63 +665,23 @@ class _MovementConfirmationPanel extends StatelessWidget {
     SoundLocatorMoveConfirmation confirmation,
   ) {
     return switch (confirmation.confirmation) {
-      SoundLocatorConfirmation.locked => pickUiText(
-        i18n,
-        zh: '已根据多个手机位置确认声源区域。复杂环境下仍建议再采一次反方向样本。',
-        en: confirmation.summary,
-      ),
-      SoundLocatorConfirmation.tracking => pickUiText(
-        i18n,
-        zh: '声源区域正在收敛，请保持目标声源持续发声并补充一个新位置。',
-        en: confirmation.summary,
-      ),
-      SoundLocatorConfirmation.tentative => pickUiText(
-        i18n,
-        zh: '已有早期线索，但还需要至少 3 个位置才能稳定确认。',
-        en: confirmation.summary,
-      ),
-      SoundLocatorConfirmation.unconfirmed => pickUiText(
-        i18n,
-        zh: '请先记录当前位置，再移动到不同方向继续采样。',
-        en: confirmation.summary,
-      ),
+      SoundLocatorConfirmation.locked => i18n.t('toolbox.sound.locator.confirm_locked'),
+      SoundLocatorConfirmation.tracking => i18n.t('toolbox.sound.locator.confirm_tracking'),
+      SoundLocatorConfirmation.tentative => i18n.t('toolbox.sound.locator.confirm_tentative'),
+      SoundLocatorConfirmation.unconfirmed => i18n.t('toolbox.sound.locator.confirm_unconfirmed'),
     };
   }
 
   String _cueInstruction(AppI18n i18n, SoundLocatorMoveCue cue, int count) {
     if (count == 0) {
-      return pickUiText(
-        i18n,
-        zh: '第一步：站在当前位置，保持手机朝向目标区域，记录一次。',
-        en: 'Step 1: stay here, point the phone toward the suspected area, and record once.',
-      );
+      return i18n.t('toolbox.sound.locator.cue_step_0');
     }
     return switch (cue) {
-      SoundLocatorMoveCue.stay => pickUiText(
-        i18n,
-        zh: '下一步：保持目标声源持续发声，再在当前位置复测一次。',
-        en: 'Next: keep the target active and record this spot once more.',
-      ),
-      SoundLocatorMoveCue.stepLeft => pickUiText(
-        i18n,
-        zh: '下一步：向左侧移动一小步，手机朝向不变，然后记录。',
-        en: 'Next: step left, keep the phone facing the same way, then record.',
-      ),
-      SoundLocatorMoveCue.stepRight => pickUiText(
-        i18n,
-        zh: '下一步：向右侧移动一小步，手机朝向不变，然后记录。',
-        en: 'Next: step right, keep the phone facing the same way, then record.',
-      ),
-      SoundLocatorMoveCue.stepForward => pickUiText(
-        i18n,
-        zh: '下一步：向目标方向靠近一步，然后记录。',
-        en: 'Next: move one step toward the target area, then record.',
-      ),
-      SoundLocatorMoveCue.stepBack => pickUiText(
-        i18n,
-        zh: '下一步：后退一步做对照采样，然后记录。',
-        en: 'Next: step back for a comparison sample, then record.',
-      ),
+      SoundLocatorMoveCue.stay => i18n.t('toolbox.sound.locator.cue_stay'),
+      SoundLocatorMoveCue.stepLeft => i18n.t('toolbox.sound.locator.cue_left'),
+      SoundLocatorMoveCue.stepRight => i18n.t('toolbox.sound.locator.cue_right'),
+      SoundLocatorMoveCue.stepForward => i18n.t('toolbox.sound.locator.cue_forward'),
+      SoundLocatorMoveCue.stepBack => i18n.t('toolbox.sound.locator.cue_back'),
     };
   }
 }
@@ -836,15 +730,11 @@ class _AnchorSampleTile extends StatelessWidget {
 
 String _cueLabel(AppI18n i18n, SoundLocatorMoveCue cue) {
   return switch (cue) {
-    SoundLocatorMoveCue.stay => pickUiText(i18n, zh: '原地', en: 'Start'),
-    SoundLocatorMoveCue.stepLeft => pickUiText(i18n, zh: '左移', en: 'Left'),
-    SoundLocatorMoveCue.stepRight => pickUiText(i18n, zh: '右移', en: 'Right'),
-    SoundLocatorMoveCue.stepForward => pickUiText(
-      i18n,
-      zh: '前移',
-      en: 'Forward',
-    ),
-    SoundLocatorMoveCue.stepBack => pickUiText(i18n, zh: '后退', en: 'Back'),
+    SoundLocatorMoveCue.stay => i18n.t('toolbox.sound.locator.cue_label_stay'),
+    SoundLocatorMoveCue.stepLeft => i18n.t('toolbox.sound.locator.cue_label_left'),
+    SoundLocatorMoveCue.stepRight => i18n.t('toolbox.sound.locator.cue_label_right'),
+    SoundLocatorMoveCue.stepForward => i18n.t('toolbox.sound.locator.cue_label_forward'),
+    SoundLocatorMoveCue.stepBack => i18n.t('toolbox.sound.locator.cue_label_back'),
   };
 }
 
@@ -881,7 +771,7 @@ class _CapabilityPanel extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  pickUiText(i18n, zh: '手机麦克风能力', en: 'Phone microphone'),
+                  i18n.t('toolbox.sound.locator.phone_mic'),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
@@ -895,22 +785,22 @@ class _CapabilityPanel extends StatelessWidget {
             runSpacing: 8,
             children: <Widget>[
               _MetricTile(
-                label: pickUiText(i18n, zh: '输入通道', en: 'Channels'),
+                label: i18n.t('toolbox.sound.locator.metric_channels'),
                 value: '${frame.profile.channelCount}',
                 tint: _soundLocatorAccent,
               ),
               _MetricTile(
-                label: pickUiText(i18n, zh: '采样率', en: 'Sample rate'),
+                label: i18n.t('toolbox.sound.locator.metric_sample_rate'),
                 value: '${frame.profile.sampleRate ~/ 1000} kHz',
                 tint: _soundLocatorAccent,
               ),
               _MetricTile(
-                label: pickUiText(i18n, zh: '峰值', en: 'Peak'),
+                label: i18n.t('toolbox.sound.locator.metric_peak'),
                 value: '${(frame.peak * 100).round()}%',
                 tint: _qualityColor(frame.quality),
               ),
               _MetricTile(
-                label: pickUiText(i18n, zh: '回响风险', en: 'Reverb'),
+                label: i18n.t('toolbox.sound.locator.metric_reverb'),
                 value: '${(frame.reverbRisk * 100).round()}%',
                 tint: frame.reverbRisk > 0.7
                     ? const Color(0xFFD97706)
@@ -924,27 +814,19 @@ class _CapabilityPanel extends StatelessWidget {
             onChanged: onStereoChanged,
             contentPadding: EdgeInsets.zero,
             title: Text(
-              pickUiText(i18n, zh: '尝试双声道采集', en: 'Try stereo capture'),
+              i18n.t('toolbox.sound.locator.try_stereo'),
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
             ),
             subtitle: Text(
-              pickUiText(
-                i18n,
-                zh: '如果平台只返回单声道或启动失败，可关闭此项改为稳定的单声道活动检查。',
-                en: 'If the platform returns mono or fails to start, turn this off for stable activity checks.',
-              ),
+              i18n.t('toolbox.sound.locator.try_stereo_subtitle'),
             ),
           ),
           _StatusNotice(
             icon: Icons.info_outline_rounded,
             tint: _soundLocatorAccent,
-            text: pickUiText(
-              i18n,
-              zh: '手机自带麦克风足够用于移动确认流程：静止单点不可靠，但记录多个位置后可以逐步收敛声源区域。',
-              en: 'The built-in phone mic is enough for movement confirmation: one static point is weak, but several positions can converge on the source area.',
-            ),
+            text: i18n.t('toolbox.sound.locator.mic_sufficient'),
           ),
         ],
       ),
@@ -975,7 +857,7 @@ class _SourcesPanel extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  pickUiText(i18n, zh: '多声源候选', en: 'Source candidates'),
+                  i18n.t('toolbox.sound.locator.source_candidates'),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
@@ -986,11 +868,7 @@ class _SourcesPanel extends StatelessWidget {
           const SizedBox(height: 12),
           if (frame.sources.isEmpty)
             Text(
-              pickUiText(
-                i18n,
-                zh: '还没有稳定声源。请让目标声源持续发声 1-2 秒。',
-                en: 'No stable source yet. Keep the target source active for 1-2 seconds.',
-              ),
+              i18n.t('toolbox.sound.locator.no_stable_source'),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -1069,26 +947,10 @@ class _SourceCandidateTile extends StatelessWidget {
 
   String _sourceTitle(AppI18n i18n, SoundLocatorSource source) {
     return switch (source.confirmation) {
-      SoundLocatorConfirmation.locked => pickUiText(
-        i18n,
-        zh: '已锁定主声源',
-        en: 'Primary source locked',
-      ),
-      SoundLocatorConfirmation.tracking => pickUiText(
-        i18n,
-        zh: '正在追踪声源',
-        en: 'Tracking source',
-      ),
-      SoundLocatorConfirmation.tentative => pickUiText(
-        i18n,
-        zh: '候选声源',
-        en: 'Candidate source',
-      ),
-      SoundLocatorConfirmation.unconfirmed => pickUiText(
-        i18n,
-        zh: '声音活动',
-        en: 'Sound activity',
-      ),
+      SoundLocatorConfirmation.locked => i18n.t('toolbox.sound.locator.source_locked'),
+      SoundLocatorConfirmation.tracking => i18n.t('toolbox.sound.locator.source_tracking'),
+      SoundLocatorConfirmation.tentative => i18n.t('toolbox.sound.locator.source_candidate'),
+      SoundLocatorConfirmation.unconfirmed => i18n.t('toolbox.sound.locator.source_activity'),
     };
   }
 }
@@ -1122,11 +984,7 @@ class _AdvancedRoutePanel extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '高级参考: ODAS 可选',
-                    en: 'Advanced reference: optional ODAS',
-                  ),
+                  i18n.t('toolbox.sound.locator.advanced_odas'),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
@@ -1141,19 +999,15 @@ class _AdvancedRoutePanel extends StatelessWidget {
                 ),
                 label: Text(
                   expanded
-                      ? pickUiText(i18n, zh: '收起', en: 'Less')
-                      : pickUiText(i18n, zh: '展开', en: 'Details'),
+                      ? i18n.t('toolbox.sound.locator.btn_less')
+                      : i18n.t('toolbox.sound.locator.btn_details'),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
-            pickUiText(
-              i18n,
-              zh: '手机端默认不要求外接同步麦克风。ODAS 只作为高级参考：当用户有专用阵列时，可把输出并入本页的确认模型。',
-              en: 'External synchronized mics are not required. ODAS stays optional: if a dedicated array exists, its output can be merged into this confirmation model.',
-            ),
+            i18n.t('toolbox.sound.locator.odas_description'),
             style: theme.textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
               height: 1.35,
@@ -1170,11 +1024,7 @@ class _AdvancedRoutePanel extends StatelessWidget {
                         _StatusNotice(
                           icon: Icons.check_circle_outline_rounded,
                           tint: const Color(0xFF16A34A),
-                          text: pickUiText(
-                            i18n,
-                            zh: '默认路线是手机移动采样；高级模式可以通过原生插件或本地守护进程读取 ODAS tracked source JSON 作为附加证据。',
-                            en: 'The default path is phone movement sampling; advanced mode can read ODAS tracked-source JSON as extra evidence.',
-                          ),
+                          text: i18n.t('toolbox.sound.locator.odas_default_path'),
                         ),
                         const SizedBox(height: 10),
                         _RequirementList(i18n: i18n),
@@ -1198,26 +1048,10 @@ class _RequirementList extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final items = <String>[
-      pickUiText(
-        i18n,
-        zh: '手机麦克风权限与稳定 PCM 采集',
-        en: 'Phone mic permission and stable PCM capture',
-      ),
-      pickUiText(
-        i18n,
-        zh: '至少 3 个不同位置的移动采样',
-        en: 'At least 3 movement samples from different positions',
-      ),
-      pickUiText(
-        i18n,
-        zh: '目标声源在采样期间保持持续发声',
-        en: 'Target sound remains active while sampling',
-      ),
-      pickUiText(
-        i18n,
-        zh: '可选 ODAS/阵列输出作为高级证据',
-        en: 'Optional ODAS or array output as advanced evidence',
-      ),
+      i18n.t('toolbox.sound.locator.requirement_1'),
+      i18n.t('toolbox.sound.locator.requirement_2'),
+      i18n.t('toolbox.sound.locator.requirement_3'),
+      i18n.t('toolbox.sound.locator.requirement_4'),
     ];
     return Column(
       children: <Widget>[

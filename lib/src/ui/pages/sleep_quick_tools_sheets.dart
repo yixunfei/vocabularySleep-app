@@ -33,7 +33,7 @@ class _CaffeineCutoffSheetState extends ConsumerState<_CaffeineCutoffSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              pickSleepText(i18n, zh: '咖啡因截止线', en: 'Caffeine cutoff'),
+              i18n.t('toolbox.sleep.library.topic.caffeine.title'),
               style: Theme.of(
                 context,
               ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
@@ -42,7 +42,7 @@ class _CaffeineCutoffSheetState extends ConsumerState<_CaffeineCutoffSheet> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(
-                pickSleepText(i18n, zh: '计划上床时间', en: 'Planned bedtime'),
+                i18n.t('toolbox.sleep.sheets.plannedBedtime'),
               ),
               subtitle: Text(sleepTimeOfDayLabel(_bedtime)),
               trailing: const Icon(Icons.schedule_rounded),
@@ -59,11 +59,7 @@ class _CaffeineCutoffSheetState extends ConsumerState<_CaffeineCutoffSheet> {
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(
-                pickSleepText(
-                  i18n,
-                  zh: '我对咖啡因较敏感',
-                  en: 'I am caffeine sensitive',
-                ),
+                i18n.t('toolbox.sleep.sheets.caffeineSensitive'),
               ),
               value: _sensitive,
               onChanged: (value) => setState(() => _sensitive = value),
@@ -73,11 +69,7 @@ class _CaffeineCutoffSheetState extends ConsumerState<_CaffeineCutoffSheet> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text(
-                  pickSleepText(
-                    i18n,
-                    zh: '建议最后一杯含咖啡因饮品不晚于 ${sleepTimeOfDayLabel(cutoff)}。',
-                    en: 'Suggested latest caffeine time: ${sleepTimeOfDayLabel(cutoff)}.',
-                  ),
+                  i18n.t('toolbox.sleep.sheets.caffeineSuggestion'),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -128,18 +120,14 @@ class _MorningLightTimerSheetState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              pickSleepText(i18n, zh: '晨光计时器', en: 'Morning light timer'),
+              i18n.t('toolbox.sleep.sheets.lightTimer'),
               style: Theme.of(
                 context,
               ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
             Text(
-              pickSleepText(
-                i18n,
-                zh: '起床后尽快见光，先从一个短而稳的时长开始。',
-                en: 'Get light soon after waking and start with a short consistent duration.',
-              ),
+              i18n.t('toolbox.sleep.sheets.lightTimerHint'),
             ),
             const SizedBox(height: 16),
             Wrap(
@@ -182,8 +170,8 @@ class _MorningLightTimerSheetState
                   ),
                   label: Text(
                     _timer == null
-                        ? pickSleepText(i18n, zh: '开始', en: 'Start')
-                        : pickSleepText(i18n, zh: '暂停', en: 'Pause'),
+                        ? i18n.t('toolbox.sleep.core.start')
+                        : i18n.t('toolbox.sleep.core.pause'),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -196,7 +184,7 @@ class _MorningLightTimerSheetState
                     });
                   },
                   icon: const Icon(Icons.replay_rounded),
-                  label: Text(pickSleepText(i18n, zh: '重置', en: 'Reset')),
+                  label: Text(i18n.t('toolbox.sleep.core.cancel')),
                 ),
               ],
             ),
@@ -285,24 +273,20 @@ class _SleepCyclePlannerSheetState
         shrinkWrap: true,
         children: <Widget>[
           Text(
-            pickSleepText(i18n, zh: '90 分钟周期规划', en: '90-minute cycle plan'),
+            i18n.t('toolbox.sleep.sheets.cyclePlan'),
             style: Theme.of(
               context,
             ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
           Text(
-            pickSleepText(
-              i18n,
-              zh: '用完整睡眠周期辅助安排，不需要精确卡点。先固定起床、晨光和低刺激流程更重要。',
-              en: 'Use full cycles as a planning aid, not a precision rule. Stable wake time, morning light, and low stimulation still matter more.',
-            ),
+            i18n.t('toolbox.sleep.sheets.cyclePlanHint'),
           ),
           const SizedBox(height: 16),
           ListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(
-              pickSleepText(i18n, zh: '目标起床时间', en: 'Target wake time'),
+              i18n.t('toolbox.sleep.sheets.targetWake'),
             ),
             subtitle: Text(sleepTimeOfDayLabel(_targetWakeTime)),
             trailing: const Icon(Icons.alarm_rounded),
@@ -318,7 +302,7 @@ class _SleepCyclePlannerSheetState
           ),
           const SizedBox(height: 10),
           Text(
-            pickSleepText(i18n, zh: '预留入睡缓冲', en: 'Settle buffer'),
+            i18n.t('toolbox.sleep.sheets.settleBuffer'),
             style: Theme.of(
               context,
             ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
@@ -339,27 +323,15 @@ class _SleepCyclePlannerSheetState
           ),
           const SizedBox(height: 18),
           _SleepCycleSection(
-            title: pickSleepText(
-              i18n,
-              zh: '反推今晚关灯',
-              en: 'Back-plan lights off',
-            ),
-            subtitle: pickSleepText(
-              i18n,
-              zh: '按目标起床时间倒推，优先选择你现实能做到的一档。',
-              en: 'Back-plan from wake time and choose the option you can actually do.',
-            ),
+            title: i18n.t('toolbox.sleep.sheets.backPlanLightsOff'),
+            subtitle: i18n.t('toolbox.sleep.sheets.backPlanHint'),
             options: bedtimeOptions,
             i18n: i18n,
           ),
           const SizedBox(height: 14),
           _SleepCycleSection(
-            title: pickSleepText(i18n, zh: '如果现在就睡', en: 'If you sleep now'),
-            subtitle: pickSleepText(
-              i18n,
-              zh: '适合夜里已经很累时快速看一眼，不要为了等整点继续熬。',
-              en: 'Useful when you are already tired. Do not stay up just to hit a perfect time.',
-            ),
+            title: i18n.t('toolbox.sleep.sheets.sleepNow'),
+            subtitle: i18n.t('toolbox.sleep.sheets.sleepNowHint'),
             options: wakeOptions,
             i18n: i18n,
           ),
@@ -497,7 +469,7 @@ class _SleepinessDecisionSheetState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              pickSleepText(i18n, zh: '我该离床吗', en: 'Should I leave bed'),
+              i18n.t('toolbox.sleep.sheets.leaveBed'),
               style: Theme.of(
                 context,
               ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
@@ -507,11 +479,7 @@ class _SleepinessDecisionSheetState
               contentPadding: EdgeInsets.zero,
               value: _awakeLong,
               title: Text(
-                pickSleepText(
-                  i18n,
-                  zh: '我已经清醒了一会',
-                  en: 'I have been awake for a while',
-                ),
+                i18n.t('toolbox.sleep.sheets.awakeAWhile'),
               ),
               onChanged: (value) => setState(() => _awakeLong = value ?? false),
             ),
@@ -519,7 +487,7 @@ class _SleepinessDecisionSheetState
               contentPadding: EdgeInsets.zero,
               value: _sleepy,
               title: Text(
-                pickSleepText(i18n, zh: '我现在还是困的', en: 'I still feel sleepy'),
+                i18n.t('toolbox.sleep.sheets.stillSleepy'),
               ),
               onChanged: (value) => setState(() => _sleepy = value ?? false),
             ),
@@ -527,7 +495,7 @@ class _SleepinessDecisionSheetState
               contentPadding: EdgeInsets.zero,
               value: _mindBusy,
               title: Text(
-                pickSleepText(i18n, zh: '脑子很忙', en: 'My mind is busy'),
+                i18n.t('toolbox.sleep.sheets.busyMind'),
               ),
               onChanged: (value) => setState(() => _mindBusy = value ?? false),
             ),
@@ -535,11 +503,7 @@ class _SleepinessDecisionSheetState
               contentPadding: EdgeInsets.zero,
               value: _bodyUncomfortable,
               title: Text(
-                pickSleepText(
-                  i18n,
-                  zh: '身体很热/紧/不舒服',
-                  en: 'My body feels hot, tense, or uncomfortable',
-                ),
+                i18n.t('toolbox.sleep.sheets.bodyUncomfortable'),
               ),
               onChanged: (value) =>
                   setState(() => _bodyUncomfortable = value ?? false),
@@ -564,30 +528,14 @@ class _SleepinessDecisionSheetState
 
   String _buildRecommendation(AppI18n i18n) {
     if (_bodyUncomfortable) {
-      return pickSleepText(
-        i18n,
-        zh: '先处理热、冷、紧绷或不适，再判断要不要离床。',
-        en: 'Fix heat, discomfort, or tension first, then decide whether to leave bed.',
-      );
+      return i18n.t('toolbox.sleep.sheets.adviceUncomfortable');
     }
     if (_awakeLong && !_sleepy) {
-      return pickSleepText(
-        i18n,
-        zh: '更像是已经完全清醒。先离床做低刺激活动，等困意回来再回床。',
-        en: 'This looks more like full wakefulness. Leave bed for a low-stimulation activity and return when sleepy.',
-      );
+      return i18n.t('toolbox.sleep.sheets.adviceAwake');
     }
     if (_mindBusy) {
-      return pickSleepText(
-        i18n,
-        zh: '先不要在床上继续想问题。把念头停放，回到呼吸。',
-        en: 'Do not keep thinking in bed. Park the thought, then return to breathing.',
-      );
+      return i18n.t('toolbox.sleep.sheets.adviceBusy');
     }
-    return pickSleepText(
-      i18n,
-      zh: '如果你还困，先保持低刺激，不急着做更多事。',
-      en: 'If you are still sleepy, keep things low-stim and avoid doing more.',
-    );
+    return i18n.t('toolbox.sleep.sheets.adviceSleepy');
   }
 }

@@ -345,21 +345,9 @@ class _SoothingMusicV2PageState extends ConsumerState<SoothingMusicV2Page>
 
   String _playbackModeLabel(AppI18n i18n, SoothingPlaybackMode mode) {
     return switch (mode) {
-      SoothingPlaybackMode.singleLoop => pickUiText(
-        i18n,
-        zh: '单曲循环',
-        en: 'Single loop',
-      ),
-      SoothingPlaybackMode.modeCycle => pickUiText(
-        i18n,
-        zh: '主题内顺播',
-        en: 'Mode cycle',
-      ),
-      SoothingPlaybackMode.arrangement => pickUiText(
-        i18n,
-        zh: '编排播放',
-        en: 'Arrangement',
-      ),
+      SoothingPlaybackMode.singleLoop => i18n.t('toolbox.sound.soothing.playback_single_loop'),
+      SoothingPlaybackMode.modeCycle => i18n.t('toolbox.sound.soothing.playback_mode_cycle'),
+      SoothingPlaybackMode.arrangement => i18n.t('toolbox.sound.soothing.playback_arrangement'),
     };
   }
 
@@ -369,25 +357,13 @@ class _SoothingMusicV2PageState extends ConsumerState<SoothingMusicV2Page>
     }
     final steps = _arrangementSteps.length;
     if (steps <= 0) {
-      return pickUiText(
-        i18n,
-        zh: '编排播放（未配置）',
-        en: 'Arrangement (not configured)',
-      );
+      return i18n.t('toolbox.sound.soothing.arrangement_not_configured');
     }
     final activeTemplate = _activeArrangementTemplate;
     if (activeTemplate != null) {
-      return pickUiText(
-        i18n,
-        zh: '编排播放 · ${activeTemplate.name}',
-        en: 'Arrangement · ${activeTemplate.name}',
-      );
+      return i18n.t('toolbox.sound.soothing.arrangement_template', params: <String, Object?>{'name': activeTemplate.name});
     }
-    return pickUiText(
-      i18n,
-      zh: '编排播放 · $steps 段',
-      en: 'Arrangement · $steps steps',
-    );
+    return i18n.t('toolbox.sound.soothing.arrangement_steps', params: <String, Object?>{'steps': '$steps'});
   }
 
   SoothingPlaybackArrangementTemplate? get _activeArrangementTemplate {
@@ -427,11 +403,14 @@ class _SoothingMusicV2PageState extends ConsumerState<SoothingMusicV2Page>
       1,
       currentStep.repeatCount,
     );
-    return pickUiText(
-      i18n,
-      zh: '第 ${currentIndex + 1}/${_arrangementSteps.length} 段 · ${currentMode.title(i18n)} · $trackLabel · $repeat/${currentStep.repeatCount} 次',
-      en: 'Step ${currentIndex + 1}/${_arrangementSteps.length} · ${currentMode.title(i18n)} · $trackLabel · $repeat/${currentStep.repeatCount}',
-    );
+    return i18n.t('toolbox.sound.soothing.arrangement_progress', params: <String, Object?>{
+      'current': '${currentIndex + 1}',
+      'total': '${_arrangementSteps.length}',
+      'mode': currentMode.title(i18n),
+      'track': trackLabel,
+      'repeat': '$repeat',
+      'max': '${currentStep.repeatCount}',
+    });
   }
 
   void _setPlaybackMode(SoothingPlaybackMode mode) {
@@ -623,7 +602,7 @@ class _SoothingMusicV2PageState extends ConsumerState<SoothingMusicV2Page>
         ),
       ),
       PopupMenuButton<_SoothingPageMenuAction>(
-        tooltip: pickUiText(i18n, zh: '播放设置', en: 'Playback settings'),
+        tooltip: i18n.t('toolbox.sound.soothing.btn_playback_settings'),
         icon: Icon(
           Icons.more_vert_rounded,
           color: _fullscreen ? Colors.white : const Color(0xFF10263A),
@@ -660,31 +639,29 @@ class _SoothingMusicV2PageState extends ConsumerState<SoothingMusicV2Page>
           CheckedPopupMenuItem<_SoothingPageMenuAction>(
             value: _SoothingPageMenuAction.playbackSingleLoop,
             checked: _playbackMode == SoothingPlaybackMode.singleLoop,
-            child: Text(pickUiText(i18n, zh: '单曲循环', en: 'Single loop')),
+            child: Text(i18n.t('toolbox.sound.soothing.playback_single_loop')),
           ),
           CheckedPopupMenuItem<_SoothingPageMenuAction>(
             value: _SoothingPageMenuAction.playbackModeCycle,
             checked: _playbackMode == SoothingPlaybackMode.modeCycle,
-            child: Text(pickUiText(i18n, zh: '主题内顺播', en: 'Mode cycle')),
+            child: Text(i18n.t('toolbox.sound.soothing.playback_mode_cycle')),
           ),
           CheckedPopupMenuItem<_SoothingPageMenuAction>(
             value: _SoothingPageMenuAction.playbackArrangement,
             checked: _playbackMode == SoothingPlaybackMode.arrangement,
-            child: Text(pickUiText(i18n, zh: '编排播放', en: 'Arrangement')),
+            child: Text(i18n.t('toolbox.sound.soothing.playback_arrangement')),
           ),
           const PopupMenuDivider(),
           PopupMenuItem<_SoothingPageMenuAction>(
             value: _SoothingPageMenuAction.editArrangement,
-            child: Text(pickUiText(i18n, zh: '编辑编排', en: 'Edit arrangement')),
+            child: Text(i18n.t('toolbox.sound.soothing.btn_edit_arrangement')),
           ),
           PopupMenuItem<_SoothingPageMenuAction>(
             value: _SoothingPageMenuAction.toggleFullscreen,
             child: Text(
-              pickUiText(
-                i18n,
-                zh: _fullscreen ? '退出全屏' : '进入全屏',
-                en: _fullscreen ? 'Exit fullscreen' : 'Enter fullscreen',
-              ),
+              _fullscreen
+                  ? i18n.t('toolbox.sound.soothing.btn_fullscreen_exit')
+                  : i18n.t('toolbox.sound.soothing.btn_fullscreen_enter'),
             ),
           ),
           const PopupMenuDivider(),

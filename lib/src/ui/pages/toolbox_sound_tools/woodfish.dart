@@ -276,7 +276,8 @@ class _WoodfishToolState extends State<_WoodfishTool>
     required String zh,
     required String en,
   }) {
-    return pickUiText(_toolboxI18n(context, listen: false), zh: zh, en: en);
+    final i18n = _toolboxI18n(context, listen: false);
+    return i18n.languageCode.startsWith('zh') ? zh : en;
   }
 
   String _modeLabelText(BuildContext context) {

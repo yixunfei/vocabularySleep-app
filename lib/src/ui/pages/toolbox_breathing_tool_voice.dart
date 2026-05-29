@@ -42,29 +42,17 @@ extension _BreathingVoiceHelpers on _BreathingPracticeReleaseCardState {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Text(
-            pickUiText(
-              i18n,
-              zh: '当前语音仅支持中文',
-              en: 'Voice is Chinese-only for now',
-            ),
-          ),
-          content: Text(
-            pickUiText(
-              i18n,
-              zh: '呼吸阶段语音目前只提供中文录音。你仍可继续使用当前界面语言的文案与计时，但语音会播放中文引导。',
-              en: 'Breathing voice guidance is currently recorded in Chinese only. The interface can stay in your current language, but spoken cues will play in Chinese.',
-            ),
-          ),
+          title: Text(i18n.t('toolbox.breathing.voice_only_chinese_title')),
+          content: Text(i18n.t('toolbox.breathing.voice_only_chinese_body')),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(pickUiText(i18n, zh: '关闭语音', en: 'Turn voice off')),
+              child: Text(i18n.t('toolbox.breathing.turn_voice_off')),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
               child: Text(
-                pickUiText(i18n, zh: '继续使用中文语音', en: 'Keep Chinese voice'),
+                i18n.t('toolbox.breathing.keep_chinese_voice'),
               ),
             ),
           ],

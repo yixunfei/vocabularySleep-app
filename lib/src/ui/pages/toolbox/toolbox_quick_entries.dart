@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../i18n/app_i18n.dart';
 import '../../../state/app_state.dart';
 import '../../module/module_access.dart';
-import '../../ui_copy.dart';
 import 'toolbox_page_models.dart';
 import 'toolbox_ui_components.dart';
 import 'toolbox_ui_tokens.dart';
@@ -87,13 +86,9 @@ class ToolboxQuickEntryPanel extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        pickUiText(
-                          i18n,
-                          zh: accepting ? '松手加入快速入口' : '常用快速入口',
-                          en: accepting
-                              ? 'Release to add shortcut'
-                              : 'Frequent shortcuts',
-                        ),
+                        accepting
+                            ? i18n.t('toolbox.hub.quick.release_hint')
+                            : i18n.t('toolbox.hub.quick.title'),
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
@@ -107,18 +102,14 @@ class ToolboxQuickEntryPanel extends StatelessWidget {
                           ? null
                           : () => _showQuickEntrySheet(context),
                       icon: const Icon(Icons.add_rounded),
-                      label: Text(pickUiText(i18n, zh: '管理', en: 'Manage')),
+                      label: Text(i18n.t('toolbox.hub.quick.manage')),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 if (quickEntries.isEmpty)
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '把常用工具拖到这里，打开会更快。',
-                      en: 'Drag go-to tools here for faster access.',
-                    ),
+                    i18n.t('toolbox.hub.quick.empty_hint'),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                       height: 1.35,
@@ -178,18 +169,14 @@ class ToolboxQuickEntryPanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickUiText(i18n, zh: '选择快速入口', en: 'Choose shortcuts'),
+                      i18n.t('toolbox.hub.quick.choose_title'),
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '勾选后会显示在工具箱首页顶部。',
-                        en: 'Selected tools appear near the top of the Toolbox home.',
-                      ),
+                      i18n.t('toolbox.hub.quick.choose_desc'),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -248,7 +235,7 @@ class ToolboxQuickEntryPanel extends StatelessWidget {
                                   },
                             icon: const Icon(Icons.clear_rounded),
                             label: Text(
-                              pickUiText(i18n, zh: '清空', en: 'Clear'),
+                              i18n.t('toolbox.hub.quick.clear'),
                             ),
                           ),
                         ),
@@ -260,7 +247,7 @@ class ToolboxQuickEntryPanel extends StatelessWidget {
                             ),
                             onPressed: saveAndClose,
                             icon: const Icon(Icons.check_rounded),
-                            label: Text(pickUiText(i18n, zh: '保存', en: 'Save')),
+                            label: Text(i18n.t('toolbox.hub.quick.save')),
                           ),
                         ),
                       ],

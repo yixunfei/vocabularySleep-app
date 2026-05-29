@@ -7,9 +7,9 @@ import '../../models/sleep_daily_log.dart';
 import '../../state/app_state.dart';
 import '../module/module_access.dart';
 import '../widgets/setting_tile.dart';
-import 'sleep_assistant_ui_support.dart';
 import 'sleep_quick_tools.dart';
 import 'sleep_research_library.dart';
+import 'sleep_assistant_ui_support.dart';
 import 'toolbox_tool_shell.dart';
 
 class SleepDailyLogPage extends StatefulWidget {
@@ -241,7 +241,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          pickSleepText(i18n, zh: '睡眠日志已保存', en: 'Sleep log saved'),
+          i18n.t('toolbox.sleep.log.saved'),
         ),
       ),
     );
@@ -273,7 +273,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
   void _appendNoteTag(String tag) {
     final current = _notesController.text.trim();
     setState(() {
-      _notesController.text = current.isEmpty ? tag : '$current；$tag';
+      _notesController.text = current.isEmpty ? tag : '$current�?tag';
       _notesController.selection = TextSelection.collapsed(
         offset: _notesController.text.length,
       );
@@ -295,12 +295,8 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
     if (!appState.isModuleEnabled(ModuleIds.toolboxSleepAssistant)) {
       return themed(
         ToolboxToolPage(
-          title: pickSleepText(i18n, zh: '睡眠助手', en: 'Sleep assistant'),
-          subtitle: pickSleepText(
-            i18n,
-            zh: '模块已停用，无法继续访问睡眠助手页面。',
-            en: 'This module is disabled and unavailable right now.',
-          ),
+          title: i18n.t('toolbox.sleep.core.title'),
+          subtitle: i18n.t('toolbox.sleep.assessment.moduleDisabled'),
           child: ModuleDisabledView(
             i18n: i18n,
             moduleId: ModuleIds.toolboxSleepAssistant,
@@ -318,12 +314,8 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
     final latest = appState.latestSleepDailyLog;
     return themed(
       ToolboxToolPage(
-        title: pickSleepText(i18n, zh: '连续睡眠日志', en: 'Continuous sleep log'),
-        subtitle: pickSleepText(
-          i18n,
-          zh: '围绕日期连续编辑同一份日志，用更细的时间点和影响因子复盘昨晚。',
-          en: 'Edit logs continuously by date with finer time points and behavior factors.',
-        ),
+        title: i18n.t('toolbox.sleep.log.title'),
+        subtitle: i18n.t('toolbox.sleep.log.intro'),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -338,17 +330,17 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                       Chip(label: Text(sleepDateLabel(latest.dateKey))),
                       Chip(
                         label: Text(
-                          '${pickSleepText(i18n, zh: '睡眠', en: 'Sleep')} ${sleepMinutesLabel(latest.estimatedTotalSleepMinutes)}',
+                          '${i18n.t('toolbox.sleep.log.sleep')} ${sleepMinutesLabel(latest.estimatedTotalSleepMinutes)}',
                         ),
                       ),
                       Chip(
                         label: Text(
-                          '${pickSleepText(i18n, zh: '效率', en: 'Efficiency')} ${sleepPercentLabel(latest.sleepEfficiency)}',
+                          '${i18n.t('toolbox.sleep.log.efficiency')} ${sleepPercentLabel(latest.sleepEfficiency)}',
                         ),
                       ),
                       Chip(
                         label: Text(
-                          '${pickSleepText(i18n, zh: '晨间精神', en: 'Energy')} ${sleepScoreLabel(latest.morningEnergy)}',
+                          '${i18n.t('toolbox.sleep.log.morningEnergy')} ${sleepScoreLabel(latest.morningEnergy)}',
                         ),
                       ),
                     ],
@@ -366,7 +358,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                       children: <Widget>[
                         Expanded(
                           child: Text(
-                            pickSleepText(i18n, zh: '编辑日期', en: 'Editing date'),
+                            i18n.t('toolbox.sleep.log.editingDate'),
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                         ),
@@ -403,16 +395,12 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickSleepText(i18n, zh: '30 秒最小日志', en: '30-second log'),
+                      i18n.t('toolbox.sleep.log.log30sec'),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      pickSleepText(
-                        i18n,
-                        zh: '先点一个最接近昨晚的状态，再补一两个细节即可。',
-                        en: 'Tap the closest state first, then add one or two details.',
-                      ),
+                      i18n.t('toolbox.sleep.log.log30secHint'),
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -421,11 +409,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                       children:
                           <_SleepLogPreset>[
                                 _SleepLogPreset(
-                                  label: pickSleepText(
-                                    i18n,
-                                    zh: '还可以',
-                                    en: 'Okay',
-                                  ),
+                                  label: i18n.t('toolbox.sleep.log.presetOkay'),
                                   sleepMinutes: 420,
                                   latencyMinutes: 20,
                                   wakeCount: 1,
@@ -436,11 +420,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                                   worryLoadLevel: 2,
                                 ),
                                 _SleepLogPreset(
-                                  label: pickSleepText(
-                                    i18n,
-                                    zh: '睡得少',
-                                    en: 'Short',
-                                  ),
+                                  label: i18n.t('toolbox.sleep.log.presetShort'),
                                   sleepMinutes: 330,
                                   latencyMinutes: 45,
                                   wakeCount: 2,
@@ -452,11 +432,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                                   lateScreenExposure: true,
                                 ),
                                 _SleepLogPreset(
-                                  label: pickSleepText(
-                                    i18n,
-                                    zh: '夜醒多',
-                                    en: 'Woke often',
-                                  ),
+                                  label: i18n.t('toolbox.sleep.log.presetWokeOften'),
                                   sleepMinutes: 390,
                                   latencyMinutes: 20,
                                   wakeCount: 3,
@@ -485,11 +461,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                       onPressed: _save,
                       icon: const Icon(Icons.done_rounded),
                       label: Text(
-                        pickSleepText(
-                          i18n,
-                          zh: '用当前内容保存',
-                          en: 'Save current log',
-                        ),
+                        i18n.t('toolbox.sleep.log.saveCurrent'),
                       ),
                     ),
                   ],
@@ -504,12 +476,12 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickSleepText(i18n, zh: '时间轴', en: 'Timeline'),
+                      i18n.t('toolbox.sleep.log.timeline'),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
                     _TimeRow(
-                      label: pickSleepText(i18n, zh: '上床', en: 'Bedtime'),
+                       label: i18n.t('toolbox.sleep.log.bedtime'),
                       value: _bedtime,
                       onTap: () => _pickTime(
                         initial: _bedtime,
@@ -517,7 +489,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                       ),
                     ),
                     _TimeRow(
-                      label: pickSleepText(i18n, zh: '熄灯', en: 'Lights off'),
+                       label: i18n.t('toolbox.sleep.log.lightsOff'),
                       value: _lightsOff,
                       onTap: () => _pickTime(
                         initial: _lightsOff,
@@ -525,7 +497,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                       ),
                     ),
                     _TimeRow(
-                      label: pickSleepText(i18n, zh: '估计入睡', en: 'Sleep onset'),
+                       label: i18n.t('toolbox.sleep.log.sleepOnset'),
                       value: _sleepOnset,
                       onTap: () => _pickTime(
                         initial: _sleepOnset,
@@ -533,7 +505,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                       ),
                     ),
                     _TimeRow(
-                      label: pickSleepText(i18n, zh: '最后醒来', en: 'Final wake'),
+                       label: i18n.t('toolbox.sleep.log.finalWake'),
                       value: _finalWake,
                       onTap: () => _pickTime(
                         initial: _finalWake,
@@ -541,7 +513,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                       ),
                     ),
                     _TimeRow(
-                      label: pickSleepText(i18n, zh: '离床', en: 'Out of bed'),
+                       label: i18n.t('toolbox.sleep.log.outOfBed'),
                       value: _outOfBed,
                       onTap: () => _pickTime(
                         initial: _outOfBed,
@@ -560,17 +532,13 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickSleepText(i18n, zh: '常见数值', en: 'Common values'),
+                      i18n.t('toolbox.sleep.log.commonValues'),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 10),
                     _NumberField(
                       controller: _sleepMinutesController,
-                      label: pickSleepText(
-                        i18n,
-                        zh: '估计总睡眠分钟数',
-                        en: 'Estimated sleep minutes',
-                      ),
+                       label: i18n.t('toolbox.sleep.log.estimatedSleepMinutes'),
                     ),
                     _QuickValueChips(
                       values: const <int>[330, 360, 390, 420, 450, 480],
@@ -582,11 +550,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                     const SizedBox(height: 12),
                     _NumberField(
                       controller: _latencyController,
-                      label: pickSleepText(
-                        i18n,
-                        zh: '入睡潜伏期（分钟）',
-                        en: 'Sleep latency (minutes)',
-                      ),
+                       label: i18n.t('toolbox.sleep.log.sleepLatency'),
                     ),
                     _QuickValueChips(
                       values: const <int>[10, 20, 30, 45, 60],
@@ -597,12 +561,12 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                     const SizedBox(height: 12),
                     _NumberField(
                       controller: _wakeCountController,
-                      label: pickSleepText(i18n, zh: '夜醒次数', en: 'Wake count'),
+                       label: i18n.t('toolbox.sleep.log.wakeCount'),
                     ),
                     _QuickValueChips(
                       values: const <int>[0, 1, 2, 3, 4],
                       labelFor: (value) => value == 4
-                          ? pickSleepText(i18n, zh: '4+', en: '4+')
+                          ? i18n.t('toolbox.sleep.log.fourPlus')
                           : '$value',
                       onSelected: (value) =>
                           _setNumber(_wakeCountController, value),
@@ -610,11 +574,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                     const SizedBox(height: 12),
                     _NumberField(
                       controller: _wakeMinutesController,
-                      label: pickSleepText(
-                        i18n,
-                        zh: '夜醒总时长（分钟）',
-                        en: 'Wake time total (minutes)',
-                      ),
+                       label: i18n.t('toolbox.sleep.log.wakeTotal'),
                     ),
                     _QuickValueChips(
                       values: const <int>[0, 10, 20, 40, 60],
@@ -625,11 +585,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                     const SizedBox(height: 12),
                     _NumberField(
                       controller: _napMinutesController,
-                      label: pickSleepText(
-                        i18n,
-                        zh: '午睡分钟数',
-                        en: 'Nap minutes',
-                      ),
+                       label: i18n.t('toolbox.sleep.log.napMinutes'),
                     ),
                     _QuickValueChips(
                       values: const <int>[0, 10, 20, 30, 45],
@@ -640,11 +596,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                     const SizedBox(height: 12),
                     _NumberField(
                       controller: _windDownMinutesController,
-                      label: pickSleepText(
-                        i18n,
-                        zh: '睡前减压时长（分钟）',
-                        en: 'Wind-down minutes',
-                      ),
+                       label: i18n.t('toolbox.sleep.log.windDownMinutes'),
                     ),
                     _QuickValueChips(
                       values: const <int>[0, 8, 15, 30, 45],
@@ -657,12 +609,8 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                       controller: _notesController,
                       maxLines: 3,
                       decoration: InputDecoration(
-                        labelText: pickSleepText(i18n, zh: '备注', en: 'Notes'),
-                        hintText: pickSleepText(
-                          i18n,
-                          zh: '例如：加班、出差、反酸、房间太热、被噪声拉醒',
-                          en: 'Example: overtime, travel, reflux, room too hot, woken by noise',
-                        ),
+                         labelText: i18n.t('toolbox.sleep.log.contextNotes'),
+                        hintText: i18n.t('toolbox.sleep.log.notesHint'),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -671,16 +619,12 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                       runSpacing: 8,
                       children:
                           <String>[
-                                pickSleepText(i18n, zh: '加班', en: 'Overtime'),
-                                pickSleepText(i18n, zh: '房间太热', en: 'Room hot'),
-                                pickSleepText(i18n, zh: '噪声', en: 'Noise'),
-                                pickSleepText(i18n, zh: '出差', en: 'Travel'),
-                                pickSleepText(i18n, zh: '反酸', en: 'Reflux'),
-                                pickSleepText(
-                                  i18n,
-                                  zh: '梦多',
-                                  en: 'Busy dreams',
-                                ),
+                                i18n.t('toolbox.sleep.log.overtime'),
+                                i18n.t('toolbox.sleep.log.roomHot'),
+                                i18n.t('toolbox.sleep.log.noise'),
+                                i18n.t('toolbox.sleep.log.travel'),
+                                i18n.t('toolbox.sleep.log.reflux'),
+                                i18n.t('toolbox.sleep.log.tagDreams'),
                               ]
                               .map(
                                 (tag) => ActionChip(
@@ -702,12 +646,12 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickSleepText(i18n, zh: '主观评分', en: 'Subjective scores'),
+                      i18n.t('toolbox.sleep.log.subjectiveScores'),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      '${pickSleepText(i18n, zh: '晨间精神', en: 'Morning energy')} ${_morningEnergy.round()}/5',
+                      '${i18n.t('toolbox.sleep.log.morningEnergy')} ${_morningEnergy.round()}/5',
                     ),
                     Slider(
                       value: _morningEnergy,
@@ -718,7 +662,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                           setState(() => _morningEnergy = value),
                     ),
                     Text(
-                      '${pickSleepText(i18n, zh: '白天困倦', en: 'Daytime sleepiness')} ${_daytimeSleepiness.round()}/5',
+                      '${i18n.t('toolbox.sleep.log.daytimeSleepiness')} ${_daytimeSleepiness.round()}/5',
                     ),
                     Slider(
                       value: _daytimeSleepiness,
@@ -729,7 +673,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                           setState(() => _daytimeSleepiness = value),
                     ),
                     Text(
-                      '${pickSleepText(i18n, zh: '当日压力峰值', en: 'Stress peak')} ${_stressPeakLevel.round()}/5',
+                      '${i18n.t('toolbox.sleep.log.stressPeak')} ${_stressPeakLevel.round()}/5',
                     ),
                     Slider(
                       value: _stressPeakLevel,
@@ -740,7 +684,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                           setState(() => _stressPeakLevel = value),
                     ),
                     Text(
-                      '${pickSleepText(i18n, zh: '担忧负荷', en: 'Worry load')} ${_worryLoadLevel.round()}/5',
+                      '${i18n.t('toolbox.sleep.log.worryLoad')} ${_worryLoadLevel.round()}/5',
                     ),
                     Slider(
                       value: _worryLoadLevel,
@@ -756,11 +700,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
             ),
             const SizedBox(height: 12),
             _DailySwitchGroup(
-              title: pickSleepText(
-                i18n,
-                zh: '行为与环境因子',
-                en: 'Behavior and environment',
-              ),
+              title: i18n.t('toolbox.sleep.log.behaviorEnv'),
               children: <Widget>[
                 _FactorSwitch(
                   value: _caffeineAfterCutoff,
@@ -792,42 +732,26 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                 _FactorSwitch(
                   value: _heavyDinner,
                   title: sleepDailyFactorTitle(i18n, 'heavyDinner'),
-                  subtitle: pickSleepText(
-                    i18n,
-                    zh: '太晚、太重或太撑都会拖慢入睡。',
-                    en: 'A heavy or late dinner can slow down sleep onset.',
-                  ),
+                   subtitle: i18n.t('toolbox.sleep.log.heavyDinnerHint'),
                   onChanged: (value) => setState(() => _heavyDinner = value),
                 ),
                 _FactorSwitch(
                   value: _intenseExerciseLate,
                   title: sleepDailyFactorTitle(i18n, 'intenseExerciseLate'),
-                  subtitle: pickSleepText(
-                    i18n,
-                    zh: '太晚高强度运动可能让身体还没降下来。',
-                    en: 'Very late intense exercise can keep the body activated.',
-                  ),
+                   subtitle: i18n.t('toolbox.sleep.log.intenseExerciseHint'),
                   onChanged: (value) =>
                       setState(() => _intenseExerciseLate = value),
                 ),
                 _FactorSwitch(
                   value: _hotBathDone,
                   title: sleepDailyFactorTitle(i18n, 'hotBathDone'),
-                  subtitle: pickSleepText(
-                    i18n,
-                    zh: '如果配合更安静的过渡，通常比硬躺更有帮助。',
-                    en: 'Used as a transition, it can help more than simply forcing bed.',
-                  ),
+                   subtitle: i18n.t('toolbox.sleep.log.hotBathHint'),
                   onChanged: (value) => setState(() => _hotBathDone = value),
                 ),
                 _FactorSwitch(
                   value: _stretchingDone,
                   title: sleepDailyFactorTitle(i18n, 'stretchingDone'),
-                  subtitle: pickSleepText(
-                    i18n,
-                    zh: '轻柔拉伸适合降低身体残余紧绷。',
-                    en: 'Gentle stretching can lower residual tension.',
-                  ),
+                   subtitle: i18n.t('toolbox.sleep.log.stretchingHint'),
                   onChanged: (value) => setState(() => _stretchingDone = value),
                 ),
                 _FactorSwitch(
@@ -839,32 +763,20 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                 _FactorSwitch(
                   value: _bedroomTooHot,
                   title: sleepDailyFactorTitle(i18n, 'bedroomTooHot'),
-                  subtitle: pickSleepText(
-                    i18n,
-                    zh: '卧室偏热很容易拖慢入睡并增加夜醒。',
-                    en: 'A hot room can delay sleep and increase awakenings.',
-                  ),
+                   subtitle: i18n.t('toolbox.sleep.log.bedroomHotHint'),
                   onChanged: (value) => setState(() => _bedroomTooHot = value),
                 ),
                 _FactorSwitch(
                   value: _bedroomTooBright,
                   title: sleepDailyFactorTitle(i18n, 'bedroomTooBright'),
-                  subtitle: pickSleepText(
-                    i18n,
-                    zh: '亮度过高会让睡意更难稳定下来。',
-                    en: 'A bright room can make sleepiness less stable.',
-                  ),
+                   subtitle: i18n.t('toolbox.sleep.log.bedroomBrightHint'),
                   onChanged: (value) =>
                       setState(() => _bedroomTooBright = value),
                 ),
                 _FactorSwitch(
                   value: _bedroomTooNoisy,
                   title: sleepDailyFactorTitle(i18n, 'bedroomTooNoisy'),
-                  subtitle: pickSleepText(
-                    i18n,
-                    zh: '若是噪声不稳定，白噪音可能比忍耐更有效。',
-                    en: 'If noise is inconsistent, white noise may help more than tolerating it.',
-                  ),
+                   subtitle: i18n.t('toolbox.sleep.log.bedroomNoisyHint'),
                   onChanged: (value) =>
                       setState(() => _bedroomTooNoisy = value),
                 ),
@@ -884,7 +796,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickSleepText(i18n, zh: '实用工具', en: 'Practical tools'),
+                      i18n.t('toolbox.sleep.log.practicalTools'),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 10),
@@ -893,20 +805,12 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                       runSpacing: 10,
                       children: <Widget>[
                         SleepQuickToolButton(
-                          title: pickSleepText(
-                            i18n,
-                            zh: '白噪音',
-                            en: 'White noise',
-                          ),
+                          title: i18n.t('toolbox.sleep.log.whiteNoise'),
                           icon: Icons.graphic_eq_rounded,
                           onTap: () => showSleepWhiteNoiseSheet(context),
                         ),
                         SleepQuickToolButton(
-                          title: pickSleepText(
-                            i18n,
-                            zh: '咖啡因截止线',
-                            en: 'Caffeine cutoff',
-                          ),
+                          title: i18n.t('toolbox.sleep.log.caffeineCutoff'),
                           icon: Icons.local_cafe_rounded,
                           onTap: () => showCaffeineCutoffCalculatorSheet(
                             context,
@@ -927,7 +831,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickSleepText(i18n, zh: '直接建议', en: 'Direct advice'),
+                      i18n.t('toolbox.sleep.log.directAdvice'),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 12),
@@ -940,7 +844,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
             FilledButton.icon(
               onPressed: _save,
               icon: const Icon(Icons.save_rounded),
-              label: Text(pickSleepText(i18n, zh: '保存日志', en: 'Save log')),
+              label: Text(i18n.t('toolbox.sleep.log.saveLog')),
             ),
           ],
         ),

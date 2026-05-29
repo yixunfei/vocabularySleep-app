@@ -119,77 +119,53 @@ class _ViolinToolState extends State<_ViolinTool> {
 
   String _presetLabel(AppI18n i18n, _ViolinPreset preset) {
     return switch (preset.id) {
-      'warm_legato' => pickUiText(i18n, zh: '温暖连弓', en: 'Warm legato'),
-      'glass_harmonic' => pickUiText(i18n, zh: '空灵泛音', en: 'Glass harmonic'),
-      _ => pickUiText(i18n, zh: '独奏运弓', en: 'Solo bow'),
+      'warm_legato' => i18n.t('toolbox.sound.violin.warm_legato'),
+      'glass_harmonic' => i18n.t('toolbox.sound.violin.glass_harmonic'),
+      _ => i18n.t('toolbox.sound.violin.solo_bow'),
     };
   }
 
   String _presetSubtitle(AppI18n i18n, _ViolinPreset preset) {
     return switch (preset.id) {
-      'warm_legato' => pickUiText(
-        i18n,
-        zh: '更柔和的弓压和更长的尾音，适合慢速歌唱性旋律。',
-        en: 'Softer bow pressure with a longer tail for lyrical lines.',
-      ),
-      'glass_harmonic' => pickUiText(
-        i18n,
-        zh: '更亮的泛音和更清晰的前缘，适合空灵铺底。',
-        en: 'Brighter harmonics with a cleaner edge for airy textures.',
-      ),
-      _ => pickUiText(
-        i18n,
-        zh: '平衡的独奏音色，适合旋律滑音。',
-        en: 'Balanced solo tone for melodic glides.',
-      ),
+      'warm_legato' => i18n.t('toolbox.sound.violin.softer_bow_pressure_with_a'),
+      'glass_harmonic' => i18n.t('toolbox.sound.violin.brighter_harmonics_with_a_cleaner'),
+      _ => i18n.t('toolbox.sound.violin.balanced_solo_tone_for_melodic'),
     };
   }
 
   String _scaleLabel(AppI18n i18n, String scaleId) {
     return switch (scaleId) {
-      'minor' => pickUiText(i18n, zh: '小调', en: 'Minor'),
-      'dorian' => pickUiText(i18n, zh: '多利亚', en: 'Dorian'),
-      'pentatonic' => pickUiText(i18n, zh: '五声音阶', en: 'Pentatonic'),
-      'chromatic' => pickUiText(i18n, zh: '半音阶', en: 'Chromatic'),
-      _ => pickUiText(i18n, zh: '大调', en: 'Major'),
+      'minor' => i18n.t('toolbox.sound.violin.minor'),
+      'dorian' => i18n.t('toolbox.sound.flute.dorian'),
+      'pentatonic' => i18n.t('toolbox.sound.flute.pentatonic'),
+      'chromatic' => i18n.t('toolbox.sound.violin.chromatic'),
+      _ => i18n.t('toolbox.sound.flute.major'),
     };
   }
 
   String _styleLabel(AppI18n i18n, String styleId) {
     return switch (styleId) {
-      'warm' => pickUiText(i18n, zh: '柔暖', en: 'Warm'),
-      'glass' => pickUiText(i18n, zh: '晶亮', en: 'Glass'),
-      _ => pickUiText(i18n, zh: '独奏', en: 'Solo'),
+      'warm' => i18n.t('toolbox.sound.violin.warm'),
+      'glass' => i18n.t('toolbox.sound.violin.glass'),
+      _ => i18n.t('toolbox.sound.violin.solo'),
     };
   }
 
   String _positionLabel(AppI18n i18n, int positionIndex) {
-    return pickUiText(
-      i18n,
-      zh: '把位 ${positionIndex + 1}',
-      en: 'Position ${positionIndex + 1}',
-    );
+    return i18n.t('toolbox.sound.violin.position_2');
   }
 
   String _variantLabel(AppI18n i18n, String variant) {
     return switch (variant) {
-      'b' => pickUiText(i18n, zh: 'B 亮弓', en: 'B Bright'),
-      _ => pickUiText(i18n, zh: 'A 木质', en: 'A Woody'),
+      'b' => i18n.t('toolbox.sound.violin.b_bright'),
+      _ => i18n.t('toolbox.sound.violin.a_woody'),
     };
   }
 
   String _variantSubtitle(AppI18n i18n) {
     return _toneVariant == 'b'
-        ? pickUiText(
-            i18n,
-            zh: 'B 版前缘更亮、更靠前，适合穿透感更强的独奏。',
-            en: 'Variant B is brighter and more forward for cutting solo lines.',
-          )
-        : pickUiText(
-            i18n,
-            zh: 'A 版琴体更厚、更木质，适合自然独奏与慢速旋律。',
-            en: 'Variant A is woodier and fuller for natural solo phrases.',
-          );
+        ? i18n.t('toolbox.sound.violin.variant_b_is_brighter_and')
+        : i18n.t('toolbox.sound.violin.variant_a_is_woodier_and');
   }
 
   List<int> _notesForString(_ViolinString string) {
@@ -628,11 +604,7 @@ class _ViolinToolState extends State<_ViolinTool> {
                       vertical: 6,
                     ),
                     child: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '双指可触发双音',
-                        en: 'Two fingers enable double-stop',
-                      ),
+                      i18n.t('toolbox.sound.violin.two_fingers_enable_doublestop'),
                       style: theme.textTheme.labelMedium?.copyWith(
                         color: Colors.white,
                       ),
@@ -659,7 +631,7 @@ class _ViolinToolState extends State<_ViolinTool> {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Text(
-          pickUiText(i18n, zh: '小提琴设置', en: 'Violin settings'),
+          i18n.t('toolbox.sound.violin.violin_settings'),
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w800,
           ),
@@ -708,7 +680,7 @@ class _ViolinToolState extends State<_ViolinTool> {
         Text(_presetSubtitle(i18n, preset), style: theme.textTheme.bodySmall),
         const SizedBox(height: 12),
         SectionHeader(
-          title: pickUiText(i18n, zh: 'A/B 微调', en: 'A/B voicing'),
+          title: i18n.t('toolbox.sound.violin.ab_voicing'),
           subtitle: _variantSubtitle(i18n),
         ),
         const SizedBox(height: 8),
@@ -768,11 +740,7 @@ class _ViolinToolState extends State<_ViolinTool> {
         ),
         const SizedBox(height: 14),
         Text(
-          pickUiText(
-            i18n,
-            zh: '弓压 ${(_bow * 100).round()}% · 音色 ${_styleLabel(i18n, preset.styleId)} · ${_variantLabel(i18n, _toneVariant)}',
-            en: 'Bow ${(_bow * 100).round()}% · Tone ${_styleLabel(i18n, preset.styleId)} · ${_variantLabel(i18n, _toneVariant)}',
-          ),
+          i18n.t('toolbox.sound.violin.bow_tone'),
         ),
         Slider(
           value: _bow,
@@ -791,11 +759,7 @@ class _ViolinToolState extends State<_ViolinTool> {
           },
         ),
         Text(
-          pickUiText(
-            i18n,
-            zh: '残响 ${(_reverb * 100).round()}%',
-            en: 'Reverb ${(_reverb * 100).round()}%',
-          ),
+          i18n.t('toolbox.sound.violin.reverb'),
         ),
         Slider(
           value: _reverb,
@@ -954,7 +918,7 @@ class _ViolinToolState extends State<_ViolinTool> {
                         foregroundColor: Colors.white,
                       ),
                       icon: const Icon(Icons.tune_rounded),
-                      label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
+                      label: Text(i18n.t('toolbox.sound.flute.settings')),
                     ),
                   ),
                 ],
@@ -979,15 +943,15 @@ class _ViolinToolState extends State<_ViolinTool> {
                 runSpacing: 10,
                 children: <Widget>[
                   ToolboxMetricCard(
-                    label: pickUiText(i18n, zh: '弦数', en: 'Strings'),
+                    label: i18n.t('toolbox.sound.violin.strings'),
                     value: '${_strings.length}',
                   ),
                   ToolboxMetricCard(
-                    label: pickUiText(i18n, zh: '调式', en: 'Scale'),
+                    label: i18n.t('toolbox.sound.flute.scale'),
                     value: _scaleLabel(i18n, _scaleId),
                   ),
                   ToolboxMetricCard(
-                    label: pickUiText(i18n, zh: '把位', en: 'Position'),
+                    label: i18n.t('toolbox.sound.violin.position'),
                     value: _positionLabel(i18n, _positionIndex),
                   ),
                   ToolboxMetricCard(
@@ -995,7 +959,7 @@ class _ViolinToolState extends State<_ViolinTool> {
                     value: _variantLabel(i18n, _toneVariant),
                   ),
                   ToolboxMetricCard(
-                    label: pickUiText(i18n, zh: '最近音符', en: 'Last note'),
+                    label: i18n.t('toolbox.sound.violin.last_note'),
                     value: _lastNoteLabel ?? '--',
                   ),
                 ],
@@ -1006,20 +970,10 @@ class _ViolinToolState extends State<_ViolinTool> {
                 children: <Widget>[
                   Expanded(
                     child: SectionHeader(
-                      title: pickUiText(
-                        i18n,
-                        zh: '指板舞台',
-                        en: 'Fingerboard stage',
-                      ),
-                      subtitle: pickUiText(
-                        i18n,
-                        zh: compact
-                            ? '手机上支持点按起弓、滑动换音，抬手即停，优先保证演奏连贯。'
-                            : '横向滑动改变量高，纵向切换弦位；现在支持点按即发声、抬手即停。',
-                        en: compact
-                            ? 'Tap to start the bow, slide for pitch, and release to stop on phones.'
-                            : 'Slide horizontally for pitch, vertically for strings, and now start instantly on tap.',
-                      ),
+                      title: i18n.t('toolbox.sound.violin.fingerboard_stage'),
+                      subtitle: compact
+                          ? i18n.t('toolbox.sound.violin.phone_subtitle')
+                          : i18n.t('toolbox.sound.violin.desktop_subtitle'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1027,7 +981,7 @@ class _ViolinToolState extends State<_ViolinTool> {
                     onPressed: () =>
                         _openViolinSettingsSheet(context, i18n, theme),
                     icon: const Icon(Icons.tune_rounded),
-                    label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
+                    label: Text(i18n.t('toolbox.sound.flute.settings')),
                   ),
                 ],
               ),
@@ -1052,7 +1006,7 @@ class _ViolinToolState extends State<_ViolinTool> {
               ),
               const SizedBox(height: 12),
               SectionHeader(
-                title: pickUiText(i18n, zh: 'A/B 微调', en: 'A/B voicing'),
+                title: i18n.t('toolbox.sound.violin.ab_voicing'),
                 subtitle: _variantSubtitle(i18n),
               ),
               const SizedBox(height: 8),
@@ -1082,12 +1036,8 @@ class _ViolinToolState extends State<_ViolinTool> {
               ),
               const SizedBox(height: 14),
               SectionHeader(
-                title: pickUiText(i18n, zh: '调式与把位', en: 'Scale and position'),
-                subtitle: pickUiText(
-                  i18n,
-                  zh: '用调式分类和把位窗口控制手机屏幕中的有效演奏区间。',
-                  en: 'Use scale categories and position windows to keep the fingerboard playable on phones.',
-                ),
+                title: i18n.t('toolbox.sound.violin.scale_and_position'),
+                subtitle: i18n.t('toolbox.sound.violin.use_scale_categories_and_position'),
               ),
               const SizedBox(height: 10),
               Wrap(
@@ -1119,20 +1069,12 @@ class _ViolinToolState extends State<_ViolinTool> {
               ),
               const SizedBox(height: 14),
               SectionHeader(
-                title: pickUiText(i18n, zh: '弓压与空间', en: 'Bow and space'),
-                subtitle: pickUiText(
-                  i18n,
-                  zh: '开放弓压和残响参数，方便把独奏感与空间感拆开控制。',
-                  en: 'Expose bow pressure and reverb separately for better solo and room control.',
-                ),
+                title: i18n.t('toolbox.sound.violin.bow_and_space'),
+                subtitle: i18n.t('toolbox.sound.violin.expose_bow_pressure_and_reverb'),
               ),
               const SizedBox(height: 10),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '弓压 ${(_bow * 100).round()}% · 音色 ${_styleLabel(i18n, preset.styleId)} · ${_variantLabel(i18n, _toneVariant)}',
-                  en: 'Bow ${(_bow * 100).round()}% · Tone ${_styleLabel(i18n, preset.styleId)} · ${_variantLabel(i18n, _toneVariant)}',
-                ),
+                i18n.t('toolbox.sound.violin.bow_tone'),
               ),
               Slider(
                 value: _bow,
@@ -1142,11 +1084,7 @@ class _ViolinToolState extends State<_ViolinTool> {
                 onChanged: (value) => setState(() => _bow = value),
               ),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '残响 ${(_reverb * 100).round()}%',
-                  en: 'Reverb ${(_reverb * 100).round()}%',
-                ),
+                i18n.t('toolbox.sound.violin.reverb'),
               ),
               Slider(
                 value: _reverb,

@@ -92,36 +92,36 @@ extension _SingingBowlsSheet on _SingingBowlsPracticeCardState {
                   const SizedBox(height: 18),
                   sheetSectionTitle(
                     context,
-                    title: t('频率菜单', 'Frequency menu'),
-                    subtitle: t('七脉轮与古典共振频率', 'Chakra & resonance tones'),
+                    title: i18n.t('toolbox.sound.bowls.sheet_frequency_menu'),
+                    subtitle: i18n.t('toolbox.sound.bowls.sheet_frequency_subtitle'),
                   ),
                   const SizedBox(height: 10),
                   buildSheetFrequencyGroup(
                     context,
-                    groupLabel: t('七脉轮', 'Chakra series'),
+                    groupLabel: i18n.t('toolbox.sound.bowls.sheet_chakra_group'),
                     group: _SingingBowlGroup.chakra,
                     sheetSetState: sheetSetState,
                   ),
                   const SizedBox(height: 14),
                   buildSheetFrequencyGroup(
                     context,
-                    groupLabel: t('共振频率', 'Resonance tones'),
+                    groupLabel: i18n.t('toolbox.sound.bowls.sheet_resonance_group'),
                     group: _SingingBowlGroup.resonance,
                     sheetSetState: sheetSetState,
                   ),
                   const SizedBox(height: 22),
                   sheetSectionTitle(
                     context,
-                    title: t('音色', 'Voices'),
-                    subtitle: t('四套钵体谐波', 'Four bowl harmonics'),
+                    title: i18n.t('toolbox.sound.bowls.sheet_voices_title'),
+                    subtitle: i18n.t('toolbox.sound.bowls.sheet_voices_subtitle'),
                   ),
                   const SizedBox(height: 10),
                   buildSheetVoiceGrid(context, sheetSetState),
                   const SizedBox(height: 22),
                   sheetSectionTitle(
                     context,
-                    title: t('自动播放', 'Autoplay'),
-                    subtitle: t('慢而宽地重复，不要急促敲击', 'Slow, spacious repetition'),
+                    title: i18n.t('toolbox.sound.bowls.sheet_autoplay_title'),
+                    subtitle: i18n.t('toolbox.sound.bowls.sheet_autoplay_subtitle'),
                   ),
                   const SizedBox(height: 10),
                   buildSheetAutoplay(context, sheetSetState),
@@ -142,17 +142,14 @@ extension _SingingBowlsSheet on _SingingBowlsPracticeCardState {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                t('调音与节律', 'Tone & cadence'),
+                i18n.t('toolbox.sound.bowls.sheet_title'),
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
               ),
               const SizedBox(height: 2),
               Text(
-                t(
-                  '挑一条频率，选一只音色，按你想要的节奏慢慢敲。',
-                  'Pick a frequency, choose a voice, and tap at your own slow rhythm.',
-                ),
+                i18n.t('toolbox.sound.bowls.sheet_subtitle'),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -162,7 +159,7 @@ extension _SingingBowlsSheet on _SingingBowlsPracticeCardState {
         ),
         IconButton(
           icon: const Icon(Icons.close_rounded),
-          tooltip: t('收起', 'Close'),
+          tooltip: i18n.t('toolbox.sound.bowls.btn_close'),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
       ],
@@ -201,10 +198,7 @@ extension _SingingBowlsSheet on _SingingBowlsPracticeCardState {
               ),
               if (_autoPlayEnabled)
                 ToolboxInfoPill(
-                  text: t(
-                    '每 ${_autoPlayIntervalMs ~/ 1000} 秒自动敲击',
-                    'Autoplay every ${_autoPlayIntervalMs ~/ 1000}s',
-                  ),
+                  text: i18n.t('toolbox.sound.bowls.auto_interval_label', params: <String, Object?>{'interval': '${_autoPlayIntervalMs ~/ 1000}'}),
                   accent: spec.accent.withValues(alpha: 0.78),
                   backgroundColor: Colors.white.withValues(alpha: 0.72),
                   textColor: Theme.of(context).colorScheme.onSurface,

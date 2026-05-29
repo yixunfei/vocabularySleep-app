@@ -228,7 +228,7 @@ extension _SingingBowlsSheetControls on _SingingBowlsPracticeCardState {
           children: <Widget>[
             Expanded(
               child: Text(
-                t('间隔时间', 'Interval'),
+                i18n.t('toolbox.sound.bowls.sheet_interval'),
                 style: Theme.of(
                   context,
                 ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -278,9 +278,9 @@ extension _SingingBowlsSheetControls on _SingingBowlsPracticeCardState {
           value: _hapticsEnabled,
           dense: true,
           contentPadding: EdgeInsets.zero,
-          title: Text(t('触感反馈', 'Haptics')),
+          title: Text(i18n.t('toolbox.sound.bowls.sheet_haptics_title')),
           subtitle: Text(
-            t('手动敲击时给一点轻微反馈', 'Add a light pulse on manual strike'),
+            i18n.t('toolbox.sound.bowls.sheet_haptics_subtitle'),
           ),
           onChanged: (bool value) {
             toggleHaptics(value);
@@ -304,8 +304,8 @@ extension _SingingBowlsSheetControls on _SingingBowlsPracticeCardState {
               ),
               label: Text(
                 _autoPlayEnabled
-                    ? t('暂停自动敲击', 'Pause autoplay')
-                    : t('开始自动敲击', 'Start autoplay'),
+                    ? i18n.t('toolbox.sound.bowls.sheet_pause_autoplay')
+                    : i18n.t('toolbox.sound.bowls.sheet_start_autoplay'),
               ),
             ),
             OutlinedButton.icon(
@@ -314,7 +314,7 @@ extension _SingingBowlsSheetControls on _SingingBowlsPracticeCardState {
                 sheetSetState(() {});
               },
               icon: const Icon(Icons.stop_circle_outlined),
-              label: Text(t('停止余振', 'Stop resonance')),
+              label: Text(i18n.t('toolbox.sound.bowls.sheet_stop_resonance')),
             ),
           ],
         ),

@@ -248,52 +248,32 @@ class _PickupToolState extends State<_PickupTool>
 
   String _profileLabel(AppI18n i18n, String profileId) {
     return switch (profileId) {
-      'contact' => pickUiText(i18n, zh: '接触式', en: 'Contact'),
-      'magnetic' => pickUiText(i18n, zh: '磁拾', en: 'Magnetic'),
-      'condenser' => pickUiText(i18n, zh: '电容', en: 'Condenser'),
-      'dynamic' => pickUiText(i18n, zh: '动圈', en: 'Dynamic'),
-      _ => pickUiText(i18n, zh: '压电', en: 'Piezo'),
+      'contact' => i18n.t('toolbox.sound.pickup.profile_contact'),
+      'magnetic' => i18n.t('toolbox.sound.pickup.profile_magnetic'),
+      'condenser' => i18n.t('toolbox.sound.pickup.profile_condenser'),
+      'dynamic' => i18n.t('toolbox.sound.pickup.profile_dynamic'),
+      _ => i18n.t('toolbox.sound.pickup.profile_piezo'),
     };
   }
 
   String _presetLabel(AppI18n i18n, String presetId) {
     return switch (presetId) {
-      'warm' => pickUiText(i18n, zh: '温暖', en: 'Warm'),
-      'bright' => pickUiText(i18n, zh: '明亮', en: 'Bright'),
-      'ambient' => pickUiText(i18n, zh: '氛围', en: 'Ambient'),
-      'low_noise' => pickUiText(i18n, zh: '降噪', en: 'Low noise'),
-      'balanced' => pickUiText(i18n, zh: '均衡', en: 'Balanced'),
-      _ => pickUiText(i18n, zh: '自定义', en: 'Custom'),
+      'warm' => i18n.t('toolbox.sound.pickup.preset_label'),
+      'bright' => i18n.t('toolbox.sound.pickup.preset_bright'),
+      'ambient' => i18n.t('toolbox.sound.pickup.preset_ambient'),
+      'low_noise' => i18n.t('toolbox.sound.pickup.preset_low_noise'),
+      'balanced' => i18n.t('toolbox.sound.pickup.preset_balanced'),
+      _ => i18n.t('toolbox.sound.pickup.preset_custom'),
     };
   }
 
   String _profileSubtitle(AppI18n i18n) {
     return switch (_profileId) {
-      'contact' => pickUiText(
-        i18n,
-        zh: '更关注箱体与桌面振动，适合接触式贴片拾音。',
-        en: 'Focuses more on body vibration for contact-style pickups.',
-      ),
-      'magnetic' => pickUiText(
-        i18n,
-        zh: '更适合圆润、中低频更厚的磁拾响应。',
-        en: 'Targets a rounder response closer to magnetic pickups.',
-      ),
-      'condenser' => pickUiText(
-        i18n,
-        zh: '高频响应灵敏，适合电容麦克风或空气感较强的拾音。',
-        en: 'Sensitive high-frequency response for condenser mics.',
-      ),
-      'dynamic' => pickUiText(
-        i18n,
-        zh: '较厚实的响应曲线，适合动圈麦克风或需要抗噪的场景。',
-        en: 'Thicker response curve for dynamic mics or noisy environments.',
-      ),
-      _ => pickUiText(
-        i18n,
-        zh: '默认面向压电拾音，强调清晰前缘和动态峰值。',
-        en: 'Targets a typical piezo response with clear attack and peaks.',
-      ),
+      'contact' => i18n.t('toolbox.sound.pickup.profile_contact_sub'),
+      'magnetic' => i18n.t('toolbox.sound.pickup.profile_magnetic_sub'),
+      'condenser' => i18n.t('toolbox.sound.pickup.profile_condenser_sub'),
+      'dynamic' => i18n.t('toolbox.sound.pickup.profile_dynamic_sub'),
+      _ => i18n.t('toolbox.sound.pickup.profile_piezo_sub'),
     };
   }
 
@@ -309,25 +289,25 @@ class _PickupToolState extends State<_PickupTool>
   String _toneBalanceLabel(AppI18n i18n) {
     final value = _effectiveBrightness;
     if (value < 0.18) {
-      return pickUiText(i18n, zh: '偏闷', en: 'Dark');
+      return i18n.t('toolbox.sound.pickup.tone_dark');
     }
     if (value > 0.42) {
-      return pickUiText(i18n, zh: '偏亮', en: 'Bright');
+      return i18n.t('toolbox.sound.pickup.tone_bright');
     }
-    return pickUiText(i18n, zh: '平衡', en: 'Balanced');
+    return i18n.t('toolbox.sound.pickup.tone_balanced');
   }
 
   String _statusLabel(AppI18n i18n) {
     if (_freezeFrame) {
-      return pickUiText(i18n, zh: '宸插喕缁?', en: 'Frozen');
+      return i18n.t('toolbox.sound.pickup.status_frozen');
     }
     if (_starting) {
-      return pickUiText(i18n, zh: '启动中', en: 'Starting');
+      return i18n.t('toolbox.sound.pickup.status_starting');
     }
     if (_monitoring) {
-      return pickUiText(i18n, zh: '监听中', en: 'Monitoring');
+      return i18n.t('toolbox.sound.pickup.status_monitoring');
     }
-    return pickUiText(i18n, zh: '待机', en: 'Idle');
+    return i18n.t('toolbox.sound.pickup.status_idle');
   }
 
   String _pitchDisplay() {
@@ -342,15 +322,15 @@ class _PickupToolState extends State<_PickupTool>
     final cents = _cents;
     if (cents == null) return '--';
     if (cents.abs() <= 5) {
-      return pickUiText(i18n, zh: '精准', en: 'Precise');
+      return i18n.t('toolbox.sound.pickup.pitch_precise');
     }
     if (cents.abs() <= 15) {
-      return pickUiText(i18n, zh: '良好', en: 'Good');
+      return i18n.t('toolbox.sound.pickup.pitch_good');
     }
     if (cents.abs() <= 30) {
-      return pickUiText(i18n, zh: '偏移', en: 'Off');
+      return i18n.t('toolbox.sound.pickup.pitch_off');
     }
-    return pickUiText(i18n, zh: '走音', en: 'Out of tune');
+    return i18n.t('toolbox.sound.pickup.pitch_out_of_tune');
   }
 
   Color _pitchAccuracyColor() {
@@ -374,97 +354,53 @@ class _PickupToolState extends State<_PickupTool>
     }
     score = score.clamp(0, 100);
     if (score >= 90) {
-      return pickUiText(i18n, zh: '优秀 $score%', en: 'Excellent $score%');
+      return i18n.t('toolbox.sound.pickup.quality_excellent', params: {'score': '\$score'});
     }
     if (score >= 75) {
-      return pickUiText(i18n, zh: '良好 $score%', en: 'Good $score%');
+      return i18n.t('toolbox.sound.pickup.quality_good', params: {'score': '\$score'});
     }
     if (score >= 60) {
-      return pickUiText(i18n, zh: '一般 $score%', en: 'Fair $score%');
+      return i18n.t('toolbox.sound.pickup.quality_fair', params: {'score': '\$score'});
     }
-    return pickUiText(i18n, zh: '需优化 $score%', en: 'Needs work $score%');
+    return i18n.t('toolbox.sound.pickup.quality_needs_work', params: {'score': '\$score'});
   }
 
   String _guidance(AppI18n i18n) {
     if (_error != null) return _error!;
     if (_freezeFrame) {
-      return pickUiText(
-        i18n,
-        zh: '宸插喕缁撳綋鍓嶅垎鏋愬揩鐓э紝鐜板湪璋冩暣鍓嶇骇銆佸櫔澹伴棬鍜屼寒搴﹀彧浼氭敼鍙樺彲瑙嗗寲鐩爣锛屼笉浼氬楹﹀厠椋庤緭鍏ュ仛瀹炴椂 DSP 澶勭悊銆?',
-        en: 'The current analysis snapshot is frozen. Preamp, gate, and presence now adjust the visual reference target only; they do not apply real-time DSP to the microphone signal.',
-      );
+      return i18n.t('toolbox.sound.pickup.guidance_frozen');
     }
     if (!_hasPermission && !_monitoring) {
-      return pickUiText(
-        i18n,
-        zh: '需要麦克风权限才能开始拾音调校。',
-        en: 'Microphone permission is required before pickup calibration starts.',
-      );
+      return i18n.t('toolbox.sound.pickup.guidance_no_perm');
     }
     if (!_monitoring) {
-      return pickUiText(
-        i18n,
-        zh: '点击开始监听，然后在稳定单音下观察电平、峰值与音高。',
-        en: 'Start monitoring, then play stable single notes to inspect level, peak, and pitch.',
-      );
+      return i18n.t('toolbox.sound.pickup.guidance_idle');
     }
     if (_effectivePeak > 0.96) {
-      return pickUiText(
-        i18n,
-        zh: '峰值接近削波，建议降低前级增益或拉远麦克风距离。',
-        en: 'Peak is near clipping; lower preamp or increase the mic distance.',
-      );
+      return i18n.t('toolbox.sound.pickup.guidance_peak');
     }
     if (_effectiveLevel < _gate * 0.92) {
-      return pickUiText(
-        i18n,
-        zh: '输入偏小，建议靠近拾音点或适当提高前级增益。',
-        en: 'Input is low; move closer to the pickup spot or raise the preamp slightly.',
-      );
+      return i18n.t('toolbox.sound.pickup.guidance_low_input');
     }
     if (_noteLabel == null) {
-      return pickUiText(
-        i18n,
-        zh: '当前基频不稳定，先保持单音持续发声，再做拾音调节。',
-        en: 'Pitch is unstable; hold a single sustained note before adjusting the pickup.',
-      );
+      return i18n.t('toolbox.sound.pickup.guidance_unstable');
     }
     final brightnessDelta =
         (_effectiveBrightness - _activeProfile.targetBrightness).abs();
     if (_effectiveBrightness < _activeProfile.targetBrightness - 0.08) {
-      return pickUiText(
-        i18n,
-        zh: '当前偏闷，可提高亮度补偿或让拾音点更靠近琴桥。',
-        en: 'The signal is dark; raise presence or move the pickup closer to the bridge.',
-      );
+      return i18n.t('toolbox.sound.pickup.guidance_dark');
     }
     if (_effectiveBrightness > _activeProfile.targetBrightness + 0.08) {
-      return pickUiText(
-        i18n,
-        zh: '当前偏亮，可降低亮度补偿或让拾音点稍远离琴桥。',
-        en: 'The signal is bright; reduce presence or move the pickup slightly away from the bridge.',
-      );
+      return i18n.t('toolbox.sound.pickup.guidance_bright');
     }
     if (_phaseReverse) {
-      return pickUiText(
-        i18n,
-        zh: '相位已反转，适合与第二路拾音并用时对比低频厚度。',
-        en: 'Phase is inverted; compare the low-end when blending with a second pickup.',
-      );
+      return i18n.t('toolbox.sound.pickup.guidance_phase');
     }
     if (brightnessDelta <= 0.08 &&
         (_effectiveLevel - _activeProfile.targetLevel).abs() <= 0.08) {
-      return pickUiText(
-        i18n,
-        zh: '当前拾音已接近平衡，可微调噪声门收紧底噪。',
-        en: 'The pickup is close to balanced; fine-tune the gate to tighten the noise floor.',
-      );
+      return i18n.t('toolbox.sound.pickup.guidance_balanced');
     }
-    return pickUiText(
-      i18n,
-      zh: '继续小幅调整前级、噪声门和亮度补偿，优先让峰值留出余量。',
-      en: 'Continue with small preamp, gate, and presence changes while keeping peak headroom.',
-    );
+    return i18n.t('toolbox.sound.pickup.guidance_default');
   }
 
   @override
@@ -507,11 +443,7 @@ class _PickupToolState extends State<_PickupTool>
         setState(() {
           _hasPermission = false;
           _starting = false;
-          _error = pickUiText(
-            _toolboxI18n(context, listen: false),
-            zh: '麦克风权限被拒绝。',
-            en: 'Microphone permission was denied.',
-          );
+          _error = _toolboxI18n(context).t('toolbox.sound.pickup.error_perm_denied');
         });
         return;
       }
@@ -921,14 +853,14 @@ class _PickupToolState extends State<_PickupTool>
     final compact = _isCompactPhoneWidth(MediaQuery.sizeOf(context).width);
     final barHeight = compact ? 80.0 : 100.0;
     final labels = <String>[
-      pickUiText(i18n, zh: '低', en: 'Low'),
-      pickUiText(i18n, zh: '中低', en: 'Mid-L'),
-      pickUiText(i18n, zh: '中', en: 'Mid'),
-      pickUiText(i18n, zh: '中高', en: 'Mid-H'),
-      pickUiText(i18n, zh: '高', en: 'High'),
-      pickUiText(i18n, zh: '超高', en: 'V-High'),
-      pickUiText(i18n, zh: '极', en: 'Ext'),
-      pickUiText(i18n, zh: '顶', en: 'Top'),
+      i18n.t('toolbox.sound.pickup.spectrum_low'),
+      i18n.t('toolbox.sound.pickup.spectrum_mid_l'),
+      i18n.t('toolbox.sound.pickup.spectrum_mid'),
+      i18n.t('toolbox.sound.pickup.spectrum_mid_h'),
+      i18n.t('toolbox.sound.pickup.spectrum_high'),
+      i18n.t('toolbox.sound.pickup.spectrum_v_high'),
+      i18n.t('toolbox.sound.pickup.spectrum_ext'),
+      i18n.t('toolbox.sound.pickup.spectrum_top'),
     ];
 
     return Container(
@@ -1020,7 +952,7 @@ class _PickupToolState extends State<_PickupTool>
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    pickUiText(i18n, zh: '电平', en: 'Level'),
+                    i18n.t('toolbox.sound.pickup.level'),
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: Colors.white.withValues(alpha: 0.5),
                     ),
@@ -1039,7 +971,7 @@ class _PickupToolState extends State<_PickupTool>
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    pickUiText(i18n, zh: '峰值', en: 'Peak'),
+                    i18n.t('toolbox.sound.pickup.peak'),
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: Colors.white.withValues(alpha: 0.5),
                     ),
@@ -1082,7 +1014,7 @@ class _PickupToolState extends State<_PickupTool>
                 children: <Widget>[
                   Expanded(
                     child: Text(
-                      pickUiText(i18n, zh: '实时拾音监看', en: 'Live pickup monitor'),
+                      i18n.t('toolbox.sound.pickup.live_monitor'),
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
@@ -1121,7 +1053,7 @@ class _PickupToolState extends State<_PickupTool>
                           vertical: 6,
                         ),
                         child: Text(
-                          pickUiText(i18n, zh: '蹇収', en: 'Snapshot'),
+                          i18n.t('toolbox.sound.pickup.snapshot'),
                           style: theme.textTheme.labelMedium?.copyWith(
                             color: const Color(0xFF7DD3FC),
                             fontWeight: FontWeight.w700,
@@ -1223,11 +1155,7 @@ class _PickupToolState extends State<_PickupTool>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          pickUiText(
-                            i18n,
-                            zh: '建议：${_guidance(i18n)}',
-                            en: 'Advice: ${_guidance(i18n)}',
-                          ),
+                          i18n.t('toolbox.sound.pickup.advice_label', params: {'text': _guidance(i18n)}),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: Colors.white70,
                             height: 1.4,
@@ -1296,7 +1224,7 @@ class _PickupToolState extends State<_PickupTool>
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               Text(
-                pickUiText(i18n, zh: '音准偏差', en: 'Pitch deviation'),
+                i18n.t('toolbox.sound.pickup.pitch_deviation'),
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: Colors.white.withValues(alpha: 0.7),
                 ),
@@ -1418,7 +1346,7 @@ class _PickupToolState extends State<_PickupTool>
                 ),
               ),
               Text(
-                pickUiText(i18n, zh: '准确', en: 'In tune'),
+                i18n.t('toolbox.sound.pickup.in_tune'),
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: hasNote && cents.abs() <= 5
                       ? const Color(0xFF22C55E)
@@ -1476,7 +1404,7 @@ class _PickupToolState extends State<_PickupTool>
           Row(
             children: <Widget>[
               Text(
-                pickUiText(i18n, zh: '音阶视图', en: 'Scale view'),
+                i18n.t('toolbox.sound.pickup.scale_view'),
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: Colors.white.withValues(alpha: 0.7),
                 ),
@@ -1550,7 +1478,7 @@ class _PickupToolState extends State<_PickupTool>
               ),
               const SizedBox(width: 4),
               Text(
-                pickUiText(i18n, zh: '当前', en: 'Current'),
+                i18n.t('toolbox.sound.pickup.current_key'),
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: Colors.white.withValues(alpha: 0.5),
                 ),
@@ -1566,7 +1494,7 @@ class _PickupToolState extends State<_PickupTool>
               ),
               const SizedBox(width: 4),
               Text(
-                pickUiText(i18n, zh: '已检测', en: 'Detected'),
+                i18n.t('toolbox.sound.pickup.detected_key'),
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: Colors.white.withValues(alpha: 0.5),
                 ),
@@ -1582,7 +1510,7 @@ class _PickupToolState extends State<_PickupTool>
               ),
               const SizedBox(width: 4),
               Text(
-                pickUiText(i18n, zh: '黑键', en: 'Sharp'),
+                i18n.t('toolbox.sound.pickup.sharp_key'),
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: Colors.white.withValues(alpha: 0.5),
                 ),
@@ -1698,7 +1626,7 @@ class _PickupToolState extends State<_PickupTool>
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    pickUiText(i18n, zh: '监测统计', en: 'Session stats'),
+                    i18n.t('toolbox.sound.pickup.session_stats'),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -1717,39 +1645,39 @@ class _PickupToolState extends State<_PickupTool>
               runSpacing: 12,
               children: <Widget>[
                 ToolboxMetricCard(
-                  label: pickUiText(i18n, zh: '时长', en: 'Duration'),
+                  label: i18n.t('toolbox.sound.pickup.duration'),
                   value: _stats.duration != null
                       ? '${_stats.duration!.inMinutes}m ${_stats.duration!.inSeconds % 60}s'
                       : '--',
                 ),
                 ToolboxMetricCard(
-                  label: pickUiText(i18n, zh: '样本', en: 'Samples'),
+                  label: i18n.t('toolbox.sound.pickup.samples_label'),
                   value: '${_stats.totalSamples}',
                 ),
                 ToolboxMetricCard(
-                  label: pickUiText(i18n, zh: '削波警告', en: 'Clip warns'),
+                  label: i18n.t('toolbox.sound.pickup.clip_warns'),
                   value: '${_stats.clipWarnings}',
                 ),
                 ToolboxMetricCard(
-                  label: pickUiText(i18n, zh: '低输入', en: 'Low input'),
+                  label: i18n.t('toolbox.sound.pickup.low_input_label'),
                   value: '${_stats.lowInputWarnings}',
                 ),
                 ToolboxMetricCard(
-                  label: pickUiText(i18n, zh: '峰值最大', en: 'Max peak'),
+                  label: i18n.t('toolbox.sound.pickup.max_peak'),
                   value: '${(_stats.maxPeak * 100).round()}%',
                 ),
                 ToolboxMetricCard(
-                  label: pickUiText(i18n, zh: '音高稳定', en: 'Pitch stable'),
+                  label: i18n.t('toolbox.sound.pickup.pitch_stable'),
                   value: _stats.totalSamples > 0
                       ? '${((_stats.validPitchSamples / _stats.totalSamples) * 100).round()}%'
                       : '--',
                 ),
                 ToolboxMetricCard(
-                  label: pickUiText(i18n, zh: '音符数', en: 'Notes'),
+                  label: i18n.t('toolbox.sound.pickup.notes_label'),
                   value: '${_stats.noteCount.length}',
                 ),
                 ToolboxMetricCard(
-                  label: pickUiText(i18n, zh: '质量评分', en: 'Quality'),
+                  label: i18n.t('toolbox.sound.pickup.quality'),
                   value: _qualityScore(i18n),
                 ),
               ],
@@ -1757,7 +1685,7 @@ class _PickupToolState extends State<_PickupTool>
             if (_stats.noteCount.isNotEmpty) ...<Widget>[
               const SizedBox(height: 16),
               Text(
-                pickUiText(i18n, zh: '检测到的音符:', en: 'Detected notes:'),
+                i18n.t('toolbox.sound.pickup.detected_notes'),
                 style: theme.textTheme.bodySmall,
               ),
               const SizedBox(height: 8),
@@ -1802,7 +1730,7 @@ class _PickupToolState extends State<_PickupTool>
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      pickUiText(i18n, zh: '使用指南', en: 'Quick guide'),
+                      i18n.t('toolbox.sound.pickup.quick_guide'),
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -1824,48 +1752,32 @@ class _PickupToolState extends State<_PickupTool>
                   i18n,
                   theme,
                   Icons.mic_rounded,
-                  pickUiText(i18n, zh: '点击开始监听', en: 'Tap start monitoring'),
-                  pickUiText(
-                    i18n,
-                    zh: '启动麦克风实时采集环境声音',
-                    en: 'Enable mic to capture ambient sound',
-                  ),
+                  i18n.t('toolbox.sound.pickup.guide_start_monitor'),
+                  i18n.t('toolbox.sound.pickup.guide_start_monitor_body'),
                 ),
                 const SizedBox(height: 8),
                 _buildGuideStep(
                   i18n,
                   theme,
                   Icons.music_note_rounded,
-                  pickUiText(i18n, zh: '演奏稳定单音', en: 'Play stable single note'),
-                  pickUiText(
-                    i18n,
-                    zh: '保持音符持续3秒以上，确保音高稳定',
-                    en: 'Hold note for 3+ seconds for stable pitch',
-                  ),
+                  i18n.t('toolbox.sound.pickup.guide_play_note'),
+                  i18n.t('toolbox.sound.pickup.guide_play_note_body'),
                 ),
                 const SizedBox(height: 8),
                 _buildGuideStep(
                   i18n,
                   theme,
                   Icons.tune_rounded,
-                  pickUiText(i18n, zh: '调整参数', en: 'Adjust parameters'),
-                  pickUiText(
-                    i18n,
-                    zh: '根据建议微调前级、噪声门和亮度',
-                    en: 'Fine-tune preamp, gate, and presence based on tips',
-                  ),
+                  i18n.t('toolbox.sound.pickup.guide_adjust_params'),
+                  i18n.t('toolbox.sound.pickup.guide_adjust_params_body'),
                 ),
                 const SizedBox(height: 8),
                 _buildGuideStep(
                   i18n,
                   theme,
                   Icons.save_rounded,
-                  pickUiText(i18n, zh: '保存预设', en: 'Save preset'),
-                  pickUiText(
-                    i18n,
-                    zh: '将满意的配置保存为预设以便下次使用',
-                    en: 'Save satisfying config as preset for reuse',
-                  ),
+                  i18n.t('toolbox.sound.pickup.guide_save_preset'),
+                  i18n.t('toolbox.sound.pickup.guide_save_preset_body'),
                 ),
               ],
             ],
@@ -1940,7 +1852,7 @@ class _PickupToolState extends State<_PickupTool>
                   ToolboxMetricCard(label: 'Status', value: _statusLabel(i18n)),
                   if (_freezeCapturedAt != null)
                     ToolboxMetricCard(
-                      label: pickUiText(i18n, zh: '蹇収', en: 'Snapshot'),
+                      label: i18n.t('toolbox.sound.pickup.snapshot'),
                       value:
                           '${_freezeCapturedAt!.hour.toString().padLeft(2, '0')}:'
                           '${_freezeCapturedAt!.minute.toString().padLeft(2, '0')}:'
@@ -1960,23 +1872,15 @@ class _PickupToolState extends State<_PickupTool>
                   ),
                   ToolboxMetricCard(label: 'Pitch', value: _pitchDisplay()),
                   ToolboxMetricCard(
-                    label: pickUiText(i18n, zh: '评分', en: 'Score'),
+                    label: i18n.t('toolbox.sound.pickup.score_label'),
                     value: _qualityScore(i18n),
                   ),
                 ],
               ),
               const SizedBox(height: 14),
               SectionHeader(
-                title: pickUiText(i18n, zh: '拾音舞台', en: 'Pickup stage'),
-                subtitle: pickUiText(
-                  i18n,
-                  zh: compact
-                      ? '通过手机麦克风观察拾音电平、峰值、音高与明亮度，快速完成调校。'
-                      : '通过麦克风实时分析电平、峰值、基频和音色倾向，辅助完成拾音调校。',
-                  en: compact
-                      ? 'Use the phone mic to inspect pickup level, peaks, pitch, and brightness.'
-                      : 'Use the microphone to inspect level, peaks, pitch, and tonal balance in real time.',
-                ),
+                title: i18n.t('toolbox.sound.pickup.pickup_stage'),
+                subtitle: compact ? i18n.t('toolbox.sound.pickup.pickup_stage_compact') : i18n.t('toolbox.sound.pickup.pickup_stage_full'),
               ),
               const SizedBox(height: 10),
               _buildMeterStage(context, i18n, theme),
@@ -1993,11 +1897,7 @@ class _PickupToolState extends State<_PickupTool>
                           : Icons.mic_rounded,
                     ),
                     label: Text(
-                      pickUiText(
-                        i18n,
-                        zh: _monitoring ? '停止监听' : '开始监听',
-                        en: _monitoring ? 'Stop monitor' : 'Start monitor',
-                      ),
+                      i18n.t(_monitoring ? 'toolbox.sound.pickup.stop_monitor' : 'toolbox.sound.pickup.start_monitor'),
                     ),
                   ),
                   OutlinedButton.icon(
@@ -2010,11 +1910,7 @@ class _PickupToolState extends State<_PickupTool>
                           : Icons.ac_unit_rounded,
                     ),
                     label: Text(
-                      pickUiText(
-                        i18n,
-                        zh: _freezeFrame ? '鎭㈠瀹炴椂' : '鍐荤粨蹇収',
-                        en: _freezeFrame ? 'Resume live' : 'Freeze snapshot',
-                      ),
+                      i18n.t(_freezeFrame ? 'toolbox.sound.pickup.resume_live' : 'toolbox.sound.pickup.freeze_snapshot'),
                     ),
                   ),
                   OutlinedButton.icon(
@@ -2054,7 +1950,7 @@ class _PickupToolState extends State<_PickupTool>
                       }
                     },
                     icon: const Icon(Icons.refresh_rounded),
-                    label: Text(pickUiText(i18n, zh: '重置读数', en: 'Reset')),
+                    label: Text(i18n.t('toolbox.sound.pickup.reset_readings')),
                   ),
                   if (_monitoring)
                     OutlinedButton.icon(
@@ -2065,11 +1961,7 @@ class _PickupToolState extends State<_PickupTool>
                             : Icons.bar_chart_rounded,
                       ),
                       label: Text(
-                        pickUiText(
-                          i18n,
-                          zh: _showStats ? '隐藏统计' : '查看统计',
-                          en: _showStats ? 'Hide stats' : 'Show stats',
-                        ),
+                        i18n.t(_showStats ? 'toolbox.sound.pickup.hide_stats' : 'toolbox.sound.pickup.show_stats'),
                       ),
                     ),
                   if (!_showGuide && !_monitoring)
@@ -2079,7 +1971,7 @@ class _PickupToolState extends State<_PickupTool>
                         setState(() => _showGuide = true);
                       },
                       icon: const Icon(Icons.help_outline_rounded),
-                      label: Text(pickUiText(i18n, zh: '使用指南', en: 'Guide')),
+                      label: Text(i18n.t('toolbox.sound.pickup.guide_button')),
                     ),
                 ],
               ),
@@ -2089,12 +1981,8 @@ class _PickupToolState extends State<_PickupTool>
               ],
               const SizedBox(height: 14),
               SectionHeader(
-                title: pickUiText(i18n, zh: '快速预设', en: 'Quick presets'),
-                subtitle: pickUiText(
-                  i18n,
-                  zh: '选择预设快速配置，或手动调整参数。',
-                  en: 'Pick a preset for quick config, or tune manually.',
-                ),
+                title: i18n.t('toolbox.sound.pickup.quick_presets'),
+                subtitle: i18n.t('toolbox.sound.pickup.quick_presets_sub'),
               ),
               const SizedBox(height: 10),
               Wrap(
@@ -2112,7 +2000,7 @@ class _PickupToolState extends State<_PickupTool>
               ),
               const SizedBox(height: 14),
               SectionHeader(
-                title: pickUiText(i18n, zh: '拾音类型', en: 'Pickup type'),
+                title: i18n.t('toolbox.sound.pickup.pickup_type'),
                 subtitle: _profileSubtitle(i18n),
               ),
               const SizedBox(height: 10),
@@ -2136,20 +2024,12 @@ class _PickupToolState extends State<_PickupTool>
               ),
               const SizedBox(height: 14),
               SectionHeader(
-                title: pickUiText(i18n, zh: '调校参数', en: 'Calibration'),
-                subtitle: pickUiText(
-                  i18n,
-                  zh: '前级增益用于预估输入余量，噪声门控制静音底噪，亮度补偿用于观察音色趋势。',
-                  en: 'Preamp estimates headroom, gate controls noise floor, and presence tracks tonal brightness.',
-                ),
+                title: i18n.t('toolbox.sound.pickup.calibration'),
+                subtitle: i18n.t('toolbox.sound.pickup.calibration_sub'),
               ),
               const SizedBox(height: 10),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '鎻愮ず锛氳繖浜涘弬鏁板彧鐢ㄤ簬鏍″噯鐩爣鍜屽彲瑙嗗寲鍙傝€冿紝涓嶄細鐩存帴鏀瑰彉楹﹀厠椋庣殑瀹炴椂澹伴煶杈撳嚭銆?',
-                  en: 'Note: these controls act as calibration targets and visual references only. They do not directly process the live microphone signal.',
-                ),
+                i18n.t('toolbox.sound.pickup.calibration_note'),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   height: 1.4,
@@ -2163,11 +2043,7 @@ class _PickupToolState extends State<_PickupTool>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          pickUiText(
-                            i18n,
-                            zh: '前级 ${(_preamp * 100).round()}%',
-                            en: 'Preamp ${(_preamp * 100).round()}%',
-                          ),
+                          i18n.t('toolbox.sound.pickup.preamp_pct', params: {'pct': '\${(_preamp * 100).round()}'}),
                           style: theme.textTheme.bodyMedium,
                         ),
                         Slider(
@@ -2189,11 +2065,7 @@ class _PickupToolState extends State<_PickupTool>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          pickUiText(
-                            i18n,
-                            zh: '噪声门 ${(_gate * 100).round()}%',
-                            en: 'Gate ${(_gate * 100).round()}%',
-                          ),
+                          i18n.t('toolbox.sound.pickup.gate_pct', params: {'pct': '\${(_gate * 100).round()}'}),
                           style: theme.textTheme.bodyMedium,
                         ),
                         Slider(
@@ -2218,11 +2090,7 @@ class _PickupToolState extends State<_PickupTool>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          pickUiText(
-                            i18n,
-                            zh: '亮度 ${(_presence * 100).round()}%',
-                            en: 'Presence ${(_presence * 100).round()}%',
-                          ),
+                          i18n.t('toolbox.sound.pickup.presence_pct', params: {'pct': '\${(_presence * 100).round()}'}),
                           style: theme.textTheme.bodyMedium,
                         ),
                         Slider(
@@ -2248,7 +2116,7 @@ class _PickupToolState extends State<_PickupTool>
                         _presetId = 'custom';
                       }),
                       title: Text(
-                        pickUiText(i18n, zh: '相位反转', en: 'Phase rev'),
+                        i18n.t('toolbox.sound.pickup.phase_rev'),
                         style: theme.textTheme.bodyMedium,
                       ),
                     ),
@@ -2257,11 +2125,7 @@ class _PickupToolState extends State<_PickupTool>
               ),
               const SizedBox(height: 8),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '相位反转：双拾音或外接前级并用时，可用来对比低频厚度。',
-                  en: 'Phase reverse: Useful for comparing low-end when blending two pickup sources.',
-                ),
+                i18n.t('toolbox.sound.pickup.phase_rev_hint'),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

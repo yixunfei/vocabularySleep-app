@@ -37,7 +37,7 @@ extension _SingingBowlsLayout on _SingingBowlsPracticeCardState {
         const SizedBox(width: 10),
         Expanded(
           child: Text(
-            t('空灵音钵', 'Healing bowls'),
+            i18n.t('toolbox.sound.bowls.appbar_title'),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -162,7 +162,7 @@ extension _SingingBowlsLayout on _SingingBowlsPracticeCardState {
       return head;
     }
     final interval = _autoPlayIntervalMs ~/ 1000;
-    return head + t(' · 自动 ${interval}s', ' · Auto ${interval}s');
+    return head + i18n.t('toolbox.sound.bowls.auto_summary_suffix', params: <String, Object?>{'interval': '$interval'});
   }
 
   // ============ 被双端共享的辅助样式方法 ============

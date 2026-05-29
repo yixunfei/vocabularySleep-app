@@ -102,46 +102,22 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
   String _animationName(BuildContext context, _FocusBeatAnimationKind kind) {
     final i18n = _i18nOf(context);
     return switch (kind) {
-      _FocusBeatAnimationKind.pendulum => pickUiText(
-        i18n,
-        zh: '暖轨',
-        en: 'Warm path',
-      ),
-      _FocusBeatAnimationKind.hypno => pickUiText(
-        i18n,
-        zh: '静环',
-        en: 'Still orbit',
-      ),
-      _FocusBeatAnimationKind.dew => pickUiText(
-        i18n,
-        zh: '清波',
-        en: 'Clear wave',
-      ),
-      _FocusBeatAnimationKind.gear => pickUiText(
-        i18n,
-        zh: '刻度',
-        en: 'Precision mark',
-      ),
-      _FocusBeatAnimationKind.steps => pickUiText(
-        i18n,
-        zh: '步阵',
-        en: 'Step array',
-      ),
+      _FocusBeatAnimationKind.pendulum => i18n.t('toolbox.sound.focus.animNameWarm'),
+      _FocusBeatAnimationKind.hypno => i18n.t('toolbox.sound.focus.animNameStill'),
+      _FocusBeatAnimationKind.dew => i18n.t('toolbox.sound.focus.animNameClear'),
+      _FocusBeatAnimationKind.gear => i18n.t('toolbox.sound.focus.animNamePrecision'),
+      _FocusBeatAnimationKind.steps => i18n.t('toolbox.sound.focus.animNameStep'),
     };
   }
 
   String _soundName(BuildContext context, _FocusBeatSoundKind kind) {
     final i18n = _i18nOf(context);
     return switch (kind) {
-      _FocusBeatSoundKind.pendulum => pickUiText(
-        i18n,
-        zh: '钟摆',
-        en: 'Pendulum',
-      ),
-      _FocusBeatSoundKind.hypno => pickUiText(i18n, zh: '脉冲', en: 'Pulse'),
-      _FocusBeatSoundKind.dew => pickUiText(i18n, zh: '水滴', en: 'Drop'),
-      _FocusBeatSoundKind.gear => pickUiText(i18n, zh: '机械', en: 'Tick'),
-      _FocusBeatSoundKind.steps => pickUiText(i18n, zh: '步伐', en: 'Step'),
+      _FocusBeatSoundKind.pendulum => i18n.t('toolbox.sound.focus.soundNamePendulum'),
+      _FocusBeatSoundKind.hypno => i18n.t('toolbox.sound.focus.soundNamePulse'),
+      _FocusBeatSoundKind.dew => i18n.t('toolbox.sound.focus.soundNameDrop'),
+      _FocusBeatSoundKind.gear => i18n.t('toolbox.sound.focus.soundNameTick'),
+      _FocusBeatSoundKind.steps => i18n.t('toolbox.sound.focus.soundNameStep'),
     };
   }
 
@@ -795,21 +771,13 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
                       ),
                       const SizedBox(height: 14),
                       Text(
-                        pickUiText(
-                          i18n,
-                          zh: '专注节拍控制台',
-                          en: 'Focus beats controls',
-                        ),
+                        i18n.t('toolbox.sound.focus.immersiveControlsTitle'),
                         style: Theme.of(sheetContext).textTheme.titleLarge
                             ?.copyWith(fontWeight: FontWeight.w800),
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        pickUiText(
-                          i18n,
-                          zh: '舞台保持全屏，只在需要时唤起控制。',
-                          en: 'Keep the stage full screen and pull controls only when needed.',
-                        ),
+                        i18n.t('toolbox.sound.focus.immersiveControlsDesc'),
                         style: Theme.of(sheetContext).textTheme.bodyMedium
                             ?.copyWith(
                               color: Theme.of(
@@ -823,12 +791,8 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
                       const SizedBox(height: 16),
                       _FocusControlSection(
                         icon: Icons.speed_rounded,
-                        title: pickUiText(i18n, zh: '节奏', en: 'Tempo'),
-                        subtitle: pickUiText(
-                          i18n,
-                          zh: '调节 BPM 与常用速度',
-                          en: 'Adjust BPM and quick tempos',
-                        ),
+                        title: i18n.t('toolbox.sound.focus.controlTempo'),
+                        subtitle: i18n.t('toolbox.sound.focus.controlTempoDesc'),
                         summary: '$_bpm BPM',
                         expanded: _tempoExpanded,
                         onToggle: () {
@@ -841,12 +805,8 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
                       const SizedBox(height: 12),
                       _FocusControlSection(
                         icon: Icons.tune_rounded,
-                        title: pickUiText(i18n, zh: '拍号与细分', en: 'Meter'),
-                        subtitle: pickUiText(
-                          i18n,
-                          zh: '控制重拍结构与子拍密度',
-                          en: 'Control the pulse structure and subdivisions',
-                        ),
+                        title: i18n.t('toolbox.sound.focus.controlMeter'),
+                        subtitle: i18n.t('toolbox.sound.focus.controlMeterDesc'),
                         summary: '$_beatsPerBar/4 × $_subdivision',
                         expanded: _meterExpanded,
                         onToggle: () {
@@ -859,12 +819,8 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
                       const SizedBox(height: 12),
                       _FocusControlSection(
                         icon: Icons.graphic_eq_rounded,
-                        title: pickUiText(i18n, zh: '节拍音色', en: 'Beat timbre'),
-                        subtitle: pickUiText(
-                          i18n,
-                          zh: '选择当前节拍点击的声音质感',
-                          en: 'Choose the current click timbre',
-                        ),
+                        title: i18n.t('toolbox.sound.focus.controlTimbre'),
+                        subtitle: i18n.t('toolbox.sound.focus.controlTimbreDesc'),
                         summary: _soundName(sheetContext, _soundKind),
                         expanded: _styleExpanded,
                         onToggle: () {
@@ -877,19 +833,11 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
                       const SizedBox(height: 12),
                       _FocusControlSection(
                         icon: Icons.view_timeline_rounded,
-                        title: pickUiText(i18n, zh: '循环编排', en: 'Arrangement'),
-                        subtitle: pickUiText(
-                          i18n,
-                          zh: '管理段落与循环模板',
-                          en: 'Manage phrases and loop templates',
-                        ),
+                        title: i18n.t('toolbox.sound.focus.controlArrangement'),
+                        subtitle: i18n.t('toolbox.sound.focus.controlArrangementDesc'),
                         summary: _patternEnabled
                             ? arrangementLabel
-                            : pickUiText(
-                                i18n,
-                                zh: '单小节循环',
-                                en: 'Single-bar loop',
-                              ),
+                            : i18n.t('toolbox.sound.focus.singleBarLoop'),
                         expanded: _arrangementExpanded,
                         onToggle: () {
                           _setViewState(() {
@@ -904,14 +852,10 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
                       const SizedBox(height: 12),
                       _FocusControlSection(
                         icon: Icons.graphic_eq_rounded,
-                        title: pickUiText(i18n, zh: '混音与触感', en: 'Mix'),
-                        subtitle: pickUiText(
-                          i18n,
-                          zh: '调节音量分层与震动反馈',
-                          en: 'Adjust volume layers and haptics',
-                        ),
+                        title: i18n.t('toolbox.sound.focus.controlMix'),
+                        subtitle: i18n.t('toolbox.sound.focus.controlMixDesc2'),
                         summary:
-                            '${(100 * _masterVolume).round()}% · ${_hapticsEnabled ? pickUiText(i18n, zh: '触感开', en: 'Haptics on') : pickUiText(i18n, zh: '触感关', en: 'Haptics off')}',
+                            '${(100 * _masterVolume).round()}% · ${_hapticsEnabled ? i18n.t('toolbox.sound.focus.hapticsOn') : i18n.t('toolbox.sound.focus.hapticsOff')}',
                         expanded: _advancedExpanded,
                         onToggle: () {
                           _setViewState(() {
@@ -926,13 +870,7 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
                         child: OutlinedButton.icon(
                           onPressed: widget.onExitFullScreen,
                           icon: const Icon(Icons.close_rounded),
-                          label: Text(
-                            pickUiText(
-                              i18n,
-                              zh: '退出全屏舞台',
-                              en: 'Exit full-screen stage',
-                            ),
-                          ),
+                          label: Text(i18n.t('toolbox.sound.focus.immersiveExitSheet')),
                         ),
                       ),
                     ],

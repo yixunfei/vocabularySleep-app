@@ -109,12 +109,8 @@ class _SleepRoutineEditorPageState extends State<SleepRoutineEditorPage> {
     if (!appState.isModuleEnabled(ModuleIds.toolboxSleepAssistant)) {
       return themed(
         ToolboxToolPage(
-          title: pickSleepText(i18n, zh: '睡眠助手', en: 'Sleep assistant'),
-          subtitle: pickSleepText(
-            i18n,
-            zh: '模块已停用，无法继续访问睡眠助手页面。',
-            en: 'This module is disabled and unavailable right now.',
-          ),
+          title: i18n.t('toolbox.sleep.core.title'),
+          subtitle: i18n.t('toolbox.sleep.core.disabledHint'),
           child: ModuleDisabledView(
             i18n: i18n,
             moduleId: ModuleIds.toolboxSleepAssistant,
@@ -124,19 +120,15 @@ class _SleepRoutineEditorPageState extends State<SleepRoutineEditorPage> {
     }
     return themed(
       ToolboxToolPage(
-        title: pickSleepText(i18n, zh: '流程编辑器', en: 'Routine editor'),
-        subtitle: pickSleepText(
-          i18n,
-          zh: '把今晚流程拆成更短、更具体、可执行的小步骤。',
-          en: 'Split the routine into smaller, more executable steps.',
-        ),
+        title: i18n.t('toolbox.sleep.routine.title'),
+        subtitle: i18n.t('toolbox.sleep.routine.intro'),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             TextField(
               controller: _nameController,
               decoration: InputDecoration(
-                labelText: pickSleepText(i18n, zh: '模板名称', en: 'Template name'),
+                labelText: i18n.t('toolbox.sleep.routine.templateName'),
               ),
             ),
             const SizedBox(height: 16),
@@ -176,14 +168,14 @@ class _SleepRoutineEditorPageState extends State<SleepRoutineEditorPage> {
                   _steps.add(
                     SleepRoutineStep(
                       type: SleepRoutineStepType.whiteNoise,
-                      label: pickSleepText(i18n, zh: '新增步骤', en: 'New step'),
+                      label: i18n.t('toolbox.sleep.routine.newStep'),
                       durationSeconds: 180,
                     ),
                   );
                 });
               },
               icon: const Icon(Icons.add_rounded),
-              label: Text(pickSleepText(i18n, zh: '添加步骤', en: 'Add step')),
+              label: Text(i18n.t('toolbox.sleep.routine.addStep')),
             ),
             const SizedBox(height: 18),
             Row(
@@ -192,7 +184,7 @@ class _SleepRoutineEditorPageState extends State<SleepRoutineEditorPage> {
                   onPressed: _steps.isEmpty ? null : _save,
                   icon: const Icon(Icons.save_rounded),
                   label: Text(
-                    pickSleepText(i18n, zh: '保存模板', en: 'Save template'),
+                    i18n.t('toolbox.sleep.routine.saveTemplate'),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -200,7 +192,7 @@ class _SleepRoutineEditorPageState extends State<SleepRoutineEditorPage> {
                   OutlinedButton.icon(
                     onPressed: _delete,
                     icon: const Icon(Icons.delete_outline_rounded),
-                    label: Text(pickSleepText(i18n, zh: '删除', en: 'Delete')),
+                    label: Text(i18n.t('toolbox.sleep.core.delete')),
                   ),
               ],
             ),
@@ -245,11 +237,7 @@ class _RoutineEditorStepCard extends StatelessWidget {
             Row(
               children: <Widget>[
                 Text(
-                  pickSleepText(
-                    i18n,
-                    zh: '步骤 ${index + 1}',
-                    en: 'Step ${index + 1}',
-                  ),
+                  '${i18n.t('toolbox.sleep.routine.step')} ${index + 1}',
                   style: Theme.of(
                     context,
                   ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
@@ -272,7 +260,7 @@ class _RoutineEditorStepCard extends StatelessWidget {
             DropdownButtonFormField<SleepRoutineStepType>(
               initialValue: step.type,
               decoration: InputDecoration(
-                labelText: pickSleepText(i18n, zh: '类型', en: 'Step type'),
+                labelText: i18n.t('toolbox.sleep.routine.stepType'),
               ),
               items: SleepRoutineStepType.values
                   .map(
@@ -293,17 +281,13 @@ class _RoutineEditorStepCard extends StatelessWidget {
             TextFormField(
               initialValue: step.label,
               decoration: InputDecoration(
-                labelText: pickSleepText(i18n, zh: '步骤文案', en: 'Step label'),
+                labelText: i18n.t('toolbox.sleep.routine.stepLabel'),
               ),
               onChanged: (value) => onChanged(step.copyWith(label: value)),
             ),
             const SizedBox(height: 12),
             Text(
-              pickSleepText(
-                i18n,
-                zh: '时长 ${sleepSecondsLabel(step.durationSeconds, i18n: i18n)}',
-                en: 'Duration ${sleepSecondsLabel(step.durationSeconds, i18n: i18n)}',
-              ),
+              '${i18n.t('toolbox.sleep.routine.stepDuration')} ${sleepSecondsLabel(step.durationSeconds, i18n: i18n)}',
             ),
             Slider(
               value: step.durationSeconds.toDouble().clamp(30, 900),

@@ -10,8 +10,8 @@ import '../../models/sleep_routine_template.dart';
 import '../../state/app_state.dart';
 import '../module/module_access.dart';
 import '../widgets/section_header.dart';
-import 'sleep_assistant_ui_support.dart';
 import 'sleep_quick_tools.dart';
+import 'sleep_assistant_ui_support.dart';
 import 'sleep_routine_editor_page.dart';
 import 'toolbox_mind_tools.dart';
 import 'toolbox_soothing_music_v2_page.dart';
@@ -84,7 +84,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          pickSleepText(i18n, zh: '思绪卸载已保存', en: 'Thought unload saved'),
+          i18n.t('toolbox.sleep.winddown.unloadSaved'),
         ),
       ),
     );
@@ -146,16 +146,12 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
     }
     appState.focusService.addTodo(
       wakeAlarm
-          ? pickSleepText(i18n, zh: '起床并打开晨光', en: 'Wake and get light')
-          : pickSleepText(i18n, zh: '开始睡前流程', en: 'Start wind-down'),
+          ? i18n.t('toolbox.sleep.winddown.wakeGetLight')
+          : i18n.t('toolbox.sleep.winddown.startWindDown'),
       category: 'sleep',
-      note: pickSleepText(
-        i18n,
-        zh: wakeAlarm ? '来自睡眠助手：起床后优先晨光，稳定节律。' : '来自睡眠助手：提前 30 分钟降低刺激，启动今晚流程。',
-        en: wakeAlarm
-            ? 'From Sleep assistant: get morning light after waking.'
-            : 'From Sleep assistant: lower stimulation 30 minutes before bed.',
-      ),
+      note: wakeAlarm
+          ? i18n.t('toolbox.sleep.winddown.reminderMorning')
+          : i18n.t('toolbox.sleep.winddown.reminderEvening'),
       dueAt: dueAt,
       alarmEnabled: true,
       syncToSystemCalendar: true,
@@ -168,12 +164,8 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
       SnackBar(
         content: Text(
           wakeAlarm
-              ? pickSleepText(i18n, zh: '已创建起床提醒', en: 'Wake reminder created')
-              : pickSleepText(
-                  i18n,
-                  zh: '已创建睡前提醒',
-                  en: 'Wind-down reminder created',
-                ),
+              ? i18n.t('toolbox.sleep.winddown.reminderWakeCreated')
+              : i18n.t('toolbox.sleep.winddown.reminderBedCreated'),
         ),
       ),
     );
@@ -203,12 +195,8 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
     if (!appState.isModuleEnabled(ModuleIds.toolboxSleepAssistant)) {
       return themed(
         ToolboxToolPage(
-          title: pickSleepText(i18n, zh: '睡眠助手', en: 'Sleep assistant'),
-          subtitle: pickSleepText(
-            i18n,
-            zh: '模块已停用，无法继续访问睡眠助手页面。',
-            en: 'This module is disabled and unavailable right now.',
-          ),
+          title: i18n.t('toolbox.sleep.core.title'),
+          subtitle: i18n.t('toolbox.sleep.core.disabled'),
           child: ModuleDisabledView(
             i18n: i18n,
             moduleId: ModuleIds.toolboxSleepAssistant,
@@ -225,26 +213,18 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
 
     return themed(
       ToolboxToolPage(
-        title: pickSleepText(i18n, zh: '今晚流程', en: 'Tonight routine'),
-        subtitle: pickSleepText(
-          i18n,
-          zh: '把睡前流程做成可选模板、可执行步骤和更温和的结束动作。',
-          en: 'Turn wind-down into editable templates, runnable steps, and a quieter ending.',
-        ),
+        title: i18n.t('toolbox.sleep.winddown.title'),
+        subtitle: i18n.t('toolbox.sleep.winddown.intro'),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             SectionHeader(
-              title: pickSleepText(i18n, zh: '流程模板', en: 'Templates'),
-              subtitle: pickSleepText(
-                i18n,
-                zh: '可直接开始，也可以复制后自定义。',
-                en: 'Start them directly or duplicate into your own custom version.',
-              ),
+              title: i18n.t('toolbox.sleep.winddown.templates'),
+              subtitle: i18n.t('toolbox.sleep.winddown.templatesHint'),
               trailing: FilledButton.tonalIcon(
                 onPressed: () => _openEditor(null),
                 icon: const Icon(Icons.add_rounded),
-                label: Text(pickSleepText(i18n, zh: '新建', en: 'New')),
+                label: Text(i18n.t('toolbox.sleep.winddown.new')),
               ),
             ),
             const SizedBox(height: 12),
@@ -270,7 +250,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickSleepText(i18n, zh: '流程执行器', en: 'Routine runner'),
+                      i18n.t('toolbox.sleep.winddown.runner'),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 10),
@@ -288,11 +268,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                       const SizedBox(height: 10),
                       Text(
                         currentStep == null
-                            ? pickSleepText(
-                                i18n,
-                                zh: '还未开始',
-                                en: 'Not started yet',
-                              )
+                            ? i18n.t('toolbox.sleep.winddown.notStarted')
                             : '${sleepRoutineStepLabel(i18n, currentStep)} · ${sleepSecondsLabel(appState.sleepRoutineRunnerState.remainingSeconds, i18n: i18n)}',
                       ),
                       const SizedBox(height: 12),
@@ -310,7 +286,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                                       .startSleepRoutine(),
                             icon: const Icon(Icons.play_arrow_rounded),
                             label: Text(
-                              pickSleepText(i18n, zh: '开始', en: 'Start'),
+                              i18n.t('toolbox.sleep.winddown.start'),
                             ),
                           ),
                           OutlinedButton.icon(
@@ -322,7 +298,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                                 : null,
                             icon: const Icon(Icons.pause_rounded),
                             label: Text(
-                              pickSleepText(i18n, zh: '暂停', en: 'Pause'),
+                              i18n.t('toolbox.sleep.core.pause'),
                             ),
                           ),
                           OutlinedButton.icon(
@@ -333,7 +309,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                                 : null,
                             icon: const Icon(Icons.play_circle_outline_rounded),
                             label: Text(
-                              pickSleepText(i18n, zh: '继续', en: 'Resume'),
+                              i18n.t('toolbox.sleep.core.resume'),
                             ),
                           ),
                           OutlinedButton.icon(
@@ -348,7 +324,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                                       .advanceSleepRoutine(),
                             icon: const Icon(Icons.skip_next_rounded),
                             label: Text(
-                              pickSleepText(i18n, zh: '下一步', en: 'Next'),
+                              i18n.t('toolbox.sleep.core.next'),
                             ),
                           ),
                           OutlinedButton.icon(
@@ -363,7 +339,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                                       .stopSleepRoutine(),
                             icon: const Icon(Icons.stop_rounded),
                             label: Text(
-                              pickSleepText(i18n, zh: '停止', en: 'Stop'),
+                              i18n.t('toolbox.sleep.core.stop'),
                             ),
                           ),
                         ],
@@ -393,7 +369,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickSleepText(i18n, zh: '担忧卸载', en: 'Thought unload'),
+                      i18n.t('toolbox.sleep.winddown.unloadThoughts'),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 10),
@@ -401,11 +377,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                       controller: _thoughtController,
                       maxLines: 3,
                       decoration: InputDecoration(
-                        labelText: pickSleepText(
-                          i18n,
-                          zh: '此刻最占脑子的念头',
-                          en: 'Most active thought right now',
-                        ),
+                        labelText: i18n.t('toolbox.sleep.winddown.topThought'),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -413,16 +385,12 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                       controller: _reframeController,
                       maxLines: 2,
                       decoration: InputDecoration(
-                        labelText: pickSleepText(
-                          i18n,
-                          zh: '更温和的替代表述',
-                          en: 'Gentler reframe',
-                        ),
+                        labelText: i18n.t('toolbox.sleep.winddown.gentlerReframe'),
                       ),
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      '${pickSleepText(i18n, zh: '强度', en: 'Intensity')} ${_intensity.round()}/5',
+                      '${i18n.t('toolbox.sleep.winddown.intensity')} ${_intensity.round()}/5',
                     ),
                     Slider(
                       value: _intensity,
@@ -435,11 +403,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                       onPressed: _saveThought,
                       icon: const Icon(Icons.edit_note_rounded),
                       label: Text(
-                        pickSleepText(
-                          i18n,
-                          zh: '保存卸载条目',
-                          en: 'Save unload entry',
-                        ),
+                        i18n.t('toolbox.sleep.winddown.saveUnload'),
                       ),
                     ),
                   ],
@@ -454,7 +418,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickSleepText(i18n, zh: '小工具', en: 'Quick tools'),
+                      i18n.t('toolbox.sleep.winddown.quickTools'),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 10),
@@ -463,39 +427,23 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                       runSpacing: 10,
                       children: <Widget>[
                         SleepQuickToolButton(
-                          title: pickSleepText(
-                            i18n,
-                            zh: '白噪音',
-                            en: 'White noise',
-                          ),
+                          title: i18n.t('toolbox.sleep.winddown.whiteNoise'),
                           icon: Icons.graphic_eq_rounded,
                           onTap: () => showSleepWhiteNoiseSheet(context),
                         ),
                         SleepQuickToolButton(
-                          title: pickSleepText(
-                            i18n,
-                            zh: '咖啡因截止线',
-                            en: 'Caffeine cutoff',
-                          ),
+                          title: i18n.t('toolbox.sleep.winddown.caffeineCutoff'),
                           icon: Icons.local_cafe_rounded,
                           onTap: () =>
                               showCaffeineCutoffCalculatorSheet(context),
                         ),
                         SleepQuickToolButton(
-                          title: pickSleepText(
-                            i18n,
-                            zh: '90 分钟周期',
-                            en: '90-min cycles',
-                          ),
+                          title: i18n.t('toolbox.sleep.winddown.cycle90min'),
                           icon: Icons.more_time_rounded,
                           onTap: () => showSleepCyclePlannerSheet(context),
                         ),
                         SleepQuickToolButton(
-                          title: pickSleepText(
-                            i18n,
-                            zh: '睡前提醒',
-                            en: 'Bed reminder',
-                          ),
+                          title: i18n.t('toolbox.sleep.winddown.bedReminder'),
                           icon: Icons.notifications_active_rounded,
                           onTap: () => _createSleepReminder(
                             appState: appState,
@@ -504,11 +452,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                           ),
                         ),
                         SleepQuickToolButton(
-                          title: pickSleepText(
-                            i18n,
-                            zh: '起床闹钟',
-                            en: 'Wake alarm',
-                          ),
+                          title: i18n.t('toolbox.sleep.winddown.wakeAlarm'),
                           icon: Icons.alarm_rounded,
                           onTap: () => _createSleepReminder(
                             appState: appState,
@@ -517,11 +461,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                           ),
                         ),
                         SleepQuickToolButton(
-                          title: pickSleepText(
-                            i18n,
-                            zh: '呼吸练习',
-                            en: 'Breathing',
-                          ),
+                          title: i18n.t('toolbox.sleep.winddown.breathing'),
                           icon: Icons.air_rounded,
                           onTap: () {
                             Navigator.of(context).push(
@@ -532,11 +472,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                           },
                         ),
                         SleepQuickToolButton(
-                          title: pickSleepText(
-                            i18n,
-                            zh: '舒缓声音',
-                            en: 'Soothing audio',
-                          ),
+                          title: i18n.t('toolbox.sleep.winddown.soothingAudio'),
                           icon: Icons.spa_rounded,
                           onTap: () {
                             Navigator.of(context).push(
@@ -561,11 +497,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        pickSleepText(
-                          i18n,
-                          zh: '最近卸载内容',
-                          en: 'Recent unload entries',
-                        ),
+                        i18n.t('toolbox.sleep.winddown.recentUnload'),
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 10),
@@ -590,7 +522,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                                     .isNotEmpty) ...<Widget>[
                                   const SizedBox(height: 6),
                                   Text(
-                                    '${pickSleepText(i18n, zh: '替代表述', en: 'Reframe')}: ${entry.reframedContent}',
+                                    '${i18n.t('toolbox.sleep.winddown.reframe')}: ${entry.reframedContent}',
                                     style: Theme.of(
                                       context,
                                     ).textTheme.bodySmall,
@@ -635,7 +567,7 @@ class _RoutineStepChecklist extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          pickSleepText(i18n, zh: '步骤清单', en: 'Step checklist'),
+          i18n.t('toolbox.sleep.winddown.stepChecklist'),
           style: Theme.of(
             context,
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
@@ -658,11 +590,7 @@ class _RoutineStepChecklist extends StatelessWidget {
             title: Text(sleepRoutineStepLabel(i18n, step)),
             subtitle: Text(
               isCurrent
-                  ? pickSleepText(
-                      i18n,
-                      zh: '当前步骤，勾选即进入下一步',
-                      en: 'Current step. Check to continue.',
-                    )
+                  ? i18n.t('toolbox.sleep.winddown.stepHint')
                   : sleepSecondsLabel(step.durationSeconds, i18n: i18n),
             ),
             secondary: Icon(
@@ -718,7 +646,7 @@ class _RoutineTemplateCard extends StatelessWidget {
                   if (template.builtIn)
                     Chip(
                       label: Text(
-                        pickSleepText(i18n, zh: '内置', en: 'Built-in'),
+                        i18n.t('toolbox.sleep.winddown.builtIn'),
                       ),
                     ),
                   const SizedBox(width: 8),
@@ -746,7 +674,7 @@ class _RoutineTemplateCard extends StatelessWidget {
               if (selected) ...<Widget>[
                 const SizedBox(height: 10),
                 Text(
-                  pickSleepText(i18n, zh: '当前已选中', en: 'Currently selected'),
+                  i18n.t('toolbox.sleep.winddown.currentlySelected'),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],

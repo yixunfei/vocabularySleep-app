@@ -195,298 +195,106 @@ TextTheme _sleepDarkTextTheme(TextTheme base, ColorScheme colorScheme) {
 
 String sleepIssueLabel(AppI18n i18n, SleepIssueType issue) {
   return switch (issue) {
-    SleepIssueType.difficultyFallingAsleep => pickSleepText(
-      i18n,
-      zh: '入睡困难',
-      en: 'Hard to fall asleep',
-    ),
-    SleepIssueType.frequentAwakenings => pickSleepText(
-      i18n,
-      zh: '夜里容易醒',
-      en: 'Frequent awakenings',
-    ),
-    SleepIssueType.earlyAwakening => pickSleepText(
-      i18n,
-      zh: '早醒',
-      en: 'Early awakening',
-    ),
-    SleepIssueType.nonRestorativeSleep => pickSleepText(
-      i18n,
-      zh: '睡后不解乏',
-      en: 'Non-restorative sleep',
-    ),
-    SleepIssueType.irregularSchedule => pickSleepText(
-      i18n,
-      zh: '作息不规律',
-      en: 'Irregular schedule',
-    ),
-    SleepIssueType.racingThoughts => pickSleepText(
-      i18n,
-      zh: '脑子停不下来',
-      en: 'Racing thoughts',
-    ),
-    SleepIssueType.daytimeSleepiness => pickSleepText(
-      i18n,
-      zh: '白天犯困',
-      en: 'Daytime sleepiness',
-    ),
-    SleepIssueType.snoringRisk => pickSleepText(
-      i18n,
-      zh: '打鼾风险',
-      en: 'Snoring risk',
-    ),
-    SleepIssueType.painOrTension => pickSleepText(
-      i18n,
-      zh: '疼痛或紧绷',
-      en: 'Pain or tension',
-    ),
+    SleepIssueType.difficultyFallingAsleep => i18n.t('toolbox.sleep.support.issue.hard_fall_asleep'),
+    SleepIssueType.frequentAwakenings => i18n.t('toolbox.sleep.support.issue.frequent_awakenings'),
+    SleepIssueType.earlyAwakening => i18n.t('toolbox.sleep.support.issue.early_awakening'),
+    SleepIssueType.nonRestorativeSleep => i18n.t('toolbox.sleep.support.issue.non_restorative'),
+    SleepIssueType.irregularSchedule => i18n.t('toolbox.sleep.support.issue.irregular_schedule'),
+    SleepIssueType.racingThoughts => i18n.t('toolbox.sleep.support.issue.racing_thoughts'),
+    SleepIssueType.daytimeSleepiness => i18n.t('toolbox.sleep.support.issue.daytime_sleepiness'),
+    SleepIssueType.snoringRisk => i18n.t('toolbox.sleep.support.issue.snoring_risk'),
+    SleepIssueType.painOrTension => i18n.t('toolbox.sleep.support.issue.pain_tension'),
   };
 }
 
 String sleepRiskLabel(AppI18n i18n, SleepRiskLevel risk) {
   return switch (risk) {
-    SleepRiskLevel.none => pickSleepText(i18n, zh: '无明显风险', en: 'Low'),
-    SleepRiskLevel.mild => pickSleepText(i18n, zh: '轻度', en: 'Mild'),
-    SleepRiskLevel.medium => pickSleepText(i18n, zh: '中度', en: 'Medium'),
-    SleepRiskLevel.high => pickSleepText(i18n, zh: '较高', en: 'High'),
+    SleepRiskLevel.none => i18n.t('toolbox.sleep.support.risk.low'),
+    SleepRiskLevel.mild => i18n.t('toolbox.sleep.support.risk.mild'),
+    SleepRiskLevel.medium => i18n.t('toolbox.sleep.support.risk.medium'),
+    SleepRiskLevel.high => i18n.t('toolbox.sleep.support.risk.high'),
   };
 }
 
 String sleepNightModeLabel(AppI18n i18n, SleepNightRescueMode mode) {
   return switch (mode) {
-    SleepNightRescueMode.briefAwakening => pickSleepText(
-      i18n,
-      zh: '短暂醒来',
-      en: 'Brief awakening',
-    ),
-    SleepNightRescueMode.fullyAwake => pickSleepText(
-      i18n,
-      zh: '完全清醒',
-      en: 'Fully awake',
-    ),
-    SleepNightRescueMode.racingThoughts => pickSleepText(
-      i18n,
-      zh: '思绪停不下来',
-      en: 'Racing thoughts',
-    ),
-    SleepNightRescueMode.bodyActivated => pickSleepText(
-      i18n,
-      zh: '身体太兴奋',
-      en: 'Body activated',
-    ),
-    SleepNightRescueMode.temperatureDiscomfort => pickSleepText(
-      i18n,
-      zh: '温度或环境不适',
-      en: 'Temperature discomfort',
-    ),
+    SleepNightRescueMode.briefAwakening => i18n.t('toolbox.sleep.support.mode.brief'),
+    SleepNightRescueMode.fullyAwake => i18n.t('toolbox.sleep.support.mode.fully_awake'),
+    SleepNightRescueMode.racingThoughts => i18n.t('toolbox.sleep.support.mode.racing_thoughts'),
+    SleepNightRescueMode.bodyActivated => i18n.t('toolbox.sleep.support.mode.body_activated'),
+    SleepNightRescueMode.temperatureDiscomfort => i18n.t('toolbox.sleep.support.mode.temperature'),
   };
 }
 
 String sleepNightModeBody(AppI18n i18n, SleepNightRescueMode mode) {
   return switch (mode) {
-    SleepNightRescueMode.briefAwakening => pickSleepText(
-      i18n,
-      zh: '先别急着做事，保持低刺激，观察困意会不会自己回来。',
-      en: 'Stay low-stim and let the sleep drive come back on its own.',
-    ),
-    SleepNightRescueMode.fullyAwake => pickSleepText(
-      i18n,
-      zh: '如果越躺越清醒，先离床，做一件单调、安静、不会越做越兴奋的事。',
-      en: 'If you are clearly awake, leave bed and do something calm and boring.',
-    ),
-    SleepNightRescueMode.racingThoughts => pickSleepText(
-      i18n,
-      zh: '不要继续在床上解决问题，先把念头停放，再回到呼吸和身体。',
-      en: 'Stop problem-solving in bed and park the thoughts first.',
-    ),
-    SleepNightRescueMode.bodyActivated => pickSleepText(
-      i18n,
-      zh: '先把身体唤醒度降下来，用更长呼气、放松肩颈或轻柔伸展。',
-      en: 'Lower body activation first with longer exhales or gentle release.',
-    ),
-    SleepNightRescueMode.temperatureDiscomfort => pickSleepText(
-      i18n,
-      zh: '优先处理过热、过冷、闷、亮或被窝不适，再决定要不要离床。',
-      en: 'Fix heat, cold, light, or bedding discomfort before deciding next.',
-    ),
+    SleepNightRescueMode.briefAwakening => i18n.t('toolbox.sleep.support.mode_body.brief'),
+    SleepNightRescueMode.fullyAwake => i18n.t('toolbox.sleep.support.mode_body.fully_awake'),
+    SleepNightRescueMode.racingThoughts => i18n.t('toolbox.sleep.support.mode_body.racing_thoughts'),
+    SleepNightRescueMode.bodyActivated => i18n.t('toolbox.sleep.support.mode_body.body_activated'),
+    SleepNightRescueMode.temperatureDiscomfort => i18n.t('toolbox.sleep.support.mode_body.temperature'),
   };
 }
 
 String sleepTrackLabel(AppI18n i18n, SleepPlanTrack track) {
   return switch (track) {
-    SleepPlanTrack.observation => pickSleepText(
-      i18n,
-      zh: '观察计划',
-      en: 'Observation',
-    ),
-    SleepPlanTrack.windDown => pickSleepText(i18n, zh: '睡前减压', en: 'Wind-down'),
-    SleepPlanTrack.insomniaSupport => pickSleepText(
-      i18n,
-      zh: '失眠支持',
-      en: 'Insomnia support',
-    ),
-    SleepPlanTrack.rhythmReset => pickSleepText(
-      i18n,
-      zh: '节律重建',
-      en: 'Rhythm reset',
-    ),
-    SleepPlanTrack.environmentFix => pickSleepText(
-      i18n,
-      zh: '环境修正',
-      en: 'Environment fix',
-    ),
-    SleepPlanTrack.daytimeRecovery => pickSleepText(
-      i18n,
-      zh: '白天恢复',
-      en: 'Daytime recovery',
-    ),
+    SleepPlanTrack.observation => i18n.t('toolbox.sleep.support.track.observation'),
+    SleepPlanTrack.windDown => i18n.t('toolbox.sleep.support.track.wind_down'),
+    SleepPlanTrack.insomniaSupport => i18n.t('toolbox.sleep.support.track.insomnia'),
+    SleepPlanTrack.rhythmReset => i18n.t('toolbox.sleep.support.track.rhythm_reset'),
+    SleepPlanTrack.environmentFix => i18n.t('toolbox.sleep.support.track.environment'),
+    SleepPlanTrack.daytimeRecovery => i18n.t('toolbox.sleep.support.track.recovery'),
   };
 }
 
 String sleepProgramLabel(AppI18n i18n, SleepProgramType type) {
   return switch (type) {
-    SleepProgramType.sevenDayRhythmReset => pickSleepText(
-      i18n,
-      zh: '7 天节律重建',
-      en: '7-day rhythm reset',
-    ),
-    SleepProgramType.fourteenDaySleepReset => pickSleepText(
-      i18n,
-      zh: '14 天睡眠重启',
-      en: '14-day sleep reset',
-    ),
-    SleepProgramType.insomniaStarter => pickSleepText(
-      i18n,
-      zh: '失眠起步计划',
-      en: 'Insomnia starter',
-    ),
+    SleepProgramType.sevenDayRhythmReset => i18n.t('toolbox.sleep.support.program.rhythm_7'),
+    SleepProgramType.fourteenDaySleepReset => i18n.t('toolbox.sleep.support.program.reset_14'),
+    SleepProgramType.insomniaStarter => i18n.t('toolbox.sleep.support.program.starter'),
   };
 }
 
 String sleepProgramBody(AppI18n i18n, SleepProgramType type) {
   return switch (type) {
-    SleepProgramType.sevenDayRhythmReset => pickSleepText(
-      i18n,
-      zh: '先稳住起床时间、晨光和咖啡因截止线，重新拉直作息。',
-      en: 'Stabilize wake time, morning light, and caffeine cutoff first.',
-    ),
-    SleepProgramType.fourteenDaySleepReset => pickSleepText(
-      i18n,
-      zh: '连续两周记录日志、执行睡前流程，并对照周报做小步调整。',
-      en: 'Build two weeks around logs, routines, and small weekly adjustments.',
-    ),
-    SleepProgramType.insomniaStarter => pickSleepText(
-      i18n,
-      zh: '优先练习夜醒应对、离床策略和担忧卸载，再看是否需要更进阶调整。',
-      en: 'Learn rescue, leave-bed strategy, and worry unload before stricter work.',
-    ),
+    SleepProgramType.sevenDayRhythmReset => i18n.t('toolbox.sleep.support.program_body.rhythm_7'),
+    SleepProgramType.fourteenDaySleepReset => i18n.t('toolbox.sleep.support.program_body.reset_14'),
+    SleepProgramType.insomniaStarter => i18n.t('toolbox.sleep.support.program_body.starter'),
   };
 }
 
 String sleepRoutineStepTypeLabel(AppI18n i18n, SleepRoutineStepType type) {
   return switch (type) {
-    SleepRoutineStepType.dimLights => pickSleepText(
-      i18n,
-      zh: '调暗灯光',
-      en: 'Dim lights',
-    ),
-    SleepRoutineStepType.stopScreens => pickSleepText(
-      i18n,
-      zh: '停止看屏',
-      en: 'Stop screens',
-    ),
-    SleepRoutineStepType.prepareRoom => pickSleepText(
-      i18n,
-      zh: '整理房间环境',
-      en: 'Prepare room',
-    ),
-    SleepRoutineStepType.unloadThoughts => pickSleepText(
-      i18n,
-      zh: '卸载思绪',
-      en: 'Unload thoughts',
-    ),
-    SleepRoutineStepType.breathing => pickSleepText(
-      i18n,
-      zh: '呼吸放松',
-      en: 'Breathing',
-    ),
-    SleepRoutineStepType.stretch => pickSleepText(
-      i18n,
-      zh: '轻柔拉伸',
-      en: 'Stretch',
-    ),
-    SleepRoutineStepType.warmBath => pickSleepText(
-      i18n,
-      zh: '热水澡或泡脚',
-      en: 'Warm bath',
-    ),
-    SleepRoutineStepType.whiteNoise => pickSleepText(
-      i18n,
-      zh: '白噪音',
-      en: 'White noise',
-    ),
-    SleepRoutineStepType.soothingAudio => pickSleepText(
-      i18n,
-      zh: '舒缓声音',
-      en: 'Soothing audio',
-    ),
-    SleepRoutineStepType.bodyScan => pickSleepText(
-      i18n,
-      zh: '身体扫描',
-      en: 'Body scan',
-    ),
-    SleepRoutineStepType.goToBed => pickSleepText(
-      i18n,
-      zh: '上床准备睡',
-      en: 'Go to bed',
-    ),
+    SleepRoutineStepType.dimLights => i18n.t('toolbox.sleep.support.step.dim_lights'),
+    SleepRoutineStepType.stopScreens => i18n.t('toolbox.sleep.support.step.stop_screens'),
+    SleepRoutineStepType.prepareRoom => i18n.t('toolbox.sleep.support.step.prepare_room'),
+    SleepRoutineStepType.unloadThoughts => i18n.t('toolbox.sleep.support.step.unload_thoughts'),
+    SleepRoutineStepType.breathing => i18n.t('toolbox.sleep.support.step.breathing'),
+    SleepRoutineStepType.stretch => i18n.t('toolbox.sleep.support.step.stretch'),
+    SleepRoutineStepType.warmBath => i18n.t('toolbox.sleep.support.step.warm_bath'),
+    SleepRoutineStepType.whiteNoise => i18n.t('toolbox.sleep.support.step.white_noise'),
+    SleepRoutineStepType.soothingAudio => i18n.t('toolbox.sleep.support.step.soothing_audio'),
+    SleepRoutineStepType.bodyScan => i18n.t('toolbox.sleep.support.step.body_scan'),
+    SleepRoutineStepType.goToBed => i18n.t('toolbox.sleep.support.step.go_to_bed'),
   };
 }
 
 String sleepRoutineTemplateName(AppI18n i18n, SleepRoutineTemplate template) {
   return switch (template.id) {
-    'minimum_energy_shutdown' => pickSleepText(
-      i18n,
-      zh: '最低能量睡前流程',
-      en: 'Tiny wind-down',
-    ),
-    'quick_reset' => pickSleepText(i18n, zh: '快速重置', en: 'Quick reset'),
-    'standard_wind_down' => pickSleepText(
-      i18n,
-      zh: '标准睡前放松',
-      en: 'Standard wind-down',
-    ),
+    'minimum_energy_shutdown' => i18n.t('toolbox.sleep.support.template.tiny'),
+    'quick_reset' => i18n.t('toolbox.sleep.support.template.quick_reset'),
+    'standard_wind_down' => i18n.t('toolbox.sleep.support.template.standard'),
     _ => template.name,
   };
 }
 
 String sleepRoutineStepLabel(AppI18n i18n, SleepRoutineStep step) {
   return switch (step.label) {
-    'Dim only the lights you can reach' => pickSleepText(
-      i18n,
-      zh: '只调暗伸手够得到的灯',
-      en: 'Dim only the lights you can reach',
-    ),
-    'Put the screen face down' => pickSleepText(
-      i18n,
-      zh: '把屏幕朝下放好',
-      en: 'Put the screen face down',
-    ),
-    'Park one loud thought' => pickSleepText(
-      i18n,
-      zh: '停放一个最吵的念头',
-      en: 'Park one loud thought',
-    ),
-    'Longer exhale breathing' => pickSleepText(
-      i18n,
-      zh: '做更长呼气的呼吸',
-      en: 'Longer exhale breathing',
-    ),
-    'Get into bed without adding tasks' => pickSleepText(
-      i18n,
-      zh: '进床，不再加任务',
-      en: 'Get into bed without adding tasks',
-    ),
+    'Dim only the lights you can reach' => i18n.t('toolbox.sleep.support.template_step.tiny1'),
+    'Put the screen face down' => i18n.t('toolbox.sleep.support.template_step.tiny2'),
+    'Park one loud thought' => i18n.t('toolbox.sleep.support.template_step.tiny3'),
+    'Longer exhale breathing' => i18n.t('toolbox.sleep.support.template_step.tiny4'),
+    'Get into bed without adding tasks' => i18n.t('toolbox.sleep.support.template_step.tiny5'),
     _ =>
       step.label.trim().isEmpty
           ? sleepRoutineStepTypeLabel(i18n, step.type)
@@ -653,52 +461,52 @@ DateTime? sleepDateTimeFromTimeOfDay(
 String sleepIntensityLabel(AppI18n i18n, int? value) {
   final resolved = value ?? 0;
   if (resolved <= 1) {
-    return pickSleepText(i18n, zh: '很低', en: 'Very low');
+    return i18n.t('toolbox.sleep.support.intensity.very_low');
   }
   if (resolved == 2) {
-    return pickSleepText(i18n, zh: '偏低', en: 'Low');
+    return i18n.t('toolbox.sleep.support.intensity.low');
   }
   if (resolved == 3) {
-    return pickSleepText(i18n, zh: '中等', en: 'Moderate');
+    return i18n.t('toolbox.sleep.support.intensity.moderate');
   }
   if (resolved == 4) {
-    return pickSleepText(i18n, zh: '偏高', en: 'High');
+    return i18n.t('toolbox.sleep.support.intensity.high');
   }
-  return pickSleepText(i18n, zh: '很高', en: 'Very high');
+  return i18n.t('toolbox.sleep.support.intensity.very_high');
 }
 
 String sleepFrequencyLabel(AppI18n i18n, int? value) {
   final resolved = value ?? 0;
   if (resolved <= 1) {
-    return pickSleepText(i18n, zh: '偶尔', en: 'Rare');
+    return i18n.t('toolbox.sleep.support.frequency.rare');
   }
   if (resolved == 2) {
-    return pickSleepText(i18n, zh: '有时', en: 'Sometimes');
+    return i18n.t('toolbox.sleep.support.frequency.sometimes');
   }
   if (resolved == 3) {
-    return pickSleepText(i18n, zh: '经常', en: 'Often');
+    return i18n.t('toolbox.sleep.support.frequency.often');
   }
   if (resolved == 4) {
-    return pickSleepText(i18n, zh: '很频繁', en: 'Frequent');
+    return i18n.t('toolbox.sleep.support.frequency.frequent');
   }
-  return pickSleepText(i18n, zh: '几乎每天', en: 'Nearly daily');
+  return i18n.t('toolbox.sleep.support.frequency.daily');
 }
 
 String sleepBooleanStatus(AppI18n i18n, bool value) {
   return value
-      ? pickSleepText(i18n, zh: '已记录', en: 'Yes')
-      : pickSleepText(i18n, zh: '未记录', en: 'No');
+      ? i18n.t('toolbox.sleep.support.bool.recorded')
+      : i18n.t('toolbox.sleep.support.bool.not_recorded');
 }
 
 String sleepWakeBurdenLabel(AppI18n i18n, SleepDailyLog log) {
   final burden = sleepWakeBurdenValue(log);
   if (burden <= 1) {
-    return pickSleepText(i18n, zh: '低', en: 'Low');
+    return i18n.t('toolbox.sleep.support.burden.low');
   }
   if (burden == 2) {
-    return pickSleepText(i18n, zh: '中', en: 'Moderate');
+    return i18n.t('toolbox.sleep.support.burden.medium');
   }
-  return pickSleepText(i18n, zh: '高', en: 'High');
+  return i18n.t('toolbox.sleep.support.burden.high');
 }
 
 int sleepWakeBurdenValue(SleepDailyLog log) {
@@ -715,131 +523,55 @@ int sleepWakeBurdenValue(SleepDailyLog log) {
 
 String sleepAssessmentFactorTitle(AppI18n i18n, String factorId) {
   return switch (factorId) {
-    'stressLoadLevel' => pickSleepText(i18n, zh: '压力负荷', en: 'Stress load'),
-    'screenDependenceLevel' => pickSleepText(
-      i18n,
-      zh: '屏幕依赖',
-      en: 'Screen dependence',
-    ),
-    'lateWorkFrequency' => pickSleepText(i18n, zh: '晚间工作', en: 'Late work'),
-    'exerciseLateFrequency' => pickSleepText(
-      i18n,
-      zh: '晚间剧烈运动',
-      en: 'Late exercise',
-    ),
-    'painImpactLevel' => pickSleepText(
-      i18n,
-      zh: '疼痛或紧绷',
-      en: 'Pain or tension',
-    ),
-    'snoringRisk' => pickSleepText(i18n, zh: '打鼾风险', en: 'Snoring risk'),
+    'stressLoadLevel' => i18n.t('toolbox.sleep.support.factor.stress'),
+    'screenDependenceLevel' => i18n.t('toolbox.sleep.support.factor.screen'),
+    'lateWorkFrequency' => i18n.t('toolbox.sleep.support.factor.late_work'),
+    'exerciseLateFrequency' => i18n.t('toolbox.sleep.support.factor.late_exercise'),
+    'painImpactLevel' => i18n.t('toolbox.sleep.support.factor.pain'),
+    'snoringRisk' => i18n.t('toolbox.sleep.support.factor.snoring'),
     _ => factorId,
   };
 }
 
 String sleepAssessmentFactorHint(AppI18n i18n, String factorId) {
   return switch (factorId) {
-    'stressLoadLevel' => pickSleepText(
-      i18n,
-      zh: '压力越高，越需要把担忧和任务从床上挪走。',
-      en: 'Higher stress means more need for worry unload before bed.',
-    ),
-    'screenDependenceLevel' => pickSleepText(
-      i18n,
-      zh: '不仅是蓝光，更是内容刺激会顶掉困意。',
-      en: 'It is not only light; stimulating content can override sleepiness.',
-    ),
-    'lateWorkFrequency' => pickSleepText(
-      i18n,
-      zh: '晚间脑力工作会把大脑维持在解决问题模式。',
-      en: 'Late cognitive work keeps the brain in problem-solving mode.',
-    ),
-    'exerciseLateFrequency' => pickSleepText(
-      i18n,
-      zh: '太晚的高强度运动可能抬高体温和唤醒度。',
-      en: 'Very late intense exercise can raise activation and body temperature.',
-    ),
-    'painImpactLevel' => pickSleepText(
-      i18n,
-      zh: '先识别是痛感、紧绷还是姿势与环境问题。',
-      en: 'Separate pain, tension, and posture or environment triggers.',
-    ),
-    'snoringRisk' => pickSleepText(
-      i18n,
-      zh: '如伴随憋醒、头痛或白天极困，需要更认真评估。',
-      en: 'If paired with gasping or strong daytime sleepiness, assess further.',
-    ),
+    'stressLoadLevel' => i18n.t('toolbox.sleep.support.factor_hint.stress'),
+    'screenDependenceLevel' => i18n.t('toolbox.sleep.support.factor_hint.screen'),
+    'lateWorkFrequency' => i18n.t('toolbox.sleep.support.factor_hint.late_work'),
+    'exerciseLateFrequency' => i18n.t('toolbox.sleep.support.factor_hint.late_exercise'),
+    'painImpactLevel' => i18n.t('toolbox.sleep.support.factor_hint.pain'),
+    'snoringRisk' => i18n.t('toolbox.sleep.support.factor_hint.snoring'),
     _ => '',
   };
 }
 
 String sleepDailyFactorTitle(AppI18n i18n, String factorId) {
   return switch (factorId) {
-    'caffeineAfterCutoff' => pickSleepText(
-      i18n,
-      zh: '咖啡因超线',
-      en: 'Late caffeine',
-    ),
-    'lateScreenExposure' => pickSleepText(
-      i18n,
-      zh: '临睡前看屏',
-      en: 'Late screens',
-    ),
-    'alcoholAtNight' => pickSleepText(i18n, zh: '夜间饮酒', en: 'Alcohol at night'),
-    'morningLightDone' => pickSleepText(i18n, zh: '晨光暴露', en: 'Morning light'),
-    'heavyDinner' => pickSleepText(i18n, zh: '晚餐偏重', en: 'Heavy dinner'),
-    'intenseExerciseLate' => pickSleepText(
-      i18n,
-      zh: '太晚运动',
-      en: 'Late intense exercise',
-    ),
-    'hotBathDone' => pickSleepText(i18n, zh: '热水澡/泡脚', en: 'Warm bath'),
-    'stretchingDone' => pickSleepText(i18n, zh: '拉伸放松', en: 'Stretching'),
-    'whiteNoiseUsed' => pickSleepText(i18n, zh: '白噪音', en: 'White noise'),
-    'bedroomTooHot' => pickSleepText(i18n, zh: '卧室太热', en: 'Room too hot'),
-    'bedroomTooBright' => pickSleepText(
-      i18n,
-      zh: '卧室太亮',
-      en: 'Room too bright',
-    ),
-    'bedroomTooNoisy' => pickSleepText(i18n, zh: '卧室太吵', en: 'Room too noisy'),
-    'clockChecking' => pickSleepText(i18n, zh: '反复看时间', en: 'Clock checking'),
+    'caffeineAfterCutoff' => i18n.t('toolbox.sleep.support.daily.late_caffeine'),
+    'lateScreenExposure' => i18n.t('toolbox.sleep.support.daily.late_screens'),
+    'alcoholAtNight' => i18n.t('toolbox.sleep.support.daily.alcohol'),
+    'morningLightDone' => i18n.t('toolbox.sleep.support.daily.morning_light'),
+    'heavyDinner' => i18n.t('toolbox.sleep.support.daily.heavy_dinner'),
+    'intenseExerciseLate' => i18n.t('toolbox.sleep.support.daily.late_exercise'),
+    'hotBathDone' => i18n.t('toolbox.sleep.support.daily.warm_bath'),
+    'stretchingDone' => i18n.t('toolbox.sleep.support.daily.stretching'),
+    'whiteNoiseUsed' => i18n.t('toolbox.sleep.support.daily.white_noise'),
+    'bedroomTooHot' => i18n.t('toolbox.sleep.support.daily.room_hot'),
+    'bedroomTooBright' => i18n.t('toolbox.sleep.support.daily.room_bright'),
+    'bedroomTooNoisy' => i18n.t('toolbox.sleep.support.daily.room_noisy'),
+    'clockChecking' => i18n.t('toolbox.sleep.support.daily.clock_checking'),
     _ => factorId,
   };
 }
 
 String sleepDailyFactorHint(AppI18n i18n, String factorId) {
   return switch (factorId) {
-    'caffeineAfterCutoff' => pickSleepText(
-      i18n,
-      zh: '多数人可以先尝试把截止线放到上床前 8 小时左右。',
-      en: 'A practical first cutoff is often around eight hours before bed.',
-    ),
-    'lateScreenExposure' => pickSleepText(
-      i18n,
-      zh: '高唤醒内容比单纯刷一会更影响入睡。',
-      en: 'Highly stimulating content matters more than screen light alone.',
-    ),
-    'alcoholAtNight' => pickSleepText(
-      i18n,
-      zh: '酒精可能让前半夜困，但常破坏后半夜连续性。',
-      en: 'Alcohol may increase drowsiness but often fragments the second half.',
-    ),
-    'morningLightDone' => pickSleepText(
-      i18n,
-      zh: '晨起尽快接触自然光，是最强的节律锚点之一。',
-      en: 'Morning outdoor light is one of the strongest rhythm anchors.',
-    ),
-    'clockChecking' => pickSleepText(
-      i18n,
-      zh: '反复确认时间会放大焦虑和性能压力。',
-      en: 'Repeated clock checking often amplifies sleep pressure anxiety.',
-    ),
-    'whiteNoiseUsed' => pickSleepText(
-      i18n,
-      zh: '更适合掩盖不稳定噪声，不是人人都需要。',
-      en: 'Best for masking unstable noise, not necessary for everyone.',
-    ),
+    'caffeineAfterCutoff' => i18n.t('toolbox.sleep.support.daily_hint.caffeine'),
+    'lateScreenExposure' => i18n.t('toolbox.sleep.support.daily_hint.screens'),
+    'alcoholAtNight' => i18n.t('toolbox.sleep.support.daily_hint.alcohol'),
+    'morningLightDone' => i18n.t('toolbox.sleep.support.daily_hint.morning_light'),
+    'clockChecking' => i18n.t('toolbox.sleep.support.daily_hint.clock'),
+    'whiteNoiseUsed' => i18n.t('toolbox.sleep.support.daily_hint.white_noise'),
     _ => '',
   };
 }

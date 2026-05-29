@@ -312,11 +312,7 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          pickUiText(
-            tempoI18n,
-            zh: '当前 $_bpm BPM，每拍 ${(60 / _bpm).toStringAsFixed(2)} 秒',
-            en: 'Current tempo: $_bpm BPM, ${(60 / _bpm).toStringAsFixed(2)} s per beat',
-          ),
+          tempoI18n.t('toolbox.sound.focus.tempoLabel', params: {'bpm': '$_bpm', 'sec': (60 / _bpm).toStringAsFixed(2)}),
         ),
         Slider(
           value: _bpm.toDouble(),
@@ -405,11 +401,7 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          pickUiText(
-            meterI18n,
-            zh: '拍号决定重拍结构，细分决定每拍内的密度，两者都会直接影响舞台节奏。',
-            en: 'Meter defines the strong-beat structure, while subdivisions control pulse density inside each beat.',
-          ),
+          meterI18n.t('toolbox.sound.focus.meterDesc'),
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.35),
         ),
         const SizedBox(height: 12),
@@ -434,11 +426,7 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
               .map(
                 (division) => ChoiceChip(
                   label: Text(
-                    pickUiText(
-                      meterI18n,
-                      zh: '子拍 ×$division',
-                      en: 'Sub ×$division',
-                    ),
+                    meterI18n.t('toolbox.sound.focus.meterSubDiv', params: {'div': '$division'}),
                   ),
                   selected: _subdivision == division,
                   onSelected: (_) => _setSubdivision(division),
@@ -453,7 +441,7 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          '拍号决定强弱拍结构，子拍决定每拍内部切分；两者会同步影响节拍推进和循环编排。',
+          '拍号决定强弱拍结构，子拍决定每拍内部切分；两者会同步影响节奏推进和循环编排。',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.35),
         ),
         const SizedBox(height: 12),
@@ -497,11 +485,7 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
           children: <Widget>[
             Expanded(
               child: Text(
-                pickUiText(
-                  styleI18n,
-                  zh: '选择节拍音色；舞台会保持淡白轨道，不再需要额外设置。',
-                  en: 'Choose the beat timbre. The stage keeps one soft pale track without extra settings.',
-                ),
+                styleI18n.t('toolbox.sound.focus.styleDesc'),
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(height: 1.35),
@@ -511,13 +495,13 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
             FilledButton.tonalIcon(
               onPressed: _previewCurrentSound,
               icon: const Icon(Icons.graphic_eq_rounded),
-              label: Text(pickUiText(styleI18n, zh: '试听', en: 'Preview')),
+              label: Text(styleI18n.t('toolbox.sound.focus.previewButton')),
             ),
           ],
         ),
         const SizedBox(height: 16),
         Text(
-          pickUiText(styleI18n, zh: '节拍音色', en: 'Beat timbre'),
+          styleI18n.t('toolbox.sound.focus.styleTimbreTitle'),
           style: Theme.of(
             context,
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
@@ -552,40 +536,24 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
           contentPadding: EdgeInsets.zero,
           title: Text(
             _patternEnabled
-                ? pickUiText(
-                    arrangementI18n,
-                    zh: '循环编排已启用',
-                    en: 'Loop arrangement is enabled',
-                  )
-                : pickUiText(
-                    arrangementI18n,
-                    zh: '当前为单小节循环',
-                    en: 'Currently using a single-bar loop',
-                  ),
+                ? arrangementI18n.t('toolbox.sound.focus.arrangementEnabled')
+                : arrangementI18n.t('toolbox.sound.focus.arrangementSingleBar'),
             style: Theme.of(
               context,
             ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
           subtitle: Text(
-            pickUiText(
-              arrangementI18n,
-              zh: '当前编排：$arrangementLabel，共 ${_arrangementBeats.fold<int>(0, (sum, item) => sum + item)} 拍',
-              en: 'Current arrangement: $arrangementLabel, ${_arrangementBeats.fold<int>(0, (sum, item) => sum + item)} beats in total',
-            ),
+            arrangementI18n.t('toolbox.sound.focus.arrangementLabel', params: {'label': arrangementLabel, 'total': '${_arrangementBeats.fold<int>(0, (sum, item) => sum + item)}'}),
           ),
           trailing: FilledButton.tonalIcon(
             onPressed: _openArrangementEditor,
             icon: const Icon(Icons.edit_note_rounded),
-            label: Text(pickUiText(arrangementI18n, zh: '编辑', en: 'Edit')),
+            label: Text(arrangementI18n.t('toolbox.sound.focus.editButton')),
           ),
         ),
         const SizedBox(height: 6),
         Text(
-          pickUiText(
-            arrangementI18n,
-            zh: '通过段落组合，让节拍和发音在一个循环里形成更清晰的推进感。',
-            en: 'Combine phrases so rhythm and click feel clearer inside each loop.',
-          ),
+          arrangementI18n.t('toolbox.sound.focus.arrangementDesc'),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.35),
         ),
         const SizedBox(height: 12),
@@ -630,7 +598,7 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         _buildMixSlider(
-          label: pickUiText(mixI18n, zh: '总音量', en: 'Master'),
+          label: mixI18n.t('toolbox.sound.focus.mixMaster'),
           value: _masterVolume,
           onChanged: (value) {
             _setViewState(() => _masterVolume = value);
@@ -638,7 +606,7 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
           },
         ),
         _buildMixSlider(
-          label: pickUiText(mixI18n, zh: '重拍', en: 'Accent'),
+          label: mixI18n.t('toolbox.sound.focus.mixAccent'),
           value: _accentVolume,
           onChanged: (value) {
             _setViewState(() => _accentVolume = value);
@@ -646,7 +614,7 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
           },
         ),
         _buildMixSlider(
-          label: pickUiText(mixI18n, zh: '常规拍', en: 'Regular'),
+          label: mixI18n.t('toolbox.sound.focus.mixRegular'),
           value: _regularVolume,
           onChanged: (value) {
             _setViewState(() => _regularVolume = value);
@@ -654,7 +622,7 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
           },
         ),
         _buildMixSlider(
-          label: pickUiText(mixI18n, zh: '子拍', en: 'Subdivision'),
+          label: mixI18n.t('toolbox.sound.focus.mixSubdivision'),
           value: _subdivisionVolume,
           onChanged: (value) {
             _setViewState(() => _subdivisionVolume = value);
@@ -668,14 +636,8 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
             _setViewState(() => _hapticsEnabled = value);
             _scheduleSavePrefs();
           },
-          title: Text(pickUiText(mixI18n, zh: '触感反馈', en: 'Haptic feedback')),
-          subtitle: Text(
-            pickUiText(
-              mixI18n,
-              zh: '在重拍和段落切换时给出更清晰的手机震动提示。',
-              en: 'Add clearer vibration cues on accents and phrase changes.',
-            ),
-          ),
+          title: Text(mixI18n.t('toolbox.sound.focus.mixHapticLabel')),
+          subtitle: Text(mixI18n.t('toolbox.sound.focus.mixHapticDesc')),
         ),
       ],
     );
@@ -767,7 +729,7 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
             children: <Widget>[
               _FocusInfoPill(
                 icon: Icons.blur_on_rounded,
-                label: '专注节拍工作台',
+                label: '专注拍点工作台',
                 emphasized: true,
                 tone: palette.accent,
               ),
@@ -779,7 +741,7 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
           ),
           const SizedBox(height: 16),
           Text(
-            '把节拍收束成一条注意力轨迹',
+            '把节奏收拢成一条注意力走势',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w800,
               color: colorScheme.onSurface,
@@ -870,8 +832,8 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
                   ),
                   label: Text(
                     _running
-                        ? pickUiText(controlI18n, zh: '停止节拍', en: 'Stop')
-                        : pickUiText(controlI18n, zh: '开始节拍', en: 'Start'),
+                        ? controlI18n.t('toolbox.sound.focus.controlStop')
+                        : controlI18n.t('toolbox.sound.focus.controlStart'),
                   ),
                 ),
               ),
@@ -900,9 +862,7 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
               FilledButton.tonalIcon(
                 onPressed: _previewCurrentSound,
                 icon: const Icon(Icons.graphic_eq_rounded),
-                label: Text(
-                  pickUiText(controlI18n, zh: '试听当前音色', en: 'Preview sound'),
-                ),
+                label: Text(controlI18n.t('toolbox.sound.focus.controlPreviewSound')),
               ),
               if (!widget.fullScreen && widget.onOpenFullScreen != null)
                 FilledButton.tonalIcon(
@@ -913,53 +873,37 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
                     );
                   },
                   icon: const Icon(Icons.open_in_full_rounded),
-                  label: Text(
-                    pickUiText(
-                      controlI18n,
-                      zh: '全屏舞台',
-                      en: 'Full-screen stage',
-                    ),
-                  ),
+                  label: Text(controlI18n.t('toolbox.sound.focus.controlFullStage')),
                 ),
               if (widget.fullScreen && !immersiveSheet)
                 FilledButton.tonalIcon(
                   onPressed: _openImmersiveControlsSheet,
                   icon: const Icon(Icons.tune_rounded),
-                  label: Text(
-                    pickUiText(controlI18n, zh: '唤起控制', en: 'Open controls'),
-                  ),
+                  label: Text(controlI18n.t('toolbox.sound.focus.controlOpenControls')),
                 ),
               if (widget.fullScreen && immersiveSheet)
                 FilledButton.tonalIcon(
                   onPressed: widget.onExitFullScreen,
                   icon: const Icon(Icons.close_rounded),
-                  label: Text(
-                    pickUiText(controlI18n, zh: '退出全屏', en: 'Exit full screen'),
-                  ),
+                  label: Text(controlI18n.t('toolbox.sound.focus.controlExitFull')),
                 )
               else if (!widget.fullScreen)
                 OutlinedButton.icon(
                   onPressed: _toggleImmersiveMode,
                   icon: const Icon(Icons.fullscreen_rounded),
-                  label: Text(
-                    pickUiText(controlI18n, zh: '沉浸全屏', en: 'Immersive stage'),
-                  ),
+                  label: Text(controlI18n.t('toolbox.sound.focus.controlImmersive')),
                 ),
               _FocusInfoPill(
                 icon: Icons.vibration_rounded,
                 label: _hapticsEnabled
-                    ? pickUiText(controlI18n, zh: '触感已开', en: 'Haptics on')
-                    : pickUiText(controlI18n, zh: '触感已关', en: 'Haptics off'),
+                    ? controlI18n.t('toolbox.sound.focus.controlHapticsOn')
+                    : controlI18n.t('toolbox.sound.focus.controlHapticsOff'),
               ),
             ],
           ),
           const SizedBox(height: 12),
           Text(
-            pickUiText(
-              controlI18n,
-              zh: 'Tap 用于快速敲定速度；全屏后单击舞台呼出悬浮控件，上滑唤起完整菜单。',
-              en: 'Use Tap to capture tempo quickly. In full screen, tap the stage for HUD controls and swipe up for the full menu.',
-            ),
+            controlI18n.t('toolbox.sound.focus.controlTapHint'),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: controlColorScheme.onSurfaceVariant,
               height: 1.4,

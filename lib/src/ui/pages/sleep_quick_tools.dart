@@ -164,27 +164,23 @@ class _SleepWhiteNoiseSheetState extends ConsumerState<_SleepWhiteNoiseSheet> {
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
         children: <Widget>[
           Text(
-            pickSleepText(i18n, zh: '环境白噪音', en: 'Ambient white noise'),
+            i18n.t('toolbox.sleep.tools.ambientNoise'),
             style: Theme.of(
               context,
             ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
           Text(
-            pickSleepText(
-              i18n,
-              zh: '它更适合遮蔽不稳定噪声，不必把它当成人人必需的助眠剂。',
-              en: 'Use it to mask unstable noise. It does not need to be a mandatory sleep aid.',
-            ),
+            i18n.t('toolbox.sleep.tools.ambientNoiseHint'),
           ),
           const SizedBox(height: 16),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(
-              pickSleepText(i18n, zh: '启用环境音', en: 'Enable ambient audio'),
+              i18n.t('toolbox.sleep.tools.enableAmbient'),
             ),
             subtitle: Text(
-              pickSleepText(i18n, zh: '全局开关', en: 'Master switch'),
+              i18n.t('toolbox.sleep.tools.masterSwitch'),
             ),
             value: appState.ambientEnabled,
             onChanged: (value) => appState.setAmbientEnabled(value),
@@ -192,7 +188,7 @@ class _SleepWhiteNoiseSheetState extends ConsumerState<_SleepWhiteNoiseSheet> {
           const SizedBox(height: 12),
           if (downloadedSources.isNotEmpty) ...<Widget>[
             Text(
-              pickSleepText(i18n, zh: '我的可用声音', en: 'My available sounds'),
+              i18n.t('toolbox.sleep.tools.mySounds'),
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
@@ -216,7 +212,7 @@ class _SleepWhiteNoiseSheetState extends ConsumerState<_SleepWhiteNoiseSheet> {
             const SizedBox(height: 18),
           ],
           Text(
-            pickSleepText(i18n, zh: '在线白噪音库', en: 'Online ambient catalog'),
+            i18n.t('toolbox.sleep.tools.onlineCatalog'),
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
@@ -283,18 +279,16 @@ class _AmbientSourceRow extends StatelessWidget {
               title: Text(source.name),
               subtitle: Text(
                 source.enabled
-                    ? pickSleepText(i18n, zh: '正在可用', en: 'Available now')
-                    : pickSleepText(i18n, zh: '未启用', en: 'Disabled'),
+                    ? i18n.t('toolbox.sleep.tools.available')
+                    : i18n.t('toolbox.sleep.tools.disabled'),
               ),
               value: source.enabled,
               onChanged: onEnable,
             ),
             Text(
-              pickSleepText(
-                i18n,
-                zh: '音量 ${source.volume.toStringAsFixed(2)}',
-                en: 'Volume ${source.volume.toStringAsFixed(2)}',
-              ),
+              i18n.t('toolbox.sleep.tools.volume', params: {
+                'value': source.volume.toStringAsFixed(2),
+              }),
             ),
             Slider(value: source.volume.clamp(0.0, 1.0), onChanged: onVolume),
           ],
@@ -334,28 +328,24 @@ class _OnlineAmbientOptionRow extends StatelessWidget {
         title: Text(option.name),
         subtitle: Text(
           existing == null
-              ? pickSleepText(i18n, zh: '未下载', en: 'Not downloaded')
-              : pickSleepText(
-                  i18n,
-                  zh: '已下载，可直接启用',
-                  en: 'Downloaded and ready',
-                ),
+              ? i18n.t('toolbox.sleep.tools.notDownloaded')
+              : i18n.t('toolbox.sleep.tools.downloadedReady'),
         ),
         trailing: existing == null
             ? FilledButton.tonal(
                 onPressed: downloading ? null : onDownload,
                 child: Text(
                   downloading
-                      ? pickSleepText(i18n, zh: '下载中', en: 'Downloading')
-                      : pickSleepText(i18n, zh: '下载', en: 'Download'),
+                      ? i18n.t('toolbox.sleep.tools.downloading')
+                      : i18n.t('toolbox.sleep.tools.download'),
                 ),
               )
             : FilledButton.tonal(
                 onPressed: () => onActivate(existing.id),
                 child: Text(
                   existing.enabled
-                      ? pickSleepText(i18n, zh: '已启用', en: 'Active')
-                      : pickSleepText(i18n, zh: '启用', en: 'Use'),
+                      ? i18n.t('toolbox.sleep.tools.enabled')
+                      : i18n.t('toolbox.sleep.tools.use'),
                 ),
               ),
       ),

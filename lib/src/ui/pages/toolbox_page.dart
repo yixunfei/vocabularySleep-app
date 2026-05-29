@@ -53,12 +53,8 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
         .where((entry) => state.toolboxLayoutState.isHidden(entry.moduleId))
         .toList(growable: false);
     final homeSection = ToolboxSectionData(
-      title: pickUiText(i18n, zh: '我的工具箱', en: 'My toolbox'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '你常用的工具会按自己的顺序显示在这里。',
-        en: 'Your tools appear here in the order you choose.',
-      ),
+      title: i18n.t('toolbox.hub.page.section_title'),
+      subtitle: i18n.t('toolbox.hub.page.subtitle'),
       entries: visibleEntries,
     );
     final quickEntries = quickToolboxEntries(
@@ -282,16 +278,8 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
             child: ToolboxEntryCard(
               entry: entry,
               editing: true,
-              dragTooltip: pickUiText(
-                i18n,
-                zh: '拖动手柄排序',
-                en: 'Long press the handle, then drag to reorder',
-              ),
-              removeTooltip: pickUiText(
-                i18n,
-                zh: '从首页移除',
-                en: 'Remove from home',
-              ),
+              dragTooltip: i18n.t('toolbox.hub.edit.drag_tooltip'),
+              removeTooltip: i18n.t('toolbox.hub.edit.remove_tooltip'),
               onRemove: () => _confirmRemoveEntry(context, i18n, state, entry),
               dragHandle: ReorderableDelayedDragStartListener(
                 index: index,
@@ -311,12 +299,8 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
   Widget _buildHeader(AppI18n i18n) {
     return PageHeader(
       eyebrow: pageLabelToolbox(i18n),
-      title: pickUiText(i18n, zh: '多功能工具箱', en: 'Multi-tool toolbox'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '声音、专注、放松、决策和趣味测试都放在一个地方，需要时直接打开。',
-        en: 'Sound, focus, calming tools, choices, and small tests are all in one place.',
-      ),
+      title: i18n.t('toolbox.hub.page.title'),
+      subtitle: i18n.t('toolbox.hub.page.subtitle'),
       action: _ToolboxEditToggle(
         i18n: i18n,
         editing: _editing,
@@ -332,34 +316,22 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
 
   Widget _buildIntroPanel(AppI18n i18n) {
     return ToolboxIntroPanel(
-      title: pickUiText(
-        i18n,
-        zh: _editing ? '正在编辑工具箱首页' : '常用工具随手打开',
-        en: _editing ? 'Editing your Toolbox home' : 'Tools ready when needed',
-      ),
-      summary: pickUiText(
-        i18n,
-        zh: _editing ? '拖动手柄排序，移除前会再次确认。' : '长按卡片编辑，拖进快速入口。',
-        en: _editing
-            ? 'Drag handles to reorder; removal asks first.'
-            : 'Long-press cards for layout and shortcuts.',
-      ),
-      details: pickUiText(
-        i18n,
-        zh: _editing
-            ? '拖动手柄调整首页顺序。长按卡片可拖到快速入口；移除入口只会隐藏首页卡片，之后可以恢复。'
-            : '长按任意工具卡片可进入编辑和排序；常用工具可以放进快速入口，隐藏入口后也能恢复。',
-        en: _editing
-            ? 'Drag handles to reorder the home page. Long-press a card to add it to shortcuts; removing only hides the home card and can be restored later.'
-            : 'Long-press any tool card to edit and reorder it. Keep favorites in shortcuts, and hidden home cards can be restored later.',
-      ),
+      title: _editing
+          ? i18n.t('toolbox.hub.intro.title_editing')
+          : i18n.t('toolbox.hub.intro.title_idle'),
+      summary: _editing
+          ? i18n.t('toolbox.hub.intro.summary_editing')
+          : i18n.t('toolbox.hub.intro.summary_idle'),
+      details: _editing
+          ? i18n.t('toolbox.hub.intro.details_editing')
+          : i18n.t('toolbox.hub.intro.details_idle'),
       highlights: <String>[
-        pickUiText(i18n, zh: '长按编辑', en: 'Long press'),
-        pickUiText(i18n, zh: '拖动排序', en: 'Drag to order'),
-        pickUiText(i18n, zh: '快速入口', en: 'Shortcuts'),
-        pickUiText(i18n, zh: '可恢复', en: 'Restorable'),
+        i18n.t('toolbox.hub.intro.highlight_edit'),
+        i18n.t('toolbox.hub.intro.highlight_reorder'),
+        i18n.t('toolbox.hub.intro.highlight_shortcuts'),
+        i18n.t('toolbox.hub.intro.highlight_restorable'),
       ],
-      helpTooltip: pickUiText(i18n, zh: '查看编辑说明', en: 'View editing tips'),
+      helpTooltip: i18n.t('toolbox.hub.intro.help_tooltip'),
     );
   }
 
@@ -428,28 +400,20 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
       builder: (context) {
         return AlertDialog(
           title: Text(
-            pickUiText(
-              i18n,
-              zh: '从首页移除 ${entry.title}？',
-              en: 'Remove ${entry.title} from home?',
-            ),
+            i18n.t('toolbox.hub.edit.confirm_remove_title', params: <String, Object?>{'title': entry.title}),
           ),
           content: Text(
-            pickUiText(
-              i18n,
-              zh: '这只会隐藏工具箱首页入口，不会关闭工具。之后可在“恢复隐藏入口”或设置里的“模块管理”中重新显示。',
-              en: 'This only hides the Toolbox home entry. The tool stays enabled, and you can restore it from Restore entries or module management.',
-            ),
+            i18n.t('toolbox.hub.edit.confirm_remove_desc'),
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+              child: Text(i18n.t('cancel')),
             ),
             FilledButton.tonalIcon(
               onPressed: () => Navigator.of(context).pop(true),
               icon: const Icon(Icons.visibility_off_rounded),
-              label: Text(pickUiText(i18n, zh: '移除', en: 'Remove')),
+              label: Text(i18n.t('toolbox.hub.edit.remove_action')),
             ),
           ],
         );
@@ -468,14 +432,10 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
         behavior: SnackBarBehavior.floating,
         showCloseIcon: true,
         content: Text(
-          pickUiText(
-            i18n,
-            zh: '${entry.title} 已从首页隐藏，可随时恢复。',
-            en: '${entry.title} is hidden from home and can be restored anytime.',
-          ),
+          i18n.t('toolbox.hub.edit.snackbar_hidden', params: <String, Object?>{'title': entry.title}),
         ),
         action: SnackBarAction(
-          label: pickUiText(i18n, zh: '恢复', en: 'Restore'),
+          label: i18n.t('toolbox.hub.edit.snackbar_restore'),
           onPressed: () => state.restoreToolboxEntry(entry.moduleId),
         ),
       ),
@@ -501,21 +461,17 @@ class _ToolboxEditToggle extends StatelessWidget {
       selected: editing,
       tint: colorScheme.primary,
       onTap: onTap,
-      tooltip: pickUiText(
-        i18n,
-        zh: editing ? '完成编辑' : '编辑工具箱布局',
-        en: editing ? 'Exit edit mode' : 'Edit toolbox layout',
-      ),
+      tooltip: editing
+          ? i18n.t('toolbox.hub.edit.toggle_exit')
+          : i18n.t('toolbox.hub.edit.toggle_enter'),
       leading: Icon(
         editing ? Icons.close_rounded : Icons.dashboard_customize_rounded,
         size: 18,
       ),
       label: Text(
-        pickUiText(
-          i18n,
-          zh: editing ? '完成' : '编辑布局',
-          en: editing ? 'Exit' : 'Edit layout',
-        ),
+        editing
+            ? i18n.t('toolbox.hub.edit.toggle_exit')
+            : i18n.t('toolbox.hub.edit.toggle_enter'),
       ),
     );
   }
@@ -580,7 +536,7 @@ class _ToolboxLayoutSummaryCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  pickUiText(i18n, zh: '编辑首页入口', en: 'Edit home entries'),
+                  i18n.t('toolbox.hub.edit.section_title'),
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -595,13 +551,13 @@ class _ToolboxLayoutSummaryCard extends StatelessWidget {
             children: <Widget>[
               _ToolboxLayoutStatusChip(
                 icon: Icons.visibility_rounded,
-                label: pickUiText(i18n, zh: '显示', en: 'Visible'),
+                label: i18n.t('toolbox.hub.edit.status_visible'),
                 value: '${visibleEntries.length}',
                 tint: colorScheme.primary,
               ),
               _ToolboxLayoutStatusChip(
                 icon: Icons.visibility_off_rounded,
-                label: pickUiText(i18n, zh: '隐藏', en: 'Hidden'),
+                label: i18n.t('toolbox.hub.edit.status_hidden'),
                 value: '${hiddenEntries.length}',
                 tint: hiddenEntries.isEmpty
                     ? colorScheme.outline
@@ -611,11 +567,7 @@ class _ToolboxLayoutSummaryCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            pickUiText(
-              i18n,
-              zh: '拖动右侧手柄可调整顺序。长按卡片拖到快速入口可加入常用工具；点减号会先确认。',
-              en: 'Drag the handle to reorder. Long-press a card and drop it on shortcuts to add it; the minus button asks first.',
-            ),
+            i18n.t('toolbox.hub.edit.layout_instructions'),
             style: theme.textTheme.bodySmall?.copyWith(
               color: colorScheme.onSurfaceVariant,
               height: 1.35,
@@ -651,7 +603,7 @@ class _ToolboxLayoutActions extends StatelessWidget {
         FilledButton.icon(
           onPressed: dragActive ? null : onExit,
           icon: const Icon(Icons.close_rounded),
-          label: Text(pickUiText(i18n, zh: '退出编辑', en: 'Exit edit')),
+          label: Text(i18n.t('toolbox.hub.edit.exit_button')),
         ),
         OutlinedButton.icon(
           key: const ValueKey<String>('toolbox_restore_entries_button'),
@@ -659,12 +611,12 @@ class _ToolboxLayoutActions extends StatelessWidget {
               ? null
               : () => _showRestoreSheet(context, i18n, state, hiddenEntries),
           icon: const Icon(Icons.add_circle_outline_rounded),
-          label: Text(pickUiText(i18n, zh: '恢复隐藏入口', en: 'Restore entries')),
+          label: Text(i18n.t('toolbox.hub.edit.restore_button')),
         ),
         TextButton.icon(
           onPressed: () => state.resetToolboxLayout(),
           icon: const Icon(Icons.restart_alt_rounded),
-          label: Text(pickUiText(i18n, zh: '重置默认', en: 'Reset default')),
+          label: Text(i18n.t('toolbox.hub.edit.reset_button')),
         ),
       ],
     );
@@ -758,35 +710,21 @@ class _EmptyToolboxLayoutPanel extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            pickUiText(
-              i18n,
-              zh: '首页暂时没有可显示的工具',
-              en: 'No visible tools on this page',
-            ),
+            i18n.t('toolbox.hub.edit.empty_title'),
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
           Text(
-            pickUiText(
-              i18n,
-              zh: hiddenEntries.isEmpty
-                  ? '可以到模块管理中重新启用工具箱里的工具。'
-                  : '进入编辑模式后可恢复已隐藏的工具入口。',
-              en: hiddenEntries.isEmpty
-                  ? 'Re-enable Toolbox tools from module management.'
-                  : 'Enter edit mode to restore hidden tool entries.',
-            ),
+            hiddenEntries.isEmpty
+                ? i18n.t('toolbox.hub.edit.empty_desc_no_hidden')
+                : i18n.t('toolbox.hub.edit.empty_desc_has_hidden'),
           ),
           if (hiddenEntries.isNotEmpty) ...<Widget>[
             const SizedBox(height: 10),
             ToolboxInfoPill(
-              text: pickUiText(
-                i18n,
-                zh: '已隐藏 ${hiddenEntries.length} 个首页入口',
-                en: '${hiddenEntries.length} home entries hidden',
-              ),
+              text: i18n.t('toolbox.hub.edit.empty_hidden_count', params: <String, Object?>{'count': '${hiddenEntries.length}'}),
               accent: colorScheme.tertiary,
               backgroundColor: colorScheme.tertiaryContainer.withValues(
                 alpha: 0.36,
@@ -799,7 +737,7 @@ class _EmptyToolboxLayoutPanel extends StatelessWidget {
             FilledButton.icon(
               onPressed: onEdit,
               icon: const Icon(Icons.dashboard_customize_rounded),
-              label: Text(pickUiText(i18n, zh: '编辑布局', en: 'Edit layout')),
+              label: Text(i18n.t('toolbox.hub.edit.empty_edit_button')),
             ),
           ],
         ],
@@ -825,7 +763,7 @@ void _showRestoreSheet(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
           children: <Widget>[
             Text(
-              pickUiText(i18n, zh: '恢复隐藏入口', en: 'Restore hidden entries'),
+              i18n.t('toolbox.hub.edit.restore_section_title'),
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
@@ -848,11 +786,7 @@ void _showRestoreSheet(
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '恢复后入口会回到工具箱首页；工具是否启用仍在模块管理中控制。',
-                        en: 'Restored entries return to the Toolbox home. Whether a tool is enabled is still controlled in module management.',
-                      ),
+                      i18n.t('toolbox.hub.edit.restore_notice'),
                       style: theme.textTheme.bodySmall?.copyWith(height: 1.35),
                     ),
                   ),
@@ -888,7 +822,7 @@ void _showRestoreSheet(
                         Navigator.of(context).pop();
                       },
                       icon: const Icon(Icons.add_rounded),
-                      label: Text(pickUiText(i18n, zh: '恢复', en: 'Restore')),
+                      label: Text(i18n.t('toolbox.hub.edit.restore_action')),
                     ),
                   ),
                 ),

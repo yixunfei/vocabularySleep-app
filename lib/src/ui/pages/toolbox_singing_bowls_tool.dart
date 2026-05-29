@@ -5,6 +5,7 @@ import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../i18n/app_i18n.dart';
 import '../../services/toolbox_audio_service.dart';
 import '../../services/toolbox_singing_bowls_prefs_service.dart';
 import '../motion/app_motion.dart';
@@ -74,6 +75,8 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
   bool get isZh => Localizations.localeOf(
     context,
   ).languageCode.toLowerCase().startsWith('zh');
+
+  AppI18n get i18n => AppI18n(Localizations.localeOf(context).languageCode);
 
   _SingingBowlFrequencySpec get frequencySpec =>
       _bowlFrequencyById[_frequencyId] ?? _bowlFrequencySpecs[3];
@@ -328,8 +331,6 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
       await _player?.play(baseVolume: voiceSpec.baseVolume);
     } catch (_) {}
   }
-
-  String t(String zh, String en) => isZh ? zh : en;
 
   String formatFrequency(double value) {
     if ((value - value.round()).abs() < 0.001) {

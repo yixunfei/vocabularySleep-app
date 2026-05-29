@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../i18n/app_i18n.dart';
-import 'sleep_assistant_ui_support.dart';
 
 enum SleepMorningQuickMood { same, worse, better }
 
@@ -44,7 +43,7 @@ class SleepSupportGoalStrip extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    pickSleepText(i18n, zh: '今晚目标', en: 'Tonight goal'),
+                    i18n.t('toolbox.sleep.low.tonightGoal'),
                     style: theme.textTheme.titleSmall?.copyWith(
                       color: scheme.onSurface,
                       fontWeight: FontWeight.w900,
@@ -52,11 +51,7 @@ class SleepSupportGoalStrip extends StatelessWidget {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    pickSleepText(
-                      i18n,
-                      zh: '不是把睡眠做完美，而是在最累的时候少做一个选择、少责备自己一点。你只需要完成一个小动作，剩下的交给身体慢慢接住。',
-                      en: 'The goal is not perfect sleep. Make one less decision, blame yourself a little less, and let one small action carry you toward rest.',
-                    ),
+                    i18n.t('toolbox.sleep.low.tonightGoalHint'),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: scheme.onSurfaceVariant,
                       height: 1.35,
@@ -107,26 +102,16 @@ class SleepMorningQuickCheckPanel extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        pickSleepText(
-                          i18n,
-                          zh: '醒来只点一下',
-                          en: 'One-tap wake check',
-                        ),
+                        i18n.t('toolbox.sleep.low.wakeTap'),
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w900,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        pickSleepText(
-                          i18n,
-                          zh: hasQuickFeedback
-                              ? '今早已经记过，需要时可以直接覆盖。'
-                              : '不用回忆时间轴，先留下今天的体感趋势。',
-                          en: hasQuickFeedback
-                              ? 'Saved this morning. Tap again to replace it.'
-                              : 'Skip the timeline and capture the trend first.',
-                        ),
+                      hasQuickFeedback
+                          ? i18n.t('toolbox.sleep.low.wakeTapDone')
+                          : i18n.t('toolbox.sleep.low.wakeTapHint'),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -161,21 +146,21 @@ class SleepMorningQuickCheckPanel extends StatelessWidget {
                     _SleepMorningMoodButton(
                       width: buttonWidth,
                       icon: Icons.drag_handle_rounded,
-                      label: pickSleepText(i18n, zh: '差不多', en: 'Same'),
+                        label: i18n.t('toolbox.sleep.low.same'),
                       onPressed: () =>
                           onMoodSelected(SleepMorningQuickMood.same),
                     ),
                     _SleepMorningMoodButton(
                       width: buttonWidth,
                       icon: Icons.trending_down_rounded,
-                      label: pickSleepText(i18n, zh: '更差', en: 'Worse'),
+                        label: i18n.t('toolbox.sleep.low.worse'),
                       onPressed: () =>
                           onMoodSelected(SleepMorningQuickMood.worse),
                     ),
                     _SleepMorningMoodButton(
                       width: buttonWidth,
                       icon: Icons.trending_up_rounded,
-                      label: pickSleepText(i18n, zh: '更好', en: 'Better'),
+                        label: i18n.t('toolbox.sleep.low.better'),
                       onPressed: () =>
                           onMoodSelected(SleepMorningQuickMood.better),
                     ),
@@ -190,7 +175,7 @@ class SleepMorningQuickCheckPanel extends StatelessWidget {
                 onPressed: onOpenLog,
                 icon: const Icon(Icons.edit_note_rounded),
                 label: Text(
-                  pickSleepText(i18n, zh: '补详细日志', en: 'Open full log'),
+                    i18n.t('toolbox.sleep.low.openFullLog'),
                 ),
               ),
             ),
@@ -224,18 +209,14 @@ class SleepBedtimeSceneSheet extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
         children: <Widget>[
           Text(
-            pickSleepText(i18n, zh: '睡前一键场景', en: 'One-tap bedtime scene'),
+              i18n.t('toolbox.sleep.low.bedtimeScene'),
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            pickSleepText(
-              i18n,
-              zh: '一次确认后，帮你打开睡眠暗色模式并启动最低能量流程。背景音和其他工具仍由你主动选择。',
-              en: 'After confirmation, sleep dark mode turns on and the tiny routine starts. Audio and other tools stay opt-in.',
-            ),
+              i18n.t('toolbox.sleep.low.bedtimeSceneHint'),
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -253,27 +234,15 @@ class SleepBedtimeSceneSheet extends StatelessWidget {
               children: <Widget>[
                 _SleepTiredStep(
                   label: '1',
-                  text: pickSleepText(
-                    i18n,
-                    zh: '切换睡眠暗色',
-                    en: 'Switch sleep dark mode',
-                  ),
+                  text: i18n.t('toolbox.sleep.low.switchDark'),
                 ),
                 _SleepTiredStep(
                   label: '2',
-                  text: pickSleepText(
-                    i18n,
-                    zh: '选中最低能量流程',
-                    en: 'Select the tiny routine',
-                  ),
+                  text: i18n.t('toolbox.sleep.low.selectTiny'),
                 ),
                 _SleepTiredStep(
                   label: '3',
-                  text: pickSleepText(
-                    i18n,
-                    zh: '进入今晚执行页',
-                    en: 'Open tonight runner',
-                  ),
+                  text: i18n.t('toolbox.sleep.low.enterRunner'),
                 ),
               ],
             ),
@@ -282,19 +251,19 @@ class SleepBedtimeSceneSheet extends StatelessWidget {
           FilledButton.icon(
             onPressed: onStartScene,
             icon: const Icon(Icons.nights_stay_rounded),
-            label: Text(pickSleepText(i18n, zh: '确认启动', en: 'Start scene')),
+            label: Text(i18n.t('toolbox.sleep.low.confirmStart')),
           ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
             onPressed: onWhiteNoise,
             icon: const Icon(Icons.graphic_eq_rounded),
             label: Text(
-              pickSleepText(i18n, zh: '先选背景音', en: 'Choose audio first'),
+              i18n.t('toolbox.sleep.low.chooseAudio'),
             ),
           ),
           TextButton(
             onPressed: onClose,
-            child: Text(pickSleepText(i18n, zh: '先不启动', en: 'Not now')),
+            child: Text(i18n.t('toolbox.sleep.low.notNow')),
           ),
         ],
       ),
@@ -353,18 +322,14 @@ class SleepTiredModeSheet extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
         children: <Widget>[
           Text(
-            pickSleepText(i18n, zh: '我现在很累', en: 'I am tired now'),
+            i18n.t('toolbox.sleep.low.imTired'),
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            pickSleepText(
-              i18n,
-              zh: '先不复盘，也不重新计划。今晚只需要选一个最小动作。',
-              en: 'No review and no replanning. Choose one tiny action for tonight.',
-            ),
+            i18n.t('toolbox.sleep.low.imTiredHint'),
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -382,23 +347,15 @@ class SleepTiredModeSheet extends StatelessWidget {
               children: <Widget>[
                 _SleepTiredStep(
                   label: '1',
-                  text: pickSleepText(i18n, zh: '把灯调暗', en: 'Dim the lights'),
+                  text: i18n.t('toolbox.sleep.low.dimLights'),
                 ),
                 _SleepTiredStep(
                   label: '2',
-                  text: pickSleepText(
-                    i18n,
-                    zh: '把手机放远一点',
-                    en: 'Move the phone away',
-                  ),
+                  text: i18n.t('toolbox.sleep.low.movePhoneAway'),
                 ),
                 _SleepTiredStep(
                   label: '3',
-                  text: pickSleepText(
-                    i18n,
-                    zh: '把一个担心留到明天',
-                    en: 'Park one worry for tomorrow',
-                  ),
+                  text: i18n.t('toolbox.sleep.low.parkWorry'),
                 ),
               ],
             ),
@@ -408,7 +365,7 @@ class SleepTiredModeSheet extends StatelessWidget {
             onPressed: onTinyRoutine,
             icon: const Icon(Icons.bedtime_rounded),
             label: Text(
-              pickSleepText(i18n, zh: '开始 8 分钟', en: 'Start 8 minutes'),
+              i18n.t('toolbox.sleep.low.start8min'),
             ),
           ),
           const SizedBox(height: 10),
@@ -416,7 +373,7 @@ class SleepTiredModeSheet extends StatelessWidget {
             onPressed: onWhiteNoise,
             icon: const Icon(Icons.graphic_eq_rounded),
             label: Text(
-              pickSleepText(i18n, zh: '只放背景音', en: 'Play background sound'),
+              i18n.t('toolbox.sleep.low.audioOnly'),
             ),
           ),
           const SizedBox(height: 10),
@@ -424,13 +381,13 @@ class SleepTiredModeSheet extends StatelessWidget {
             onPressed: onNightRescue,
             icon: const Icon(Icons.self_improvement_rounded),
             label: Text(
-              pickSleepText(i18n, zh: '我是半夜醒了', en: 'I woke up at night'),
+              i18n.t('toolbox.sleep.low.wokeAtNight'),
             ),
           ),
           TextButton(
             onPressed: onClose,
             child: Text(
-              pickSleepText(i18n, zh: '只做上面 3 步', en: 'I will do the 3 steps'),
+              i18n.t('toolbox.sleep.low.do3Steps'),
             ),
           ),
         ],

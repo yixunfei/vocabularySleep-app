@@ -65,11 +65,7 @@ class SleepMetricChartCard extends StatelessWidget {
                   color: Theme.of(context).colorScheme.surfaceContainerLow,
                 ),
                 child: Text(
-                  pickSleepText(
-                    i18n,
-                    zh: '数据不足，先继续记录',
-                    en: 'Not enough data yet',
-                  ),
+                  i18n.t('toolbox.sleep.core.noData'),
                 ),
               )
             else

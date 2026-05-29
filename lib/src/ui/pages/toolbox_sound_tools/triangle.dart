@@ -81,45 +81,33 @@ class _TriangleToolState extends State<_TriangleTool> {
 
   String _presetLabel(AppI18n i18n, _TrianglePreset preset) {
     return switch (preset.id) {
-      'soft_ring' => pickUiText(i18n, zh: '柔和振铃', en: 'Soft ring'),
-      'bright_ring' => pickUiText(i18n, zh: '明亮振铃', en: 'Bright ring'),
-      _ => pickUiText(i18n, zh: '管弦振铃', en: 'Orchestral ring'),
+      'soft_ring' => i18n.t('toolbox.sound.triangle.soft_ring'),
+      'bright_ring' => i18n.t('toolbox.sound.triangle.bright_ring'),
+      _ => i18n.t('toolbox.sound.triangle.orchestral_ring'),
     };
   }
 
   String _presetSubtitle(AppI18n i18n, _TrianglePreset preset) {
     return switch (preset.id) {
-      'soft_ring' => pickUiText(
-        i18n,
-        zh: '更柔和的高频和更短的尾音，适合轻节奏点缀。',
-        en: 'Softer highs and a shorter tail for gentle rhythm support.',
-      ),
-      'bright_ring' => pickUiText(
-        i18n,
-        zh: '更亮更脆，尾音更明显，适合强调拍点。',
-        en: 'Brighter attack and stronger ring to mark accents.',
-      ),
-      _ => pickUiText(
-        i18n,
-        zh: '明亮与延音更平衡，更接近管弦语境。',
-        en: 'Balanced brightness and decay close to orchestral behavior.',
-      ),
+      'soft_ring' => i18n.t('toolbox.sound.triangle.softer_highs_and_a_shorter'),
+      'bright_ring' => i18n.t('toolbox.sound.triangle.brighter_attack_and_stronger_ring'),
+      _ => i18n.t('toolbox.sound.triangle.balanced_brightness_and_decay_close'),
     };
   }
 
   String _materialLabel(AppI18n i18n, String material) {
     return switch (material) {
-      'brass' => pickUiText(i18n, zh: '黄铜', en: 'Brass'),
-      'aluminum' => pickUiText(i18n, zh: '铝制', en: 'Aluminum'),
-      _ => pickUiText(i18n, zh: '钢制', en: 'Steel'),
+      'brass' => i18n.t('toolbox.sound.triangle.brass'),
+      'aluminum' => i18n.t('toolbox.sound.triangle.aluminum'),
+      _ => i18n.t('toolbox.sound.triangle.steel'),
     };
   }
 
   String _playModeLabel(AppI18n i18n, _TrianglePlayMode mode) {
     return switch (mode) {
-      _TrianglePlayMode.accent => pickUiText(i18n, zh: '重击', en: 'Accent'),
-      _TrianglePlayMode.roll => pickUiText(i18n, zh: '滚奏', en: 'Roll'),
-      _ => pickUiText(i18n, zh: '单击', en: 'Single'),
+      _TrianglePlayMode.accent => i18n.t('toolbox.sound.triangle.accent'),
+      _TrianglePlayMode.roll => i18n.t('toolbox.sound.triangle.roll'),
+      _ => i18n.t('toolbox.sound.triangle.single'),
     };
   }
 
@@ -434,7 +422,7 @@ class _TriangleToolState extends State<_TriangleTool> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
                       Text(
-                        pickUiText(i18n, zh: '左侧更柔', en: 'Left softer'),
+                        i18n.t('toolbox.sound.triangle.left_softer'),
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: immersive
                               ? Colors.white70
@@ -442,7 +430,7 @@ class _TriangleToolState extends State<_TriangleTool> {
                         ),
                       ),
                       Text(
-                        pickUiText(i18n, zh: '右侧更亮', en: 'Right brighter'),
+                        i18n.t('toolbox.sound.triangle.right_brighter'),
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: immersive
                               ? Colors.white70
@@ -472,7 +460,7 @@ class _TriangleToolState extends State<_TriangleTool> {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Text(
-          pickUiText(i18n, zh: '三角铁设置', en: 'Triangle settings'),
+          i18n.t('toolbox.sound.triangle.triangle_settings'),
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w800,
           ),
@@ -555,11 +543,7 @@ class _TriangleToolState extends State<_TriangleTool> {
         ),
         const SizedBox(height: 14),
         Text(
-          pickUiText(
-            i18n,
-            zh: '振铃 ${(_ring * 100).round()}%',
-            en: 'Ring ${(_ring * 100).round()}%',
-          ),
+          i18n.t('toolbox.sound.triangle.ring'),
         ),
         Slider(
           value: _ring,
@@ -578,11 +562,7 @@ class _TriangleToolState extends State<_TriangleTool> {
           },
         ),
         Text(
-          pickUiText(
-            i18n,
-            zh: '敲击点 ${(_strikePoint * 100).round()}%',
-            en: 'Strike ${(_strikePoint * 100).round()}%',
-          ),
+          i18n.t('toolbox.sound.triangle.strike'),
         ),
         Slider(
           value: _strikePoint,
@@ -603,11 +583,7 @@ class _TriangleToolState extends State<_TriangleTool> {
           },
         ),
         Text(
-          pickUiText(
-            i18n,
-            zh: '阻尼 ${(_damping * 100).round()}%',
-            en: 'Damping ${(_damping * 100).round()}%',
-          ),
+          i18n.t('toolbox.sound.triangle.damping'),
         ),
         Slider(
           value: _damping,
@@ -698,7 +674,7 @@ class _TriangleToolState extends State<_TriangleTool> {
           OutlinedButton.icon(
             onPressed: () => _openTriangleSettingsSheet(context, i18n),
             icon: const Icon(Icons.tune_rounded),
-            label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
+            label: Text(i18n.t('toolbox.sound.flute.settings')),
           ),
       ],
     );
@@ -784,7 +760,7 @@ class _TriangleToolState extends State<_TriangleTool> {
                           foregroundColor: Colors.white,
                         ),
                         icon: const Icon(Icons.tune_rounded),
-                        label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
+                        label: Text(i18n.t('toolbox.sound.flute.settings')),
                       ),
                     ],
                   ),
@@ -808,11 +784,7 @@ class _TriangleToolState extends State<_TriangleTool> {
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
                           Text(
-                            pickUiText(
-                              i18n,
-                              zh: '左侧更柔，右侧更亮；滚奏模式适合连续紧凑的强调。',
-                              en: 'Left is softer, right is brighter; roll mode creates tight repeated accents.',
-                            ),
+                            i18n.t('toolbox.sound.triangle.left_is_softer_right_is'),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: Colors.white70,
                             ),
@@ -874,12 +846,8 @@ class _TriangleToolState extends State<_TriangleTool> {
           ),
           const SizedBox(height: 12),
           SectionHeader(
-            title: pickUiText(i18n, zh: '预设包', en: 'Preset pack'),
-            subtitle: pickUiText(
-              i18n,
-              zh: '预设会联动音色、默认材质和延音长度。',
-              en: 'Presets move tone, material, and default ring length together.',
-            ),
+            title: i18n.t('toolbox.sound.flute.preset_pack'),
+            subtitle: i18n.t('toolbox.sound.triangle.presets_move_tone_material_and'),
           ),
           const SizedBox(height: 10),
           Wrap(
@@ -902,12 +870,8 @@ class _TriangleToolState extends State<_TriangleTool> {
           ),
           const SizedBox(height: 14),
           SectionHeader(
-            title: pickUiText(i18n, zh: '击打舞台', en: 'Strike stage'),
-            subtitle: pickUiText(
-              i18n,
-              zh: '直接在三角铁画面上点按：左柔右亮，模式决定是单击、重击还是滚奏。',
-              en: 'Tap directly on the triangle: left is softer, right is brighter, and the mode changes the gesture output.',
-            ),
+            title: i18n.t('toolbox.sound.triangle.strike_stage'),
+            subtitle: i18n.t('toolbox.sound.triangle.tap_directly_on_the_triangle'),
           ),
           const SizedBox(height: 10),
           _buildTriangleStage(context, i18n, height: 240, immersive: false),
@@ -915,12 +879,8 @@ class _TriangleToolState extends State<_TriangleTool> {
           _buildQuickControls(context, i18n, immersive: false),
           const SizedBox(height: 14),
           SectionHeader(
-            title: pickUiText(i18n, zh: '音色与衰减', en: 'Tone and decay'),
-            subtitle: pickUiText(
-              i18n,
-              zh: '材质决定泛音质感，敲击点和阻尼决定脆度与尾音长度。',
-              en: 'Material shapes overtones while strike point and damping control attack and tail.',
-            ),
+            title: i18n.t('toolbox.sound.triangle.tone_and_decay'),
+            subtitle: i18n.t('toolbox.sound.triangle.material_shapes_overtones_while_strike'),
           ),
           const SizedBox(height: 10),
           Wrap(
@@ -943,11 +903,7 @@ class _TriangleToolState extends State<_TriangleTool> {
           ),
           const SizedBox(height: 10),
           Text(
-            pickUiText(
-              i18n,
-              zh: '振铃 ${(_ring * 100).round()}%',
-              en: 'Ring ${(_ring * 100).round()}%',
-            ),
+            i18n.t('toolbox.sound.triangle.ring'),
           ),
           Slider(
             value: _ring,
@@ -957,11 +913,7 @@ class _TriangleToolState extends State<_TriangleTool> {
             onChanged: (value) => setState(() => _ring = value),
           ),
           Text(
-            pickUiText(
-              i18n,
-              zh: '敲击点 ${(_strikePoint * 100).round()}%',
-              en: 'Strike ${(_strikePoint * 100).round()}%',
-            ),
+            i18n.t('toolbox.sound.triangle.strike'),
           ),
           Slider(
             value: _strikePoint,
@@ -975,11 +927,7 @@ class _TriangleToolState extends State<_TriangleTool> {
             },
           ),
           Text(
-            pickUiText(
-              i18n,
-              zh: '阻尼 ${(_damping * 100).round()}%',
-              en: 'Damping ${(_damping * 100).round()}%',
-            ),
+            i18n.t('toolbox.sound.triangle.damping'),
           ),
           Slider(
             value: _damping,
@@ -996,7 +944,7 @@ class _TriangleToolState extends State<_TriangleTool> {
           FilledButton.icon(
             onPressed: () => unawaited(_performHit(gesture: 'Single')),
             icon: const Icon(Icons.music_video_rounded),
-            label: Text(pickUiText(i18n, zh: '立即击打', en: 'Strike now')),
+            label: Text(i18n.t('toolbox.sound.triangle.strike_now')),
           ),
         ],
       ),

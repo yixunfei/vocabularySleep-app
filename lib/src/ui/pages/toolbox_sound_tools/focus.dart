@@ -365,19 +365,6 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
     setState(fn);
   }
 
-  String _text(
-    BuildContext context, {
-    required String zh,
-    required String en,
-    bool listen = true,
-  }) {
-    return pickUiText(
-      _i18nOf(context, listen: listen),
-      zh: zh,
-      en: en,
-    );
-  }
-
   FocusBeatsPrefsState get _prefsState => FocusBeatsPrefsState(
     bpm: _bpm,
     beatsPerBar: _beatsPerBar,
@@ -471,12 +458,8 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
         const SizedBox(height: 16),
         _FocusControlSection(
           icon: Icons.speed_rounded,
-          title: pickUiText(inlineI18n, zh: '节奏', en: 'Tempo'),
-          subtitle: pickUiText(
-            inlineI18n,
-            zh: '调整 BPM 与常用速度',
-            en: 'Adjust BPM and quick tempos',
-          ),
+          title: inlineI18n.t('toolbox.sound.focus.controlTempo'),
+          subtitle: inlineI18n.t('toolbox.sound.focus.controlTempoDesc'),
           summary: '$_bpm BPM · ${(60 / _bpm).toStringAsFixed(2)} s/beat',
           expanded: _tempoExpanded,
           onToggle: () {
@@ -489,12 +472,8 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
         const SizedBox(height: 12),
         _FocusControlSection(
           icon: Icons.tune_rounded,
-          title: pickUiText(inlineI18n, zh: '拍号与细分', en: 'Meter'),
-          subtitle: pickUiText(
-            inlineI18n,
-            zh: '控制重拍结构和子拍密度',
-            en: 'Control the pulse structure and subdivisions',
-          ),
+          title: inlineI18n.t('toolbox.sound.focus.controlMeter'),
+          subtitle: inlineI18n.t('toolbox.sound.focus.controlMeterDesc'),
           summary: '$_beatsPerBar/4 × $_subdivision',
           expanded: _meterExpanded,
           onToggle: () {
@@ -507,12 +486,8 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
         const SizedBox(height: 12),
         _FocusControlSection(
           icon: Icons.graphic_eq_rounded,
-          title: pickUiText(inlineI18n, zh: '节拍音色', en: 'Beat timbre'),
-          subtitle: pickUiText(
-            inlineI18n,
-            zh: '选择当前节拍点击的声音质感',
-            en: 'Choose the current click timbre',
-          ),
+          title: inlineI18n.t('toolbox.sound.focus.controlTimbre'),
+          subtitle: inlineI18n.t('toolbox.sound.focus.controlTimbreDesc'),
           summary: _soundName(context, _soundKind),
           expanded: _styleExpanded,
           onToggle: () {
@@ -525,15 +500,11 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
         const SizedBox(height: 12),
         _FocusControlSection(
           icon: Icons.view_timeline_rounded,
-          title: pickUiText(inlineI18n, zh: '循环编排', en: 'Arrangement'),
-          subtitle: pickUiText(
-            inlineI18n,
-            zh: '管理段落与循环模板',
-            en: 'Manage phrases and loop templates',
-          ),
+          title: inlineI18n.t('toolbox.sound.focus.controlArrangement'),
+          subtitle: inlineI18n.t('toolbox.sound.focus.controlArrangementDesc'),
           summary: _patternEnabled
               ? inlineArrangementLabel
-              : pickUiText(inlineI18n, zh: '单小节循环', en: 'Single-bar loop'),
+              : inlineI18n.t('toolbox.sound.focus.singleBarLoop'),
           expanded: _arrangementExpanded,
           onToggle: () {
             setState(() {
@@ -548,14 +519,10 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
         const SizedBox(height: 12),
         _FocusControlSection(
           icon: Icons.graphic_eq_rounded,
-          title: pickUiText(inlineI18n, zh: '混音与触感', en: 'Mix'),
-          subtitle: pickUiText(
-            inlineI18n,
-            zh: '调节音量层级与震动反馈',
-            en: 'Adjust volume layers and haptics',
-          ),
+          title: inlineI18n.t('toolbox.sound.focus.controlMix'),
+          subtitle: inlineI18n.t('toolbox.sound.focus.controlMixDesc'),
           summary:
-              '${(100 * _masterVolume).round()}% · ${_hapticsEnabled ? pickUiText(inlineI18n, zh: '触感开', en: 'Haptics on') : pickUiText(inlineI18n, zh: '触感关', en: 'Haptics off')}',
+              '${(100 * _masterVolume).round()}% · ${_hapticsEnabled ? inlineI18n.t('toolbox.sound.focus.hapticsOn') : inlineI18n.t('toolbox.sound.focus.hapticsOff')}',
           expanded: _advancedExpanded,
           onToggle: () {
             setState(() {
@@ -596,7 +563,7 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
         ),
         const SizedBox(height: 14),
         const SectionHeader(
-          title: '专注节拍工作台',
+          title: '专注拍点工作台',
           subtitle: '围绕手机单手操作重构了节奏、风格、编排与触感设置，首屏只保留最关键的开播信息。',
         ),
         const SizedBox(height: 12),
@@ -633,7 +600,7 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
                   icon: Icon(
                     _running ? Icons.pause_rounded : Icons.play_arrow_rounded,
                   ),
-                  label: Text(_running ? '停止节拍' : '开始节拍'),
+                  label: Text(_running ? '停止节奏' : '开始节奏'),
                 ),
               ),
               const SizedBox(width: 10),
@@ -674,7 +641,7 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
                     );
                   },
                   icon: const Icon(Icons.open_in_full_rounded),
-                  label: const Text('全屏启动'),
+                  label: const Text('全屏开始'),
                 ),
               _FocusInfoPill(
                 icon: Icons.vibration_rounded,
@@ -714,8 +681,8 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
         const SizedBox(height: 12),
         _FocusControlSection(
           icon: Icons.graphic_eq_rounded,
-          title: '节拍音色',
-          subtitle: '选择当前节拍点击的声音质感',
+          title: '拍点音色',
+          subtitle: '选择当前拍点点击的声音质感',
           summary: _soundLabel(_soundKind),
           expanded: _styleExpanded,
           onToggle: () {
@@ -729,7 +696,7 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
         _FocusControlSection(
           icon: Icons.view_timeline_rounded,
           title: '循环编排',
-          subtitle: '按段落组织一轮节拍结构',
+          subtitle: '按段落组织一轮节奏结构',
           summary: _patternEnabled ? arrangementLabel : '单小节循环',
           expanded: _arrangementExpanded,
           onToggle: () {

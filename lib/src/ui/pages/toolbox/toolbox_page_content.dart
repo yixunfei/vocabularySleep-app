@@ -4,7 +4,6 @@ import '../../../core/module_system/module_id.dart';
 import '../../../i18n/app_i18n.dart';
 import '../../../models/settings_dto.dart';
 import '../../theme/toolbox_colors.dart';
-import '../../ui_copy.dart';
 import '../toolbox_crypto_security.dart';
 import '../toolbox_daily_choice_tool.dart';
 import '../toolbox_human_tests.dart';
@@ -99,21 +98,13 @@ List<ToolboxEntryData> flattenToolboxEntries(
 List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
   return <ToolboxSectionData>[
     ToolboxSectionData(
-      title: pickUiText(i18n, zh: '睡眠支持', en: 'Sleep support'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '记录睡眠、安排睡前准备，也能在夜里醒来时帮你缓一缓。',
-        en: 'Track sleep, wind down at night, and get a calmer path when you wake up.',
-      ),
+      title: i18n.t('toolbox.hub.section.sleep.title'),
+      subtitle: i18n.t('toolbox.hub.section.sleep.subtitle'),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(
           moduleId: ModuleIds.toolboxSleepAssistant,
-          title: pickUiText(i18n, zh: '睡眠助手', en: 'Sleep assistant'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '睡眠记录、睡前清单、夜醒安抚和每周回顾。',
-            en: 'Sleep logs, wind-down steps, night support, and weekly reviews.',
-          ),
+          title: i18n.t('toolbox.hub.entry.sleep_assistant.title'),
+          subtitle: i18n.t('toolbox.hub.entry.sleep_assistant.subtitle'),
           icon: Icons.bedtime_rounded,
           accent: ToolboxColors.sleepAccent,
           pageBuilder: () => const ToolboxSleepAssistantPage(),
@@ -121,21 +112,13 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
       ],
     ),
     ToolboxSectionData(
-      title: pickUiText(i18n, zh: '小游戏', en: 'Mini games'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '短时间就能玩一局的益智小游戏。',
-        en: 'Small puzzle games for a quick break.',
-      ),
+      title: i18n.t('toolbox.hub.section.games.title'),
+      subtitle: i18n.t('toolbox.hub.section.games.subtitle'),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(
           moduleId: ModuleIds.toolboxMiniGames,
-          title: pickUiText(i18n, zh: '游戏中心', en: 'Game hub'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '俄罗斯方块、推箱子、数独、扫雷、拼图和小转盘都在这里。',
-            en: 'Tetris, Sokoban, Sudoku, Minesweeper, jigsaw, and a small roulette game.',
-          ),
+          title: i18n.t('toolbox.hub.entry.games.title'),
+          subtitle: i18n.t('toolbox.hub.entry.games.subtitle'),
           icon: Icons.videogame_asset_rounded,
           accent: ToolboxColors.gamesAccent,
           pageBuilder: () => const MiniGamesToolPage(),
@@ -143,21 +126,13 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
       ],
     ),
     ToolboxSectionData(
-      title: pickUiText(i18n, zh: '人类测试', en: 'Human tests'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '测测反应、记忆、视觉搜索和手眼协调。',
-        en: 'Try reaction, memory, visual search, and coordination tests.',
-      ),
+      title: i18n.t('toolbox.hub.section.tests.title'),
+      subtitle: i18n.t('toolbox.hub.section.tests.subtitle'),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(
           moduleId: ModuleIds.toolboxHumanTests,
-          title: pickUiText(i18n, zh: '人类测试中心', en: 'Human test hub'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '反应、记忆、打字、色觉、视力、计算和协调练习。',
-            en: 'Reaction, memory, typing, color, vision, math, and coordination drills.',
-          ),
+          title: i18n.t('toolbox.hub.entry.tests.title'),
+          subtitle: i18n.t('toolbox.hub.entry.tests.subtitle'),
           icon: Icons.psychology_alt_rounded,
           accent: const Color(0xFF2F8D8E),
           pageBuilder: () => const HumanTestsToolPage(),
@@ -165,81 +140,53 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
       ],
     ),
     ToolboxSectionData(
-      title: pickUiText(i18n, zh: '声音工具', en: 'Sound tools'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '一些可以放松、打节奏或随手演奏的声音。',
-        en: 'Sounds for relaxing, keeping rhythm, or playing for a moment.',
-      ),
+      title: i18n.t('toolbox.hub.section.sound.title'),
+      subtitle: i18n.t('toolbox.hub.section.sound.subtitle'),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(
           moduleId: ModuleIds.toolboxSoothingMusic,
-          title: pickUiText(i18n, zh: '舒缓音乐', en: 'Soothing music'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '挑一段音乐，让自己慢慢安静下来。',
-            en: 'Pick a track and let the room settle.',
-          ),
+          title: i18n.t('toolbox.hub.entry.soothing.title'),
+          subtitle: i18n.t('toolbox.hub.entry.soothing.subtitle'),
           icon: Icons.spa_rounded,
           accent: ToolboxColors.soundAccent,
           pageBuilder: () => const SoothingMusicV2Page(),
         ),
         ToolboxEntryData(
           moduleId: ModuleIds.toolboxSoundDeck,
-          title: pickUiText(i18n, zh: '空灵竖琴', en: 'Ethereal harp'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '竖琴、钢琴、长笛、鼓垫和几种小乐器随手切换。',
-            en: 'Switch between harp, piano, flute, drum pad, guitar, and small instruments.',
-          ),
+          title: i18n.t('toolbox.hub.entry.harp.title'),
+          subtitle: i18n.t('toolbox.hub.entry.harp.subtitle'),
           icon: Icons.music_note_rounded,
           accent: ToolboxColors.harpAccent,
           pageBuilder: () => const HarpToolPage(),
         ),
         ToolboxEntryData(
           moduleId: ModuleIds.toolboxSingingBowls,
-          title: pickUiText(i18n, zh: '疗愈音钵', en: 'Healing bowls'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '轻敲音钵，听一段慢慢散开的共振。',
-            en: 'Tap a bowl and listen to a slow, spacious resonance.',
-          ),
+          title: i18n.t('toolbox.hub.entry.bowls.title'),
+          subtitle: i18n.t('toolbox.hub.entry.bowls.subtitle'),
           icon: Icons.blur_circular_rounded,
           accent: ToolboxColors.bowlsAccent,
           pageBuilder: () => const SingingBowlsToolPage(),
         ),
         ToolboxEntryData(
           moduleId: ModuleIds.toolboxSoundLocator,
-          title: pickUiText(i18n, zh: '声源定位', en: 'Sound locator'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '用麦克风阵列确认声源方向，并在空间舞台中给出指引。',
-            en: 'Confirm sound direction with mic arrays and spatial guidance.',
-          ),
+          title: i18n.t('toolbox.hub.entry.locator.title'),
+          subtitle: i18n.t('toolbox.hub.entry.locator.subtitle'),
           icon: Icons.spatial_audio_rounded,
           accent: ToolboxColors.locatorAccent,
           pageBuilder: () => const SoundLocatorToolPage(),
         ),
         ToolboxEntryData(
           moduleId: ModuleIds.toolboxFocusBeats,
-          title: pickUiText(i18n, zh: '专注节拍', en: 'Focus beats'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '跟着节拍练专注，也可以自己排一段循环。',
-            en: 'Practice with a beat or build a simple loop.',
-          ),
+          title: i18n.t('toolbox.hub.entry.beats.title'),
+          subtitle: i18n.t('toolbox.hub.entry.beats.subtitle'),
           icon: Icons.av_timer_rounded,
           accent: ToolboxColors.beatsAccent,
           pageBuilder: () => const FocusBeatsToolPage(),
         ),
         ToolboxEntryData(
           moduleId: ModuleIds.toolboxWoodfish,
-          title: pickUiText(i18n, zh: '电子木鱼', en: 'Digital woodfish'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '轻敲计数，做一个微型重置。',
-            en: 'Quick strike and count for a tiny reset.',
-          ),
+          title: i18n.t('toolbox.hub.entry.woodfish.title'),
+          subtitle: i18n.t('toolbox.hub.entry.woodfish.subtitle'),
           icon: Icons.self_improvement_rounded,
           accent: ToolboxColors.woodfishAccent,
           pageBuilder: () => const WoodfishToolPage(),
@@ -247,33 +194,21 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
       ],
     ),
     ToolboxSectionData(
-      title: pickUiText(i18n, zh: '专注训练', en: 'Focus drills'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '用数字、呼吸和节奏把注意力拉回来。',
-        en: 'Use numbers, breathing, and rhythm to steady attention.',
-      ),
+      title: i18n.t('toolbox.hub.section.focus.title'),
+      subtitle: i18n.t('toolbox.hub.section.focus.subtitle'),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(
           moduleId: ModuleIds.toolboxSchulteGrid,
-          title: pickUiText(i18n, zh: '舒尔特方格', en: 'Schulte grid'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '按顺序寻找数字，训练视觉搜索。',
-            en: 'Find numbers in order to train visual search.',
-          ),
+          title: i18n.t('toolbox.hub.entry.schulte.title'),
+          subtitle: i18n.t('toolbox.hub.entry.schulte.subtitle'),
           icon: Icons.grid_view_rounded,
           accent: ToolboxColors.schulteAccent,
           pageBuilder: () => const SchulteGridToolPage(),
         ),
         ToolboxEntryData(
           moduleId: ModuleIds.toolboxBreathing,
-          title: pickUiText(i18n, zh: '呼吸训练', en: 'Breathing practice'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '专注、放松、睡前和短暂停顿时都能用。',
-            en: 'Breathing patterns for focus, relaxing, bedtime, and short pauses.',
-          ),
+          title: i18n.t('toolbox.hub.entry.breathing.title'),
+          subtitle: i18n.t('toolbox.hub.entry.breathing.subtitle'),
           icon: Icons.air_rounded,
           accent: ToolboxColors.breathingAccent,
           pageBuilder: () => const BreathingToolPage(),
@@ -281,33 +216,21 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
       ],
     ),
     ToolboxSectionData(
-      title: pickUiText(i18n, zh: '静心减压', en: 'Calm tools'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '用触摸、计数和简单画面让自己慢下来。',
-        en: 'Slow down with touch, counting, and simple visuals.',
-      ),
+      title: i18n.t('toolbox.hub.section.calm.title'),
+      subtitle: i18n.t('toolbox.hub.section.calm.subtitle'),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(
           moduleId: ModuleIds.toolboxPrayerBeads,
-          title: pickUiText(i18n, zh: '静心念珠', en: 'Prayer beads'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '按自己的节奏一颗颗拨动。',
-            en: 'Advance bead by bead at your own rhythm.',
-          ),
+          title: i18n.t('toolbox.hub.entry.beads.title'),
+          subtitle: i18n.t('toolbox.hub.entry.beads.subtitle'),
           icon: Icons.trip_origin_rounded,
           accent: ToolboxColors.prayerAccent,
           pageBuilder: () => const PrayerBeadsToolPage(),
         ),
         ToolboxEntryData(
           moduleId: ModuleIds.toolboxZenSand,
-          title: pickUiText(i18n, zh: '禅意沙盘', en: 'Zen sand tray'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '画出痕迹、摆放石子，做一个迷你沙盘。',
-            en: 'Draw in sand, place stones, and make a small quiet scene.',
-          ),
+          title: i18n.t('toolbox.hub.entry.zen.title'),
+          subtitle: i18n.t('toolbox.hub.entry.zen.subtitle'),
           icon: Icons.landscape_rounded,
           accent: ToolboxColors.zenAccent,
           pageBuilder: () => const ZenSandStudioPage(),
@@ -315,21 +238,13 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
       ],
     ),
     ToolboxSectionData(
-      title: pickUiText(i18n, zh: '生活实用', en: 'Life tools'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '从屏幕测量到生活计算，日常高频工具集中在这里。',
-        en: 'Everyday tools from screen measurement to life calculators.',
-      ),
+      title: i18n.t('toolbox.hub.section.life.title'),
+      subtitle: i18n.t('toolbox.hub.section.life.subtitle'),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(
           moduleId: ModuleIds.toolboxLifeTools,
-          title: pickUiText(i18n, zh: '生活实用中心', en: 'Life tool hub'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '几十种日常工具：屏幕展示、设备测量、图像处理、网络工具、文本编辑与生活计算。',
-            en: 'Dozens of daily tools: displays, device sensors, image tools, web utilities, text editing, and life calculators.',
-          ),
+          title: i18n.t('toolbox.hub.entry.life.title'),
+          subtitle: i18n.t('toolbox.hub.entry.life.subtitle'),
           icon: Icons.home_repair_service_rounded,
           accent: ToolboxColors.lifeAccent,
           pageBuilder: () => const LifeToolsHubPage(),
@@ -337,21 +252,13 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
       ],
     ),
     ToolboxSectionData(
-      title: pickUiText(i18n, zh: '加密安全', en: 'Crypto security'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '隐写、加密、解密、密钥和校验工具集中在独立安全工作台。',
-        en: 'Steganography, encryption, decryption, keys, and verification tools in a dedicated security workspace.',
-      ),
+      title: i18n.t('toolbox.hub.section.crypto.title'),
+      subtitle: i18n.t('toolbox.hub.section.crypto.subtitle'),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(
           moduleId: ModuleIds.toolboxCryptoSecurity,
-          title: pickUiText(i18n, zh: '加密安全中心', en: 'Crypto security hub'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '先接入图片/音频/视频隐写，后续扩展更多加密解密子模块。',
-            en: 'Starts with media steganography and leaves room for more crypto submodules.',
-          ),
+          title: i18n.t('toolbox.hub.entry.crypto.title'),
+          subtitle: i18n.t('toolbox.hub.entry.crypto.subtitle'),
           icon: Icons.enhanced_encryption_rounded,
           accent: ToolboxColors.cryptoAccent,
           pageBuilder: () => const CryptoSecurityHubPage(),
@@ -359,21 +266,13 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
       ],
     ),
     ToolboxSectionData(
-      title: pickUiText(i18n, zh: '随机决策', en: 'Random choice'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '选择太多时，让转盘帮你先动起来。',
-        en: 'When there are too many choices, let the wheel get you moving.',
-      ),
+      title: i18n.t('toolbox.hub.section.decision.title'),
+      subtitle: i18n.t('toolbox.hub.section.decision.subtitle'),
       entries: <ToolboxEntryData>[
         ToolboxEntryData(
           moduleId: ModuleIds.toolboxDailyDecision,
-          title: pickUiText(i18n, zh: '每日决策', en: 'Daily decision'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '输入选项后转一次，直接给出结果。',
-            en: 'Drop in your options and spin once.',
-          ),
+          title: i18n.t('toolbox.hub.entry.decision.title'),
+          subtitle: i18n.t('toolbox.hub.entry.decision.subtitle'),
           icon: Icons.casino_rounded,
           accent: ToolboxColors.decisionAccent,
           pageBuilder: () => const DailyDecisionToolPage(),

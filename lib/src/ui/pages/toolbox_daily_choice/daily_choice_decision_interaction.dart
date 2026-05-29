@@ -1796,7 +1796,7 @@ String _presetTooltip(AppI18n i18n, _DecisionQuickPreset preset) {
     ),
     _DecisionQuickPreset.highStakes => pickUiText(
       i18n,
-      zh: '先检查底线，再谈收益。',
+      zh: '先检查安全门槛，再谈收益。',
       en: 'Check guardrails before chasing upside.',
     ),
     _DecisionQuickPreset.uncertain => pickUiText(
@@ -1959,7 +1959,7 @@ String _methodReportSummary(
       i18n,
       zh: winner == null
           ? '先看把握、风险、可回头和信息差是否过线，再做排序。'
-          : '$winner 在底线守门下排在前面，适合高风险场景优先参考。',
+          : '$winner 在安全线优先下排在前面，适合高风险场景优先参考。',
       en: winner == null
           ? 'Checks confidence, downside, reversibility, and info gaps before ranking.'
           : '$winner leads under guardrails, which matters most in higher-stakes contexts.',
@@ -2008,7 +2008,7 @@ String _methodTrustText(AppI18n i18n, DailyChoiceDecisionMethod method) {
     ),
     DailyChoiceDecisionMethod.thresholdGuardrail => pickUiText(
       i18n,
-      zh: '适用：高风险、难回头、时间紧或需要先保护底线。',
+      zh: '适用：高风险、难回头、时间紧或需要先守住基本盘。',
       en: 'Best when stakes are high, reversal is hard, time is tight, or the floor must be protected.',
     ),
     DailyChoiceDecisionMethod.calibratedForecast => pickUiText(

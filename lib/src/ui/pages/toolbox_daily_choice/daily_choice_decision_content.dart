@@ -138,15 +138,15 @@ DailyChoiceDecisionMethodSpec decisionMethodSpec(
       const DailyChoiceDecisionMethodSpec(
         method: DailyChoiceDecisionMethod.thresholdGuardrail,
         icon: Icons.rule_rounded,
-        titleZh: '底线守门',
+        titleZh: '安全线优先',
         titleEn: 'Guardrails first',
-        subtitleZh: '先看是否过最低门槛，再在过线选项里比较优先级。',
+        subtitleZh: '先看是否过最低门槛，再在过关选项里比较优先级。',
         subtitleEn:
             'Check minimum standards first, then rank only the options that clear them.',
         formulaZh: '先判定信心、风险、可回退性、信息差是否过线，再用综合分做同档比较。',
         formulaEn:
             'Check confidence, downside, reversibility, and info gaps first, then break ties with a composite score.',
-        cautionZh: '高风险场景先守门，再谈收益。',
+        cautionZh: '高风险场景先看安全线，再谈收益。',
         cautionEn:
             'In high-stakes situations, protect the floor before chasing upside.',
       ),
@@ -190,7 +190,7 @@ decisionGuideModules = <DailyChoiceGuideModule>[
       ),
       DailyChoiceGuideEntry(
         icon: Icons.warning_amber_rounded,
-        titleZh: '高风险或难回头：先设底线',
+        titleZh: '高风险或难回头：先设安全门槛',
         titleEn: 'High stakes or hard to undo: set guardrails first',
         bodyZh: '如果一旦做错很难补救，先看风险、把握度、信息差和可回退性是否过线，再比较收益。',
         bodyEn:

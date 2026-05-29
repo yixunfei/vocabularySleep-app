@@ -732,7 +732,7 @@ class _BreathingPracticeReleaseCardState
       ),
       'physiological_sigh_216' => pickUiText(
         i18n,
-        zh: '下一步：恢复自然呼吸 30-60 秒，再决定是否需要再来一轮短练。',
+        zh: '下一步：恢复自然呼吸 30-60 秒，再决定是否需要再来一次短练。',
         en: 'Next: return to natural breathing for 30-60 seconds before deciding whether to repeat.',
       ),
       _altitudeScenarioId => pickUiText(

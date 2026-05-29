@@ -103,62 +103,38 @@ class _ToolboxSleepAssistantPageState
             i18n: i18n,
             items: <_SleepLocatorItem>[
               _SleepLocatorItem(
-                title: pickSleepText(i18n, zh: '当前主线', en: 'Current plan'),
-                subtitle: pickSleepText(
-                  i18n,
-                  zh: '查看本周优先方向',
-                  en: 'Review this week priority',
-                ),
+                title: i18n.t('toolbox.sleep.assist.locatorPlan'),
+                subtitle: i18n.t('toolbox.sleep.assist.locatorPlanHint'),
                 icon: Icons.route_rounded,
                 onTap: () => jump(_planKey),
               ),
               _SleepLocatorItem(
-                title: pickSleepText(i18n, zh: '闭环路线', en: 'Sleep loop'),
-                subtitle: pickSleepText(
-                  i18n,
-                  zh: '评估到周报的完整路径',
-                  en: 'Assessment to review path',
-                ),
+                title: i18n.t('toolbox.sleep.assist.locatorLoop'),
+                subtitle: i18n.t('toolbox.sleep.assist.locatorLoopHint'),
                 icon: Icons.account_tree_rounded,
                 onTap: () => jump(_loopKey),
               ),
               _SleepLocatorItem(
-                title: pickSleepText(i18n, zh: '更多入口', en: 'More actions'),
-                subtitle: pickSleepText(
-                  i18n,
-                  zh: '日志、流程、救援、节律',
-                  en: 'Logs, routine, rescue, rhythm',
-                ),
+                title: i18n.t('toolbox.sleep.assist.locatorMore'),
+                subtitle: i18n.t('toolbox.sleep.assist.locatorMoreHint'),
                 icon: Icons.apps_rounded,
                 onTap: () => jump(_moreKey),
               ),
               _SleepLocatorItem(
-                title: pickSleepText(i18n, zh: '直接建议', en: 'Advice'),
-                subtitle: pickSleepText(
-                  i18n,
-                  zh: '按当前数据给出下一步',
-                  en: 'Next move from current data',
-                ),
+                title: i18n.t('toolbox.sleep.assist.locatorAdvice'),
+                subtitle: i18n.t('toolbox.sleep.assist.locatorAdviceHint'),
                 icon: Icons.tips_and_updates_rounded,
                 onTap: () => jump(_adviceKey),
               ),
               _SleepLocatorItem(
-                title: pickSleepText(i18n, zh: '7 天趋势', en: '7-day trend'),
-                subtitle: pickSleepText(
-                  i18n,
-                  zh: '快速看日志趋势',
-                  en: 'Read log trend quickly',
-                ),
+                title: i18n.t('toolbox.sleep.assist.locatorTrend'),
+                subtitle: i18n.t('toolbox.sleep.assist.locatorTrendHint'),
                 icon: Icons.show_chart_rounded,
                 onTap: () => jump(_trendKey),
               ),
               _SleepLocatorItem(
-                title: pickSleepText(i18n, zh: '科学睡眠', en: 'Sleep science'),
-                subtitle: pickSleepText(
-                  i18n,
-                  zh: '打开精简手册',
-                  en: 'Open the compact handbook',
-                ),
+                title: i18n.t('toolbox.sleep.assist.locatorScience'),
+                subtitle: i18n.t('toolbox.sleep.assist.locatorScienceHint'),
                 icon: Icons.menu_book_rounded,
                 onTap: () => open(const SleepSciencePage()),
               ),
@@ -253,21 +229,9 @@ class _ToolboxSleepAssistantPageState
       SleepMorningQuickMood.better => 2,
     };
     final quickNote = switch (mood) {
-      SleepMorningQuickMood.same => pickSleepText(
-        i18n,
-        zh: '晨间快记：差不多',
-        en: 'Morning quick check: about the same',
-      ),
-      SleepMorningQuickMood.worse => pickSleepText(
-        i18n,
-        zh: '晨间快记：更差',
-        en: 'Morning quick check: worse',
-      ),
-      SleepMorningQuickMood.better => pickSleepText(
-        i18n,
-        zh: '晨间快记：更好',
-        en: 'Morning quick check: better',
-      ),
+      SleepMorningQuickMood.same => i18n.t('toolbox.sleep.assist.morningSame'),
+      SleepMorningQuickMood.worse => i18n.t('toolbox.sleep.assist.morningWorse'),
+      SleepMorningQuickMood.better => i18n.t('toolbox.sleep.assist.morningBetter'),
     };
     final updated = base.copyWith(
       morningEnergy: energy,
@@ -282,21 +246,9 @@ class _ToolboxSleepAssistantPageState
     );
     appState.saveSleepDailyLog(updated);
     final message = switch (mood) {
-      SleepMorningQuickMood.same => pickSleepText(
-        i18n,
-        zh: '已记下：差不多。今天先稳住一个锚点就好。',
-        en: 'Saved: about the same. Hold one anchor today.',
-      ),
-      SleepMorningQuickMood.worse => pickSleepText(
-        i18n,
-        zh: '已记下：更差。今天只做一件温和修复，不追责。',
-        en: 'Saved: worse. Choose one gentle repair today.',
-      ),
-      SleepMorningQuickMood.better => pickSleepText(
-        i18n,
-        zh: '已记下：更好。保留做对的一件事就够了。',
-        en: 'Saved: better. Keep the one thing that helped.',
-      ),
+      SleepMorningQuickMood.same => i18n.t('toolbox.sleep.assist.morningSavedSame'),
+      SleepMorningQuickMood.worse => i18n.t('toolbox.sleep.assist.morningSavedWorse'),
+      SleepMorningQuickMood.better => i18n.t('toolbox.sleep.assist.morningSavedBetter'),
     };
     final messenger = ScaffoldMessenger.of(context);
     messenger.hideCurrentSnackBar();
@@ -313,24 +265,20 @@ class _ToolboxSleepAssistantPageState
       );
       if (event.dateKey == today || event.dateKey == yesterday) {
         hints.add(
-          pickSleepText(
-            i18n,
-            zh: '最近夜醒：${sleepNightModeLabel(i18n, event.mode)}',
-            en: 'Recent rescue: ${sleepNightModeLabel(i18n, event.mode)}',
-          ),
+          i18n.t('toolbox.sleep.assist.recentRescue'),
         );
         if (event.returnedToBedAt != null) {
-          hints.add(pickSleepText(i18n, zh: '有离床记录', en: 'Left-bed noted'));
+          hints.add(i18n.t('toolbox.sleep.assist.leftBedRecorded'));
         }
       }
     }
     final routine = appState.sleepRoutineRunnerState;
     if (routine.activeTemplateId == 'minimum_energy_shutdown') {
-      hints.add(pickSleepText(i18n, zh: '昨晚低能量流程', en: 'Tiny routine used'));
+      hints.add(i18n.t('toolbox.sleep.assist.tinyRoutineUsed'));
     }
     final latest = appState.latestSleepDailyLog;
     if (latest?.lateScreenExposure == true) {
-      hints.add(pickSleepText(i18n, zh: '晚间看屏线索', en: 'Late-screen clue'));
+      hints.add(i18n.t('toolbox.sleep.assist.lateScreenClue'));
     }
     return hints;
   }
@@ -379,12 +327,8 @@ class _ToolboxSleepAssistantPageState
       context: context,
       enabled: appState.sleepDashboardState.sleepDarkModeEnabled,
       child: ToolboxToolPage(
-        title: pickSleepText(i18n, zh: '睡眠助手', en: 'Sleep assistant'),
-        subtitle: pickSleepText(
-          i18n,
-          zh: '把评估、连续日志、夜醒救援、睡前流程、节律和周报放进一个闭环入口。',
-          en: 'One loop for assessment, continuous logs, rescue, routines, rhythm, and reports.',
-        ),
+        title: i18n.t('toolbox.sleep.core.title'),
+        subtitle: i18n.t('toolbox.sleep.assist.subtitle'),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -401,11 +345,7 @@ class _ToolboxSleepAssistantPageState
                     step: nextStep,
                     supportGoal: SleepSupportGoalStrip(i18n: i18n),
                     onShortVersion: () => _showTiredModeSheet(appState, i18n),
-                    shortVersionLabel: pickSleepText(
-                      i18n,
-                      zh: '更短版本',
-                      en: 'Shorter version',
-                    ),
+                    shortVersionLabel: i18n.t('toolbox.sleep.assist.shorterVersion'),
                   ),
                 ),
               ),
@@ -435,28 +375,20 @@ class _ToolboxSleepAssistantPageState
                     runSpacing: 10,
                     children: <Widget>[
                       ToolboxMetricCard(
-                        label: pickSleepText(i18n, zh: '平均睡眠', en: 'Avg sleep'),
+                        label: i18n.t('toolbox.sleep.assist.avgSleep'),
                         value: sleepMinutesLabel(avgSleep),
                       ),
                       ToolboxMetricCard(
-                        label: pickSleepText(
-                          i18n,
-                          zh: '平均效率',
-                          en: 'Avg efficiency',
-                        ),
+                        label: i18n.t('toolbox.sleep.assist.avgEfficiency'),
                         value: sleepPercentLabel(avgEfficiency),
                       ),
                       ToolboxMetricCard(
-                        label: pickSleepText(
-                          i18n,
-                          zh: '晨间精神',
-                          en: 'Morning energy',
-                        ),
+                        label: i18n.t('toolbox.sleep.assist.morningEnergy'),
                         value: sleepScoreLabel(avgEnergy),
                       ),
                       if (appState.sleepCurrentPlan != null)
                         ToolboxMetricCard(
-                          label: pickSleepText(i18n, zh: '主线', en: 'Track'),
+                          label: i18n.t('toolbox.sleep.assist.track'),
                           value: sleepTrackLabel(
                             i18n,
                             appState.sleepCurrentPlan!.track,
@@ -485,14 +417,10 @@ class _ToolboxSleepAssistantPageState
                 child: SwitchListTile(
                   secondary: const Icon(Icons.dark_mode_rounded),
                   title: Text(
-                    pickSleepText(i18n, zh: '睡眠暗色模式', en: 'Sleep dark mode'),
+                    i18n.t('toolbox.sleep.assist.darkMode'),
                   ),
                   subtitle: Text(
-                    pickSleepText(
-                      i18n,
-                      zh: '只在睡眠助手内部生效，适合夜间查看和执行流程。',
-                      en: 'Applies only inside the sleep assistant for nighttime use.',
-                    ),
+                    i18n.t('toolbox.sleep.assist.darkModeHint'),
                   ),
                   value: appState.sleepDashboardState.sleepDarkModeEnabled,
                   onChanged: (value) => appState.updateSleepDashboardState(
@@ -513,12 +441,8 @@ class _ToolboxSleepAssistantPageState
               KeyedSubtree(
                 key: _planKey,
                 child: _SleepCompactSection(
-                  title: pickSleepText(i18n, zh: '当前主线', en: 'Current plan'),
-                  subtitle: pickSleepText(
-                    i18n,
-                    zh: '本周只优先一件事，避免技巧堆叠。',
-                    en: 'Keep only one priority this week.',
-                  ),
+                  title: i18n.t('toolbox.sleep.assist.currentPlan'),
+                  subtitle: i18n.t('toolbox.sleep.assist.currentPlanHint'),
                   icon: Icons.route_rounded,
                   child: const _CurrentPlanCard(),
                 ),
@@ -527,12 +451,8 @@ class _ToolboxSleepAssistantPageState
               KeyedSubtree(
                 key: _loopKey,
                 child: _SleepCompactSection(
-                  title: pickSleepText(i18n, zh: '睡眠闭环路线', en: 'Sleep loop'),
-                  subtitle: pickSleepText(
-                    i18n,
-                    zh: '评估、睡前、夜醒、白天、日志、周报。',
-                    en: 'Assessment, wind-down, rescue, day, log, review.',
-                  ),
+                  title: i18n.t('toolbox.sleep.assist.sleepLoop'),
+                  subtitle: i18n.t('toolbox.sleep.assist.sleepLoopSub'),
                   icon: Icons.account_tree_rounded,
                   child: _SleepLoopPanel(
                     steps: _buildSleepLoopSteps(context, appState, i18n),
@@ -543,51 +463,35 @@ class _ToolboxSleepAssistantPageState
               KeyedSubtree(
                 key: _moreKey,
                 child: _SleepCompactSection(
-                  title: pickSleepText(i18n, zh: '更多入口与工具', en: 'More actions'),
-                  subtitle: pickSleepText(
-                    i18n,
-                    zh: '需要时再展开，不挤占首屏。',
-                    en: 'Expand only when needed.',
-                  ),
+                  title: i18n.t('toolbox.sleep.assist.moreActions'),
+                  subtitle: i18n.t('toolbox.sleep.assist.moreActionsHint'),
                   icon: Icons.apps_rounded,
                   child: _SleepMoreActionsPanel(
                     i18n: i18n,
                     actions: _buildMoreSleepActions(context, appState, i18n),
                     tools: <Widget>[
                       SleepQuickToolButton(
-                        title: pickSleepText(
-                          i18n,
-                          zh: '白噪音',
-                          en: 'White noise',
-                        ),
+                        title: i18n.t('toolbox.sleep.assist.whiteNoise'),
                         icon: Icons.graphic_eq_rounded,
                         onTap: () => showSleepWhiteNoiseSheet(context),
                       ),
                       SleepQuickToolButton(
-                        title: pickSleepText(
-                          i18n,
-                          zh: '晨光计时器',
-                          en: 'Morning light timer',
-                        ),
+                        title: i18n.t('toolbox.sleep.assist.morningLightTimer'),
                         icon: Icons.wb_sunny_rounded,
                         onTap: () => showMorningLightTimerSheet(context),
                       ),
                       SleepQuickToolButton(
-                        title: pickSleepText(
-                          i18n,
-                          zh: '咖啡因截止线',
-                          en: 'Caffeine cutoff',
-                        ),
+                        title: i18n.t('toolbox.sleep.assist.caffeineCutoff'),
                         icon: Icons.local_cafe_rounded,
                         onTap: () => showCaffeineCutoffCalculatorSheet(context),
                       ),
                       SleepQuickToolButton(
-                        title: pickSleepText(i18n, zh: '90 分钟', en: '90 min'),
+                        title: i18n.t('toolbox.sleep.assist.min90'),
                         icon: Icons.more_time_rounded,
                         onTap: () => showSleepCyclePlannerSheet(context),
                       ),
                       SleepQuickToolButton(
-                        title: pickSleepText(i18n, zh: '呼吸训练', en: 'Breathing'),
+                        title: i18n.t('toolbox.sleep.assist.breathing'),
                         icon: Icons.air_rounded,
                         onTap: () => _openToolboxModule(
                           context,
@@ -597,7 +501,7 @@ class _ToolboxSleepAssistantPageState
                         ),
                       ),
                       SleepQuickToolButton(
-                        title: pickSleepText(i18n, zh: '舒缓音乐', en: 'Music'),
+                        title: i18n.t('toolbox.sleep.assist.music'),
                         icon: Icons.spa_rounded,
                         onTap: () => _openToolboxModule(
                           context,
@@ -607,7 +511,7 @@ class _ToolboxSleepAssistantPageState
                         ),
                       ),
                       SleepQuickToolButton(
-                        title: pickSleepText(i18n, zh: '疗愈音钵', en: 'Bowls'),
+                        title: i18n.t('toolbox.sleep.assist.bowls'),
                         icon: Icons.blur_circular_rounded,
                         onTap: () => _openToolboxModule(
                           context,
@@ -617,7 +521,7 @@ class _ToolboxSleepAssistantPageState
                         ),
                       ),
                       SleepQuickToolButton(
-                        title: pickSleepText(i18n, zh: '禅意沙盘', en: 'Zen sand'),
+                        title: i18n.t('toolbox.sleep.assist.zenSand'),
                         icon: Icons.landscape_rounded,
                         onTap: () => _openToolboxModule(
                           context,
@@ -634,12 +538,8 @@ class _ToolboxSleepAssistantPageState
               KeyedSubtree(
                 key: _adviceKey,
                 child: _SleepCompactSection(
-                  title: pickSleepText(i18n, zh: '直接建议', en: 'Direct advice'),
-                  subtitle: pickSleepText(
-                    i18n,
-                    zh: '按当前记录给出少量下一步。',
-                    en: 'A few next moves from current records.',
-                  ),
+                  title: i18n.t('toolbox.sleep.assist.directAdvice'),
+                  subtitle: i18n.t('toolbox.sleep.assist.directAdviceSub'),
                   icon: Icons.tips_and_updates_rounded,
                   child: SleepAdviceList(
                     items: advice.take(4).toList(growable: false),
@@ -651,12 +551,8 @@ class _ToolboxSleepAssistantPageState
               KeyedSubtree(
                 key: _trendKey,
                 child: _SleepCompactSection(
-                  title: pickSleepText(i18n, zh: '近 7 天趋势', en: '7-day trend'),
-                  subtitle: pickSleepText(
-                    i18n,
-                    zh: '短趋势足够决定下一步。',
-                    en: 'Short trend is enough for the next move.',
-                  ),
+                  title: i18n.t('toolbox.sleep.assist.trend7'),
+                  subtitle: i18n.t('toolbox.sleep.assist.trend7Sub'),
                   icon: Icons.show_chart_rounded,
                   child: _SleepTrendSummary(
                     i18n: i18n,
@@ -682,72 +578,48 @@ class _ToolboxSleepAssistantPageState
     return <_SleepLoopStep>[
       _SleepLoopStep(
         label: '01',
-        title: pickSleepText(i18n, zh: '定主线', en: 'Direction'),
-        body: pickSleepText(
-          i18n,
-          zh: '用评估决定先改哪一个变量。',
-          en: 'Use assessment to choose one variable.',
-        ),
+        title: i18n.t('toolbox.sleep.assist.setDirection'),
+        body: i18n.t('toolbox.sleep.assist.setDirectionHint'),
         icon: Icons.fact_check_rounded,
         accent: const Color(0xFF517D6E),
         onTap: () => _open(context, appState, const SleepAssessmentPage()),
       ),
       _SleepLoopStep(
         label: '02',
-        title: pickSleepText(i18n, zh: '今晚收口', en: 'Wind down'),
-        body: pickSleepText(
-          i18n,
-          zh: '直接进入当前模板或最低能量流程。',
-          en: 'Open the routine or tiny flow.',
-        ),
+        title: i18n.t('toolbox.sleep.assist.windDown'),
+        body: i18n.t('toolbox.sleep.assist.windDownHint'),
         icon: Icons.nights_stay_rounded,
         accent: const Color(0xFF805C92),
         onTap: () => _open(context, appState, const SleepWindDownPage()),
       ),
       _SleepLoopStep(
         label: '03',
-        title: pickSleepText(i18n, zh: '夜醒救援', en: 'Rescue'),
-        body: pickSleepText(
-          i18n,
-          zh: '半夜只做留床/离床判断。',
-          en: 'Only decide stay or leave bed.',
-        ),
+        title: i18n.t('toolbox.sleep.assist.nightRescue'),
+        body: i18n.t('toolbox.sleep.assist.nightRescueHint'),
         icon: Icons.self_improvement_rounded,
         accent: const Color(0xFF9A6A52),
         onTap: () => _open(context, appState, const SleepNightRescuePage()),
       ),
       _SleepLoopStep(
         label: '04',
-        title: pickSleepText(i18n, zh: '白天锚点', en: 'Day anchor'),
-        body: pickSleepText(
-          i18n,
-          zh: '晨光、咖啡因和午睡放一处。',
-          en: 'Keep light, caffeine, and naps together.',
-        ),
+        title: i18n.t('toolbox.sleep.assist.dayAnchor'),
+        body: i18n.t('toolbox.sleep.assist.dayAnchorHint'),
         icon: Icons.wb_sunny_rounded,
         accent: const Color(0xFFB08B33),
         onTap: () => _open(context, appState, const SleepDayRhythmPage()),
       ),
       _SleepLoopStep(
         label: '05',
-        title: pickSleepText(i18n, zh: '最小日志', en: 'Tiny log'),
-        body: pickSleepText(
-          i18n,
-          zh: '只补趋势需要的关键值。',
-          en: 'Only fill the trend-critical values.',
-        ),
+        title: i18n.t('toolbox.sleep.assist.tinyLog'),
+        body: i18n.t('toolbox.sleep.assist.tinyLogHint'),
         icon: Icons.edit_note_rounded,
         accent: const Color(0xFF4E74A8),
         onTap: () => _open(context, appState, const SleepDailyLogPage()),
       ),
       _SleepLoopStep(
         label: '06',
-        title: pickSleepText(i18n, zh: '周报复盘', en: 'Review'),
-        body: pickSleepText(
-          i18n,
-          zh: '下一周仍只选一件事。',
-          en: 'Choose only one thing for next week.',
-        ),
+        title: i18n.t('toolbox.sleep.assist.weeklyReview'),
+        body: i18n.t('toolbox.sleep.assist.weeklyReviewHint'),
         icon: Icons.insights_rounded,
         accent: const Color(0xFF6A7F9E),
         onTap: () => _open(context, appState, const SleepReportPage()),
@@ -762,78 +634,50 @@ class _ToolboxSleepAssistantPageState
   ) {
     return <Widget>[
       _SleepQuickActionCard(
-        title: pickSleepText(i18n, zh: '科学睡眠', en: 'Sleep science'),
-        subtitle: pickSleepText(
-          i18n,
-          zh: '精简手册和风险边界。',
-          en: 'Compact handbook and safety edges.',
-        ),
+        title: i18n.t('toolbox.sleep.assist.scienceCard'),
+        subtitle: i18n.t('toolbox.sleep.assist.scienceCardSub'),
         icon: Icons.menu_book_rounded,
         accent: const Color(0xFF5D8F8B),
         onTap: () => _open(context, appState, const SleepSciencePage()),
       ),
       _SleepQuickActionCard(
-        title: pickSleepText(i18n, zh: '睡眠评估', en: 'Assessment'),
-        subtitle: pickSleepText(
-          i18n,
-          zh: '识别问题类型和风险线索。',
-          en: 'Assess issues and risk signals.',
-        ),
+        title: i18n.t('toolbox.sleep.assist.assessmentCard'),
+        subtitle: i18n.t('toolbox.sleep.assist.assessmentCardSub'),
         icon: Icons.fact_check_rounded,
         accent: const Color(0xFF517D6E),
         onTap: () => _open(context, appState, const SleepAssessmentPage()),
       ),
       _SleepQuickActionCard(
-        title: pickSleepText(i18n, zh: '连续日志', en: 'Continuous log'),
-        subtitle: pickSleepText(
-          i18n,
-          zh: '按日期持续编辑睡眠日志。',
-          en: 'Continuously edit sleep logs by date.',
-        ),
+        title: i18n.t('toolbox.sleep.assist.logCard'),
+        subtitle: i18n.t('toolbox.sleep.assist.logCardSub'),
         icon: Icons.bedtime_rounded,
         accent: const Color(0xFF4E74A8),
         onTap: () => _open(context, appState, const SleepDailyLogPage()),
       ),
       _SleepQuickActionCard(
-        title: pickSleepText(i18n, zh: '今晚流程', en: 'Tonight routine'),
-        subtitle: pickSleepText(
-          i18n,
-          zh: '模板、执行器和担忧卸载。',
-          en: 'Templates, runner, and thought unload.',
-        ),
+        title: i18n.t('toolbox.sleep.assist.routineCard'),
+        subtitle: i18n.t('toolbox.sleep.assist.routineCardSub'),
         icon: Icons.nights_stay_rounded,
         accent: const Color(0xFF805C92),
         onTap: () => _open(context, appState, const SleepWindDownPage()),
       ),
       _SleepQuickActionCard(
-        title: pickSleepText(i18n, zh: '夜醒救援', en: 'Night rescue'),
-        subtitle: pickSleepText(
-          i18n,
-          zh: '按夜醒类型走低刺激脚本。',
-          en: 'Use low-stim scripts for awakenings.',
-        ),
+        title: i18n.t('toolbox.sleep.assist.rescueCard'),
+        subtitle: i18n.t('toolbox.sleep.assist.rescueCardSub'),
         icon: Icons.self_improvement_rounded,
         accent: const Color(0xFF9A6A52),
         onTap: () => _open(context, appState, const SleepNightRescuePage()),
       ),
       _SleepQuickActionCard(
-        title: pickSleepText(i18n, zh: '白天节律', en: 'Day rhythm'),
-        subtitle: pickSleepText(
-          i18n,
-          zh: '晨光、咖啡因、午睡和计划。',
-          en: 'Light, caffeine, naps, and structured plans.',
-        ),
+        title: i18n.t('toolbox.sleep.assist.rhythmCard'),
+        subtitle: i18n.t('toolbox.sleep.assist.rhythmCardSub'),
         icon: Icons.wb_sunny_rounded,
         accent: const Color(0xFFB08B33),
         onTap: () => _open(context, appState, const SleepDayRhythmPage()),
       ),
       _SleepQuickActionCard(
-        title: pickSleepText(i18n, zh: '睡眠周报', en: 'Sleep report'),
-        subtitle: pickSleepText(
-          i18n,
-          zh: '看图表、影响因子和下周建议。',
-          en: 'Review charts, factors, and next-cycle advice.',
-        ),
+        title: i18n.t('toolbox.sleep.assist.reportCard'),
+        subtitle: i18n.t('toolbox.sleep.assist.reportCardSub'),
         icon: Icons.insights_rounded,
         accent: const Color(0xFF6A7F9E),
         onTap: () => _open(context, appState, const SleepReportPage()),
@@ -854,171 +698,119 @@ class _ToolboxSleepAssistantPageState
     final latestIsToday = latestLog?.dateKey == todaySleepDateKey();
     final lowEnergySignals = <String>[
       if (appState.sleepDailyLogs.length < 3)
-        pickSleepText(i18n, zh: '先收集 3 晚', en: 'Collect 3 nights'),
+        i18n.t('toolbox.sleep.assist.collect3'),
       if (profile?.hasRacingThoughts == true)
-        pickSleepText(i18n, zh: '思绪偏活跃', en: 'Busy mind'),
+        i18n.t('toolbox.sleep.assist.busyMind'),
       if (latestLog?.lateScreenExposure == true)
-        pickSleepText(i18n, zh: '昨晚看屏', en: 'Late screens'),
+        i18n.t('toolbox.sleep.assist.lateScreensTag'),
     ];
 
     if (profile == null) {
       return _SleepHomeNextStep(
-        eyebrow: pickSleepText(i18n, zh: '先定主线', en: 'Set direction'),
-        title: pickSleepText(
-          i18n,
-          zh: '用 2 分钟做一次睡眠评估',
-          en: 'Take a 2-minute assessment',
-        ),
-        body: pickSleepText(
-          i18n,
-          zh: '先识别你更像是节律、压力、夜醒、环境还是白天恢复问题，系统才不会一次塞给你太多技巧。',
-          en: 'Identify whether rhythm, stress, awakenings, environment, or recovery should come first.',
-        ),
+        eyebrow: i18n.t('toolbox.sleep.assist.setDirectionBtn'),
+        title: i18n.t('toolbox.sleep.assist.assessment2min'),
+        body: i18n.t('toolbox.sleep.assist.assessmentIntro'),
         icon: Icons.fact_check_rounded,
         accent: const Color(0xFF517D6E),
-        primaryLabel: pickSleepText(i18n, zh: '开始评估', en: 'Start'),
+        primaryLabel: i18n.t('toolbox.sleep.assist.startAssessment'),
         onPrimary: () => _open(context, appState, const SleepAssessmentPage()),
-        secondaryLabel: pickSleepText(i18n, zh: '先看夜醒救援', en: 'Rescue first'),
+        secondaryLabel: i18n.t('toolbox.sleep.assist.rescueFirst'),
         onSecondary: () =>
             _open(context, appState, const SleepNightRescuePage()),
         signals: <String>[
-          pickSleepText(i18n, zh: '先少后多', en: 'Small first'),
-          pickSleepText(i18n, zh: '自动生成主线', en: 'Auto plan'),
+          i18n.t('toolbox.sleep.assist.smallFirst'),
+          i18n.t('toolbox.sleep.assist.autoPlan'),
         ],
       );
     }
 
     if (routine.isRunning || routine.isPaused) {
       return _SleepHomeNextStep(
-        eyebrow: pickSleepText(i18n, zh: '正在进行', en: 'In progress'),
-        title: pickSleepText(
-          i18n,
-          zh: '继续今晚流程',
-          en: 'Continue tonight routine',
-        ),
-        body: pickSleepText(
-          i18n,
-          zh: '不要重新选择，也不要再加任务。回到当前步骤，把它做完就够了。',
-          en: 'Do not re-plan or add tasks. Return to the current step and finish it.',
-        ),
+        eyebrow: i18n.t('toolbox.sleep.assist.inProgress'),
+        title: i18n.t('toolbox.sleep.assist.continueRoutine'),
+        body: i18n.t('toolbox.sleep.assist.continueRoutineHint'),
         icon: Icons.play_circle_fill_rounded,
         accent: const Color(0xFF805C92),
-        primaryLabel: pickSleepText(i18n, zh: '回到流程', en: 'Open routine'),
+        primaryLabel: i18n.t('toolbox.sleep.assist.backToRoutine'),
         onPrimary: () => _open(context, appState, const SleepWindDownPage()),
-        secondaryLabel: pickSleepText(i18n, zh: '夜醒救援', en: 'Night rescue'),
+        secondaryLabel: i18n.t('toolbox.sleep.assist.nightRescue'),
         onSecondary: () =>
             _open(context, appState, const SleepNightRescuePage()),
         signals: <String>[
           sleepSecondsLabel(routine.remainingSeconds, i18n: i18n),
-          pickSleepText(i18n, zh: '不加新任务', en: 'No extra task'),
+          i18n.t('toolbox.sleep.assist.noNewTask'),
         ],
       );
     }
 
     if (hour < 5) {
       return _SleepHomeNextStep(
-        eyebrow: pickSleepText(i18n, zh: '夜里模式', en: 'Night mode'),
-        title: pickSleepText(
-          i18n,
-          zh: '只判断：留床还是离床',
-          en: 'Only decide: stay or leave bed',
-        ),
-        body: pickSleepText(
-          i18n,
-          zh: '夜里不做复盘，不追求立刻睡着。先按当前状态走一个低刺激脚本。',
-          en: 'Do not analyze at night. Use one low-stimulation script for the current state.',
-        ),
+        eyebrow: i18n.t('toolbox.sleep.assist.nightMode'),
+        title: i18n.t('toolbox.sleep.assist.nightModeHint'),
+        body: i18n.t('toolbox.sleep.assist.nightModeDesc'),
         icon: Icons.self_improvement_rounded,
         accent: const Color(0xFF9A6A52),
-        primaryLabel: pickSleepText(i18n, zh: '打开夜醒救援', en: 'Open rescue'),
+        primaryLabel: i18n.t('toolbox.sleep.assist.openRescue'),
         onPrimary: () => _open(context, appState, const SleepNightRescuePage()),
-        secondaryLabel: pickSleepText(i18n, zh: '离床判断', en: 'Leave-bed aid'),
+        secondaryLabel: i18n.t('toolbox.sleep.assist.leaveBedAid'),
         onSecondary: () => showSleepinessDecisionSheet(context),
         signals: <String>[
-          pickSleepText(i18n, zh: '低刺激', en: 'Low stimulation'),
-          pickSleepText(i18n, zh: '不看时间', en: 'No clock checking'),
+          i18n.t('toolbox.sleep.assist.lowStim'),
+          i18n.t('toolbox.sleep.assist.noClock'),
         ],
       );
     }
 
     if (hour >= 20) {
       return _SleepHomeNextStep(
-        eyebrow: pickSleepText(i18n, zh: '今晚一步', en: 'Tonight step'),
-        title: pickSleepText(
-          i18n,
-          zh: '启动 8 分钟最低能量流程',
-          en: 'Start the 8-minute tiny routine',
-        ),
-        body: pickSleepText(
-          i18n,
-          zh: '已经累的时候，不需要完整仪式。调暗、放下屏幕、停放一个念头，然后进床。',
-          en: 'When you are already tired, skip the full ritual. Dim, park one thought, and get into bed.',
-        ),
+        eyebrow: i18n.t('toolbox.sleep.assist.tonightStep'),
+        title: i18n.t('toolbox.sleep.assist.startTinyRoutine'),
+        body: i18n.t('toolbox.sleep.assist.startTinyRoutineHint'),
         icon: Icons.bedtime_rounded,
         accent: const Color(0xFF805C92),
-        primaryLabel: pickSleepText(i18n, zh: '一键开始', en: 'Start tiny routine'),
+        primaryLabel: i18n.t('toolbox.sleep.assist.oneTapStart'),
         onPrimary: () => _startTinyRoutine(context, appState),
-        secondaryLabel: pickSleepText(i18n, zh: '90 分钟参考', en: '90-min guide'),
+        secondaryLabel: i18n.t('toolbox.sleep.assist.min90Guide'),
         onSecondary: () => showSleepCyclePlannerSheet(context),
         signals: lowEnergySignals.isEmpty
-            ? <String>[pickSleepText(i18n, zh: '8 分钟', en: '8 min')]
+            ? <String>[i18n.t('toolbox.sleep.assist.min8')]
             : lowEnergySignals,
       );
     }
 
     if (hour < 11 && latestLog?.morningLightDone != true) {
       return _SleepHomeNextStep(
-        eyebrow: pickSleepText(i18n, zh: '白天锚点', en: 'Day anchor'),
-        title: pickSleepText(
-          i18n,
-          zh: '先补晨光，不纠结昨晚',
-          en: 'Get morning light before replaying last night',
-        ),
-        body: pickSleepText(
-          i18n,
-          zh: '晨光和固定起床是最稳的节律锚点之一。先做这个，再决定要不要记录昨晚。',
-          en: 'Morning light and stable wake time are strong rhythm anchors. Do this before overthinking last night.',
-        ),
+        eyebrow: i18n.t('toolbox.sleep.assist.dayAnchorTitle'),
+        title: i18n.t('toolbox.sleep.assist.dayAnchorDesc'),
+        body: i18n.t('toolbox.sleep.assist.dayAnchorScenarioHint'),
         icon: Icons.wb_sunny_rounded,
         accent: const Color(0xFFB08B33),
-        primaryLabel: pickSleepText(
-          i18n,
-          zh: '开始晨光计时',
-          en: 'Start light timer',
-        ),
+        primaryLabel: i18n.t('toolbox.sleep.assist.startLightTimer'),
         onPrimary: () => showMorningLightTimerSheet(context),
-        secondaryLabel: pickSleepText(i18n, zh: '记录昨晚', en: 'Log last night'),
+        secondaryLabel: i18n.t('toolbox.sleep.assist.logLastNight'),
         onSecondary: () => _open(context, appState, const SleepDailyLogPage()),
         signals: <String>[
-          pickSleepText(i18n, zh: '10-20 分钟', en: '10-20 min'),
+          i18n.t('toolbox.sleep.assist.min10to20'),
           if (!latestIsToday)
-            pickSleepText(i18n, zh: '日志待补', en: 'Log pending'),
+            i18n.t('toolbox.sleep.assist.logPending'),
         ],
       );
     }
 
     if (latestLog == null || !latestIsToday) {
       return _SleepHomeNextStep(
-        eyebrow: pickSleepText(i18n, zh: '补最小日志', en: 'Minimal log'),
-        title: pickSleepText(
-          i18n,
-          zh: '只记 4 个数就够开始',
-          en: 'Start with only four values',
-        ),
-        body: pickSleepText(
-          i18n,
-          zh: '先记录睡了多久、夜醒、晨间精神和关键因子。完整时间轴可以以后再补。',
-          en: 'Log sleep time, awakenings, morning energy, and key factors first. Fill the full timeline later.',
-        ),
+        eyebrow: i18n.t('toolbox.sleep.assist.minimalLog'),
+        title: i18n.t('toolbox.sleep.assist.minimalLogHint'),
+        body: i18n.t('toolbox.sleep.assist.minimalLogDesc'),
         icon: Icons.edit_note_rounded,
         accent: const Color(0xFF4E74A8),
-        primaryLabel: pickSleepText(i18n, zh: '去记录', en: 'Log now'),
+        primaryLabel: i18n.t('toolbox.sleep.assist.logNow'),
         onPrimary: () => _open(context, appState, const SleepDailyLogPage()),
-        secondaryLabel: pickSleepText(i18n, zh: '咖啡因线', en: 'Caffeine cutoff'),
+        secondaryLabel: i18n.t('toolbox.sleep.assist.caffeineLine'),
         onSecondary: () => showCaffeineCutoffCalculatorSheet(context),
         signals: <String>[
-          pickSleepText(i18n, zh: '低负担', en: 'Low effort'),
-          pickSleepText(i18n, zh: '趋势优先', en: 'Trend first'),
+          i18n.t('toolbox.sleep.assist.lowEffort'),
+          i18n.t('toolbox.sleep.assist.trendFirst'),
         ],
       );
     }
@@ -1026,49 +818,33 @@ class _ToolboxSleepAssistantPageState
     if (latestLog.caffeineAfterCutoff ||
         (profile.caffeineSensitive && hour >= 11 && hour < 17)) {
       return _SleepHomeNextStep(
-        eyebrow: pickSleepText(i18n, zh: '今天先控变量', en: 'Control one variable'),
-        title: pickSleepText(
-          i18n,
-          zh: '把最后一杯往前挪',
-          en: 'Move the last caffeine earlier',
-        ),
-        body: pickSleepText(
-          i18n,
-          zh: '咖啡因是最容易先收紧的变量之一。先定今天的截止线，不等晚上再补救。',
-          en: 'Caffeine is one of the cleanest variables to tighten. Set today’s cutoff before nighttime.',
-        ),
+        eyebrow: i18n.t('toolbox.sleep.assist.controlOneVar'),
+        title: i18n.t('toolbox.sleep.assist.controlOneVarHint'),
+        body: i18n.t('toolbox.sleep.assist.controlOneVarDesc'),
         icon: Icons.local_cafe_rounded,
         accent: const Color(0xFF7E6A3A),
-        primaryLabel: pickSleepText(i18n, zh: '计算截止线', en: 'Calculate cutoff'),
+        primaryLabel: i18n.t('toolbox.sleep.assist.calcCutoff'),
         onPrimary: () => showCaffeineCutoffCalculatorSheet(context),
-        secondaryLabel: pickSleepText(i18n, zh: '白天节律', en: 'Day rhythm'),
+        secondaryLabel: i18n.t('toolbox.sleep.assist.dayRhythm'),
         onSecondary: () => _open(context, appState, const SleepDayRhythmPage()),
         signals: <String>[
           if (latestLog.caffeineAfterCutoff)
-            pickSleepText(i18n, zh: '昨晚超线', en: 'Late yesterday'),
+            i18n.t('toolbox.sleep.assist.lateYesterday'),
           if (profile.caffeineSensitive)
-            pickSleepText(i18n, zh: '咖啡因敏感', en: 'Sensitive'),
+            i18n.t('toolbox.sleep.assist.caffeineSensitive'),
         ],
       );
     }
 
     return _SleepHomeNextStep(
-      eyebrow: pickSleepText(i18n, zh: '下一周期', en: 'Next cycle'),
-      title: pickSleepText(
-        i18n,
-        zh: '只选一件事维持到下周',
-        en: 'Choose one thing to hold until next week',
-      ),
-      body: pickSleepText(
-        i18n,
-        zh: '睡眠改善最怕同时改太多。看一眼趋势，再决定下一周优先晨光、咖啡因、夜醒还是卧室。',
-        en: 'Sleep work breaks down when everything changes at once. Check the trend and pick one next variable.',
-      ),
+      eyebrow: i18n.t('toolbox.sleep.assist.nextCycle'),
+      title: i18n.t('toolbox.sleep.assist.nextCycleHint'),
+      body: i18n.t('toolbox.sleep.assist.nextCycleDesc'),
       icon: Icons.insights_rounded,
       accent: const Color(0xFF6A7F9E),
-      primaryLabel: pickSleepText(i18n, zh: '查看周报', en: 'Open report'),
+      primaryLabel: i18n.t('toolbox.sleep.assist.openReport'),
       onPrimary: () => _open(context, appState, const SleepReportPage()),
-      secondaryLabel: pickSleepText(i18n, zh: '今晚流程', en: 'Tonight routine'),
+      secondaryLabel: i18n.t('toolbox.sleep.assist.tonightRoutine'),
       onSecondary: () => _open(context, appState, const SleepWindDownPage()),
       signals: <String>[
         '${appState.sleepDailyLogs.length}/7',
@@ -1195,11 +971,7 @@ class _SleepRiskWarningCard extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                pickSleepText(
-                  i18n,
-                  zh: '当前存在中高水平打鼾风险线索。工具可以继续帮你做记录和行为调整，但如果伴随憋醒、巨大鼾声或白天困到影响功能，建议尽快做进一步评估。',
-                  en: 'Elevated snoring risk is present. Behavior tools can still help, but loud snoring, gasping, or severe daytime sleepiness should be assessed further.',
-                ),
+                i18n.t('toolbox.sleep.assist.snoringRisk'),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onErrorContainer,
                   fontWeight: FontWeight.w700,
@@ -1364,7 +1136,7 @@ class _SleepHomeUtilityPanel extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    pickSleepText(i18n, zh: '快速定位', en: 'Quick locate'),
+                    i18n.t('toolbox.sleep.assist.quickLocate'),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w900,
                     ),
@@ -1381,14 +1153,14 @@ class _SleepHomeUtilityPanel extends StatelessWidget {
                   onPressed: onLocate,
                   icon: const Icon(Icons.menu_open_rounded),
                   label: Text(
-                    pickSleepText(i18n, zh: '打开定位抽屉', en: 'Open drawer'),
+                    i18n.t('toolbox.sleep.assist.openDrawer'),
                   ),
                 ),
                 OutlinedButton.icon(
                   onPressed: onScience,
                   icon: const Icon(Icons.menu_book_rounded),
                   label: Text(
-                    pickSleepText(i18n, zh: '科学睡眠', en: 'Sleep science'),
+                    i18n.t('toolbox.sleep.assist.scienceCard'),
                   ),
                 ),
               ],
@@ -1464,7 +1236,7 @@ class _SleepMoreActionsPanel extends StatelessWidget {
         Wrap(spacing: 12, runSpacing: 12, children: actions),
         const SizedBox(height: 14),
         Text(
-          pickSleepText(i18n, zh: '即时工具', en: 'Instant tools'),
+          i18n.t('toolbox.sleep.assist.instantTools'),
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w900,
           ),
@@ -1494,13 +1266,9 @@ class _SleepTrendSummary extends StatelessWidget {
     if (recentLogs.isEmpty) {
       return EmptyStateView(
         icon: Icons.hotel_rounded,
-        title: pickSleepText(i18n, zh: '还没有睡眠日志', en: 'No sleep logs yet'),
-        message: pickSleepText(
-          i18n,
-          zh: '先从连续日志开始，至少记录 3 到 7 天，趋势和建议才会更可靠。',
-          en: 'Start the continuous log and collect at least 3 to 7 days first.',
-        ),
-        actionLabel: pickSleepText(i18n, zh: '去记录', en: 'Start logging'),
+        title: i18n.t('toolbox.sleep.assist.noLogsYet'),
+        message: i18n.t('toolbox.sleep.assist.noLogsHint'),
+        actionLabel: i18n.t('toolbox.sleep.assist.startLogging'),
         onAction: onLog,
       );
     }
@@ -1514,17 +1282,17 @@ class _SleepTrendSummary extends StatelessWidget {
           runSpacing: 10,
           children: <Widget>[
             ToolboxMetricCard(
-              label: pickSleepText(i18n, zh: '晚咖啡因', en: 'Late caffeine'),
+              label: i18n.t('toolbox.sleep.assist.lateCaffeine'),
               value:
                   '${recentLogs.where((item) => item.caffeineAfterCutoff).length}/${recentLogs.length}',
             ),
             ToolboxMetricCard(
-              label: pickSleepText(i18n, zh: '晚间看屏', en: 'Late screens'),
+              label: i18n.t('toolbox.sleep.assist.lateScreens'),
               value:
                   '${recentLogs.where((item) => item.lateScreenExposure).length}/${recentLogs.length}',
             ),
             ToolboxMetricCard(
-              label: pickSleepText(i18n, zh: '晨光完成', en: 'Morning light'),
+              label: i18n.t('toolbox.sleep.assist.morningLightDone'),
               value:
                   '${recentLogs.where((item) => item.morningLightDone).length}/${recentLogs.length}',
             ),
@@ -1564,18 +1332,14 @@ class _SleepHomeLocatorSheet extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 6, 20, 24),
         children: <Widget>[
           Text(
-            pickSleepText(i18n, zh: '跳到指定位置', en: 'Jump to'),
+            i18n.t('toolbox.sleep.assist.jumpTitle'),
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            pickSleepText(
-              i18n,
-              zh: '首页内容已压缩为折叠区，需要哪一块就直接跳过去。',
-              en: 'The home page is compressed into sections. Jump to what you need.',
-            ),
+            i18n.t('toolbox.sleep.assist.jumpDesc'),
             style: theme.textTheme.bodySmall,
           ),
           const SizedBox(height: 14),
@@ -1647,22 +1411,14 @@ class _SleepFrictionlessStartPanel extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        pickSleepText(
-                          i18n,
-                          zh: '免输入场景启动',
-                          en: 'No-input starts',
-                        ),
+                        i18n.t('toolbox.sleep.assist.noInputStarts'),
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w900,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        pickSleepText(
-                          i18n,
-                          zh: '疲惫时不做表单，先用场景按钮进入下一步。',
-                          en: 'When tired, enter the next step from a scene button.',
-                        ),
+                        i18n.t('toolbox.sleep.assist.noInputStartsHint'),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -1688,11 +1444,7 @@ class _SleepFrictionlessStartPanel extends StatelessWidget {
                         onPressed: onTiredMode,
                         icon: const Icon(Icons.battery_1_bar_rounded),
                         label: Text(
-                          pickSleepText(
-                            i18n,
-                            zh: '我现在很累',
-                            en: 'I am tired now',
-                          ),
+                          i18n.t('toolbox.sleep.assist.imTired'),
                         ),
                       ),
                     ),
@@ -1702,11 +1454,7 @@ class _SleepFrictionlessStartPanel extends StatelessWidget {
                         onPressed: onBedtimeScene,
                         icon: const Icon(Icons.nights_stay_rounded),
                         label: Text(
-                          pickSleepText(
-                            i18n,
-                            zh: '睡前一键场景',
-                            en: 'Bedtime scene',
-                          ),
+                          i18n.t('toolbox.sleep.assist.bedtimeScene'),
                         ),
                       ),
                     ),
@@ -1728,48 +1476,32 @@ class _SleepFrictionlessStartPanel extends StatelessWidget {
                   children: <Widget>[
                     _SleepSceneActionTile(
                       width: tileWidth,
-                      title: pickSleepText(i18n, zh: '现在就睡', en: 'Sleep now'),
-                      subtitle: pickSleepText(
-                        i18n,
-                        zh: '8 分钟低能量流程',
-                        en: '8-minute tiny routine',
-                      ),
+                      title: i18n.t('toolbox.sleep.assist.sleepNow'),
+                      subtitle: i18n.t('toolbox.sleep.assist.tiny8min'),
                       icon: Icons.bedtime_rounded,
                       accent: const Color(0xFF805C92),
                       onTap: onSleepNow,
                     ),
                     _SleepSceneActionTile(
                       width: tileWidth,
-                      title: pickSleepText(i18n, zh: '半夜醒了', en: 'Awake now'),
-                      subtitle: pickSleepText(
-                        i18n,
-                        zh: '低刺激救援脚本',
-                        en: 'Low-stim rescue',
-                      ),
+                      title: i18n.t('toolbox.sleep.assist.awakeNow'),
+                      subtitle: i18n.t('toolbox.sleep.assist.lowStimRescue'),
                       icon: Icons.self_improvement_rounded,
                       accent: const Color(0xFF9A6A52),
                       onTap: onNightWake,
                     ),
                     _SleepSceneActionTile(
                       width: tileWidth,
-                      title: pickSleepText(i18n, zh: '放背景音', en: 'Audio bed'),
-                      subtitle: pickSleepText(
-                        i18n,
-                        zh: '白噪音或雨声',
-                        en: 'Noise or rain',
-                      ),
+                      title: i18n.t('toolbox.sleep.assist.audioBed'),
+                      subtitle: i18n.t('toolbox.sleep.assist.noiseOrRain'),
                       icon: Icons.graphic_eq_rounded,
                       accent: const Color(0xFF4F7F8F),
                       onTap: onWhiteNoise,
                     ),
                     _SleepSceneActionTile(
                       width: tileWidth,
-                      title: pickSleepText(i18n, zh: '明早补记', en: 'Log later'),
-                      subtitle: pickSleepText(
-                        i18n,
-                        zh: '30 秒最小日志',
-                        en: '30-second log',
-                      ),
+                      title: i18n.t('toolbox.sleep.assist.logLater'),
+                      subtitle: i18n.t('toolbox.sleep.assist.log30sec'),
                       icon: Icons.edit_note_rounded,
                       accent: const Color(0xFF4E74A8),
                       onTap: onMinimalLog,
@@ -1892,7 +1624,7 @@ class _SleepNightBranchStrip extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickSleepText(i18n, zh: '夜醒分支', en: 'Night-wake branches'),
+            i18n.t('toolbox.sleep.assist.nightWakeBranches'),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w900,
             ),
@@ -2078,11 +1810,7 @@ class _SleepAssistantLoadingState extends ConsumerWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              pickSleepText(
-                i18n,
-                zh: '正在加载睡眠助手...',
-                en: 'Loading sleep assistant...',
-              ),
+              i18n.t('toolbox.sleep.core.loading'),
             ),
           ),
         ],
@@ -2109,16 +1837,12 @@ class _CurrentPlanCard extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                pickSleepText(i18n, zh: '还没有主线', en: 'No plan yet'),
+                i18n.t('toolbox.sleep.assist.noPlanYet'),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
               Text(
-                pickSleepText(
-                  i18n,
-                  zh: '先做一次睡眠评估，系统会给出当前最值得先改的方向。',
-                  en: 'Complete the assessment first to get a recommended direction.',
-                ),
+                i18n.t('toolbox.sleep.assist.noPlanHint'),
               ),
               const SizedBox(height: 12),
               FilledButton.icon(
@@ -2131,7 +1855,7 @@ class _CurrentPlanCard extends ConsumerWidget {
                 },
                 icon: const Icon(Icons.fact_check_rounded),
                 label: Text(
-                  pickSleepText(i18n, zh: '开始评估', en: 'Start assessment'),
+                  i18n.t('toolbox.sleep.assist.startAssessment'),
                 ),
               ),
             ],
@@ -2207,7 +1931,7 @@ class _LatestLogRow extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            '${pickSleepText(i18n, zh: '最近一晚', en: 'Latest night')} · ${sleepDateLabel(log.dateKey)}',
+            '${i18n.t('toolbox.sleep.assist.latestNight')} · ${sleepDateLabel(log.dateKey)}',
             style: Theme.of(
               context,
             ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
@@ -2219,22 +1943,22 @@ class _LatestLogRow extends ConsumerWidget {
             children: <Widget>[
               Chip(
                 label: Text(
-                  '${pickSleepText(i18n, zh: '睡眠', en: 'Sleep')} ${sleepMinutesLabel(log.estimatedTotalSleepMinutes)}',
+                  '${i18n.t('toolbox.sleep.assist.sleep')} ${sleepMinutesLabel(log.estimatedTotalSleepMinutes)}',
                 ),
               ),
               Chip(
                 label: Text(
-                  '${pickSleepText(i18n, zh: '效率', en: 'Efficiency')} ${sleepPercentLabel(log.sleepEfficiency)}',
+                  '${i18n.t('toolbox.sleep.assist.efficiency')} ${sleepPercentLabel(log.sleepEfficiency)}',
                 ),
               ),
               Chip(
                 label: Text(
-                  '${pickSleepText(i18n, zh: '夜醒', en: 'Wake-ups')} ${log.nightWakeCount}',
+                  '${i18n.t('toolbox.sleep.assist.wakeUps')} ${log.nightWakeCount}',
                 ),
               ),
               Chip(
                 label: Text(
-                  '${pickSleepText(i18n, zh: '精神', en: 'Energy')} ${sleepScoreLabel(log.morningEnergy)}',
+                  '${i18n.t('toolbox.sleep.assist.energy')} ${sleepScoreLabel(log.morningEnergy)}',
                 ),
               ),
             ],

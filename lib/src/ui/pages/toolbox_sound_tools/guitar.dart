@@ -111,29 +111,17 @@ class _GuitarToolState extends State<_GuitarTool> {
 
   String _presetLabel(AppI18n i18n, _GuitarPreset preset) {
     return switch (preset.id) {
-      'nylon_finger' => pickUiText(i18n, zh: '尼龙指弹', en: 'Nylon finger'),
-      'ambient_chime' => pickUiText(i18n, zh: '氛围泛音', en: 'Ambient chime'),
-      _ => pickUiText(i18n, zh: '钢弦扫弦', en: 'Steel strum'),
+      'nylon_finger' => i18n.t('toolbox.sound.guitar.nylon_finger'),
+      'ambient_chime' => i18n.t('toolbox.sound.guitar.ambient_chime'),
+      _ => i18n.t('toolbox.sound.guitar.steel_strum'),
     };
   }
 
   String _presetSubtitle(AppI18n i18n, _GuitarPreset preset) {
     return switch (preset.id) {
-      'nylon_finger' => pickUiText(
-        i18n,
-        zh: '更圆润柔和，适合慢速分解和单音拨奏。',
-        en: 'Rounder and softer for slow arpeggios and finger picking.',
-      ),
-      'ambient_chime' => pickUiText(
-        i18n,
-        zh: '更长泛音和尾韵，适合氛围铺底。',
-        en: 'Longer shimmer and overtones for ambient layers.',
-      ),
-      _ => pickUiText(
-        i18n,
-        zh: '清晰有力的钢弦核心，适合节奏扫弦。',
-        en: 'Clear steel-core tone tuned for rhythmic strumming.',
-      ),
+      'nylon_finger' => i18n.t('toolbox.sound.guitar.rounder_and_softer_for_slow'),
+      'ambient_chime' => i18n.t('toolbox.sound.guitar.longer_shimmer_and_overtones_for'),
+      _ => i18n.t('toolbox.sound.guitar.clear_steelcore_tone_tuned_for'),
     };
   }
 
@@ -173,8 +161,8 @@ class _GuitarToolState extends State<_GuitarTool> {
 
   String _techniqueLabel(AppI18n i18n) {
     return _effectivePalmMute
-        ? pickUiText(i18n, zh: '闂烽煶', en: 'Palm mute')
-        : pickUiText(i18n, zh: '寮€鏀惧欢闊?', en: 'Open ring');
+        ? i18n.t('toolbox.sound.guitar.palm_mute_2')
+        : i18n.t('toolbox.sound.guitar.open_ring');
   }
 
   double _pickPositionForStageX(Offset localPosition, Size size) {
@@ -555,11 +543,7 @@ class _GuitarToolState extends State<_GuitarTool> {
                             vertical: 6,
                           ),
                           child: Text(
-                            pickUiText(
-                              i18n,
-                              zh: compact ? '滑扫' : '滑动扫弦',
-                              en: compact ? 'Swipe' : 'Swipe to strum',
-                            ),
+                            compact ? i18n.t('toolbox.sound.guitar.swipe_label') : i18n.t('toolbox.sound.guitar.strum_label'),
                             style: theme.textTheme.labelMedium?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
@@ -587,12 +571,8 @@ class _GuitarToolState extends State<_GuitarTool> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         SectionHeader(
-          title: pickUiText(i18n, zh: '和弦与变调夹', en: 'Chord and capo'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '选定和弦后可直接点弦或滑扫，变调夹会整体抬高音高。',
-            en: 'Pick a chord, pluck or sweep the strings, and move the capo to lift the voicing.',
-          ),
+          title: i18n.t('toolbox.sound.guitar.chord_and_capo'),
+          subtitle: i18n.t('toolbox.sound.guitar.pick_a_chord_pluck_or'),
         ),
         const SizedBox(height: 10),
         SingleChildScrollView(
@@ -653,7 +633,7 @@ class _GuitarToolState extends State<_GuitarTool> {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Text(
-          pickUiText(i18n, zh: '吉他设置', en: 'Guitar settings'),
+          i18n.t('toolbox.sound.guitar.guitar_settings'),
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w800,
           ),
@@ -695,11 +675,7 @@ class _GuitarToolState extends State<_GuitarTool> {
         _buildChordSection(context, i18n, onSelectionChanged: refreshSheet),
         const SizedBox(height: 18),
         Text(
-          pickUiText(
-            i18n,
-            zh: '共鸣 ${(_resonance * 100).round()}%',
-            en: 'Resonance ${(_resonance * 100).round()}%',
-          ),
+          i18n.t('toolbox.sound.guitar.resonance'),
         ),
         Slider(
           value: _resonance,
@@ -720,11 +696,7 @@ class _GuitarToolState extends State<_GuitarTool> {
           },
         ),
         Text(
-          pickUiText(
-            i18n,
-            zh: '拨弦位置 ${(_pickPosition * 100).round()}%',
-            en: 'Pick position ${(_pickPosition * 100).round()}%',
-          ),
+          i18n.t('toolbox.sound.guitar.pick_position'),
         ),
         Slider(
           value: _pickPosition,
@@ -748,13 +720,9 @@ class _GuitarToolState extends State<_GuitarTool> {
         SwitchListTile.adaptive(
           value: _palmMute,
           contentPadding: EdgeInsets.zero,
-          title: Text(pickUiText(i18n, zh: '鎵嬫帉闂烽煶', en: 'Palm mute')),
+          title: Text(i18n.t('toolbox.sound.guitar.palm_mute')),
           subtitle: Text(
-            pickUiText(
-              i18n,
-              zh: '寮€鍚悗浼氱缉鐭欢闊筹紝鏇撮€傚悎鑺傚鍨嬫壂寮︺€?',
-              en: 'Shortens sustain and tightens upper harmonics for rhythmic strokes.',
-            ),
+            i18n.t('toolbox.sound.guitar.shortens_sustain_and_tightens_upper'),
           ),
           onChanged: (value) {
             setState(() => _palmMute = value);
@@ -809,12 +777,12 @@ class _GuitarToolState extends State<_GuitarTool> {
         FilledButton.tonalIcon(
           onPressed: () => unawaited(_strum(down: true)),
           icon: const Icon(Icons.south_rounded),
-          label: Text(pickUiText(i18n, zh: '下扫', en: 'Strum down')),
+          label: Text(i18n.t('toolbox.sound.guitar.strum_down')),
         ),
         FilledButton.tonalIcon(
           onPressed: () => unawaited(_strum(down: false)),
           icon: const Icon(Icons.north_rounded),
-          label: Text(pickUiText(i18n, zh: '上扫', en: 'Strum up')),
+          label: Text(i18n.t('toolbox.sound.guitar.strum_up')),
         ),
         Listener(
           behavior: HitTestBehavior.opaque,
@@ -835,7 +803,7 @@ class _GuitarToolState extends State<_GuitarTool> {
           OutlinedButton.icon(
             onPressed: () => _openGuitarSettingsSheet(context, i18n),
             icon: const Icon(Icons.tune_rounded),
-            label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
+            label: Text(i18n.t('toolbox.sound.flute.settings')),
           ),
       ],
     );
@@ -926,7 +894,7 @@ class _GuitarToolState extends State<_GuitarTool> {
                           foregroundColor: Colors.white,
                         ),
                         icon: const Icon(Icons.tune_rounded),
-                        label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
+                        label: Text(i18n.t('toolbox.sound.flute.settings')),
                       ),
                     ],
                   ),
@@ -950,11 +918,7 @@ class _GuitarToolState extends State<_GuitarTool> {
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
                           Text(
-                            pickUiText(
-                              i18n,
-                              zh: '纵向滑动可扫弦；点按单根琴弦可触发单音拨奏。',
-                              en: 'Swipe vertically to strum; tap a string to pluck single notes.',
-                            ),
+                            i18n.t('toolbox.sound.guitar.swipe_vertically_to_strum_tap'),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: Colors.white70,
                             ),
@@ -1015,16 +979,10 @@ class _GuitarToolState extends State<_GuitarTool> {
               ),
               const SizedBox(height: 12),
               SectionHeader(
-                title: pickUiText(i18n, zh: '吉他舞台', en: 'Guitar stage'),
-                subtitle: pickUiText(
-                  i18n,
-                  zh: compact
-                      ? '手机优先保留主扫弦区域，和弦与变调夹收进紧凑控制区。'
-                      : '扫弦区域保持主视觉，和弦、变调夹与音色控制围绕其布局。',
-                  en: compact
-                      ? 'The phone layout keeps the strum surface primary and moves harmony controls into compact rows.'
-                      : 'The strum surface stays primary while chords, capo, and tone controls sit around it.',
-                ),
+                title: i18n.t('toolbox.sound.guitar.guitar_stage'),
+                subtitle: compact
+                    ? i18n.t('toolbox.sound.guitar.phone_layout_sub')
+                    : i18n.t('toolbox.sound.guitar.desktop_layout_sub'),
               ),
               const SizedBox(height: 10),
               _buildChordSection(context, i18n),
@@ -1041,20 +999,12 @@ class _GuitarToolState extends State<_GuitarTool> {
               _buildQuickActions(context, i18n, immersive: false),
               const SizedBox(height: 12),
               SectionHeader(
-                title: pickUiText(i18n, zh: '音色塑形', en: 'Tone shaping'),
-                subtitle: pickUiText(
-                  i18n,
-                  zh: '共鸣控制琴体响应，拨弦位置控制亮度与颗粒感。',
-                  en: 'Resonance shapes body response and pick position shifts brightness.',
-                ),
+                title: i18n.t('toolbox.sound.guitar.tone_shaping'),
+                subtitle: i18n.t('toolbox.sound.guitar.resonance_shapes_body_response_and'),
               ),
               const SizedBox(height: 10),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '共鸣 ${(_resonance * 100).round()}%',
-                  en: 'Resonance ${(_resonance * 100).round()}%',
-                ),
+                i18n.t('toolbox.sound.guitar.resonance'),
               ),
               Slider(
                 value: _resonance,
@@ -1068,11 +1018,7 @@ class _GuitarToolState extends State<_GuitarTool> {
                 },
               ),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '拨弦位置 ${(_pickPosition * 100).round()}%',
-                  en: 'Pick position ${(_pickPosition * 100).round()}%',
-                ),
+                i18n.t('toolbox.sound.guitar.pick_position'),
               ),
               Slider(
                 value: _pickPosition,

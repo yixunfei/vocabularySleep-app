@@ -1515,7 +1515,7 @@ class _WearWeatherPanel extends StatelessWidget {
                             i18n,
                             zh: weatherEnabled
                                 ? '正在等待全局天气数据，当前先查看全部气温，你也可以手动改档位。'
-                                : '当前先查看全部气温；若启动天气提醒已读取天气，这里会自动用于穿搭建议。',
+                                : '当前先查看全部气温；若天气提醒已读取天气，这里会自动用于穿搭建议。',
                             en: weatherEnabled
                                 ? 'Waiting for global weather data. The module shows all temperatures for now, and you can adjust it manually.'
                                 : 'Showing all temperatures for now. If startup weather has loaded, it will be used here automatically.',

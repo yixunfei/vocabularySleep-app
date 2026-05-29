@@ -1458,7 +1458,7 @@ cookingGuideModules = <DailyChoiceGuideModule>[
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.schedule_rounded,
-        titleZh: '先启动长等待：浸泡、腌制、预热、煮饭',
+        titleZh: '先开始长等待：浸泡、腌制、预热、煮饭',
         titleEn: 'Start long waits first',
         bodyZh:
             '豆类、干货、米饭、烤箱预热、空气炸锅预热、肉类腌制、烧水焯菜都可能占用整顿饭的时间轴。先让等待步骤开始，再切配和调酱，整体节奏会轻很多。',
@@ -1988,7 +1988,7 @@ const List<DailyChoiceGuideModule> placeGuideModules = <DailyChoiceGuideModule>[
         titleZh: '问题不是去哪儿，而是现在缺什么',
         titleEn: 'The issue is what you lack right now',
         bodyZh:
-            '饮食类解决的是“补一顿”与“找个能坐下来的地方”，娱乐类解决新鲜感，运动类解决身体激活，学习类解决专注环境，放松类则解决恢复感。先识别缺口，比盲抽地名更准。',
+            '饮食类解决的是”补一顿”与”找个能坐下来的地方”，娱乐类解决新鲜感，运动类解决身体唤醒，学习类解决专注环境，放松类则解决恢复感。先识别缺口，比盲抽地名更准。',
         bodyEn:
             'Food solves hunger or the need for a place to sit, entertainment gives novelty, sports wake up the body, study gives focus, and relax scenes restore energy.',
       ),
@@ -2097,9 +2097,9 @@ activityGuideEntries = <DailyChoiceGuideEntry>[
   ),
   DailyChoiceGuideEntry(
     icon: Icons.repeat_rounded,
-    titleZh: '先做一轮，再决定继续',
+    titleZh: '先做一次，再决定继续',
     titleEn: 'One round first',
-    bodyZh: '运动、学习、整理都先做一轮。完成后再选择继续、换方向或停止，避免一开始就被计划压住。',
+    bodyZh: '运动、学习、整理都先做一次。完成后再选择继续、换方向或停止，避免一开始就被计划压住。',
     bodyEn:
         'Move, study, or tidy for one round first. After that, choose continue, switch, or stop.',
   ),
@@ -2142,9 +2142,9 @@ activityGuideModules = <DailyChoiceGuideModule>[
       ),
       DailyChoiceGuideEntry(
         icon: Icons.timer_rounded,
-        titleZh: '只承诺一小轮',
+        titleZh: '只承诺一小段',
         titleEn: 'Commit to one small round',
-        bodyZh: '先做一轮 5 到 12 分钟。到点后再决定继续、休息或换方向，避免把随机结果变成新的压力。',
+        bodyZh: '先做一小段 5 到 12 分钟。到点后再决定继续、休息或换方向，避免把随机结果变成新的压力。',
         bodyEn:
             'Do one 5 to 12 minute round first. When it ends, choose continue, rest, or switch.',
       ),
@@ -2187,7 +2187,7 @@ activityGuideModules = <DailyChoiceGuideModule>[
   DailyChoiceGuideModule(
     id: 'low_energy',
     icon: Icons.battery_2_bar_rounded,
-    titleZh: '低意志力启动',
+    titleZh: '低能量开始',
     titleEn: 'Low-energy start',
     subtitleZh: '降低动作体积，让开始先发生',
     subtitleEn: 'Shrink the action so starting happens first',
@@ -2204,7 +2204,7 @@ activityGuideModules = <DailyChoiceGuideModule>[
         icon: Icons.hourglass_empty_rounded,
         titleZh: '默认时间盒要短',
         titleEn: 'Keep the time box short',
-        bodyZh: '低意志力时，5 分钟不是偷懒，而是启动协议。完成后如果状态变好，再自愿追加一轮。',
+        bodyZh: '能量低时，5 分钟不是偷懒，而是开始的小仪式。完成后如果状态变好，再自愿追加一次。',
         bodyEn:
             'At low energy, five minutes is a start protocol, not laziness. Add another round only if it helps.',
       ),

@@ -166,195 +166,69 @@ class _FluteToolState extends State<_FluteTool> {
 
   String _presetLabel(AppI18n i18n, _FlutePreset preset) {
     return switch (preset.id) {
-      'bamboo_breath' => pickUiText(
-        i18n,
-        zh: '竹韵呼吸',
-        en: 'Bamboo breath',
-        ja: '竹の息吹',
-        de: 'Bambusatem',
-        fr: 'Souffle de bambou',
-        es: 'Aliento de bambú',
-        ru: 'Бамбуковое дыхание',
-      ),
-      'lead_solo' => pickUiText(
-        i18n,
-        zh: '独奏领奏',
-        en: 'Lead solo',
-        ja: 'リードソロ',
-        de: 'Lead-Solo',
-        fr: 'Solo lead',
-        es: 'Solo lead',
-        ru: 'Лид-соло',
-      ),
-      'alto_warm' => pickUiText(
-        i18n,
-        zh: '暖音中音',
-        en: 'Warm alto',
-        ja: 'ウォームアルト',
-        de: 'Warmes Alt',
-        fr: 'Alto chaud',
-        es: 'Alto cálido',
-        ru: 'Тёплый альт',
-      ),
-      _ => pickUiText(
-        i18n,
-        zh: '空气流',
-        en: 'Airy flow',
-        ja: 'エアリーフロー',
-        de: 'Luftiger Fluss',
-        fr: 'Flux aérien',
-        es: 'Flujo aéreo',
-        ru: 'Воздушный поток',
-      ),
+      'bamboo_breath' => i18n.t('toolbox.sound.flute.bamboo_breath'),
+      'lead_solo' => i18n.t('toolbox.sound.flute.lead_solo'),
+      'alto_warm' => i18n.t('toolbox.sound.flute.warm_alto'),
+      _ => i18n.t('toolbox.sound.flute.airy_flow'),
     };
   }
 
   String _presetSubtitle(AppI18n i18n, _FlutePreset preset) {
     return switch (preset.id) {
-      'bamboo_breath' => pickUiText(
-        i18n,
-        zh: '竹感更强，起音更柔，适合安静的五声音阶即兴。',
-        en: 'Gentler attacks and a more bamboo-like body for calm pentatonic phrases.',
-        ja: '竹らしい胴鳴りと柔らかな立ち上がりで、静かなペンタトニックに向きます。',
-        de: 'Mehr Bambus-Resonanz und weicherer Einsatz für ruhige pentatonische Phrasen.',
-        fr: 'Plus de résonance de bambou et une attaque plus douce pour des phrases pentatoniques calmes.',
-        es: 'Más resonancia de bambú y un ataque más suave para frases pentatónicas tranquilas.',
-        ru: 'Более бамбуковый корпус и мягкая атака для спокойных пентатонических фраз.',
-      ),
-      'lead_solo' => pickUiText(
-        i18n,
-        zh: '更亮、更靠前，适合旋律句的突出。',
-        en: 'Brighter lead tone with stronger presence for melodic phrases.',
-        ja: '明るく前に出る音色で、主旋律を際立たせます。',
-        de: 'Hellerer Lead-Sound mit mehr Präsenz für Melodielinien.',
-        fr: 'Timbre plus brillant et présent pour les lignes mélodiques.',
-        es: 'Tono más brillante y presente para frases melódicas.',
-        ru: 'Более яркий и выдвинутый тембр для мелодических фраз.',
-      ),
-      'alto_warm' => pickUiText(
-        i18n,
-        zh: '更厚实的中频和更柔和尾音，适合氛围铺底。',
-        en: 'Warmer midrange and softer tail for calm backing layers.',
-        ja: '中域を厚くし、余韻を柔らかくした落ち着いたトーン。',
-        de: 'Wärmere Mitten und weicheres Ausklingen für ruhige Flächen.',
-        fr: 'Médiums plus chauds et fin de note douce pour des nappes calmes.',
-        es: 'Medios más cálidos y cola suave para capas tranquilas.',
-        ru: 'Тёплая середина и мягкий хвост для спокойной подложки.',
-      ),
-      _ => pickUiText(
-        i18n,
-        zh: '自然气息感，适合轻柔演奏。',
-        en: 'Natural breathy tone for gentle and flowing play.',
-        ja: '自然な息づかいで、やわらかな演奏に向きます。',
-        de: 'Natürlicher, luftiger Klang für sanftes Spiel.',
-        fr: 'Souffle naturel pour un jeu doux et fluide.',
-        es: 'Tono de soplo natural para tocar suave y fluido.',
-        ru: 'Естественное дыхание тембра для мягкой и плавной игры.',
-      ),
+      'bamboo_breath' => i18n.t('toolbox.sound.flute.gentler_attacks_and_a_more'),
+      'lead_solo' => i18n.t('toolbox.sound.flute.brighter_lead_tone_with_stronger'),
+      'alto_warm' => i18n.t('toolbox.sound.flute.warmer_midrange_and_softer_tail'),
+      _ => i18n.t('toolbox.sound.flute.natural_breathy_tone_for_gentle'),
     };
   }
 
   // ignore: unused_element
   String _scaleLabel(AppI18n i18n, String scaleId) {
     return switch (scaleId) {
-      'pentatonic' => pickUiText(
-        i18n,
-        zh: '五声音阶',
-        en: 'Pentatonic',
-        ja: 'ペンタトニック',
-        de: 'Pentatonik',
-        fr: 'Pentatonique',
-        es: 'Pentatónica',
-        ru: 'Пентатоника',
-      ),
-      'dorian' => pickUiText(
-        i18n,
-        zh: '多利亚',
-        en: 'Dorian',
-        ja: 'ドリアン',
-        de: 'Dorisch',
-        fr: 'Dorien',
-        es: 'Dórico',
-        ru: 'Дорийский',
-      ),
-      _ => pickUiText(
-        i18n,
-        zh: '大调',
-        en: 'Major',
-        ja: 'メジャー',
-        de: 'Dur',
-        fr: 'Majeur',
-        es: 'Mayor',
-        ru: 'Мажор',
-      ),
+      'pentatonic' => i18n.t('toolbox.sound.flute.pentatonic'),
+      'dorian' => i18n.t('toolbox.sound.flute.dorian'),
+      _ => i18n.t('toolbox.sound.flute.major'),
     };
   }
 
   // ignore: unused_element
   String _styleLabel(AppI18n i18n, String styleId) {
     return switch (styleId) {
-      'lead' => pickUiText(
-        i18n,
-        zh: '领奏',
-        en: 'Lead',
-        ja: 'リード',
-        de: 'Lead',
-        fr: 'Lead',
-        es: 'Lead',
-        ru: 'Лид',
-      ),
-      'alto' => pickUiText(
-        i18n,
-        zh: '中音',
-        en: 'Alto',
-        ja: 'アルト',
-        de: 'Alt',
-        fr: 'Alto',
-        es: 'Alto',
-        ru: 'Альт',
-      ),
-      _ => pickUiText(
-        i18n,
-        zh: '空气',
-        en: 'Airy',
-        ja: 'エアリー',
-        de: 'Luftig',
-        fr: 'Aérien',
-        es: 'Aéreo',
-        ru: 'Воздушный',
-      ),
+      'lead' => i18n.t('toolbox.sound.flute.lead'),
+      'alto' => i18n.t('toolbox.sound.flute.alto'),
+      _ => i18n.t('toolbox.sound.flute.airy'),
     };
   }
 
   String _materialLabel(AppI18n i18n, String materialId) {
     return switch (materialId) {
-      'metal_short' => pickUiText(i18n, zh: '短铁笛', en: 'Short metal'),
-      'metal_long' => pickUiText(i18n, zh: '长铁笛', en: 'Long metal'),
-      'jade' => pickUiText(i18n, zh: '玉笛', en: 'Jade flute'),
-      'clay' => pickUiText(i18n, zh: '陶笛', en: 'Clay ocarina'),
-      _ => pickUiText(i18n, zh: '木笛', en: 'Wood flute'),
+      'metal_short' => i18n.t('toolbox.sound.flute.short_metal'),
+      'metal_long' => i18n.t('toolbox.sound.flute.long_metal'),
+      'jade' => i18n.t('toolbox.sound.flute.jade_flute'),
+      'clay' => i18n.t('toolbox.sound.flute.clay_ocarina'),
+      _ => i18n.t('toolbox.sound.flute.wood_flute'),
     };
   }
 
   String _displayScaleLabel(AppI18n i18n, String scaleId) {
     return switch (scaleId) {
-      'pentatonic' => pickUiText(i18n, zh: '五声音阶', en: 'Pentatonic'),
-      'dorian' => pickUiText(i18n, zh: '多利亚', en: 'Dorian'),
-      'minor' => pickUiText(i18n, zh: '自然小调', en: 'Natural minor'),
-      'mixolydian' => pickUiText(i18n, zh: '混合利底亚', en: 'Mixolydian'),
-      'lydian' => pickUiText(i18n, zh: '利底亚', en: 'Lydian'),
-      _ => pickUiText(i18n, zh: '大调', en: 'Major'),
+      'pentatonic' => i18n.t('toolbox.sound.flute.pentatonic'),
+      'dorian' => i18n.t('toolbox.sound.flute.dorian'),
+      'minor' => i18n.t('toolbox.sound.flute.natural_minor'),
+      'mixolydian' => i18n.t('toolbox.sound.flute.mixolydian'),
+      'lydian' => i18n.t('toolbox.sound.flute.lydian'),
+      _ => i18n.t('toolbox.sound.flute.major'),
     };
   }
 
   String _displayStyleLabel(AppI18n i18n, String styleId) {
     return switch (styleId) {
-      'lead' => pickUiText(i18n, zh: '领奏', en: 'Lead'),
-      'alto' => pickUiText(i18n, zh: '中音', en: 'Alto'),
-      'velvet' => pickUiText(i18n, zh: '绒感', en: 'Velvet'),
-      'hollow' => pickUiText(i18n, zh: '空腔', en: 'Hollow'),
-      'bamboo' => pickUiText(i18n, zh: '竹感', en: 'Bamboo'),
-      _ => pickUiText(i18n, zh: '空气', en: 'Airy'),
+      'lead' => i18n.t('toolbox.sound.flute.lead'),
+      'alto' => i18n.t('toolbox.sound.flute.alto'),
+      'velvet' => i18n.t('toolbox.sound.flute.velvet'),
+      'hollow' => i18n.t('toolbox.sound.flute.hollow'),
+      'bamboo' => i18n.t('toolbox.sound.flute.bamboo'),
+      _ => i18n.t('toolbox.sound.flute.airy'),
     };
   }
 
@@ -1283,7 +1157,7 @@ class _FluteToolState extends State<_FluteTool> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               Text(
-                pickUiText(i18n, zh: '吹奏', en: 'Breath'),
+                i18n.t('toolbox.sound.flute.breath'),
                 textAlign: TextAlign.center,
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: immersive ? Colors.white70 : const Color(0xFF475569),
@@ -1309,7 +1183,7 @@ class _FluteToolState extends State<_FluteTool> {
               Text(
                 _blowSensorEnabled
                     ? '${(100 * _blowThreshold).round()}%'
-                    : pickUiText(i18n, zh: '关闭', en: 'Off'),
+                    : i18n.t('toolbox.sound.flute.off'),
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: immersive ? Colors.white70 : const Color(0xFF475569),
@@ -1382,7 +1256,7 @@ class _FluteToolState extends State<_FluteTool> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     Text(
-                      pickUiText(i18n, zh: '气息', en: 'Breath'),
+                      i18n.t('toolbox.sound.flute.breath_2'),
                       textAlign: TextAlign.center,
                       style: theme.textTheme.labelMedium?.copyWith(
                         color: immersive
@@ -1608,7 +1482,7 @@ class _FluteToolState extends State<_FluteTool> {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Text(
-          pickUiText(i18n, zh: '长笛设置', en: 'Flute settings'),
+          i18n.t('toolbox.sound.flute.flute_settings'),
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w800,
           ),
@@ -1640,7 +1514,7 @@ class _FluteToolState extends State<_FluteTool> {
         const SizedBox(height: 20),
         _buildSettingsSectionTitle(
           context,
-          pickUiText(i18n, zh: '预设包', en: 'Preset pack'),
+          i18n.t('toolbox.sound.flute.preset_pack'),
         ),
         Wrap(
           spacing: 8,
@@ -1666,7 +1540,7 @@ class _FluteToolState extends State<_FluteTool> {
         const SizedBox(height: 20),
         _buildSettingsSectionTitle(
           context,
-          pickUiText(i18n, zh: '调式', en: 'Scale'),
+          i18n.t('toolbox.sound.flute.scale'),
         ),
         Wrap(
           spacing: 8,
@@ -1695,7 +1569,7 @@ class _FluteToolState extends State<_FluteTool> {
         const SizedBox(height: 20),
         _buildSettingsSectionTitle(
           context,
-          pickUiText(i18n, zh: '音色拟真', en: 'Timbre'),
+          i18n.t('toolbox.sound.flute.timbre'),
         ),
         Wrap(
           spacing: 8,
@@ -1717,7 +1591,7 @@ class _FluteToolState extends State<_FluteTool> {
         const SizedBox(height: 20),
         _buildSettingsSectionTitle(
           context,
-          pickUiText(i18n, zh: '材质音色', en: 'Material'),
+          i18n.t('toolbox.sound.flute.material'),
         ),
         Wrap(
           spacing: 8,
@@ -1743,14 +1617,10 @@ class _FluteToolState extends State<_FluteTool> {
         const SizedBox(height: 20),
         _buildSettingsSectionTitle(
           context,
-          pickUiText(i18n, zh: '气息与空间', en: 'Breath and space'),
+          i18n.t('toolbox.sound.flute.breath_and_space'),
         ),
         Text(
-          pickUiText(
-            i18n,
-            zh: '气息 ${(_breath * 100).round()}%',
-            en: 'Breath ${(_breath * 100).round()}%',
-          ),
+          i18n.t('toolbox.sound.flute.breath_3'),
           style: theme.textTheme.labelLarge,
         ),
         Slider(
@@ -1764,11 +1634,7 @@ class _FluteToolState extends State<_FluteTool> {
           },
         ),
         Text(
-          pickUiText(
-            i18n,
-            zh: '空间 ${(_airSpace * 100).round()}%',
-            en: 'Space ${(_airSpace * 100).round()}%',
-          ),
+          i18n.t('toolbox.sound.flute.space'),
           style: theme.textTheme.labelLarge,
         ),
         Slider(
@@ -1786,11 +1652,7 @@ class _FluteToolState extends State<_FluteTool> {
           },
         ),
         Text(
-          pickUiText(
-            i18n,
-            zh: '尾音 ${(_tail * 100).round()}%',
-            en: 'Tail ${(_tail * 100).round()}%',
-          ),
+          i18n.t('toolbox.sound.flute.tail'),
           style: theme.textTheme.labelLarge,
         ),
         Slider(
@@ -1810,7 +1672,7 @@ class _FluteToolState extends State<_FluteTool> {
         const SizedBox(height: 20),
         _buildSettingsSectionTitle(
           context,
-          pickUiText(i18n, zh: '吹气检测', en: 'Blow sensor'),
+          i18n.t('toolbox.sound.flute.blow_sensor'),
         ),
         FilledButton.tonalIcon(
           onPressed: () async {
@@ -1822,18 +1684,14 @@ class _FluteToolState extends State<_FluteTool> {
           ),
           label: Text(
             _blowSensorEnabled
-                ? pickUiText(i18n, zh: '关闭吹气检测', en: 'Disable blow sensor')
-                : pickUiText(i18n, zh: '开启吹气检测', en: 'Enable blow sensor'),
+                ? i18n.t('toolbox.sound.flute.disable_blow_sensor')
+                : i18n.t('toolbox.sound.flute.enable_blow_sensor'),
           ),
         ),
         if (_blowPermissionDenied) ...<Widget>[
           const SizedBox(height: 8),
           Text(
-            pickUiText(
-              i18n,
-              zh: '麦克风权限不可用',
-              en: 'Microphone permission unavailable',
-            ),
+            i18n.t('toolbox.sound.flute.microphone_permission_unavailable'),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.error,
             ),
@@ -1841,11 +1699,7 @@ class _FluteToolState extends State<_FluteTool> {
         ],
         const SizedBox(height: 12),
         Text(
-          pickUiText(
-            i18n,
-            zh: '吹气阈值 ${(_blowThreshold * 100).round()}% · 当前 ${(_micLevel * 100).round()}%',
-            en: 'Threshold ${(_blowThreshold * 100).round()}% · Current ${(_micLevel * 100).round()}%',
-          ),
+          i18n.t('toolbox.sound.flute.threshold_current'),
           style: theme.textTheme.labelLarge,
         ),
         Slider(
@@ -1967,7 +1821,7 @@ class _FluteToolState extends State<_FluteTool> {
                     visualDensity: VisualDensity.compact,
                   ),
                   icon: const Icon(Icons.tune_rounded),
-                  label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
+                  label: Text(i18n.t('toolbox.sound.flute.settings')),
                 ),
               ],
             ),
@@ -2051,19 +1905,15 @@ class _FluteToolState extends State<_FluteTool> {
             children: <Widget>[
               Expanded(
                 child: SectionHeader(
-                  title: pickUiText(i18n, zh: '纵向长笛', en: 'Vertical flute'),
-                  subtitle: pickUiText(
-                    i18n,
-                    zh: '按手机竖屏重排长笛机身、按孔和音阶按钮，保留触控与吹气两种演奏路径。',
-                    en: 'Rebuild the flute body, finger holes, and note rail for portrait phones.',
-                  ),
+                  title: i18n.t('toolbox.sound.flute.vertical_flute'),
+                  subtitle: i18n.t('toolbox.sound.flute.rebuild_the_flute_body_finger'),
                 ),
               ),
               const SizedBox(width: 12),
               FilledButton.tonalIcon(
                 onPressed: () => _openFluteSettingsSheet(context, i18n),
                 icon: const Icon(Icons.tune_rounded),
-                label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
+                label: Text(i18n.t('toolbox.sound.flute.settings')),
               ),
             ],
           ),
@@ -2083,14 +1933,14 @@ class _FluteToolState extends State<_FluteTool> {
                   ),
                   label: Text(
                     _blowSensorEnabled
-                        ? pickUiText(i18n, zh: '吹气开启', en: 'Blow on')
-                        : pickUiText(i18n, zh: '吹气关闭', en: 'Blow off'),
+                        ? i18n.t('toolbox.sound.flute.blow_on')
+                        : i18n.t('toolbox.sound.flute.blow_off'),
                   ),
                 ),
                 OutlinedButton.icon(
                   onPressed: () => _openFullScreen(context),
                   icon: const Icon(Icons.open_in_full_rounded),
-                  label: Text(pickUiText(i18n, zh: '全屏', en: 'Full screen')),
+                  label: Text(i18n.t('toolbox.sound.flute.full_screen')),
                 ),
               ],
             ),
@@ -2119,11 +1969,7 @@ class _FluteToolState extends State<_FluteTool> {
           ),
           const SizedBox(height: 12),
           Text(
-            pickUiText(
-              i18n,
-              zh: '吹气阈值 ${(_blowThreshold * 100).round()}% · 当前 ${(_micLevel * 100).round()}% · 按孔 ${_pressedHoles.length}',
-              en: 'Threshold ${(_blowThreshold * 100).round()}% · Current ${(_micLevel * 100).round()}% · Holes ${_pressedHoles.length}',
-            ),
+            i18n.t('toolbox.sound.flute.threshold_current_holes'),
             style: theme.textTheme.bodySmall,
           ),
           const SizedBox(height: 6),
@@ -2137,11 +1983,7 @@ class _FluteToolState extends State<_FluteTool> {
           if (_blowPermissionDenied) ...<Widget>[
             const SizedBox(height: 8),
             Text(
-              pickUiText(
-                i18n,
-                zh: '麦克风权限不可用，当前仅可使用触控演奏。',
-                en: 'Microphone permission unavailable. Touch play is still available.',
-              ),
+              i18n.t('toolbox.sound.flute.microphone_permission_unavailable_touch_play'),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.error,
               ),

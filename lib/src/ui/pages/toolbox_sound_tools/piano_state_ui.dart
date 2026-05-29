@@ -25,7 +25,7 @@ extension _PianoToolStateUi on _PianoToolState {
         ? Colors.white.withValues(alpha: 0.08)
         : theme.colorScheme.surfaceContainerHighest;
     return PopupMenuButton<String>(
-      tooltip: pickUiText(i18n, zh: '切换键盘键数', en: 'Change key layout'),
+      tooltip: i18n.t('toolbox.sound.piano.changeKeyLayout'),
       onSelected: (layoutId) {
         _setViewState(() {
           _applyKeyLayoutById(layoutId);
@@ -62,11 +62,7 @@ extension _PianoToolStateUi on _PianoToolState {
               ),
               const SizedBox(width: 6),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '${_activeKeyLayout.keyCount}键',
-                  en: '${_activeKeyLayout.keyCount} keys',
-                ),
+                i18n.t('toolbox.sound.piano.keyCount', params: {'count': '${_activeKeyLayout.keyCount}'}),
                 style:
                     (compact
                             ? theme.textTheme.labelLarge
@@ -146,7 +142,7 @@ extension _PianoToolStateUi on _PianoToolState {
                       preloadAllKeys: true,
                     )
                   : null,
-              tooltip: pickUiText(i18n, zh: '上一窗口', en: 'Previous window'),
+              tooltip: i18n.t('toolbox.sound.piano.previousWindow'),
               style: immersive
                   ? IconButton.styleFrom(
                       backgroundColor: Colors.white.withValues(alpha: 0.10),
@@ -161,7 +157,7 @@ extension _PianoToolStateUi on _PianoToolState {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    pickUiText(i18n, zh: '当前窗口', en: 'Current window'),
+                    i18n.t('toolbox.sound.piano.currentWindow'),
                     style: Theme.of(
                       context,
                     ).textTheme.labelMedium?.copyWith(color: labelColor),
@@ -195,11 +191,7 @@ extension _PianoToolStateUi on _PianoToolState {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                pickUiText(
-                                  i18n,
-                                  zh: '音域音色准备中',
-                                  en: 'Preparing note voices',
-                                ),
+                                i18n.t('toolbox.sound.piano.preparingVoices'),
                                 style: Theme.of(context).textTheme.labelSmall
                                     ?.copyWith(color: labelColor),
                               ),
@@ -217,11 +209,7 @@ extension _PianoToolStateUi on _PianoToolState {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                pickUiText(
-                                  i18n,
-                                  zh: '音域就绪',
-                                  en: 'Window ready',
-                                ),
+                                i18n.t('toolbox.sound.piano.windowReady'),
                                 style: Theme.of(context).textTheme.labelSmall
                                     ?.copyWith(color: labelColor),
                               ),
@@ -241,7 +229,7 @@ extension _PianoToolStateUi on _PianoToolState {
                       preloadAllKeys: true,
                     )
                   : null,
-              tooltip: pickUiText(i18n, zh: '下一窗口', en: 'Next window'),
+              tooltip: i18n.t('toolbox.sound.piano.nextWindow'),
               style: immersive
                   ? IconButton.styleFrom(
                       backgroundColor: Colors.white.withValues(alpha: 0.10),
@@ -253,11 +241,7 @@ extension _PianoToolStateUi on _PianoToolState {
             const SizedBox(width: 8),
             IconButton.filledTonal(
               onPressed: _toggleRangeNavigatorLayout,
-              tooltip: pickUiText(
-                i18n,
-                zh: '切换窗口列表布局',
-                en: 'Toggle window list layout',
-              ),
+              tooltip: i18n.t('toolbox.sound.piano.toggleWindowList'),
               style: immersive
                   ? IconButton.styleFrom(
                       backgroundColor: Colors.white.withValues(alpha: 0.10),
@@ -279,7 +263,7 @@ extension _PianoToolStateUi on _PianoToolState {
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    pickUiText(i18n, zh: '快速跳转', en: 'Quick jump'),
+                    i18n.t('toolbox.sound.piano.quickJump'),
                     style: Theme.of(
                       context,
                     ).textTheme.labelSmall?.copyWith(color: labelColor),
@@ -326,7 +310,7 @@ extension _PianoToolStateUi on _PianoToolState {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            pickUiText(i18n, zh: '选择窗口', en: 'Choose window'),
+                            i18n.t('toolbox.sound.piano.chooseWindow'),
                             style: theme.textTheme.labelLarge?.copyWith(
                               color: pickerTextColor,
                               fontWeight: FontWeight.w700,
@@ -350,7 +334,7 @@ extension _PianoToolStateUi on _PianoToolState {
             Row(
               children: <Widget>[
                 Text(
-                  pickUiText(i18n, zh: '快速跳转', en: 'Quick jump'),
+                  i18n.t('toolbox.sound.piano.quickJump'),
                   style: Theme.of(
                     context,
                   ).textTheme.labelSmall?.copyWith(color: labelColor),
@@ -915,11 +899,7 @@ extension _PianoToolStateUi on _PianoToolState {
                 },
                 icon: const Icon(Icons.swap_vert_rounded),
                 label: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '切换到另一组键盘',
-                    en: 'Switch to ${inactiveFocus == _PianoCompactDeckFocus.high ? 'high' : 'low'} (${inactiveSlice.label})',
-                  ),
+                  i18n.t('toolbox.sound.piano.switchKeyboard', params: {'side': inactiveFocus == _PianoCompactDeckFocus.high ? 'high' : 'low', 'label': inactiveSlice.label}),
                 ),
               ),
             ],
@@ -936,7 +916,7 @@ extension _PianoToolStateUi on _PianoToolState {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Text(
-                      pickUiText(i18n, zh: '高音', en: 'High'),
+                      i18n.t('toolbox.sound.piano.high'),
                       style: TextStyle(
                         color: immersive ? Colors.white70 : null,
                         fontSize: 11,
@@ -964,7 +944,7 @@ extension _PianoToolStateUi on _PianoToolState {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Text(
-                      pickUiText(i18n, zh: '低音', en: 'Low'),
+                      i18n.t('toolbox.sound.piano.low'),
                       style: TextStyle(
                         color: immersive ? Colors.white70 : null,
                         fontSize: 11,
@@ -1085,7 +1065,7 @@ extension _PianoToolStateUi on _PianoToolState {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Text(
-          pickUiText(i18n, zh: '钢琴设置', en: 'Piano settings'),
+          i18n.t('toolbox.sound.piano.pianoSettings'),
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w800,
           ),
@@ -1096,23 +1076,23 @@ extension _PianoToolStateUi on _PianoToolState {
           runSpacing: 10,
           children: <Widget>[
             ToolboxMetricCard(
-              label: pickUiText(i18n, zh: '键盘规格', en: 'Layout'),
+              label: i18n.t('toolbox.sound.piano.layout'),
               value: _displayKeyLayoutLabel(i18n, _activeKeyLayout),
             ),
             ToolboxMetricCard(
-              label: pickUiText(i18n, zh: '音域', en: 'Range'),
+              label: i18n.t('toolbox.sound.piano.range'),
               value: slice.label,
             ),
             ToolboxMetricCard(
-              label: pickUiText(i18n, zh: '调式', en: 'Scale'),
+              label: i18n.t('toolbox.sound.piano.scale'),
               value: _displayScaleLabelFixed(i18n, _scaleId),
             ),
             ToolboxMetricCard(
-              label: pickUiText(i18n, zh: '和声', en: 'Harmony'),
+              label: i18n.t('toolbox.sound.piano.harmony'),
               value: _displayChordLabelFixed(i18n, _chordId),
             ),
             ToolboxMetricCard(
-              label: pickUiText(i18n, zh: '风格', en: 'Style'),
+              label: i18n.t('toolbox.sound.piano.style'),
               value: _displayKeyboardStyleLabelFixed(
                 i18n,
                 _activeKeyboardStyle,
@@ -1123,7 +1103,7 @@ extension _PianoToolStateUi on _PianoToolState {
         const SizedBox(height: 20),
         _buildSettingsSectionTitle(
           context,
-          pickUiText(i18n, zh: '键盘键数', en: 'Key layout'),
+          i18n.t('toolbox.sound.piano.keyLayoutLabel'),
         ),
         Wrap(
           spacing: 8,
@@ -1148,7 +1128,7 @@ extension _PianoToolStateUi on _PianoToolState {
         const SizedBox(height: 20),
         _buildSettingsSectionTitle(
           context,
-          pickUiText(i18n, zh: '预设音色包', en: 'Preset pack'),
+          i18n.t('toolbox.sound.piano.presetPack'),
         ),
         Wrap(
           spacing: 8,
@@ -1171,7 +1151,7 @@ extension _PianoToolStateUi on _PianoToolState {
         const SizedBox(height: 20),
         _buildSettingsSectionTitle(
           context,
-          pickUiText(i18n, zh: '键盘风格', en: 'Keyboard style'),
+          i18n.t('toolbox.sound.piano.keyboardStyle'),
         ),
         Wrap(
           spacing: 8,
@@ -1191,7 +1171,7 @@ extension _PianoToolStateUi on _PianoToolState {
         const SizedBox(height: 20),
         _buildSettingsSectionTitle(
           context,
-          pickUiText(i18n, zh: '触键与空间', en: 'Touch and space'),
+          i18n.t('toolbox.sound.piano.touchAndSpace'),
         ),
         Text(_displayTouchLabelFixed(i18n), style: theme.textTheme.labelLarge),
         Slider(
@@ -1228,7 +1208,7 @@ extension _PianoToolStateUi on _PianoToolState {
         const SizedBox(height: 20),
         _buildSettingsSectionTitle(
           context,
-          pickUiText(i18n, zh: '手机适配', en: 'Phone tuning'),
+          i18n.t('toolbox.sound.piano.phoneTuning'),
         ),
         SwitchListTile.adaptive(
           contentPadding: EdgeInsets.zero,
@@ -1237,14 +1217,10 @@ extension _PianoToolStateUi on _PianoToolState {
             _compactKeyboardMode = value;
           }),
           title: Text(
-            pickUiText(i18n, zh: '紧凑键盘模式', en: 'Compact keyboard mode'),
+            i18n.t('toolbox.sound.piano.compactKeyboardMode'),
           ),
           subtitle: Text(
-            pickUiText(
-              i18n,
-              zh: '缩小键位并尽量显示更多八度，减少频繁切换音域。',
-              en: 'Shrink key height and show more octaves to reduce frequent range switching.',
-            ),
+            i18n.t('toolbox.sound.piano.compactKeyboardModeDesc'),
           ),
         ),
         SwitchListTile.adaptive(
@@ -1257,18 +1233,10 @@ extension _PianoToolStateUi on _PianoToolState {
             }
           }),
           title: Text(
-            pickUiText(
-              i18n,
-              zh: '激进单手模式（320-390dp）',
-              en: 'Aggressive one-hand mode (320-390dp)',
-            ),
+            i18n.t('toolbox.sound.piano.aggressiveOneHand'),
           ),
           subtitle: Text(
-            pickUiText(
-              i18n,
-              zh: '窄屏自动放大黑键触控区、减少控件干扰，并优先单键盘演奏。',
-              en: 'On narrow phones, enlarge black-key hit zones, reduce control density, and prefer a single keyboard.',
-            ),
+            i18n.t('toolbox.sound.piano.aggressiveOneHandDesc'),
           ),
         ),
         Text(
@@ -1285,19 +1253,11 @@ extension _PianoToolStateUi on _PianoToolState {
           }),
         ),
         Text(
-          pickUiText(
-            i18n,
-            zh: '值越小越灵敏，越大越稳。建议真机按手势习惯微调。',
-            en: 'Lower values are more sensitive, higher values are steadier. Fine-tune on a real device.',
-          ),
+          i18n.t('toolbox.sound.piano.sensitivityTip'),
           style: theme.textTheme.bodySmall,
         ),
         Text(
-          pickUiText(
-            i18n,
-            zh: '白键高度 ${(_keyHeightScale * 100).round()}%',
-            en: 'Key height ${(_keyHeightScale * 100).round()}%',
-          ),
+          i18n.t('toolbox.sound.piano.keyHeight', params: {'percent': '${(_keyHeightScale * 100).round()}'}),
           style: theme.textTheme.labelLarge,
         ),
         Slider(
@@ -1310,11 +1270,7 @@ extension _PianoToolStateUi on _PianoToolState {
           }),
         ),
         Text(
-          pickUiText(
-            i18n,
-            zh: '黑键宽度 ${(_blackKeyWidthRatio * 100).round()}%',
-            en: 'Black key width ${(_blackKeyWidthRatio * 100).round()}%',
-          ),
+          i18n.t('toolbox.sound.piano.blackKeyWidth', params: {'percent': '${(_blackKeyWidthRatio * 100).round()}'}),
           style: theme.textTheme.labelLarge,
         ),
         Slider(
@@ -1327,11 +1283,7 @@ extension _PianoToolStateUi on _PianoToolState {
           }),
         ),
         Text(
-          pickUiText(
-            i18n,
-            zh: '黑键高度 ${(_blackKeyHeightRatio * 100).round()}%',
-            en: 'Black key height ${(_blackKeyHeightRatio * 100).round()}%',
-          ),
+          i18n.t('toolbox.sound.piano.blackKeyHeight', params: {'percent': '${(_blackKeyHeightRatio * 100).round()}'}),
           style: theme.textTheme.labelLarge,
         ),
         Slider(
@@ -1344,11 +1296,7 @@ extension _PianoToolStateUi on _PianoToolState {
           }),
         ),
         Text(
-          pickUiText(
-            i18n,
-            zh: '和弦延迟 ${(_chordSpreadScale * 100).round()}%',
-            en: 'Chord delay ${(_chordSpreadScale * 100).round()}%',
-          ),
+          i18n.t('toolbox.sound.piano.chordDelay', params: {'percent': '${(_chordSpreadScale * 100).round()}'}),
           style: theme.textTheme.labelLarge,
         ),
         Slider(
@@ -1361,11 +1309,7 @@ extension _PianoToolStateUi on _PianoToolState {
           }),
         ),
         Text(
-          pickUiText(
-            i18n,
-            zh: '和弦衰减 ${(_chordFalloff * 100).round()}%',
-            en: 'Chord falloff ${(_chordFalloff * 100).round()}%',
-          ),
+          i18n.t('toolbox.sound.piano.chordFalloff', params: {'percent': '${(_chordFalloff * 100).round()}'}),
           style: theme.textTheme.labelLarge,
         ),
         Slider(
@@ -1380,7 +1324,7 @@ extension _PianoToolStateUi on _PianoToolState {
         const SizedBox(height: 20),
         _buildSettingsSectionTitle(
           context,
-          pickUiText(i18n, zh: '调式与和声', en: 'Scale and harmony'),
+          i18n.t('toolbox.sound.piano.scaleAndHarmony'),
         ),
         Wrap(
           spacing: 8,
@@ -1432,14 +1376,10 @@ extension _PianoToolStateUi on _PianoToolState {
         const SizedBox(height: 20),
         _buildSettingsSectionTitle(
           context,
-          pickUiText(i18n, zh: '音域窗口', en: 'Range window'),
+          i18n.t('toolbox.sound.piano.rangeWindow'),
         ),
         Text(
-          pickUiText(
-            i18n,
-            zh: '当前纵向舞台一次显示 ${viewport.octaveSpan} 个八度，支持快速切换音域与分行展示窗口。',
-            en: 'The vertical stage currently shows ${viewport.octaveSpan} octaves and supports quick range switching and wrapped rows.',
-          ),
+          i18n.t('toolbox.sound.piano.octaveSpanDesc', params: {'octaveSpan': '${viewport.octaveSpan}'}),
           style: theme.textTheme.bodySmall,
         ),
         const SizedBox(height: 10),
@@ -1633,11 +1573,7 @@ extension _PianoToolStateUi on _PianoToolState {
                       ),
                     if (compactTopBar)
                       PopupMenuButton<_PianoTopBarAction>(
-                        tooltip: pickUiText(
-                          i18n,
-                          zh: '更多操作',
-                          en: 'More actions',
-                        ),
+                        tooltip: i18n.t('toolbox.sound.piano.moreActions'),
                         color: Colors.black.withValues(alpha: 0.92),
                         onSelected: (action) {
                           switch (action) {
@@ -1658,26 +1594,14 @@ extension _PianoToolStateUi on _PianoToolState {
                               value: _PianoTopBarAction.toggleCompact,
                               child: Text(
                                 _compactKeyboardMode
-                                    ? pickUiText(
-                                        i18n,
-                                        zh: '关闭紧凑键盘',
-                                        en: 'Disable compact keys',
-                                      )
-                                    : pickUiText(
-                                        i18n,
-                                        zh: '开启紧凑键盘',
-                                        en: 'Enable compact keys',
-                                      ),
+                                    ? i18n.t('toolbox.sound.piano.disableCompact')
+                                    : i18n.t('toolbox.sound.piano.enableCompact'),
                               ),
                             ),
                             PopupMenuItem<_PianoTopBarAction>(
                               value: _PianoTopBarAction.openSettings,
                               child: Text(
-                                pickUiText(
-                                  i18n,
-                                  zh: '键盘设置',
-                                  en: 'Keyboard settings',
-                                ),
+                                i18n.t('toolbox.sound.piano.keyboardSettings'),
                               ),
                             ),
                           ];
@@ -1708,7 +1632,7 @@ extension _PianoToolStateUi on _PianoToolState {
                         ),
                         style: overlayButtonStyle,
                         icon: const Icon(Icons.tune_rounded),
-                        label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
+                        label: Text(i18n.t('toolbox.sound.piano.settings')),
                       ),
                   ],
                 ),
@@ -1755,8 +1679,8 @@ extension _PianoToolStateUi on _PianoToolState {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     );
     final activeCompactSlice = _compactDualFocus == _PianoCompactDeckFocus.high
-        ? pickUiText(i18n, zh: '高音', en: 'High')
-        : pickUiText(i18n, zh: '低音', en: 'Low');
+        ? i18n.t('toolbox.sound.piano.high')
+        : i18n.t('toolbox.sound.piano.low');
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.30),
@@ -1781,22 +1705,22 @@ extension _PianoToolStateUi on _PianoToolState {
               child: Row(
                 children: <Widget>[
                   _PianoOverlayChip(
-                    label: pickUiText(i18n, zh: '窗口', en: 'Window'),
+                    label: i18n.t('toolbox.sound.piano.window'),
                     value: slice.label,
                   ),
                   const SizedBox(width: 8),
                   _PianoOverlayChip(
-                    label: pickUiText(i18n, zh: '和声', en: 'Harmony'),
+                    label: i18n.t('toolbox.sound.piano.harmony'),
                     value: _displayChordLabelFixed(i18n, _chordId),
                   ),
                   const SizedBox(width: 8),
                   _PianoOverlayChip(
-                    label: pickUiText(i18n, zh: '模式', en: 'Mode'),
+                    label: i18n.t('toolbox.sound.piano.mode'),
                     value: effectiveDualMode
                         ? compactPhone
-                              ? '${pickUiText(i18n, zh: '双键盘', en: 'Dual')} · $activeCompactSlice'
-                              : pickUiText(i18n, zh: '双键盘', en: 'Dual')
-                        : pickUiText(i18n, zh: '单键盘', en: 'Single'),
+                              ? '${i18n.t('toolbox.sound.piano.dual')} · $activeCompactSlice'
+                              : i18n.t('toolbox.sound.piano.dual')
+                        : i18n.t('toolbox.sound.piano.single'),
                   ),
                   const SizedBox(width: 8),
                   _buildKeyLayoutPickerButton(
@@ -1825,16 +1749,8 @@ extension _PianoToolStateUi on _PianoToolState {
                 Expanded(
                   child: Text(
                     compactPhone
-                        ? pickUiText(
-                            i18n,
-                            zh: '单指滑奏，双指切换音域。',
-                            en: 'Gliss with one finger; shift range with two.',
-                          )
-                        : pickUiText(
-                            i18n,
-                            zh: '单指滑奏，双指上下或左右切换音域。',
-                            en: 'Gliss with one finger; use two fingers to shift range.',
-                          ),
+                        ? i18n.t('toolbox.sound.piano.glissTip')
+                        : i18n.t('toolbox.sound.piano.glissTipWide'),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: Colors.white70,
                     ),
@@ -1908,26 +1824,26 @@ extension _PianoToolStateUi on _PianoToolState {
                 runSpacing: 10,
                 children: <Widget>[
                   ToolboxMetricCard(
-                    label: pickUiText(i18n, zh: '键数', en: 'Keys'),
+                    label: i18n.t('toolbox.sound.piano.keys'),
                     value: '${_activeKeyLayout.keyCount}',
                   ),
                   if (!compactPhone)
                     ToolboxMetricCard(
-                      label: pickUiText(i18n, zh: '总音域', en: 'Total range'),
+                      label: i18n.t('toolbox.sound.piano.totalRange'),
                       value:
                           '${_noteLabelForMidi(_activeKeyLayout.startMidi)}-${_noteLabelForMidi(_activeKeyLayout.startMidi + _activeKeyLayout.keyCount - 1)}',
                     ),
                   ToolboxMetricCard(
-                    label: pickUiText(i18n, zh: '当前窗口', en: 'Window'),
+                    label: i18n.t('toolbox.sound.piano.window'),
                     value: slice.label,
                   ),
                   if (!compactPhone)
                     ToolboxMetricCard(
-                      label: pickUiText(i18n, zh: '预设', en: 'Preset'),
+                      label: i18n.t('toolbox.sound.piano.preset'),
                       value: _displayPresetLabel(i18n, _activePreset),
                     ),
                   ToolboxMetricCard(
-                    label: pickUiText(i18n, zh: '和声', en: 'Harmony'),
+                    label: i18n.t('toolbox.sound.piano.harmony'),
                     value: _displayChordLabelFixed(i18n, _chordId),
                   ),
                 ],
@@ -1935,12 +1851,8 @@ extension _PianoToolStateUi on _PianoToolState {
               const SizedBox(height: 14),
               if (compactPhone) ...<Widget>[
                 SectionHeader(
-                  title: pickUiText(i18n, zh: '纵向键盘', en: 'Vertical keyboard'),
-                  subtitle: pickUiText(
-                    i18n,
-                    zh: '手机布局优先保证单手点击和滑奏，再按需切换双键盘。',
-                    en: 'Phone layout prioritizes one-hand taps and glissando before exposing the dual keyboard.',
-                  ),
+                  title: i18n.t('toolbox.sound.piano.verticalKeyboard'),
+                  subtitle: i18n.t('toolbox.sound.piano.verticalKeyboardPhoneDesc'),
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
@@ -1954,7 +1866,7 @@ extension _PianoToolStateUi on _PianoToolState {
                     ),
                     icon: const Icon(Icons.tune_rounded),
                     label: Text(
-                      pickUiText(i18n, zh: '键盘设置', en: 'Keyboard settings'),
+                      i18n.t('toolbox.sound.piano.keyboardSettings'),
                     ),
                   ),
                 ),
@@ -1964,16 +1876,8 @@ extension _PianoToolStateUi on _PianoToolState {
                   children: <Widget>[
                     Expanded(
                       child: SectionHeader(
-                        title: pickUiText(
-                          i18n,
-                          zh: '纵向键盘',
-                          en: 'Vertical keyboard',
-                        ),
-                        subtitle: pickUiText(
-                          i18n,
-                          zh: '键盘沿屏幕高度展开，避免横向压缩。',
-                          en: 'The keyboard now expands down the phone height instead of being crushed horizontally.',
-                        ),
+                        title: i18n.t('toolbox.sound.piano.verticalKeyboard'),
+                        subtitle: i18n.t('toolbox.sound.piano.verticalKeyboardDesc'),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -1985,7 +1889,7 @@ extension _PianoToolStateUi on _PianoToolState {
                         slice: slice,
                       ),
                       icon: const Icon(Icons.tune_rounded),
-                      label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
+                      label: Text(i18n.t('toolbox.sound.piano.settings')),
                     ),
                   ],
                 ),
@@ -2007,11 +1911,7 @@ extension _PianoToolStateUi on _PianoToolState {
                           : Icons.view_day_rounded,
                     ),
                     label: Text(
-                      pickUiText(
-                        i18n,
-                        zh: ultraCompactPhone ? '窗口' : '窗口列表',
-                        en: ultraCompactPhone ? 'Window' : 'Window list',
-                      ),
+                      ultraCompactPhone ? i18n.t('toolbox.sound.piano.window') : i18n.t('toolbox.sound.piano.windowList'),
                     ),
                   ),
                   if (!aggressiveOneHand)
@@ -2023,22 +1923,14 @@ extension _PianoToolStateUi on _PianoToolState {
                             : Icons.view_day_rounded,
                       ),
                       label: Text(
-                        pickUiText(
-                          i18n,
-                          zh: ultraCompactPhone ? '双键盘' : '双键盘',
-                          en: ultraCompactPhone ? 'Dual' : 'Dual keyboard',
-                        ),
+                        ultraCompactPhone ? i18n.t('toolbox.sound.piano.dual') : i18n.t('toolbox.sound.piano.dualKeyboard'),
                       ),
                     ),
                   OutlinedButton.icon(
                     onPressed: () => _openFullScreen(context),
                     icon: const Icon(Icons.open_in_full_rounded),
                     label: Text(
-                      pickUiText(
-                        i18n,
-                        zh: ultraCompactPhone ? '全屏' : '全屏',
-                        en: ultraCompactPhone ? 'Full' : 'Full screen',
-                      ),
+                      ultraCompactPhone ? i18n.t('toolbox.sound.piano.full') : i18n.t('toolbox.sound.piano.fullScreen'),
                     ),
                   ),
                 ],
@@ -2095,15 +1987,7 @@ extension _PianoToolStateUi on _PianoToolState {
               ],
               const SizedBox(height: 10),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: compactPhone
-                      ? '单指可连续滑奏；双指上下或左右滑动可切换音域窗口；窄屏优先单键盘。'
-                      : '单指可连续滑奏；双指上下滑动可跳转音域，双指左右滑动可快速切窗。',
-                  en: compactPhone
-                      ? 'Use one finger for glissando, two fingers to change range, and tap once to switch high or low rows in phone dual mode.'
-                      : 'Single-finger glissando is supported, while two-finger vertical drags jump registers and horizontal drags switch windows.',
-                ),
+                compactPhone ? i18n.t('toolbox.sound.piano.glissandoGuideCompact') : i18n.t('toolbox.sound.piano.glissandoGuide'),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
@@ -2113,3 +1997,6 @@ extension _PianoToolStateUi on _PianoToolState {
     );
   }
 }
+
+
+

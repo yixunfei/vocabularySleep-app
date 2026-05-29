@@ -6,8 +6,8 @@ import '../../i18n/app_i18n.dart';
 import '../../models/sleep_daily_log.dart';
 import '../../state/app_state.dart';
 import '../module/module_access.dart';
-import 'sleep_assistant_ui_support.dart';
 import 'sleep_quick_tools.dart';
+import 'sleep_assistant_ui_support.dart';
 import 'sleep_research_library.dart';
 import 'toolbox_tool_shell.dart';
 
@@ -83,7 +83,7 @@ class _SleepNightRescuePageState extends State<SleepNightRescuePage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          pickSleepText(i18n, zh: '夜醒事件已保存', en: 'Night-wake event saved'),
+          i18n.t('toolbox.sleep.rescue.saved'),
         ),
       ),
     );
@@ -104,12 +104,8 @@ class _SleepNightRescuePageState extends State<SleepNightRescuePage> {
     if (!appState.isModuleEnabled(ModuleIds.toolboxSleepAssistant)) {
       return themed(
         ToolboxToolPage(
-          title: pickSleepText(i18n, zh: '睡眠助手', en: 'Sleep assistant'),
-          subtitle: pickSleepText(
-            i18n,
-            zh: '模块已停用，无法继续访问睡眠助手页面。',
-            en: 'This module is disabled and unavailable right now.',
-          ),
+          title: i18n.t('toolbox.sleep.core.title'),
+          subtitle: i18n.t('toolbox.sleep.core.disabled'),
           child: ModuleDisabledView(
             i18n: i18n,
             moduleId: ModuleIds.toolboxSleepAssistant,
@@ -132,12 +128,8 @@ class _SleepNightRescuePageState extends State<SleepNightRescuePage> {
 
     return themed(
       ToolboxToolPage(
-        title: pickSleepText(i18n, zh: '夜醒救援', en: 'Night rescue'),
-        subtitle: pickSleepText(
-          i18n,
-          zh: '夜里不需要复杂分析，只需要判断当前状态，然后只做下一步。',
-          en: 'You do not need complex analysis at night. Judge the state, then do only the next step.',
-        ),
+        title: i18n.t('toolbox.sleep.rescue.title'),
+        subtitle: i18n.t('toolbox.sleep.rescue.intro'),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -148,11 +140,7 @@ class _SleepNightRescuePageState extends State<SleepNightRescuePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickSleepText(
-                        i18n,
-                        zh: '选择当前状态',
-                        en: 'Choose the current state',
-                      ),
+                      i18n.t('toolbox.sleep.rescue.chooseState'),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 12),
@@ -227,11 +215,7 @@ class _SleepNightRescuePageState extends State<SleepNightRescuePage> {
                       children: <Widget>[
                         Expanded(
                           child: Text(
-                            pickSleepText(
-                              i18n,
-                              zh: '当前指导',
-                              en: 'Current guidance',
-                            ),
+                            i18n.t('toolbox.sleep.rescue.currentGuidance'),
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                         ),
@@ -248,11 +232,7 @@ class _SleepNightRescuePageState extends State<SleepNightRescuePage> {
                     const SizedBox(height: 10),
                     Text(
                       suggestedAction ??
-                          pickSleepText(
-                            i18n,
-                            zh: '先选择当前状态，再启动夜醒脚本。',
-                            en: 'Choose the current state and start the guide.',
-                          ),
+          i18n.t('toolbox.sleep.rescue.chooseFirst'),
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -263,25 +243,21 @@ class _SleepNightRescuePageState extends State<SleepNightRescuePage> {
                           onPressed: _startGuide,
                           icon: const Icon(Icons.play_circle_outline_rounded),
                           label: Text(
-                            pickSleepText(i18n, zh: '启动指导', en: 'Start guide'),
+                            i18n.t('toolbox.sleep.rescue.beginGuide'),
                           ),
                         ),
                         OutlinedButton.icon(
                           onPressed: () => showSleepinessDecisionSheet(context),
                           icon: const Icon(Icons.rule_folder_rounded),
                           label: Text(
-                            pickSleepText(
-                              i18n,
-                              zh: '离床判断',
-                              en: 'Leave-bed aid',
-                            ),
+                            i18n.t('toolbox.sleep.rescue.leaveBedAid'),
                           ),
                         ),
                         OutlinedButton.icon(
                           onPressed: _saveEvent,
                           icon: const Icon(Icons.save_rounded),
                           label: Text(
-                            pickSleepText(i18n, zh: '保存事件', en: 'Save event'),
+                            i18n.t('toolbox.sleep.rescue.saveEvent'),
                           ),
                         ),
                       ],
@@ -299,22 +275,14 @@ class _SleepNightRescuePageState extends State<SleepNightRescuePage> {
                     TextField(
                       controller: _triggerController,
                       decoration: InputDecoration(
-                        labelText: pickSleepText(
-                          i18n,
-                          zh: '你猜测的触发因素',
-                          en: 'Guessed trigger',
-                        ),
+                        labelText: i18n.t('toolbox.sleep.rescue.guessedTrigger'),
                       ),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: _actionController,
                       decoration: InputDecoration(
-                        labelText: pickSleepText(
-                          i18n,
-                          zh: '实际采取动作',
-                          en: 'Action taken',
-                        ),
+                        labelText: i18n.t('toolbox.sleep.rescue.actionTaken'),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -322,14 +290,14 @@ class _SleepNightRescuePageState extends State<SleepNightRescuePage> {
                       controller: _notesController,
                       maxLines: 3,
                       decoration: InputDecoration(
-                        labelText: pickSleepText(i18n, zh: '补充说明', en: 'Notes'),
+                        labelText: i18n.t('toolbox.sleep.rescue.extraNotes'),
                       ),
                     ),
                     const SizedBox(height: 8),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        pickSleepText(i18n, zh: '这次有离床', en: 'I left the bed'),
+                        i18n.t('toolbox.sleep.rescue.leftBed'),
                       ),
                       value: _hasLeftBed,
                       onChanged: (value) => setState(() => _hasLeftBed = value),
@@ -347,7 +315,7 @@ class _SleepNightRescuePageState extends State<SleepNightRescuePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        pickSleepText(i18n, zh: '最近夜醒事件', en: 'Recent events'),
+                        i18n.t('toolbox.sleep.rescue.recentEvents'),
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 10),
@@ -372,13 +340,13 @@ class _SleepNightRescuePageState extends State<SleepNightRescuePage> {
                                 const SizedBox(height: 4),
                                 if ((event.actionTaken ?? '').trim().isNotEmpty)
                                   Text(
-                                    '${pickSleepText(i18n, zh: '动作', en: 'Action')}: ${event.actionTaken}',
+                                    '${i18n.t('toolbox.sleep.rescue.action')}: ${event.actionTaken}',
                                   ),
                                 if ((event.guessedTrigger ?? '')
                                     .trim()
                                     .isNotEmpty)
                                   Text(
-                                    '${pickSleepText(i18n, zh: '触发', en: 'Trigger')}: ${event.guessedTrigger}',
+                                    '${i18n.t('toolbox.sleep.rescue.trigger')}: ${event.guessedTrigger}',
                                   ),
                               ],
                             ),

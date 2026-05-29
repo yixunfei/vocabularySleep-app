@@ -730,7 +730,7 @@ class _DecisionContextCard extends StatelessWidget {
           Text(
             pickUiText(
               i18n,
-              zh: '情境会影响你更该先看随机、加权、情景分析还是底线守门。',
+              zh: '情境会影响你更该先看随机、加权、情景分析还是安全线优先。',
               en: 'The context changes which lens should lead: random, weighted, scenario, or guardrails.',
             ),
             style: theme.textTheme.bodySmall?.copyWith(
@@ -1532,7 +1532,7 @@ class _DecisionHygieneCard extends StatelessWidget {
             pickUiText(
               i18n,
               zh: showHighRiskBoundary
-                  ? '高风险场景先看底线，再谈收益。完整清单已下沉到弹窗。'
+                  ? '高风险场景先看安全门槛，再谈收益。完整清单已下沉到弹窗。'
                   : '最终拍板前，快速扫一遍偏差、噪声和复盘条件。',
               en: showHighRiskBoundary
                   ? 'For high-stakes calls, check guardrails before upside. Open the full checklist when needed.'

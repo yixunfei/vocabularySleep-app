@@ -27,7 +27,7 @@ extension _SingingBowlsStage on _SingingBowlsPracticeCardState {
                   onTap: () => unawaited(strikeBowl()),
                   child: Semantics(
                     button: true,
-                    label: t('敲击音钵', 'Strike bowl'),
+                    label: i18n.t('toolbox.sound.bowls.bowl_semantics'),
                     child: SizedBox(
                       width: bowlSize * 2.2,
                       height: bowlSize * 2.2,
@@ -119,10 +119,7 @@ extension _SingingBowlsStage on _SingingBowlsPracticeCardState {
           const SizedBox(width: 8),
           Flexible(
             child: Text(
-              t(
-                '轻触音钵，听它从敲击、扩散到归静。',
-                'Tap the bowl and let it bloom, spread, and settle.',
-              ),
+              i18n.t('toolbox.sound.bowls.tap_hint'),
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,

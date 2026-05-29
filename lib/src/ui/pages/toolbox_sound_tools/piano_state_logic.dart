@@ -48,68 +48,48 @@ extension _PianoToolStateLogic on _PianoToolState {
 
   String _displayKeyLayoutLabel(AppI18n i18n, _PianoKeyLayoutPreset layout) {
     final endMidi = layout.startMidi + layout.keyCount - 1;
-    return pickUiText(
-      i18n,
-      zh: '${layout.keyCount}键 ${_noteLabelForMidi(layout.startMidi)}-${_noteLabelForMidi(endMidi)}',
-      en: '${layout.keyCount} keys ${_noteLabelForMidi(layout.startMidi)}-${_noteLabelForMidi(endMidi)}',
-    );
+    return i18n.t('toolbox.sound.piano.keyLayoutRange', params: {'count': '${layout.keyCount}', 'range': '${_noteLabelForMidi(layout.startMidi)}-${_noteLabelForMidi(endMidi)}'});
   }
 
   String _displayPresetLabel(AppI18n i18n, _PianoPreset preset) {
     return switch (preset.id) {
-      'upright_studio' => pickUiText(i18n, zh: '录音室立式', en: 'Studio upright'),
-      'bright_stage' => pickUiText(i18n, zh: '明亮舞台', en: 'Bright stage'),
-      'felt_room' => pickUiText(i18n, zh: '毛毡房间', en: 'Felt room'),
-      _ => pickUiText(i18n, zh: '音乐厅', en: 'Concert hall'),
+      'upright_studio' => i18n.t('toolbox.sound.piano.studioUpright'),
+      'bright_stage' => i18n.t('toolbox.sound.piano.brightStage'),
+      'felt_room' => i18n.t('toolbox.sound.piano.feltRoom'),
+      _ => i18n.t('toolbox.sound.piano.concertHall'),
     };
   }
 
   String _displayPresetSubtitleFixed(AppI18n i18n, _PianoPreset preset) {
     return switch (preset.id) {
-      'upright_studio' => pickUiText(
-        i18n,
-        zh: '更接近真实立式钢琴的木质共鸣与干净起音，适合日常练习。',
-        en: 'Dryer wood resonance and cleaner attacks, closer to a real upright piano.',
-      ),
-      'bright_stage' => pickUiText(
-        i18n,
-        zh: '更锋利的击弦边缘，适合突出旋律和明亮起音。',
-        en: 'Sharper hammer edge for lead lines and brighter attacks.',
-      ),
-      'felt_room' => pickUiText(
-        i18n,
-        zh: '毛毡包裹感更强，适合安静和亲密的演奏氛围。',
-        en: 'Softer felt body for intimate and quiet playing.',
-      ),
-      _ => pickUiText(
-        i18n,
-        zh: '延音与空间感更均衡，适合通用演奏和编配。',
-        en: 'Balanced sustain and room feel for all-purpose playing.',
-      ),
+      'upright_studio' => i18n.t('toolbox.sound.piano.studioUprightDesc'),
+      'bright_stage' => i18n.t('toolbox.sound.piano.brightStageDesc'),
+      'felt_room' => i18n.t('toolbox.sound.piano.feltRoomDesc'),
+      _ => i18n.t('toolbox.sound.piano.concertHallDesc'),
     };
   }
 
   String _displayScaleLabelFixed(AppI18n i18n, String scaleId) {
     return switch (scaleId) {
-      'minor' => pickUiText(i18n, zh: '小调', en: 'Minor'),
-      'dorian' => pickUiText(i18n, zh: '多利亚', en: 'Dorian'),
-      'lydian' => pickUiText(i18n, zh: '利底亚', en: 'Lydian'),
-      'harmonic_minor' => pickUiText(i18n, zh: '和声小调', en: 'Harmonic minor'),
-      'pentatonic' => pickUiText(i18n, zh: '五声音阶', en: 'Pentatonic'),
-      'chromatic' => pickUiText(i18n, zh: '半音阶', en: 'Chromatic'),
-      _ => pickUiText(i18n, zh: '大调', en: 'Major'),
+      'minor' => i18n.t('toolbox.sound.piano.minor'),
+      'dorian' => i18n.t('toolbox.sound.piano.dorian'),
+      'lydian' => i18n.t('toolbox.sound.piano.lydian'),
+      'harmonic_minor' => i18n.t('toolbox.sound.piano.harmonicMinor'),
+      'pentatonic' => i18n.t('toolbox.sound.piano.pentatonic'),
+      'chromatic' => i18n.t('toolbox.sound.piano.chromatic'),
+      _ => i18n.t('toolbox.sound.piano.major'),
     };
   }
 
   String _displayChordLabelFixed(AppI18n i18n, String chordId) {
     return switch (chordId) {
-      'major' => pickUiText(i18n, zh: '大三和弦', en: 'Major'),
-      'minor' => pickUiText(i18n, zh: '小三和弦', en: 'Minor'),
-      'sus2' => pickUiText(i18n, zh: '挂二', en: 'Sus2'),
-      'maj7' => pickUiText(i18n, zh: '大七', en: 'Maj7'),
-      'm7' => pickUiText(i18n, zh: '小七', en: 'm7'),
-      'add9' => pickUiText(i18n, zh: '加九', en: 'Add9'),
-      _ => pickUiText(i18n, zh: '单音', en: 'Single note'),
+      'major' => i18n.t('toolbox.sound.piano.majorChord'),
+      'minor' => i18n.t('toolbox.sound.piano.minorChord'),
+      'sus2' => i18n.t('toolbox.sound.piano.sus2'),
+      'maj7' => i18n.t('toolbox.sound.piano.maj7'),
+      'm7' => i18n.t('toolbox.sound.piano.m7'),
+      'add9' => i18n.t('toolbox.sound.piano.add9'),
+      _ => i18n.t('toolbox.sound.piano.singleNote'),
     };
   }
 
@@ -118,43 +98,27 @@ extension _PianoToolStateLogic on _PianoToolState {
     _PianoKeyboardStyle style,
   ) {
     return switch (style.id) {
-      'classic_bw' => pickUiText(i18n, zh: '经典黑白', en: 'Classic black & white'),
-      'midnight' => pickUiText(i18n, zh: '午夜', en: 'Midnight'),
-      'mist' => pickUiText(i18n, zh: '薄雾', en: 'Mist'),
-      _ => pickUiText(i18n, zh: '象牙', en: 'Ivory'),
+      'classic_bw' => i18n.t('toolbox.sound.piano.classicBW'),
+      'midnight' => i18n.t('toolbox.sound.piano.midnight'),
+      'mist' => i18n.t('toolbox.sound.piano.mist'),
+      _ => i18n.t('toolbox.sound.piano.ivory'),
     };
   }
 
   String _displayTouchLabelFixed(AppI18n i18n) {
-    return pickUiText(
-      i18n,
-      zh: '触键 ${(100 * _touch).round()}%',
-      en: 'Touch ${(100 * _touch).round()}%',
-    );
+    return i18n.t('toolbox.sound.piano.touch', params: {'percent': '${(100 * _touch).round()}'});
   }
 
   String _displaySpaceLabelFixed(AppI18n i18n) {
-    return pickUiText(
-      i18n,
-      zh: '空间 ${(_reverb * 100).round()}%',
-      en: 'Space ${(_reverb * 100).round()}%',
-    );
+    return i18n.t('toolbox.sound.piano.space', params: {'percent': '${(_reverb * 100).round()}'});
   }
 
   String _displayDecayLabelFixed(AppI18n i18n) {
-    return pickUiText(
-      i18n,
-      zh: '延音 ${_decay.toStringAsFixed(2)}x',
-      en: 'Decay ${_decay.toStringAsFixed(2)}x',
-    );
+    return i18n.t('toolbox.sound.piano.decay', params: {'value': '${_decay.toStringAsFixed(2)}'});
   }
 
   String _displayGestureThresholdLabelFixed(AppI18n i18n) {
-    return pickUiText(
-      i18n,
-      zh: '双指切窗灵敏度 ${(_gestureThresholdScale * 100).round()}%',
-      en: 'Two-finger range sensitivity ${(_gestureThresholdScale * 100).round()}%',
-    );
+    return i18n.t('toolbox.sound.piano.gestureSensitivity', params: {'percent': '${(_gestureThresholdScale * 100).round()}'});
   }
 
   void _applyKeyLayoutById(String layoutId) {
@@ -930,8 +894,8 @@ extension _PianoToolStateLogic on _PianoToolState {
 
   String _compactFocusLabel(AppI18n i18n, _PianoCompactDeckFocus focus) {
     return switch (focus) {
-      _PianoCompactDeckFocus.high => pickUiText(i18n, zh: '高音', en: 'High'),
-      _ => pickUiText(i18n, zh: '低音', en: 'Low'),
+      _PianoCompactDeckFocus.high => i18n.t('toolbox.sound.piano.high'),
+      _ => i18n.t('toolbox.sound.piano.low'),
     };
   }
 
@@ -1043,3 +1007,6 @@ extension _PianoToolStateLogic on _PianoToolState {
     );
   }
 }
+
+
+

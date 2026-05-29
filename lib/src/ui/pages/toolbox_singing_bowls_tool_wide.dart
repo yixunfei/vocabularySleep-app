@@ -27,8 +27,8 @@ extension _SingingBowlsWide on _SingingBowlsPracticeCardState {
                           : Icons.volume_off_rounded,
                       active: _soundEnabled,
                       tooltip: _soundEnabled
-                          ? t('点击静音', 'Mute')
-                          : t('点击恢复声音', 'Enable sound'),
+                          ? i18n.t('toolbox.sound.bowls.btn_mute')
+                          : i18n.t('toolbox.sound.bowls.btn_enable_sound'),
                       onTap: toggleSound,
                     ),
                     const SizedBox(width: 10),
@@ -39,8 +39,8 @@ extension _SingingBowlsWide on _SingingBowlsPracticeCardState {
                           : Icons.play_circle_fill_rounded,
                       active: _autoPlayEnabled,
                       tooltip: _autoPlayEnabled
-                          ? t('暂停自动敲击', 'Pause autoplay')
-                          : t('开始自动敲击', 'Start autoplay'),
+                          ? i18n.t('toolbox.sound.bowls.btn_pause_autoplay')
+                          : i18n.t('toolbox.sound.bowls.btn_start_autoplay'),
                       onTap: toggleAutoPlay,
                     ),
                     const SizedBox(width: 10),
@@ -48,7 +48,7 @@ extension _SingingBowlsWide on _SingingBowlsPracticeCardState {
                       context,
                       icon: Icons.stop_circle_outlined,
                       active: false,
-                      tooltip: t('停止余振', 'Stop resonance'),
+                      tooltip: i18n.t('toolbox.sound.bowls.btn_stop_resonance'),
                       onTap: stopResonance,
                     ),
                   ],
@@ -99,7 +99,7 @@ extension _SingingBowlsWide on _SingingBowlsPracticeCardState {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    t('返回工具箱', 'Back to toolbox'),
+                    i18n.t('toolbox.sound.bowls.back_to_toolbox'),
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -109,17 +109,14 @@ extension _SingingBowlsWide on _SingingBowlsPracticeCardState {
             ),
             const SizedBox(height: 18),
             Text(
-              t('空灵音钵', 'Healing bowls'),
+              i18n.t('toolbox.sound.bowls.appbar_title'),
               style: Theme.of(
                 context,
               ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 8),
             Text(
-              t(
-                '十一组自然色调谐的频率与四套钵体谐波，给长时间聆听一个更温润的入口。',
-                'Eleven nature-tuned frequencies and four bowl voices, shaped for a softer, longer listening session.',
-              ),
+              i18n.t('toolbox.sound.bowls.page_subtitle'),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 height: 1.45,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -128,19 +125,16 @@ extension _SingingBowlsWide on _SingingBowlsPracticeCardState {
             const SizedBox(height: 18),
             wideSectionTitle(
               context,
-              title: t('音色', 'Voices'),
-              subtitle: t(
-                '四套钵体谐波，慢慢换着听',
-                'Four harmonic profiles to rotate through',
-              ),
+              title: i18n.t('toolbox.sound.bowls.voices_section_title'),
+              subtitle: i18n.t('toolbox.sound.bowls.voices_section_subtitle'),
             ),
             const SizedBox(height: 10),
             buildWideVoiceGrid(context),
             const SizedBox(height: 18),
             wideSectionTitle(
               context,
-              title: t('频率菜单', 'Frequency menu'),
-              subtitle: t('七脉轮与古典共振频率', 'Chakra and resonance tones'),
+              title: i18n.t('toolbox.sound.bowls.frequency_menu_title'),
+              subtitle: i18n.t('toolbox.sound.bowls.frequency_menu_subtitle'),
             ),
             const SizedBox(height: 10),
             Expanded(
@@ -186,10 +180,7 @@ extension _SingingBowlsWide on _SingingBowlsPracticeCardState {
                 if (_autoPlayEnabled)
                   wideInfoPill(
                     context,
-                    text: t(
-                      '每 ${_autoPlayIntervalMs ~/ 1000} 秒自动敲击',
-                      'Autoplay every ${_autoPlayIntervalMs ~/ 1000}s',
-                    ),
+                  text: i18n.t('toolbox.sound.bowls.auto_interval_label', params: <String, Object?>{'interval': '${_autoPlayIntervalMs ~/ 1000}'}),
                     accent: spec.accent.withValues(alpha: 0.78),
                   ),
               ],
@@ -234,17 +225,14 @@ extension _SingingBowlsWide on _SingingBowlsPracticeCardState {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              t('当前共振建议', 'Current listening note'),
+              i18n.t('toolbox.sound.bowls.today_suggestion_title'),
               style: Theme.of(
                 context,
               ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 10),
             Text(
-              t(
-                '夜里想要沉一点，优先尝试"深邃 + 地球 / 174 Hz"；白天短时调息，"水晶 + 和谐 / 528 Hz / 639 Hz"会更轻一些。',
-                'At night, try Deep with Om / Earth or 174 Hz. For lighter daytime reset sessions, Crystal with Harmony, 528 Hz, or 639 Hz feels gentler.',
-              ),
+              i18n.t('toolbox.sound.bowls.today_suggestion_body'),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 height: 1.52,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -257,17 +245,17 @@ extension _SingingBowlsWide on _SingingBowlsPracticeCardState {
               children: <Widget>[
                 wideInfoPill(
                   context,
-                  text: t('自然色调谐频率', 'Nature-tuned tones'),
+                  text: i18n.t('toolbox.sound.bowls.nature_tuned_tones'),
                   accent: spec.accent,
                 ),
                 wideInfoPill(
                   context,
-                  text: t('柔和扩散衰减', 'Soft spectral decay'),
+                  text: i18n.t('toolbox.sound.bowls.soft_spectral_decay'),
                   accent: spec.glow,
                 ),
                 wideInfoPill(
                   context,
-                  text: t('上拉抽屉控制', 'Pull-up sheet controls'),
+                  text: i18n.t('toolbox.sound.bowls.pull_up_sheet_controls'),
                   accent: spec.accent.withValues(alpha: 0.78),
                 ),
               ],
@@ -288,15 +276,15 @@ extension _SingingBowlsWide on _SingingBowlsPracticeCardState {
           children: <Widget>[
             wideSectionTitle(
               context,
-              title: t('自动播放', 'Autoplay'),
-              subtitle: t('慢而宽地重复，不要急促敲击', 'Slow, spacious repetition'),
+              title: i18n.t('toolbox.sound.bowls.autoplay_title'),
+              subtitle: i18n.t('toolbox.sound.bowls.autoplay_subtitle'),
             ),
             const SizedBox(height: 14),
             Row(
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    t('间隔时间', 'Interval'),
+                    i18n.t('toolbox.sound.bowls.interval_label'),
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -345,9 +333,9 @@ extension _SingingBowlsWide on _SingingBowlsPracticeCardState {
               value: _hapticsEnabled,
               dense: true,
               contentPadding: EdgeInsets.zero,
-              title: Text(t('触感反馈', 'Haptics')),
+              title: Text(i18n.t('toolbox.sound.bowls.haptics_title')),
               subtitle: Text(
-                t('手动敲击时提供轻微反馈', 'Add a light pulse on manual strike'),
+                i18n.t('toolbox.sound.bowls.haptics_subtitle'),
               ),
               onChanged: toggleHaptics,
             ),
@@ -365,14 +353,14 @@ extension _SingingBowlsWide on _SingingBowlsPracticeCardState {
                   ),
                   label: Text(
                     _autoPlayEnabled
-                        ? t('暂停自动敲击', 'Pause autoplay')
-                        : t('开始自动敲击', 'Start autoplay'),
+                        ? i18n.t('toolbox.sound.bowls.btn_pause_autoplay')
+                        : i18n.t('toolbox.sound.bowls.btn_start_autoplay'),
                   ),
                 ),
                 OutlinedButton.icon(
                   onPressed: stopResonance,
                   icon: const Icon(Icons.stop_circle_outlined),
-                  label: Text(t('停止余振', 'Stop resonance')),
+                  label: Text(i18n.t('toolbox.sound.bowls.btn_stop_resonance')),
                 ),
               ],
             ),

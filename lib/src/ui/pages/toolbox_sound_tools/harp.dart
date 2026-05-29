@@ -425,8 +425,8 @@ class _HarpToolState extends State<_HarpTool>
 
   String _layoutLabel(AppI18n i18n) {
     return _isHorizontalLayout
-        ? pickUiText(i18n, zh: '横弦', en: 'Horizontal')
-        : pickUiText(i18n, zh: '竖弦', en: 'Vertical');
+        ? i18n.t('toolbox.sound.harp.horizontal')
+        : i18n.t('toolbox.sound.harp.vertical');
   }
 
   String _playerKeyForFrequency(double frequency) {
@@ -453,142 +453,94 @@ class _HarpToolState extends State<_HarpTool>
 
   String _scaleLabel(AppI18n i18n, _HarpScalePreset preset) {
     return switch (preset.id) {
-      'a_minor' => pickUiText(i18n, zh: 'A小调', en: 'A Minor'),
-      'd_dorian' => pickUiText(i18n, zh: 'D多利亚', en: 'D Dorian'),
-      'zen' => pickUiText(i18n, zh: '禅意五声音阶', en: 'Zen Pentatonic'),
-      'c_lydian' => pickUiText(i18n, zh: 'C利底亚', en: 'C Lydian'),
-      'hirajoshi' => pickUiText(i18n, zh: '平调子', en: 'Hirajoshi'),
-      _ => pickUiText(i18n, zh: 'C大调', en: 'C Major'),
+      'a_minor' => i18n.t('toolbox.sound.harp.a_minor'),
+      'd_dorian' => i18n.t('toolbox.sound.harp.d_dorian'),
+      'zen' => i18n.t('toolbox.sound.harp.zen_pentatonic'),
+      'c_lydian' => i18n.t('toolbox.sound.harp.c_lydian'),
+      'hirajoshi' => i18n.t('toolbox.sound.harp.hirajoshi'),
+      _ => i18n.t('toolbox.sound.harp.c_major'),
     };
   }
 
   String _chordLabel(AppI18n i18n, _HarpChordPreset preset) {
     return switch (preset.id) {
-      'minor' => pickUiText(i18n, zh: '小三和弦', en: 'Minor'),
-      'sus2' => pickUiText(i18n, zh: '挂二', en: 'Sus2'),
-      'add9' => pickUiText(i18n, zh: '加九', en: 'Add9'),
-      'sus4' => pickUiText(i18n, zh: '挂四', en: 'Sus4'),
-      'maj7' => pickUiText(i18n, zh: '大七', en: 'Maj7'),
-      'min7' => pickUiText(i18n, zh: '小七', en: 'Min7'),
-      _ => pickUiText(i18n, zh: '大三和弦', en: 'Major'),
+      'minor' => i18n.t('toolbox.sound.harp.minor'),
+      'sus2' => i18n.t('toolbox.sound.harp.sus2'),
+      'add9' => i18n.t('toolbox.sound.harp.add9'),
+      'sus4' => i18n.t('toolbox.sound.harp.sus4'),
+      'maj7' => i18n.t('toolbox.sound.harp.maj7'),
+      'min7' => i18n.t('toolbox.sound.harp.min7'),
+      _ => i18n.t('toolbox.sound.harp.major'),
     };
   }
 
   String _pluckLabel(AppI18n i18n, _HarpPluckPreset preset) {
     return switch (preset.id) {
-      'warm' => pickUiText(i18n, zh: '温暖', en: 'Warm'),
-      'crystal' => pickUiText(i18n, zh: '水晶', en: 'Crystal'),
-      'bright' => pickUiText(i18n, zh: '明亮', en: 'Bright'),
-      'nylon' => pickUiText(i18n, zh: '尼龙', en: 'Nylon'),
-      'glass' => pickUiText(i18n, zh: '玻璃', en: 'Glass'),
-      'concert' => pickUiText(i18n, zh: '音乐厅', en: 'Concert'),
-      'steel' => pickUiText(i18n, zh: '钢弦', en: 'Steel'),
-      _ => pickUiText(i18n, zh: '丝绸', en: 'Silk'),
+      'warm' => i18n.t('toolbox.sound.harp.warm'),
+      'crystal' => i18n.t('toolbox.sound.harp.crystal'),
+      'bright' => i18n.t('toolbox.sound.harp.bright'),
+      'nylon' => i18n.t('toolbox.sound.harp.nylon'),
+      'glass' => i18n.t('toolbox.sound.harp.glass'),
+      'concert' => i18n.t('toolbox.sound.harp.concert'),
+      'steel' => i18n.t('toolbox.sound.harp.steel'),
+      _ => i18n.t('toolbox.sound.harp.silk'),
     };
   }
 
   String _pluckDescription(AppI18n i18n, _HarpPluckPreset preset) {
     return switch (preset.id) {
-      'warm' => pickUiText(
-        i18n,
-        zh: '更厚实、尾音更慢。',
-        en: 'More body and slower tail.',
-      ),
-      'crystal' => pickUiText(
-        i18n,
-        zh: '高频更亮，颗粒更清晰。',
-        en: 'Sharper upper harmonics.',
-      ),
-      'bright' => pickUiText(
-        i18n,
-        zh: '起音更清楚，适合扫弦。',
-        en: 'Clear attack for active strum.',
-      ),
-      'nylon' => pickUiText(
-        i18n,
-        zh: '圆润柔和，瞬态较轻。',
-        en: 'Round body with light transient.',
-      ),
-      'glass' => pickUiText(
-        i18n,
-        zh: '更薄更亮，泛音闪烁。',
-        en: 'Thin body and sparkling top.',
-      ),
-      'concert' => pickUiText(
-        i18n,
-        zh: '接近踏板竖琴的均衡延音。',
-        en: 'Pedal-harp like balance and sustain.',
-      ),
-      'steel' => pickUiText(
-        i18n,
-        zh: '核心更强，拨弦更亮。',
-        en: 'Stronger core and brighter attack.',
-      ),
-      _ => pickUiText(i18n, zh: '平衡柔和。', en: 'Balanced and soft.'),
+      'warm' => i18n.t('toolbox.sound.harp.more_body_and_slower_tail'),
+      'crystal' => i18n.t('toolbox.sound.harp.sharper_upper_harmonics'),
+      'bright' => i18n.t('toolbox.sound.harp.clear_attack_for_active_strum'),
+      'nylon' => i18n.t('toolbox.sound.harp.round_body_with_light_transient'),
+      'glass' => i18n.t('toolbox.sound.harp.thin_body_and_sparkling_top'),
+      'concert' => i18n.t('toolbox.sound.harp.pedalharp_like_balance_and_sustain'),
+      'steel' => i18n.t('toolbox.sound.harp.stronger_core_and_brighter_attack'),
+      _ => i18n.t('toolbox.sound.harp.balanced_and_soft'),
     };
   }
 
   String _patternLabel(AppI18n i18n, _HarpPatternPreset preset) {
     return switch (preset.id) {
-      'cascade' => pickUiText(i18n, zh: '瀑布', en: 'Cascade'),
-      'chord' => pickUiText(i18n, zh: '和弦脉冲', en: 'Chord'),
-      _ => pickUiText(i18n, zh: '滑行', en: 'Glide'),
+      'cascade' => i18n.t('toolbox.sound.harp.cascade'),
+      'chord' => i18n.t('toolbox.sound.harp.chord_2'),
+      _ => i18n.t('toolbox.sound.harp.glide'),
     };
   }
 
   String _patternDescription(AppI18n i18n, _HarpPatternPreset preset) {
     return switch (preset.id) {
-      'cascade' => pickUiText(i18n, zh: '先上行再下行。', en: 'Up then down.'),
-      'chord' => pickUiText(
-        i18n,
-        zh: '脉冲弹奏当前和弦音。',
-        en: 'Pulse active chord tones.',
-      ),
-      _ => pickUiText(i18n, zh: '连续上行扫弦。', en: 'Ascending sweep.'),
+      'cascade' => i18n.t('toolbox.sound.harp.up_then_down'),
+      'chord' => i18n.t('toolbox.sound.harp.pulse_active_chord_tones'),
+      _ => i18n.t('toolbox.sound.harp.ascending_sweep'),
     };
   }
 
   String _paletteLabel(AppI18n i18n, _HarpPalettePreset preset) {
     return switch (preset.id) {
-      'ivory_wood' => pickUiText(i18n, zh: '象牙木质', en: 'Ivory Wood'),
-      'aurora' => pickUiText(i18n, zh: '极光', en: 'Aurora'),
-      'ember' => pickUiText(i18n, zh: '余烬', en: 'Ember'),
-      'jade' => pickUiText(i18n, zh: '翡翠', en: 'Jade'),
-      _ => pickUiText(i18n, zh: '月光', en: 'Moon'),
+      'ivory_wood' => i18n.t('toolbox.sound.harp.ivory_wood'),
+      'aurora' => i18n.t('toolbox.sound.harp.aurora'),
+      'ember' => i18n.t('toolbox.sound.harp.ember'),
+      'jade' => i18n.t('toolbox.sound.harp.jade'),
+      _ => i18n.t('toolbox.sound.harp.moon'),
     };
   }
 
   String _realismLabel(AppI18n i18n, _HarpRealismPreset preset) {
     return switch (preset.id) {
-      'pedal_harp' => pickUiText(i18n, zh: '踏板竖琴', en: 'Pedal Harp'),
-      'steel_studio' => pickUiText(i18n, zh: '钢弦录音棚', en: 'Steel Studio'),
-      'chamber_soft' => pickUiText(i18n, zh: '室内柔和', en: 'Chamber Soft'),
-      _ => pickUiText(i18n, zh: '音乐会尼龙', en: 'Concert Nylon'),
+      'pedal_harp' => i18n.t('toolbox.sound.harp.pedal_harp'),
+      'steel_studio' => i18n.t('toolbox.sound.harp.steel_studio'),
+      'chamber_soft' => i18n.t('toolbox.sound.harp.chamber_soft'),
+      _ => i18n.t('toolbox.sound.harp.concert_nylon'),
     };
   }
 
   String _realismDescription(AppI18n i18n, _HarpRealismPreset preset) {
     return switch (preset.id) {
-      'pedal_harp' => pickUiText(
-        i18n,
-        zh: '适合旋律线条的平衡延音。',
-        en: 'Balanced sustain for melodic passages.',
-      ),
-      'steel_studio' => pickUiText(
-        i18n,
-        zh: '瞬态紧致，音符分离清晰。',
-        en: 'Tight transient and clear note separation.',
-      ),
-      'chamber_soft' => pickUiText(
-        i18n,
-        zh: '柔和拨弦，余韵舒展。',
-        en: 'Soft finger-pluck with gentle bloom.',
-      ),
-      _ => pickUiText(
-        i18n,
-        zh: '圆润琴体与受控厅堂尾音。',
-        en: 'Round body with controlled hall tail.',
-      ),
+      'pedal_harp' => i18n.t('toolbox.sound.harp.balanced_sustain_for_melodic_passages'),
+      'steel_studio' => i18n.t('toolbox.sound.harp.tight_transient_and_clear_note'),
+      'chamber_soft' => i18n.t('toolbox.sound.harp.soft_fingerpluck_with_gentle_bloom'),
+      _ => i18n.t('toolbox.sound.harp.round_body_with_controlled_hall'),
     };
   }
 
@@ -1295,7 +1247,7 @@ class _HarpToolState extends State<_HarpTool>
       return preset.id == _activeRealismPresetId;
     });
     final presetLabel = activePreset.isEmpty
-        ? pickUiText(i18n, zh: '自定义', en: 'Custom')
+        ? i18n.t('toolbox.sound.harp.custom')
         : _realismLabel(i18n, activePreset.first);
 
     return Stack(
@@ -1402,17 +1354,17 @@ class _HarpToolState extends State<_HarpTool>
               Row(
                 children: <Widget>[
                   _CompactMetric(
-                    label: pickUiText(i18n, zh: '布局', en: 'Layout'),
+                    label: i18n.t('toolbox.sound.harp.layout'),
                     value: _layoutLabel(i18n),
                   ),
                   const SizedBox(width: 8),
                   _CompactMetric(
-                    label: pickUiText(i18n, zh: '预设', en: 'Preset'),
+                    label: i18n.t('toolbox.sound.harp.preset'),
                     value: presetLabel,
                   ),
                   const SizedBox(width: 8),
                   _CompactMetric(
-                    label: pickUiText(i18n, zh: '残响', en: 'Reverb'),
+                    label: i18n.t('toolbox.sound.harp.reverb'),
                     value: '$reverbPercent%',
                   ),
                 ],
@@ -1444,22 +1396,14 @@ class _HarpToolState extends State<_HarpTool>
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  pickUiText(
-                                    i18n,
-                                    zh: 'Tap for single note, swipe for sweep.',
-                                    en: 'Tap for single note, swipe for sweep.',
-                                  ),
+                                  i18n.t('toolbox.sound.harp.tap_for_single_note_swipe'),
                                   style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(color: Colors.white),
                                 ),
                               ),
                               IconButton(
                                 onPressed: _dismissGestureCoach,
-                                tooltip: pickUiText(
-                                  i18n,
-                                  zh: 'Hide tip',
-                                  en: 'Hide tip',
-                                ),
+                                tooltip: i18n.t('toolbox.sound.harp.hide_tip'),
                                 icon: const Icon(
                                   Icons.close_rounded,
                                   size: 16,
@@ -1519,7 +1463,7 @@ class _HarpToolState extends State<_HarpTool>
       return preset.id == _activeRealismPresetId;
     });
     final presetLabel = activePreset.isEmpty
-        ? pickUiText(i18n, zh: '自定义', en: 'Custom')
+        ? i18n.t('toolbox.sound.harp.custom')
         : _realismLabel(i18n, activePreset.first);
     if (widget.fullScreen) {
       return _buildFullScreenBody(context);
@@ -1531,12 +1475,8 @@ class _HarpToolState extends State<_HarpTool>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             SectionHeader(
-              title: pickUiText(i18n, zh: '空灵竖琴', en: 'Ethereal Harp'),
-              subtitle: pickUiText(
-                i18n,
-                zh: '轻触单音，顺着琴弦滑动可扫弦。',
-                en: 'Tap a note, then glide across strings to sweep.',
-              ),
+              title: i18n.t('toolbox.sound.harp.ethereal_harp'),
+              subtitle: i18n.t('toolbox.sound.harp.tap_a_note_then_glide'),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -1545,15 +1485,15 @@ class _HarpToolState extends State<_HarpTool>
               crossAxisAlignment: WrapCrossAlignment.center,
               children: <Widget>[
                 ToolboxMetricCard(
-                  label: pickUiText(i18n, zh: '预设', en: 'Preset'),
+                  label: i18n.t('toolbox.sound.harp.preset'),
                   value: presetLabel,
                 ),
                 ToolboxMetricCard(
-                  label: pickUiText(i18n, zh: '调式', en: 'Scale'),
+                  label: i18n.t('toolbox.sound.flute.scale'),
                   value: _scaleLabel(i18n, _activeScale),
                 ),
                 ToolboxMetricCard(
-                  label: pickUiText(i18n, zh: '残响', en: 'Reverb'),
+                  label: i18n.t('toolbox.sound.harp.reverb'),
                   value: '$reverbPercent%',
                 ),
                 FilledButton.tonalIcon(
@@ -1563,14 +1503,14 @@ class _HarpToolState extends State<_HarpTool>
                   ),
                   label: Text(
                     _muted
-                        ? pickUiText(i18n, zh: '静音', en: 'Muted')
-                        : pickUiText(i18n, zh: '声音开', en: 'Sound on'),
+                        ? i18n.t('toolbox.sound.harp.muted')
+                        : i18n.t('toolbox.sound.harp.sound_on'),
                   ),
                 ),
                 OutlinedButton.icon(
                   onPressed: _openFullScreen,
                   icon: const Icon(Icons.open_in_full_rounded),
-                  label: Text(pickUiText(i18n, zh: '全屏', en: 'Full screen')),
+                  label: Text(i18n.t('toolbox.sound.flute.full_screen')),
                 ),
               ],
             ),
@@ -1600,20 +1540,16 @@ class _HarpToolState extends State<_HarpTool>
                   onPressed: _playArpeggio,
                   icon: const Icon(Icons.auto_awesome_rounded),
                   label: Text(
-                    pickUiText(i18n, zh: '自动琶音', en: 'Auto arpeggio'),
+                    i18n.t('toolbox.sound.harp.auto_arpeggio'),
                   ),
                 ),
                 FilledButton.tonalIcon(
                   onPressed: () => _openHarpSettingsSheet(context, i18n),
                   icon: const Icon(Icons.tune_rounded),
-                  label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
+                  label: Text(i18n.t('toolbox.sound.flute.settings')),
                 ),
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '音色、调式、和弦与手感已收入口底板。',
-                    en: 'Timbre, scale, chord, and feel live in the sheet.',
-                  ),
+                  i18n.t('toolbox.sound.harp.timbre_scale_chord_and_feel'),
                   style: theme.textTheme.bodySmall,
                 ),
               ],

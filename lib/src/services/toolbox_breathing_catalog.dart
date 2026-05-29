@@ -339,7 +339,7 @@ class BreathingExperienceCatalog {
         'Keep the shoulders soft and let the belly, not the chest, drive the motion.',
       ),
       whenToUse: BreathingCopy(
-        '适合早晨启动、久坐后重新调整呼吸，或学习间隙做基础稳态练习。',
+        '适合早晨开始、久坐后重新调整呼吸，或学习间隙做基础稳态练习。',
         'Use at the start of the day, after long sitting, or between study blocks.',
       ),
       researchBasis: BreathingCopy(
@@ -408,7 +408,7 @@ class BreathingExperienceCatalog {
         'Use before focused work or any time you want to gather your attention back in.',
       ),
       researchBasis: BreathingCopy(
-        '鼻呼吸与认知网络和情绪线路同步研究有关，适合需要清醒又不想过度激活的人。',
+        '鼻呼吸与认知网络和情绪线路同步研究有关，适合需要清醒又不想过度调动的人。',
         'Nasal breathing has been linked to limbic and cognitive timing, making it useful for calm alertness.',
       ),
       mechanism: BreathingCopy(
@@ -444,7 +444,7 @@ class BreathingExperienceCatalog {
       id: 'box_4444',
       name: BreathingCopy('方块稳定 4-4-4-4', 'Box 4-4-4-4'),
       scene: BreathingCopy(
-        '会前、演讲前、任务启动前的节拍稳定。',
+        '会前、演讲前、任务开始前的节拍稳定。',
         'Steady your rhythm before meetings, talks, or demanding tasks.',
       ),
       description: BreathingCopy(
@@ -505,7 +505,7 @@ class BreathingExperienceCatalog {
           kind: BreathingStageKind.rest,
           seconds: 4,
           label: BreathingCopy('停顿', 'Pause'),
-          prompt: BreathingCopy('准备下一轮', 'Prepare the next cycle'),
+          prompt: BreathingCopy('准备下一次', 'Prepare the next cycle'),
         ),
       ],
     ),

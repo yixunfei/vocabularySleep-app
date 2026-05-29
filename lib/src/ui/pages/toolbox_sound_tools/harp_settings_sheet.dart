@@ -16,7 +16,7 @@ extension _HarpSettingsSheet on _HarpToolState {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(i18n, zh: '高真实度预设', en: 'High Realism Presets'),
+            i18n.t('toolbox.sound.harp.high_realism_presets'),
             style: titleStyle(),
           ),
           const SizedBox(height: 10),
@@ -39,12 +39,12 @@ extension _HarpSettingsSheet on _HarpToolState {
           ),
           const SizedBox(height: 20),
           Text(
-            pickUiText(i18n, zh: '主题与音色', en: 'Theme & Timbre'),
+            i18n.t('toolbox.sound.harp.theme_timbre'),
             style: titleStyle(),
           ),
           const SizedBox(height: 8),
           Text(
-            pickUiText(i18n, zh: '音色', en: 'Timbre'),
+            i18n.t('toolbox.sound.harp.timbre'),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
             ),
@@ -73,7 +73,7 @@ extension _HarpSettingsSheet on _HarpToolState {
           ),
           const SizedBox(height: 14),
           Text(
-            pickUiText(i18n, zh: '主题', en: 'Palette'),
+            i18n.t('toolbox.sound.harp.palette'),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
             ),
@@ -100,11 +100,7 @@ extension _HarpSettingsSheet on _HarpToolState {
           ),
           const SizedBox(height: 14),
           Text(
-            pickUiText(
-              i18n,
-              zh: '残响 ${(_reverbUi * 100).round()}%',
-              en: 'Reverb ${(_reverbUi * 100).round()}%',
-            ),
+            i18n.t('toolbox.sound.harp.reverb_2'),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
             ),
@@ -133,12 +129,12 @@ extension _HarpSettingsSheet on _HarpToolState {
           ),
           const SizedBox(height: 20),
           Text(
-            pickUiText(i18n, zh: '调式与和声', en: 'Scale & Harmony'),
+            i18n.t('toolbox.sound.harp.scale_harmony'),
             style: titleStyle(),
           ),
           const SizedBox(height: 8),
           Text(
-            pickUiText(i18n, zh: '调式', en: 'Scale'),
+            i18n.t('toolbox.sound.flute.scale'),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
             ),
@@ -165,7 +161,7 @@ extension _HarpSettingsSheet on _HarpToolState {
           ),
           const SizedBox(height: 14),
           Text(
-            pickUiText(i18n, zh: '和弦', en: 'Chord'),
+            i18n.t('toolbox.sound.harp.chord'),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
             ),
@@ -192,7 +188,7 @@ extension _HarpSettingsSheet on _HarpToolState {
           ),
           const SizedBox(height: 14),
           Text(
-            pickUiText(i18n, zh: '琶音模式', en: 'Arpeggio'),
+            i18n.t('toolbox.sound.harp.arpeggio'),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
             ),
@@ -220,7 +216,7 @@ extension _HarpSettingsSheet on _HarpToolState {
           ),
           const SizedBox(height: 8),
           FilterChip(
-            label: Text(pickUiText(i18n, zh: '和弦共振', en: 'Chord resonance')),
+            label: Text(i18n.t('toolbox.sound.harp.chord_resonance')),
             selected: _chordResonanceEnabled,
             onSelected: (selected) {
               applySettings(() {
@@ -241,26 +237,16 @@ extension _HarpSettingsSheet on _HarpToolState {
                 });
               },
               title: Text(
-                pickUiText(i18n, zh: '高级微调', en: 'Advanced'),
+                i18n.t('toolbox.sound.harp.advanced'),
                 style: titleStyle(),
               ),
               subtitle: Text(
-                pickUiText(
-                  i18n,
-                  zh: '阻尼、扫弦死区与和弦根音。',
-                  en: 'Damping, sweep deadzone, and chord root.',
-                ),
+                i18n.t('toolbox.sound.harp.damping_sweep_deadzone_and_chord'),
               ),
               childrenPadding: const EdgeInsets.only(bottom: 8),
               children: <Widget>[
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh:
-                        '和弦根音 ${_chordRootIndex + 1} / ${_HarpToolState._stringCount}',
-                    en:
-                        'Chord root ${_chordRootIndex + 1} / ${_HarpToolState._stringCount}',
-                  ),
+                  i18n.t('toolbox.sound.harp.chord_root'),
                 ),
                 Slider(
                   value: _chordRootIndex.toDouble(),
@@ -275,11 +261,7 @@ extension _HarpSettingsSheet on _HarpToolState {
                   },
                 ),
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '阻尼 ${_damping.toStringAsFixed(1)}',
-                    en: 'Damping ${_damping.toStringAsFixed(1)}',
-                  ),
+                  i18n.t('toolbox.sound.harp.damping'),
                 ),
                 Slider(
                   value: _damping,
@@ -302,11 +284,7 @@ extension _HarpSettingsSheet on _HarpToolState {
                   },
                 ),
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '扫弦死区 ${_swipeThreshold.toStringAsFixed(1)} px',
-                    en: 'Sweep deadzone ${_swipeThreshold.toStringAsFixed(1)} px',
-                  ),
+                  i18n.t('toolbox.sound.harp.sweep_deadzone_px'),
                 ),
                 Slider(
                   value: _swipeThreshold,

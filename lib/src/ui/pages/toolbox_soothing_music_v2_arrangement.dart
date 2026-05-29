@@ -8,22 +8,14 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
     }
     final suggestedName =
         _activeArrangementTemplate?.name ??
-        pickUiText(i18n, zh: '我的编排', en: 'My arrangement');
+        i18n.t('toolbox.sound.soothing.my_arrangement');
     final name = await showTextPromptDialog(
       context: context,
-      title: pickUiText(i18n, zh: '保存编排模板', en: 'Save arrangement'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '保存当前编排，方便下次直接套用。',
-        en: 'Save the current arrangement for quick reuse.',
-      ),
+      title: i18n.t('toolbox.sound.soothing.save_arrangement'),
+      subtitle: i18n.t('toolbox.sound.soothing.save_arrangement_subtitle'),
       initialValue: suggestedName,
-      hintText: pickUiText(
-        i18n,
-        zh: '例如：睡前 20 分钟',
-        en: 'For example: Wind-down 20m',
-      ),
-      confirmText: pickUiText(i18n, zh: '保存', en: 'Save'),
+      hintText: i18n.t('toolbox.sound.soothing.save_arrangement_hint'),
+      confirmText: i18n.t('toolbox.sound.soothing.save'),
     );
     if (!mounted || name == null || name.trim().isEmpty) {
       return;
@@ -58,11 +50,7 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          pickUiText(
-            i18n,
-            zh: '已保存编排模板：$trimmedName',
-            en: 'Saved arrangement: $trimmedName',
-          ),
+          i18n.t('toolbox.sound.soothing.arrangement_saved', params: <String, Object?>{'name': trimmedName}),
         ),
       ),
     );
@@ -74,10 +62,10 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
   ) async {
     final name = await showTextPromptDialog(
       context: context,
-      title: pickUiText(i18n, zh: '重命名编排模板', en: 'Rename arrangement'),
+      title: i18n.t('toolbox.sound.soothing.rename_arrangement'),
       initialValue: template.name,
-      hintText: pickUiText(i18n, zh: '输入新名称', en: 'Enter a new name'),
-      confirmText: pickUiText(i18n, zh: '保存', en: 'Save'),
+      hintText: i18n.t('toolbox.sound.soothing.rename_hint'),
+      confirmText: i18n.t('toolbox.sound.soothing.save'),
     );
     if (!mounted || name == null || name.trim().isEmpty) {
       return;
@@ -103,13 +91,9 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
   ) async {
     final confirmed = await showConfirmDialog(
       context: context,
-      title: pickUiText(i18n, zh: '删除编排模板', en: 'Delete arrangement'),
-      message: pickUiText(
-        i18n,
-        zh: '确定删除“${template.name}”？',
-        en: 'Delete "${template.name}"?',
-      ),
-      confirmText: pickUiText(i18n, zh: '删除', en: 'Delete'),
+      title: i18n.t('toolbox.sound.soothing.delete_arrangement'),
+      message: i18n.t('toolbox.sound.soothing.delete_arrangement_confirm', params: <String, Object?>{'name': template.name}),
+      confirmText: i18n.t('toolbox.sound.soothing.delete'),
       danger: true,
     );
     if (!mounted || !confirmed) {
@@ -202,18 +186,14 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    pickUiText(i18n, zh: '播放顺序与编排', en: 'Playback order'),
+                    i18n.t('toolbox.sound.soothing.playback_order'),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '默认使用单曲循环。切到编排播放后，可按设定顺序自动切换主题和曲目。',
-                      en: 'Single loop is the default. Switch to arrangement mode to auto-advance across themes and tracks.',
-                    ),
+                    i18n.t('toolbox.sound.soothing.playback_order_desc'),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 14),
@@ -268,18 +248,10 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
                         leading: const Icon(Icons.bookmark_added_outlined),
                         title: Text(
                           activeTemplate?.name ??
-                              pickUiText(
-                                i18n,
-                                zh: '当前编排未保存',
-                                en: 'Current arrangement not saved',
-                              ),
+                              i18n.t('toolbox.sound.soothing.arrangement_not_saved'),
                         ),
                         subtitle: Text(
-                          pickUiText(
-                            i18n,
-                            zh: '${draftSteps.length} 段 · 已保存模板 ${templates.length} 个',
-                            en: '${draftSteps.length} steps · ${templates.length} saved',
-                          ),
+                              i18n.t('toolbox.sound.soothing.arrangement_steps_info', params: <String, Object?>{'steps': '${draftSteps.length}', 'templates': '${templates.length}'}),
                         ),
                       ),
                     ),
@@ -302,9 +274,7 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
                             await _saveArrangementTemplate(i18n);
                           },
                           icon: const Icon(Icons.save_outlined),
-                          label: Text(
-                            pickUiText(i18n, zh: '保存当前编排', en: 'Save current'),
-                          ),
+                            label: Text(i18n.t('toolbox.sound.soothing.save_current')),
                         ),
                         if (templates.isNotEmpty)
                           OutlinedButton.icon(
@@ -342,11 +312,7 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
                                               ),
                                               title: Text(template.name),
                                               subtitle: Text(
-                                                pickUiText(
-                                                  i18n,
-                                                  zh: '${template.steps.length} 段',
-                                                  en: '${template.steps.length} steps',
-                                                ),
+                                                i18n.t('toolbox.sound.soothing.template_steps', params: <String, Object?>{'count': template.steps.length}),
                                               ),
                                               onTap: () => Navigator.of(
                                                 dialogContext,
@@ -374,21 +340,13 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
                                                       PopupMenuItem<String>(
                                                         value: 'rename',
                                                         child: Text(
-                                                          pickUiText(
-                                                            i18n,
-                                                            zh: '重命名',
-                                                            en: 'Rename',
-                                                          ),
+                                                          i18n.t('toolbox.sound.soothing.rename'),
                                                         ),
                                                       ),
                                                       PopupMenuItem<String>(
                                                         value: 'delete',
                                                         child: Text(
-                                                          pickUiText(
-                                                            i18n,
-                                                            zh: '删除',
-                                                            en: 'Delete',
-                                                          ),
+                                                          i18n.t('toolbox.sound.soothing.delete'),
                                                         ),
                                                       ),
                                                     ],
@@ -411,9 +369,7 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
                               _applyArrangementTemplate(selected);
                             },
                             icon: const Icon(Icons.folder_open_rounded),
-                            label: Text(
-                              pickUiText(i18n, zh: '加载模板', en: 'Load saved'),
-                            ),
+                            label: Text(i18n.t('toolbox.sound.soothing.load_saved')),
                           ),
                       ],
                     ),
@@ -422,11 +378,7 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
                       children: <Widget>[
                         Expanded(
                           child: Text(
-                            pickUiText(
-                              i18n,
-                              zh: '编排步骤',
-                              en: 'Arrangement steps',
-                            ),
+                            i18n.t('toolbox.sound.soothing.arrangement_steps_title'),
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                         ),
@@ -443,9 +395,7 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
                             });
                           },
                           icon: const Icon(Icons.add_rounded),
-                          label: Text(
-                            pickUiText(i18n, zh: '添加当前曲目', en: 'Add current'),
-                          ),
+                            label: Text(i18n.t('toolbox.sound.soothing.add_current')),
                         ),
                       ],
                     ),
@@ -538,11 +488,7 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
                                   DropdownButtonFormField<String>(
                                     initialValue: stepMode.id,
                                     decoration: InputDecoration(
-                                      labelText: pickUiText(
-                                        i18n,
-                                        zh: '主题',
-                                        en: 'Theme',
-                                      ),
+                                      labelText: i18n.t('toolbox.sound.soothing.theme'),
                                     ),
                                     items: _modes
                                         .map(
@@ -567,11 +513,7 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
                                   DropdownButtonFormField<int>(
                                     initialValue: safeTrackIndex,
                                     decoration: InputDecoration(
-                                      labelText: pickUiText(
-                                        i18n,
-                                        zh: '曲目',
-                                        en: 'Track',
-                                      ),
+                                      labelText: i18n.t('toolbox.sound.soothing.track'),
                                     ),
                                     items: List<DropdownMenuItem<int>>.generate(
                                       tracks.length,
@@ -598,11 +540,7 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
                                   Row(
                                     children: <Widget>[
                                       Text(
-                                        pickUiText(
-                                          i18n,
-                                          zh: '重复次数',
-                                          en: 'Repeats',
-                                        ),
+                                        i18n.t('toolbox.sound.soothing.repeats'),
                                       ),
                                       const Spacer(),
                                       IconButton(
@@ -694,7 +632,7 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
                             );
                           }
                         },
-                        child: Text(pickUiText(i18n, zh: '应用', en: 'Apply')),
+                        child: Text(i18n.t('toolbox.sound.soothing.apply')),
                       ),
                     ],
                   ),
