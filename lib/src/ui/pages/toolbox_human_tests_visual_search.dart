@@ -23,8 +23,8 @@ class VisualSearchTestPage extends StatelessWidget {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '在密集网格中快速定位目标，并在左右面板之间辨别细微差异。',
-        en: 'Find the target in dense grids, or compare two panels to locate the subtle difference.',
+        zh: '在密密麻麻的格子里快速找出那个不同的——像在人群里找人。',
+        en: 'Find targets in dense grids with search, difference, and link-match modes.',
         ja: 'Find the target in dense grids, or compare two panels to locate the subtle difference.',
         de: 'Find the target in dense grids, or compare two panels to locate the subtle difference.',
         fr: 'Trouvez la cible dans des grilles denses, ou comparez deux panneaux pour localiser la différence subtile.',
@@ -35,7 +35,7 @@ class VisualSearchTestPage extends StatelessWidget {
       icon: Icons.manage_search_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：选择模式并开始扫描',
+        zh: '在密集网格里快速找到那个不同的目标',
         en: 'Next: choose a mode and start scanning',
         ja: 'Next: choose a mode and start scanning',
         de: 'Next: choose a mode and start scanning',
@@ -1011,7 +1011,7 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
           ),
           subtitle: pickUiText(
             i18n,
-            zh: '切换搜索、找不同或连连看，并调整网格密度与轮数。',
+            zh: '切换搜索、找不同或连连看，网格密度和轮数也在这里调。',
             en: 'Switch search, difference, or matching mode and adjust board density.',
             ja: 'Switch search, difference, or matching mode and adjust board density.',
             de: 'Switch search, difference, or matching mode and adjust board density.',
@@ -1302,7 +1302,7 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
     if (_done) {
       return pickUiText(
         i18n,
-        zh: '本组已完成，可重新开始。',
+        zh: '本轮完成，可重新开始。',
         en: 'Session complete. Restart when ready.',
         ja: 'Session complete. Restart when ready.',
         de: 'Session complete. Restart when ready.',
@@ -1860,7 +1860,7 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
           Text(
             pickUiText(
               i18n,
-              zh: '本模式只在视觉搜索页内部生效；关闭只匹配图案时，相同图案需要直线、边界或最多两次转弯路径才能消除。',
+              zh: '这个开关只影响本页。关闭后，相同图案还需要直线、借边界或最多两次转弯的路径才能消除。',
               en: 'This mode stays inside visual search; when icon-only match is off, identical tiles need a straight, edge, or two-turn route.',
               ja: 'This mode stays inside visual search; when icon-only match is off, identical tiles need a straight, edge, or two-turn route.',
               de: 'This mode stays inside visual search; when icon-only match is off, identical tiles need a straight, edge, or two-turn route.',
@@ -2022,7 +2022,7 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
                         ? _linkIgnorePath
                               ? pickUiText(
                                   i18n,
-                                  zh: '当前已开启只匹配图案；下一轮可以关闭开关，继续练习路径预判和短程扫描。',
+                                  zh: '当前已开启只匹配图案，关闭后可练习路径预判与短程扫描。',
                                   en: 'Icon-only match is on. Turn it off next to keep training route planning and short-range scanning.',
                                   ja: 'Icon-only match is on. Turn it off next to keep training route planning and short-range scanning.',
                                   de: 'Icon-only match is on. Turn it off next to keep training route planning and short-range scanning.',

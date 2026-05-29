@@ -72,7 +72,7 @@ class HandEyeCoordinationTestPage extends StatelessWidget {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '目标会在随机时间与位置出现、快速移动并消失；在消失前按要求点击命中。',
+        zh: '目标闪现、乱窜、消失——考验你手比眼快的极限反应。',
         en: 'Targets appear at random times and positions, move quickly, then vanish. Tap enough times before they disappear.',
         ja: 'Targets appear at random times and positions, move quickly, then vanish. Tap enough times before they disappear.',
         de: 'Targets appear at random times and positions, move quickly, then vanish. Tap enough times before they disappear.',
@@ -84,7 +84,7 @@ class HandEyeCoordinationTestPage extends StatelessWidget {
       icon: Icons.center_focus_strong_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：开始后等待目标出现',
+        zh: '盯紧屏幕，目标一出现就快速点击',
         en: 'Next: start and wait for the target',
         ja: 'Next: start and wait for the target',
         de: 'Next: start and wait for the target',
@@ -915,7 +915,7 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
     return switch (_phase) {
       _HandEyePhase.idle => pickUiText(
         i18n,
-        zh: '点击开始后，目标会在随机时间出现。',
+        zh: '点击开始后，目标会在随机时间出现，出现后快速点击。',
         en: 'Press Start. Targets will appear after random delays.',
         ja: 'Press Start. Targets will appear after random delays.',
         de: 'Press Start. Targets will appear after random delays.',
@@ -1144,7 +1144,7 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
           ),
           subtitle: pickUiText(
             i18n,
-            zh: '默认关闭：随机等待后可同时出现一个或多个假目标，颜色与真目标区分。',
+            zh: '随机等待后可同时出现一个或多个假目标，颜色与真目标区分。',
             en: 'Off by default: one or more color-coded false targets may appear with the real target.',
             ja: 'Off by default: one or more color-coded false targets may appear with the real target.',
             de: 'Off by default: one or more color-coded false targets may appear with the real target.',

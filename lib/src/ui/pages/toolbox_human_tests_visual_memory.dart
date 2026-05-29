@@ -19,7 +19,7 @@ class VisualMemoryTestPage extends StatelessWidget {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '从经典位置到随机目标色，等级越高，干扰色会越接近目标。',
+        zh: '记住亮过的位置或目标色，关卡越高，干扰越像真的。',
         en: 'From classic positions to random target colors; higher levels use closer decoy colors.',
         ja: 'From classic positions to random target colors; higher levels use closer decoy colors.',
         de: 'From classic positions to random target colors; higher levels use closer decoy colors.',
@@ -31,7 +31,7 @@ class VisualMemoryTestPage extends StatelessWidget {
       icon: Icons.dashboard_customize_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：选择模式后开始观察并复现目标',
+        zh: '看一眼记住位置，遮盖后点出来',
         en: 'Next: choose a mode, observe, then reproduce the targets',
         ja: 'Next: choose a mode, observe, then reproduce the targets',
         de: 'Next: choose a mode, observe, then reproduce the targets',
@@ -856,7 +856,7 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
     if (_gameOver) {
       return pickUiText(
         i18n,
-        zh: '测试结束，已生成本次统计报告。',
+        zh: '测试结束，可以查看这次报告。',
         en: 'Test finished. Your report is ready.',
         ja: 'Test finished. Your report is ready.',
         de: 'Test finished. Your report is ready.',
@@ -929,7 +929,7 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
     }
     return pickUiText(
       i18n,
-      zh: '点击开始，先观察目标，隐藏后再复现。',
+      zh: '点击开始后先记住亮起的目标格，隐藏后按记忆点击。',
       en: 'Press start, observe the targets, then reproduce them after they hide.',
       ja: 'Press start, observe the targets, then reproduce them after they hide.',
       de: 'Press start, observe the targets, then reproduce them after they hide.',
@@ -1302,7 +1302,7 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
           ),
           subtitle: pickUiText(
             i18n,
-            zh: '难度、模式、颜色和干扰格设置会在下一轮生效',
+            zh: '难度、模式、颜色和干扰会在下一轮生效',
             en: 'Difficulty, mode, color, and distractor settings apply to the next round',
             ja: 'Difficulty, mode, color, and distractor settings apply to the next round',
             de: 'Difficulty, mode, color, and distractor settings apply to the next round',
@@ -1625,7 +1625,7 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
           subtitle: Text(
             pickUiText(
               i18n,
-              zh: '观察阶段额外闪现灰色非目标格；颜色模式下，强度也会让异色干扰更接近目标色。',
+              zh: '观察时会混入灰色非目标格；颜色模式下，强度越高，干扰色越接近目标色。',
               en: 'Adds gray non-target cells during view time; in color modes, stronger intensity also makes decoy colors closer to the target.',
               ja: '表示時間中に灰色の非ターゲットセルを追加します。カラーモードでは、強度が強くなると、オトリの色がターゲットに近づきます。',
               de: 'Adds gray non-target cells during view time; in color modes, stronger intensity also makes decoy colors closer to the target.',

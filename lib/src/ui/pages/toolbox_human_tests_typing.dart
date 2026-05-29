@@ -40,7 +40,7 @@ class TypingTestPage extends StatelessWidget {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '选择语言、题材、长度和训练模式，实时查看速度、准确率、错误位置与节奏稳定性。',
+        zh: '换语言、换题材，看看速度和准确率能不能一起稳住。',
         en: 'Choose language, topic, length, and mode while tracking speed, accuracy, errors, and rhythm.',
         ja: 'スピード、正確さ、エラー、リズムを追跡しながら、言語、トピック、長さ、モードを選択します。',
         de: 'Choose language, topic, length, and mode while tracking speed, accuracy, errors, and rhythm.',
@@ -52,7 +52,7 @@ class TypingTestPage extends StatelessWidget {
       icon: Icons.keyboard_alt_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：选择训练组合并开始输入',
+        zh: '选好语言和题型，就可以开始输入',
         en: 'Next: choose a drill setup and start typing',
         ja: 'Next: choose a drill setup and start typing',
         de: 'Next: choose a drill setup and start typing',
@@ -294,10 +294,10 @@ class _TypingTestCardState extends State<_TypingTestCard> {
       _TypingMode.fixErrors => _makeFixErrorsText(target),
       _TypingMode.code => pickUiText(
         i18n,
-        zh: '格式专项：注意大小写、括号、引号和换行。',
-        en: 'Format drill: preserve case, brackets, quotes, and line breaks.',
-        ja: 'Format drill: preserve case, brackets, quotes, and line breaks.',
-        de: 'Format drill: preserve case, brackets, quotes, and line breaks.',
+        zh: '代码专项：注意大小写、括号、引号和换行。',
+        en: 'Code drill: preserve case, brackets, quotes, and line breaks.',
+        ja: 'Code drill: preserve case, brackets, quotes, and line breaks.',
+        de: 'Code drill: preserve case, brackets, quotes, and line breaks.',
         fr: 'Perceuse de format : conservez le boîtier, les crochets, les guillemets et les sauts de ligne.',
         es: 'Taladro de formato: caja de conservación, corchetes, citas y roturas de línea.',
         ru: 'Формат сверла: сохранение корпуса, скобки, котировки и разрывы линий.',
@@ -886,7 +886,7 @@ class _TypingTestCardState extends State<_TypingTestCard> {
           ),
           subtitle: pickUiText(
             i18n,
-            zh: '模式、语言、题材和长度会收纳到结构化设置区，节省移动端空间。',
+            zh: '模式、语言、题材和长度都在这里，展开后慢慢调。',
             en: 'Mode, language, topic, and length settings fold away to save space.',
             ja: 'Mode, language, topic, and length settings fold away to save space.',
             de: 'Mode, language, topic, and length settings fold away to save space.',
@@ -1007,7 +1007,7 @@ class _TypingTestCardState extends State<_TypingTestCard> {
         _HumanSettingsSection(
           title: pickUiText(
             i18n,
-            zh: '训练边界',
+            zh: '小提示',
             en: 'Training boundary',
             ja: 'Training boundary',
             de: 'Training boundary',
@@ -1017,7 +1017,7 @@ class _TypingTestCardState extends State<_TypingTestCard> {
           ),
           subtitle: pickUiText(
             i18n,
-            zh: '模式、语言、题材和长度只影响当前页面即时训练。',
+            zh: '这些设置只影响这一轮练习。',
             en: 'Mode, language, topic, and length only affect this practice page.',
             ja: 'Mode, language, topic, and length only affect this practice page.',
             de: 'Mode, language, topic, and length only affect this practice page.',
@@ -1028,7 +1028,7 @@ class _TypingTestCardState extends State<_TypingTestCard> {
           child: Text(
             pickUiText(
               i18n,
-              zh: '结果报告不会写入学习记录。建议先用经典模式建立基准，再切换冲刺、精准、盲打、符号、格式和数字模式做专项练习。',
+              zh: '报告只用来复盘这次输入。可以先用经典模式热身，再切换冲刺、精准、盲打、符号、代码或数字练弱项。',
               en: 'Reports are not saved to study history. Start with Classic, then use Sprint, Precision, Blind, Symbols, Format, and Numbers for focused practice.',
               ja: 'Reports are not saved to study history. Start with Classic, then use Sprint, Precision, Blind, Symbols, Format, and Numbers for focused practice.',
               de: 'Reports are not saved to study history. Start with Classic, then use Sprint, Precision, Blind, Symbols, Format, and Numbers for focused practice.',

@@ -41,7 +41,7 @@ class AuditoryReactionTestPage extends StatelessWidget {
       icon: Icons.hearing_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：佩戴耳机，选择模式并开始一组听觉测试',
+        zh: '戴上耳机，准备好判断声音变化',
         en: 'Next: wear headphones, choose a mode, and start a hearing test set',
         ja: 'Next: wear headphones, choose a mode, and start a hearing test set',
         de: 'Next: wear headphones, choose a mode, and start a hearing test set',
@@ -258,7 +258,7 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
       frLabel: 'Sensibilité',
       esLabel: 'Sensibilidad',
       ruLabel: 'Чувствительность',
-      zhDescription: '围绕选定基准频率估计可听音量阈值。',
+      zhDescription: '围绕选定频率估计可听音量下限。',
       enDescription:
           'Check audible volume levels around a selected base frequency.',
       jaDescription: '選んだ基準周波数で、聞き取れる音量の範囲を確認します。',
@@ -1570,7 +1570,7 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
           ),
           subtitle: pickUiText(
             i18n,
-            zh: '调整频率分组、音量阶梯、空间方向、试听和报告方式。',
+            zh: '频率、音量、方向和报告选项都在这里。',
             en: 'Adjust frequency groups, volume ladders, spatial directions, previews, and report style.',
             ja: 'Adjust frequency groups, volume ladders, spatial directions, previews, and report style.',
             de: 'Adjust frequency groups, volume ladders, spatial directions, previews, and report style.',
@@ -2061,7 +2061,7 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
         Text(
           pickUiText(
             i18n,
-            zh: '频率默认 10 轮，其它模式可按需要自定义。',
+            zh: '频率模式建议 10 轮，其它模式可按需调整。',
             en: 'Frequency defaults to 10 rounds, and each mode can be customized.',
             ja: 'Frequency defaults to 10 rounds, and each mode can be customized.',
             de: 'Frequency defaults to 10 rounds, and each mode can be customized.',
@@ -2080,7 +2080,7 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
         _sectionLabel(
           pickUiText(
             i18n,
-            zh: '模式设置',
+            zh: '玩法细节',
             en: 'Mode settings',
             ja: 'Mode settings',
             de: 'Mode settings',
@@ -2789,7 +2789,7 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
                 Text(
                   pickUiText(
                     i18n,
-                    zh: '说明：不同设备、耳机和环境会影响结果。这里适合日常观察和训练对比，不能替代专业检查。',
+                    zh: '提醒：设备、耳机和环境都会影响结果。这里适合日常观察和练习对比，不能替代专业检查。',
                     en: 'Note: device, headphones, and room conditions can affect results. Use this for everyday observation and practice comparison; it does not replace a professional check.',
                     ja: '注: 端末、イヤホン、部屋の状態によって結果は変わります。日々の観察や練習の比較に使い、専門的な確認の代わりにはしないでください。',
                     de: 'Hinweis: Gerät, Kopfhörer und Raum können die Ergebnisse beeinflussen. Nutze sie für Alltag, Übung und Vergleich; sie ersetzen keine fachliche Kontrolle.',
@@ -2862,7 +2862,7 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
               ),
               _AuditoryMode.sensitivity => pickUiText(
                 i18n,
-                zh: '估计可听阈值: ${(_estimatedThreshold() * 100).round()}%',
+                zh: '估计可听下限: ${(_estimatedThreshold() * 100).round()}%',
                 en: 'Estimated audible threshold: ${(_estimatedThreshold() * 100).round()}%',
                 ja: '推定可聴しきい値: ${(_estimatedThreshold() * 100).round()}%',
                 de: 'Geschätzte Hörschwelle: ${(_estimatedThreshold() * 100).round()}%',
@@ -2983,7 +2983,7 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
       if (_averageSpatialError > _spatialTolerance * 1.5) {
         return pickUiText(
           i18n,
-          zh: '建议：先用 8 个方向、较宽容差和更高空间音量建立基线；结果稳定后再切到 12 或 16 个方向。',
+          zh: '可以先用 8 个方向、宽裕容差和较高空间音量建立基准，稳定后再切到 12 或 16 个方向。',
           en: 'Suggestion: start with 8 directions, wider tolerance, and higher spatial volume; move to 16 directions after results stabilize.',
           ja: 'Suggestion: start with 8 directions, wider tolerance, and higher spatial volume; move to 16 directions after results stabilize.',
           de: 'Suggestion: start with 8 directions, wider tolerance, and higher spatial volume; move to 16 directions after results stabilize.',
@@ -2994,7 +2994,7 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
       }
       return pickUiText(
         i18n,
-        zh: '建议：定位已经较稳定，可提高方向数或收紧容差，进一步细分方位辨别能力。',
+        zh: '定位已经比较稳，可以提高方向数或收紧容差，继续细分方位。',
         en: 'Suggestion: localization is stable; increase direction count or reduce tolerance.',
         ja: '提案: 方向の聞き分けは安定しています。方向数を増やすか、許容範囲を少し狭めてみましょう。',
         de: 'Vorschlag: Die Richtungswahrnehmung ist stabil. Erhöhe die Richtungsanzahl oder verringere die Toleranz.',
@@ -3012,7 +3012,7 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
     if (_mode == _AuditoryMode.frequency && highRate < 0.6) {
       return pickUiText(
         i18n,
-        zh: '建议：若高频可闻性偏弱，可把上限缩到 6000-8000 Hz，并用 16-20 组重新测一次。',
+        zh: '如果高频可闻性偏弱，可以把上限缩到 6000-8000 Hz，并用 16-20 组重新测一次。',
         en: 'Suggestion: if high-frequency audibility is weak, narrow the top range to 6000-8000 Hz and retest with 16-20 groups.',
         ja: 'Suggestion: if high-frequency audibility is weak, narrow the top range to 6000-8000 Hz and retest with 16-20 groups.',
         de: 'Suggestion: if high-frequency audibility is weak, narrow the top range to 6000-8000 Hz and retest with 16-20 groups.',
@@ -3025,7 +3025,7 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
       final threshold = _estimatedThreshold();
       return pickUiText(
         i18n,
-        zh: '建议：估计可听阈值约 ${(threshold * 100).round()}%。可进一步降低最低输出并用 16-20 阶重测。',
+        zh: '估计可听下限约 ${(threshold * 100).round()}%。可以降低最低输出，并用 16-20 阶重测。',
         en: 'Suggestion: estimated audible threshold is about ${(threshold * 100).round()}%. Lower the minimum output and retest with 16-20 levels.',
         ja: 'Suggestion: estimated audible threshold is about ${(threshold * 100).round()}%. Lower the minimum output and retest with 16-20 levels.',
         de: 'Suggestion: estimated audible threshold is about ${(threshold * 100).round()}%. Lower the minimum output and retest with 16-20 levels.',
@@ -3036,7 +3036,7 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
     }
     return pickUiText(
       i18n,
-      zh: '建议：当前设置可继续保留；若结果波动较大，可增加测试规模并降低节奏响度深度。',
+      zh: '当前设置可以继续保留；如果结果波动较大，可以增加轮数，并减小节奏音量变化。',
       en: 'Suggestion: keep this setup; if results fluctuate, increase test size and lower rhythmic loudness depth.',
       ja: 'Suggestion: keep this setup; if results fluctuate, increase test size and lower rhythmic loudness depth.',
       de: 'Suggestion: keep this setup; if results fluctuate, increase test size and lower rhythmic loudness depth.',
@@ -3050,7 +3050,7 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
     return switch (_phase) {
       _AuditoryPhase.idle => pickUiText(
         i18n,
-        zh: '点击开始，等待随机刺激出现。',
+        zh: '点击开始后，听到声音立即点击按钮响应。',
         en: 'Press start and wait for a random sound.',
         ja: 'Press start and wait for a random sound.',
         de: 'Press start and wait for a random sound.',
@@ -3062,7 +3062,7 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
       _AuditoryPhase.cue => _activePhaseText(i18n),
       _AuditoryPhase.done => pickUiText(
         i18n,
-        zh: '本组测试已完成，可查看报告或重新开始。',
+        zh: '测试完成，可查看报告或重新开始。',
         en: 'Session complete. View the report or restart.',
         ja: 'Session complete. View the report or restart.',
         de: 'Session complete. View the report or restart.',
@@ -3121,7 +3121,7 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
   String _sizeSuggestion(AppI18n i18n) {
     return pickUiText(
       i18n,
-      zh: '建议：快速筛查可用 10-12 轮，正式评估建议 16-20 轮，并让分析频段数接近轮次规模。',
+      zh: '快速筛查用 10-12 轮就够；想测得更稳，可以用 16-20 轮，并让分析频段数接近轮次规模。',
       en: 'Suggested test size: use 10-12 rounds for a quick screen; use 16-20 rounds for assessment and keep analysis bands close to the round count.',
       ja: 'Suggested test size: use 10-12 rounds for a quick screen; use 16-20 rounds for assessment and keep analysis bands close to the round count.',
       de: 'Suggested test size: use 10-12 rounds for a quick screen; use 16-20 rounds for assessment and keep analysis bands close to the round count.',

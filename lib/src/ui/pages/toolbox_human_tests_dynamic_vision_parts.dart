@@ -336,7 +336,7 @@ class _DynamicSymbolReportDialog extends StatelessWidget {
               _ColorVisionReportSection(
                 title: pickUiText(
                   i18n,
-                  zh: '本轮配置',
+                  zh: '本次设置',
                   en: 'Session setup',
                   ja: 'Session setup',
                   de: 'Session setup',
@@ -371,7 +371,7 @@ class _DynamicSymbolReportDialog extends StatelessWidget {
               _ColorVisionReportSection(
                 title: pickUiText(
                   i18n,
-                  zh: '训练建议',
+                  zh: '练习建议',
                   en: 'Training note',
                   ja: 'Training note',
                   de: 'Training note',

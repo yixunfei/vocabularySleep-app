@@ -398,7 +398,7 @@ class _VerbalMemoryReportDialog extends StatelessWidget {
         _VerbalMemoryReportBlock(
           title: pickUiText(
             i18n,
-            zh: '结果分析',
+            zh: '结果复盘',
             en: 'Analysis',
             ja: '分析',
             de: 'Analysis',
@@ -413,7 +413,7 @@ class _VerbalMemoryReportDialog extends StatelessWidget {
         _VerbalMemoryReportBlock(
           title: pickUiText(
             i18n,
-            zh: '本轮设置',
+            zh: '本次设置',
             en: 'Run settings',
             ja: 'Run settings',
             de: 'Run settings',

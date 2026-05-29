@@ -19,7 +19,7 @@ class ChimpTestPage extends StatelessWidget {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '保留经典数字模式，并新增顺序数字与颜色顺序模式，支持表格大小、答案辅助与统计报告。',
+        zh: '记住数字位置并在遮盖后按顺序点击，难度随轮次自动提升。',
         en: 'Includes classic, sequential-number, and color-sequence modes with board size, answer assists, and reports.',
         ja: 'Includes classic, sequential-number, and color-sequence modes with board size, answer assists, and reports.',
         de: 'Includes classic, sequential-number, and color-sequence modes with board size, answer assists, and reports.',
@@ -31,7 +31,7 @@ class ChimpTestPage extends StatelessWidget {
       icon: Icons.grid_view_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：播放结束后按顺序点击目标',
+        zh: '数字闪过就遮住，按记忆顺序逐个点击',
         en: 'Next: replay the shown order by tapping targets',
         ja: 'Next: replay the shown order by tapping targets',
         de: 'Next: replay the shown order by tapping targets',
@@ -328,7 +328,7 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
     if (_failed) {
       return pickUiText(
         i18n,
-        zh: '顺序错误，本组已结束。',
+        zh: '顺序错误，本轮结束。',
         en: 'Wrong order. This set has ended.',
         ja: 'Wrong order. This set has ended.',
         de: 'Wrong order. This set has ended.',
@@ -341,7 +341,7 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
       return _sessionEnded
           ? pickUiText(
               i18n,
-              zh: '完成上限目标，本组已结算。',
+              zh: '完成上限目标，本轮结束。',
               en: 'Target cap cleared. This set is complete.',
               ja: 'Target cap cleared. This set is complete.',
               de: 'Target cap cleared. This set is complete.',
@@ -886,7 +886,7 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
               _HumanSettingsSection(
                 title: pickUiText(
                   i18n,
-                  zh: '设置项',
+                  zh: '记忆设置',
                   en: 'Settings',
                   ja: 'Settings',
                   de: 'Settings',
@@ -896,7 +896,7 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
                 ),
                 subtitle: pickUiText(
                   i18n,
-                  zh: '模式、表格大小、难度上限与辅助提示',
+                  zh: '表格大小、目标上限和辅助提示都在这里。',
                   en: 'Mode, board size, difficulty cap, and assists',
                   ja: 'Mode, board size, difficulty cap, and assists',
                   de: 'Mode, board size, difficulty cap, and assists',
@@ -962,7 +962,7 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
                     Text(
                       pickUiText(
                         i18n,
-                        zh: '本组最大目标数',
+                        zh: '最大目标数',
                         en: 'Set target cap',
                         ja: 'Set target cap',
                         de: 'Set target cap',
@@ -1085,7 +1085,7 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
                       title: Text(
                         pickUiText(
                           i18n,
-                          zh: '下一步提示',
+                          zh: '下一个提示',
                           en: 'Next-step hint',
                           ja: 'Next-step hint',
                           de: 'Next-step hint',
@@ -1097,7 +1097,7 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
                       subtitle: Text(
                         pickUiText(
                           i18n,
-                          zh: '默认关闭。用轻描边提示下一次应点击的位置。',
+                          zh: '用轻描边提示下一次应点击的位置。',
                           en: 'Off by default. Outline the next expected cell.',
                           ja: 'Off by default. Outline the next expected cell.',
                           de: 'Off by default. Outline the next expected cell.',
@@ -1130,7 +1130,7 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
                       subtitle: Text(
                         pickUiText(
                           i18n,
-                          zh: '默认关闭。每轮第一次点错只警告，不立即结束。',
+                          zh: '每轮第一次点错只警告，不立即结束。',
                           en: 'Off by default. The first wrong tap warns instead of ending the round.',
                           ja: 'Off by default. The first wrong tap warns instead of ending the round.',
                           de: 'Off by default. The first wrong tap warns instead of ending the round.',
@@ -1151,7 +1151,7 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
                       title: Text(
                         pickUiText(
                           i18n,
-                          zh: '完成后弹出报告',
+                          zh: '结束后显示报告',
                           en: 'Auto report',
                           ja: '自動レポート',
                           de: 'Auto report',
@@ -1163,7 +1163,7 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
                       subtitle: Text(
                         pickUiText(
                           i18n,
-                          zh: '测试结束后显示统计分析报告。',
+                          zh: '测试结束后自动打开这次报告。',
                           en: 'Show the statistical report when the test ends.',
                           ja: 'Show the statistical report when the test ends.',
                           de: 'Show the statistical report when the test ends.',
@@ -1412,7 +1412,7 @@ class _ChimpCompletionReportDialog extends StatelessWidget {
       title: Text(
         pickUiText(
           i18n,
-          zh: '黑猩猩测试统计报告',
+          zh: '黑猩猩测试报告',
           en: 'Chimp test report',
           ja: 'CHIMP TEST REPORT',
           de: 'Chimp test report',
@@ -1583,7 +1583,7 @@ class _ChimpCompletionReportDialog extends StatelessWidget {
         _ChimpReportBlock(
           title: pickUiText(
             i18n,
-            zh: '分析',
+            zh: '复盘',
             en: 'Analysis',
             ja: '分析',
             de: 'Analysis',
@@ -1609,7 +1609,7 @@ class _ChimpCompletionReportDialog extends StatelessWidget {
           body: assisted
               ? pickUiText(
                   i18n,
-                  zh: '本组开启了辅助：${_enabledAssistLabels(i18n).join(' / ')}。报告用于训练反馈，不宜和纯净成绩直接比较。',
+                  zh: '已开启辅助：${_enabledAssistLabels(i18n).join(' / ')}。这次成绩适合自己复盘，不建议和无辅助成绩直接比较。',
                   en: 'Assists enabled: ${_enabledAssistLabels(i18n).join(' / ')}. Treat this as practice feedback, not a clean-score comparison.',
                   ja: 'アシスト有効: ${_enabledAssistLabels(i18n).join(' / ')}。練習用のフィードバックとして見てください。',
                   de: 'Hilfen aktiv: ${_enabledAssistLabels(i18n).join(' / ')}. Das ist Übungsfeedback, kein reiner Vergleichswert.',
@@ -1619,7 +1619,7 @@ class _ChimpCompletionReportDialog extends StatelessWidget {
                 )
               : pickUiText(
                   i18n,
-                  zh: '本组未开启答案或提示辅助，成绩更接近纯记忆测试。',
+                  zh: '没有开启答案或提示，成绩更接近真实记忆表现。',
                   en: 'No answer or hint assist was enabled, so the score is closer to a clean memory test.',
                   ja: 'No answer or hint assist was enabled, so the score is closer to a clean memory test.',
                   de: 'No answer or hint assist was enabled, so the score is closer to a clean memory test.',
@@ -1649,7 +1649,7 @@ class _ChimpCompletionReportDialog extends StatelessWidget {
       if (showNextHint)
         pickUiText(
           i18n,
-          zh: '下一步提示',
+          zh: '下一个提示',
           en: 'Next-step hint',
           ja: '次のヒント',
           de: 'Nächster Hinweis',
@@ -1682,7 +1682,7 @@ class _ChimpCompletionReportDialog extends StatelessWidget {
     if (bestTargets >= targetCap && accuracy >= 95) {
       return pickUiText(
         i18n,
-        zh: '准确率很稳，已经触达本组上限。可以调大目标上限或表格尺寸继续加压。',
+        zh: '准确率很稳，已经触达本轮上限。可以调大目标上限或表格尺寸继续加压。',
         en: 'Accuracy is steady and the cap is cleared. Raise target cap or board size for more pressure.',
         ja: '精度は安定しており、キャップはクリアされています。ターゲットキャップまたはボードのサイズを上げて、より多くの圧力をかけます。',
         de: 'Accuracy is steady and the cap is cleared. Raise target cap or board size for more pressure.',
@@ -1694,7 +1694,7 @@ class _ChimpCompletionReportDialog extends StatelessWidget {
     if (accuracy >= 85) {
       return pickUiText(
         i18n,
-        zh: '整体表现稳定。下一步可逐步关闭辅助，或降低播放间隔来训练瞬时记忆。',
+        zh: '整体很稳。可以逐步关闭辅助，或缩短播放间隔来练瞬时记忆。',
         en: 'Performance is stable. Next, turn assists off or lower playback delay for instant memory.',
         ja: 'Performance is stable. Next, turn assists off or lower playback delay for instant memory.',
         de: 'Performance is stable. Next, turn assists off or lower playback delay for instant memory.',
@@ -1706,7 +1706,7 @@ class _ChimpCompletionReportDialog extends StatelessWidget {
     if (mistakes > 0) {
       return pickUiText(
         i18n,
-        zh: '主要损失来自顺序错误。建议先开启下一步提示练路线，再关闭提示测纯记忆。',
+        zh: '主要失误来自顺序。可以先打开下一个提示熟悉路线，再关闭提示测记忆。',
         en: 'Most loss comes from order errors. Practice route planning with next-step hints, then test without them.',
         ja: 'Most loss comes from order errors. Practice route planning with next-step hints, then test without them.',
         de: 'Most loss comes from order errors. Practice route planning with next-step hints, then test without them.',
@@ -1798,7 +1798,7 @@ class SequenceMemoryTestPage extends StatelessWidget {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '观察亮起顺序，然后按同样顺序点击色块。',
+        zh: '观察亮灯顺序，按相同顺序点击色块。',
         en: 'Watch the light sequence, then tap the panels in the same order.',
         ja: 'Watch the light sequence, then tap the panels in the same order.',
         de: 'Watch the light sequence, then tap the panels in the same order.',
@@ -1810,7 +1810,7 @@ class SequenceMemoryTestPage extends StatelessWidget {
       icon: Icons.auto_awesome_motion_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：播放序列后复现',
+        zh: '看清亮灯顺序，照着点一遍',
         en: 'Next: replay the sequence',
         ja: 'Next: replay the sequence',
         de: 'Next: replay the sequence',

@@ -380,7 +380,7 @@ class _ColorVisionReportDialog extends StatelessWidget {
                 _ColorVisionReportSection(
                   title: pickUiText(
                     i18n,
-                    zh: '色相分组表现',
+                    zh: '色调分组表现',
                     en: 'Hue groups',
                     ja: 'Hue groups',
                     de: 'Hue groups',
@@ -417,7 +417,7 @@ class _ColorVisionReportDialog extends StatelessWidget {
               _ColorVisionReportSection(
                 title: pickUiText(
                   i18n,
-                  zh: '本轮设置',
+                  zh: '本次设置',
                   en: 'Session settings',
                   ja: 'Session settings',
                   de: 'Session settings',
@@ -457,7 +457,7 @@ class _ColorVisionReportDialog extends StatelessWidget {
               _ColorVisionReportSection(
                 title: pickUiText(
                   i18n,
-                  zh: '训练建议',
+                  zh: '练习建议',
                   en: 'Training note',
                   ja: 'Training note',
                   de: 'Training note',
@@ -543,7 +543,7 @@ class _ColorVisionReportDialog extends StatelessWidget {
     if (data.rounds <= 0) {
       return pickUiText(
         i18n,
-        zh: '还没有有效轮次。先完成几轮后，报告会显示色差、色相和弱项分析。',
+        zh: '还没有有效轮次。先完成几轮，报告会帮你看色差、色调和容易出错的地方。',
         en: 'No valid rounds yet. Complete a few rounds to unlock delta, hue, and weak-area analysis.',
         ja: 'No valid rounds yet. Complete a few rounds to unlock delta, hue, and weak-area analysis.',
         de: 'No valid rounds yet. Complete a few rounds to unlock delta, hue, and weak-area analysis.',
@@ -578,7 +578,7 @@ class _ColorVisionReportDialog extends StatelessWidget {
         : axisLabel(weakestAxis.axis);
     return pickUiText(
       i18n,
-      zh: '本轮正确率 ${(data.accuracy * 100).round()}%，最弱色相集中在 $weakBandText，较弱差异类型为 $weakAxisText。平均通过色差 ${(data.averageCorrectDelta * 100).toStringAsFixed(1)}，平均失误色差 ${(data.averageMissDelta * 100).toStringAsFixed(1)}。',
+      zh: '本轮正确率 ${(data.accuracy * 100).round()}%，最弱色调集中在 $weakBandText，较弱差异类型为 $weakAxisText。平均通过色差 ${(data.averageCorrectDelta * 100).toStringAsFixed(1)}，平均失误色差 ${(data.averageMissDelta * 100).toStringAsFixed(1)}。',
       en: 'Accuracy is ${(data.accuracy * 100).round()}%. The weakest hue band is $weakBandText, and the weaker contrast axis is $weakAxisText. Average passed delta is ${(data.averageCorrectDelta * 100).toStringAsFixed(1)}, while missed delta averages ${(data.averageMissDelta * 100).toStringAsFixed(1)}.',
       ja: '精度は${(data.accuracy * 100).round()}%です。最も弱い色相帯域はで$weakBandText、より弱いコントラスト軸はです$weakAxisText。合格したデルタの平均はですが${(data.averageCorrectDelta * 100).toStringAsFixed(1)}、合格しなかったデルタの平均はです${(data.averageMissDelta * 100).toStringAsFixed(1)}。',
       de: 'Accuracy is ${(data.accuracy * 100).round()}%. The weakest hue band is $weakBandText, and the weaker contrast axis is $weakAxisText. Average passed delta is ${(data.averageCorrectDelta * 100).toStringAsFixed(1)}, while missed delta averages ${(data.averageMissDelta * 100).toStringAsFixed(1)}.',
@@ -596,7 +596,7 @@ class _ColorVisionReportDialog extends StatelessWidget {
     if (data.rounds < 6) {
       return pickUiText(
         i18n,
-        zh: '样本量还少，建议至少完成 10 轮再判断稳定弱项。可以先用 3 到 5 生命、4x4 网格练习。',
+        zh: '样本还少，先完成 10 轮左右，再看哪些颜色容易出错。可以先用 3 到 5 生命、4x4 网格练习。',
         en: 'The sample is still small. Complete at least 10 rounds before treating weak areas as stable. Start with 3 to 5 lives and a 4x4 grid.',
         ja: 'The sample is still small. Complete at least 10 rounds before treating weak areas as stable. Start with 3 to 5 lives and a 4x4 grid.',
         de: 'The sample is still small. Complete at least 10 rounds before treating weak areas as stable. Start with 3 to 5 lives and a 4x4 grid.',
@@ -609,7 +609,7 @@ class _ColorVisionReportDialog extends StatelessWidget {
     final axis = weakestAxis == null ? '' : axisLabel(weakestAxis.axis);
     return pickUiText(
       i18n,
-      zh: '建议下一轮保留当前弱项相关色系，降低最大网格或开启提示练习。重点关注 $band 的 $axis，等正确率稳定后再提高最大网格。',
+      zh: '可以保留当前容易出错的色系，降低最大网格或开启提示练习。先关注 $band 的 $axis，等正确率稳定后再提高网格。',
       en: 'For the next run, keep the weak hue family enabled, lower the maximum grid, or practice with hints. Focus on $axis around $band, then raise the maximum grid after accuracy stabilizes.',
       ja: 'For the next run, keep the weak hue family enabled, lower the maximum grid, or practice with hints. Focus on $axis around $band, then raise the maximum grid after accuracy stabilizes.',
       de: 'For the next run, keep the weak hue family enabled, lower the maximum grid, or practice with hints. Focus on $axis around $band, then raise the maximum grid after accuracy stabilizes.',

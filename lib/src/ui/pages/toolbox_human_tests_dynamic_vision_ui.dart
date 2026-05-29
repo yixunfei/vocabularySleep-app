@@ -364,7 +364,7 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '调整字符集、轮次数、轨迹、速度、干扰和选项数量',
+        zh: '字符集、轮数、轨迹、速度、干扰和选项数量都在这里。',
         en: 'Tune character set, rounds, path, speed, distractors, and option count',
         ja: 'Tune character set, rounds, path, speed, distractors, and option count',
         de: 'Tune character set, rounds, path, speed, distractors, and option count',
@@ -987,7 +987,7 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '调整起始数量、上限、速度、观察时长与增长曲线',
+        zh: '起始数量、上限、速度、观察时长和增长曲线都在这里。',
         en: 'Tune starting count, cap, speed, observe time, and growth curve',
         ja: 'Tune starting count, cap, speed, observe time, and growth curve',
         de: 'Tune starting count, cap, speed, observe time, and growth curve',

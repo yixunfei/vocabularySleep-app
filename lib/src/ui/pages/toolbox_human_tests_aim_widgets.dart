@@ -519,7 +519,7 @@ class _AimCompletionReportDialog extends StatelessWidget {
         Text(
           pickUiText(
             i18n,
-            zh: '本轮设置',
+            zh: '本次设置',
             en: 'Round settings',
             ja: 'Round settings',
             de: 'Round settings',
@@ -654,7 +654,7 @@ class _AimCompletionReportDialog extends StatelessWidget {
         Text(
           pickUiText(
             i18n,
-            zh: '训练建议',
+            zh: '练习建议',
             en: 'Training note',
             ja: 'Training note',
             de: 'Training note',
@@ -680,7 +680,7 @@ class _AimCompletionReportDialog extends StatelessWidget {
     if (sniperFailures > 0) {
       return pickUiText(
         i18n,
-        zh: '狙击手失败多时，先调低放大速率或关闭移动放大，把第一眼定位练稳后再增加压迫感。',
+        zh: '狙击失败偏多时，先调低放大速率或关闭移动放大，把第一眼定位练稳后再加难度。',
         en: 'With sniper failures, lower growth speed or disable moving growth until first-sight acquisition feels stable.',
         ja: 'With sniper failures, lower growth speed or disable moving growth until first-sight acquisition feels stable.',
         de: 'With sniper failures, lower growth speed or disable moving growth until first-sight acquisition feels stable.',
@@ -692,7 +692,7 @@ class _AimCompletionReportDialog extends StatelessWidget {
     if (decoyHits > 0) {
       return pickUiText(
         i18n,
-        zh: '假目标命中偏多，说明出手前确认不足；建议降低假目标数量，先练颜色识别再提速。',
+        zh: '假目标命中偏多，可能是出手前确认不够。可以先减少假目标，练稳颜色识别再提速。',
         en: 'Decoy hits suggest rushed confirmation. Reduce false targets first, then add speed back.',
         ja: 'Decoy hits suggest rushed confirmation. Reduce false targets first, then add speed back.',
         de: 'Decoy hits suggest rushed confirmation. Reduce false targets first, then add speed back.',
@@ -704,7 +704,7 @@ class _AimCompletionReportDialog extends StatelessWidget {
     if (resolvedAccuracy < 0.75) {
       return pickUiText(
         i18n,
-        zh: '准确率还在建立中，优先调大目标或减少移动速度，把命中稳定性放在速度前面。',
+        zh: '准确率偏低时，优先调大目标或降低移动速度，把稳定性放在速度前面。',
         en: 'Accuracy is still settling. Increase target size or lower movement speed before pushing pace.',
         ja: '精度はまだ落ち着いていません。ペースを押す前に、ターゲットサイズを大きくするか、移動速度を下げてください。',
         de: 'Accuracy is still settling. Increase target size or lower movement speed before pushing pace.',

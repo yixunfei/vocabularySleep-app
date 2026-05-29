@@ -9,7 +9,7 @@ class StroopTestPage extends StatelessWidget {
     return _HumanTestScaffold(
       title: pickUiText(
         i18n,
-        zh: '斯特鲁普',
+        zh: '斯特鲁普测试',
         en: 'Stroop test',
         ja: 'Stroop test',
         de: 'Stroop test',
@@ -19,7 +19,7 @@ class StroopTestPage extends StatelessWidget {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '判断文字含义和显示颜色是否一致，抵抗自动阅读干扰。',
+        zh: '判断字义与颜色是否一致，抵抗阅读干扰。',
         en: 'Judge whether word meaning and ink color match, resisting the reading reflex.',
         ja: 'Judge whether word meaning and ink color match, resisting the reading reflex.',
         de: 'Judge whether word meaning and ink color match, resisting the reading reflex.',
@@ -31,7 +31,7 @@ class StroopTestPage extends StatelessWidget {
       icon: Icons.contrast_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：判断是否一致',
+        zh: '看字义还是看颜色？判断是否一致',
         en: 'Next: decide match or mismatch',
         ja: 'Next: decide match or mismatch',
         de: 'Next: decide match or mismatch',
@@ -631,7 +631,7 @@ class _StroopTestCardState extends State<_StroopTestCard> {
               _HumanSettingsSection(
                 title: pickUiText(
                   i18n,
-                  zh: '设置项',
+                  zh: '颜色设置',
                   en: 'Settings',
                   ja: 'Settings',
                   de: 'Settings',
@@ -888,7 +888,7 @@ class _StroopTestCardState extends State<_StroopTestCard> {
                   child: Text(
                     pickUiText(
                       i18n,
-                      zh: '本轮已结束，可查看报告或重置后继续。',
+                      zh: '本轮结束，可查看报告或重置后继续。',
                       en: 'This run is complete. View the report or reset.',
                       ja: 'This run is complete. View the report or reset.',
                       de: 'This run is complete. View the report or reset.',
@@ -951,7 +951,7 @@ class _StroopReportDialog extends StatelessWidget {
         : accuracy < 0.7
         ? pickUiText(
             i18n,
-            zh: '错误偏多，建议先减少颜色数量，使用“说出墨色”模式单独练习抑制阅读反射。',
+            zh: '错误偏多，可以先减少颜色数量，用“说出墨色”模式单独练。',
             en: 'Errors are high. Reduce colors and practice Ink color mode to isolate response inhibition.',
             ja: 'Errors are high. Reduce colors and practice Ink color mode to isolate response inhibition.',
             de: 'Errors are high. Reduce colors and practice Ink color mode to isolate response inhibition.',
@@ -961,7 +961,7 @@ class _StroopReportDialog extends StatelessWidget {
           )
         : pickUiText(
             i18n,
-            zh: '表现接近稳定，下一轮可以保持当前模式并稍微增加题数。',
+            zh: '表现已经比较稳，可以保持当前模式，再稍微增加题数。',
             en: 'Performance is close to stable. Keep this mode and slightly increase the round count.',
             ja: 'Performance is close to stable. Keep this mode and slightly increase the round count.',
             de: 'Performance is close to stable. Keep this mode and slightly increase the round count.',
@@ -1053,7 +1053,7 @@ class _StroopReportDialog extends StatelessWidget {
               _ColorVisionReportSection(
                 title: pickUiText(
                   i18n,
-                  zh: '本轮设置',
+                  zh: '本次设置',
                   en: 'Session settings',
                   ja: 'Session settings',
                   de: 'Session settings',
@@ -1075,7 +1075,7 @@ class _StroopReportDialog extends StatelessWidget {
               _ColorVisionReportSection(
                 title: pickUiText(
                   i18n,
-                  zh: '训练建议',
+                  zh: '练习建议',
                   en: 'Training note',
                   ja: 'Training note',
                   de: 'Training note',
@@ -1148,7 +1148,7 @@ class _LuckTestPageState extends State<LuckTestPage> {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '支持抽卡和独立刮刮乐两种子模块，并提供自定义概率与结果报告。',
+        zh: '今天手气如何？抽一发试试——纯看人品，不服来验。',
         en: 'Draw cards or play a standalone scratch-off mode with custom odds and reports.',
         ja: 'Draw cards or play a standalone scratch-off mode with custom odds and reports.',
         de: 'Draw cards or play a standalone scratch-off mode with custom odds and reports.',
@@ -1160,7 +1160,7 @@ class _LuckTestPageState extends State<LuckTestPage> {
       icon: Icons.casino_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：选择运气子模块',
+        zh: '抽卡、刮票还是投注——试试今天的运气',
         en: 'Next: choose a luck module',
         ja: 'Next: choose a luck module',
         de: 'Next: choose a luck module',
@@ -2627,7 +2627,7 @@ class _LuckTestCardState extends State<_LuckTestCard>
                     label: Text(
                       pickUiText(
                         i18n,
-                        zh: '统计报告',
+                        zh: '本次报告',
                         en: 'Report',
                         ja: 'Report',
                         de: 'Report',
@@ -2669,7 +2669,7 @@ class _LuckTestCardState extends State<_LuckTestCard>
                 ),
                 subtitle: pickUiText(
                   i18n,
-                  zh: '选择抽卡模式、完成目标和不同卡牌概率',
+                  zh: '抽卡方式、目标和卡牌概率都可以在这里调。',
                   en: 'Choose draw mode, completion goal, and card-tier odds',
                   ja: 'ドローモード、コンプリート目標、カードティアのオッズを選択',
                   de: 'Choose draw mode, completion goal, and card-tier odds',
@@ -3158,7 +3158,7 @@ class _LuckReportDialog extends StatelessWidget {
     final summary = goalCompleted
         ? pickUiText(
             i18n,
-            zh: '目标已完成。本轮结果可作为娱乐统计，不代表真实概率会持续偏离期望。',
+            zh: '目标已完成。以上统计仅供参考，不表示未来结果。',
             en: 'Goal completed. Treat this as entertainment analysis; future draws still follow the configured odds.',
             ja: 'Goal completed. Treat this as entertainment analysis; future draws still follow the configured odds.',
             de: 'Goal completed. Treat this as entertainment analysis; future draws still follow the configured odds.',
@@ -3168,7 +3168,7 @@ class _LuckReportDialog extends StatelessWidget {
           )
         : pickUiText(
             i18n,
-            zh: '当前统计基于本页已完成抽卡。幸运指数以 100 为期望水平，高于 100 表示本轮高于概率期望。',
+            zh: '幸运指数以 100 为基准，高于 100 表示本轮运气好于设定概率。',
             en: 'This report uses draws from the current page. Luck index uses 100 as expected; above 100 means this run beat expectation.',
             ja: 'This report uses draws from the current page. Luck index uses 100 as expected; above 100 means this run beat expectation.',
             de: 'This report uses draws from the current page. Luck index uses 100 as expected; above 100 means this run beat expectation.',
@@ -4258,7 +4258,7 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '票价、刮开数量和概率变更会重新开始本轮模拟',
+        zh: '改票价、刮开数量或概率后，会重新开始这一轮。',
         en: 'Price, spot count, and odds changes start a fresh simulation run',
         ja: 'Price, spot count, and odds changes start a fresh simulation run',
         de: 'Price, spot count, and odds changes start a fresh simulation run',
@@ -4675,7 +4675,7 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
             Text(
               pickUiText(
                 i18n,
-                zh: '刮开“中奖号码”和“我的号码”。我的号码命中任一中奖号码即可按该格奖金兑奖；星标为自动中奖，倍数符号会放大奖金。这里适合作为概率小游戏体验。',
+                zh: '刮开”中奖号码”和”我的号码”。我的号码命中任一中奖号码即可按该格奖金兑奖；星标为自动中奖，倍数符号会放大奖金。',
                 en: 'Scratch the winning numbers and your numbers. Match any winning number to win that spot prize; stars auto-win and multipliers boost the prize. Treat this as a probability mini-game.',
                 ja: 'Scratch the winning numbers and your numbers. Match any winning number to win that spot prize; stars auto-win and multipliers boost the prize. Treat this as a probability mini-game.',
                 de: 'Scratch the winning numbers and your numbers. Match any winning number to win that spot prize; stars auto-win and multipliers boost the prize. Treat this as a probability mini-game.',
@@ -6546,7 +6546,7 @@ class CalculationTestPage extends StatelessWidget {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '按难度、题型、题量或限时进行口算训练，完成后查看速度和准确率报告。',
+        zh: '心算能力拉到极限——看你能算多快、多准、撑多久。',
         en: 'Practice arithmetic by difficulty, operation type, round count, or time limit with a final speed and accuracy report.',
         ja: 'Practice arithmetic by difficulty, operation type, round count, or time limit with a final speed and accuracy report.',
         de: 'Practice arithmetic by difficulty, operation type, round count, or time limit with a final speed and accuracy report.',
@@ -6558,7 +6558,7 @@ class CalculationTestPage extends StatelessWidget {
       icon: Icons.calculate_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：输入答案并提交',
+        zh: '心算后输入答案，看速度也看准确率',
         en: 'Next: type answers and submit',
         ja: 'Next: type answers and submit',
         de: 'Next: type answers and submit',
@@ -7918,7 +7918,7 @@ class _CalculationReportDialog extends StatelessWidget {
               _ColorVisionReportSection(
                 title: pickUiText(
                   i18n,
-                  zh: '本轮设置',
+                  zh: '本次设置',
                   en: 'Session settings',
                   ja: 'Session settings',
                   de: 'Session settings',
@@ -7940,7 +7940,7 @@ class _CalculationReportDialog extends StatelessWidget {
               _ColorVisionReportSection(
                 title: pickUiText(
                   i18n,
-                  zh: '训练建议',
+                  zh: '练习建议',
                   en: 'Training note',
                   ja: 'Training note',
                   de: 'Training note',
@@ -8024,7 +8024,7 @@ class SustainedAttentionTestPage extends StatelessWidget {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '支持目标点击、低频目标和 n-back 任务，统计命中、漏点、误点和反应时。',
+        zh: '长时间保持警觉，克制冲动——只在关键时刻精准出手。',
         en: 'Go/no-go, oddball, and n-back attention tasks with hit, miss, false-alarm, and reaction-time stats.',
         ja: 'Go/no-go, oddball, and n-back attention tasks with hit, miss, false-alarm, and reaction-time stats.',
         de: 'Go/no-go, oddball, and n-back attention tasks with hit, miss, false-alarm, and reaction-time stats.',
@@ -8036,7 +8036,7 @@ class SustainedAttentionTestPage extends StatelessWidget {
       icon: Icons.track_changes_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：看到 X 才点击',
+        zh: '控制住冲动，只看到 X 才点击',
         en: 'Next: tap only on X',
         ja: 'Next: tap only on X',
         de: 'Next: tap only on X',
@@ -8849,7 +8849,7 @@ class _SustainedAttentionCardState extends State<_SustainedAttentionCard> {
                   subtitle: Text(
                     pickUiText(
                       i18n,
-                      zh: '默认关闭；开启后目标出现时舞台会轻微变色，适合练习阶段。',
+                      zh: '开启后目标出现时舞台会轻微变色，适合练习阶段。',
                       en: 'Off by default. When on, targets tint the stage for practice.',
                       ja: 'Off by default. When on, targets tint the stage for practice.',
                       de: 'Off by default. When on, targets tint the stage for practice.',
@@ -8922,7 +8922,7 @@ class _AttentionReportDialog extends StatelessWidget {
         : falseAlarms > misses
         ? pickUiText(
             i18n,
-            zh: '当前更容易冲动点击，建议降低速度并提高只在目标出现时才动作的抑制感。',
+            zh: '当前更容易冲动点击，建议降低速度，只在目标出现时再反应。',
             en: 'False alarms dominate. Slow down and practice response inhibition.',
             ja: 'False alarms dominate. Slow down and practice response inhibition.',
             de: 'False alarms dominate. Slow down and practice response inhibition.',
@@ -9024,7 +9024,7 @@ class _AttentionReportDialog extends StatelessWidget {
               _ColorVisionReportSection(
                 title: pickUiText(
                   i18n,
-                  zh: '本轮设置',
+                  zh: '本次设置',
                   en: 'Session settings',
                   ja: 'Session settings',
                   de: 'Session settings',
@@ -9047,7 +9047,7 @@ class _AttentionReportDialog extends StatelessWidget {
               _ColorVisionReportSection(
                 title: pickUiText(
                   i18n,
-                  zh: '训练建议',
+                  zh: '练习建议',
                   en: 'Training note',
                   ja: 'Training note',
                   de: 'Training note',

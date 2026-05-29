@@ -199,7 +199,7 @@ extension _VerbalMemoryView on _VerbalMemoryCardState {
         ),
         body: pickUiText(
           i18n,
-          zh: '词汇、数字和空间箭头共用连续训练与结果报告。',
+          zh: '词汇、数字和箭头都可以连续练，结束后一起看报告。',
           en: 'Words, digits, and spatial arrows share one continuous report.',
           ja: 'Words, digits, and spatial arrows share one continuous report.',
           de: 'Words, digits, and spatial arrows share one continuous report.',
@@ -695,7 +695,7 @@ extension _VerbalMemoryView on _VerbalMemoryCardState {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '模式、词库、难度和展示高度都会影响下一次训练。',
+        zh: '模式、词库、难度和展示高度会在下次开始时生效。',
         en: 'Mode, word bank, difficulty, and stage height shape the next run.',
         ja: 'Mode, word bank, difficulty, and stage height shape the next run.',
         de: 'Mode, word bank, difficulty, and stage height shape the next run.',

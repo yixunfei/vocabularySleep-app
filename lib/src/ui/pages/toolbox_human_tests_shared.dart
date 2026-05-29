@@ -71,7 +71,7 @@ class _HumanTestEntryCard extends StatelessWidget {
                     );
                   },
             child: Ink(
-              height: compact ? 126 : null,
+              height: compact ? 118 : null,
               padding: EdgeInsets.all(compact ? 10 : 16),
               decoration: BoxDecoration(
                 borderRadius: radius,
@@ -116,22 +116,33 @@ class _HumanTestEntryCard extends StatelessWidget {
                               ),
                             ),
                             const Spacer(),
-                            Icon(
-                              Icons.drag_indicator_rounded,
-                              size: 12,
-                              color: entry.accent.withValues(alpha: 0.28),
+                            Container(
+                              width: 18,
+                              height: 18,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: entry.accent.withValues(alpha: 0.11),
+                                border: Border.all(
+                                  color: entry.accent.withValues(alpha: 0.16),
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.arrow_forward_rounded,
+                                size: 13,
+                                color: entry.accent.withValues(alpha: 0.78),
+                              ),
                             ),
                           ],
                         ),
                         const Spacer(),
                         Container(
-                          width: 48,
-                          height: 48,
+                          width: 42,
+                          height: 42,
                           decoration: BoxDecoration(
                             color: entry.accent.withValues(
                               alpha: dragging ? 0.08 : 0.13,
                             ),
-                            borderRadius: BorderRadius.circular(18),
+                            borderRadius: BorderRadius.circular(15),
                             border: Border.all(
                               color: entry.accent.withValues(alpha: 0.14),
                             ),
@@ -140,10 +151,10 @@ class _HumanTestEntryCard extends StatelessWidget {
                           child: Icon(
                             entry.icon,
                             color: entry.accent,
-                            size: 28,
+                            size: 24,
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 7),
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
@@ -157,7 +168,7 @@ class _HumanTestEntryCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         ConstrainedBox(
                           constraints: const BoxConstraints(maxHeight: 17),
                           child: Text(
@@ -211,18 +222,36 @@ class _HumanTestEntryCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          entry.shortTitle,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: colorScheme.outline,
-                            fontWeight: FontWeight.w800,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 5,
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 16,
-                          color: colorScheme.outline,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(999),
+                            color: entry.accent.withValues(alpha: 0.10),
+                            border: Border.all(
+                              color: entry.accent.withValues(alpha: 0.16),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Text(
+                                entry.shortTitle,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: entry.accent,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(width: 3),
+                              Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                size: 12,
+                                color: entry.accent,
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -268,6 +297,7 @@ class _HumanTestScaffold extends StatelessWidget {
     return ToolboxToolPage(
       title: title,
       subtitle: subtitle,
+      showPageHeader: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -464,12 +494,16 @@ class _HumanSettingsSectionState extends State<_HumanSettingsSection> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     final borderColor = _expanded
         ? colorScheme.primary.withValues(alpha: 0.44)
         : colorScheme.outlineVariant.withValues(alpha: 0.88);
     final headerTint = colorScheme.primary.withValues(
-      alpha: _expanded ? 0.10 : 0.055,
+      alpha: _expanded ? 0.13 : 0.075,
     );
+    final toggleLabel = _expanded
+        ? pickUiText(i18n, zh: '收起', en: 'Collapse')
+        : pickUiText(i18n, zh: '展开', en: 'Expand');
     final iconTint = _expanded
         ? colorScheme.primary.withValues(alpha: 0.18)
         : colorScheme.surfaceContainerHighest.withValues(alpha: 0.72);
@@ -500,7 +534,16 @@ class _HumanSettingsSectionState extends State<_HumanSettingsSection> {
               child: InkWell(
                 onTap: _toggle,
                 child: Ink(
-                  decoration: BoxDecoration(color: headerTint),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: <Color>[
+                        headerTint,
+                        colorScheme.surfaceContainerLow.withValues(alpha: 0.70),
+                      ],
+                    ),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(12, 11, 10, 11),
                     child: Row(
@@ -554,10 +597,17 @@ class _HumanSettingsSectionState extends State<_HumanSettingsSection> {
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 220),
                           curve: Curves.easeInOutCubic,
-                          width: 34,
+                          constraints: const BoxConstraints(
+                            minWidth: 64,
+                            minHeight: 34,
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 7,
+                          ),
                           height: 34,
                           decoration: BoxDecoration(
-                            shape: BoxShape.circle,
+                            borderRadius: BorderRadius.circular(999),
                             color: _expanded
                                 ? colorScheme.primary.withValues(alpha: 0.16)
                                 : colorScheme.surface.withValues(alpha: 0.78),
@@ -567,14 +617,25 @@ class _HumanSettingsSectionState extends State<_HumanSettingsSection> {
                               ),
                             ),
                           ),
-                          child: AnimatedRotation(
-                            turns: _expanded ? 0.5 : 0,
-                            duration: const Duration(milliseconds: 220),
-                            curve: Curves.easeInOutCubic,
-                            child: Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              color: colorScheme.primary,
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Text(
+                                toggleLabel,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              const SizedBox(width: 3),
+                              Icon(
+                                _expanded
+                                    ? Icons.keyboard_arrow_up_rounded
+                                    : Icons.keyboard_arrow_down_rounded,
+                                size: 18,
+                                color: colorScheme.primary,
+                              ),
+                            ],
                           ),
                         ),
                       ],

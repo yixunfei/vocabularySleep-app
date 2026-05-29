@@ -34,8 +34,8 @@ class AimTestPage extends StatelessWidget {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '从经典点靶扩展到降级放大、移动靶和真假目标干扰，练速度，也练稳定性。',
-        en: 'Train speed and control with classic, reveal-grow, moving, and decoy target modes.',
+        zh: '从固定靶到移动干扰，逐步加压测试你的瞄准上限。',
+        en: 'Classic, reveal-grow, moving, and decoy target modes.',
         ja: 'Train speed and control with classic, reveal-grow, moving, and decoy target modes.',
         de: 'Train speed and control with classic, reveal-grow, moving, and decoy target modes.',
         fr: 'Vitesse et contrôle du train avec des modes classiques, de révélation, de déplacement et de cible de leurre.',
@@ -46,7 +46,7 @@ class AimTestPage extends StatelessWidget {
       icon: Icons.adjust_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：选择模式后开始追踪目标',
+        zh: '瞄准目标点击命中，记录连击和反应速度',
         en: 'Next: choose a mode and track the targets',
         ja: 'Next: choose a mode and track the targets',
         de: 'Next: choose a mode and track the targets',
@@ -580,7 +580,7 @@ class _AimTestCardState extends State<_AimTestCard>
           ),
           subtitle: pickUiText(
             i18n,
-            zh: '目标已经放大到最大，反制窗口结束。本轮按失败记录。',
+            zh: '目标已放大到极限，本轮按失败记录。',
             en: 'The target reached maximum size. The counter-shot window closed.',
             ja: 'The target reached maximum size. The counter-shot window closed.',
             de: 'The target reached maximum size. The counter-shot window closed.',
@@ -1092,7 +1092,7 @@ class _AimTestCardState extends State<_AimTestCard>
           ),
           subtitle: pickUiText(
             i18n,
-            zh: '模式、目标数量、大小、显形、移动和干扰强度。',
+            zh: '目标数量、大小、移动速度和干扰强度都可以在这里调。',
             en: 'Modes, target count, size, reveal timing, movement, and decoys.',
             ja: 'Modes, target count, size, reveal timing, movement, and decoys.',
             de: 'Modes, target count, size, reveal timing, movement, and decoys.',

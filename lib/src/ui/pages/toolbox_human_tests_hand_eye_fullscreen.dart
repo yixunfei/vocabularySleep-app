@@ -813,7 +813,7 @@ class _JoystickFullscreenSettingsDialog extends StatelessWidget {
                     ),
                     subtitle: pickUiText(
                       i18n,
-                      zh: '默认关闭：让目标在刷新后持续移动，增加追踪压力。',
+                      zh: '开启后目标在刷新后持续移动，增加追踪压力。',
                       en: 'Off by default: keeps targets moving after spawn for harder tracking.',
                       ja: 'Off by default: keeps targets moving after spawn for harder tracking.',
                       de: 'Off by default: keeps targets moving after spawn for harder tracking.',
@@ -837,7 +837,7 @@ class _JoystickFullscreenSettingsDialog extends StatelessWidget {
                     ),
                     subtitle: pickUiText(
                       i18n,
-                      zh: '默认关闭：目标附近可随机出现不同颜色的假目标。',
+                      zh: '目标附近可随机出现不同颜色的假目标。',
                       en: 'Off by default: color-coded false targets may appear around the real target.',
                       ja: 'Off by default: color-coded false targets may appear around the real target.',
                       de: 'Off by default: color-coded false targets may appear around the real target.',

@@ -19,8 +19,8 @@ class TapSpeedTestPage extends StatelessWidget {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '在经典连点、目标追击和节奏命中模式中测试点击速度、稳定性与准确率。',
-        en: 'Measure tap speed, stability, and accuracy across classic, target chase, and rhythm modes.',
+        zh: '十秒倒计时，疯狂点击——连击越高越过瘾。',
+        en: 'Classic, target chase, and rhythm hit modes for speed and accuracy.',
         ja: 'Measure tap speed, stability, and accuracy across classic, target chase, and rhythm modes.',
         de: 'Measure tap speed, stability, and accuracy across classic, target chase, and rhythm modes.',
         fr: 'Mesurer la vitesse, la stabilité et la précision du robinet sur les modes classiques, de poursuite des cibles et de rythme.',
@@ -31,7 +31,7 @@ class TapSpeedTestPage extends StatelessWidget {
       icon: Icons.touch_app_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：选择模式后开始挑战',
+        zh: '经典连点、目标追击或节奏命中——纯拼手速',
         en: 'Next: choose a mode and start',
         ja: 'Next: choose a mode and start',
         de: 'Next: choose a mode and start',
@@ -898,7 +898,7 @@ class _TapSpeedReportDialog extends StatelessWidget {
               _ColorVisionReportSection(
                 title: pickUiText(
                   i18n,
-                  zh: '本轮设置',
+                  zh: '本次设置',
                   en: 'Session settings',
                   ja: 'Session settings',
                   de: 'Session settings',
@@ -920,7 +920,7 @@ class _TapSpeedReportDialog extends StatelessWidget {
               _ColorVisionReportSection(
                 title: pickUiText(
                   i18n,
-                  zh: '训练建议',
+                  zh: '练习建议',
                   en: 'Training note',
                   ja: 'Training note',
                   de: 'Training note',

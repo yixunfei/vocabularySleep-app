@@ -26,6 +26,62 @@
 - `flutter test test/ui_smoke_test.dart --plain-name "toolbox intro stays compact and opens editing tips" --reporter compact`
 - `flutter test test/ui_smoke_test.dart --plain-name "toolbox page supports editable home layout" --reporter compact`
 
+## [Unreleased-PLAN_287-HUMAN-TEST-COPY-AND-SWITCH-CUES] - 2026-05-28
+
+### 原因
+- 用户希望优化 `工具箱 - 人类测试` 各子模块文案，移除开发式说明、进度口吻和重复叙述，让页面表达更亲近自然；同时增强可切换子模块与可展开设置区的视觉提示。
+
+### 新增
+- `plans/PLAN_287_人类测试文案与切换提示优化.md`
+  - 记录本轮仅处理人类测试模块展示层文案与轻量样式，不修改玩法、计时、状态机、持久化或数据模型。
+
+### 修改
+- `lib/src/ui/pages/toolbox_human_tests*.dart`
+  - 优化人类测试入口、常用测试区、各子模块标题说明、状态提示、设置区说明和报告内建议文案。
+  - 移除或改写“结构化设置区”“训练边界”“当前页面内统计”“统计报告”“本轮设置”“训练建议”等偏内部或偏机械的表达。
+  - 保留开始、切换、设置生效、重开、报告查看、专业检查提醒等关键提示。
+- `lib/src/ui/pages/toolbox_human_tests_shared.dart`
+  - 子测试卡片增加更明确的进入箭头与 accent 色提示，同时保持既有 118dp 卡片高度，避免入口网格布局变化。
+  - 设置折叠区右侧改为“展开 / 收起”文字胶囊，并增强头部渐变、边框与图标承托，让用户更容易看出可展开。
+
+### 风险变更
+- 本轮未修改人类测试业务逻辑、计时逻辑、结果计算、路由行为和持久化。
+- 英文测试锚点保留，中文文案优先优化自然度；部分英文沿用既有文案以避免测试和本地化范围扩大。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_human_tests*.dart lib/src/ui/pages/toolbox_tool_shell.dart`
+- `dart analyze lib/src/ui/pages/toolbox_tool_shell.dart lib/src/ui/pages/toolbox_human_tests.dart`
+- `flutter test test/toolbox_human_tests_extended_smoke_test.dart test/toolbox_visual_memory_smoke_test.dart test/toolbox_typing_test_smoke_test.dart test/toolbox_verbal_memory_smoke_test.dart test/toolbox_color_vision_smoke_test.dart --reporter compact`（通过；保留测试中 `Single-side practice` 既有非致命 hit-test 警告）
+
+## [Unreleased-PLAN_286-HUMAN-TEST-VISUAL-MEMORY-DESCRIPTION-DEDUP] - 2026-05-28
+
+### 原因
+- 用户反馈 `工具箱 - 人类测试中心 - 视觉记忆` 首屏中“从经典位置到随机目标色，等级越高，干扰色会越接近目标。”在外层标题区和内层主舞台重复展示，造成信息冗余。
+
+### 新增
+- `plans/PLAN_286_视觉记忆冗余描述清理.md`
+  - 记录本轮仅清理展示层重复文案，不修改视觉记忆玩法、计时、状态机、持久化或数据模型。
+
+### 修改
+- `lib/src/ui/pages/toolbox_tool_shell.dart`
+  - 为 `ToolboxToolPage` 增加默认开启的 `showPageHeader` 参数，允许特定工具详情页跳过外层 `PageHeader`。
+- `lib/src/ui/pages/toolbox_human_tests_shared.dart`
+  - 人类测试详情页关闭外层 `PageHeader`，保留内部 `_HumanHeroPanel` 的标题、说明和状态 pill，避免同一 `subtitle` 被渲染两次。
+
+### 位置确认
+- 文案源头位于 `lib/src/ui/pages/toolbox_human_tests_visual_memory.dart` 的 `VisualMemoryTestPage.subtitle`。
+- 原先第一处渲染位于 `ToolboxToolPage` 的外层 `PageHeader.subtitle`。
+- 原先第二处渲染位于 `_HumanTestScaffold` 内的 `_HumanHeroPanel.subtitle`。
+
+### 风险变更
+- `showPageHeader` 默认保持 `true`，工具箱其他页面默认展示行为不变。
+- 人类测试详情页统一减少一层外部标题说明，内部主舞台信息仍保留，首屏上下文不丢失。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_tool_shell.dart lib/src/ui/pages/toolbox_human_tests_shared.dart`
+- `dart analyze lib/src/ui/pages/toolbox_tool_shell.dart lib/src/ui/pages/toolbox_human_tests.dart`
+- `flutter test test/toolbox_visual_memory_smoke_test.dart --reporter compact`
+
 ## [Unreleased-PLAN_285-BOTTOM-NAV-AUTO-HIDE] - 2026-05-28
 
 ### 原因

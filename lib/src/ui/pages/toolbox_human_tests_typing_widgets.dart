@@ -706,8 +706,8 @@ Widget _typingBuildRecentReports(
         Text(
           pickUiText(
             i18n,
-            zh: '本页最近结果',
-            en: 'Recent results',
+            zh: '最近结果',
+            en: 'Recent local results',
             ja: '最近の結果',
             de: 'Letzte Ergebnisse',
             fr: 'Résultats récents',

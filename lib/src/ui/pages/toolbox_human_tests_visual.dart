@@ -19,7 +19,7 @@ class ColorVisionTestPage extends StatelessWidget {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '支持经典找不同与混色匹配，记录不同色差和色相方向的识别表现。',
+        zh: '练就火眼金睛——细微色差也逃不过你的眼睛。',
         en: 'Classic odd-tile and mixed-color matching with per-hue and color-difference analysis.',
         ja: '色相ごとの色差分析による古典的な奇数タイルと混合色のマッチング。',
         de: 'Classic odd-tile and mixed-color matching with per-hue and color-difference analysis.',
@@ -31,7 +31,7 @@ class ColorVisionTestPage extends StatelessWidget {
       icon: Icons.palette_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：选择模式并点击目标色块',
+        zh: '找出不同颜色或匹配混色，练眼睛',
         en: 'Next: choose a mode and tap the target color',
         ja: 'Next: choose a mode and tap the target color',
         de: 'Next: choose a mode and tap the target color',
@@ -635,7 +635,7 @@ class _ColorVisionCardState extends State<_ColorVisionCard> {
           ),
           subtitle: pickUiText(
             i18n,
-            zh: '模式、色系排除、生命和网格会立即重开当前测试',
+            zh: '切换模式、色系、生命或网格后，会重新开始当前测试。',
             en: 'Mode, color filter, lives, and grid settings restart the current test',
             ja: 'Mode, color filter, lives, and grid settings restart the current test',
             de: 'Mode, color filter, lives, and grid settings restart the current test',
@@ -748,7 +748,7 @@ class _ColorVisionCardState extends State<_ColorVisionCard> {
                     label: Text(
                       pickUiText(
                         i18n,
-                        zh: '结束并分析',
+                        zh: '结束并复盘',
                         en: 'End and analyze',
                         ja: 'End and analyze',
                         de: 'End and analyze',
@@ -1228,7 +1228,7 @@ class _ColorVisionCardState extends State<_ColorVisionCard> {
     return switch (axis) {
       _ColorVisionDeltaAxis.hue => pickUiText(
         i18n,
-        zh: '色相差',
+        zh: '色调差',
         en: 'Hue shift',
         ja: 'Hue shift',
         de: 'Hue shift',

@@ -23,8 +23,8 @@ class FineDragTrackingTestPage extends StatelessWidget {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '沿窄轨迹拖动光标，训练微小位移控制与持续追踪稳定性。',
-        en: 'Drag a cursor along a narrow track to train fine movement control and sustained tracking stability.',
+        zh: '手指稳住，沿窄轨从起点滑到终点——越慢越难。',
+        en: 'Drag a cursor along a narrow track for fine movement control.',
         ja: 'Drag a cursor along a narrow track to train fine movement control and sustained tracking stability.',
         de: 'Drag a cursor along a narrow track to train fine movement control and sustained tracking stability.',
         fr: 'Faites glisser un curseur le long d\'une voie étroite pour entraîner un contrôle de mouvement fin et une stabilité de suivi soutenue.',
@@ -35,7 +35,7 @@ class FineDragTrackingTestPage extends StatelessWidget {
       icon: Icons.gesture_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：按住起点并沿轨迹拖到终点',
+        zh: '稳住手指，沿着窄轨从起点滑到终点',
         en: 'Next: hold the start point and drag along the track',
         ja: 'Next: hold the start point and drag along the track',
         de: 'Next: hold the start point and drag along the track',
@@ -421,7 +421,7 @@ class _FineDragTrackingCardState extends State<_FineDragTrackingCard> {
           ),
           subtitle: pickUiText(
             i18n,
-            zh: '调整轨迹复杂度、宽度和轮数。',
+            zh: '轨迹复杂度、宽度和轮数都在这里。',
             en: 'Adjust track complexity, width, and round count.',
             ja: 'トラックの複雑さ、幅、ラウンドカウントを調整します。',
             de: 'Adjust track complexity, width, and round count.',

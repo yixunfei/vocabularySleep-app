@@ -10,7 +10,7 @@ const List<_TypingPassage> _typingPassages = <_TypingPassage>[
   _TypingPassage(
     language: _TypingLanguage.zh,
     topic: _TypingTopic.focus,
-    zh: '把复杂任务切成几段，手指会更快找到下一步的落点。',
+    zh: '把复杂任务切成几段，手指会更快找到下一个落点。',
     en: 'Split complex work into smaller steps, and your hands find the next move faster.',
   ),
   _TypingPassage(

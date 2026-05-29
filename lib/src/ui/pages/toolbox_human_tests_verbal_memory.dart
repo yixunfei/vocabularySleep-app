@@ -19,7 +19,7 @@ class VerbalMemoryTestPage extends StatelessWidget {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '从词汇识别扩展到数字串和空间箭头序列，支持分领域词库、多选筛选和自定义舞台高度。',
+        zh: '大脑的内存条有多宽？看你能一口气记住多少词、多少数。',
         en: 'A memory lab for domain words, digit strings, and spatial arrow sequences with custom stage height.',
         ja: 'カスタムステージの高さを持つドメインワード、ディジット文字列、空間矢印シーケンスのメモリラボ。',
         de: 'A memory lab for domain words, digit strings, and spatial arrow sequences with custom stage height.',
@@ -31,7 +31,7 @@ class VerbalMemoryTestPage extends StatelessWidget {
       icon: Icons.menu_book_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：选择模式与词库，开始连续训练',
+        zh: '记单词、数字串或箭头——选好就开始',
         en: 'Next: choose a mode and start a continuous run',
         ja: 'Next: choose a mode and start a continuous run',
         de: 'Next: choose a mode and start a continuous run',
@@ -194,7 +194,7 @@ class _VerbalMemoryCardState extends State<_VerbalMemoryCard> {
     if (!_sessionActive && _attempts == 0) {
       return pickUiText(
         i18n,
-        zh: '选择模式后点击开始。本页结果只在当前训练内统计。',
+        zh: '选好模式后点击开始，结果只用于这次训练复盘。',
         en: 'Pick a mode and press start. Results are counted only for this run.',
         ja: 'Pick a mode and press start. Results are counted only for this run.',
         de: 'Pick a mode and press start. Results are counted only for this run.',

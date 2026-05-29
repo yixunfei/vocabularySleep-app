@@ -118,8 +118,8 @@ class BimanualCoordinationTestPage extends StatelessWidget {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '左右手同时控制不同小游戏，手机默认进入横屏全屏，在脑裂、同步奖励和节奏切换里练习独立分工。',
-        en: 'Run different mini-games on both sides at once. Phones default to landscape fullscreen for split-brain separation, sync bonuses, and rhythm shifts.',
+        zh: '左右脑各管一摊，同时应对不同任务——像周伯通双手互搏。',
+        en: 'Run different mini-games on both sides at once for split-brain coordination and rhythm shifts.',
         ja: 'Run different mini-games on both sides at once. Phones default to landscape fullscreen for split-brain separation, sync bonuses, and rhythm shifts.',
         de: 'Run different mini-games on both sides at once. Phones default to landscape fullscreen for split-brain separation, sync bonuses, and rhythm shifts.',
         fr: 'Exécutez différents mini-jeux des deux côtés à la fois. Les téléphones par défaut pour le paysage plein écran pour la séparation du cerveau divisé, les bonus de synchronisation et les changements de rythme.',
@@ -130,7 +130,7 @@ class BimanualCoordinationTestPage extends StatelessWidget {
       icon: Icons.pan_tool_alt_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：进入全屏横屏，同时推进左右两侧任务。',
+        zh: '横屏全屏，左右手各管一边，独立分工',
         en: 'Next: enter landscape fullscreen and push both sides forward together.',
         ja: 'Next: enter landscape fullscreen and push both sides forward together.',
         de: 'Next: enter landscape fullscreen and push both sides forward together.',
@@ -3597,7 +3597,7 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
                 plan == null
                     ? pickUiText(
                         i18n,
-                        zh: '默认左右都是弹球，可在设置里自由组合画图、弹球和跳高；也可开启单侧练习。',
+                        zh: '左右默认弹球，可在设置里自由组合画图、弹球和跳高，也可开启单侧练习。',
                         en: 'Both hands default to Bounce. Freely combine Trace, Bounce, and High jump in settings, or enable single-side practice.',
                         ja: '手はデフォルトでバウンスします。 設定でトレース、バウンス、ハイジャンプを自由に組み合わせるか、片側練習を有効にします。',
                         de: 'Both hands default to Bounce. Freely combine Trace, Bounce, and High jump in settings, or enable single-side practice.',
@@ -3838,7 +3838,7 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
           subtitle: Text(
             pickUiText(
               i18n,
-              zh: '默认关闭；开启后只训练选中一侧，另一侧休息且不参与同步分。',
+              zh: '开启后只训练选中一侧，另一侧休息且不参与同步分。',
               en: 'Off by default; train one selected side while the other rests and does not count toward sync scoring.',
               ja: 'Off by default; train one selected side while the other rests and does not count toward sync scoring.',
               de: 'Off by default; train one selected side while the other rests and does not count toward sync scoring.',

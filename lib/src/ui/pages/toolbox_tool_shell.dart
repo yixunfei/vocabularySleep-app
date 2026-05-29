@@ -35,6 +35,7 @@ class ToolboxToolPage extends StatelessWidget {
     this.backgroundColor,
     this.scrollController,
     this.floatingActionButton,
+    this.showPageHeader = true,
   });
 
   final String title;
@@ -44,6 +45,7 @@ class ToolboxToolPage extends StatelessWidget {
   final Color? backgroundColor;
   final ScrollController? scrollController;
   final Widget? floatingActionButton;
+  final bool showPageHeader;
 
   @override
   Widget build(BuildContext context) {
@@ -80,16 +82,18 @@ class ToolboxToolPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  PageHeader(
-                    eyebrow: pickUiText(
-                      AppI18n(Localizations.localeOf(context).languageCode),
-                      zh: '工具箱',
-                      en: 'Toolbox',
+                  if (showPageHeader) ...<Widget>[
+                    PageHeader(
+                      eyebrow: pickUiText(
+                        AppI18n(Localizations.localeOf(context).languageCode),
+                        zh: '工具箱',
+                        en: 'Toolbox',
+                      ),
+                      title: title,
+                      subtitle: subtitle,
                     ),
-                    title: title,
-                    subtitle: subtitle,
-                  ),
-                  const SizedBox(height: 18),
+                    const SizedBox(height: 18),
+                  ],
                   child,
                 ],
               ),

@@ -30,8 +30,8 @@ class DualTaskSwitchTestPage extends StatelessWidget {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '在数字奇偶与颜色冷热判断之间来回切换，并观察切换代价。',
-        en: 'Switch between digit parity and warm/cool color judgments while tracking switch cost.',
+        zh: '大脑来回换挡——数字判奇偶，颜色判冷暖。',
+        en: 'Alternate between digit and color judgments, tracking switch cost.',
         ja: 'Switch between digit parity and warm/cool color judgments while tracking switch cost.',
         de: 'Switch between digit parity and warm/cool color judgments while tracking switch cost.',
         fr: 'Passez entre la parité des chiffres et les jugements de couleur chaud/froid tout en suivant le coût du commutateur.',
@@ -42,7 +42,7 @@ class DualTaskSwitchTestPage extends StatelessWidget {
       icon: Icons.swap_horiz_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：选择切换节奏并开始一组交替判断',
+        zh: '数字判奇偶，颜色判冷暖——来回切换',
         en: 'Next: choose a switch rhythm and start the alternating set',
         ja: 'Next: choose a switch rhythm and start the alternating set',
         de: 'Next: choose a switch rhythm and start the alternating set',
@@ -444,7 +444,7 @@ class _DualTaskSwitchCardState extends State<_DualTaskSwitchCard> {
           ),
           subtitle: pickUiText(
             i18n,
-            zh: '调整每轮切换节奏、题量与判断主题。',
+            zh: '切换节奏、题量和判断主题都可以在这里调。',
             en: 'Adjust the switch rhythm, round count, and judgment theme.',
             ja: 'スイッチリズム、ラウンドカウント、判定テーマを調整します。',
             de: 'Adjust the switch rhythm, round count, and judgment theme.',

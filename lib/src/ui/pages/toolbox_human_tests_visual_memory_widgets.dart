@@ -382,7 +382,7 @@ class _VisualMemoryReportDialog extends StatelessWidget {
       title: Text(
         pickUiText(
           i18n,
-          zh: '视觉记忆统计报告',
+          zh: '视觉记忆报告',
           en: 'Visual memory report',
           ja: 'Visual memory report',
           de: 'Visual memory report',

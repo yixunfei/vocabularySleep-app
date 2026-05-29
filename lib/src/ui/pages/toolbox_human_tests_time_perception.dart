@@ -19,8 +19,8 @@ class TimePerceptionTestPage extends StatelessWidget {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '启动后按随机目标时刻依次点击时间按钮，测试连续时间感知。',
-        en: 'Start and tap randomized target-time buttons in sequence.',
+        zh: '不看表——你体内的时钟走得准吗？',
+        en: 'Tap randomized target-time buttons in sequence to test time perception.',
         ja: 'Start and tap randomized target-time buttons in sequence.',
         de: 'Start and tap randomized target-time buttons in sequence.',
         fr: 'Démarrer et appuyer sur les boutons randomisés de temps cible dans la séquence.',
@@ -31,7 +31,7 @@ class TimePerceptionTestPage extends StatelessWidget {
       icon: Icons.timer_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：开始后盯住当前目标时间',
+        zh: '不看表，凭感觉在目标时间点按下按钮',
         en: 'Next: start, then watch the current target time',
         ja: 'Next: start, then watch the current target time',
         de: 'Next: start, then watch the current target time',
@@ -524,7 +524,7 @@ class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
               _HumanSettingsSection(
                 title: pickUiText(
                   i18n,
-                  zh: '设置项',
+                  zh: '时间设置',
                   en: 'Settings',
                   ja: 'Settings',
                   de: 'Settings',
@@ -534,7 +534,7 @@ class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
                 ),
                 subtitle: pickUiText(
                   i18n,
-                  zh: '调整目标数量、最大时间和随机粒度',
+                  zh: '目标数量、最大时间和随机粒度都在这里。',
                   en: 'Adjust target count, maximum time, and randomization unit',
                   ja: 'ターゲット数、最大時間、ランダム化単位の調整',
                   de: 'Adjust target count, maximum time, and randomization unit',
@@ -670,7 +670,7 @@ class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
                     Text(
                       pickUiText(
                         i18n,
-                        zh: '当前会在 ${_formatDuration(_minimumFirstTargetTime, i18n)} 到 ${_formatDuration(_maxTargetTime, i18n)} 之间随机生成 $plannedTargetCount 个目标；单位越细，目标时间越不容易落在整秒上。',
+                        zh: '当前会在 ${_formatDuration(_minimumFirstTargetTime, i18n)} 到 ${_formatDuration(_maxTargetTime, i18n)} 之间随机生成 $plannedTargetCount 个目标；越细的单位越不容易落在整秒上。',
                         en: 'This will randomize $plannedTargetCount targets between ${_formatDuration(_minimumFirstTargetTime, i18n)} and ${_formatDuration(_maxTargetTime, i18n)}. Finer units make targets less likely to land on whole seconds.',
                         ja: 'This will randomize $plannedTargetCount targets between ${_formatDuration(_minimumFirstTargetTime, i18n)} and ${_formatDuration(_maxTargetTime, i18n)}. Finer units make targets less likely to land on whole seconds.',
                         de: 'This will randomize $plannedTargetCount targets between ${_formatDuration(_minimumFirstTargetTime, i18n)} and ${_formatDuration(_maxTargetTime, i18n)}. Finer units make targets less likely to land on whole seconds.',
@@ -787,7 +787,7 @@ class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
                 Text(
                   pickUiText(
                     i18n,
-                    zh: '结果说明',
+                    zh: '结果怎么读',
                     en: 'Result notes',
                     ja: 'Result notes',
                     de: 'Result notes',

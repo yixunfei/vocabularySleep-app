@@ -29,7 +29,7 @@ class ReactionTestPage extends StatelessWidget {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '经典松手、方向滑动与颜色匹配三种模式，观察速度、准确率和连击。',
+        zh: '信号出现立刻反应——测测你的手有多快。',
         en: 'Release, direction-swipe, and color-match modes with speed, accuracy, and streak feedback.',
         ja: 'Release, direction-swipe, and color-match modes with speed, accuracy, and streak feedback.',
         de: 'Release, direction-swipe, and color-match modes with speed, accuracy, and streak feedback.',
@@ -41,7 +41,7 @@ class ReactionTestPage extends StatelessWidget {
       icon: Icons.flash_on_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：选择模式并完成一组反应挑战',
+        zh: '信号一亮立刻反应，比谁的手速更快',
         en: 'Next: choose a mode and finish a reaction set',
         ja: 'Next: choose a mode and finish a reaction set',
         de: 'Next: choose a mode and finish a reaction set',
@@ -902,7 +902,7 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
       _ReactionPhase.feedback => _latestFeedbackText(i18n),
       _ReactionPhase.done => pickUiText(
         i18n,
-        zh: '本组完成',
+        zh: '本轮完成',
         en: 'Set complete',
         ja: 'Set complete',
         de: 'Set complete',
@@ -929,7 +929,7 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
     if (_phase == _ReactionPhase.done) {
       return pickUiText(
         i18n,
-        zh: '可重置，或切换模式开始新挑战',
+        zh: '可以重置，也可以换个模式再来一轮',
         en: 'Reset or switch mode for a fresh challenge',
         ja: 'Reset or switch mode for a fresh challenge',
         de: 'Reset or switch mode for a fresh challenge',
@@ -1630,7 +1630,7 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '切换轮次和信号节奏会重置当前成绩。',
+        zh: '改轮次或信号节奏后，会从新一轮开始。',
         en: 'Changing rounds or signal pace resets the current set.',
         ja: 'ラウンドまたはシグナルペースを変更すると、現在のセットがリセットされます。',
         de: 'Changing rounds or signal pace resets the current set.',
@@ -1717,7 +1717,7 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
                 child: Text(
                   pickUiText(
                     i18n,
-                    zh: '本组轨迹',
+                    zh: '反应轨迹',
                     en: 'Set trail',
                     ja: 'Set trail',
                     de: 'Set trail',
@@ -2071,7 +2071,7 @@ class _ReactionCompletionReportDialog extends StatelessWidget {
               Text(
                 pickUiText(
                   i18n,
-                  zh: '分析',
+                  zh: '复盘',
                   en: 'Analysis',
                   ja: '分析',
                   de: 'Analysis',
@@ -2181,7 +2181,7 @@ class _ReactionCompletionReportDialog extends StatelessWidget {
     if (wrongDirections > 0 || wrongColors > 0) {
       return pickUiText(
         i18n,
-        zh: '错误多半来自判向或配色，下一轮先固定单一模式再提速。',
+        zh: '错误多半来自判向或配色。可以先固定单一模式，练稳后再提速。',
         en: 'Most misses come from direction or color choice. Practice one mode cleanly before speeding up.',
         ja: 'Most misses come from direction or color choice. Practice one mode cleanly before speeding up.',
         de: 'Most misses come from direction or color choice. Practice one mode cleanly before speeding up.',

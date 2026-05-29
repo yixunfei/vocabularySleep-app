@@ -19,7 +19,7 @@ class JoystickHandEyeCoordinationTestPage extends StatelessWidget {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '像手机游戏一样用虚拟摇杆移动准星，点击射击命中随机目标。',
+        zh: '像街机光枪一样——摇杆走位、瞄准开火，看你能连中多少。',
         en: 'Move a crosshair with a virtual joystick like a mobile game, then fire at random targets.',
         ja: 'Move a crosshair with a virtual joystick like a mobile game, then fire at random targets.',
         de: 'Move a crosshair with a virtual joystick like a mobile game, then fire at random targets.',
@@ -31,7 +31,7 @@ class JoystickHandEyeCoordinationTestPage extends StatelessWidget {
       icon: Icons.gamepad_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：开始后拖动摇杆并射击',
+        zh: '摇杆控制准星走位，对准目标开枪',
         en: 'Next: start, steer, and fire',
         ja: 'Next: start, steer, and fire',
         de: 'Next: start, steer, and fire',
@@ -857,7 +857,7 @@ class _JoystickHandEyeCardState extends State<_JoystickHandEyeCard>
     }
     return pickUiText(
       i18n,
-      zh: '移动准星并射击',
+      zh: '拖动摇杆移动准星，对准后点击射击',
       en: 'Move and fire',
       ja: 'Move and fire',
       de: 'Move and fire',
@@ -1013,7 +1013,7 @@ class _JoystickHandEyeCardState extends State<_JoystickHandEyeCard>
           ),
           subtitle: pickUiText(
             i18n,
-            zh: '默认关闭：让目标在刷新后持续移动，增加追踪压力。',
+            zh: '开启后目标在刷新后持续移动，增加追踪压力。',
             en: 'Off by default: keeps targets moving after spawn for harder tracking.',
             ja: 'Off by default: keeps targets moving after spawn for harder tracking.',
             de: 'Off by default: keeps targets moving after spawn for harder tracking.',
@@ -1037,7 +1037,7 @@ class _JoystickHandEyeCardState extends State<_JoystickHandEyeCard>
           ),
           subtitle: pickUiText(
             i18n,
-            zh: '默认关闭：目标附近可随机出现不同颜色的假目标。',
+            zh: '目标附近可随机出现不同颜色的假目标。',
             en: 'Off by default: color-coded false targets may appear around the real target.',
             ja: 'Off by default: color-coded false targets may appear around the real target.',
             de: 'Off by default: color-coded false targets may appear around the real target.',

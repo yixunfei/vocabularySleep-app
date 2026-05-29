@@ -64,13 +64,13 @@ String _typingModeLabel(AppI18n i18n, _TypingMode mode) {
     ),
     _TypingMode.code => pickUiText(
       i18n,
-      zh: '格式',
-      en: 'Format',
-      ja: '形式',
-      de: 'Format',
-      fr: 'Format',
-      es: 'Formato',
-      ru: 'Формат',
+      zh: '代码',
+      en: 'Code',
+      ja: 'Code',
+      de: 'Code',
+      fr: 'Code',
+      es: 'Código',
+      ru: 'Код',
     ),
     _TypingMode.numbers => pickUiText(
       i18n,
@@ -405,7 +405,7 @@ String _typingAdvice(AppI18n i18n, _TypingReport report) {
   if (report.consistencyScore < 65 || report.longPauses >= 2) {
     return pickUiText(
       i18n,
-      zh: '节奏波动偏大。下一轮用短句冲刺，专注连续输入，不急着修饰速度。',
+      zh: '节奏波动偏大。下一轮用短句冲刺，专注连续输入，不急着提速。',
       en: 'Rhythm is uneven. Use a short Sprint round next and focus on continuous flow.',
       ja: 'Rhythm is uneven. Use a short Sprint round next and focus on continuous flow.',
       de: 'Rhythm is uneven. Use a short Sprint round next and focus on continuous flow.',
@@ -417,7 +417,7 @@ String _typingAdvice(AppI18n i18n, _TypingReport report) {
   if (symbolIssues >= math.max(2, report.errorCount * 0.35)) {
     return pickUiText(
       i18n,
-      zh: '符号或数字是主要弱点，建议切换符号或数字模式做专项练习。',
+      zh: '符号或数字是主要弱项，可以切到符号或数字模式单独练。',
       en: 'Symbols or numbers are the main weak point. Switch to Symbols or Numbers.',
       ja: 'Symbols or numbers are the main weak point. Switch to Symbols or Numbers.',
       de: 'Symbols or numbers are the main weak point. Switch to Symbols or Numbers.',

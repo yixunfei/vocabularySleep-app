@@ -75,7 +75,7 @@ class AcousticExperimentTestPage extends StatelessWidget {
       icon: Icons.mic_external_on_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：允许麦克风权限，选择模式后开始采样',
+        zh: '打开麦克风权限，选个模式开始采集声音',
         en: 'Next: allow microphone access, choose a mode, and start sampling',
         ja: '次へ: マイクを許可し、モードを選んで測定を始めます',
         de: 'Weiter: Mikrofon erlauben, Modus wählen und Aufnahme starten',
@@ -573,7 +573,7 @@ class _AuditoryVolumeReadinessCardState
                     Text(
                       pickUiText(
                         i18n,
-                        zh: '声学测试不会在未说明的情况下修改你的系统媒体音量。开启后，本页会先检查当前音量，并在支持的平台上把媒体音量调到建议范围。',
+                        zh: '需要校准时会先检查当前音量；支持的平台会把媒体音量调到建议范围。',
                         en: 'The acoustic test will not change your system media volume without notice. If enabled, this page checks the current volume first, then sets media volume to the recommended range on supported platforms.',
                         ja: 'The acoustic test will not change your system media volume without notice. If enabled, this page checks the current volume first, then sets media volume to the recommended range on supported platforms.',
                         de: 'The acoustic test will not change your system media volume without notice. If enabled, this page checks the current volume first, then sets media volume to the recommended range on supported platforms.',
@@ -2841,7 +2841,7 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
     if (!_captures.containsKey(_MicLabMode.noise)) {
       return pickUiText(
         i18n,
-        zh: '建议下一步：先测噪声仪，建立本机本房间的环境底噪。',
+        zh: '可以先测噪声仪，了解这台设备和这个房间的底噪。',
         en: 'Next: measure the noise meter first to establish the room floor on this device.',
         ja: '次は騒音計で部屋のノイズフロアを測り、この端末の基準を作ります。',
         de: 'Nächster Schritt: zuerst den Geräuschmesser messen, um den Raumpegel auf diesem Gerät zu erfassen.',
@@ -2858,7 +2858,7 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
       if (!_captures.containsKey(mode)) {
         return pickUiText(
           i18n,
-          zh: '建议下一步：完成 ${_modeSpecs[mode]!.label(i18n)} 样本，保持同一距离和音量。',
+          zh: '接着完成 ${_modeSpecs[mode]!.label(i18n)} 样本，尽量保持同一距离和音量。',
           en: 'Next: capture ${_modeSpecs[mode]!.label(i18n)} with the same distance and level.',
           ja: '次は ${_modeSpecs[mode]!.label(i18n)} を同じ距離と音量で測ります。',
           de: 'Nächster Schritt: ${_modeSpecs[mode]!.label(i18n)} mit gleichem Abstand und Pegel aufnehmen.',
@@ -3152,7 +3152,7 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
                   child: Text(
                     pickUiText(
                       i18n,
-                      zh: '说明：手机和电脑麦克风会受设备、距离和环境影响。结果适合练习、对比和观察房间噪声，不能替代专业检查。',
+                      zh: '提醒：手机和电脑麦克风会受设备、距离和环境影响。结果适合练习、对比和观察房间噪声，不能替代专业检查。',
                       en: 'Note: phone and computer microphones vary by device, distance, and room. Use these results for practice, comparison, and room-noise checks; they do not replace a professional check.',
                       ja: '注: スマホやパソコンのマイクは、機種、距離、部屋の影響を受けます。結果は練習や比較、部屋の音の確認に使い、専門的な確認の代わりにはしないでください。',
                       de: 'Hinweis: Mikrofone in Telefonen und Computern reagieren je nach Gerät, Abstand und Raum anders. Die Ergebnisse helfen beim Üben, Vergleichen und Prüfen des Raumgeräuschs, ersetzen aber keine fachliche Kontrolle.',
@@ -3199,7 +3199,7 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
                 Text(
                   pickUiText(
                     i18n,
-                    zh: '复测建议：如果削波高于 1%、音高命中低于 60% 或曲线平滑低于 45%，可以拉远一点或放轻音量再测；如果环境噪声高于 -38 dBFS，先换到更安静的位置。',
+                    zh: '复测时：如果削波高于 1%、音高命中低于 60% 或曲线平滑低于 45%，可以拉远一点或放轻音量；如果环境噪声高于 -38 dBFS，先换到更安静的位置。',
                     en: 'Retest tip: if clipping is above 1%, pitch hit is below 60%, or smoothness is below 45%, move back a little or lower your voice and try again. If ambient noise is above -38 dBFS, move somewhere quieter first.',
                     ja: 'Retest tip: if clipping is above 1%, pitch hit is below 60%, or smoothness is below 45%, move back a little or lower your voice and try again. If ambient noise is above -38 dBFS, move somewhere quieter first.',
                     de: 'Retest tip: if clipping is above 1%, pitch hit is below 60%, or smoothness is below 45%, move back a little or lower your voice and try again. If ambient noise is above -38 dBFS, move somewhere quieter first.',
@@ -4603,7 +4603,7 @@ class _AcousticReportCaptureCard extends StatelessWidget {
     if (capture.clippingRatio > 0.01) {
       return pickUiText(
         i18n,
-        zh: '检测到削波风险，说明输入过响或距离过近；请降低音量或拉远麦克风后重测。',
+        zh: '检测到削波风险，可能是声音太响或距离太近；请降低音量或拉远麦克风后重测。',
         en: 'Clipping risk is present, suggesting the input is too loud or too close. Lower the level or increase mic distance and retest.',
         ja: 'クリッピングのリスクがあり、入力が大きすぎるか近すぎることを示唆しています。レベルを下げるか、マイク距離を増やして再テストします。',
         de: 'Clipping risk is present, suggesting the input is too loud or too close. Lower the level or increase mic distance and retest.',

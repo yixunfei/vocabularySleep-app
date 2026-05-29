@@ -78,7 +78,7 @@ class HumanTestsToolPage extends StatelessWidget {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '一组轻量测试，覆盖反应、记忆、视觉搜索、听觉、声学、打字、手眼协调、切换、计算和注意力。',
+        zh: '一组轻量认知测试，从反应速度、记忆力到注意力，追踪你的日常表现。',
         en: 'A set of quick tests for reaction, memory, visual search, hearing, acoustics, typing, coordination, switching, calculation, and attention.',
         ja: '反応、記憶、視覚探索、聴覚、音響、タイピング、協調、切り替え、計算、注意を気軽に試せます。',
         de: 'Kurze Tests für Reaktion, Gedächtnis, visuelle Suche, Hören, Akustik, Tippen, Koordination, Wechsel, Rechnen und Aufmerksamkeit.',
@@ -396,7 +396,7 @@ class _HumanTestsHubState extends State<_HumanTestsHub> {
               Text(
                 pickUiText(
                   i18n,
-                  zh: '添加快捷工具',
+                  zh: '添加快捷测试',
                   en: 'Add quick tool',
                   ja: 'クイックツールを追加',
                   de: 'Add quick tool',
@@ -412,7 +412,7 @@ class _HumanTestsHubState extends State<_HumanTestsHub> {
               Text(
                 pickUiText(
                   i18n,
-                  zh: '选择常用测试加入顶部入口，也可以长按下方卡片拖到顶部。',
+                  zh: '点一下加入快捷栏，也可以长按卡片拖到上方。',
                   en: 'Choose common tests for the top bar, or drag a card upward into My tools.',
                   ja: 'トップバーの一般的なテストを選択するか、マイツールにカードを上にドラッグします。',
                   de: 'Choose common tests for the top bar, or drag a card upward into My tools.',
@@ -431,7 +431,7 @@ class _HumanTestsHubState extends State<_HumanTestsHub> {
                   child: Text(
                     pickUiText(
                       i18n,
-                      zh: '所有测试都已加入快捷入口。',
+                      zh: '常用测试都在快捷栏里了。',
                       en: 'All tests are already in My tools.',
                       ja: 'すべてのテストは既にマイツールにあります。',
                       de: 'All tests are already in My tools.',
@@ -516,7 +516,7 @@ class _HumanTestsHubState extends State<_HumanTestsHub> {
           ),
           subtitle: pickUiText(
             i18n,
-            zh: '选择一个测试开始。结果只保留在当前页面，方便随手对照。',
+            zh: '选一个想练的项目开始，常用的可以拖到上方，结果方便随手对照。',
             en: 'Choose a test to begin. Results stay on this screen for quick comparison.',
             ja: 'テストを選んで始めます。結果はこの画面に残り、すぐ見比べられます。',
             de: 'Wähle einen Test aus. Die Ergebnisse bleiben zum schnellen Vergleich auf diesem Bildschirm.',
@@ -668,7 +668,7 @@ class _HumanTestQuickDock extends StatelessWidget {
                           Text(
                             pickUiText(
                               i18n,
-                              zh: '我的工具',
+                              zh: '常用测试',
                               en: 'My tools',
                               ja: 'My tools',
                               de: 'My tools',
@@ -683,7 +683,7 @@ class _HumanTestQuickDock extends StatelessWidget {
                           Text(
                             pickUiText(
                               i18n,
-                              zh: '添加或拖入常用测试',
+                              zh: '点加号或拖卡片加入',
                               en: 'Add or drag tests',
                               ja: 'テストの追加またはドラッグ',
                               de: 'Add or drag tests',
@@ -708,7 +708,7 @@ class _HumanTestQuickDock extends StatelessWidget {
                       visualDensity: VisualDensity.compact,
                       tooltip: pickUiText(
                         i18n,
-                        zh: '添加快捷工具',
+                        zh: '添加快捷测试',
                         en: 'Add quick tool',
                         ja: 'クイックツールを追加',
                         de: 'Add quick tool',
@@ -755,7 +755,7 @@ class _HumanTestQuickDock extends StatelessWidget {
                             )
                           : pickUiText(
                               i18n,
-                              zh: '暂无快捷工具',
+                              zh: '还没有常用测试',
                               en: 'No quick tools yet',
                               ja: 'No quick tools yet',
                               de: 'No quick tools yet',
@@ -939,13 +939,13 @@ class _HumanTestReorderGridState extends State<_HumanTestReorderGrid> {
         final double cardHeight;
         if (constraints.maxWidth < 360) {
           spacing = 8.0;
-          cardHeight = 126.0;
+          cardHeight = 118.0;
         } else if (constraints.maxWidth < 500) {
           spacing = 10.0;
-          cardHeight = 126.0;
+          cardHeight = 118.0;
         } else {
           spacing = 12.0;
-          cardHeight = 128.0;
+          cardHeight = 118.0;
         }
         final columns = constraints.maxWidth < 260 ? 1 : 2;
         final cardWidth =
@@ -1063,7 +1063,7 @@ class _HumanTestDraggableEntryCardState
                 widget.onDragEnd(accepted: details.wasAccepted),
             feedback: SizedBox(
               width: width,
-              height: 126,
+              height: 118,
               child: IgnorePointer(
                 child: _HumanTestEntryCard(
                   entry: widget.entry,
@@ -1119,8 +1119,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '经典松手、方向滑动与颜色匹配三种反应模式。',
-        en: 'Classic release, direction-swipe, and color-match reaction modes.',
+        zh: '等信号、辨方向、配颜色，测一测反应有多快。',
+        en: 'Release, direction-swipe, and color-match reaction modes.',
         ja: 'クラシックリリース、方向スワイプ、カラーマッチのリアクションモード。',
         de: 'Classic release, direction-swipe, and color-match reaction modes.',
         fr: 'Modes classiques de libération, de balayage de direction et de réaction par correspondance de couleur.',
@@ -1155,8 +1155,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '支持数字串、彩色数字、多数字目标与计算式，毫秒级停留和随机化可调。',
-        en: 'Train digit strings, colored digits, multi-number targets, and equations with millisecond timing and randomization.',
+        zh: '记数字、看颜色、算心算，停留时间可以细调。',
+        en: 'Digit strings, colored digits, and equation memory with adjustable timing and randomization.',
         ja: 'Train digit strings, colored digits, multi-number targets, and equations with millisecond timing and randomization.',
         de: 'Train digit strings, colored digits, multi-number targets, and equations with millisecond timing and randomization.',
         fr: 'Chaînes à chiffres de train, chiffres colorés, cibles à nombres multiples et équations avec chronométrage et randomisation en millisecondes.',
@@ -1191,8 +1191,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '支持经典、顺序数字与颜色顺序三种模式，并可调切换速度与难度。',
-        en: 'Classic, sequential-number, and color-sequence modes with tunable speed/difficulty.',
+        zh: '记住位置和顺序，遮住以后按记忆点回来。',
+        en: 'Classic, sequential-number, and color-sequence modes with adjustable speed and difficulty.',
         ja: '速度/難易度を調整可能なクラシック、シーケンシャルナンバー、カラーシーケンスモード。',
         de: 'Classic, sequential-number, and color-sequence modes with tunable speed/difficulty.',
         fr: 'Modes classiques, séquentielle et séquentielle avec vitesse/difficulté réglable.',
@@ -1227,8 +1227,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '多语言语料、趣味模式、实时纠错和完成报告，训练速度、准确率与节奏稳定性。',
-        en: 'Multi-language passages, playful modes, live correction, and reports for speed, accuracy, and rhythm.',
+        zh: '换语言、换题材，看看速度和准确率能不能一起稳住。',
+        en: 'Multi-language typing with live correction, stats for speed, accuracy, and rhythm.',
         ja: 'Multi-language passages, playful modes, live correction, and reports for speed, accuracy, and rhythm.',
         de: 'Multi-language passages, playful modes, live correction, and reports for speed, accuracy, and rhythm.',
         fr: 'Passages en plusieurs langues, modes ludiques, correction en direct et rapports pour la vitesse, la précision et le rythme.',
@@ -1253,7 +1253,7 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       shortTitle: pickUiText(
         i18n,
-        zh: '视觉记忆',
+        zh: '视觉',
         en: 'Visual',
         ja: 'Visual',
         de: 'Visual',
@@ -1263,8 +1263,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '支持动态网格、颜色目标、指定颜色与干扰格，难度随等级阶梯提升。',
-        en: 'Dynamic grids, color targets, target-color recall, and distractors with stepped difficulty.',
+        zh: '看一眼网格，再把亮过的位置或目标色点回来。',
+        en: 'Remember color positions in dynamic grids with stepped difficulty.',
         ja: 'Dynamic grids, color targets, target-color recall, and distractors with stepped difficulty.',
         de: 'Dynamic grids, color targets, target-color recall, and distractors with stepped difficulty.',
         fr: 'Grilles dynamiques, cibles de couleur, rappel de couleur cible, et disjoncteurs avec difficulté de marche.',
@@ -1299,8 +1299,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '在密集特征网格中快速找目标，并在双面板对照模式中辨别细微差异。',
-        en: 'Scan dense grids for the target, then compare paired boards to spot a subtle difference.',
+        zh: '在密集格子里找目标，也可以比对两块面板找不同。',
+        en: 'Find targets in dense grids, or spot differences between paired boards.',
         ja: 'Scan dense grids for the target, then compare paired boards to spot a subtle difference.',
         de: 'Scan dense grids for the target, then compare paired boards to spot a subtle difference.',
         fr: 'Scanner des grilles denses pour la cible, puis comparer les planches appariées pour repérer une différence subtile.',
@@ -1335,8 +1335,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '支持经典点靶、降级放大、移动靶和真假干扰，统计命中质量与连击。',
-        en: 'Classic, reveal-grow, moving, and decoy target modes with accuracy and streak feedback.',
+        zh: '点固定靶、追移动靶，避开干扰，练准度和连击。',
+        en: 'Classic, reveal-grow, moving, and decoy target modes with hit and streak tracking.',
         ja: '精度とストリークフィードバックを備えたクラシック、露出成長、移動、おとりターゲットモード。',
         de: 'Classic, reveal-grow, moving, and decoy target modes with accuracy and streak feedback.',
         fr: 'Modes de cible classique, de révélation, de déplacement et de leurre avec précision et retour de stries.',
@@ -1371,8 +1371,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '找不同、混色匹配、提示记录和可读报告，分析色差、色相与差异类型弱项。',
-        en: 'Odd-tile and mixed-match modes with hints and readable reports for hue, delta, and contrast weaknesses.',
+        zh: '找出不一样的色块，或按目标色做混色匹配。',
+        en: 'Odd-tile and mixed-match modes for color vision and contrast analysis.',
         ja: 'Odd-tile and mixed-match modes with hints and readable reports for hue, delta, and contrast weaknesses.',
         de: 'Odd-tile and mixed-match modes with hints and readable reports for hue, delta, and contrast weaknesses.',
         fr: 'Modes od-tile et mixte avec des conseils et des rapports lisibles pour les nuances, le delta et les faiblesses de contraste.',
@@ -1407,8 +1407,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '覆盖频率、灵敏度与声音空间三类听感测试。',
-        en: 'Hearing checks for frequency, sensitivity, and sound space.',
+        zh: '听频率、辨音量、判断方向，适合戴耳机慢慢测。',
+        en: 'Frequency, sensitivity, and spatial hearing tests.',
         ja: 'Hearing checks for frequency, sensitivity, and sound space.',
         de: 'Hearing checks for frequency, sensitivity, and sound space.',
         fr: 'Vérification de la fréquence, de la sensibilité et de l\'espace sonore.',
@@ -1443,8 +1443,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '用麦克风观察低音、高音、持续发声和环境噪声的变化曲线。',
-        en: 'Use the microphone to watch low tone, high tone, vocal sustain, and ambient noise trends.',
+        zh: '用麦克风看看声音频率、发声稳定度和环境噪声。',
+        en: 'Use the microphone to observe tone, vocal sustain, and ambient noise trends.',
         ja: 'Use the microphone to watch low tone, high tone, vocal sustain, and ambient noise trends.',
         de: 'Use the microphone to watch low tone, high tone, vocal sustain, and ambient noise trends.',
         fr: 'Utilisez le microphone pour observer les tendances sonores basses, élevées, vocales et ambiantes.',
@@ -1459,7 +1459,7 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       id: 'stroop',
       title: pickUiText(
         i18n,
-        zh: '斯特鲁普',
+        zh: '斯特鲁普测试',
         en: 'Stroop test',
         ja: 'Stroop test',
         de: 'Stroop test',
@@ -1479,7 +1479,7 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '可配置 3-12 种颜色，判断词义与显示颜色是否一致。',
+        zh: '别被字义带跑，判断文字和颜色是不是一致。',
         en: 'Configure 3-12 colors and judge meaning-vs-ink consistency.',
         ja: '3〜12色を設定し、意味とインクの一貫性を判断します。',
         de: 'Configure 3-12 colors and judge meaning-vs-ink consistency.',
@@ -1515,8 +1515,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '支持分领域词库、随机数字串与空间箭头序列，并可自定义展示高度。',
-        en: 'Domain word banks, random digit strings, and arrow sequences with custom stage height.',
+        zh: '记单词、数字串或箭头序列，看看脑内缓存有多稳。',
+        en: 'Domain word banks, digit strings, and spatial arrow sequence memory.',
         ja: 'Domain word banks, random digit strings, and arrow sequences with custom stage height.',
         de: 'Domain word banks, random digit strings, and arrow sequences with custom stage height.',
         fr: 'Banques de mots de domaine, chaînes à chiffres aléatoires et séquences de flèches avec hauteur de scène personnalisée.',
@@ -1551,7 +1551,7 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '记住灯光顺序并原样复现。',
+        zh: '看灯光亮起的顺序，再照着点一遍。',
         en: 'Remember the light sequence and repeat it.',
         ja: 'Remember the light sequence and repeat it.',
         de: 'Remember the light sequence and repeat it.',
@@ -1587,8 +1587,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '支持单抽、十连、二十连、概率自定义、目标抽取和幸运指数报告。',
-        en: 'Single, 10x, and 20x draws with custom odds, goals, and luck-index reports.',
+        zh: '抽卡、刮票、试概率，轻松看看今天手气。',
+        en: 'Single, 10x, and 20x draws with custom odds and luck-index reports.',
         ja: 'Single, 10x, and 20x draws with custom odds, goals, and luck-index reports.',
         de: 'Single, 10x, and 20x draws with custom odds, goals, and luck-index reports.',
         fr: 'Single, 10x, et 20x dessine avec des cotes personnalisées, des buts, et des rapports de chance-index.',
@@ -1623,8 +1623,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '10 秒内尽可能多次点击按钮。',
-        en: 'Tap as many times as possible in 10 seconds.',
+        zh: '连点、追目标、踩节奏，比拼速度也看准度。',
+        en: 'Classic, target chase, and rhythm hit modes for speed and accuracy.',
         ja: 'Tap as many times as possible in 10 seconds.',
         de: 'Tap as many times as possible in 10 seconds.',
         fr: 'Tapez autant de fois que possible en 10 secondes.',
@@ -1659,8 +1659,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '连续多个时间节点感知：在指定时刻点击对应数字。',
-        en: 'Multi-node time perception: tap matching numbers at planned moments.',
+        zh: '不看表，在目标时刻按下按钮，看看体感时间准不准。',
+        en: 'Tap buttons at planned moments to test continuous time perception.',
         ja: 'Multi-node time perception: tap matching numbers at planned moments.',
         de: 'Multi-node time perception: tap matching numbers at planned moments.',
         fr: 'Perception multi-noeud du temps: tapotez les numéros correspondants aux moments prévus.',
@@ -1695,8 +1695,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '随机目标快速出现、移动并消失，统计成功、漏点、点空和反应延迟。',
-        en: 'Fast random targets appear, move, and vanish while tracking hits, misses, blanks, and latency.',
+        zh: '目标一出现就点，移动和消失都会考验反应。',
+        en: 'Tap random fast-moving targets and track hits, misses, and reaction time.',
         ja: 'Fast random targets appear, move, and vanish while tracking hits, misses, blanks, and latency.',
         de: 'Fast random targets appear, move, and vanish while tracking hits, misses, blanks, and latency.',
         fr: 'Des cibles aléatoires rapides apparaissent, bougent et disparaissent tout en traquant les coups, les ratés, les blancs et la latence.',
@@ -1731,8 +1731,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '沿窄轨迹拖动光标，记录偏离距离、离轨次数和完成时间。',
-        en: 'Drag a small cursor along a narrow track while watching deviation, off-track events, and completion time.',
+        zh: '稳住手指沿窄轨拖到终点，越稳越好。',
+        en: 'Drag a cursor along a narrow track for fine movement control.',
         ja: 'Drag a small cursor along a narrow track while watching deviation, off-track events, and completion time.',
         de: 'Drag a small cursor along a narrow track while watching deviation, off-track events, and completion time.',
         fr: 'Faites glisser un petit curseur le long d\'une piste étroite tout en regardant la déviation, les événements hors piste, et le temps d\'achèvement.',
@@ -1767,8 +1767,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '用虚拟摇杆移动准星并点击射击，支持限时和目标总数两种测试。',
-        en: 'Move a crosshair with a virtual joystick and fire in timed or target-count modes.',
+        zh: '用虚拟摇杆移动准星，对准目标再开火。',
+        en: 'Virtual joystick aim-and-fire in timed or target-count modes.',
         ja: 'Move a crosshair with a virtual joystick and fire in timed or target-count modes.',
         de: 'Move a crosshair with a virtual joystick and fire in timed or target-count modes.',
         fr: 'Déplacez un crosshair avec un joystick virtuel et feu en mode chronométré ou cible-compte.',
@@ -1803,8 +1803,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '在脑裂指令、陷阱、长按和同步窗口中同时调度左右手，挑战节奏、抑制和双手分工。',
-        en: 'Run both hands through split-brain cues, traps, holds, and sync-window strikes for rhythm, inhibition, and coordination.',
+        zh: '左右手同时处理不同指令，练分工也练节奏。',
+        en: 'Both hands respond to separate cues, training independent coordination and rhythm.',
         ja: 'Run both hands through split-brain cues, traps, holds, and sync-window strikes for rhythm, inhibition, and coordination.',
         de: 'Run both hands through split-brain cues, traps, holds, and sync-window strikes for rhythm, inhibition, and coordination.',
         fr: 'Exécutez les deux mains à travers des repères, des pièges, des cales et des frappes de synchronisation pour le rythme, l\'inhibition et la coordination.',
@@ -1839,8 +1839,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '按难度、题型、题量或限时训练口算，完成后查看速度与准确率分析。',
-        en: 'Train arithmetic by difficulty, operation type, fixed rounds, or time limit with speed and accuracy analysis.',
+        zh: '按难度和题型练口算，速度和准确率一起看。',
+        en: 'Train arithmetic by difficulty and operation type with speed and accuracy analysis.',
         ja: 'Train arithmetic by difficulty, operation type, fixed rounds, or time limit with speed and accuracy analysis.',
         de: 'Train arithmetic by difficulty, operation type, fixed rounds, or time limit with speed and accuracy analysis.',
         fr: 'Arithmétique du train par difficulté, type de fonctionnement, rondes fixes ou limite de temps avec analyse de vitesse et de précision.',
@@ -1875,8 +1875,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '字符识别支持字符集、轨迹、干扰与报告；小球数量随等级提升速度和数量。',
-        en: 'Symbol recognition adds sets, paths, distractors, and reports; ball counting raises speed and count by level.',
+        zh: '移动字符一闪而过，小球数量也要看清。',
+        en: 'Fast-moving symbol recognition and ball counting with level-based difficulty.',
         ja: 'Symbol recognition adds sets, paths, distractors, and reports; ball counting raises speed and count by level.',
         de: 'Symbol recognition adds sets, paths, distractors, and reports; ball counting raises speed and count by level.',
         fr: 'La reconnaissance des symboles ajoute des ensembles, des chemins, des disjoncteurs et des rapports; le comptage des boules augmente la vitesse et le nombre par niveau.',
@@ -1911,8 +1911,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '在数字与颜色判断之间来回切换注意力，并统计切换代价。',
-        en: 'Switch between two judgment rules and track switch cost, repeat cost, and response speed.',
+        zh: '数字和颜色规则来回换，看看切换时会慢多少。',
+        en: 'Alternate between digit and color judgments to measure switch cost.',
         ja: 'Switch between two judgment rules and track switch cost, repeat cost, and response speed.',
         de: 'Switch between two judgment rules and track switch cost, repeat cost, and response speed.',
         fr: 'Interchanger entre deux règles de jugement et le coût de l\'interrupteur de voie, le coût de répétition et la vitesse de réponse.',
@@ -1947,8 +1947,8 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '目标点击、低频目标和 n-back 三类任务，统计命中、漏点、误点与反应时。',
-        en: 'Go/no-go, oddball, and n-back tasks with hit, miss, false-alarm, and reaction-time stats.',
+        zh: '只在该出手时出手，练持续专注和抑制冲动。',
+        en: 'Go/no-go, oddball, and n-back tasks with hit, miss, and reaction-time stats.',
         ja: 'Go/no-go, oddball, and n-back tasks with hit, miss, false-alarm, and reaction-time stats.',
         de: 'Go/no-go, oddball, and n-back tasks with hit, miss, false-alarm, and reaction-time stats.',
         fr: 'Go/no-go, impairball, et n-back tâches avec succès, miss, faux bras, et des statistiques de temps de réaction.',

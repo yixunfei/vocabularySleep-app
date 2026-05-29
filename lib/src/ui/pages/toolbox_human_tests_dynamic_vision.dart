@@ -61,7 +61,7 @@ class DynamicVisionTestPage extends StatelessWidget {
       ),
       subtitle: pickUiText(
         i18n,
-        zh: '在移动字符识别与小球数量判断之间切换，训练快速追踪与动态辨识。',
+        zh: '挑战动态视力的极限——一闪而过的字和球，你能看清几个？',
         en: 'Switch between moving-symbol recognition and moving-ball counting for fast tracking practice.',
         ja: 'Switch between moving-symbol recognition and moving-ball counting for fast tracking practice.',
         de: 'Switch between moving-symbol recognition and moving-ball counting for fast tracking practice.',
@@ -73,7 +73,7 @@ class DynamicVisionTestPage extends StatelessWidget {
       icon: Icons.remove_red_eye_rounded,
       status: pickUiText(
         i18n,
-        zh: '下一步：选择模式后开始观察',
+        zh: '快速闪过的文字或数量，看清再答',
         en: 'Next: choose a mode and start observing',
         ja: 'Next: choose a mode and start observing',
         de: 'Next: choose a mode and start observing',
