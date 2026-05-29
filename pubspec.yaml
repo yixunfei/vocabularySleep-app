@@ -123,6 +123,7 @@ flutter:
     - assets/toolbox/colors/
     - assets/toolbox/device_frames/
     - assets/toolbox/games/roulette/
+    - lib/l10n/catalog/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

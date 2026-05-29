@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../i18n/app_i18n_catalog.dart';
 import '../services/app_log_service.dart';
 import 'app_dependencies.dart';
 import 'app_root.dart';
@@ -17,6 +18,7 @@ void runVocabularySleepApp({Future<void> Function()? beforeRunApp}) {
       if (beforeRunApp != null) {
         await beforeRunApp();
       }
+      await AppI18nCatalog.loadFromAssets();
       unawaited(logger.init());
 
       FlutterError.onError = (FlutterErrorDetails details) {

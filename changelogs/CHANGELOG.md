@@ -1,3 +1,32 @@
+## [Unreleased-PLAN_290-I18N-JSON-CATALOG-RUNTIME] - 2026-05-29
+
+### 原因
+- 用户要求将上一轮生成的语言 JSON 表接入项目运行时，替换/接管现有 i18n 文案读取路径，并先完成一次提交。
+
+### 新增
+- `lib/src/i18n/app_i18n_catalog.dart`
+  - 新增集中 JSON 文案表加载器，负责加载 `lib/l10n/catalog/app_texts_*.json` 并提供同步查询能力。
+  - 支持测试注入和重置，便于验证 JSON 优先级与回退行为。
+- `test/app_i18n_catalog_test.dart`
+  - 覆盖 JSON catalog 优先于内置 Map、跨语言回退与占位符替换。
+
+### 修改
+- `pubspec.yaml`
+  - 注册 `lib/l10n/catalog/` 为 Flutter assets，使语言 JSON 表随应用打包。
+- `lib/src/app/app_bootstrap.dart`
+  - 启动阶段预加载 i18n JSON catalog。
+- `lib/src/i18n/app_i18n.dart`
+  - `AppI18n.t(...)` 优先读取 JSON catalog，缺失或未加载时继续回退现有内置 Map 与 humanize 逻辑，保持现有调用点兼容。
+
+### 风险变更
+- 启动时会读取 7 个语言 JSON，资源体积较大；本轮保留内置 Map 回退，后续可优化为按当前语言懒加载。
+- JSON catalog 仅接管 `i18n.t(...)` 的 key 查询；仍内联使用 `pickUiText(...)` 的页面需要后续逐步迁移到 key。
+
+### 验证
+- `dart format lib/src/i18n/app_i18n.dart lib/src/i18n/app_i18n_catalog.dart lib/src/app/app_bootstrap.dart test/app_i18n_catalog_test.dart`
+- `dart analyze lib/src/i18n/app_i18n.dart lib/src/i18n/app_i18n_catalog.dart lib/src/app/app_bootstrap.dart test/app_i18n_catalog_test.dart`
+- `flutter test test/app_i18n_catalog_test.dart --reporter compact`
+
 ## [Unreleased-PLAN_289-I18N-FULL-TEXT-CATALOG-BASELINE] - 2026-05-29
 
 ### 原因
