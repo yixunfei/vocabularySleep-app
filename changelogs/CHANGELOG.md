@@ -1,3 +1,41 @@
+## [Unreleased-PLAN_289-I18N-FULL-TEXT-CATALOG-BASELINE] - 2026-05-29
+
+### 原因
+- 用户要求先将当前分支还原到 `c38e2fee4f8b5df079d0398745fe82e9b6077ff9` 并丢弃所有修改，再在“不修改任何代码”的边界下，对当前项目所有页面与文本内容做 i18n 集中统一化管理，方便后续集中替换和翻译维护。
+
+### 新增
+- `plans/PLAN_289_i18n_full_text_catalog_baseline.md`
+  - 记录本轮只新增 i18n 资源、计划、审计和变更记录，不修改 Dart/Kotlin/Gradle/YAML 运行时代码。
+- `lib/l10n/catalog/app_text_registry.json`
+  - 新增全量机器可读文案总账，覆盖现有 `AppI18n` key、ARB key、`pickUiText` 内联双语文本、`i18n.t(...)` 引用、疑似用户可见 Dart 字面量和平台展示元数据。
+  - 为每条文本保留来源文件、行号、文本类型、建议 key、占位符、缺失语言、已有 key 匹配和迁移状态。
+- `lib/l10n/catalog/app_texts_zh.json`
+- `lib/l10n/catalog/app_texts_en.json`
+- `lib/l10n/catalog/app_texts_ja.json`
+- `lib/l10n/catalog/app_texts_de.json`
+- `lib/l10n/catalog/app_texts_fr.json`
+- `lib/l10n/catalog/app_texts_es.json`
+- `lib/l10n/catalog/app_texts_ru.json`
+  - 新增按语言拆分的平铺文案表，用于集中翻译、批量替换和差异审查；缺失翻译暂按 en/zh/source 回退，真实缺口以 registry 的 `missingLocales` 为准。
+- `lib/l10n/catalog/README.md`
+  - 说明 i18n 文案目录用途、资源边界和后续代码接入方式。
+- `docs/i18n/I18N_TEXT_AUDIT.md`
+  - 新增全量文本梳理报告，记录扫描范围、排除范围、类型统计、页面高密度区域和后续迁移建议。
+- `docs/i18n/I18N_PAGE_TEXT_COVERAGE.md`
+  - 新增页面级覆盖表，按页面/展示层文件列出 `pickUiText`、`i18n.t`、疑似可见 literal 与技术/数据 literal 数量。
+
+### 修改
+- 当前分支已通过 `git reset --hard c38e2fee4f8b5df079d0398745fe82e9b6077ff9` 回退到指定提交，并通过 `git clean -fd`、`git clean -ffd` 清理未跟踪文件和嵌套未跟踪目录。
+
+### 风险变更
+- 本轮没有修改运行时代码，因此新增集中资源不会自动改变应用显示内容；后续需要按页面逐步把 `pickUiText` 与确认后的可见 literal 迁移到 `AppI18n.t` 或统一生成式本地化入口。
+- Dart 字符串候选中包含资源路径、存储 key、SQL、日志和数据文本等非 UI 内容，已在 registry 中标注 `visibility` 与 `status`，后续替换前必须逐项确认。
+- 大型词典、测试断言、第三方依赖和内容数据集未混入 UI 文案迁移范围，作为内容/测试/外部资源单独看待。
+
+### 验证
+- `node` 解析 `lib/l10n/catalog/app_text_registry.json` 与 7 个 `app_texts_*.json` 成功。
+- `git status --short --untracked-files=all` 确认未修改 Dart/Kotlin/Gradle/YAML 代码文件；仅新增 i18n catalog 资源并更新 changelog。
+
 ## [Unreleased-PLAN_288-TOOLBOX-HOME-TIP-COMPACT] - 2026-05-29
 
 ### 原因
