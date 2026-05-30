@@ -30,6 +30,8 @@ class SettingsService {
       'toolbox_auto_adjust_system_volume_enabled_v1';
   static const String bottomNavigationAutoHideEnabledKey =
       'bottom_navigation_auto_hide_enabled_v1';
+  static const String firstRunSetupCompletedKey =
+      'first_run_setup_completed_v1';
 
   final SettingsStoreRepository _store;
 
@@ -143,6 +145,59 @@ class SettingsService {
 
   void saveBottomNavigationAutoHideEnabled(bool enabled) {
     _store.setSetting(bottomNavigationAutoHideEnabledKey, enabled ? '1' : '0');
+  }
+
+  bool loadFirstRunSetupCompleted() {
+    final raw = _store.getSetting(firstRunSetupCompletedKey);
+    if (raw != null && raw.trim().isNotEmpty) {
+      return raw.trim() == '1';
+    }
+    return _hasExistingSetupState();
+  }
+
+  void saveFirstRunSetupCompleted(bool completed) {
+    _store.setSetting(firstRunSetupCompletedKey, completed ? '1' : '0');
+  }
+
+  bool _hasExistingSetupState() {
+    const keys = <String>[
+      'playConfig',
+      'uiLanguage',
+      'startupPage',
+      'focusStartupTab',
+      'studyStartupTab',
+      'weatherEnabled',
+      'startupTodoPromptEnabled',
+      'startupTodoPromptSuppressedDate',
+      'testModeState',
+      'practiceDashboard',
+      'rememberedWords',
+      'playbackProgressByWordbook',
+      'ambientPresets',
+      'sleepProfile',
+      'sleepDailyLogs',
+      'sleepCurrentPlan',
+      'sleepRoutineTemplates',
+      'sleepDashboardState',
+      'sleepProgramProgress',
+      'tomato_focus_seconds',
+      'tomato_break_seconds',
+      'tomato_rounds',
+      'tomato_reminder_config',
+      moduleTogglesKey,
+      toolboxLayoutKey,
+      todoSystemRemindersEnabledKey,
+      toolboxAutoAdjustSystemVolumeEnabledKey,
+      bottomNavigationAutoHideEnabledKey,
+      remotePrewarmCompletedKey,
+    ];
+    for (final key in keys) {
+      final raw = _store.getSetting(key);
+      if (raw != null && raw.trim().isNotEmpty) {
+        return true;
+      }
+    }
+    return false;
   }
 
   String? loadStartupTodoPromptSuppressedDate() {

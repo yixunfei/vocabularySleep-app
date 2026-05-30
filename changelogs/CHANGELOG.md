@@ -1,3 +1,28 @@
+## [Unreleased-PLAN_303-FIRST-RUN-SETUP-GUIDE] - 2026-05-31
+
+### 原因
+- 用户要求先提交当前 i18n 修复，再增加首次安装后的客制化引导，覆盖语言、主题、权限说明、隐私承诺和基于场景的初始功能开关。
+
+### 新增
+- 新增首次安装设置引导弹窗：首次启动后先选择语言、主题，并用场景多选初始化模块开关。
+- 新增 `first_run_setup_completed_v1` 持久化标记，并检测已有核心设置以避免老用户升级后被误判为首次安装。
+- 新增权限说明分区：必须权限为无；麦克风、系统语音识别、相机、位置、日历、通知/闹钟/提醒、文件与媒体、网络访问、音量控制、壁纸设置均说明为按功能触发的可选权限。
+- 新增隐私说明：应用没有自有远端服务、账号系统或遥测，不主动收集、上传或售卖使用信息；联网能力仅在用户主动使用对应功能时访问公开资源或用户配置的外部服务。
+- 新增 `onboarding.first_run.*` 44 个七语言 catalog key，并同步 registry。
+
+### 修改
+- App 启动弹窗顺序调整为首次安装引导优先，完成后再显示每日概览。
+- 当初始场景关闭专注模块时，启动流程不再弹出每日待办概览。
+- 初始场景预设覆盖全部、工作专注清单、实用工具、安全工具、学习、趣味消遣，并保留“更多”模块用于后续调整。
+
+### 验证
+- JSON catalog 解析通过。
+- `node scripts/audit_i18n_placeholders.js` 通过：catalog missing 0，placeholderMismatch 0，Dart 缺参 0。
+- 旧 helper 扫描无命中。
+- catalog Dart 插值表达式扫描无命中。
+- `flutter test test/app_i18n_catalog_test.dart --reporter compact` 通过。
+- `flutter analyze lib/src/ui/app_shell.dart lib/src/ui/widgets/first_run_setup_dialog.dart lib/src/state/app_state.dart lib/src/services/settings_service.dart` 通过。
+
 ## [Unreleased-PLAN_302-I18N-GLOBAL-PLACEHOLDER-AUDIT] - 2026-05-31
 
 ### 原因

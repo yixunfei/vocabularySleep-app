@@ -25,6 +25,7 @@ import 'widgets/app_background.dart';
 import 'widgets/ambient_floating_dock.dart';
 import 'widgets/busy_overlay.dart';
 import 'widgets/focus_lock_overlay.dart';
+import 'widgets/first_run_setup_dialog.dart';
 import 'widgets/mini_player.dart';
 import 'widgets/soothing_mini_player.dart';
 
@@ -50,6 +51,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   bool _navigationBarVisible = true;
   VoidCallback? _scrollLibraryToTop;
   bool _exitDialogVisible = false;
+  bool _firstRunSetupShown = false;
   bool _startupPromptShown = false;
   int? _lastHandledTodoReminderLaunchId;
 
@@ -70,7 +72,7 @@ class _AppShellState extends ConsumerState<AppShell> {
         });
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
-          unawaited(_maybeShowStartupTodoPrompt());
+          unawaited(_showStartupDialogs());
         });
       });
     });
@@ -140,6 +142,9 @@ class _AppShellState extends ConsumerState<AppShell> {
       return;
     }
     final state = ref.read(appStateProvider);
+    if (!state.isModuleEnabled(ModuleIds.focus)) {
+      return;
+    }
     if (!state.shouldShowStartupTodoPromptToday) {
       return;
     }
@@ -215,6 +220,42 @@ class _AppShellState extends ConsumerState<AppShell> {
       return;
     }
     state.suppressStartupTodoPromptForToday();
+  }
+
+  Future<void> _showStartupDialogs() async {
+    await _maybeShowFirstRunSetup();
+    if (!mounted) {
+      return;
+    }
+    await _maybeShowStartupTodoPrompt();
+  }
+
+  Future<void> _maybeShowFirstRunSetup() async {
+    if (_firstRunSetupShown || !mounted) {
+      return;
+    }
+    final state = ref.read(appStateProvider);
+    if (state.firstRunSetupCompleted) {
+      return;
+    }
+
+    _firstRunSetupShown = true;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const FirstRunSetupDialog(),
+    );
+    if (!mounted) {
+      return;
+    }
+    final nextState = ref.read(appStateProvider);
+    final visibleTabs = _resolveVisibleTabs(nextState);
+    final nextIndex = _resolveStartupIndex(nextState, visibleTabs);
+    setState(() {
+      _visibleTabs = visibleTabs;
+      _index = nextIndex;
+      _studyTab = nextState.studyStartupTab;
+    });
   }
 
   void _setIndex(int index) {

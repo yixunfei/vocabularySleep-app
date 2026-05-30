@@ -32,6 +32,7 @@ extension _AppStateStartup on AppState {
       _playback.updateRuntimeConfig(_config);
       _bottomNavigationAutoHideEnabled = _settings
           .loadBottomNavigationAutoHideEnabled();
+      _firstRunSetupCompleted = _settings.loadFirstRunSetupCompleted();
       final languageSetting = _settings.loadUiLanguage();
       if (languageSetting == SettingsService.uiLanguageSystem) {
         _uiLanguageFollowsSystem = true;
@@ -111,6 +112,85 @@ extension _AppStateStartup on AppState {
 
   void _setStudyStartupTabImpl(StudyStartupTab tab) {
     _startupStore.setStudyStartupTab(tab);
+  }
+
+  void _completeFirstRunSetupImpl({
+    required String languageSelection,
+    required String theme,
+    required Set<String> enabledModuleIds,
+  }) {
+    final language = languageSelection.trim();
+    var languageChanged = false;
+    if (language == SettingsService.uiLanguageSystem) {
+      final resolved = AppState._resolveSystemUiLanguage();
+      languageChanged = !_uiLanguageFollowsSystem || _uiLanguage != resolved;
+      _uiLanguageFollowsSystem = true;
+      _uiLanguage = resolved;
+      _settings.saveUiLanguage(SettingsService.uiLanguageSystem);
+    } else {
+      final normalized = AppI18n.normalizeLanguageCode(language);
+      if (normalized.isNotEmpty) {
+        languageChanged = _uiLanguageFollowsSystem || _uiLanguage != normalized;
+        _uiLanguageFollowsSystem = false;
+        _uiLanguage = normalized;
+        _settings.saveUiLanguage(_uiLanguage);
+      }
+    }
+    if (languageChanged) {
+      _refreshLocalizedWordbookNames();
+    }
+
+    final normalizedTheme = AppearanceConfig.supportedThemes.contains(theme)
+        ? theme
+        : AppearanceConfig.defaults.theme;
+    _config = _config.copyWith(
+      appearance: _config.appearance.copyWith(theme: normalizedTheme),
+    );
+    _settings.savePlayConfig(_config);
+    _playback.updateRuntimeConfig(_config);
+
+    final previousState = _moduleToggleState;
+    final normalizedModuleIds = _normalizeFirstRunModuleIds(enabledModuleIds);
+    final nextModules = <String, bool>{
+      for (final descriptor in ModuleRegistry.descriptors)
+        descriptor.id:
+            !descriptor.canDisable ||
+            normalizedModuleIds.contains(descriptor.id),
+    };
+    final nextState = ModuleToggleState(
+      version: ModuleToggleState.currentVersion,
+      modules: nextModules,
+    );
+    _moduleToggleState = nextState;
+    _settings.saveModuleToggleState(nextState);
+    _normalizeStartupPageForModuleToggles();
+    _syncModuleRuntimeTransition(previous: previousState, next: nextState);
+
+    _firstRunSetupCompleted = true;
+    _settings.saveFirstRunSetupCompleted(true);
+    _notifyStateChanged();
+  }
+
+  Set<String> _normalizeFirstRunModuleIds(Set<String> enabledModuleIds) {
+    if (enabledModuleIds.isEmpty) {
+      return ModuleIds.allModules.toSet();
+    }
+    final known = ModuleIds.allModules.toSet();
+    final normalized = enabledModuleIds
+        .map((item) => item.trim())
+        .where(known.contains)
+        .toSet();
+    if (normalized.isEmpty) {
+      normalized.addAll(ModuleIds.allModules);
+    }
+    normalized.add(ModuleIds.more);
+    for (final descriptor in ModuleRegistry.descriptors) {
+      final parentId = descriptor.parentId;
+      if (parentId != null && normalized.contains(descriptor.id)) {
+        normalized.add(parentId);
+      }
+    }
+    return normalized;
   }
 
   void _setModuleEnabledImpl(String moduleId, bool enabled) {

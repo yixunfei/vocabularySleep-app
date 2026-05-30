@@ -209,6 +209,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   Set<String> _rememberedWords = <String>{};
   String _uiLanguage = _resolveSystemUiLanguage();
   bool _uiLanguageFollowsSystem = true;
+  bool _firstRunSetupCompleted = false;
   ModuleToggleState _moduleToggleState = ModuleToggleState.defaults;
   ToolboxLayoutState _toolboxLayoutState = ToolboxLayoutState.defaults;
   bool _bottomNavigationAutoHideEnabled = false;
@@ -306,6 +307,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   SearchMode get searchMode => _searchMode;
   String get uiLanguage => _uiLanguage;
   bool get uiLanguageFollowsSystem => _uiLanguageFollowsSystem;
+  bool get firstRunSetupCompleted => _firstRunSetupCompleted;
   ModuleToggleState get moduleToggleState => _moduleToggleState;
   ToolboxLayoutState get toolboxLayoutState => _toolboxLayoutState;
   AppHomeTab get startupPage => _startupStore.startupPage;
@@ -782,6 +784,16 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   void setUiLanguage(String language) => _setUiLanguageImpl(language);
 
   void setUiLanguageFollowSystem() => _setUiLanguageFollowSystemImpl();
+
+  void completeFirstRunSetup({
+    required String languageSelection,
+    required String theme,
+    required Set<String> enabledModuleIds,
+  }) => _completeFirstRunSetupImpl(
+    languageSelection: languageSelection,
+    theme: theme,
+    enabledModuleIds: enabledModuleIds,
+  );
 
   void setStartupPage(AppHomeTab page) => _setStartupPageImpl(page);
 
