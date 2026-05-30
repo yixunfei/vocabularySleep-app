@@ -282,7 +282,7 @@ class _AmbientSourceRow extends StatelessWidget {
             Text(
               i18n.t(
                 'toolbox.sleep.tools.volume',
-                params: {'value': source.volume.toStringAsFixed(2)},
+                params: {'pct': (source.volume * 100).round()},
               ),
             ),
             Slider(value: source.volume.clamp(0.0, 1.0), onChanged: onVolume),

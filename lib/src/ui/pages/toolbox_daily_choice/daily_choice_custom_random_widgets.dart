@@ -52,6 +52,7 @@ class _CustomRandomHeaderCard extends StatelessWidget {
                     ToolboxInfoPill(
                       text: i18n.t(
                         'inline.plan295.daily_choice.optioncount_options.35f063facbc7',
+                        params: <String, Object?>{'optionCount': optionCount},
                       ),
                       accent: accent,
                       backgroundColor: Colors.white.withValues(alpha: 0.64),
@@ -191,6 +192,7 @@ class _CustomRandomStageHeader extends StatelessWidget {
               ? i18n.t('inline.plan295.daily_choice.ready_to_draw.52bfde9e6b05')
               : i18n.t(
                   'inline.plan295.daily_choice.picked_winner.c2edd09aaca4',
+                  params: <String, Object?>{'winner': winner},
                 ),
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w900,
@@ -214,6 +216,9 @@ class _CustomRandomStageHeader extends StatelessWidget {
               ToolboxInfoPill(
                 text: i18n.t(
                   'inline.plan295.daily_choice.chance_probability_100_tostringasfix.e6be7d710fa0',
+                  params: <String, Object?>{
+                    'probability': (probability! * 100).toStringAsFixed(1),
+                  },
                 ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -334,6 +339,10 @@ class _CustomRandomParameterCard extends StatelessWidget {
               ToolboxInfoPill(
                 text: i18n.t(
                   'inline.plan295.daily_choice.optioncount_active_totalcount_total.1f956fa63ee7',
+                  params: <String, Object?>{
+                    'optionCount': optionCount,
+                    'totalCount': totalCount,
+                  },
                 ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -483,6 +492,9 @@ class _CustomRandomSettingsCard extends StatelessWidget {
             divisions: math.max(1, diceMax - diceMin),
             displayValue: i18n.t(
               'inline.plan295.daily_choice.normalizeddicecount_dice.01bcc648c3ef',
+              params: <String, Object?>{
+                'normalizedDiceCount': normalizedDiceCount,
+              },
             ),
             onChanged: diceMin == diceMax
                 ? null
@@ -510,6 +522,7 @@ class _CustomRandomSettingsCard extends StatelessWidget {
             divisions: 8,
             displayValue: i18n.t(
               'inline.plan295.daily_choice.coincount_coins.a049170d5974',
+              params: <String, Object?>{'coinCount': coinCount},
             ),
             onChanged: (value) {
               var next = value.round();
@@ -600,6 +613,10 @@ class _CustomRandomOptionEditorCard extends StatelessWidget {
                 ToolboxInfoPill(
                   text: i18n.t(
                     'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_widgets.optioncount_totalcount_7b7994',
+                    params: <String, Object?>{
+                      'optionCount': optionCount,
+                      'totalCount': totalCount,
+                    },
                   ),
                   accent: accent,
                   backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -849,10 +866,7 @@ class _LabeledSlider extends StatelessWidget {
 }
 
 class _SelectorTitle extends StatelessWidget {
-  const _SelectorTitle({
-    required this.i18n,
-    required this.titleKey,
-  });
+  const _SelectorTitle({required this.i18n, required this.titleKey});
 
   final AppI18n i18n;
   final String titleKey;
@@ -957,6 +971,7 @@ String _resultModeText(AppI18n i18n, DailyChoiceCustomRandomResult result) {
     ),
     DailyChoiceCustomRandomMode.jointDistribution => i18n.t(
       'inline.plan295.daily_choice.result_roundpicks_length_joint_round.7bdfffffafc9',
+      params: <String, Object?>{'resultRoundPicks': result.roundPicks.length},
     ),
   };
 }

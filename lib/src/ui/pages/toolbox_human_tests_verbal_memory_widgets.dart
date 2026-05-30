@@ -368,12 +368,33 @@ class _VerbalMemoryReportDialog extends StatelessWidget {
     return switch (mode) {
       _VerbalMemoryMode.words => i18n.t(
         'inline.ui.pages.toolbox_human_tests_verbal_memory_widgets.domains_domainssummary_pool_wordpoolsize_base_repeat_wor_7d5c7d',
+        params: <String, Object?>{
+          'domainsSummary': domainsSummary,
+          'wordPoolSize': wordPoolSize,
+          'wordRepeatChance': (wordRepeatChance * 100).round(),
+          'stageHeight': stageHeight,
+        },
       ),
       _VerbalMemoryMode.numbers => i18n.t(
         'inline.ui.pages.toolbox_human_tests_verbal_memory_widgets.base_digits_numberbaselength_max_sequence_maxsequencelen_31452b',
+        params: <String, Object?>{
+          'numberBaseLength': numberBaseLength,
+          'maxSequenceLength': maxSequenceLength,
+          'previewMs': previewMs,
+          'stageHeight': stageHeight,
+        },
       ),
       _VerbalMemoryMode.arrows => i18n.t(
         'inline.ui.pages.toolbox_human_tests_verbal_memory_widgets.direction_set_verbalmemoryarrowsetlabel_i18n_arrowset_ma_fe9b32',
+        params: <String, Object?>{
+          'verbalMemoryArrowSetLabelArrowSet': _verbalMemoryArrowSetLabel(
+            i18n,
+            arrowSet,
+          ),
+          'maxSequenceLength': maxSequenceLength,
+          'previewMs': previewMs,
+          'stageHeight': stageHeight,
+        },
       ),
     };
   }
@@ -470,6 +491,11 @@ class _VerbalMemoryResultRow extends StatelessWidget {
                 Text(
                   i18n.t(
                     'inline.ui.pages.toolbox_human_tests_verbal_memory_widgets.expected_result_expectedlabel_response_result_responsela_f9d347',
+                    params: <String, Object?>{
+                      'resultExpectedLabel': result.expectedLabel,
+                      'resultResponseLabel': result.responseLabel,
+                      'resultDetailLabel': result.detailLabel,
+                    },
                   ),
                   style: Theme.of(
                     context,

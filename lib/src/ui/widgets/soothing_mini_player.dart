@@ -5,7 +5,6 @@ import '../../services/toolbox_soothing_prefs_service.dart';
 import '../pages/toolbox_soothing_music/runtime_store.dart';
 import '../pages/toolbox_soothing_music/track_catalog.dart';
 import '../pages/toolbox_soothing_music_v2_copy.dart';
-import '../ui_copy.dart';
 
 class SoothingMiniPlayer extends StatelessWidget {
   const SoothingMiniPlayer({
@@ -79,6 +78,16 @@ class SoothingMiniPlayer extends StatelessWidget {
                 SoothingMusicRuntimeStore.arrangementSteps.isNotEmpty
             ? i18n.t(
                 'inline.ui.widgets.soothing_mini_player.step_soothingmusicruntimestore_arrangementstepindex_clam_293aa4',
+                params: <String, Object?>{
+                  'clampSoothingMusicRuntimeStoreArrangementSteps':
+                      (SoothingMusicRuntimeStore.arrangementStepIndex + 1)
+                          .clamp(
+                            1,
+                            SoothingMusicRuntimeStore.arrangementSteps.length,
+                          ),
+                  'soothingMusicRuntimeStoreArrangementSteps':
+                      SoothingMusicRuntimeStore.arrangementSteps.length,
+                },
               )
             : null;
 

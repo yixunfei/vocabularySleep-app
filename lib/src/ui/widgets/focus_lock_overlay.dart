@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/tomato_timer.dart';
 import '../../state/app_state_provider.dart';
-import '../ui_copy.dart';
 
 /// Full-screen immersive overlay shown during focus sessions.
 ///
@@ -148,6 +147,10 @@ class _FocusLockOverlayState extends ConsumerState<FocusLockOverlay> {
                     Text(
                       i18n.t(
                         'inline.ui.widgets.focus_lock_overlay.round_timerstate_currentround_config_rounds_51f88a',
+                        params: <String, Object?>{
+                          'timerStateCurrentRound': timerState.currentRound,
+                          'configRounds': config.rounds,
+                        },
                       ),
                       style: const TextStyle(
                         color: Colors.white38,

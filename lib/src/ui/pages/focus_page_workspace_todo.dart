@@ -1653,10 +1653,16 @@ extension _FocusPageWorkspaceTodoExtension on _FocusPageState {
         : dueAt.isBefore(tomorrowStart)
         ? i18n.t(
             'inline.ui.pages.focus_page_workspace_todo.today_formattodotime_dueat_68dd27',
+            params: <String, Object?>{
+              'formatTodoTimeDueAt': _formatTodoTime(dueAt),
+            },
           )
         : _isSameDay(dueAt, tomorrowStart)
         ? i18n.t(
             'inline.ui.pages.focus_page_workspace_todo.tomorrow_formattodotime_dueat_94cdb1',
+            params: <String, Object?>{
+              'formatTodoTimeDueAt': _formatTodoTime(dueAt),
+            },
           )
         : _formatTodoDateTime(dueAt);
     final color = dueAt.isBefore(todayStart)

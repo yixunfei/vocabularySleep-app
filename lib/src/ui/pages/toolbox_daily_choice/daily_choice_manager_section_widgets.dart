@@ -242,6 +242,7 @@ class _ManagerTraitFilterSection extends StatelessWidget {
         Text(
           i18n.t(
             'inline.plan295.daily_choice.filter_by_group_titleen.a79a5a261df1',
+            params: <String, Object?>{'groupTitleEn': group.title(i18n)},
           ),
           style: theme.textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w900,
@@ -546,14 +547,20 @@ String _managerActionErrorText(AppI18n i18n, String actionId, Object error) {
   return switch (actionId) {
     _managerActionInspect => i18n.t(
       'inline.plan295.daily_choice.details_could_not_be_loaded_error.8303d11f304d',
+      params: <String, Object?>{'error': error},
     ),
     _managerActionAdjust => i18n.t(
       'inline.plan295.daily_choice.adjustment_could_not_be_prepared_err.3076513e8c93',
+      params: <String, Object?>{'error': error},
     ),
     _managerActionSaveAs => i18n.t(
       'inline.plan295.daily_choice.copy_could_not_be_prepared_error.9b7fd3a7963c',
+      params: <String, Object?>{'error': error},
     ),
-    _ => i18n.t('inline.plan295.daily_choice.action_failed_error.8f6169f58adf'),
+    _ => i18n.t(
+      'inline.plan295.daily_choice.action_failed_error.8f6169f58adf',
+      params: <String, Object?>{'error': error},
+    ),
   };
 }
 
@@ -766,6 +773,10 @@ Future<Set<String>?> _showWearCollectionPicker({
                           subtitle: Text(
                             i18n.t(
                               'inline.plan295.daily_choice.collection_optionids_length_outfits.fcbd023a8667',
+                              params: <String, Object?>{
+                                'collectionOptionIds':
+                                    collection.optionIds.length,
+                              },
                             ),
                           ),
                         ),
@@ -843,6 +854,10 @@ Future<Set<String>?> _showActivityCollectionPicker({
                           subtitle: Text(
                             i18n.t(
                               'inline.plan295.daily_choice.collection_optionids_length_actions.2327f5e73732',
+                              params: <String, Object?>{
+                                'collectionOptionIds':
+                                    collection.optionIds.length,
+                              },
                             ),
                           ),
                         ),
@@ -918,6 +933,10 @@ Future<Set<String>?> _showEatCollectionPicker({
                           subtitle: Text(
                             i18n.t(
                               'inline.plan295.daily_choice.collection_optionids_length_recipes.44a4a08c31f4',
+                              params: <String, Object?>{
+                                'collectionOptionIds':
+                                    collection.optionIds.length,
+                              },
                             ),
                           ),
                         ),

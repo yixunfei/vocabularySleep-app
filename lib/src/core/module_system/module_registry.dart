@@ -45,11 +45,6 @@ class ModuleRegistry {
       parentId: ModuleIds.toolbox,
     ),
     ModuleDescriptor(
-      id: ModuleIds.toolboxSoundLocator,
-      group: ModuleGroup.toolbox,
-      parentId: ModuleIds.toolbox,
-    ),
-    ModuleDescriptor(
       id: ModuleIds.toolboxFocusBeats,
       group: ModuleGroup.toolbox,
       parentId: ModuleIds.toolbox,

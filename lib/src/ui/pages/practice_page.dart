@@ -9,7 +9,6 @@ import '../../models/word_entry.dart';
 import '../../state/app_state.dart';
 import '../../state/app_state_provider.dart';
 import '../module/module_access.dart';
-import '../ui_copy.dart';
 import '../wordbook_localization.dart';
 import '../widgets/empty_state_view.dart';
 import '../widgets/page_header.dart';
@@ -145,30 +144,51 @@ class PracticePage extends ConsumerWidget {
                 Text(
                   i18n.t(
                     'inline.ui.pages.practice_page.current_word_current_word_bab62a',
+                    params: <String, Object?>{'word': current.word},
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   i18n.t(
                     'inline.ui.pages.practice_page.wordbook_localizedwordbookname_i18n_state_selectedwordbo_6292f6',
+                    params: <String, Object?>{
+                      'wordbook': localizedWordbookName(
+                        i18n,
+                        state.selectedWordbook,
+                      ),
+                    },
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   i18n.t(
                     'inline.ui.pages.practice_page.scope_scopedwords_length_task_taskwords_length_favorite_7e91f1',
+                    params: <String, Object?>{
+                      'scope': scopedWords.length,
+                      'task': taskWords.length,
+                      'favorite': favoriteWords.length,
+                    },
                   ),
                 ),
                 const SizedBox(height: 10),
                 Text(
                   i18n.t(
                     'inline.ui.pages.practice_page.today_state_practicetodaysessions_sessions_state_practic_0b1062',
+                    params: <String, Object?>{
+                      'sessions': state.practiceTodaySessions,
+                      'reviewed': state.practiceTodayReviewed,
+                      'accuracy': todayAccuracy,
+                    },
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   i18n.t(
                     'inline.ui.pages.practice_page.all_time_state_practicetotalsessions_sessions_totalaccur_e9fd7e',
+                    params: <String, Object?>{
+                      'sessions': state.practiceTotalSessions,
+                      'accuracy': totalAccuracy,
+                    },
                   ),
                 ),
                 if (state.practiceLastSessionTitle.trim().isNotEmpty) ...[
@@ -176,6 +196,9 @@ class PracticePage extends ConsumerWidget {
                   Text(
                     i18n.t(
                       'inline.ui.pages.practice_page.last_session_state_practicelastsessiontitle_0cbec4',
+                      params: <String, Object?>{
+                        'title': state.practiceLastSessionTitle,
+                      },
                     ),
                   ),
                 ],
@@ -268,6 +291,9 @@ class PracticePage extends ConsumerWidget {
                           ),
                           subtitle: i18n.t(
                             'inline.ui.pages.practice_page.weakwords_length_weak_words_26454f',
+                            params: <String, Object?>{
+                              'weakWords': weakWords.length,
+                            },
                           ),
                           words: weakWords,
                         ),
@@ -287,6 +313,9 @@ class PracticePage extends ConsumerWidget {
                           ),
                           subtitle: i18n.t(
                             'inline.ui.pages.practice_page.scopedwords_length_words_33fa4f',
+                            params: <String, Object?>{
+                              'scope': scopedWords.length,
+                            },
                           ),
                           words: scopedWords,
                           shuffle: false,
@@ -314,6 +343,9 @@ class PracticePage extends ConsumerWidget {
                           ),
                           subtitle: i18n.t(
                             'inline.ui.pages.practice_page.wordbookwords_length_words_320caa',
+                            params: <String, Object?>{
+                              'wordbookWords': wordbookWords.length,
+                            },
                           ),
                           words: wordbookWords,
                           shuffle: true,
@@ -415,6 +447,9 @@ class PracticePage extends ConsumerWidget {
                               ),
                               subtitle: i18n.t(
                                 'inline.ui.pages.practice_page.warmupwords_length_words_494b66',
+                                params: <String, Object?>{
+                                  'warmupWords': warmupWords.length,
+                                },
                               ),
                               words: scopedWords,
                               shuffle: false,
@@ -444,6 +479,9 @@ class PracticePage extends ConsumerWidget {
                               ),
                               subtitle: i18n.t(
                                 'inline.ui.pages.practice_page.scopedwords_length_words_33fa4f',
+                                params: <String, Object?>{
+                                  'scope': scopedWords.length,
+                                },
                               ),
                               words: scopedWords,
                               shuffle: true,
@@ -522,6 +560,7 @@ class PracticePage extends ConsumerWidget {
                 ),
                 subtitle: i18n.t(
                   'inline.ui.pages.practice_page.scopedwords_length_words_33fa4f',
+                  params: <String, Object?>{'scope': scopedWords.length},
                 ),
                 words: scopedWords,
                 shuffle: false,
@@ -551,6 +590,9 @@ class PracticePage extends ConsumerWidget {
               ),
               subtitle: i18n.t(
                 'inline.ui.pages.practice_page.wordbookwords_length_words_320caa',
+                params: <String, Object?>{
+                  'wordbookWords': wordbookWords.length,
+                },
               ),
               words: wordbookWords,
               shuffle: true,
@@ -573,6 +615,7 @@ class PracticePage extends ConsumerWidget {
               ),
               subtitle: i18n.t(
                 'inline.ui.pages.practice_page.taskwords_length_task_words_7d8908',
+                params: <String, Object?>{'task': taskWords.length},
               ),
               words: taskWords,
             ),
@@ -594,6 +637,7 @@ class PracticePage extends ConsumerWidget {
               ),
               subtitle: i18n.t(
                 'inline.ui.pages.practice_page.favoritewords_length_favorite_words_474f92',
+                params: <String, Object?>{'favorite': favoriteWords.length},
               ),
               words: favoriteWords,
             ),
@@ -616,6 +660,7 @@ class PracticePage extends ConsumerWidget {
                 ),
                 subtitle: i18n.t(
                   'inline.ui.pages.practice_page.weakwords_length_weak_words_26454f',
+                  params: <String, Object?>{'weakWords': weakWords.length},
                 ),
                 words: weakWords,
               ),

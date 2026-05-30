@@ -106,6 +106,7 @@ extension _PlayPageNavigation on _PlayPageState {
       title: i18n.t('inline.ui.pages.play_page_navigation.exact_jump_8b53eb'),
       subtitle: i18n.t(
         'inline.ui.pages.play_page_navigation.enter_a_position_between_1_and_visiblewords_length_ed5abd',
+        params: <String, Object?>{'count': visibleWords.length},
       ),
       hintText: i18n.t('inline.ui.pages.play_page_navigation.e_g_256_226af0'),
       confirmText: i18n.t('inline.ui.pages.play_page_navigation.jump_1534a4'),
@@ -120,6 +121,7 @@ extension _PlayPageNavigation on _PlayPageState {
           content: Text(
             i18n.t(
               'inline.ui.pages.play_page_navigation.enter_a_number_between_1_and_visiblewords_length_01bc91',
+              params: <String, Object?>{'count': visibleWords.length},
             ),
           ),
         ),
@@ -175,6 +177,7 @@ extension _PlayPageNavigation on _PlayPageState {
                     subtitle: Text(
                       i18n.t(
                         'inline.ui.pages.library_page.book_wordcount_words_d7e63b',
+                        params: <String, Object?>{'count': book.wordCount},
                       ),
                     ),
                     onTap: () async {
@@ -213,6 +216,9 @@ extension _PlayPageNavigation on _PlayPageState {
       title: i18n.t('inline.ui.pages.library_page.initialize_wordbook_c30e1d'),
       message: i18n.t(
         'inline.ui.pages.library_page.localizedwordbookname_i18n_book_may_be_large_the_first_l_3b46f5',
+        params: <String, Object?>{
+          'wordbook': localizedWordbookName(i18n, book),
+        },
       ),
       confirmText: i18n.t('toolbox.breathing.continue_select'),
     );

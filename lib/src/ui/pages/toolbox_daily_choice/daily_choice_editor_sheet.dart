@@ -222,24 +222,28 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
   String _editorTitleKey() {
     if (widget.forceNewId) {
       return _editorModuleKey(
-        eatKey: 'inline.plan295.daily_choice.save_as_personal_recipe.ff812c8062d5',
+        eatKey:
+            'inline.plan295.daily_choice.save_as_personal_recipe.ff812c8062d5',
         wearKey: 'inline.plan295.daily_choice.save_to_my_wardrobe.8d5c904e4187',
         activityKey:
             'inline.plan295.daily_choice.save_to_action_set.40bdbc29f8f2',
-        defaultKey: 'inline.plan295.daily_choice.save_as_custom_item.277464962f22',
+        defaultKey:
+            'inline.plan295.daily_choice.save_as_custom_item.277464962f22',
       );
     }
     if (widget.option == null) {
       return _editorModuleKey(
         eatKey: 'inline.plan295.daily_choice.add_recipe.342dfa0d76b3',
-        wearKey: 'inline.plan295.daily_choice.add_my_wardrobe_outfit.ab5bbfdc5025',
+        wearKey:
+            'inline.plan295.daily_choice.add_my_wardrobe_outfit.ab5bbfdc5025',
         activityKey: 'inline.plan295.daily_choice.add_action.0a2571423038',
         defaultKey: 'inline.plan295.daily_choice.add_custom_item.4c4b95788fcf',
       );
     }
     return _editorModuleKey(
       eatKey: 'toolbox.daily_choice.editor.title.edit_recipe',
-      wearKey: 'inline.plan295.daily_choice.edit_my_wardrobe_outfit.28310bb9b709',
+      wearKey:
+          'inline.plan295.daily_choice.edit_my_wardrobe_outfit.28310bb9b709',
       activityKey: 'inline.plan295.daily_choice.edit_action.c16d134338f5',
       defaultKey: 'inline.plan295.daily_choice.edit_custom_item.ac74bed50d6e',
     );
@@ -274,7 +278,8 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
 
   String _detailsFieldKey() {
     return _editorModuleKey(
-      eatKey: 'inline.plan295.daily_choice.details_when_to_make_it.0a812be3929d',
+      eatKey:
+          'inline.plan295.daily_choice.details_when_to_make_it.0a812be3929d',
       wearKey: 'inline.plan295.daily_choice.why_it_works.b3f19d146bcd',
       activityKey: 'inline.plan295.daily_choice.why_and_boundary.9761657c643f',
       defaultKey: 'inline.plan295.daily_choice.details.7bbe5d15d198',
@@ -283,17 +288,20 @@ class _DailyChoiceEditorSheetState extends State<DailyChoiceEditorSheet> {
 
   String _materialsFieldKey() {
     return _editorModuleKey(
-      eatKey: 'inline.plan295.daily_choice.ingredients_one_per_line.bc6c5d98c803',
+      eatKey:
+          'inline.plan295.daily_choice.ingredients_one_per_line.bc6c5d98c803',
       wearKey: 'inline.plan295.daily_choice.pieces_components.b75e0638b6d0',
       activityKey: 'inline.plan295.daily_choice.start_conditions.16f92dd1e176',
-      defaultKey: 'inline.plan295.daily_choice.materials_conditions.feb2d8e31e93',
+      defaultKey:
+          'inline.plan295.daily_choice.materials_conditions.feb2d8e31e93',
     );
   }
 
   String _stepsFieldKey() {
     return _editorModuleKey(
       eatKey: 'inline.plan295.daily_choice.recipe_steps.052c8348637f',
-      wearKey: 'inline.plan295.daily_choice.outfit_steps_checklist.d63bb3dc95ee',
+      wearKey:
+          'inline.plan295.daily_choice.outfit_steps_checklist.d63bb3dc95ee',
       activityKey: 'inline.plan295.daily_choice.action_steps.202c74b134b7',
       defaultKey: 'inline.plan295.daily_choice.steps.a55041a8ded6',
     );
@@ -1084,6 +1092,9 @@ class _EditorEatCollectionSection extends StatelessWidget {
               subtitle: Text(
                 i18n.t(
                   'inline.plan295.daily_choice.collection_optionids_length_recipes.44a4a08c31f4',
+                  params: <String, Object?>{
+                    'collectionOptionIds': collection.optionIds.length,
+                  },
                 ),
               ),
             ),
@@ -1155,6 +1166,9 @@ class _EditorWearCollectionSection extends StatelessWidget {
               subtitle: Text(
                 i18n.t(
                   'inline.plan295.daily_choice.collection_optionids_length_outfits.fcbd023a8667',
+                  params: <String, Object?>{
+                    'collectionOptionIds': collection.optionIds.length,
+                  },
                 ),
               ),
             ),
@@ -1226,6 +1240,9 @@ class _EditorActivityCollectionSection extends StatelessWidget {
               subtitle: Text(
                 i18n.t(
                   'inline.plan295.daily_choice.collection_optionids_length_actions.2327f5e73732',
+                  params: <String, Object?>{
+                    'collectionOptionIds': collection.optionIds.length,
+                  },
                 ),
               ),
             ),

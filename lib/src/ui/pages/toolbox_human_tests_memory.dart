@@ -185,6 +185,10 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
     final sequenceLabel = _targetStepIndexes.map((step) => 'x$step').join(', ');
     return i18n.t(
       'inline.ui.pages.toolbox_human_tests_memory.target_color_colorname_tap_sequencelabel_in_order_624267',
+      params: <String, Object?>{
+        'colorName': colorName,
+        'sequenceLabel': sequenceLabel,
+      },
     );
   }
 
@@ -193,6 +197,9 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
       return _mode == _ChimpMode.colorSequence
           ? i18n.t(
               'inline.ui.pages.toolbox_human_tests_memory.showing_sequence_colorsequencesummary_i18n_ce5324',
+              params: <String, Object?>{
+                'colorSequenceSummary': _colorSequenceSummary(i18n),
+              },
             )
           : i18n.t(
               'inline.ui.pages.toolbox_human_tests_memory.playing_in_order_memorize_positions_1aa220',

@@ -4708,6 +4708,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             ? AppI18n(Localizations.localeOf(context).languageCode).t(
                 'inline.plan295.crypto.remaining_successful_reveals_result.c34efd72ab27',
                 params: <String, Object?>{
+                  'resultRemainingSuccessfulReveals':
+                      result.remainingSuccessfulReveals,
                   'result.remainingSuccessfulReveals':
                       result.remainingSuccessfulReveals,
                 },
@@ -4715,6 +4717,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             : AppI18n(Localizations.localeOf(context).languageCode).t(
                 'inline.plan295.crypto.remaining_successful_reveals_result.d4becbbdd62c',
                 params: <String, Object?>{
+                  'resultRemainingSuccessfulReveals':
+                      result.remainingSuccessfulReveals,
                   'result.remainingSuccessfulReveals':
                       result.remainingSuccessfulReveals,
                 },

@@ -127,6 +127,10 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
           Text(
             i18n.t(
               'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.done_symbolcorrect_symbolroundcount_f9f171',
+              params: <String, Object?>{
+                'symbolCorrect': symbolCorrect,
+                'symbolRoundCount': symbolRoundCount,
+              },
             ),
             style: Theme.of(
               context,

@@ -289,6 +289,10 @@ class _DynamicSymbolReportDialog extends StatelessWidget {
                       label: Text(
                         i18n.t(
                           'inline.ui.pages.toolbox_human_tests_dynamic_vision_parts.speed_records_last_speed_tostringasfixed_1_x_a67a1a',
+                          params: <String, Object?>{
+                            'recordsLastSpeed': records.last.speed
+                                .toStringAsFixed(1),
+                          },
                         ),
                       ),
                     ),

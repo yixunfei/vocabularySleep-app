@@ -8,7 +8,6 @@ import '../../models/word_memory_progress.dart';
 import '../../state/app_state.dart';
 import '../../state/app_state_provider.dart';
 import '../module/module_access.dart';
-import '../ui_copy.dart';
 import '../widgets/empty_state_view.dart';
 import '../widgets/page_header.dart';
 import '../widgets/word_row.dart';
@@ -88,6 +87,7 @@ class _ReviewSessionPageState extends ConsumerState<ReviewSessionPage> {
                 widget.subtitle ??
                 i18n.t(
                   'inline.ui.pages.review_session_page.widget_words_length_words_preview_a_subset_before_starti_cd41a7',
+                  params: <String, Object?>{'words': widget.words.length},
                 ),
           ),
           const SizedBox(height: 16),
@@ -218,6 +218,9 @@ class _ReviewSessionPageState extends ConsumerState<ReviewSessionPage> {
               child: Text(
                 i18n.t(
                   'inline.ui.pages.review_session_page.showing_first_previewwords_length_words_the_session_cove_b1d4f3',
+                  params: <String, Object?>{
+                    'previewWords': previewWords.length,
+                  },
                 ),
                 style: Theme.of(context).textTheme.bodySmall,
               ),

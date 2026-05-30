@@ -390,7 +390,10 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         'inline.ui.pages.library_page.built_in_wordbook_loads_on_first_open_9967f7',
       );
     }
-    return i18n.t('inline.ui.pages.library_page.visiblecount_results_fcc200');
+    return i18n.t(
+      'inline.ui.pages.library_page.visiblecount_results_fcc200',
+      params: <String, Object?>{'count': visibleCount},
+    );
   }
 
   String _wordbookSheetSubtitle(AppI18n i18n, Wordbook book) {
@@ -401,7 +404,10 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         'inline.ui.pages.library_page.built_in_wordbook_loads_on_first_tap_93bdfc',
       );
     }
-    return i18n.t('inline.ui.pages.library_page.book_wordcount_words_d7e63b');
+    return i18n.t(
+      'inline.ui.pages.library_page.book_wordcount_words_d7e63b',
+      params: <String, Object?>{'count': book.wordCount},
+    );
   }
 
   @override
@@ -421,7 +427,6 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     }
 
     final totalWords = state.visibleWordCount;
-    final words = _WordCountProxy(totalWords);
     _syncPaginationState(state, totalWords);
     final displayedWords = totalWords <= 0
         ? const <WordEntry>[]
@@ -664,6 +669,10 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                   child: Text(
                     i18n.t(
                       'inline.ui.pages.library_page.loaded_displayedwords_length_totalwords_keep_scrolling_t_22d8a6',
+                      params: <String, Object?>{
+                        'loaded': displayedWords.length,
+                        'total': totalWords,
+                      },
                     ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
@@ -787,6 +796,9 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       title: i18n.t('inline.ui.pages.library_page.initialize_wordbook_c30e1d'),
       message: i18n.t(
         'inline.ui.pages.library_page.localizedwordbookname_i18n_book_may_be_large_the_first_l_3b46f5',
+        params: <String, Object?>{
+          'wordbook': localizedWordbookName(i18n, book),
+        },
       ),
       confirmText: i18n.t('toolbox.breathing.continue_select'),
     );
@@ -802,12 +814,6 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       ),
     );
   }
-}
-
-class _WordCountProxy {
-  const _WordCountProxy(this.length);
-
-  final int length;
 }
 
 class _MeasuredSize extends StatefulWidget {

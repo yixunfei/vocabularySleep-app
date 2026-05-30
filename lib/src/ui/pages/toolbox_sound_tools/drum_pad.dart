@@ -193,8 +193,8 @@ class _DrumPadToolState extends State<_DrumPadTool>
   double _masterVolume = 0.92;
   int _bpm = _patternTemplates.first.bpm;
   int _currentStep = -1;
-  int _barsPlayed = 0;
   int _hits = 0;
+  int _barsPlayed = 0;
   bool _transportRunning = false;
   bool _metronomeEnabled = true;
   bool _stageLightsEnabled = true;
@@ -510,6 +510,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
           Text(
             i18n.t(
               'inline.ui.pages.toolbox_sound_tools.drum_pad.tempo_bpm_bpm_0cbf79',
+              params: <String, Object?>{'bpm': _bpm},
             ),
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
               color: Colors.white,
@@ -924,6 +925,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
           Text(
             i18n.t(
               'inline.ui.pages.toolbox_sound_tools.drum_pad.tempo_bpm_bpm_0cbf79',
+              params: <String, Object?>{'bpm': _bpm},
             ),
             style: theme.textTheme.labelLarge?.copyWith(
               color: widget.fullScreen ? Colors.white : null,
@@ -1034,6 +1036,9 @@ class _DrumPadToolState extends State<_DrumPadTool>
                       Text(
                         i18n.t(
                           'inline.ui.pages.toolbox_sound_tools.drum_pad.beat_headers_columnindex_9e1610',
+                          params: <String, Object?>{
+                            'headersColumnIndex': columnIndex + 1,
+                          },
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1243,6 +1248,9 @@ class _DrumPadToolState extends State<_DrumPadTool>
                         label: Text(
                           i18n.t(
                             'inline.ui.pages.toolbox_sound_tools.drum_pad.bars_played_barsplayed_195774',
+                            params: <String, Object?>{
+                              'barsPlayed': _barsPlayed,
+                            },
                           ),
                         ),
                       ),
@@ -1250,6 +1258,9 @@ class _DrumPadToolState extends State<_DrumPadTool>
                         label: Text(
                           i18n.t(
                             'inline.ui.pages.toolbox_sound_tools.drum_pad.active_steps_activestepcount_6b5ee7',
+                            params: <String, Object?>{
+                              'activeStepCount': _activeStepCount,
+                            },
                           ),
                         ),
                       ),
@@ -1257,6 +1268,9 @@ class _DrumPadToolState extends State<_DrumPadTool>
                         label: Text(
                           i18n.t(
                             'inline.ui.pages.toolbox_sound_tools.drum_pad.master_mix_mastervolume_100_round_6a552f',
+                            params: <String, Object?>{
+                              'masterVolume': (_masterVolume * 100).round(),
+                            },
                           ),
                         ),
                       ),
@@ -1309,6 +1323,9 @@ class _DrumPadToolState extends State<_DrumPadTool>
         Text(
           i18n.t(
             'inline.ui.pages.toolbox_sound_tools.drum_pad.master_mix_mastervolume_100_round_6a552f',
+            params: <String, Object?>{
+              'masterVolume': (_masterVolume * 100).round(),
+            },
           ),
           style: theme.textTheme.labelLarge,
         ),
@@ -1484,6 +1501,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
           Text(
             i18n.t(
               'inline.ui.pages.toolbox_sound_tools.drum_pad.drive_drive_100_round_59698e',
+              params: <String, Object?>{'drive': (_drive * 100).round()},
             ),
             style: theme.textTheme.labelLarge,
           ),
@@ -1500,6 +1518,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
           Text(
             i18n.t(
               'inline.ui.pages.toolbox_sound_tools.drum_pad.tone_tone_100_round_da4602',
+              params: <String, Object?>{'tone': (_tone * 100).round()},
             ),
             style: theme.textTheme.labelLarge,
           ),
@@ -1518,6 +1537,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
           Text(
             i18n.t(
               'inline.ui.pages.toolbox_sound_tools.drum_pad.tail_tail_100_round_e574e4',
+              params: <String, Object?>{'tail': (_tail * 100).round()},
             ),
             style: theme.textTheme.labelLarge,
           ),
@@ -1615,6 +1635,9 @@ class _DrumPadToolState extends State<_DrumPadTool>
                 label: Text(
                   i18n.t(
                     'inline.ui.pages.toolbox_sound_tools.drum_pad.active_steps_activestepcount_6b5ee7',
+                    params: <String, Object?>{
+                      'activeStepCount': _activeStepCount,
+                    },
                   ),
                 ),
               ),
@@ -1661,6 +1684,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
                 label: Text(
                   i18n.t(
                     'inline.ui.pages.toolbox_sound_tools.drum_pad.bars_played_barsplayed_195774',
+                    params: <String, Object?>{'barsPlayed': _barsPlayed},
                   ),
                 ),
               ),
@@ -1804,7 +1828,11 @@ class _DrumPadToolState extends State<_DrumPadTool>
                 onPressed: () => Navigator.of(context).maybePop(),
                 style: overlayButtonStyle,
                 icon: const Icon(Icons.arrow_back_rounded),
-                label: Text(i18n.t('toolbox.sound.locator.cue_label_back')),
+                label: Text(
+                  i18n.t(
+                    'inline.ui.pages.toolbox_sound_tools.drum_pad.back_add231',
+                  ),
+                ),
               ),
               const Spacer(),
               FilledButton.tonalIcon(
@@ -1843,6 +1871,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
               _buildImmersiveStatusPill(
                 i18n.t(
                   'inline.ui.pages.toolbox_sound_tools.drum_pad.hits_hits_6dd70f',
+                  params: <String, Object?>{'hits': _hits},
                 ),
                 icon: Icons.flash_on_rounded,
                 iconColor: const Color(0xFFFDE68A),
@@ -1922,6 +1951,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
               _buildImmersiveStatusPill(
                 i18n.t(
                   'inline.ui.pages.toolbox_sound_tools.drum_pad.barsplayed_bars_699b76',
+                  params: <String, Object?>{'barsPlayed': _barsPlayed},
                 ),
                 icon: Icons.repeat_rounded,
                 iconColor: const Color(0xFF86EFAC),
@@ -1929,6 +1959,9 @@ class _DrumPadToolState extends State<_DrumPadTool>
               _buildImmersiveStatusPill(
                 i18n.t(
                   'inline.ui.pages.toolbox_sound_tools.drum_pad.mix_mastervolume_100_round_8d5f68',
+                  params: <String, Object?>{
+                    'masterVolume': (_masterVolume * 100).round(),
+                  },
                 ),
                 icon: Icons.tune_rounded,
                 iconColor: const Color(0xFFC4B5FD),
@@ -2343,6 +2376,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
             icon: Icons.flash_on_rounded,
             label: i18n.t(
               'inline.ui.pages.toolbox_sound_tools.drum_pad.hits_hits_6dd70f',
+              params: <String, Object?>{'hits': _hits},
             ),
             color: const Color(0xFFFDE68A),
           ),
@@ -2680,6 +2714,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
                 icon: Icons.repeat_rounded,
                 label: i18n.t(
                   'inline.ui.pages.toolbox_sound_tools.drum_pad.bars_barsplayed_c1618d',
+                  params: <String, Object?>{'barsPlayed': _barsPlayed},
                 ),
                 color: const Color(0xFF86EFAC),
               ),
@@ -2687,6 +2722,9 @@ class _DrumPadToolState extends State<_DrumPadTool>
                 icon: Icons.tune_rounded,
                 label: i18n.t(
                   'inline.ui.pages.toolbox_sound_tools.drum_pad.mix_mastervolume_100_round_8d5f68',
+                  params: <String, Object?>{
+                    'masterVolume': (_masterVolume * 100).round(),
+                  },
                 ),
                 color: const Color(0xFFC4B5FD),
               ),

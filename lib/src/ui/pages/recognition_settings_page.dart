@@ -254,6 +254,10 @@ class _RecognitionSettingsPageState
       ),
       message: i18n.t(
         'inline.ui.pages.recognition_settings_page.asrproviderlabel_i18n_provider_is_about_sizetext_downloa_08cd77',
+        params: <String, Object?>{
+          'asrProviderLabelProvider': asrProviderLabel(i18n, provider),
+          'sizeText': sizeText,
+        },
       ),
       confirmText: i18n.t('download'),
     );
@@ -270,6 +274,10 @@ class _RecognitionSettingsPageState
       ),
       message: i18n.t(
         'inline.ui.pages.recognition_settings_page.scoringmethodlabel_i18n_method_is_about_sizetext_downloa_ee00e0',
+        params: <String, Object?>{
+          'scoringMethodLabelMethod': _scoringMethodLabel(i18n, method),
+          'sizeText': sizeText,
+        },
       ),
       confirmText: i18n.t('download'),
     );
@@ -305,6 +313,9 @@ class _RecognitionSettingsPageState
       ),
       message: i18n.t(
         'inline.ui.pages.recognition_settings_page.api_recognition_is_recommended_for_better_accuracy_and_t_61fce8',
+        params: <String, Object?>{
+          'asrProviderLabelProvider': asrProviderLabel(i18n, provider),
+        },
       ),
       confirmText: i18n.t(
         'inline.ui.pages.recognition_settings_page.switch_anyway_16961d',

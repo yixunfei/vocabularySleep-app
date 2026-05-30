@@ -546,7 +546,12 @@ class _TriangleToolState extends State<_TriangleTool> {
               .toList(growable: false),
         ),
         const SizedBox(height: 14),
-        Text(i18n.t('toolbox.sound.triangle.ring')),
+        Text(
+          i18n.t(
+            'toolbox.sound.triangle.ring',
+            params: <String, Object?>{'value': (_ring * 100).round()},
+          ),
+        ),
         Slider(
           value: _ring,
           min: 0.2,
@@ -563,7 +568,12 @@ class _TriangleToolState extends State<_TriangleTool> {
             refreshSheet();
           },
         ),
-        Text(i18n.t('toolbox.sound.triangle.strike')),
+        Text(
+          i18n.t(
+            'toolbox.sound.triangle.strike',
+            params: <String, Object?>{'value': (_strikePoint * 100).round()},
+          ),
+        ),
         Slider(
           value: _strikePoint,
           min: 0.1,
@@ -582,7 +592,12 @@ class _TriangleToolState extends State<_TriangleTool> {
             refreshSheet();
           },
         ),
-        Text(i18n.t('toolbox.sound.triangle.damping')),
+        Text(
+          i18n.t(
+            'toolbox.sound.triangle.damping',
+            params: <String, Object?>{'value': (_damping * 100).round()},
+          ),
+        ),
         Slider(
           value: _damping,
           min: 0.0,
@@ -908,7 +923,12 @@ class _TriangleToolState extends State<_TriangleTool> {
                 .toList(growable: false),
           ),
           const SizedBox(height: 10),
-          Text(i18n.t('toolbox.sound.triangle.ring')),
+          Text(
+            i18n.t(
+              'toolbox.sound.triangle.ring',
+              params: <String, Object?>{'value': (_ring * 100).round()},
+            ),
+          ),
           Slider(
             value: _ring,
             min: 0.2,
@@ -916,7 +936,12 @@ class _TriangleToolState extends State<_TriangleTool> {
             divisions: 16,
             onChanged: (value) => setState(() => _ring = value),
           ),
-          Text(i18n.t('toolbox.sound.triangle.strike')),
+          Text(
+            i18n.t(
+              'toolbox.sound.triangle.strike',
+              params: <String, Object?>{'value': (_strikePoint * 100).round()},
+            ),
+          ),
           Slider(
             value: _strikePoint,
             min: 0.1,
@@ -928,7 +953,12 @@ class _TriangleToolState extends State<_TriangleTool> {
               unawaited(_warmUpActivePreset());
             },
           ),
-          Text(i18n.t('toolbox.sound.triangle.damping')),
+          Text(
+            i18n.t(
+              'toolbox.sound.triangle.damping',
+              params: <String, Object?>{'value': (_damping * 100).round()},
+            ),
+          ),
           Slider(
             value: _damping,
             min: 0.0,

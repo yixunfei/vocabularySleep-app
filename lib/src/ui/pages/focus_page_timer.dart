@@ -204,6 +204,7 @@ extension _FocusPageTimerExtension on _FocusPageState {
           )
         : i18n.t(
             'inline.ui.pages.focus_page_timer.enabledsources_length_ambient_tracks_enabled_cc57e0',
+            params: <String, Object?>{'enabledSources': enabledSources.length},
           );
     final details = enabledSources.isEmpty
         ? i18n.t(
@@ -288,6 +289,9 @@ extension _FocusPageTimerExtension on _FocusPageState {
                         )
                       : i18n.t(
                           'inline.ui.pages.focus_page_timer.enabledsources_length_tracks_c6905b',
+                          params: <String, Object?>{
+                            'enabledSources': enabledSources.length,
+                          },
                         ),
                 ),
               ),

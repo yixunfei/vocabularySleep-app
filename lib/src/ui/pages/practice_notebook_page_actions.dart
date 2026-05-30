@@ -18,6 +18,10 @@ extension _PracticeNotebookPageActions on _PracticeNotebookPageState {
           ),
           subtitle: i18n.t(
             'inline.ui.pages.practice_notebook_page_actions.words_length_notebook_words_orderlabel_i18n_order_f4aa18',
+            params: <String, Object?>{
+              'words': words.length,
+              'orderLabelOrder': _orderLabel(i18n, _order),
+            },
           ),
           words: words,
           shuffle: shuffle,
@@ -45,6 +49,7 @@ extension _PracticeNotebookPageActions on _PracticeNotebookPageState {
       ),
       subtitle: i18n.t(
         'inline.ui.pages.practice_notebook_page_actions.the_file_will_be_saved_to_defaultdirectory_682a9b',
+        params: <String, Object?>{'defaultDirectory': defaultDirectory},
       ),
       initialValue: 'xianyushengxi_wrong_notebook.${format.extension}',
       confirmText: i18n.t(
@@ -75,6 +80,7 @@ extension _PracticeNotebookPageActions on _PracticeNotebookPageState {
         content: Text(
           i18n.t(
             'inline.ui.pages.practice_notebook_page_actions.filtered_notebook_results_exported_to_path_20dd67',
+            params: <String, Object?>{'path': path},
           ),
         ),
       ),
@@ -101,6 +107,7 @@ extension _PracticeNotebookPageActions on _PracticeNotebookPageState {
                 )
               : i18n.t(
                   'inline.ui.pages.practice_notebook_page_actions.added_to_task_list_added_a18082',
+                  params: <String, Object?>{'added': added},
                 ),
         ),
       ),
@@ -127,6 +134,7 @@ extension _PracticeNotebookPageActions on _PracticeNotebookPageState {
                 )
               : i18n.t(
                   'inline.ui.pages.practice_notebook_page_actions.added_to_favorites_added_6ace25',
+                  params: <String, Object?>{'added': added},
                 ),
         ),
       ),
@@ -203,9 +211,11 @@ extension _PracticeNotebookPageActions on _PracticeNotebookPageState {
         : masteredOnly
         ? i18n.t(
             'inline.ui.pages.practice_notebook_page_actions.cleared_removed_mastered_notebook_words_194c80',
+            params: <String, Object?>{'removed': removed},
           )
         : i18n.t(
             'inline.ui.pages.practice_notebook_page_actions.cleared_removed_notebook_words_85a05e',
+            params: <String, Object?>{'removed': removed},
           );
     ScaffoldMessenger.of(
       context,

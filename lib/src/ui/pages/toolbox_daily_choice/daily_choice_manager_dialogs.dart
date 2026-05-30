@@ -14,7 +14,8 @@ Future<bool?> _confirmHideBuiltInRecipe({
         title: Text(
           i18n.t(
             _managerModuleKey(
-              wearKey: 'inline.plan295.daily_choice.hide_this_outfit.a7a55c353895',
+              wearKey:
+                  'inline.plan295.daily_choice.hide_this_outfit.a7a55c353895',
               activityKey: 'toolbox.daily_choice.manager.dialog.hide_action',
               eatKey: 'toolbox.daily_choice.manager.dialog.hide_recipe',
               isWearModule: isWearModule,
@@ -25,6 +26,7 @@ Future<bool?> _confirmHideBuiltInRecipe({
         content: Text(
           i18n.t(
             'inline.plan295.daily_choice.option_title_i18n_will_be_hidden_fro.34f412bf6405',
+            params: <String, Object?>{'optionTitle': option.title(i18n)},
           ),
         ),
         actions: <Widget>[

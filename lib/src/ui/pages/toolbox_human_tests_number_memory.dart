@@ -461,6 +461,10 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
     final note = result.correct
         ? i18n.t(
             'inline.ui.pages.toolbox_human_tests_number_memory.level_result_level_is_cleared_the_next_round_starts_at_l_14621e',
+            params: <String, Object?>{
+              'resultLevel': result.level,
+              'level': _level,
+            },
           )
         : i18n.t(
             'inline.ui.pages.toolbox_human_tests_number_memory.check_the_gap_first_then_decide_when_to_retry_e962de',
@@ -679,6 +683,7 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
     if (_failed) {
       return i18n.t(
         'inline.ui.pages.toolbox_human_tests_number_memory.answer_round_answer_8967a5',
+        params: <String, Object?>{'answer': round.answer},
       );
     }
     return _modeDescription(i18n, _mode);
@@ -893,6 +898,12 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
                 Text(
                   i18n.t(
                     'inline.ui.pages.toolbox_human_tests_number_memory.match_targetcolor_en_tolowercase_4ba898',
+                    params: <String, Object?>{
+                      'targetColorEn': _colorName(
+                        i18n,
+                        targetColor,
+                      ).toLowerCase(),
+                    },
                   ),
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: targetColor.color,
@@ -970,6 +981,9 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
                     group.target
                         ? i18n.t(
                             'inline.ui.pages.toolbox_human_tests_number_memory.group_label_target_32b708',
+                            params: <String, Object?>{
+                              'groupLabel': group.label,
+                            },
                           )
                         : group.label,
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -1055,6 +1069,12 @@ class _NumberMemoryCardState extends State<_NumberMemoryCard> {
                 Text(
                   i18n.t(
                     'inline.ui.pages.toolbox_human_tests_number_memory.only_targetcolor_en_tolowercase_digits_b2db7c',
+                    params: <String, Object?>{
+                      'targetColorEn': _colorName(
+                        i18n,
+                        targetColor,
+                      ).toLowerCase(),
+                    },
                   ),
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: targetColor.color,

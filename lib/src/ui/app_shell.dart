@@ -831,6 +831,10 @@ class _AppShellState extends ConsumerState<AppShell> {
                   Text(
                     i18n.t(
                       'inline.ui.app_shell.reminder_formatstartupprompttime_todo_dueat_25a81e',
+                      params: <String, Object?>{
+                        'formatStartupPromptTimeTodoDueAt':
+                            _formatStartupPromptTime(todo.dueAt!),
+                      },
                     ),
                     style: theme.textTheme.bodySmall,
                   ),
@@ -1206,7 +1210,10 @@ class _AppShellState extends ConsumerState<AppShell> {
     final total = state.wordbookImportTotalEntries;
     final subtitle = total == null || total <= 0
         ? i18n.t('inline.ui.app_shell.parsing_and_importing_please_wait_1b254d')
-        : i18n.t('inline.ui.app_shell.processed_processed_total_11a7cb');
+        : i18n.t(
+            'inline.ui.app_shell.processed_processed_total_11a7cb',
+            params: <String, Object?>{'processed': processed, 'total': total},
+          );
     return Material(
       elevation: 4,
       color: Colors.transparent,
@@ -1235,6 +1242,9 @@ class _AppShellState extends ConsumerState<AppShell> {
                     child: Text(
                       i18n.t(
                         'inline.ui.app_shell.importing_in_background_state_wordbookimportname_57cc79',
+                        params: <String, Object?>{
+                          'wordbookImportName': state.wordbookImportName,
+                        },
                       ),
                       style: Theme.of(context).textTheme.titleSmall,
                       maxLines: 1,

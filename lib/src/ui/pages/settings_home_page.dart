@@ -30,9 +30,17 @@ class SettingsHomePage extends ConsumerWidget {
       i18n,
       config.voiceInput.provider,
     );
+    final voiceInputLanguageLabel = asrLanguageLabel(
+      i18n,
+      config.voiceInput.language,
+    );
     final asrStatus = config.asr.enabled
         ? i18n.t('toolbox.sleep.tools.enabled')
         : i18n.t('toolbox.sleep.tools.disabled');
+    final asrProvider = asrProviderLabel(i18n, config.asr.provider);
+    final textVisibilityLabel = config.showText
+        ? i18n.t('showText')
+        : i18n.t('inline.ui.pages.word_detail_page.text_is_hidden_262961');
 
     return Scaffold(
       appBar: AppBar(
@@ -221,17 +229,7 @@ class SettingsHomePage extends ConsumerWidget {
                       'inline.plan296.ui.pages.settings.home.page.playback.4c5292ccff',
                       params: <String, Object?>{
                         'p0': playOrderLabel(i18n, config.order),
-                        'p1': config.showText ? '显示文本' : '隐藏文本',
-                        'p2': config.showText ? 'Text On' : 'Text Off',
-                        'p3': config.showText ? 'テキスト表示' : 'テキスト非表示',
-                        'p4': config.showText ? 'Text an' : 'Text aus',
-                        'p5': config.showText
-                            ? 'Texte visible'
-                            : 'Texte masqué',
-                        'p6': config.showText
-                            ? 'Texto visible'
-                            : 'Texto oculto',
-                        'p7': config.showText ? 'Текст включён' : 'Текст скрыт',
+                        'p1': textVisibilityLabel,
                       },
                     ),
                   ),
@@ -239,18 +237,32 @@ class SettingsHomePage extends ConsumerWidget {
                   Text(
                     i18n.t(
                       'inline.ui.pages.settings_home_page.voice_ttsproviderlabel_i18n_config_tts_provider_be7301',
+                      params: <String, Object?>{
+                        'configTtsProvider': ttsProviderLabel(
+                          i18n,
+                          config.tts.provider,
+                        ),
+                      },
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     i18n.t(
                       'inline.ui.pages.settings_home_page.voice_input_voiceinputlabel_asrlanguagelabel_i18n_config_82e5e9',
+                      params: <String, Object?>{
+                        'voiceInputLabel': voiceInputLabel,
+                        'configVoiceInputLanguage': voiceInputLanguageLabel,
+                      },
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     i18n.t(
                       'inline.ui.pages.settings_home_page.recognition_asrstatus_asrproviderlabel_i18n_config_asr_p_30aa7c',
+                      params: <String, Object?>{
+                        'asrStatus': asrStatus,
+                        'configAsrProvider': asrProvider,
+                      },
                     ),
                   ),
                 ],
@@ -355,7 +367,7 @@ class SettingsHomePage extends ConsumerWidget {
               'inline.ui.pages.settings_home_page.asr_switch_engine_and_practice_recognition_options_7d89ec',
             ),
             trailing: Text(
-              '$asrStatus · ${asrProviderLabel(i18n, config.asr.provider)}',
+              '$asrStatus · $asrProvider',
               style: Theme.of(context).textTheme.labelLarge,
             ),
             onTap: () => _open(context, const RecognitionSettingsPage()),

@@ -64,6 +64,7 @@ class _VoiceInputSettingsPageState
           content: Text(
             i18n.t(
               'inline.ui.pages.voice_input_settings_page.voice_input_offline_model_action_failed_error_aad121',
+              params: <String, Object?>{'error': error},
             ),
           ),
         ),

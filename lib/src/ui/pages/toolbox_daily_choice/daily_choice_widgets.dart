@@ -448,7 +448,11 @@ class _DailyChoiceRandomPanelState extends State<DailyChoiceRandomPanel> {
                     ? null
                     : () => widget.onDetail(display),
                 icon: const Icon(Icons.receipt_long_rounded),
-                label: Text(widget.i18n.t('toolbox.sound.locator.btn_details')),
+                label: Text(
+                  widget.i18n.t(
+                    'inline.ui.pages.toolbox_daily_choice.daily_choice_widgets.details_eb32a3',
+                  ),
+                ),
               ),
               OutlinedButton.icon(
                 onPressed: widget.onManage,

@@ -209,6 +209,10 @@ class _WordbookEditorPageState extends ConsumerState<WordbookEditorPage> {
                           Text(
                             i18n.t(
                               'inline.ui.pages.wordbook_editor_page.filteredwords_length_book_wordcount_words_tap_a_row_for_0f25b3',
+                              params: <String, Object?>{
+                                'filtered': filteredWords.length,
+                                'total': book.wordCount,
+                              },
                             ),
                           ),
                           const SizedBox(height: 14),

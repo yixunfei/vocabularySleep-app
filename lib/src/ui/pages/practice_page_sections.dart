@@ -48,6 +48,10 @@ Widget _buildPracticeRoundSetupCard(
         )
       : i18n.t(
           'inline.ui.pages.practice_page_sections.one_round_effectiveroundsize_words_from_sourcelabel_5fdb0b',
+          params: <String, Object?>{
+            'sourceLabel': sourceLabel,
+            'effectiveRoundSize': effectiveRoundSize,
+          },
         );
   final startSummary = sourceWords.isEmpty
       ? i18n.t(
@@ -56,12 +60,24 @@ Widget _buildPracticeRoundSetupCard(
       : switch (settings.startMode) {
           PracticeRoundStartMode.resumeCursor => i18n.t(
             'inline.ui.pages.practice_page_sections.resume_from_saved_position_previewindex_1_previewword_b60e63',
+            params: <String, Object?>{
+              'previewIndex': previewIndex + 1,
+              'previewWord': previewWord,
+            },
           ),
           PracticeRoundStartMode.currentWord => i18n.t(
             'inline.ui.pages.practice_page_sections.start_from_current_word_previewindex_1_previewword_89f95e',
+            params: <String, Object?>{
+              'previewIndex': previewIndex + 1,
+              'previewWord': previewWord,
+            },
           ),
           PracticeRoundStartMode.fromStart => i18n.t(
             'inline.ui.pages.practice_page_sections.start_from_the_beginning_previewindex_1_previewword_dcbfcd',
+            params: <String, Object?>{
+              'previewIndex': previewIndex + 1,
+              'previewWord': previewWord,
+            },
           ),
         };
   final availableSummary = sourceWords.isEmpty
@@ -70,6 +86,7 @@ Widget _buildPracticeRoundSetupCard(
         )
       : i18n.t(
           'inline.ui.pages.practice_page_sections.sourcewords_length_words_available_cdf53d',
+          params: <String, Object?>{'sourceWords': sourceWords.length},
         );
 
   return Card(
@@ -262,6 +279,7 @@ Widget _buildPracticeRoundSetupCard(
                       context,
                       title: i18n.t(
                         'inline.ui.pages.practice_page_sections.sourcelabel_round_540f13',
+                        params: <String, Object?>{'sourceLabel': sourceLabel},
                       ),
                       subtitle: sourceWords.isEmpty
                           ? i18n.t(
@@ -269,6 +287,10 @@ Widget _buildPracticeRoundSetupCard(
                             )
                           : i18n.t(
                               'inline.ui.pages.practice_page_sections.effectiveroundsize_of_sourcewords_length_words_e05728',
+                              params: <String, Object?>{
+                                'effectiveRoundSize': effectiveRoundSize,
+                                'sourceWords': sourceWords.length,
+                              },
                             ),
                       words: sourceWords,
                       shuffle: settings.shuffle,
@@ -316,6 +338,7 @@ Widget _buildMemoryLanesCard(
       ),
       subtitle: i18n.t(
         'inline.ui.pages.practice_page_sections.scopewords_length_words_4a9571',
+        params: <String, Object?>{'scopeWords': scopeWords.length},
       ),
       words: scopeWords,
       shuffle: false,
@@ -417,6 +440,9 @@ Widget _buildMemoryLanesCard(
                     ),
                     subtitle: i18n.t(
                       'inline.ui.pages.practice_page_sections.stablewords_length_remembered_words_299de1',
+                      params: <String, Object?>{
+                        'stableWords': stableWords.length,
+                      },
                     ),
                     words: stableWords,
                   )
@@ -455,6 +481,9 @@ Widget _buildMemoryLanesCard(
                     ),
                     subtitle: i18n.t(
                       'inline.ui.pages.practice_page_sections.recoverywords_length_words_to_reinforce_66e959',
+                      params: <String, Object?>{
+                        'recoveryWords': recoveryWords.length,
+                      },
                     ),
                     words: recoveryWords,
                   )
@@ -610,6 +639,9 @@ Widget _buildWrongNotebookCard(
                     ),
                     subtitle: i18n.t(
                       'inline.ui.pages.practice_page_sections.notebookwords_length_notebook_words_87aa77',
+                      params: <String, Object?>{
+                        'notebookWords': notebookWords.length,
+                      },
                     ),
                     words: notebookWords,
                     shuffle: false,
@@ -728,6 +760,12 @@ Widget _buildRecentHistoryCard(
                     Text(
                       i18n.t(
                         'inline.ui.pages.practice_page_sections.accuracy_record_accuracy_100_round_record_remembered_rec_b4a3e4',
+                        params: <String, Object?>{
+                          'recordAccuracy': (record.accuracy * 100).round(),
+                          'recordRemembered': record.remembered,
+                          'recordTotal': record.total,
+                          'recordWeakCount': record.weakCount,
+                        },
                       ),
                       style: theme.textTheme.bodyMedium,
                     ),

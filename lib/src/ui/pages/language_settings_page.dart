@@ -78,9 +78,15 @@ class LanguageSettingsPage extends ConsumerWidget {
                     state.uiLanguageFollowsSystem
                         ? i18n.t(
                             'inline.ui.pages.language_settings_page.currently_following_system_language_currentlanguagename_c8b46b',
+                            params: <String, Object?>{
+                              'currentLanguageName': currentLanguageName,
+                            },
                           )
                         : i18n.t(
                             'inline.ui.pages.language_settings_page.manual_language_is_fixed_to_currentlanguagename_e6aac4',
+                            params: <String, Object?>{
+                              'currentLanguageName': currentLanguageName,
+                            },
                           ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
@@ -167,6 +173,12 @@ class LanguageSettingsPage extends ConsumerWidget {
                   Text(
                     i18n.t(
                       'inline.ui.pages.language_settings_page.current_startup_tab_apphometablabel_i18n_state_startuppa_3dfb72',
+                      params: <String, Object?>{
+                        'appHomeTabLabelStartupPage': appHomeTabLabel(
+                          i18n,
+                          state.startupPage,
+                        ),
+                      },
                     ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
@@ -196,6 +208,10 @@ class LanguageSettingsPage extends ConsumerWidget {
                     Text(
                       i18n.t(
                         'inline.ui.pages.language_settings_page.when_study_is_the_startup_page_it_will_open_studystartup_6c240e',
+                        params: <String, Object?>{
+                          'studyStartupTabLabelStudyStartupTab':
+                              studyStartupTabLabel(i18n, state.studyStartupTab),
+                        },
                       ),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
@@ -226,6 +242,10 @@ class LanguageSettingsPage extends ConsumerWidget {
                     Text(
                       i18n.t(
                         'inline.ui.pages.language_settings_page.when_focus_is_the_startup_page_it_will_open_focusstartup_fb217c',
+                        params: <String, Object?>{
+                          'focusStartupTabLabelFocusStartupTab':
+                              focusStartupTabLabel(i18n, state.focusStartupTab),
+                        },
                       ),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),

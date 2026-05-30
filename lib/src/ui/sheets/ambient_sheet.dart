@@ -151,6 +151,7 @@ class _AmbientSheetState extends State<AmbientSheet> {
                 Text(
                   i18n.t(
                     'inline.ui.sheets.ambient_sheet.enabledcount_ambient_sounds_enabled_save_this_mix_as_a_p_99b2a9',
+                    params: <String, Object?>{'enabledCount': enabledCount},
                   ),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),

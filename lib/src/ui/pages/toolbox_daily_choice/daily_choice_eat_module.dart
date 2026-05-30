@@ -228,14 +228,22 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
               ? widget.i18n.t(
                   'inline.plan295.daily_choice.what_for_category_titleen_tolowercas.4b9f52de36d4',
                   params: <String, Object?>{
+                    'categoryTitleEn': _categoryTitle(
+                      category,
+                      'en',
+                    ).toLowerCase(),
                     'category.titleZh': _categoryTitle(category, 'zh'),
-                    'category.titleEn.toLowerCase()':
-                        _categoryTitle(category, 'en').toLowerCase(),
+                    'category.titleEn.toLowerCase()': _categoryTitle(
+                      category,
+                      'en',
+                    ).toLowerCase(),
                   },
                 )
               : widget.i18n.t(
                   'inline.plan295.daily_choice.tool_titleen_category_titleen.ca8660c39c29',
                   params: <String, Object?>{
+                    'toolTitleEn': _categoryTitle(tool, 'en'),
+                    'categoryTitleEn': _categoryTitle(category, 'en'),
                     'tool.titleZh': _categoryTitle(tool, 'zh'),
                     'category.titleZh': _categoryTitle(category, 'zh'),
                     'tool.titleEn': _categoryTitle(tool, 'en'),
@@ -332,6 +340,10 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
     return withCollection(
       widget.i18n.t(
         'inline.ui.pages.toolbox_daily_choice.daily_choice_eat_module.tool_subtitleen_category_subtitleen_79a0d9',
+        params: <String, Object?>{
+          'categorySubtitleEn': category.subtitle(AppI18n('en')),
+          'toolSubtitleEn': tool.subtitle(AppI18n('en')),
+        },
       ),
     );
   }
@@ -490,6 +502,7 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
             content: Text(
               widget.i18n.t(
                 'inline.plan295.daily_choice.failed_to_load_recipe_details_error.d9f10a742c37',
+                params: <String, Object?>{'error': error},
               ),
             ),
           ),
@@ -683,6 +696,9 @@ class _EatLibraryStatusPanel extends StatelessWidget {
                 ToolboxInfoPill(
                   text: i18n.t(
                     'inline.plan295.daily_choice.total_librarystatus_recipecount.895006c8f6e8',
+                    params: <String, Object?>{
+                      'libraryStatusRecipeCount': libraryStatus.recipeCount,
+                    },
                   ),
                   accent: accent,
                   backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -690,6 +706,7 @@ class _EatLibraryStatusPanel extends StatelessWidget {
                 ToolboxInfoPill(
                   text: i18n.t(
                     'inline.plan295.daily_choice.pool_candidatecount.2886b3be61e9',
+                    params: <String, Object?>{'candidateCount': candidateCount},
                   ),
                   accent: accent,
                   backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -737,6 +754,7 @@ class _EatLibraryStatusPanel extends StatelessWidget {
               Text(
                 i18n.t(
                   'inline.plan295.daily_choice.updated_updatedlabel.6e0ba6c7f960',
+                  params: <String, Object?>{'updatedLabel': updatedLabel},
                 ),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,

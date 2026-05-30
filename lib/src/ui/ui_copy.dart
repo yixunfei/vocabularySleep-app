@@ -392,7 +392,8 @@ IconData weatherCodeIcon(int weatherCode, {required bool isDay}) {
   return Icons.cloud_sync_rounded;
 }
 
-String pageLabelLibrary(AppI18n i18n) => i18n.t('ambientNameFocusLibrary');
+String pageLabelLibrary(AppI18n i18n) =>
+    i18n.t('inline.ui.ui_copy.library_304d85');
 
 String pageLabelPractice(AppI18n i18n) =>
     i18n.t('inline.ui.module.module_access.practice_edc3b5');

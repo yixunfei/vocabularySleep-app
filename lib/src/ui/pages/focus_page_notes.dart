@@ -46,6 +46,7 @@ String _noteSpeechHelperText(
     ),
     _NoteVoiceInputState.idle => i18n.t(
       'inline.ui.pages.focus_page_notes.use_system_speech_recognition_to_append_text_directly_to_47f989',
+      params: <String, Object?>{'languageLabel': languageLabel},
     ),
   };
 }
@@ -137,6 +138,10 @@ String _noteVoiceRecordingHelperText(
     ),
     _NoteVoiceInputState.idle => i18n.t(
       'inline.ui.pages.focus_page_notes.use_providerlabel_to_append_speech_text_directly_to_the_220bf5',
+      params: <String, Object?>{
+        'languageLabel': languageLabel,
+        'providerLabel': providerLabel,
+      },
     ),
   };
 }

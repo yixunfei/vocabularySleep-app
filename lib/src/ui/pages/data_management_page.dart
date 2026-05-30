@@ -6,7 +6,6 @@ import '../../services/database_service.dart';
 import '../../state/app_state.dart';
 import '../../state/app_state_provider.dart';
 import '../modal_helpers.dart';
-import '../ui_copy.dart';
 import '../widgets/setting_tile.dart';
 
 class DataManagementPage extends ConsumerWidget {
@@ -258,6 +257,12 @@ class DataManagementPage extends ConsumerWidget {
           Text(
             i18n.t(
               'inline.ui.pages.data_management_page.source_backup_reasonlabel_size_formatfilesize_backup_siz_85229a',
+              params: <String, Object?>{
+                'backupReasonLabel': backup.reasonLabel,
+                'formatFileSizeBackupSizeBytes': _formatFileSize(
+                  backup.sizeBytes,
+                ),
+              },
             ),
             style: theme.textTheme.bodySmall,
           ),

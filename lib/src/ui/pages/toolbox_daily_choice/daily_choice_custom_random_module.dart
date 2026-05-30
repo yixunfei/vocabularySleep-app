@@ -383,6 +383,7 @@ class _CustomRandomModuleState extends State<_CustomRandomModule>
           id: 'custom_${DateTime.now().microsecondsSinceEpoch}',
           label: widget.i18n.t(
             'inline.plan295.daily_choice.option_nextindex.f477e542fa13',
+            params: <String, Object?>{'nextIndex': nextIndex},
           ),
         ),
       ];
@@ -427,22 +428,34 @@ class _CustomRandomModuleState extends State<_CustomRandomModule>
         const DailyChoiceGuideModule(
           id: 'random_scope',
           icon: Icons.rule_folder_rounded,
-    titleKey: 'inline.plan295.daily_choice.check_the_boundary_first.78f54cbdfafe',
-    subtitleKey: 'inline.plan295.daily_choice.random_choice_fits_low_stakes_revers.6c704dcae087',
+          titleKey:
+              'inline.plan295.daily_choice.check_the_boundary_first.78f54cbdfafe',
+          subtitleKey:
+              'inline.plan295.daily_choice.random_choice_fits_low_stakes_revers.6c704dcae087',
           entries: <DailyChoiceGuideEntry>[
             DailyChoiceGuideEntry(
               icon: Icons.low_priority_rounded,
-        titleKey: 'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_widgets.uniform_random_851942',
-        bodyKey: 'inline.plan295.daily_choice.every_option_has_the_same_chance_use.e989f5341b23'),
+              titleKey:
+                  'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_widgets.uniform_random_851942',
+              bodyKey:
+                  'inline.plan295.daily_choice.every_option_has_the_same_chance_use.e989f5341b23',
+            ),
             DailyChoiceGuideEntry(
               icon: Icons.balance_rounded,
-        titleKey: 'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_widgets.weighted_random_28af44',
-        bodyKey: 'inline.plan295.daily_choice.higher_weights_get_more_chances_it_k.3ece5fbe976b'),
+              titleKey:
+                  'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_widgets.weighted_random_28af44',
+              bodyKey:
+                  'inline.plan295.daily_choice.higher_weights_get_more_chances_it_k.3ece5fbe976b',
+            ),
             DailyChoiceGuideEntry(
               icon: Icons.account_tree_rounded,
-        titleKey: 'inline.plan295.daily_choice.joint_multi_round.d854ecdf35d2',
-        bodyKey: 'inline.plan295.daily_choice.use_weight_condition_probability_as.162d148577a3'),
-          ]),
+              titleKey:
+                  'inline.plan295.daily_choice.joint_multi_round.d854ecdf35d2',
+              bodyKey:
+                  'inline.plan295.daily_choice.use_weight_condition_probability_as.162d148577a3',
+            ),
+          ],
+        ),
       ],
     );
   }

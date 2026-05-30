@@ -40,6 +40,12 @@ String formatPracticeDateTime(AppI18n i18n, DateTime value) {
   final minute = local.minute.toString().padLeft(2, '0');
   return i18n.t(
     'inline.ui.pages.practice_support.month_day_hour_minute_59dd3a',
+    params: <String, Object?>{
+      'month': month,
+      'day': day,
+      'hour': hour,
+      'minute': minute,
+    },
   );
 }
 

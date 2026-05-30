@@ -224,11 +224,23 @@ class _WearChoiceModuleState extends State<_WearChoiceModule> {
                     : (_temperatureManuallyEdited && suggestion != null
                           ? widget.i18n.t(
                               'inline.plan295.daily_choice.manual_selection_temperature_titleen.645fc37db6a4',
+                              params: <String, Object?>{
+                                'suggestionTemperatureIdTitleEn':
+                                    _wearTemperatureCategory(
+                                      suggestion.temperatureId,
+                                    ).title(AppI18n('en')),
+                                'temperatureTitleEn': temperature.title(
+                                  AppI18n('en'),
+                                ),
+                              },
                             )
                           : scene.subtitle(widget.i18n))));
     final filterNote = _activeTraitFilterCount > 0
         ? widget.i18n.t(
             'inline.plan295.daily_choice.activetraitfiltercount_advanced_filt.d8fbf6fd3e2f',
+            params: <String, Object?>{
+              'activeTraitFilterCount': _activeTraitFilterCount,
+            },
           )
         : '';
     final panelSubtitle = '$baseSubtitle$filterNote';
@@ -382,6 +394,10 @@ class _WearChoiceModuleState extends State<_WearChoiceModule> {
           accent: widget.accent,
           title: widget.i18n.t(
             'inline.ui.pages.toolbox_daily_choice.daily_choice_wear_module.temperature_titleen_scene_titleen_5fc52d',
+            params: <String, Object?>{
+              'sceneTitleEn': scene.title(AppI18n('en')),
+              'temperatureTitleEn': temperature.title(AppI18n('en')),
+            },
           ),
           subtitle: panelSubtitle,
           options: traitFiltered,
@@ -646,6 +662,7 @@ class _WearAdvisorAuditTool extends StatelessWidget {
         Text(
           i18n.t(
             'inline.plan295.daily_choice.checked_total_passed_if_fewer_than_4.5ca16f184329',
+            params: <String, Object?>{'checked': checked, 'total': total},
           ),
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
@@ -1491,6 +1508,10 @@ class _WearWeatherPanel extends StatelessWidget {
               ToolboxInfoPill(
                 text: i18n.t(
                   'inline.plan295.daily_choice.snapshot_temperaturecelsius_round_c.b812c43c7215',
+                  params: <String, Object?>{
+                    'snapshotTemperatureCelsius': snapshot.temperatureCelsius
+                        .round(),
+                  },
                 ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -1498,6 +1519,11 @@ class _WearWeatherPanel extends StatelessWidget {
               ToolboxInfoPill(
                 text: i18n.t(
                   'inline.plan295.daily_choice.feels_snapshot_apparenttemperaturece.3782d2ebb643',
+                  params: <String, Object?>{
+                    'snapshotApparentTemperatureCelsius': snapshot
+                        .apparentTemperatureCelsius
+                        .round(),
+                  },
                 ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -1505,6 +1531,7 @@ class _WearWeatherPanel extends StatelessWidget {
               ToolboxInfoPill(
                 text: i18n.t(
                   'inline.plan295.daily_choice.high_low_highlow.14a0357434f6',
+                  params: <String, Object?>{'highLow': highLow},
                 ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -1512,6 +1539,10 @@ class _WearWeatherPanel extends StatelessWidget {
               ToolboxInfoPill(
                 text: i18n.t(
                   'inline.plan295.daily_choice.suggest_recommendedtemperature_title.9edbb2638d54',
+                  params: <String, Object?>{
+                    'recommendedTemperatureTitleEn': recommendedTemperature
+                        .title(AppI18n('en')),
+                  },
                 ),
                 accent: accent,
                 backgroundColor: usingSuggestedTemperature
@@ -1936,6 +1967,9 @@ class _WearAdvancedSettingsPanel extends StatelessWidget {
                           activeCount > 0
                               ? i18n.t(
                                   'inline.plan295.daily_choice.activecount_filter_s_enabled.39fb4a8c5390',
+                                  params: <String, Object?>{
+                                    'activeCount': activeCount,
+                                  },
                                 )
                               : i18n.t(
                                   'inline.plan295.daily_choice.narrow_by_gender_reference_age_stage.9aa91a3903e5',
@@ -1952,6 +1986,7 @@ class _WearAdvancedSettingsPanel extends StatelessWidget {
                     ToolboxInfoPill(
                       text: i18n.t(
                         'inline.plan295.daily_choice.activecount_active.ff742077cc87',
+                        params: <String, Object?>{'activeCount': activeCount},
                       ),
                       accent: accent,
                       backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -2170,6 +2205,9 @@ class _WearLibraryStatusPanel extends StatelessWidget {
                 ToolboxInfoPill(
                   text: i18n.t(
                     'inline.plan295.daily_choice.total_librarystatus_outfitcount.b65025c2ec8f',
+                    params: <String, Object?>{
+                      'libraryStatusOutfitCount': libraryStatus.outfitCount,
+                    },
                   ),
                   accent: accent,
                   backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -2177,6 +2215,7 @@ class _WearLibraryStatusPanel extends StatelessWidget {
                 ToolboxInfoPill(
                   text: i18n.t(
                     'inline.plan295.daily_choice.pool_candidatecount.2886b3be61e9',
+                    params: <String, Object?>{'candidateCount': candidateCount},
                   ),
                   accent: accent,
                   backgroundColor: theme.colorScheme.surfaceContainerLow,

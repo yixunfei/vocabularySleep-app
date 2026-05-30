@@ -180,6 +180,7 @@ class WordbookManagementPage extends ConsumerWidget {
       title: i18n.t('deleteWordbook'),
       message: i18n.t(
         'inline.ui.pages.wordbook_management_page.delete_book_name_974093',
+        params: <String, Object?>{'book': book.name},
       ),
       danger: true,
       confirmText: i18n.t('delete'),

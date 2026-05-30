@@ -92,6 +92,7 @@ class _OnlineAmbientCatalogSheetState
                   )
                 : i18n.t(
                     'inline.ui.sheets.online_ambient_sheet.downloaded_locally_localizedname_07c499',
+                    params: <String, Object?>{'localizedName': localizedName},
                   ),
           ),
         ),
@@ -132,6 +133,7 @@ class _OnlineAmbientCatalogSheetState
             deleted
                 ? i18n.t(
                     'inline.ui.sheets.online_ambient_sheet.deleted_local_audio_localizedname_7440f2',
+                    params: <String, Object?>{'localizedName': localizedName},
                   )
                 : i18n.t(
                     'inline.ui.sheets.online_ambient_sheet.delete_failed_please_try_again_later_ad76c3',

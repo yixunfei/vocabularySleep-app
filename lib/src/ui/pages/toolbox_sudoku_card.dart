@@ -194,6 +194,13 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
           content: Text(
             i18n.t(
               'inline.ui.pages.toolbox_sudoku_card.you_completed_this_difficultylabel_i18n_difficulty_varia_474ffc',
+              params: <String, Object?>{
+                'difficultyLabelDifficulty': _difficultyLabel(
+                  i18n,
+                  _difficulty,
+                ),
+                'variantLabelVariant': _variantLabel(i18n, _variant),
+              },
             ),
           ),
           actions: <Widget>[
@@ -265,6 +272,7 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
         content: Text(
           i18n.t(
             'inline.ui.pages.toolbox_sudoku_card.revealed_the_correct_digit_for_row_row_column_col_543c10',
+            params: <String, Object?>{'row': row, 'col': col},
           ),
         ),
       ),
@@ -498,11 +506,13 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
     if (_fixed.contains(selected)) {
       return i18n.t(
         'inline.ui.pages.toolbox_sudoku_card.selected_row_row_column_col_this_is_a_given_clue_for_loc_deaf92',
+        params: <String, Object?>{'row': row, 'col': col},
       );
     }
     if (value != 0) {
       return i18n.t(
         'inline.ui.pages.toolbox_sudoku_card.selected_row_row_column_col_with_value_value_conflicts_h_16d2bd',
+        params: <String, Object?>{'row': row, 'col': col, 'value': value},
       );
     }
     final marks = _notes[selected].isNotEmpty
@@ -512,9 +522,19 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
     return _noteMode
         ? i18n.t(
             'inline.ui.pages.toolbox_sudoku_card.selected_row_row_column_col_notes_mode_is_on_current_mar_9397ba',
+            params: <String, Object?>{
+              'row': row,
+              'col': col,
+              'candidateText': candidateText,
+            },
           )
         : i18n.t(
             'inline.ui.pages.toolbox_sudoku_card.selected_row_row_column_col_candidate_guide_candidatetex_38001e',
+            params: <String, Object?>{
+              'row': row,
+              'col': col,
+              'candidateText': candidateText,
+            },
           );
   }
 
@@ -565,6 +585,11 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
     final colors = Theme.of(context).colorScheme;
     final summary = i18n.t(
       'inline.ui.pages.toolbox_sudoku_card.progress_filled_81_conflicts_conflicts_length_statuslabe_38fbf7',
+      params: <String, Object?>{
+        'filled': filled,
+        'conflicts': _conflicts.length,
+        'statusLabel': _statusLabel(i18n),
+      },
     );
     return Card(
       child: Padding(

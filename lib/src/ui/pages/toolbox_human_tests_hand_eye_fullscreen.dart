@@ -520,6 +520,10 @@ class _JoystickFullscreenStatusPeek extends StatelessWidget {
                 child: Text(
                   i18n.t(
                     'inline.ui.pages.toolbox_human_tests_hand_eye_fullscreen.progress_progress_hits_state_hits_29c6de',
+                    params: <String, Object?>{
+                      'progress': progress,
+                      'hits': state._hits,
+                    },
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

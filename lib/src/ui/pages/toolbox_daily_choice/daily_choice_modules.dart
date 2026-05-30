@@ -79,9 +79,16 @@ class _PlaceChoiceModuleState extends State<_PlaceChoiceModule> {
     final subtitle = _sceneId == allPlaceSceneCategory.id
         ? widget.i18n.t(
             'inline.plan295.daily_choice.category_subtitleen_then_randomize_a.ef4bd170b52d',
+            params: <String, Object?>{
+              'categorySubtitleEn': category.subtitle(AppI18n('en')),
+            },
           )
         : widget.i18n.t(
             'inline.plan295.daily_choice.scene_subtitleen_filtered_length_can.4eddf714a17c',
+            params: <String, Object?>{
+              'filtered': filtered.length,
+              'sceneSubtitleEn': scene.subtitle(AppI18n('en')),
+            },
           );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,6 +173,8 @@ class _PlaceChoiceModuleState extends State<_PlaceChoiceModule> {
               : widget.i18n.t(
                   'inline.plan295.daily_choice.category_titleen_scene_titleen.9cb81855c227',
                   params: <String, Object?>{
+                    'categoryTitleEn': _categoryTitle(category, 'en'),
+                    'sceneTitleEn': _categoryTitle(scene, 'en'),
                     'category.titleZh': _categoryTitle(category, 'zh'),
                     'scene.titleZh': _categoryTitle(scene, 'zh'),
                     'category.titleEn': _categoryTitle(category, 'en'),
@@ -255,13 +264,27 @@ class _PlaceChoiceStatusPanel extends StatelessWidget {
     final summary = usingAllScenes
         ? i18n.t(
             'inline.plan295.daily_choice.the_current_selecteddistance_titleen.c289a8372f20',
+            params: <String, Object?>{
+              'distanceCount': distanceCount,
+              'sceneCoverageCount': sceneCoverageCount,
+              'selectedDistanceTitleEn': selectedDistance.title(AppI18n('en')),
+            },
           )
         : candidateCount == 0
         ? i18n.t(
             'inline.plan295.daily_choice.there_are_no_candidates_for_selected.02201253e526',
+            params: <String, Object?>{
+              'selectedDistanceTitleEn': selectedDistance.title(AppI18n('en')),
+              'selectedSceneTitleEn': selectedScene.title(AppI18n('en')),
+            },
           )
         : i18n.t(
             'inline.plan295.daily_choice.the_current_selecteddistance_titleen.c5724f7be4ad',
+            params: <String, Object?>{
+              'candidateCount': candidateCount,
+              'selectedDistanceTitleEn': selectedDistance.title(AppI18n('en')),
+              'selectedSceneTitleEn': selectedScene.title(AppI18n('en')),
+            },
           );
     return ToolboxSurfaceCard(
       padding: const EdgeInsets.all(16),
@@ -279,6 +302,11 @@ class _PlaceChoiceStatusPanel extends StatelessWidget {
               ToolboxInfoPill(
                 text: i18n.t(
                   'inline.plan295.daily_choice.distance_selecteddistance_titleen.d2dae2086fe7',
+                  params: <String, Object?>{
+                    'selectedDistanceTitleEn': selectedDistance.title(
+                      AppI18n('en'),
+                    ),
+                  },
                 ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -291,6 +319,9 @@ class _PlaceChoiceStatusPanel extends StatelessWidget {
                     : i18n.t(
                         'inline.plan295.daily_choice.scene_selectedscene_titleen.36a46f133169',
                         params: <String, Object?>{
+                          'selectedSceneTitleEn': selectedScene.title(
+                            AppI18n('en'),
+                          ),
                           'selectedScene.titleZh': selectedScene.title(
                             AppI18n('zh'),
                           ),
@@ -305,6 +336,7 @@ class _PlaceChoiceStatusPanel extends StatelessWidget {
               ToolboxInfoPill(
                 text: i18n.t(
                   'inline.plan295.daily_choice.distancecount_in_this_tier.70a0d57ac81e',
+                  params: <String, Object?>{'distanceCount': distanceCount},
                 ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -312,6 +344,7 @@ class _PlaceChoiceStatusPanel extends StatelessWidget {
               ToolboxInfoPill(
                 text: i18n.t(
                   'inline.plan295.daily_choice.candidatecount_candidates.fa6ad8b2a1d1',
+                  params: <String, Object?>{'candidateCount': candidateCount},
                 ),
                 accent: accent,
                 backgroundColor: candidateCount == 0
@@ -321,6 +354,9 @@ class _PlaceChoiceStatusPanel extends StatelessWidget {
               ToolboxInfoPill(
                 text: i18n.t(
                   'inline.plan295.daily_choice.scenecoveragecount_covered_scenes.bd3688135666',
+                  params: <String, Object?>{
+                    'sceneCoverageCount': sceneCoverageCount,
+                  },
                 ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -458,6 +494,10 @@ class _ActivityChoiceModuleState extends State<_ActivityChoiceModule> {
               ? category.subtitle(widget.i18n)
               : widget.i18n.t(
                   'inline.plan295.daily_choice.category_subtitleen_current_set_coll.912e0bcfb629',
+                  params: <String, Object?>{
+                    'categorySubtitleEn': category.subtitle(AppI18n('en')),
+                    'collectionTitle': collectionTitle,
+                  },
                 ),
           options: filtered,
           emptyText: widget.libraryStatus.hasInstalledLibrary
@@ -634,6 +674,7 @@ class _ActivityLibraryStatusPanel extends StatelessWidget {
     final summary = hasLibrary
         ? i18n.t(
             'inline.plan295.daily_choice.status_actioncount_actions_installed.c084e467eb6d',
+            params: <String, Object?>{'statusActionCount': status.actionCount},
           )
         : i18n.t(
             'inline.plan295.daily_choice.the_built_in_action_library_is_not_i.3f5ad1b8bbae',
@@ -693,6 +734,9 @@ class _ActivityLibraryStatusPanel extends StatelessWidget {
             Text(
               i18n.t(
                 'inline.ui.pages.toolbox_daily_choice.daily_choice_modules.last_sync_failed_status_errormessage_9b18da',
+                params: <String, Object?>{
+                  'statusErrorMessage': status.errorMessage,
+                },
               ),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.error,
@@ -819,6 +863,8 @@ class _PlaceLibraryStatusPanel extends StatelessWidget {
                         ? i18n.t(
                             'inline.plan295.daily_choice.place_library_ready_librarystatus_pl.765c1a239cbf',
                             params: <String, Object?>{
+                              'libraryStatusPlaceCount':
+                                  libraryStatus.placeCount,
                               'libraryStatus.placeCount':
                                   libraryStatus.placeCount,
                             },

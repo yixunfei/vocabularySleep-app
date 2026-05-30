@@ -7,7 +7,6 @@ import '../../models/word_entry.dart';
 import '../../state/app_state.dart';
 import '../sheets/ambient_sheet.dart';
 import '../theme/app_theme.dart';
-import '../ui_copy.dart';
 
 class MiniPlayer extends StatefulWidget {
   const MiniPlayer({
@@ -221,6 +220,9 @@ class _MiniPlayerState extends State<MiniPlayer> {
                         weakCount > 0
                             ? i18n.t(
                                 'inline.ui.widgets.mini_player.you_have_weakcount_recent_weak_words_practice_is_recomme_ab5015',
+                                params: <String, Object?>{
+                                  'weakCount': weakCount,
+                                },
                               )
                             : i18n.t(
                                 'inline.ui.widgets.mini_player.you_can_continue_in_practice_or_return_to_the_library_b92564',
@@ -298,6 +300,7 @@ class _MiniPlayerState extends State<MiniPlayer> {
     }
     return i18n.t(
       'inline.ui.widgets.mini_player.sleep_timer_enabled_stop_in_about_minutes_min_8b3e99',
+      params: <String, Object?>{'minutes': minutes},
     );
   }
 
@@ -329,6 +332,7 @@ class _MiniPlayerState extends State<MiniPlayer> {
         content: Text(
           _i18n.t(
             'inline.ui.widgets.mini_player.playback_will_stop_in_duration_inminutes_minutes_ab0716',
+            params: <String, Object?>{'durationInMinutes': duration.inMinutes},
           ),
         ),
       ),

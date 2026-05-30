@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../core/module_system/module_id.dart';
 import '../../i18n/app_i18n.dart';
 import '../../state/app_state.dart';
-import '../ui_copy.dart';
 
 String localizedModuleLabel(AppI18n i18n, String moduleId) {
   return switch (moduleId) {
@@ -30,7 +29,6 @@ String localizedModuleLabel(AppI18n i18n, String moduleId) {
     ModuleIds.toolboxSingingBowls => i18n.t(
       'inline.ui.module.module_access.healing_bowls_918cb2',
     ),
-    ModuleIds.toolboxSoundLocator => i18n.t('toolbox.sound.locator.page_title'),
     ModuleIds.toolboxFocusBeats => i18n.t(
       'inline.ui.module.module_access.focus_beats_68284f',
     ),
@@ -64,6 +62,7 @@ String moduleDisabledMessage(AppI18n i18n, String moduleId) {
   final label = localizedModuleLabel(i18n, moduleId);
   return i18n.t(
     'inline.ui.module.module_access.label_is_currently_disabled_re_enable_it_in_module_manag_0dfbf2',
+    params: <String, Object?>{'label': label},
   );
 }
 

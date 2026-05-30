@@ -130,6 +130,7 @@ class StudyPage extends ConsumerWidget {
       }
       return i18n.t(
         'inline.ui.pages.study_page.state_visiblewordcount_words_9edc10',
+        params: <String, Object?>{'count': state.visibleWordCount},
       );
     }
     if (state.selectedWordbook == null) {
@@ -139,6 +140,10 @@ class StudyPage extends ConsumerWidget {
     }
     return i18n.t(
       'inline.ui.pages.study_page.selectedwordbookname_state_visiblewordcount_words_ready_3d99e5',
+      params: <String, Object?>{
+        'wordbook': selectedWordbookName,
+        'count': state.visibleWordCount,
+      },
     );
   }
 
@@ -161,6 +166,7 @@ class StudyPage extends ConsumerWidget {
     }
     return i18n.t(
       'inline.ui.pages.study_page.search_jump_through_and_organize_entries_in_selectedword_307e60',
+      params: <String, Object?>{'wordbook': selectedWordbookName},
     );
   }
 }
@@ -335,7 +341,10 @@ class _StudyImportLockPanel extends StatelessWidget {
     final total = state.wordbookImportTotalEntries;
     final detail = total == null || total <= 0
         ? i18n.t('inline.ui.app_shell.parsing_and_importing_please_wait_1b254d')
-        : i18n.t('inline.ui.app_shell.processed_processed_total_11a7cb');
+        : i18n.t(
+            'inline.ui.app_shell.processed_processed_total_11a7cb',
+            params: <String, Object?>{'processed': processed, 'total': total},
+          );
 
     return Center(
       child: ConstrainedBox(

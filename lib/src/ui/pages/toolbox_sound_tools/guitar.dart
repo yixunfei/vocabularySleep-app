@@ -680,7 +680,12 @@ class _GuitarToolState extends State<_GuitarTool> {
         const SizedBox(height: 18),
         _buildChordSection(context, i18n, onSelectionChanged: refreshSheet),
         const SizedBox(height: 18),
-        Text(i18n.t('toolbox.sound.guitar.resonance')),
+        Text(
+          i18n.t(
+            'toolbox.sound.guitar.resonance',
+            params: <String, Object?>{'value': (_resonance * 100).round()},
+          ),
+        ),
         Slider(
           value: _resonance,
           min: 0.1,
@@ -699,7 +704,12 @@ class _GuitarToolState extends State<_GuitarTool> {
             refreshSheet();
           },
         ),
-        Text(i18n.t('toolbox.sound.guitar.pick_position')),
+        Text(
+          i18n.t(
+            'toolbox.sound.guitar.pick_position',
+            params: <String, Object?>{'value': (_pickPosition * 100).round()},
+          ),
+        ),
         Slider(
           value: _pickPosition,
           min: 0.1,
@@ -1009,7 +1019,14 @@ class _GuitarToolState extends State<_GuitarTool> {
                 ),
               ),
               const SizedBox(height: 10),
-              Text(i18n.t('toolbox.sound.guitar.resonance')),
+              Text(
+                i18n.t(
+                  'toolbox.sound.guitar.resonance',
+                  params: <String, Object?>{
+                    'value': (_resonance * 100).round(),
+                  },
+                ),
+              ),
               Slider(
                 value: _resonance,
                 min: 0.1,
@@ -1021,7 +1038,14 @@ class _GuitarToolState extends State<_GuitarTool> {
                   unawaited(_warmUpActivePreset());
                 },
               ),
-              Text(i18n.t('toolbox.sound.guitar.pick_position')),
+              Text(
+                i18n.t(
+                  'toolbox.sound.guitar.pick_position',
+                  params: <String, Object?>{
+                    'value': (_pickPosition * 100).round(),
+                  },
+                ),
+              ),
               Slider(
                 value: _pickPosition,
                 min: 0.1,

@@ -7,7 +7,10 @@ String _defaultDecisionOptionName(AppI18n i18n, int index) {
   final label = index > 0 && index <= letters.length
       ? letters[index - 1]
       : '$index';
-  return i18n.t('inline.plan295.daily_choice.option_label.a5f302b1c989');
+  return i18n.t(
+    'inline.plan295.daily_choice.option_label.a5f302b1c989',
+    params: <String, Object?>{'label': label},
+  );
 }
 
 Color _decisionOptionTint(ThemeData theme, Color accent) =>
@@ -440,6 +443,11 @@ class _DecisionQuestionFlowCard extends StatelessWidget {
           Text(
             i18n.t(
               'inline.plan295.daily_choice.scoring_activeitem_name_trim_isempty.0a5528e9c554',
+              params: <String, Object?>{
+                'activeItemIdActiveItem': activeItem.name.trim().isEmpty
+                    ? activeItem.id
+                    : activeItem.name.trim(),
+              },
             ),
             style: theme.textTheme.labelLarge?.copyWith(
               fontWeight: FontWeight.w900,
@@ -635,6 +643,7 @@ class _DecisionQuestionFlowCard extends StatelessWidget {
                   ),
             body: i18n.t(
               'inline.plan295.daily_choice.recommended_lenses_recommended_the_r.79ccb84669c2',
+              params: <String, Object?>{'recommended': recommended},
             ),
           ),
         ],
@@ -734,7 +743,10 @@ class _DecisionAdvancedEditorCard extends StatelessWidget {
                     ? i18n.t('inline.plan295.daily_choice.open.34dacfa544d1')
                     : i18n.t(
                         'inline.plan295.daily_choice.items_length_options.ebed8e40c40e',
-                        params: <String, Object?>{'items.length': items.length},
+                        params: <String, Object?>{
+                          'items': items.length,
+                          'items.length': items.length,
+                        },
                       ),
                 accent: expanded ? readableAccent : readableClosedColor,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -885,6 +897,7 @@ class _DecisionReportCard extends StatelessWidget {
                     : i18n.t(
                         'inline.plan295.daily_choice.consensus_consensus_winnername.15c320b891da',
                         params: <String, Object?>{
+                          'consensusWinnerName': consensus.winnerName,
                           'consensus.winnerName': consensus.winnerName,
                         },
                       ),
@@ -894,6 +907,7 @@ class _DecisionReportCard extends StatelessWidget {
               ToolboxInfoPill(
                 text: i18n.t(
                   'inline.plan295.daily_choice.stability_stabilitytext.04d6310e4297',
+                  params: <String, Object?>{'stabilityText': stabilityText},
                 ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -1031,6 +1045,9 @@ class _DecisionActionPlanCard extends StatelessWidget {
         ? i18n.t('inline.plan295.daily_choice.needs_narrowing.26ea8268b9c3')
         : i18n.t(
             'inline.plan295.daily_choice.act_report_consensus_winnername.012489cb6c90',
+            params: <String, Object?>{
+              'reportConsensusWinnerName': report.consensus.winnerName,
+            },
           );
     return ToolboxSurfaceCard(
       padding: const EdgeInsets.all(16),
@@ -1085,6 +1102,7 @@ class _DecisionActionPlanCard extends StatelessWidget {
               ToolboxInfoPill(
                 text: i18n.t(
                   'inline.plan295.daily_choice.stability_stabilitytext.04d6310e4297',
+                  params: <String, Object?>{'stabilityText': stabilityText},
                 ),
                 accent: actionTint,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -1269,25 +1287,47 @@ class _DecisionActionPlanCard extends StatelessWidget {
         .map((method) => decisionMethodSpec(method).title(i18n))
         .join(' / ');
     return <String>[
-      i18n.t('inline.plan295.daily_choice.decision_question.5f59a5e1a488'),
-      i18n.t('inline.plan295.daily_choice.consensus_consensus.a127c803fb92'),
+      i18n.t(
+        'inline.plan295.daily_choice.decision_question.5f59a5e1a488',
+        params: <String, Object?>{'question': question},
+      ),
+      i18n.t(
+        'inline.plan295.daily_choice.consensus_consensus.a127c803fb92',
+        params: <String, Object?>{'consensus': consensus},
+      ),
       i18n.t(
         'inline.plan295.daily_choice.recommended_lenses_recommended.51d61438eb22',
+        params: <String, Object?>{'recommended': recommended},
       ),
       i18n.t(
         'inline.plan295.daily_choice.next_action_briefvalue_draft_nextste.274036ed54f4',
+        params: <String, Object?>{
+          'briefValueDraftNextStep': _briefValue(draft.nextStep),
+        },
       ),
       i18n.t(
         'inline.plan295.daily_choice.key_evidence_briefvalue_draft_eviden.441151fed3e2',
+        params: <String, Object?>{
+          'briefValueDraftEvidenceTask': _briefValue(draft.evidenceTask),
+        },
       ),
       i18n.t(
         'inline.plan295.daily_choice.stop_rule_briefvalue_draft_stoprule.a212703b3dbc',
+        params: <String, Object?>{
+          'briefValueDraftStopRule': _briefValue(draft.stopRule),
+        },
       ),
       i18n.t(
         'inline.plan295.daily_choice.review_trigger_briefvalue_draft_revi.529d01e07d5a',
+        params: <String, Object?>{
+          'briefValueDraftReviewTrigger': _briefValue(draft.reviewTrigger),
+        },
       ),
       i18n.t(
         'inline.plan295.daily_choice.premortem_briefvalue_draft_premortem.d0cf33135808',
+        params: <String, Object?>{
+          'briefValueDraftPremortem': _briefValue(draft.premortem),
+        },
       ),
     ].join('\n');
   }
@@ -1373,6 +1413,9 @@ class _DecisionMethodReportTileState extends State<_DecisionMethodReportTile> {
         : widget.method == DailyChoiceDecisionMethod.random
         ? widget.i18n.t(
             'inline.plan295.daily_choice.formatpercent_winner_score_each.64ae961878af',
+            params: <String, Object?>{
+              'formatPercentWinnerScore': _formatPercent(winner.score),
+            },
           )
         : '${winner.option.name} · ${winner.score.toStringAsFixed(2)}';
 
@@ -1446,6 +1489,16 @@ class _DecisionMethodReportTileState extends State<_DecisionMethodReportTile> {
                   Text(
                     widget.i18n.t(
                       'inline.plan295.daily_choice.lead_over_runnerup_option_name_resul.4de5a3116fb3',
+                      params: <String, Object?>{
+                        'leadMarginAdviceResultLeadMargin': _leadMarginAdvice(
+                          widget.i18n,
+                          result.leadMargin,
+                        ),
+                        'resultLeadMargin': result.leadMargin.toStringAsFixed(
+                          2,
+                        ),
+                        'runnerUpOption': runnerUp.option.name,
+                      },
                     ),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
@@ -1792,6 +1845,9 @@ String _reportActionTitle(AppI18n i18n, DailyChoiceDecisionReport report) {
       report.consensus.winnerName.isNotEmpty) {
     return i18n.t(
       'inline.plan295.daily_choice.narrow_around_report_consensus_winne.dcb90e83d7ce',
+      params: <String, Object?>{
+        'reportConsensusWinnerName': report.consensus.winnerName,
+      },
     );
   }
   return i18n.t(
@@ -1815,6 +1871,8 @@ String _reportActionBody(AppI18n i18n, DailyChoiceDecisionReport report) {
         ? i18n.t(
             'inline.plan295.daily_choice.information_value_is_report_infosign.d6653124f45f',
             params: <String, Object?>{
+              'reportInfoSignalImpactScore': report.infoSignal.impactScore
+                  .toStringAsFixed(2),
               'report.infoSignal.impactScore.toStringAsFixed(2)': report
                   .infoSignal
                   .impactScore
@@ -1824,6 +1882,8 @@ String _reportActionBody(AppI18n i18n, DailyChoiceDecisionReport report) {
         : i18n.t(
             'inline.plan295.daily_choice.information_value_is_report_infosign.8216f998d3ef',
             params: <String, Object?>{
+              'reportInfoSignalImpactScore': report.infoSignal.impactScore
+                  .toStringAsFixed(2),
               'report.infoSignal.impactScore.toStringAsFixed(2)': report
                   .infoSignal
                   .impactScore
@@ -1835,6 +1895,10 @@ String _reportActionBody(AppI18n i18n, DailyChoiceDecisionReport report) {
   if (report.consensus.winnerName.isNotEmpty) {
     return i18n.t(
       'inline.plan295.daily_choice.report_consensus_supportcount_report.26229b88f94a',
+      params: <String, Object?>{
+        'reportConsensusMethodCount': report.consensus.methodCount,
+        'reportConsensusSupportCount': report.consensus.supportCount,
+      },
     );
   }
   return i18n.t(
@@ -1852,6 +1916,9 @@ String _actionPlanNoticeTitle(AppI18n i18n, DailyChoiceDecisionReport report) {
       report.consensus.winnerName.isNotEmpty) {
     return i18n.t(
       'inline.plan295.daily_choice.turn_report_consensus_winnername_int.c4fc8fe86df4',
+      params: <String, Object?>{
+        'reportConsensusWinnerName': report.consensus.winnerName,
+      },
     );
   }
   return i18n.t(

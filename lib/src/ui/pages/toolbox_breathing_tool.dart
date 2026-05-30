@@ -14,7 +14,6 @@ import '../../services/toolbox_breathing_audio_repository.dart';
 import '../../services/toolbox_breathing_catalog.dart';
 import '../../services/toolbox_breathing_prefs_service.dart';
 import '../../state/app_state_provider.dart';
-import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 import 'toolbox_breathing_ui_parts.dart';
 import 'toolbox_tool_shell.dart';
@@ -133,8 +132,6 @@ class _BreathingPracticeReleaseCardState
       _loopStages.fold<int>(0, (sum, stage) => sum + stage.seconds);
 
   BreathingStagePlan get _stage => _loopStages[_stageIndex];
-  BreathingStagePlan get _nextStage =>
-      _loopStages[(_stageIndex + 1) % _loopStages.length];
 
   Duration get _elapsed {
     if (!_running || _runStartedAt == null) {
@@ -457,9 +454,11 @@ class _BreathingPracticeReleaseCardState
         : _lastBoltSeconds < 20
         ? i18n.t(
             'inline.plan294.breathing.your_recent_bolt_is_value_s_it_is_usually_better_b95808b3',
+            params: <String, Object?>{'lastBoltSeconds': _lastBoltSeconds},
           )
         : i18n.t(
             'inline.plan294.breathing.your_recent_bolt_is_value_s_still_stay_inside_co_42bf0ef2',
+            params: <String, Object?>{'lastBoltSeconds': _lastBoltSeconds},
           );
     final confirmed = await showDialog<bool>(
       context: context,
@@ -727,9 +726,17 @@ class _BreathingPracticeReleaseCardState
       ),
     };
     return _BreathingSessionSummary(
-      title: i18n.t('inline.plan294.breathing.completed_value_a5eefca9'),
+      title: i18n.t(
+        'inline.plan294.breathing.completed_value_a5eefca9',
+        params: <String, Object?>{'scenario': _scenario.name.resolve(i18n)},
+      ),
       body: i18n.t(
         'inline.plan294.breathing.completed_value_and_about_value_cycles_value_52f6c172',
+        params: <String, Object?>{
+          'fmtElapsed': _fmt(elapsed),
+          'cycles': cycles,
+          'scenarioScene': _scenario.scene.resolve(i18n),
+        },
       ),
       nextStep: nextStep,
     );
@@ -789,13 +796,22 @@ class _BreathingPracticeReleaseCardState
         final parts = <String>[];
         if (_expectedCueCount > 0) {
           parts.add(
-            i18n.t('inline.plan294.breathing.value_value_cues_ready_d186cb84'),
+            i18n.t(
+              'inline.plan294.breathing.value_value_cues_ready_d186cb84',
+              params: <String, Object?>{
+                'availableCueCount': _availableCueCount,
+                'expectedCueCount': _expectedCueCount,
+              },
+            ),
           );
         }
         if (_shortStageSilentCount > 0) {
           parts.add(
             i18n.t(
               'inline.plan294.breathing.value_short_stages_stay_silent_to_protect_timing_de7c8705',
+              params: <String, Object?>{
+                'shortStageSilentCount': _shortStageSilentCount,
+              },
             ),
           );
         }
@@ -863,7 +879,10 @@ class _BreathingPracticeReleaseCardState
     final formatted = value >= 10
         ? value.toStringAsFixed(0)
         : value.toStringAsFixed(1);
-    return i18n.t('inline.plan294.breathing.value_cycles_min_e897befc');
+    return i18n.t(
+      'inline.plan294.breathing.value_cycles_min_e897befc',
+      params: <String, Object?>{'formatted': formatted},
+    );
   }
 
   String _friendlyVoiceLocation() {
@@ -1381,6 +1400,10 @@ class _BreathingPracticeReleaseCardState
                         ScenarioTagChip(
                           label: i18n.t(
                             'inline.plan294.breathing.coverage_value_value_20b6e21e',
+                            params: <String, Object?>{
+                              'availableCueCount': _availableCueCount,
+                              'expectedCueCount': _expectedCueCount,
+                            },
                           ),
                           color: _theme.orbStart,
                         ),
@@ -1388,6 +1411,9 @@ class _BreathingPracticeReleaseCardState
                         ScenarioTagChip(
                           label: i18n.t(
                             'inline.plan294.breathing.silent_short_value_267977bd',
+                            params: <String, Object?>{
+                              'shortStageSilentCount': _shortStageSilentCount,
+                            },
                           ),
                           color: _theme.accent,
                         ),
@@ -1398,6 +1424,9 @@ class _BreathingPracticeReleaseCardState
                     Text(
                       i18n.t(
                         'inline.plan294.breathing.last_matched_cue_value_b5ab39e2',
+                        params: <String, Object?>{
+                          'friendlyVoiceLocation': _friendlyVoiceLocation(),
+                        },
                       ),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
@@ -1465,7 +1494,13 @@ class _BreathingPracticeReleaseCardState
                       },
                 icon: const Icon(Icons.schedule_rounded),
                 label: Text(
-                  i18n.t('inline.plan294.breathing.use_value_min_24233949'),
+                  i18n.t(
+                    'inline.plan294.breathing.use_value_min_24233949',
+                    params: <String, Object?>{
+                      'scenarioRecommendedMinutes':
+                          _scenario.recommendedMinutes,
+                    },
+                  ),
                 ),
               ),
             ],
@@ -1660,6 +1695,7 @@ class _BreathingPracticeReleaseCardState
                         ? i18n.t(
                             'inline.plan295.breathing.interpretation_assessment_label.fc570901e88f',
                             params: <String, Object?>{
+                              'assessmentLabel': assessment.label,
                               'assessment.label': assessment.label,
                             },
                           )
@@ -1738,10 +1774,6 @@ class _BreathingPracticeReleaseCardState
   }
 
   Widget _buildPracticeCard(BuildContext context, AppI18n i18n) {
-    final remainStage = math.max(
-      0,
-      (_stage.seconds - (_stage.seconds * _controller.value)).ceil(),
-    );
     final remainSession = (_targetDuration - _elapsed).inSeconds.clamp(
       0,
       24 * 3600,
@@ -1785,6 +1817,9 @@ class _BreathingPracticeReleaseCardState
                 label: i18n.t('inline.plan294.breathing.cycle_1ca94239'),
                 value: i18n.t(
                   'inline.ui.pages.toolbox_breathing_tool.loopcycleseconds_s_0c3e97',
+                  params: <String, Object?>{
+                    'loopCycleSeconds': _loopCycleSeconds,
+                  },
                 ),
               ),
             ],
@@ -1918,6 +1953,21 @@ class _BreathingPracticeReleaseCardState
                       Text(
                         i18n.t(
                           'inline.plan294.breathing.value_s_left_round_value_next_value_43938d7c',
+                          params: <String, Object?>{
+                            'remainStage': math
+                                .max(
+                                  0,
+                                  (_stage.seconds * (1 - _controller.value))
+                                      .ceil(),
+                                )
+                                .toInt(),
+                            'rounds': _rounds + 1,
+                            'nextStageLabel':
+                                _loopStages[(_stageIndex + 1) %
+                                        _loopStages.length]
+                                    .label
+                                    .resolve(i18n),
+                          },
                         ),
                         style: Theme.of(
                           context,
@@ -1957,6 +2007,7 @@ class _BreathingPracticeReleaseCardState
                 label: i18n.t('toolbox.breathing.target'),
                 value: i18n.t(
                   'inline.ui.pages.toolbox_breathing_tool.targetminutes_min_029964',
+                  params: <String, Object?>{'targetMinutes': _targetMinutes},
                 ),
               ),
               BreathingMetricPill(
@@ -2080,6 +2131,7 @@ class _BreathingPracticeReleaseCardState
                     label: Text(
                       i18n.t(
                         'inline.ui.pages.toolbox_breathing_tool.minutes_min_373b41',
+                        params: <String, Object?>{'minutes': minutes},
                       ),
                     ),
                   ),

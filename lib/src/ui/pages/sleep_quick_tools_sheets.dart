@@ -65,7 +65,12 @@ class _CaffeineCutoffSheetState extends ConsumerState<_CaffeineCutoffSheet> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text(
-                  i18n.t('toolbox.sleep.sheets.caffeineSuggestion'),
+                  i18n.t(
+                    'toolbox.sleep.sheets.caffeineSuggestion',
+                    params: <String, Object?>{
+                      'time': sleepTimeOfDayLabel(cutoff),
+                    },
+                  ),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -122,7 +127,12 @@ class _MorningLightTimerSheetState
               ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
-            Text(i18n.t('toolbox.sleep.sheets.lightTimerHint')),
+            Text(
+              i18n.t(
+                'toolbox.sleep.sheets.lightTimerHint',
+                params: <String, Object?>{'minutes': _targetMinutes},
+              ),
+            ),
             const SizedBox(height: 16),
             Wrap(
               spacing: 10,
@@ -292,7 +302,10 @@ class _SleepCyclePlannerSheetState
           ),
           const SizedBox(height: 10),
           Text(
-            i18n.t('toolbox.sleep.sheets.settleBuffer'),
+            i18n.t(
+              'toolbox.sleep.sheets.settleBuffer',
+              params: <String, Object?>{'minutes': _settleMinutes},
+            ),
             style: Theme.of(
               context,
             ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
@@ -313,7 +326,12 @@ class _SleepCyclePlannerSheetState
           ),
           const SizedBox(height: 18),
           _SleepCycleSection(
-            title: i18n.t('toolbox.sleep.sheets.backPlanLightsOff'),
+            title: i18n.t(
+              'toolbox.sleep.sheets.backPlanLightsOff',
+              params: <String, Object?>{
+                'time': sleepTimeOfDayLabel(_targetWakeTime),
+              },
+            ),
             subtitle: i18n.t('toolbox.sleep.sheets.backPlanHint'),
             options: bedtimeOptions,
             i18n: i18n,
@@ -321,7 +339,13 @@ class _SleepCyclePlannerSheetState
           const SizedBox(height: 14),
           _SleepCycleSection(
             title: i18n.t('toolbox.sleep.sheets.sleepNow'),
-            subtitle: i18n.t('toolbox.sleep.sheets.sleepNowHint'),
+            subtitle: i18n.t(
+              'toolbox.sleep.sheets.sleepNowHint',
+              params: <String, Object?>{
+                'cycles': wakeOptions.first.cycles,
+                'time': _sleepCycleDateTimeLabel(wakeOptions.first.time),
+              },
+            ),
             options: wakeOptions,
             i18n: i18n,
           ),
@@ -342,6 +366,12 @@ class _SleepCyclePlannerSheetState
       value = value.add(const Duration(days: 1));
     }
     return value;
+  }
+
+  String _sleepCycleDateTimeLabel(DateTime value) {
+    return sleepTimeOfDayLabel(
+      TimeOfDay(hour: value.hour, minute: value.minute),
+    );
   }
 }
 

@@ -327,6 +327,7 @@ class PlaybackAdvancedPage extends ConsumerWidget {
                   Text(
                     i18n.t(
                       'inline.ui.pages.playback_advanced_page.delay_between_units_delay_ms_3d39b7',
+                      params: <String, Object?>{'delay': delay},
                     ),
                   ),
                   Slider(
@@ -343,6 +344,7 @@ class PlaybackAdvancedPage extends ConsumerWidget {
                   Text(
                     i18n.t(
                       'inline.ui.pages.playback_advanced_page.overall_loop_overallrepeat_e237ea',
+                      params: <String, Object?>{'overallRepeat': overallRepeat},
                     ),
                   ),
                   Slider(

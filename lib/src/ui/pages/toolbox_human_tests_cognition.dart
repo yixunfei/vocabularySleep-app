@@ -1576,6 +1576,7 @@ class _LuckTestCardState extends State<_LuckTestCard>
                   Text(
                     i18n.t(
                       'inline.ui.pages.toolbox_human_tests_cognition.luck_tier_score_d35a83',
+                      params: <String, Object?>{'tierScore': tier.score},
                     ),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.white.withValues(alpha: 0.95),
@@ -1775,10 +1776,20 @@ class _LuckTestCardState extends State<_LuckTestCard>
                       : _lastBatch.length > 1
                       ? i18n.t(
                           'inline.ui.pages.toolbox_human_tests_cognition.revealed_batchrevealedcount_batchcards_isempty_lastbatch_4cd5d6',
+                          params: <String, Object?>{
+                            'batchRevealedCount': _batchRevealedCount,
+                            'isEmptyLastBatchBatchCards': _batchCards.isEmpty
+                                ? _lastBatch.length
+                                : _batchCards.length,
+                            'batchSummary': _batchSummary(i18n),
+                          },
                         )
                       : _batchActive
                       ? i18n.t(
                           'inline.ui.pages.toolbox_human_tests_cognition.batchcards_length_cards_are_ready_tap_cards_to_flip_them_9e7d1e',
+                          params: <String, Object?>{
+                            'batchCards': _batchCards.length,
+                          },
                         )
                       : _revealedTier == null
                       ? i18n.t(
@@ -1786,6 +1797,12 @@ class _LuckTestCardState extends State<_LuckTestCard>
                         )
                       : i18n.t(
                           'inline.ui.pages.toolbox_human_tests_cognition.revealed_tierlabel_i18n_revealedtier_280d02',
+                          params: <String, Object?>{
+                            'tierLabelRevealedTier': _tierLabel(
+                              i18n,
+                              _revealedTier!,
+                            ),
+                          },
                         ),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
@@ -1822,6 +1839,13 @@ class _LuckTestCardState extends State<_LuckTestCard>
                   child: Text(
                     i18n.t(
                       'inline.ui.pages.toolbox_human_tests_cognition.drawmodelabel_i18n_drawmode_mode_press_the_button_below_215553',
+                      params: <String, Object?>{
+                        'drawModeLabelDrawMode': _drawModeLabel(
+                          i18n,
+                          _drawMode,
+                        ),
+                        'drawCountForMode': _drawCountForMode,
+                      },
                     ),
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
@@ -1877,6 +1901,10 @@ class _LuckTestCardState extends State<_LuckTestCard>
                           Text(
                             i18n.t(
                               'inline.ui.pages.toolbox_human_tests_cognition.progress_batchrevealedcount_batchcards_length_6ac751',
+                              params: <String, Object?>{
+                                'batchRevealedCount': _batchRevealedCount,
+                                'batchCards': _batchCards.length,
+                              },
                             ),
                             style: theme.textTheme.labelLarge?.copyWith(
                               fontWeight: FontWeight.w800,
@@ -3334,6 +3362,7 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                     label: Text(
                       i18n.t(
                         'inline.ui.pages.toolbox_human_tests_cognition.count_spots_544af2',
+                        params: <String, Object?>{'count': count},
                       ),
                     ),
                     selected: _slotCount == count,
@@ -3391,6 +3420,11 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
             label: Text(
               i18n.t(
                 'inline.ui.pages.toolbox_human_tests_cognition.current_ticket_odds_about_1_effectiveoverallodds_tostrin_b42a10',
+                params: <String, Object?>{
+                  'effectiveOverallOdds': _effectiveOverallOdds.toStringAsFixed(
+                    2,
+                  ),
+                },
               ),
             ),
           ),
@@ -3541,6 +3575,7 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
           child: Text(
             i18n.t(
               'inline.ui.pages.toolbox_human_tests_cognition.target_label_40464b',
+              params: <String, Object?>{'label': label},
             ),
             maxLines: 1,
             style: theme.textTheme.titleSmall?.copyWith(
@@ -3605,6 +3640,9 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                   label: Text(
                     i18n.t(
                       'inline.ui.pages.toolbox_human_tests_cognition.price_formatprize_ticketprice_cd0a56',
+                      params: <String, Object?>{
+                        'formatPrizeTicketPrice': _formatPrize(_ticketPrice),
+                      },
                     ),
                   ),
                   visualDensity: VisualDensity.compact,
@@ -3613,6 +3651,10 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                   label: Text(
                     i18n.t(
                       'inline.ui.pages.toolbox_human_tests_cognition.effective_odds_1_effectiveoverallodds_tostringasfixed_2_23ed6a',
+                      params: <String, Object?>{
+                        'effectiveOverallOdds': _effectiveOverallOdds
+                            .toStringAsFixed(2),
+                      },
                     ),
                   ),
                   visualDensity: VisualDensity.compact,
@@ -3621,6 +3663,7 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                   label: Text(
                     i18n.t(
                       'inline.ui.pages.toolbox_human_tests_cognition.slotcount_covered_spots_af1649',
+                      params: <String, Object?>{'slotCount': _slotCount},
                     ),
                   ),
                   visualDensity: VisualDensity.compact,
@@ -3940,6 +3983,9 @@ class _LuckScratchTestCardState extends State<_LuckScratchTestCard> {
                   Text(
                     i18n.t(
                       'inline.ui.pages.toolbox_human_tests_cognition.revealed_completionratio_100_round_dbb16d',
+                      params: <String, Object?>{
+                        'completionRatio': (_completionRatio * 100).round(),
+                      },
                     ),
                     style: theme.textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w800,
@@ -4981,6 +5027,7 @@ class _LuckScratchReportDialog extends StatelessWidget {
                       label: Text(
                         i18n.t(
                           'inline.ui.pages.toolbox_human_tests_cognition.ticket_ticketid_51a2bf',
+                          params: <String, Object?>{'ticketId': ticketId},
                         ),
                       ),
                     ),
@@ -4988,6 +5035,7 @@ class _LuckScratchReportDialog extends StatelessWidget {
                       label: Text(
                         i18n.t(
                           'inline.ui.pages.toolbox_human_tests_cognition.pack_packid_c7f974',
+                          params: <String, Object?>{'packId': packId},
                         ),
                       ),
                     ),
@@ -4995,6 +5043,9 @@ class _LuckScratchReportDialog extends StatelessWidget {
                       label: Text(
                         i18n.t(
                           'inline.ui.pages.toolbox_human_tests_cognition.validation_validationcode_525db8',
+                          params: <String, Object?>{
+                            'validationCode': validationCode,
+                          },
                         ),
                       ),
                     ),
@@ -5002,6 +5053,9 @@ class _LuckScratchReportDialog extends StatelessWidget {
                       label: Text(
                         i18n.t(
                           'inline.ui.pages.toolbox_human_tests_cognition.target_tier_tierlabel_winningtier_97be39',
+                          params: <String, Object?>{
+                            'tierLabelWinningTier': _tierLabel(winningTier),
+                          },
                         ),
                       ),
                     ),
@@ -5009,6 +5063,11 @@ class _LuckScratchReportDialog extends StatelessWidget {
                       label: Text(
                         i18n.t(
                           'inline.ui.pages.toolbox_human_tests_cognition.target_amount_formatprize_winningamount_cc75e3',
+                          params: <String, Object?>{
+                            'formatPrizeWinningAmount': _formatPrize(
+                              winningAmount,
+                            ),
+                          },
                         ),
                       ),
                     ),
@@ -5016,6 +5075,9 @@ class _LuckScratchReportDialog extends StatelessWidget {
                       label: Text(
                         i18n.t(
                           'inline.ui.pages.toolbox_human_tests_cognition.matches_currentmatches_2b889a',
+                          params: <String, Object?>{
+                            'currentMatches': currentMatches,
+                          },
                         ),
                       ),
                     ),
@@ -5023,6 +5085,11 @@ class _LuckScratchReportDialog extends StatelessWidget {
                       label: Text(
                         i18n.t(
                           'inline.ui.pages.toolbox_human_tests_cognition.current_prize_formatprize_currentprize_393d8e',
+                          params: <String, Object?>{
+                            'formatPrizeCurrentPrize': _formatPrize(
+                              currentPrize,
+                            ),
+                          },
                         ),
                       ),
                     ),
@@ -5030,6 +5097,9 @@ class _LuckScratchReportDialog extends StatelessWidget {
                       label: Text(
                         i18n.t(
                           'inline.ui.pages.toolbox_human_tests_cognition.reveal_completionratio_100_round_cf3f7f',
+                          params: <String, Object?>{
+                            'completionRatio': (completionRatio * 100).round(),
+                          },
                         ),
                       ),
                     ),
@@ -5844,6 +5914,7 @@ class _CalculationTestCardState extends State<_CalculationTestCard> {
                         )
                       : i18n.t(
                           'inline.ui.pages.toolbox_human_tests_cognition.last_answer_lastanswer_b751d8',
+                          params: <String, Object?>{'lastAnswer': _lastAnswer},
                         ),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: _lastCorrect! ? _accent : theme.colorScheme.error,
@@ -6511,6 +6582,7 @@ class _SustainedAttentionCardState extends State<_SustainedAttentionCard> {
       ),
       _AttentionMode.nBack => i18n.t(
         'inline.ui.pages.toolbox_human_tests_cognition.tap_when_the_current_symbol_matches_the_one_nback_step_s_2dd97c',
+        params: <String, Object?>{'nBack': _nBack},
       ),
     };
   }

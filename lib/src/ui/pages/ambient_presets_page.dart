@@ -6,7 +6,6 @@ import '../../models/ambient_preset.dart';
 import '../../state/app_state.dart';
 import '../../state/app_state_provider.dart';
 import '../modal_helpers.dart';
-import '../ui_copy.dart';
 
 class AmbientPresetsPage extends ConsumerWidget {
   const AmbientPresetsPage({super.key});
@@ -64,6 +63,7 @@ class AmbientPresetsPage extends ConsumerWidget {
                           content: Text(
                             i18n.t(
                               'inline.ui.pages.ambient_presets_page.applied_preset_preset_name_044da2',
+                              params: <String, Object?>{'preset': preset.name},
                             ),
                           ),
                         ),
@@ -87,6 +87,10 @@ class AmbientPresetsPage extends ConsumerWidget {
   String _subtitle(AppI18n i18n, AmbientPreset preset) {
     return i18n.t(
       'inline.ui.pages.ambient_presets_page.preset_entries_length_sounds_master_preset_mastervolume_2f5f31',
+      params: <String, Object?>{
+        'presetEntries': preset.entries.length,
+        'presetMasterVolume': (preset.masterVolume * 100).round(),
+      },
     );
   }
 
@@ -131,6 +135,7 @@ class AmbientPresetsPage extends ConsumerWidget {
         content: Text(
           i18n.t(
             'inline.ui.pages.ambient_presets_page.saved_preset_name_trim_f76b76',
+            params: <String, Object?>{'trim': name.trim()},
           ),
         ),
       ),
@@ -150,6 +155,7 @@ class AmbientPresetsPage extends ConsumerWidget {
       ),
       message: i18n.t(
         'inline.ui.pages.ambient_presets_page.delete_preset_preset_name_6329ee',
+        params: <String, Object?>{'preset': preset.name},
       ),
       confirmText: i18n.t('delete'),
       danger: true,

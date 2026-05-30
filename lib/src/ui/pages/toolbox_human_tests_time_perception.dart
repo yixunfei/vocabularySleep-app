@@ -376,6 +376,12 @@ class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
                 _running
                     ? i18n.t(
                         'inline.ui.pages.toolbox_human_tests_time_perception.current_target_formatduration_targets_index_i18n_a96b9b',
+                        params: <String, Object?>{
+                          'formatDurationTargetsIndex': _formatDuration(
+                            _targets[_index],
+                            i18n,
+                          ),
+                        },
                       )
                     : _done
                     ? i18n.t(
@@ -499,6 +505,15 @@ class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
                     Text(
                       i18n.t(
                         'inline.ui.pages.toolbox_human_tests_time_perception.this_will_randomize_plannedtargetcount_targets_between_f_92b3d6',
+                        params: <String, Object?>{
+                          'plannedTargetCount': plannedTargetCount,
+                          'formatDurationMinimumFirstTargetTime':
+                              _formatDuration(_minimumFirstTargetTime, i18n),
+                          'formatDurationMaxTargetTime': _formatDuration(
+                            _maxTargetTime,
+                            i18n,
+                          ),
+                        },
                       ),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -582,6 +597,17 @@ class _TimePerceptionTestCardState extends State<_TimePerceptionTestCard> {
                     child: Text(
                       i18n.t(
                         'inline.ui.pages.toolbox_human_tests_time_perception.target_formatduration_result_target_i18n_actual_formatdu_ec49ff',
+                        params: <String, Object?>{
+                          'formatDurationResultTarget': _formatDuration(
+                            result.target,
+                            i18n,
+                          ),
+                          'formatDurationResultActual': _formatDuration(
+                            result.actual,
+                            i18n,
+                          ),
+                          'formatDurationError': _formatDuration(error, i18n),
+                        },
                       ),
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),

@@ -74,6 +74,9 @@ Future<bool?> _confirmDeleteEatCollection({
         content: Text(
           i18n.t(
             'inline.plan295.daily_choice.collection_title_i18n_will_be_remove.9c682cda7ca6',
+            params: <String, Object?>{
+              'collectionTitle': collection.title(i18n),
+            },
           ),
         ),
         actions: <Widget>[
@@ -338,6 +341,9 @@ Future<bool?> _confirmDeleteWearCollection({
         content: Text(
           i18n.t(
             'inline.plan295.daily_choice.collection_title_i18n_will_be_remove.34bb8b26bd3a',
+            params: <String, Object?>{
+              'collectionTitle': collection.title(i18n),
+            },
           ),
         ),
         actions: <Widget>[
@@ -621,6 +627,9 @@ Future<bool?> _confirmDeleteActivityCollection({
         content: Text(
           i18n.t(
             'inline.plan295.daily_choice.collection_title_i18n_will_be_remove.d2c1a2ec3f4f',
+            params: <String, Object?>{
+              'collectionTitle': collection.title(i18n),
+            },
           ),
         ),
         actions: <Widget>[

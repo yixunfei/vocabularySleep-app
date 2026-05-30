@@ -658,6 +658,11 @@ class _AimTestCardState extends State<_AimTestCard>
             ? i18n.t('inline.ui.pages.toolbox_human_tests_aim.hit_bb8a95')
             : i18n.t(
                 'inline.ui.pages.toolbox_human_tests_aim.hit_formatmilliseconds_latesthitms_1146a9',
+                params: <String, Object?>{
+                  'formatMillisecondsLatestHitMs': _formatMilliseconds(
+                    _latestHitMs!,
+                  ),
+                },
               ),
       _AimFeedbackKind.miss => i18n.t(
         'inline.ui.pages.toolbox_human_tests_aim.blank_tap_the_target_stays_but_the_streak_is_broken_c645da',
@@ -832,6 +837,12 @@ class _AimTestCardState extends State<_AimTestCard>
                               subtitle: _done
                                   ? i18n.t(
                                       'inline.ui.pages.toolbox_human_tests_aim.total_formatmilliseconds_finalmilliseconds_0_6a27d6',
+                                      params: <String, Object?>{
+                                        'formatMillisecondsFinalMilliseconds':
+                                            _formatMilliseconds(
+                                              _finalMilliseconds ?? 0,
+                                            ),
+                                      },
                                     )
                                   : _modeDescription(i18n, _mode),
                             ),

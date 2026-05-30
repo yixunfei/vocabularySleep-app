@@ -156,7 +156,10 @@ class _ViolinToolState extends State<_ViolinTool> {
   }
 
   String _positionLabel(AppI18n i18n, int positionIndex) {
-    return i18n.t('toolbox.sound.violin.position_2');
+    return i18n.t(
+      'toolbox.sound.violin.position_2',
+      params: <String, Object?>{'value': positionIndex + 1},
+    );
   }
 
   String _variantLabel(AppI18n i18n, String variant) {
@@ -745,7 +748,16 @@ class _ViolinToolState extends State<_ViolinTool> {
           }),
         ),
         const SizedBox(height: 14),
-        Text(i18n.t('toolbox.sound.violin.bow_tone')),
+        Text(
+          i18n.t(
+            'toolbox.sound.violin.bow_tone',
+            params: <String, Object?>{
+              'pct': (_bow * 100).round(),
+              'tone': _styleLabel(i18n, _activePreset.styleId),
+              'variant': _variantLabel(i18n, _toneVariant),
+            },
+          ),
+        ),
         Slider(
           value: _bow,
           min: 0.15,
@@ -762,7 +774,12 @@ class _ViolinToolState extends State<_ViolinTool> {
             refreshSheet();
           },
         ),
-        Text(i18n.t('toolbox.sound.violin.reverb')),
+        Text(
+          i18n.t(
+            'toolbox.sound.violin.reverb',
+            params: <String, Object?>{'value': (_reverb * 100).round()},
+          ),
+        ),
         Slider(
           value: _reverb,
           min: 0.0,
@@ -1079,7 +1096,16 @@ class _ViolinToolState extends State<_ViolinTool> {
                 ),
               ),
               const SizedBox(height: 10),
-              Text(i18n.t('toolbox.sound.violin.bow_tone')),
+              Text(
+                i18n.t(
+                  'toolbox.sound.violin.bow_tone',
+                  params: <String, Object?>{
+                    'pct': (_bow * 100).round(),
+                    'tone': _styleLabel(i18n, _activePreset.styleId),
+                    'variant': _variantLabel(i18n, _toneVariant),
+                  },
+                ),
+              ),
               Slider(
                 value: _bow,
                 min: 0.15,
@@ -1087,7 +1113,12 @@ class _ViolinToolState extends State<_ViolinTool> {
                 divisions: 17,
                 onChanged: (value) => setState(() => _bow = value),
               ),
-              Text(i18n.t('toolbox.sound.violin.reverb')),
+              Text(
+                i18n.t(
+                  'toolbox.sound.violin.reverb',
+                  params: <String, Object?>{'value': (_reverb * 100).round()},
+                ),
+              ),
               Slider(
                 value: _reverb,
                 min: 0.0,

@@ -49,7 +49,7 @@ Future<void> showDailyChoiceManagerSheet({
   final filterContexts = contexts.any((item) => item.id == 'all')
       ? contexts
       : <DailyChoiceCategory>[
-          DailyChoiceCategory(
+          const DailyChoiceCategory(
             id: 'all',
             icon: Icons.tune_rounded,
             titleKey: 'all',
@@ -742,7 +742,8 @@ Future<void> showDailyChoiceManagerSheet({
                   localState.restoreBuiltIn(option.id),
                   i18n.t(
                     _managerModuleKey(
-                      wearKey: 'inline.plan295.daily_choice.restoring_outfit.ae04744e159f',
+                      wearKey:
+                          'inline.plan295.daily_choice.restoring_outfit.ae04744e159f',
                       activityKey:
                           'inline.plan295.daily_choice.restoring_action.18747f1d0c5e',
                       eatKey:
@@ -837,9 +838,7 @@ Future<void> showDailyChoiceManagerSheet({
                 return;
               }
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(i18n.t(key, params: params)),
-                ),
+                SnackBar(content: Text(i18n.t(key, params: params))),
               );
             }
 
@@ -1106,9 +1105,7 @@ Future<void> showDailyChoiceManagerSheet({
                 );
                 showManagerMessageKey(
                   'toolbox.daily_choice.manager.message.recipe_sets_imported',
-                  params: <String, Object?>{
-                    'count': imported.collectionCount,
-                  },
+                  params: <String, Object?>{'count': imported.collectionCount},
                 );
               } catch (error) {
                 showManagerMessageKey(
@@ -1206,9 +1203,7 @@ Future<void> showDailyChoiceManagerSheet({
                 );
                 showManagerMessageKey(
                   'toolbox.daily_choice.manager.message.wardrobes_imported',
-                  params: <String, Object?>{
-                    'count': imported.collectionCount,
-                  },
+                  params: <String, Object?>{'count': imported.collectionCount},
                 );
               } catch (error) {
                 showManagerMessageKey(
@@ -1306,9 +1301,7 @@ Future<void> showDailyChoiceManagerSheet({
                 );
                 showManagerMessageKey(
                   'toolbox.daily_choice.manager.message.action_sets_imported',
-                  params: <String, Object?>{
-                    'count': imported.collectionCount,
-                  },
+                  params: <String, Object?>{'count': imported.collectionCount},
                 );
               } catch (error) {
                 showManagerMessageKey(
@@ -1426,6 +1419,10 @@ Future<void> showDailyChoiceManagerSheet({
                                       )
                                     : i18n.t(
                                         'inline.plan295.daily_choice.showing_selectedcollection_title_i18.7636930244a9',
+                                        params: <String, Object?>{
+                                          'selectedCollectionTitle':
+                                              selectedCollection.title(i18n),
+                                        },
                                       ),
                                 accent: accent,
                                 expanded: collectionsExpanded,
@@ -1628,6 +1625,12 @@ Future<void> showDailyChoiceManagerSheet({
                                       )
                                     : i18n.t(
                                         'inline.plan295.daily_choice.showing_selectedwearcollection_title.e6f91512e431',
+                                        params: <String, Object?>{
+                                          'selectedWearCollectionTitle':
+                                              selectedWearCollection.title(
+                                                i18n,
+                                              ),
+                                        },
                                       ),
                                 accent: accent,
                                 expanded: collectionsExpanded,
@@ -1837,6 +1840,12 @@ Future<void> showDailyChoiceManagerSheet({
                                       )
                                     : i18n.t(
                                         'inline.plan295.daily_choice.showing_selectedactivitycollection_t.873ce359d318',
+                                        params: <String, Object?>{
+                                          'selectedActivityCollectionTitle':
+                                              selectedActivityCollection.title(
+                                                i18n,
+                                              ),
+                                        },
                                       ),
                                 accent: accent,
                                 expanded: collectionsExpanded,
@@ -2036,6 +2045,9 @@ Future<void> showDailyChoiceManagerSheet({
                                     )
                                   : i18n.t(
                                       'inline.plan295.daily_choice.activefiltercount_filters_enabled.6b3651f7782c',
+                                      params: <String, Object?>{
+                                        'activeFilterCount': activeFilterCount,
+                                      },
                                     ),
                               accent: accent,
                               expanded: filtersExpanded,
@@ -2043,6 +2055,9 @@ Future<void> showDailyChoiceManagerSheet({
                                   ? i18n.t('todoNoColor')
                                   : i18n.t(
                                       'inline.plan295.daily_choice.activefiltercount_active.721b68d05f03',
+                                      params: <String, Object?>{
+                                        'activeFilterCount': activeFilterCount,
+                                      },
                                     ),
                               onToggle: () {
                                 setSheetState(() {
@@ -2074,6 +2089,11 @@ Future<void> showDailyChoiceManagerSheet({
                                       i18n: i18n,
                                       title: i18n.t(
                                         'inline.plan295.daily_choice.filter_by_contextlabelen.301714535181',
+                                        params: <String, Object?>{
+                                          'contextLabelEn': i18n.t(
+                                            contextLabelKey,
+                                          ),
+                                        },
                                       ),
                                       categories: filterContexts,
                                       selectedId:

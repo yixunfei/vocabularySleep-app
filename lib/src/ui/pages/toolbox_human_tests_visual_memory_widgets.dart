@@ -488,6 +488,12 @@ class _VisualMemoryReportSummary extends StatelessWidget {
       child: Text(
         i18n.t(
           'inline.ui.pages.toolbox_human_tests_visual_memory_widgets.difficulty_mode_near_color_pressure_was_about_pressure_s_826dee',
+          params: <String, Object?>{
+            'difficulty': difficulty,
+            'mode': mode,
+            'pressure': pressure,
+            'suggestion': suggestion,
+          },
         ),
         style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
       ),
@@ -546,6 +552,7 @@ class _VisualMemoryReportRoundRow extends StatelessWidget {
         ? ''
         : i18n.t(
             'inline.ui.pages.toolbox_human_tests_visual_memory_widgets.target_targetcolor_en_d2b139',
+            params: <String, Object?>{'targetColorEn': targetColor.label(i18n)},
           );
     return Container(
       width: double.infinity,
@@ -558,6 +565,13 @@ class _VisualMemoryReportRoundRow extends StatelessWidget {
       child: Text(
         i18n.t(
           'inline.ui.pages.toolbox_human_tests_visual_memory_widgets.level_result_level_result_gridsize_x_result_gridsize_tar_d58e74',
+          params: <String, Object?>{
+            'resultLevel': result.level,
+            'resultGridSize': result.gridSize,
+            'resultTargets': result.targets,
+            'resultMistakes': result.mistakes,
+            'targetText': targetText,
+          },
         ),
         style: theme.textTheme.bodySmall?.copyWith(
           height: 1.25,

@@ -12,7 +12,6 @@ import '../../services/app_log_service.dart';
 import '../../state/app_state.dart';
 import '../../state/app_state_provider.dart';
 import '../module/module_access.dart';
-import '../ui_copy.dart';
 import '../widgets/empty_state_view.dart';
 import '../widgets/section_header.dart';
 import '../widgets/word_card.dart';
@@ -286,6 +285,7 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
               Text(
                 i18n.t(
                   'inline.ui.pages.practice_session_page.accuracy_accuracy_5e2b02',
+                  params: <String, Object?>{'accuracy': accuracy},
                 ),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
@@ -293,6 +293,11 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
               Text(
                 i18n.t(
                   'inline.ui.pages.practice_session_page.remembered_remembered_weak_weakcount_total_total_97ec42',
+                  params: <String, Object?>{
+                    'remembered': remembered,
+                    'weakCount': weakCount,
+                    'total': total,
+                  },
                 ),
               ),
               if (_rememberedWords.isNotEmpty) ...<Widget>[
@@ -434,6 +439,10 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                   widget.subtitle ??
                   i18n.t(
                     'inline.ui.pages.practice_session_page.item_index_1_of_total_d48de9',
+                    params: <String, Object?>{
+                      'index': _index + 1,
+                      'total': total,
+                    },
                   ),
             ),
             const SizedBox(height: 12),
@@ -443,6 +452,7 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
               ),
               value: i18n.t(
                 'inline.ui.pages.practice_session_page.item_index_1_of_total_d48de9',
+                params: <String, Object?>{'index': _index + 1, 'total': total},
               ),
               child: ExcludeSemantics(
                 child: LinearProgressIndicator(value: progress),
@@ -1020,7 +1030,11 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                         _pendingAnswerFeedback = null;
                       });
                     },
-                    child: Text(i18n.t('toolbox.sound.locator.cue_label_back')),
+                    child: Text(
+                      i18n.t(
+                        'inline.ui.pages.practice_session_page.back_1b5005',
+                      ),
+                    ),
                   ),
                   FilledButton.icon(
                     onPressed: () => _commitInlineAnswerFeedback(state),
@@ -1117,6 +1131,7 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                 ? i18n.t('inline.ui.pages.practice_session_page.correct_c3dccf')
                 : i18n.t(
                     'inline.ui.pages.practice_session_page.not_quite_correct_answer_correctmeaning_766850',
+                    params: <String, Object?>{'correctMeaning': correctMeaning},
                   ),
           ),
       ],
@@ -1173,6 +1188,7 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                   )
                 : i18n.t(
                     'inline.ui.pages.practice_session_page.not_quite_correct_spelling_current_word_96d345',
+                    params: <String, Object?>{'word': current.word},
                   ),
           ),
         ],
@@ -1641,7 +1657,9 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
               actions: <Widget>[
                 TextButton(
                   onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: Text(i18n.t('toolbox.sound.locator.cue_label_back')),
+                  child: Text(
+                    i18n.t('inline.ui.pages.practice_session_page.back_1b5005'),
+                  ),
                 ),
                 FilledButton.icon(
                   onPressed: () {

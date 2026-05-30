@@ -548,6 +548,7 @@ extension _JoystickHandEyeSettingsWidgets on _JoystickHandEyeCardState {
         Text(
           i18n.t(
             'inline.ui.pages.toolbox_human_tests_hand_eye_settings.current_respawn_spawnlabel_i18n_55aef0',
+            params: <String, Object?>{'spawnLabel': _spawnLabel(i18n)},
           ),
           style: Theme.of(context).textTheme.bodySmall,
         ),

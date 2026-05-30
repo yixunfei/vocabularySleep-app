@@ -513,6 +513,9 @@ class _DiceRandomStage extends StatelessWidget {
                         sides: layout.facesPerDie[index],
                         faceText: i18n.t(
                           'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_visuals.layout_facesperdie_index_sides_efb13a',
+                          params: <String, Object?>{
+                            'layoutFacesPerDieIndex': layout.facesPerDie[index],
+                          },
                         ),
                         size: dieSize,
                       ),
@@ -544,6 +547,11 @@ class _DiceRandomStage extends StatelessWidget {
                           )
                         : i18n.t(
                             'inline.plan295.daily_choice.landed_on_d_result_diceindex_0_1_fac.093330f4da90',
+                            params: <String, Object?>{
+                              'resultDiceFaceIndex':
+                                  (result?.diceFaceIndex ?? 0) + 1,
+                              'resultDiceIndex': (result?.diceIndex ?? 0) + 1,
+                            },
                           ),
                   ),
                 ),

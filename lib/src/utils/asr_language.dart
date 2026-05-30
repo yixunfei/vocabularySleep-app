@@ -58,10 +58,10 @@ String asrLanguageLabel(AppI18n i18n, String? raw) {
     'ja-JP' => '日本語',
     'ko-KR' => '한국어',
     'de-DE' => 'Deutsch',
-    'fr-FR' => 'Francais',
-    'es-ES' => 'Espanol',
-    'es-MX' => 'Espanol (MX)',
-    'pt-BR' => 'Portugues (BR)',
+    'fr-FR' => 'Français',
+    'es-ES' => 'Español',
+    'es-MX' => 'Español (MX)',
+    'pt-BR' => 'Português (BR)',
     'it-IT' => 'Italiano',
     'ru-RU' => 'Русский',
     _ =>
@@ -130,13 +130,5 @@ String _canonicalizeLocaleTag(String raw) {
 }
 
 String _systemDefaultLanguageLabel(AppI18n i18n) {
-  return switch (AppI18n.normalizeLanguageCode(i18n.languageCode)) {
-    'zh' => '系统默认语言',
-    'ja' => 'システム既定',
-    'de' => 'Systemstandard',
-    'fr' => 'Langue du systeme',
-    'es' => 'Idioma del sistema',
-    'ru' => 'Язык системы',
-    _ => 'System default',
-  };
+  return i18n.t('settings.language.system_default');
 }

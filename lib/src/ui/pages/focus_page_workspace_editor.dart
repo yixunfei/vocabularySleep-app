@@ -170,16 +170,19 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
     if (minutesBefore < 60) {
       return i18n.t(
         'inline.ui.pages.focus_page_workspace_editor.minutesbefore_minutes_before_44ac9c',
+        params: <String, Object?>{'minutesBefore': minutesBefore},
       );
     }
     if (minutesBefore % 60 == 0) {
       final hours = minutesBefore ~/ 60;
       return i18n.t(
         'inline.ui.pages.focus_page_workspace_editor.hours_hours_before_bdad8b',
+        params: <String, Object?>{'hours': hours},
       );
     }
     return i18n.t(
       'inline.ui.pages.focus_page_workspace_editor.minutesbefore_minutes_before_44ac9c',
+      params: <String, Object?>{'minutesBefore': minutesBefore},
     );
   }
 

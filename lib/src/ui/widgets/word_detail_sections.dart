@@ -25,12 +25,14 @@ class WordDetailOverviewCard extends StatelessWidget {
         icon: Icons.layers_rounded,
         label: i18n.t(
           'inline.ui.widgets.word_detail_sections.groupedfields_length_groups_2ab664',
+          params: <String, Object?>{'groupedFields': groupedFields.length},
         ),
       ),
       _OverviewChip(
         icon: Icons.view_list_rounded,
         label: i18n.t(
           'inline.ui.widgets.word_detail_sections.word_fields_length_fields_105c39',
+          params: <String, Object?>{'wordFields': word.fields.length},
         ),
       ),
     ];

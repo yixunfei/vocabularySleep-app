@@ -879,6 +879,10 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
       ),
       _HandEyePhase.visible => i18n.t(
         'inline.ui.pages.toolbox_human_tests_hand_eye.hit_target_targettaps_requiredtaps_28a288',
+        params: <String, Object?>{
+          'targetTaps': _targetTaps,
+          'requiredTaps': _requiredTaps,
+        },
       ),
       _HandEyePhase.done => i18n.t(
         'inline.ui.pages.toolbox_human_tests_hand_eye.test_complete_reset_or_start_again_655d25',

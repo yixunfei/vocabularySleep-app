@@ -1315,6 +1315,9 @@ class _HandEyeResultRow extends StatelessWidget {
     final falseHitText = result.distractorTaps > 0
         ? i18n.t(
             'inline.ui.pages.toolbox_human_tests_hand_eye_parts.false_result_distractortaps_4feb9e',
+            params: <String, Object?>{
+              'resultDistractorTaps': result.distractorTaps,
+            },
           )
         : '';
     return Container(
@@ -1336,6 +1339,15 @@ class _HandEyeResultRow extends StatelessWidget {
             child: Text(
               i18n.t(
                 'inline.ui.pages.toolbox_human_tests_hand_eye_parts.index_result_taps_result_requiredtaps_taps_blanks_result_fa0fcf',
+                params: <String, Object?>{
+                  'index': index,
+                  'resultTaps': result.taps,
+                  'resultRequiredTaps': result.requiredTaps,
+                  'resultBlankTaps': result.blankTaps,
+                  'falseHitText': falseHitText,
+                  'reaction': reaction,
+                  'completion': completion,
+                },
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,

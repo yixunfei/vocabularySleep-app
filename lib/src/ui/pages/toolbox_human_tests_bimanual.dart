@@ -715,7 +715,9 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
   String _laneLabel(AppI18n i18n, _BimanualLane lane) {
     return switch (lane) {
       _BimanualLane.left => i18n.t('toolbox.breathing.left'),
-      _BimanualLane.right => i18n.t('toolbox.sound.locator.cue_label_right'),
+      _BimanualLane.right => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.right_00d88b',
+      ),
       _BimanualLane.both => i18n.t(
         'inline.ui.pages.toolbox_human_tests_bimanual.both_897ba3',
       ),
@@ -737,6 +739,9 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
               )
             : i18n.t(
                 'inline.ui.pages.toolbox_human_tests_bimanual.tap_the_lanelabel_i18n_cue_lane_pad_ab65df',
+                params: <String, Object?>{
+                  'laneLabelCueLane': _laneLabel(i18n, cue.lane),
+                },
               ),
       _BimanualRule.hold =>
         cue.lane == _BimanualLane.both
@@ -745,6 +750,9 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
               )
             : i18n.t(
                 'inline.ui.pages.toolbox_human_tests_bimanual.hold_the_lanelabel_i18n_cue_lane_pad_4a8932',
+                params: <String, Object?>{
+                  'laneLabelCueLane': _laneLabel(i18n, cue.lane),
+                },
               ),
       _BimanualRule.mirror => i18n.t(
         'inline.ui.pages.toolbox_human_tests_bimanual.mirror_cue_strike_left_and_right_within_the_sync_window_98fa82',
@@ -1131,7 +1139,9 @@ class _BimanualStage extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _BimanualPad(
-                label: i18n.t('toolbox.sound.locator.cue_label_right'),
+                label: i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_bimanual.right_00d88b',
+                ),
                 subtitle: firstSyncLane == _BimanualLane.right
                     ? i18n.t(
                         'inline.ui.pages.toolbox_human_tests_bimanual.first_strike_2ce009',
@@ -1572,7 +1582,7 @@ class _BimanualLoadBar extends StatelessWidget {
               ),
             ),
             Text(
-              '${i18n.t('toolbox.sound.locator.cue_label_right')} $rightHits',
+              '${i18n.t('inline.ui.pages.toolbox_human_tests_bimanual.right_00d88b')} $rightHits',
               style: theme.textTheme.labelMedium,
             ),
           ],
@@ -2024,6 +2034,13 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
     final label = _singleSidePractice
         ? i18n.t(
             'inline.ui.pages.toolbox_human_tests_bimanual.sidelabel_i18n_practiceside_only_tasklabel_i18n_practice_4f3967',
+            params: <String, Object?>{
+              'sideLabelPracticeSide': _sideLabel(i18n, _practiceSide),
+              'leftLeftTaskTypeRightTaskType': _taskLabel(
+                i18n,
+                _practiceSide == _BimanualSide.left ? left.type : right.type,
+              ),
+            },
           )
         : _pairLabel(i18n, left.type, right.type);
 
@@ -2074,12 +2091,21 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
       type: _BimanualTaskType.trace,
       title: i18n.t(
         'inline.ui.pages.toolbox_human_tests_bimanual.sidelabel_trace_patternlabel_882d11',
+        params: <String, Object?>{
+          'sideLabel': sideLabel,
+          'patternLabel': patternLabel,
+        },
       ),
       subtitle: i18n.t(
         'inline.ui.pages.toolbox_human_tests_bimanual.trace_nodes_seeded_geometry_nodes_as_one_linestylelabel_397e8d',
+        params: <String, Object?>{
+          'nodes': nodes,
+          'lineStyleLabel': lineStyleLabel,
+        },
       ),
       goalText: i18n.t(
         'inline.ui.pages.toolbox_human_tests_bimanual.finish_random_patternlabel_419d0e',
+        params: <String, Object?>{'patternLabel': patternLabel},
       ),
       accent: _traceAccent,
       seed: seed,
@@ -2115,12 +2141,18 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
       type: _BimanualTaskType.bounce,
       title: i18n.t(
         'inline.ui.pages.toolbox_human_tests_bimanual.sidelabel_bounce_17baa0',
+        params: <String, Object?>{'sideLabel': sideLabel},
       ),
       subtitle: i18n.t(
         'inline.ui.pages.toolbox_human_tests_bimanual.drag_from_the_lower_control_strip_the_ball_rebounds_off_e183b8',
+        params: <String, Object?>{
+          'speedScale': speedScale.toStringAsFixed(2),
+          'rallies': rallies,
+        },
       ),
       goalText: i18n.t(
         'inline.ui.pages.toolbox_human_tests_bimanual.keep_rallies_rallies_98e103',
+        params: <String, Object?>{'rallies': rallies},
       ),
       accent: _bounceAccent,
       seed: seed,
@@ -2150,12 +2182,15 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
       type: _BimanualTaskType.climb,
       title: i18n.t(
         'inline.ui.pages.toolbox_human_tests_bimanual.sidelabel_high_jump_8dea68',
+        params: <String, Object?>{'sideLabel': sideLabel},
       ),
       subtitle: i18n.t(
         'inline.ui.pages.toolbox_human_tests_bimanual.time_the_moving_platforms_tap_or_charge_based_on_difficu_e0c9c2',
+        params: <String, Object?>{'steps': steps},
       ),
       goalText: i18n.t(
         'inline.ui.pages.toolbox_human_tests_bimanual.reach_level_steps_12849e',
+        params: <String, Object?>{'steps': steps},
       ),
       accent: _climbAccent,
       seed: seed,
@@ -2263,6 +2298,10 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
     final rightLabel = _taskLabel(i18n, right);
     return i18n.t(
       'inline.ui.pages.toolbox_human_tests_bimanual.leftlabel_rightlabel_d183a2',
+      params: <String, Object?>{
+        'leftLabel': leftLabel,
+        'rightLabel': rightLabel,
+      },
     );
   }
 
@@ -2382,7 +2421,9 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
   String _sideLabel(AppI18n i18n, _BimanualSide side) {
     return switch (side) {
       _BimanualSide.left => i18n.t('toolbox.breathing.left'),
-      _BimanualSide.right => i18n.t('toolbox.sound.locator.cue_label_right'),
+      _BimanualSide.right => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.right_00d88b',
+      ),
     };
   }
 
@@ -2551,6 +2592,10 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
           : _rightTaskType;
       return i18n.t(
         'inline.ui.pages.toolbox_human_tests_bimanual.sidelabel_i18n_practiceside_only_tasklabel_i18n_tasktype_cd496e',
+        params: <String, Object?>{
+          'sideLabelPracticeSide': _sideLabel(i18n, _practiceSide),
+          'taskLabelTaskType': _taskLabel(i18n, taskType),
+        },
       );
     }
     return _pairLabel(i18n, _leftTaskType, _rightTaskType);
@@ -2581,6 +2626,7 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
     return _infiniteMode
         ? i18n.t(
             'inline.ui.pages.toolbox_human_tests_bimanual.endless_roundindex_1667b0',
+            params: <String, Object?>{'roundIndex': _roundIndex},
           )
         : '$_roundIndex/$_roundCount';
   }
@@ -2637,6 +2683,12 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
                     _HumanPill(
                       text: i18n.t(
                         'inline.ui.pages.toolbox_human_tests_bimanual.sidelabel_i18n_practiceside_practice_c556b5',
+                        params: <String, Object?>{
+                          'sideLabelPracticeSide': _sideLabel(
+                            i18n,
+                            _practiceSide,
+                          ),
+                        },
                       ),
                       accent: _rightAccent,
                     ),
@@ -2672,6 +2724,10 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
                       )
                     : i18n.t(
                         'inline.ui.pages.toolbox_human_tests_bimanual.plan_left_goaltext_plan_right_goaltext_finish_both_sides_d37668',
+                        params: <String, Object?>{
+                          'planLeftGoalText': plan.left.goalText,
+                          'planRightGoalText': plan.right.goalText,
+                        },
                       ),
                 style: Theme.of(
                   context,
@@ -4000,6 +4056,10 @@ class _BrainSplitStage extends StatelessWidget {
         : currentPlan.leftActive && currentPlan.rightActive
         ? i18n.t(
             'inline.ui.pages.toolbox_human_tests_bimanual.currentplan_left_goaltext_currentplan_right_goaltext_ea34a6',
+            params: <String, Object?>{
+              'currentPlanLeftGoalText': currentPlan.left.goalText,
+              'currentPlanRightGoalText': currentPlan.right.goalText,
+            },
           )
         : currentPlan.leftActive
         ? currentPlan.left.goalText
@@ -4180,7 +4240,9 @@ class _BrainSplitLaneView extends StatelessWidget {
     final accent = spec?.accent ?? _BimanualBrainSplitGameState._accent;
     final sideLabel = switch (side) {
       _BimanualSide.left => i18n.t('toolbox.breathing.left'),
-      _BimanualSide.right => i18n.t('toolbox.sound.locator.cue_label_right'),
+      _BimanualSide.right => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.right_00d88b',
+      ),
     };
 
     if (spec == null) {
@@ -4193,7 +4255,9 @@ class _BrainSplitLaneView extends StatelessWidget {
         goalText: '-',
         progressText: '0/0',
         progressValue: 0,
-        statusText: i18n.t('toolbox.sound.locator.status_idle'),
+        statusText: i18n.t(
+          'inline.ui.pages.toolbox_human_tests_bimanual.idle_985a20',
+        ),
         fullscreen: fullscreen,
         denseFullscreen: denseFullscreen,
         child: const SizedBox.shrink(),
@@ -6343,6 +6407,9 @@ class _BrainSplitClimbLaneState extends State<_BrainSplitClimbLane> {
           : _charging
           ? i18n.t(
               'inline.ui.pages.toolbox_human_tests_bimanual.chargeprogress_100_round_charge_f005e6',
+              params: <String, Object?>{
+                'chargeProgress': (_chargeProgress * 100).round(),
+              },
             )
           : needCharge
           ? i18n.t(

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../i18n/app_i18n.dart';
-import '../ui_copy.dart';
 import 'section_header.dart';
 
 typedef PlaybackFieldLabelBuilder = String Function(String key);
@@ -92,6 +91,7 @@ class PlaybackRepeatGroupCard extends StatelessWidget {
       ),
       _ => i18n.t(
         'inline.ui.widgets.playback_repeat_group_card.set_all_to_value_774c60',
+        params: <String, Object?>{'value': value},
       ),
     };
   }

@@ -327,6 +327,12 @@ class _FollowAlongPageState extends ConsumerState<FollowAlongPage> {
                       child: Text(
                         i18n.t(
                           'inline.ui.pages.follow_along_page.current_engine_asrproviderlabel_i18n_activeprovider_48f7a4',
+                          params: <String, Object?>{
+                            'asrProviderLabelActiveProvider': asrProviderLabel(
+                              i18n,
+                              _activeProvider,
+                            ),
+                          },
                         ),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
@@ -384,6 +390,12 @@ class _FollowAlongPageState extends ConsumerState<FollowAlongPage> {
                             child: Text(
                               i18n.t(
                                 'inline.ui.pages.follow_along_page.windows_temporarily_avoids_asrproviderlabel_i18n_guarded_362f2f',
+                                params: <String, Object?>{
+                                  'asrProviderLabelActiveProvider':
+                                      asrProviderLabel(i18n, _activeProvider),
+                                  'asrProviderLabelGuardedProvider':
+                                      asrProviderLabel(i18n, guardedProvider),
+                                },
                               ),
                               style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(

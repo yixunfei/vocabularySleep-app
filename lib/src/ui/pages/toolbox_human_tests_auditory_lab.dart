@@ -256,6 +256,12 @@ class _AuditoryVolumeReadinessCardState
               Text(
                 i18n.t(
                   'inline.ui.pages.toolbox_human_tests_auditory_lab.current_snapshot_currentratio_100_round_recommended_snap_13fabd',
+                  params: <String, Object?>{
+                    'snapshotCurrentRatio': (snapshot.currentRatio * 100)
+                        .round(),
+                    'snapshotRecommendedRatio':
+                        (snapshot.recommendedRatio * 100).round(),
+                  },
                 ),
               ),
               if (snapshot.currentIndex != null &&
@@ -264,6 +270,10 @@ class _AuditoryVolumeReadinessCardState
                 Text(
                   i18n.t(
                     'inline.ui.pages.toolbox_human_tests_auditory_lab.system_volume_index_snapshot_currentindex_snapshot_maxin_6a70ab',
+                    params: <String, Object?>{
+                      'snapshotCurrentIndex': snapshot.currentIndex,
+                      'snapshotMaxIndex': snapshot.maxIndex,
+                    },
                   ),
                 ),
               ],
@@ -272,6 +282,11 @@ class _AuditoryVolumeReadinessCardState
                 Text(
                   i18n.t(
                     'inline.ui.pages.toolbox_human_tests_auditory_lab.reference_output_snapshot_currentdb_tostringasfixed_1_db_b0be84',
+                    params: <String, Object?>{
+                      'snapshotCurrentDb': snapshot.currentDb!.toStringAsFixed(
+                        1,
+                      ),
+                    },
                   ),
                 ),
               ],
@@ -1909,7 +1924,9 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
       );
     }
     if (score >= 0.42) {
-      return i18n.t('toolbox.sound.locator.status_usable');
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.usable_ca43f3',
+      );
     }
     return i18n.t(
       'inline.ui.pages.toolbox_human_tests_auditory_lab.retest_98b4de',
@@ -1982,7 +1999,9 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
       );
     }
     if (_starting) {
-      return i18n.t('toolbox.sound.locator.btn_starting');
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.starting_2d4107',
+      );
     }
     if (_running && !_hasSeenFrame) {
       return i18n.t(
@@ -2130,6 +2149,15 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
     );
     return i18n.t(
       'inline.ui.pages.toolbox_human_tests_auditory_lab.captures_length_4_modes_complete_overall_quality_capture_2d49a7',
+      params: <String, Object?>{
+        'captures': _captures.length,
+        'captureQualityLabelAverageScore': _captureQualityLabel(
+          i18n,
+          averageScore,
+        ),
+        'bestModeLabel': _modeSpecs[best.mode]!.label(i18n),
+        'weakestModeLabel': _modeSpecs[weakest.mode]!.label(i18n),
+      },
     );
   }
 
@@ -2147,6 +2175,9 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
       if (!_captures.containsKey(mode)) {
         return i18n.t(
           'inline.ui.pages.toolbox_human_tests_auditory_lab.next_capture_modespecs_mode_label_i18n_with_the_same_dis_0c5c6d',
+          params: <String, Object?>{
+            'modeSpecsModeLabel': _modeSpecs[mode]!.label(i18n),
+          },
         );
       }
     }
@@ -2155,6 +2186,9 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
     );
     return i18n.t(
       'inline.ui.pages.toolbox_human_tests_auditory_lab.all_four_modes_are_complete_to_improve_comparability_ret_589f75',
+      params: <String, Object?>{
+        'weakestModeLabel': _modeSpecs[weakest.mode]!.label(i18n),
+      },
     );
   }
 
@@ -2162,6 +2196,9 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
     if (_noiseFloorDbfs != null) {
       return i18n.t(
         'inline.ui.pages.toolbox_human_tests_auditory_lab.room_floor_noisefloordbfs_tostringasfixed_1_dbfs_later_s_b81d7e',
+        params: <String, Object?>{
+          'noiseFloorDbfs': _noiseFloorDbfs!.toStringAsFixed(1),
+        },
       );
     }
     return i18n.t(
@@ -2273,9 +2310,17 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
     return switch (_mode) {
       _MicLabMode.low => i18n.t(
         'inline.ui.pages.toolbox_human_tests_auditory_lab.target_spec_targetminhz_round_spec_targetmaxhz_round_hz_5c0997',
+        params: <String, Object?>{
+          'specTargetMinHz': spec.targetMinHz.round(),
+          'specTargetMaxHz': spec.targetMaxHz.round(),
+        },
       ),
       _MicLabMode.high => i18n.t(
         'inline.ui.pages.toolbox_human_tests_auditory_lab.target_spec_targetminhz_round_spec_targetmaxhz_round_hz_5c0997',
+        params: <String, Object?>{
+          'specTargetMinHz': spec.targetMinHz.round(),
+          'specTargetMaxHz': spec.targetMaxHz.round(),
+        },
       ),
       _MicLabMode.sustain => i18n.t(
         'inline.ui.pages.toolbox_human_tests_auditory_lab.hold_steady_for_5_seconds_the_system_reads_sustain_and_v_c6ea24',
@@ -2512,7 +2557,9 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
         value: '${(_level * 100).round()}%',
       ),
       ToolboxMetricCard(
-        label: i18n.t('toolbox.sound.locator.metric_peak'),
+        label: i18n.t(
+          'inline.ui.pages.toolbox_human_tests_auditory_lab.peak_62e9ba',
+        ),
         value: '${(_peak * 100).round()}%',
       ),
       ToolboxMetricCard(
@@ -2604,7 +2651,9 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
           runSpacing: 10,
           children: <Widget>[
             ToolboxMetricCard(
-              label: i18n.t('toolbox.sound.locator.metric_sample_rate'),
+              label: i18n.t(
+                'inline.ui.pages.toolbox_human_tests_auditory_lab.sample_rate_40f6c3',
+              ),
               value: _running || _activeRecorderProfileId != null
                   ? '${(_activeSampleRate / 1000).toStringAsFixed(_activeSampleRate % 1000 == 0 ? 0 : 1)} kHz'
                   : '--',
@@ -3329,7 +3378,9 @@ class _AcousticReportCaptureCard extends StatelessWidget {
                 value: '${capture.averageDbfs.toStringAsFixed(1)} dBFS',
               ),
               ToolboxMetricCard(
-                label: i18n.t('toolbox.sound.locator.metric_peak'),
+                label: i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_auditory_lab.peak_62e9ba',
+                ),
                 value: '${capture.peakDbfs.toStringAsFixed(1)} dBFS',
               ),
               ToolboxMetricCard(
@@ -3351,7 +3402,9 @@ class _AcousticReportCaptureCard extends StatelessWidget {
                 value: '${(capture.targetHitRatio * 100).round()}%',
               ),
               ToolboxMetricCard(
-                label: i18n.t('toolbox.sound.locator.metric_snr'),
+                label: i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_auditory_lab.snr_fc3bf4',
+                ),
                 value: snr,
               ),
               ToolboxMetricCard(

@@ -97,7 +97,10 @@ extension _HarpSettingsSheet on _HarpToolState {
           ),
           const SizedBox(height: 14),
           Text(
-            i18n.t('toolbox.sound.harp.reverb_2'),
+            i18n.t(
+              'toolbox.sound.harp.reverb_2',
+              params: <String, Object?>{'value': (_reverbUi * 100).round()},
+            ),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
             ),
@@ -239,7 +242,15 @@ extension _HarpSettingsSheet on _HarpToolState {
               ),
               childrenPadding: const EdgeInsets.only(bottom: 8),
               children: <Widget>[
-                Text(i18n.t('toolbox.sound.harp.chord_root')),
+                Text(
+                  i18n.t(
+                    'toolbox.sound.harp.chord_root',
+                    params: <String, Object?>{
+                      'current': _chordRootIndex + 1,
+                      'total': _HarpToolState._stringCount,
+                    },
+                  ),
+                ),
                 Slider(
                   value: _chordRootIndex.toDouble(),
                   min: 0,
@@ -252,7 +263,14 @@ extension _HarpSettingsSheet on _HarpToolState {
                     });
                   },
                 ),
-                Text(i18n.t('toolbox.sound.harp.damping')),
+                Text(
+                  i18n.t(
+                    'toolbox.sound.harp.damping',
+                    params: <String, Object?>{
+                      'value': _damping.toStringAsFixed(1),
+                    },
+                  ),
+                ),
                 Slider(
                   value: _damping,
                   min: 4,
@@ -273,7 +291,14 @@ extension _HarpSettingsSheet on _HarpToolState {
                     _invalidateAudioPlayers();
                   },
                 ),
-                Text(i18n.t('toolbox.sound.harp.sweep_deadzone_px')),
+                Text(
+                  i18n.t(
+                    'toolbox.sound.harp.sweep_deadzone_px',
+                    params: <String, Object?>{
+                      'value': _swipeThreshold.toStringAsFixed(1),
+                    },
+                  ),
+                ),
                 Slider(
                   value: _swipeThreshold,
                   min: 0.4,

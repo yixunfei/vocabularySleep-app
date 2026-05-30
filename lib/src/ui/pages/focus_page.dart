@@ -189,6 +189,7 @@ class _FocusPageState extends ConsumerState<FocusPage>
               content: Text(
                 AppI18n(state.uiLanguage).t(
                   'inline.ui.pages.focus_page.todo_completed_todo_content_a6cd67',
+                  params: <String, Object?>{'todoContent': todo.content},
                 ),
               ),
             ),
@@ -206,6 +207,9 @@ class _FocusPageState extends ConsumerState<FocusPage>
               content: Text(
                 AppI18n(state.uiLanguage).t(
                   'inline.ui.pages.focus_page.reminder_snoozed_for_action_snoozeminutes_10_minutes_4d9024',
+                  params: <String, Object?>{
+                    'actionSnoozeMinutes': action?.snoozeMinutes ?? 10,
+                  },
                 ),
               ),
             ),

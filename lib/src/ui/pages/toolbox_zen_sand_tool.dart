@@ -1236,11 +1236,17 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
       replace
           ? _i18n.t(
               'inline.plan294.zen_sand.applied_value_3041c0f2',
-              params: <String, Object?>{'preset.title': preset.title(_i18n)},
+              params: <String, Object?>{
+                'presetTitleEn': preset.title(_i18n),
+                'preset.title': preset.title(_i18n),
+              },
             )
           : _i18n.t(
               'inline.plan294.zen_sand.layered_value_onto_the_current_tray_2f704183',
-              params: <String, Object?>{'preset.title': preset.title(_i18n)},
+              params: <String, Object?>{
+                'presetTitleEn': preset.title(_i18n),
+                'preset.title': preset.title(_i18n),
+              },
             ),
     );
   }
@@ -2000,7 +2006,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
             children: <Widget>[
               _ZenQuickIconButton(
                 icon: Icons.arrow_back_rounded,
-                tooltip: _i18n.t('toolbox.sound.locator.cue_label_back'),
+                tooltip: _i18n.t(
+                  'inline.ui.pages.toolbox_zen_sand_tool.back_2f3904',
+                ),
                 onPressed: () => Navigator.of(context).maybePop(),
               ),
               const SizedBox(width: 12),
@@ -2051,7 +2059,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
           children: <Widget>[
             _ZenQuickIconButton(
               icon: Icons.arrow_back_rounded,
-              tooltip: _i18n.t('toolbox.sound.locator.cue_label_back'),
+              tooltip: _i18n.t(
+                'inline.ui.pages.toolbox_zen_sand_tool.back_2f3904',
+              ),
               onPressed: () => Navigator.of(context).maybePop(),
             ),
             const SizedBox(width: 10),
@@ -2267,6 +2277,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                   label: _i18n.t(
                     'inline.plan294.zen_sand.sound_value_9fd56fdd',
                     params: <String, Object?>{
+                      'soundDescriptor': _soundDescriptor,
                       '_soundDescriptor': _soundDescriptor,
                     },
                   ),
@@ -2275,7 +2286,10 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                 _ZenCanvasHint(
                   label: _i18n.t(
                     'inline.plan294.zen_sand.anchor_value_5a9e2f63',
-                    params: <String, Object?>{'_anchorLabel': _anchorLabel},
+                    params: <String, Object?>{
+                      'anchorLabel': _anchorLabel,
+                      '_anchorLabel': _anchorLabel,
+                    },
                   ),
                   accent: _background.accent,
                 ),
@@ -2284,6 +2298,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                     label: _i18n.t(
                       'inline.plan294.zen_sand.last_value_eb6c6831',
                       params: <String, Object?>{
+                        'lastPresetTitleI18n': _lastPreset!.title(_i18n),
                         '_lastPreset!.title(_i18n)': _lastPreset!.title(_i18n),
                       },
                     ),

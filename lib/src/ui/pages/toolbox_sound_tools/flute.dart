@@ -1626,7 +1626,10 @@ class _FluteToolState extends State<_FluteTool> {
           i18n.t('toolbox.sound.flute.breath_and_space'),
         ),
         Text(
-          i18n.t('toolbox.sound.flute.breath_3'),
+          i18n.t(
+            'toolbox.sound.flute.breath_3',
+            params: <String, Object?>{'value': (_breath * 100).round()},
+          ),
           style: theme.textTheme.labelLarge,
         ),
         Slider(
@@ -1640,7 +1643,10 @@ class _FluteToolState extends State<_FluteTool> {
           },
         ),
         Text(
-          i18n.t('toolbox.sound.flute.space'),
+          i18n.t(
+            'toolbox.sound.flute.space',
+            params: <String, Object?>{'value': (_airSpace * 100).round()},
+          ),
           style: theme.textTheme.labelLarge,
         ),
         Slider(
@@ -1658,7 +1664,10 @@ class _FluteToolState extends State<_FluteTool> {
           },
         ),
         Text(
-          i18n.t('toolbox.sound.flute.tail'),
+          i18n.t(
+            'toolbox.sound.flute.tail',
+            params: <String, Object?>{'value': (_tail * 100).round()},
+          ),
           style: theme.textTheme.labelLarge,
         ),
         Slider(
@@ -1705,7 +1714,13 @@ class _FluteToolState extends State<_FluteTool> {
         ],
         const SizedBox(height: 12),
         Text(
-          i18n.t('toolbox.sound.flute.threshold_current'),
+          i18n.t(
+            'toolbox.sound.flute.threshold_current',
+            params: <String, Object?>{
+              'pct': (_blowThreshold * 100).round(),
+              'current': (_micLevel * 100).round(),
+            },
+          ),
           style: theme.textTheme.labelLarge,
         ),
         Slider(
@@ -1977,7 +1992,14 @@ class _FluteToolState extends State<_FluteTool> {
           ),
           const SizedBox(height: 12),
           Text(
-            i18n.t('toolbox.sound.flute.threshold_current_holes'),
+            i18n.t(
+              'toolbox.sound.flute.threshold_current_holes',
+              params: <String, Object?>{
+                'pct': (_blowThreshold * 100).round(),
+                'current': (_micLevel * 100).round(),
+                'holes': _pressedHoles.length,
+              },
+            ),
             style: theme.textTheme.bodySmall,
           ),
           const SizedBox(height: 6),

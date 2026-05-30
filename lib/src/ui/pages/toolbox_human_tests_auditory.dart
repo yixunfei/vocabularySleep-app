@@ -1729,6 +1729,7 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
           label: i18n.t('rounds'),
           valueText: i18n.t(
             'inline.ui.pages.toolbox_human_tests_auditory.roundcount_rounds_685a31',
+            params: <String, Object?>{'roundCount': roundCount},
           ),
           value: roundCount.toDouble(),
           min: roundBounds.$1.toDouble(),
@@ -2270,9 +2271,15 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
               ),
               _AuditoryMode.sensitivity => i18n.t(
                 'inline.ui.pages.toolbox_human_tests_auditory.estimated_audible_threshold_estimatedthreshold_100_round_38a1f6',
+                params: <String, Object?>{
+                  'estimatedThreshold': (_estimatedThreshold() * 100).round(),
+                },
               ),
               _AuditoryMode.spatial => i18n.t(
                 'inline.ui.pages.toolbox_human_tests_auditory.average_direction_error_averagespatialerror_round_2f16c4',
+                params: <String, Object?>{
+                  'averageSpatialError': _averageSpatialError.round(),
+                },
               ),
             },
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -2398,6 +2405,7 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
       final threshold = _estimatedThreshold();
       return i18n.t(
         'inline.ui.pages.toolbox_human_tests_auditory.suggestion_estimated_audible_threshold_is_about_threshol_10fd1a',
+        params: <String, Object?>{'threshold': (threshold * 100).round()},
       );
     }
     return i18n.t(
@@ -2565,11 +2573,11 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
       1 => i18n.t(
         'inline.ui.pages.toolbox_human_tests_auditory.front_right_a3f226',
       ),
-      2 => i18n.t('toolbox.sound.locator.cue_label_right'),
+      2 => i18n.t('inline.ui.pages.toolbox_human_tests_auditory.right_594268'),
       3 => i18n.t(
         'inline.ui.pages.toolbox_human_tests_auditory.back_right_731f4e',
       ),
-      4 => i18n.t('toolbox.sound.locator.cue_label_back'),
+      4 => i18n.t('inline.ui.pages.toolbox_human_tests_auditory.back_1ed784'),
       5 => i18n.t(
         'inline.ui.pages.toolbox_human_tests_auditory.back_left_26a1be',
       ),
@@ -2598,11 +2606,11 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
       1 => i18n.t(
         'inline.ui.pages.toolbox_human_tests_auditory.front_right_a3f226',
       ),
-      2 => i18n.t('toolbox.sound.locator.cue_label_right'),
+      2 => i18n.t('inline.ui.pages.toolbox_human_tests_auditory.right_594268'),
       3 => i18n.t(
         'inline.ui.pages.toolbox_human_tests_auditory.back_right_731f4e',
       ),
-      4 => i18n.t('toolbox.sound.locator.cue_label_back'),
+      4 => i18n.t('inline.ui.pages.toolbox_human_tests_auditory.back_1ed784'),
       5 => i18n.t(
         'inline.ui.pages.toolbox_human_tests_auditory.back_left_26a1be',
       ),

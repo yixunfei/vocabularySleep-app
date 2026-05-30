@@ -90,6 +90,10 @@ class _PlayPageState extends ConsumerState<PlayPage> {
         message: deferredLoad
             ? i18n.t(
                 'inline.ui.pages.play_page.localizedwordbookname_i18n_selectedwordbook_has_state_vi_c42762',
+                params: <String, Object?>{
+                  'wordbook': localizedWordbookName(i18n, selectedWordbook),
+                  'count': state.visibleWordCount,
+                },
               )
             : i18n.t('noWordbookYet'),
         actionLabel: deferredLoad
@@ -236,6 +240,7 @@ class _PlayPageState extends ConsumerState<PlayPage> {
                         description: weakCount > 0
                             ? i18n.t(
                                 'inline.ui.pages.play_page.you_have_weakcount_recent_weak_words_recover_the_unstabl_b00953',
+                                params: <String, Object?>{'count': weakCount},
                               )
                             : state.practiceTodaySessions > 0
                             ? i18n.t(
@@ -316,6 +321,7 @@ class _PlayPageState extends ConsumerState<PlayPage> {
           title: localizedWordbookName(i18n, state.selectedWordbook),
           subtitle: i18n.t(
             'inline.ui.pages.play_page.state_visiblewords_length_words_in_scope_5b655d',
+            params: <String, Object?>{'count': state.visibleWords.length},
           ),
           onTap: () => _openWordbookSheet(context, state, i18n),
         ),

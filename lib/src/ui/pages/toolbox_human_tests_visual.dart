@@ -598,6 +598,11 @@ class _ColorVisionCardState extends State<_ColorVisionCard> {
                   _HumanPill(
                     text: i18n.t(
                       'inline.ui.pages.toolbox_human_tests_visual.delta_currentdelta_100_tostringasfixed_1_5d6eb1',
+                      params: <String, Object?>{
+                        'currentDelta': (_currentDelta * 100).toStringAsFixed(
+                          1,
+                        ),
+                      },
                     ),
                     accent: Theme.of(context).colorScheme.secondary,
                   ),
@@ -784,6 +789,9 @@ class _ColorVisionCardState extends State<_ColorVisionCard> {
             valueText: _randomTargetCount
                 ? i18n.t(
                     'inline.ui.pages.toolbox_human_tests_visual.random_1_sametargetcount_ef7206',
+                    params: <String, Object?>{
+                      'sameTargetCount': _sameTargetCount,
+                    },
                   )
                 : '$_sameTargetCount',
             value: _sameTargetCount.toDouble(),

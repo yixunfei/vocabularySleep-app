@@ -423,6 +423,9 @@ class _DecisionAssistantModuleState extends State<_DecisionAssistantModule> {
         : report.consensus.winnerName.isNotEmpty
         ? widget.i18n.t(
             'inline.plan295.daily_choice.take_one_small_reversible_action_aro.91849e446b6d',
+            params: <String, Object?>{
+              'reportConsensusWinnerName': report.consensus.winnerName,
+            },
           )
         : widget.i18n.t(
             'inline.plan295.daily_choice.add_viable_options_or_recalibrate_th.cea239fde266',
@@ -1021,6 +1024,9 @@ class _DecisionOutcomePanel extends StatelessWidget {
               )
             : i18n.t(
                 'inline.plan295.daily_choice.prioritize_missing_facts_for_highlig.4c883ac1e111',
+                params: <String, Object?>{
+                  'reportActiveWinnerOption': activeWinner.option.name,
+                },
               ),
       (DailyChoiceDecisionMethod.random, _) when randomPick == null => i18n.t(
         'inline.plan295.daily_choice.let_randomness_end_a_low_stakes_tie.c69c72b8f4dd',
@@ -1043,6 +1049,11 @@ class _DecisionOutcomePanel extends StatelessWidget {
               )
             : i18n.t(
                 'inline.plan295.daily_choice.information_value_is_report_infosign.c47489931003',
+                params: <String, Object?>{
+                  'activeWinnerOption': activeWinner.option.name,
+                  'reportInfoSignalImpactScore': report.infoSignal.impactScore
+                      .toStringAsFixed(2),
+                },
               ),
       _ => spec.subtitle(i18n),
     };
@@ -1094,6 +1105,11 @@ class _DecisionOutcomePanel extends StatelessWidget {
               ToolboxInfoPill(
                 text: i18n.t(
                   'inline.ui.pages.toolbox_daily_choice.daily_choice_decision_assistant.consensus_report_consensus_supportcount_report_consensus_33a5b4',
+                  params: <String, Object?>{
+                    'reportConsensusMethodCount': report.consensus.methodCount,
+                    'reportConsensusSupportCount':
+                        report.consensus.supportCount,
+                  },
                 ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surface,
@@ -1101,6 +1117,10 @@ class _DecisionOutcomePanel extends StatelessWidget {
               ToolboxInfoPill(
                 text: i18n.t(
                   'inline.plan295.daily_choice.pass_thresholdpasscount_report_optio.2d78a1c88f67',
+                  params: <String, Object?>{
+                    'reportOptions': report.options.length,
+                    'thresholdPassCount': thresholdPassCount,
+                  },
                 ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surface,
@@ -1137,19 +1157,6 @@ class _DecisionOutcomePanel extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String? _highlightOptionName(DailyChoiceDecisionReport report) {
-    final optionId = report.infoSignal.highlightOptionId;
-    if (optionId == null) {
-      return null;
-    }
-    for (final option in report.options) {
-      if (option.id == optionId) {
-        return option.name;
-      }
-    }
-    return null;
   }
 }
 
@@ -1193,6 +1200,9 @@ class _DecisionInputCard extends StatelessWidget {
       else if (score != null && method != DailyChoiceDecisionMethod.random)
         i18n.t(
           'inline.plan295.daily_choice.score_score_score_tostringasfixed_2.591dc0b4157d',
+          params: <String, Object?>{
+            'scoreScore': score!.score.toStringAsFixed(2),
+          },
         ),
       if (infoSignal.highlightOptionId == item.id)
         i18n.t('inline.plan295.daily_choice.research_needed.dc11a2beffe7'),
@@ -1402,6 +1412,7 @@ class _DecisionRankingCard extends StatelessWidget {
                   : i18n.t(
                       'inline.plan295.daily_choice.random_mode_does_not_rank_quality_fo.7e9d681a3081',
                       params: <String, Object?>{
+                        'consensusWinnerName': consensus.winnerName,
                         'consensus.winnerName': consensus.winnerName,
                       },
                     ),
@@ -1509,6 +1520,7 @@ class _DecisionHygieneCard extends StatelessWidget {
               ToolboxInfoPill(
                 text: i18n.t(
                   'inline.plan295.daily_choice.entries_length_checks.2d24b95c1bc6',
+                  params: <String, Object?>{'entries': entries.length},
                 ),
                 accent: cautionTint,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,

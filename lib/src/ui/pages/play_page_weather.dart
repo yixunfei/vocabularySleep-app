@@ -256,6 +256,11 @@ extension _PlayPageWeather on _PlayPageState {
                                 Text(
                                   i18n.t(
                                     'inline.ui.pages.play_page_weather.feels_like_snapshot_apparenttemperaturecelsius_round_c_2ffa66',
+                                    params: <String, Object?>{
+                                      'snapshotApparentTemperatureCelsius':
+                                          snapshot.apparentTemperatureCelsius
+                                              .round(),
+                                    },
                                   ),
                                   style: theme.textTheme.bodyMedium,
                                 ),

@@ -51,18 +51,30 @@ class MorePage extends ConsumerWidget {
                 Text(
                   i18n.t(
                     'inline.ui.pages.more_page.mode_experiencemodetitle_i18n_mode_a24484',
+                    params: <String, Object?>{
+                      'mode': experienceModeTitle(i18n, mode),
+                    },
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   i18n.t(
                     'inline.ui.pages.more_page.current_wordbook_localizedwordbookname_i18n_state_select_3d822a',
+                    params: <String, Object?>{
+                      'wordbook': localizedWordbookName(
+                        i18n,
+                        state.selectedWordbook,
+                      ),
+                    },
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   i18n.t(
                     'inline.ui.pages.more_page.visible_words_state_visiblewords_length_9686c9',
+                    params: <String, Object?>{
+                      'count': state.visibleWords.length,
+                    },
                   ),
                 ),
               ],

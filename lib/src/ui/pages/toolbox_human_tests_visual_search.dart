@@ -34,7 +34,7 @@ class _VisualSearchCell {
   final Color color;
 
   bool sameAppearance(_VisualSearchCell other) {
-    return icon == other.icon && color.value == other.color.value;
+    return icon == other.icon && color.toARGB32() == other.color.toARGB32();
   }
 }
 
@@ -1179,7 +1179,9 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
           ),
           _buildDifferenceBoard(
             context,
-            label: i18n.t('toolbox.sound.locator.cue_label_right'),
+            label: i18n.t(
+              'inline.ui.pages.toolbox_human_tests_visual_search.right_e59dee',
+            ),
             cells: _rightCells,
           ),
         ];
@@ -1257,12 +1259,16 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
             _HumanPill(
               text: i18n.t(
                 'inline.ui.pages.toolbox_human_tests_visual_search.linkremainingpairs_pairs_left_77ac2d',
+                params: <String, Object?>{
+                  'linkRemainingPairs': _linkRemainingPairs,
+                },
               ),
               accent: VisualSearchTestPage._accent,
             ),
             _HumanPill(
               text: i18n.t(
                 'inline.ui.pages.toolbox_human_tests_visual_search.moves_moves_833828',
+                params: <String, Object?>{'moves': _moves},
               ),
               accent: theme.colorScheme.tertiary,
             ),

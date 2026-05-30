@@ -953,6 +953,10 @@ class _PlaceMapFilterPanel extends StatelessWidget {
                   child: Text(
                     i18n.t(
                       'inline.plan295.daily_choice.map_results_can_follow_the_current_w.5bb5586e60d5',
+                      params: <String, Object?>{
+                        'distanceTitle': distanceTitle,
+                        'sceneTitle': sceneTitle,
+                      },
                     ),
                     style: theme.textTheme.bodySmall?.copyWith(height: 1.35),
                   ),
@@ -1163,6 +1167,7 @@ class _PlaceMapResourcePanelState extends State<_PlaceMapResourcePanel> {
                       return Text(
                         widget.i18n.t(
                           'inline.ui.pages.toolbox_daily_choice.daily_choice_place_map_panel.tile_cache_label_91a99d',
+                          params: <String, Object?>{'label': label},
                         ),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
@@ -2052,6 +2057,7 @@ class _PlaceMapStatusOverlay extends StatelessWidget {
                 icon: Icons.warning_amber_rounded,
                 text: i18n.t(
                   'inline.ui.pages.toolbox_daily_choice.daily_choice_place_map_panel.tile_retries_tileerrorcount_49449b',
+                  params: <String, Object?>{'tileErrorCount': tileErrorCount},
                 ),
                 accent: theme.colorScheme.error,
               ),
@@ -2191,11 +2197,15 @@ class _PlaceMapResultList extends StatelessWidget {
           totalPlaceCount == places.length
               ? i18n.t(
                   'inline.plan295.daily_choice.nearby_places_places_length.7bca5e141f5a',
-                  params: <String, Object?>{'places.length': places.length},
+                  params: <String, Object?>{
+                    'places': places.length,
+                    'places.length': places.length,
+                  },
                 )
               : i18n.t(
                   'inline.plan295.daily_choice.filtered_places_places_length_totalp.cae3c013d3c7',
                   params: <String, Object?>{
+                    'places': places.length,
                     'places.length': places.length,
                     'totalPlaceCount': totalPlaceCount,
                   },
@@ -2255,6 +2265,13 @@ class _PlaceMapResultList extends StatelessWidget {
                             Text(
                               i18n.t(
                                 'inline.plan295.daily_choice.place_kinden_about_dailychoicedistan.950e9d6994e3',
+                                params: <String, Object?>{
+                                  'dailyChoiceDistanceLabelEnPlaceDistanceMeters':
+                                      dailyChoiceDistanceLabelEn(
+                                        place.distanceMeters,
+                                      ),
+                                  'placeKindEn': place.kindEn,
+                                },
                               ),
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,

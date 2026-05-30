@@ -51,6 +51,7 @@ class _ColorVisionTargetPrompt extends StatelessWidget {
                 Text(
                   i18n.t(
                     'inline.ui.pages.toolbox_human_tests_visual_widgets.tap_tiles_exactly_matching_the_swatch_targets_this_round_ac9ce0',
+                    params: <String, Object?>{'targetCount': targetCount},
                   ),
                   style: theme.textTheme.bodySmall?.copyWith(height: 1.25),
                 ),
@@ -340,6 +341,11 @@ class _ColorVisionReportDialog extends StatelessWidget {
                       label: Text(
                         i18n.t(
                           'inline.ui.pages.toolbox_human_tests_visual_widgets.avg_passed_delta_data_averagecorrectdelta_100_tostringas_6d823d',
+                          params: <String, Object?>{
+                            'dataAverageCorrectDelta':
+                                (data.averageCorrectDelta * 100)
+                                    .toStringAsFixed(1),
+                          },
                         ),
                       ),
                     ),
@@ -432,6 +438,16 @@ class _ColorVisionReportDialog extends StatelessWidget {
         : axisLabel(weakestAxis.axis);
     return i18n.t(
       'inline.ui.pages.toolbox_human_tests_visual_widgets.accuracy_is_data_accuracy_100_round_the_weakest_hue_band_2b930d',
+      params: <String, Object?>{
+        'dataAccuracy': (data.accuracy * 100).round(),
+        'weakBandText': weakBandText,
+        'weakAxisText': weakAxisText,
+        'dataAverageCorrectDelta': (data.averageCorrectDelta * 100)
+            .toStringAsFixed(1),
+        'dataAverageMissDelta': (data.averageMissDelta * 100).toStringAsFixed(
+          1,
+        ),
+      },
     );
   }
 
@@ -449,6 +465,7 @@ class _ColorVisionReportDialog extends StatelessWidget {
     final axis = weakestAxis == null ? '' : axisLabel(weakestAxis.axis);
     return i18n.t(
       'inline.ui.pages.toolbox_human_tests_visual_widgets.for_the_next_run_keep_the_weak_hue_family_enabled_lower_df248f',
+      params: <String, Object?>{'axis': axis, 'band': band},
     );
   }
 }
@@ -564,6 +581,9 @@ class _ColorVisionRecentDeltaList extends StatelessWidget {
               Text(
                 i18n.t(
                   'inline.ui.pages.toolbox_human_tests_visual_widgets.delta_record_delta_100_tostringasfixed_1_472de9',
+                  params: <String, Object?>{
+                    'recordDelta': (record.delta * 100).toStringAsFixed(1),
+                  },
                 ),
                 style: Theme.of(context).textTheme.labelMedium,
               ),

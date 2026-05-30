@@ -14,7 +14,6 @@ import '../../services/app_log_service.dart';
 import '../../services/audio_player_source_helper.dart';
 import '../../services/toolbox_audio_volume_service.dart';
 import '../../state/app_state_provider.dart';
-import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 import 'toolbox_tool_shell.dart';
 
@@ -1094,7 +1093,7 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       title: i18n.t(
         'inline.ui.pages.toolbox_human_tests_visual.color_vision_26e312',
       ),
-      shortTitle: i18n.t('todoColor'),
+      shortTitle: i18n.t('inline.plan300.human_tests.visual.short_title'),
       subtitle: i18n.t(
         'inline.ui.pages.toolbox_human_tests.odd_tile_and_mixed_match_modes_for_color_vision_and_cont_84a4d0',
       ),
@@ -1185,7 +1184,9 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       title: i18n.t(
         'inline.ui.pages.toolbox_human_tests_action.tap_speed_1d5f49',
       ),
-      shortTitle: i18n.t('inline.plan294.woodfish.tap_04839a81'),
+      shortTitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_action.tap_speed_1d5f49',
+      ),
       subtitle: i18n.t(
         'inline.ui.pages.toolbox_human_tests_action.classic_target_chase_and_rhythm_hit_modes_for_speed_and_349b91',
       ),

@@ -1,3 +1,109 @@
+## [Unreleased-PLAN_302-I18N-GLOBAL-PLACEHOLDER-AUDIT] - 2026-05-31
+
+### 原因
+- 用户反馈每日决策等页面仍直接显示 `{categoryTitleEn}` 一类原始占位符，需要用全局脚本审计七语言文案占位符与 Dart 调用参数覆盖。
+
+### 新增
+- 新增 `scripts/audit_i18n_placeholders.js`，检查七语言 catalog key/占位符集合一致性，并扫描 `lib/**/*.dart` 中静态 `AppI18n.t(...)` / `i18n.t(...)` 缺参调用。
+
+### 修复
+- 补齐全局扫描命中的 194 处缺失 `params` 与 21 处缺失具体参数名调用，最终运行时占位符缺参归零。
+- 覆盖每日决策、声音工具、呼吸引导、睡眠工具、识别设置、播放天气、复习会话、数独、播放器、单词详情、ambient 面板和通用 app shell 等页面。
+- 保持七语言 catalog key 集合和占位符集合一致，未引入新的硬编码展示文本或旧 source-pair helper。
+
+### 验证
+- `node scripts/audit_i18n_placeholders.js` 通过：catalog keys 49511，placeholderKeys 4044，missing 0，placeholderMismatch 0，Dart 缺参 0。
+- JSON catalog 解析通过。
+- 旧 helper 扫描无命中。
+- catalog Dart 插值表达式扫描无命中。
+- `flutter test test/app_i18n_catalog_test.dart --reporter compact` 通过。
+- 目标 `flutter analyze` 通过，No issues found。
+- `git diff --check` 通过。
+
+## [Unreleased-PLAN_301-I18N-HUMAN-TESTS-PLACEHOLDER-REPAIR] - 2026-05-31
+
+### 原因
+- 用户反馈练习中心、人类测试中心及幸运测试（刮刮乐）、听力测试、双手协调、视觉感知等页面仍有 `{label}`、`{roundCount}`、`{observeMilliseconds}` 等占位符直接显示。
+
+### 修复
+- 补齐 `practice*.dart` 与 `toolbox_human_tests*.dart` 中所有带占位符 catalog key 的运行时 `params`，缺参扫描从 124 处收敛到 0。
+- 覆盖练习中心、笔记本、练习回顾、幸运测试、听力测试、听力实验室、双手协调、手眼协调、视觉感知、视觉搜索、视觉记忆、动态视觉、数字记忆和单词记忆等页面。
+- 清理本轮触达练习页面中的未使用 import，保持目标分析无警告。
+
+### 验证
+- JSON catalog 解析通过。
+- 旧 helper 扫描无命中。
+- catalog Dart 插值表达式扫描无命中。
+- 七语言 catalog parity：key 49511，missing 0，placeholderMismatch 0。
+- 运行时占位符缺参扫描：0。
+- `flutter test test/app_i18n_catalog_test.dart --reporter compact` 通过。
+- `dart analyze lib/src/ui/pages/toolbox_human_tests.dart lib/src/ui/pages/practice_page.dart lib/src/ui/pages/practice_notebook_page.dart lib/src/ui/pages/practice_review_page.dart lib/src/ui/pages/practice_session_page.dart` 通过。
+- `git diff --check` 通过。
+
+## [Unreleased-PLAN_300-I18N-TEXT-QUALITY-REPAIR] - 2026-05-31
+
+### 原因
+- 修复截图反馈中暴露的 i18n 文本质量问题，包括 `????` 乱码、占位符未传参、模块说明缺失感和中文命名误译。
+
+### 修改
+- 设置中心当前摘要、高级播放播放策略、语言设置启动页提示、呼吸引导完成摘要与语音提示补齐 `AppI18n.t(..., params: ...)`。
+- 恢复 zh catalog 中 20 个 `????` 文案，覆盖模块管理、播放练习、数独直输、单词本编辑与单词本管理。
+- 将应用内学习页语境的“图书馆”改为“单词本”，同时保留地点/环境音语境中的“图书馆”。
+- 修正中文命名：人类测试中心、呼吸引导、番茄钟、视觉感知、摇杆、切换、单词记忆、刮刮乐、听力设置、手速。
+- 新增 `settings.language.system_default` 与人类测试视觉感知短标题 key，并同步七语言 catalog 与 registry。
+- 清理呼吸引导与人类测试文件中因本轮调整暴露的未使用 import/局部声明。
+
+### 验证
+- JSON 解析检查通过。
+- `????` 扫描无命中。
+- 旧 helper 扫描无命中。
+- 七语言 catalog/registry 覆盖检查：key 数 49511，缺失 0，占位符不一致 0。
+- 目标文件带占位符 key 直接调用复扫：0。
+- `flutter test test/app_i18n_catalog_test.dart --reporter compact` 通过。
+- `dart analyze` 目标文件通过，No issues found。
+
+## [Unreleased-PLAN_299-I18N-FOLLOWUP-CLEANUP] - 2026-05-31
+
+### 原因
+- 完成 `plans/PLAN_299_i18n_followup_todo.md` 中记录的 i18n 后续收口任务，避免界面继续暴露 Dart 插值、旧中文命名、残留英文说明或已废弃模块入口。
+
+### 修改
+- 修复学习、播放、图书馆、练习、单词本、更多页和模块禁用提示中的动态文案渲染，统一通过 `AppI18n.t(key, params: {...})` 传入真实值。
+- 统一 catalog 中的动态占位符格式，将 `$name` / `${...}` 类 Dart 插值改为 `{name}`，并同步七语言 catalog 与 registry 的 key 覆盖和占位符集合。
+- 核对并补齐 `study`、`play`、`library`、`wordbook`、`word_entry`、`module_access` 相关入口文案。
+- 修正中文命名：游戏中心、人类测试、舒缓轻音乐、模拟乐器、疗愈音钵、声源定位、静心念珠、随心沙盘、番茄钟、计划与笔记。
+- 清理生活实用模块说明中的英文残留和错误中文摘要。
+- 将其他工具误借用 `toolbox.sound.locator.*` 的展示文案改回各自语义 key。
+- 恢复鼓垫工具状态逻辑仍在使用的 `_barsPlayed` 状态字段，修复 Windows build 中 `drum_pad_state_logic.dart` 找不到 getter/setter 的错误。
+
+### 移除
+- 移除声源定位模块的模块 ID、registry 描述、工具箱入口、页面、服务、测试和相关 catalog/registry key。
+
+### 验证
+- JSON 解析检查通过。
+- catalog Dart 插值表达式扫描无命中。
+- 旧 helper 扫描无命中。
+- 声源定位相关残留扫描无命中。
+- 旧中文命名残留扫描无命中。
+- 七语言 catalog/registry 覆盖检查：key 数 49509，缺失 0，占位符不一致 0。
+- `flutter test test/app_i18n_catalog_test.dart --reporter compact` 通过。
+- 触达 Dart 文件 `dart analyze` 通过，No issues found。
+- `dart analyze lib/src/ui/pages/toolbox_sound_tools.dart` 通过，No issues found。
+- `flutter build windows` 通过。
+
+## [Unreleased-I18N-PROCESS-HANDOFF] - 2026-05-31
+
+### 原因
+- 本地化清理经过多轮中断后，需要把统一规则、定位流程和后续问题清单固化到项目文档，方便新会话直接接手。
+
+### 新增
+- `plans/PLAN_299_i18n_followup_todo.md`
+  - 记录插值泄漏、学习/单词本文案、生活实用说明、中文命名修正和移除声源定位模块等后续待办。
+
+### 修改
+- `AGENTS.md`
+  - 补充 i18n 统一规则、标准修改流程、必跑检查，以及“文本到 key/代码位置定位 Skill”。
+
 ## [Unreleased-I18N-RESIDUE-CLEANUP] - 2026-05-30
 
 ### 原因

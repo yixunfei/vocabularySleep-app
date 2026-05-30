@@ -584,6 +584,7 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
     }
     return i18n.t(
       'inline.ui.pages.toolbox_human_tests_visual_memory.target_color_colorname_i18n_token_b194d9',
+      params: <String, Object?>{'colorNameToken': _colorName(i18n, token)},
     );
   }
 
@@ -603,6 +604,7 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
         final colorName = _colorName(i18n, _targetColorToken!);
         return i18n.t(
           'inline.ui.pages.toolbox_human_tests_visual_memory.memorize_every_colorname_cell_similar_colors_and_gray_ce_d73906',
+          params: <String, Object?>{'colorName': colorName},
         );
       }
       return i18n.t(
@@ -614,10 +616,12 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
         final colorName = _colorName(i18n, _targetColorToken!);
         return i18n.t(
           'inline.ui.pages.toolbox_human_tests_visual_memory.now_tap_only_colorname_cells_similar_colors_gray_cells_a_514cb0',
+          params: <String, Object?>{'colorName': colorName},
         );
       }
       return i18n.t(
         'inline.ui.pages.toolbox_human_tests_visual_memory.tap_the_highlighted_targets_misses_allowed_misslimit_d07a2c',
+        params: <String, Object?>{'missLimit': _missLimit},
       );
     }
     return i18n.t(
@@ -963,6 +967,9 @@ class _VisualMemoryCardState extends State<_VisualMemoryCard> {
                   _HumanPill(
                     text: i18n.t(
                       'inline.ui.pages.toolbox_human_tests_visual_memory.observemilliseconds_ms_view_b89008',
+                      params: <String, Object?>{
+                        'observeMilliseconds': _observeMilliseconds,
+                      },
                     ),
                     accent: Theme.of(context).colorScheme.primary,
                   ),

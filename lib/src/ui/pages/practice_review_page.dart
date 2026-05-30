@@ -9,7 +9,6 @@ import '../../models/practice_session_record.dart';
 import '../../models/word_entry.dart';
 import '../../state/app_state_provider.dart';
 import '../modal_helpers.dart';
-import '../ui_copy.dart';
 import 'practice_support.dart';
 
 enum _PracticeReviewRange { today, last7Days, last30Days, all }
@@ -634,6 +633,7 @@ class _PracticeReviewPageState extends ConsumerState<PracticeReviewPage> {
     }
     return i18n.t(
       'inline.ui.pages.practice_review_page.bucket_sessioncount_sessions_included_183ae5',
+      params: <String, Object?>{'bucketSessionCount': bucket.sessionCount},
     );
   }
 
@@ -731,6 +731,7 @@ class _PracticeReviewPageState extends ConsumerState<PracticeReviewPage> {
       ),
       subtitle: i18n.t(
         'inline.ui.pages.practice_notebook_page_actions.the_file_will_be_saved_to_defaultdirectory_682a9b',
+        params: <String, Object?>{'defaultDirectory': defaultDirectory},
       ),
       initialValue: 'xianyushengxi_practice_review.${format.extension}',
       hintText: 'practice_review.${format.extension}',
@@ -756,6 +757,7 @@ class _PracticeReviewPageState extends ConsumerState<PracticeReviewPage> {
         content: Text(
           i18n.t(
             'inline.ui.pages.practice_review_page.practice_review_exported_to_path_5d8841',
+            params: <String, Object?>{'path': path},
           ),
         ),
       ),
@@ -848,6 +850,12 @@ class _HistoryTile extends StatelessWidget {
           Text(
             i18n.t(
               'inline.ui.pages.practice_page_sections.accuracy_record_accuracy_100_round_record_remembered_rec_b4a3e4',
+              params: <String, Object?>{
+                'recordAccuracy': (record.accuracy * 100).round(),
+                'recordRemembered': record.remembered,
+                'recordTotal': record.total,
+                'recordWeakCount': record.weakCount,
+              },
             ),
           ),
           if (reasonEntries.isNotEmpty) ...<Widget>[

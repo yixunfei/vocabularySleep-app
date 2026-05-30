@@ -10,7 +10,6 @@ import '../../state/app_state.dart';
 import '../../state/app_state_provider.dart';
 import '../module/module_access.dart';
 import '../modal_helpers.dart';
-import '../ui_copy.dart';
 import '../widgets/empty_state_view.dart';
 import '../widgets/page_header.dart';
 import '../widgets/word_row.dart';
@@ -523,6 +522,9 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                           Text(
                             i18n.t(
                               'inline.ui.pages.practice_notebook_page.selectedentries_length_selected_add_to_task_favorite_or_4a63f1',
+                              params: <String, Object?>{
+                                'selectedEntries': selectedEntries.length,
+                              },
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -639,6 +641,9 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                               final message = removed
                                   ? i18n.t(
                                       'inline.ui.pages.practice_notebook_page.word_word_removed_from_notebook_c57eb1',
+                                      params: <String, Object?>{
+                                        'wordWord': word.word,
+                                      },
                                     )
                                   : i18n.t(
                                       'inline.ui.pages.practice_notebook_page.notebook_was_not_changed_d68576',
@@ -838,6 +843,9 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
           context,
           label: i18n.t(
             'inline.ui.pages.practice_notebook_page.accuracy_accuracy_progress_100_round_160c10',
+            params: <String, Object?>{
+              'accuracyProgress': (_accuracy(progress) * 100).round(),
+            },
           ),
           icon: Icons.query_stats_rounded,
         ),
@@ -851,6 +859,9 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
           context,
           label: i18n.t(
             'inline.ui.pages.practice_notebook_page.last_formatmonthday_lastplayed_d82f1f',
+            params: <String, Object?>{
+              'formatMonthDayLastPlayed': _formatMonthDay(lastPlayed),
+            },
           ),
           icon: Icons.history_rounded,
         ),
@@ -1049,6 +1060,7 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                 )
               : i18n.t(
                   'inline.ui.pages.practice_notebook_page.removed_from_notebook_removed_a43dfc',
+                  params: <String, Object?>{'removed': removed},
                 ),
         ),
       ),
@@ -1084,6 +1096,9 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
     }
     return i18n.t(
       'inline.ui.pages.practice_notebook_page.next_formatmonthday_nextreview_e74448',
+      params: <String, Object?>{
+        'formatMonthDayNextReview': _formatMonthDay(nextReview),
+      },
     );
   }
 
