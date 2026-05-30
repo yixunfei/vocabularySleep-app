@@ -1,3 +1,19 @@
+## [Unreleased-I18N-RESIDUE-CLEANUP] - 2026-05-30
+
+### 原因
+- 合并前最终清理 i18n 迁移阶段残余，避免把临时补全工具、缓存和快照文件继续作为维护入口。
+
+### 移除
+- 删除早期 i18n 语言补全临时脚本；当前本地化维护入口统一为 `lib/l10n/catalog/app_texts_*.json` 与 `lib/l10n/catalog/app_text_registry.json`。
+- 清理本地忽略目录中的 i18n 翻译缓存、报告和 key 快照残余。
+
+### 修改
+- 更新历史 i18n changelog 条目，不再要求保留或运行已移除的临时迁移产物。
+
+### 验证
+- 残余文件名扫描无命中。
+- 合并后主分支工作区保持干净。
+
 ## [Unreleased-PLAN_296-I18N-SINGLE-CATALOG-CLEANUP] - 2026-05-30
 
 ### Reason
@@ -61,8 +77,6 @@
 ### Added
 - `plans/PLAN_298_i18n_pick_ui_text_cleanup_mini_games_misc.md`
   - Records this migration scope, risks, execution notes, and validation results.
-- `plans/PLAN_298_added_keys.json`
-  - Records the 313 catalog keys added or touched in this pass.
 
 ### Changed
 - `lib/src/ui/app_shell.dart`
@@ -97,10 +111,6 @@
 ### 新增
 - `plans/PLAN_294_i18n_toolbox_module_titles_settings_followup.md`
   - 记录本轮点名模块 i18n 补漏范围、风险边界、key 统计和验证结果。
-- `plans/PLAN_294_added_keys.json`
-  - 记录本轮新增 485 个 catalog key 清单，便于后续复查。
-- `plans/PLAN_294_pairs_snapshot.json`
-  - 保留本轮 source-pair 扫描快照。
 
 ### 修改
 - `lib/src/ui/pages/toolbox_sound_tools/soothing.dart`
@@ -211,10 +221,6 @@
 ### 原因
 - 用户指出历史补全无法真实覆盖全部内容且存在大量文本问题，要求不参考旧翻译库、旧脚本或历史提交，重新完整补全当前项目 i18n 语言文本。
 
-### 新增
-- `scripts/redo_i18n_locale_completion.py`
-  - 新增本轮返工专用补全脚本，支持占位符保护、静态 UI 词表、Bing 批量翻译缓存、分语言报告、空英文源过滤和最终审计。
-
 ### 修改
 - `lib/l10n/catalog/app_text_registry.json`
 - `lib/l10n/catalog/app_texts_zh.json`
@@ -233,8 +239,6 @@
 - 空英文源 ARB 资源仅保留集中登记，不再作为当前 runtime/UI 英文源缺翻统计对象。
 
 ### 验证
-- `python -m py_compile scripts\redo_i18n_locale_completion.py`
-- `python -X utf8 scripts\redo_i18n_locale_completion.py --sync-only --replace-completion-summary --report-prefix completion_report_sync_final`
 - `collect_jobs(..., include_zh=True, force_runtime=False)` 为 0。
 - `audit(...).unresolvedCount` 为 0。
 - `app_text_registry.json` 与 7 个 `app_texts_*.json` 解析成功。
