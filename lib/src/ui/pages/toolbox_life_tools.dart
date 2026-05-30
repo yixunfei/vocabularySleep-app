@@ -37,6 +37,7 @@ import '../../services/toolbox_bmi_service.dart';
 import '../../services/toolbox_date_calculator_service.dart';
 import '../../services/toolbox_image_to_web_service.dart';
 import '../../services/toolbox_id_photo_service.dart';
+import '../../services/toolbox_i18n_text_ref.dart';
 import '../../services/toolbox_number_mark_service.dart';
 import '../../services/toolbox_offer_select_service.dart';
 import '../../services/toolbox_qr_service.dart';
@@ -49,7 +50,6 @@ import '../../services/todo_reminder_service.dart';
 import '../../state/app_state.dart';
 import '../layout/app_width_tier.dart';
 import '../motion/app_motion.dart';
-import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 import 'toolbox_tool_shell.dart';
 
@@ -275,13 +275,37 @@ Future<void> _exitLifeImmersive() async {
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 }
 
-String _lifeText(
-  BuildContext context, {
-  required String zh,
-  required String en,
+String _lifeI18nText(
+  BuildContext context,
+  String key, {
+  Map<String, Object?> params = const <String, Object?>{},
 }) {
   final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-  return pickUiText(i18n, zh: zh, en: en);
+  return i18n.t(key, params: params);
+}
+
+String _lifeI18nRefText(BuildContext context, ToolboxI18nTextRef ref) {
+  return _lifeI18nText(
+    context,
+    ref.key,
+    params: _lifeResolveI18nParams(context, ref.params),
+  );
+}
+
+Map<String, Object?> _lifeResolveI18nParams(
+  BuildContext context,
+  Map<String, Object?> params,
+) {
+  if (params.isEmpty) {
+    return params;
+  }
+  return <String, Object?>{
+    for (final entry in params.entries)
+      entry.key: switch (entry.value) {
+        final ToolboxI18nTextRef ref => _lifeI18nRefText(context, ref),
+        _ => entry.value,
+      },
+  };
 }
 
 class _LifeToolSource {
@@ -299,20 +323,16 @@ class _LifeToolSource {
 class _LifeTool {
   const _LifeTool({
     required this.id,
-    required this.titleZh,
-    required this.titleEn,
-    required this.summaryZh,
-    required this.summaryEn,
+    required this.titleKey,
+    required this.summaryKey,
     required this.category,
     required this.icon,
     this.sources = const <_LifeToolSource>[],
   });
 
   final String id;
-  final String titleZh;
-  final String titleEn;
-  final String summaryZh;
-  final String summaryEn;
+  final String titleKey;
+  final String summaryKey;
   final String category;
   final IconData icon;
   final List<_LifeToolSource> sources;
@@ -321,55 +341,49 @@ class _LifeTool {
 const List<_LifeTool> _lifeTools = <_LifeTool>[
   _LifeTool(
     id: 'time_screen',
-    titleZh: '时间屏幕',
-    titleEn: 'Time screen',
-    summaryZh: '全屏方形翻页时钟',
-    summaryEn: 'Fullscreen square flip clock',
+    titleKey: 'inline.plan295.life.time_screen.62f5d9ae9d5d',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.fullscreen_square_flip_clock_16aab7',
     category: 'display',
     icon: Icons.access_time_rounded,
   ),
   _LifeTool(
     id: 'barrage',
-    titleZh: '手持弹幕',
-    titleEn: 'Handheld barrage',
-    summaryZh: '可调字体、速度、颜色和方向的全屏弹幕',
-    summaryEn: 'Configurable style and speed',
+    titleKey: 'inline.plan295.life.handheld_barrage.eb37eeab9e11',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.configurable_style_and_speed_4ce488',
     category: 'display',
     icon: Icons.view_stream_rounded,
   ),
   _LifeTool(
     id: 'ruler',
-    titleZh: '尺子和量角器',
-    titleEn: 'Ruler and protractor',
-    summaryZh: '支持屏幕标尺和量角器校准',
-    summaryEn: 'Screen ruler and protractor view',
+    titleKey: 'inline.plan295.life.ruler_and_protractor.34ba83f7ca22',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.screen_ruler_and_protractor_view_10b800',
     category: 'device',
     icon: Icons.straighten_rounded,
   ),
   _LifeTool(
     id: 'scoreboard',
-    titleZh: '记分牌',
-    titleEn: 'Scoreboard',
-    summaryZh: '双队计分和混合积分模式',
-    summaryEn: 'Two-team and mixed points',
+    titleKey: 'inline.plan295.life.scoreboard.331767dc94ac',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.two_team_and_mixed_points_202bf7',
     category: 'display',
     icon: Icons.scoreboard_rounded,
   ),
   _LifeTool(
     id: 'color_helper',
-    titleZh: '配色助手',
-    titleEn: 'Color helper',
-    summaryZh: '色卡和图片取色',
-    summaryEn: 'Palette and image picker',
+    titleKey: 'inline.plan295.life.color_helper.10ac659af588',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.palette_and_image_picker_2df8cb',
     category: 'image',
     icon: Icons.palette_rounded,
   ),
   _LifeTool(
     id: 'wallpaper_helper',
-    titleZh: '壁纸助手',
-    titleEn: 'Wallpaper helper',
-    summaryZh: '按来源分类并支持搜索的壁纸助手',
-    summaryEn: 'Source-based wallpaper helper',
+    titleKey: 'inline.plan295.life.wallpaper_helper.bda912c53aec',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.source_based_wallpaper_helper_81133a',
     category: 'web',
     icon: Icons.wallpaper_rounded,
     sources: <_LifeToolSource>[
@@ -384,10 +398,9 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
   ),
   _LifeTool(
     id: 'postal_code',
-    titleZh: '邮编查询',
-    titleEn: 'Postal lookup',
-    summaryZh: '常用城市/区县邮编速查',
-    summaryEn: 'Common city and district ZIP lookup',
+    titleKey: 'inline.plan295.life.postal_lookup.1ce6c88311a4',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.common_city_and_district_zip_lookup_2bd81d',
     category: 'web',
     icon: Icons.local_post_office_rounded,
     sources: <_LifeToolSource>[
@@ -400,10 +413,9 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
   ),
   _LifeTool(
     id: 'reverse_image',
-    titleZh: '以图搜图',
-    titleEn: 'Reverse image',
-    summaryZh: '多引擎以图搜图入口',
-    summaryEn: 'Multi-engine reverse image links',
+    titleKey: 'inline.plan295.life.reverse_image.c5edca6a6947',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.multi_engine_reverse_image_links_588100',
     category: 'web',
     icon: Icons.image_search_rounded,
     sources: <_LifeToolSource>[
@@ -418,10 +430,9 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
   ),
   _LifeTool(
     id: 'garbage',
-    titleZh: '垃圾分类查询',
-    titleEn: 'Garbage sorting',
-    summaryZh: '本地词库和分类投放提示',
-    summaryEn: 'Local catalog and disposal hints',
+    titleKey: 'inline.plan295.life.garbage_sorting.3e693c2be494',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.local_catalog_and_disposal_hints_ddab1a',
     category: 'web',
     icon: Icons.recycling_rounded,
     sources: <_LifeToolSource>[
@@ -433,20 +444,17 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
   ),
   _LifeTool(
     id: 'image_transform',
-    titleZh: '图片压缩/扩大',
-    titleEn: 'Image compression / upscale',
-    summaryZh: '在同一工具内快速切换压缩与扩大，并提供更轻量的放大算法',
-    summaryEn:
-        'Switch quickly between compression and upscale with lighter upscale algorithms',
+    titleKey: 'inline.plan295.life.image_compression_upscale.6a89f70da7a2',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.switch_quickly_between_compression_and_upscale_with_ligh_8f2b96',
     category: 'image',
     icon: Icons.photo_size_select_large_rounded,
   ),
   _LifeTool(
     id: 'relatives',
-    titleZh: '亲戚关系计算器',
-    titleEn: 'Relative calculator',
-    summaryZh: '本地亲戚称谓推算',
-    summaryEn: 'Local relation chain hints',
+    titleKey: 'inline.plan295.life.relative_calculator.fc170b634aa5',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.local_relation_chain_hints_fa3a03',
     category: 'text',
     icon: Icons.groups_rounded,
     sources: <_LifeToolSource>[
@@ -458,39 +466,34 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
   ),
   _LifeTool(
     id: 'text_count',
-    titleZh: '字数拆分与统计',
-    titleEn: 'Text split and count',
-    summaryZh: '统计字符并按规则拆分长文本',
-    summaryEn: 'Count text and split long content',
+    titleKey: 'inline.plan295.life.text_split_and_count.1f879ec08a67',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.count_text_and_split_long_content_b85a9d',
     category: 'text',
     icon: Icons.calculate_rounded,
   ),
   _LifeTool(
     id: 'mind_map',
-    titleZh: '简易思维导图',
-    titleEn: 'Simple mind map',
-    summaryZh: '创建节点关系并导出图片',
-    summaryEn: 'Node and relation sketch',
+    titleKey: 'inline.plan295.life.simple_mind_map.e5993d3e2573',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.node_and_relation_sketch_69973c',
     category: 'text',
     icon: Icons.account_tree_rounded,
   ),
   _LifeTool(
     id: 'timeline_periodic',
-    titleZh: '历史年表/元素周期表',
-    titleEn: 'Timeline and periodic table',
-    summaryZh: '动态查看共识历史节点与 118 元素数据',
-    summaryEn: 'Dynamic consensus timeline and 118-element data',
+    titleKey: 'inline.plan295.life.timeline_and_periodic_table.a8ffb824aa25',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.dynamic_consensus_timeline_and_118_element_data_203811',
     category: 'study',
     icon: Icons.auto_graph_rounded,
     sources: _timelinePeriodicSources,
   ),
   _LifeTool(
     id: 'text_encoding',
-    titleZh: '文本转换',
-    titleEn: 'Text transform',
-    summaryZh: '拼音简繁、数字、农历干支、语言代码与常用文本转换',
-    summaryEn:
-        'Pinyin, number, calendar, ganzhi, language code, and common text transforms',
+    titleKey: 'inline.plan295.life.text_transform.9571d3b531bd',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.pinyin_number_calendar_ganzhi_language_code_and_common_t_eb56dd',
     category: 'text',
     icon: Icons.lock_rounded,
     sources: <_LifeToolSource>[
@@ -526,65 +529,56 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
   ),
   _LifeTool(
     id: 'compass',
-    titleZh: '指南针',
-    titleEn: 'Compass',
-    summaryZh: '指南针表盘与方向指示',
-    summaryEn: 'Compass dial panel',
+    titleKey: 'inline.plan295.life.compass.64c372418a25',
+    summaryKey: 'literal.ui.pages.toolbox_life_tools.compass_dial_panel_9b44bd',
     category: 'device',
     icon: Icons.explore_rounded,
   ),
   _LifeTool(
     id: 'level',
-    titleZh: '水平仪',
-    titleEn: 'Level meter',
-    summaryZh: '横竖方向水平校准辅助',
-    summaryEn: 'Horizontal and vertical helper',
+    titleKey: 'inline.plan295.life.level_meter.12381487172b',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.horizontal_and_vertical_helper_df8e36',
     category: 'device',
     icon: Icons.horizontal_split_rounded,
   ),
   _LifeTool(
     id: 'vibration',
-    titleZh: '震动仪',
-    titleEn: 'Vibration tool',
-    summaryZh: '按强度、时长和节奏控制震动',
-    summaryEn: 'Rhythm and duration pattern',
+    titleKey: 'inline.plan295.life.vibration_tool.e1833c0d758f',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.rhythm_and_duration_pattern_c458ba',
     category: 'device',
     icon: Icons.vibration_rounded,
   ),
   _LifeTool(
     id: 'notify_me',
-    titleZh: '通知自己',
-    titleEn: 'Notify me',
-    summaryZh: '定时提醒自己，并同步到状态栏、锁屏和系统日历',
-    summaryEn:
-        'Schedule self-reminders with notifications, lock-screen alerts, and calendar sync',
+    titleKey: 'inline.plan295.life.notify_me.a1cb3fafbdd1',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.schedule_self_reminders_with_notifications_lock_screen_a_96e02b',
     category: 'device',
     icon: Icons.notifications_active_rounded,
   ),
   _LifeTool(
     id: 'fake_call',
-    titleZh: '模拟来电',
-    titleEn: 'Fake incoming call',
-    summaryZh: '定时或倒计时触发全屏来电模拟，支持号码、归属地和标签',
-    summaryEn: 'Schedule a full-screen fake incoming call with caller details',
+    titleKey: 'inline.plan295.life.fake_incoming_call.a3cd1b946f9f',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.schedule_a_full_screen_fake_incoming_call_with_caller_de_adef9f',
     category: 'device',
     icon: Icons.call_rounded,
   ),
   _LifeTool(
     id: 'sup_sub',
-    titleZh: '数字转标',
-    titleEn: 'Super or subscript',
-    summaryZh: '支持上标、下标、带圈、括号编号和反向还原',
-    summaryEn: 'Convert text into number marks and normalize it back',
+    titleKey: 'inline.plan295.life.super_or_subscript.725857aea674',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.convert_text_into_number_marks_and_normalize_it_back_86e322',
     category: 'text',
     icon: Icons.text_fields_rounded,
   ),
   _LifeTool(
     id: 'meme_maker',
-    titleZh: '表情包制作',
-    titleEn: 'Meme maker',
-    summaryZh: '导入本地图片，叠加文案并导出 PNG 表情包',
-    summaryEn: 'Import an image, add captions, and export a PNG meme',
+    titleKey: 'inline.plan295.life.meme_maker.b757bab40693',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.import_an_image_add_captions_and_export_a_png_meme_071f00',
     category: 'image',
     icon: Icons.mood_rounded,
     sources: <_LifeToolSource>[
@@ -597,28 +591,25 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
   ),
   _LifeTool(
     id: 'device_frame',
-    titleZh: '带壳截图',
-    titleEn: 'Device frame shot',
-    summaryZh: '生成带手机壳或状态栏的截图',
-    summaryEn: 'Frame and status-bar overlay',
+    titleKey: 'inline.plan295.life.device_frame_shot.e3a794041162',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.frame_and_status_bar_overlay_b389ee',
     category: 'image',
     icon: Icons.phone_iphone_rounded,
   ),
   _LifeTool(
     id: 'unit_converter',
-    titleZh: '全能单位换算',
-    titleEn: 'Unit converter',
-    summaryZh: '长度、重量、温度等单位换算',
-    summaryEn: 'Length, weight, temp and more',
+    titleKey: 'inline.plan295.life.unit_converter.53644e92a340',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.length_weight_temp_and_more_79d354',
     category: 'calc',
     icon: Icons.swap_horiz_rounded,
   ),
   _LifeTool(
     id: 'work_worth',
-    titleZh: '工作性价比计算器',
-    titleEn: 'Work value calculator',
-    summaryZh: '综合收入、生活开销和健康因子',
-    summaryEn: 'Income, cost and health factor',
+    titleKey: 'inline.plan295.life.work_value_calculator.766dbe3047f2',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.income_cost_and_health_factor_a81081',
     category: 'calc',
     icon: Icons.work_history_rounded,
     sources: <_LifeToolSource>[
@@ -634,10 +625,9 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
   ),
   _LifeTool(
     id: 'city_compare',
-    titleZh: '城市薪资对比工具',
-    titleEn: 'City salary compare',
-    summaryZh: '城市收入和生活成本对比',
-    summaryEn: 'City income and cost compare',
+    titleKey: 'inline.plan295.life.city_salary_compare.0924c6268506',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.city_income_and_cost_compare_d06597',
     category: 'calc',
     icon: Icons.location_city_rounded,
     sources: <_LifeToolSource>[
@@ -658,10 +648,9 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
   ),
   _LifeTool(
     id: 'mortgage',
-    titleZh: '房贷计算器',
-    titleEn: 'Mortgage calculator',
-    summaryZh: '等额本息和等额本金计算',
-    summaryEn: 'Amortized and equal principal',
+    titleKey: 'inline.plan295.life.mortgage_calculator.3e4f4dddc3e6',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.amortized_and_equal_principal_178e28',
     category: 'calc',
     icon: Icons.home_work_rounded,
     sources: <_LifeToolSource>[
@@ -673,28 +662,25 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
   ),
   _LifeTool(
     id: 'date_calculator',
-    titleZh: '日期计算器',
-    titleEn: 'Date calculator',
-    summaryZh: '日期差值与生命进度计算',
-    summaryEn: 'Date diff and life progress',
+    titleKey: 'inline.plan295.life.date_calculator.20630c7c40d6',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.date_diff_and_life_progress_a40341',
     category: 'calc',
     icon: Icons.date_range_rounded,
   ),
   _LifeTool(
     id: 'world_clock',
-    titleZh: '世界时钟',
-    titleEn: 'World clock',
-    summaryZh: '常用城市当前时间、本地时差和办公时段速查',
-    summaryEn: 'Current time, local difference, and business-hours lookup',
+    titleKey: 'inline.plan295.life.world_clock.8c72a17e8d79',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.current_time_local_difference_and_business_hours_lookup_b96eaa',
     category: 'calc',
     icon: Icons.public_rounded,
   ),
   _LifeTool(
     id: 'bmi',
-    titleZh: 'BMI 计算器',
-    titleEn: 'BMI calculator',
-    summaryZh: '成人/儿童青少年 BMI、围度和能量估算',
-    summaryEn: 'Adult/youth BMI, waist metrics, and energy estimates',
+    titleKey: 'inline.plan295.life.bmi_calculator.9086420041e2',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.adult_youth_bmi_waist_metrics_and_energy_estimates_1adb25',
     category: 'calc',
     icon: Icons.monitor_weight_rounded,
     sources: <_LifeToolSource>[
@@ -733,10 +719,9 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
   ),
   _LifeTool(
     id: 'image_to_web',
-    titleZh: '图片转网页',
-    titleEn: 'Image to webpage',
-    summaryZh: '生成单文件图片网页，并可上传到 Uguu 临时分享',
-    summaryEn: 'Generate a single-file image page and share via Uguu',
+    titleKey: 'inline.plan295.life.image_to_webpage.1ddd6465ce87',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.generate_a_single_file_image_page_and_share_via_uguu_68cd03',
     category: 'image',
     icon: Icons.web_rounded,
     sources: <_LifeToolSource>[
@@ -754,10 +739,9 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
   ),
   _LifeTool(
     id: 'short_link',
-    titleZh: '短链接生成与还原',
-    titleEn: 'Short link tool',
-    summaryZh: '多服务短链、本地短码与重定向链路还原',
-    summaryEn: 'Multi-service short links, local aliases, and redirect restore',
+    titleKey: 'inline.plan295.life.short_link_tool.001f0902e016',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.multi_service_short_links_local_aliases_and_redirect_res_261585',
     category: 'web',
     icon: Icons.link_rounded,
     sources: <_LifeToolSource>[
@@ -769,10 +753,9 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
   ),
   _LifeTool(
     id: 'qr',
-    titleZh: '二维码生成',
-    titleEn: 'QR generator',
-    summaryZh: '模板、样式、图片二维码化与多种二维编码标准',
-    summaryEn: 'Templates, styles, image QR, and multiple 2D code standards',
+    titleKey: 'inline.plan295.life.qr_generator.5f240db63805',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.templates_styles_image_qr_and_multiple_2d_code_standards_f0246c',
     category: 'web',
     icon: Icons.qr_code_2_rounded,
     sources: <_LifeToolSource>[
@@ -788,10 +771,9 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
   ),
   _LifeTool(
     id: 'id_photo',
-    titleZh: '证件照生成',
-    titleEn: 'ID photo',
-    summaryZh: '本地裁切、换底色并导出常见证件照规格',
-    summaryEn: 'Local crop, background color, and ID photo export',
+    titleKey: 'inline.plan295.life.id_photo.0d7cf4d70985',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.local_crop_background_color_and_id_photo_export_4d4767',
     category: 'image',
     icon: Icons.badge_rounded,
     sources: <_LifeToolSource>[
@@ -803,10 +785,9 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
   ),
   _LifeTool(
     id: 'ai_interview',
-    titleZh: 'AI 面试',
-    titleEn: 'AI interview',
-    summaryZh: '本地题目拆解、答案框架、追问与提示词草稿',
-    summaryEn: 'Local interview practice, answer framing, follow-ups, prompts',
+    titleKey: 'inline.plan295.life.ai_interview.0618cad69887',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.local_interview_practice_answer_framing_follow_ups_promp_93dc06',
     category: 'study',
     icon: Icons.record_voice_over_rounded,
     sources: <_LifeToolSource>[
@@ -819,10 +800,9 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
   ),
   _LifeTool(
     id: 'offer_select',
-    titleZh: 'Offer 选择助手',
-    titleEn: 'Offer selector',
-    summaryZh: '多 Offer 本地评分、风险提示和谈薪追平测算',
-    summaryEn: 'Local multi-offer scoring, risk checks, and negotiation anchor',
+    titleKey: 'inline.plan295.life.offer_selector.f837d5d3336b',
+    summaryKey:
+        'literal.ui.pages.toolbox_life_tools.local_multi_offer_scoring_risk_checks_and_negotiation_an_f8c251',
     category: 'calc',
     icon: Icons.checklist_rounded,
     sources: <_LifeToolSource>[

@@ -1,3 +1,5 @@
+import 'toolbox_i18n_text_ref.dart';
+
 enum ToolboxAiInterviewType {
   auto,
   behavioral,
@@ -44,33 +46,29 @@ class ToolboxAiInterviewInput {
 class ToolboxAiInterviewResult {
   const ToolboxAiInterviewResult({
     required this.normalizedQuestion,
+    required this.fallbackQuestionKey,
     required this.detectedType,
-    required this.typeLabelZh,
-    required this.typeLabelEn,
+    required this.typeLabelKey,
     required this.readinessScore,
-    required this.readinessLabelZh,
-    required this.readinessLabelEn,
+    required this.readinessLabelKey,
     required this.answerOutline,
     required this.evaluationNotes,
     required this.followUpQuestions,
-    required this.promptDraft,
     required this.actionChecklist,
     required this.boundaryNotes,
   });
 
   final String normalizedQuestion;
+  final String fallbackQuestionKey;
   final ToolboxAiInterviewType detectedType;
-  final String typeLabelZh;
-  final String typeLabelEn;
+  final String typeLabelKey;
   final int readinessScore;
-  final String readinessLabelZh;
-  final String readinessLabelEn;
-  final List<String> answerOutline;
-  final List<String> evaluationNotes;
-  final List<String> followUpQuestions;
-  final String promptDraft;
-  final List<String> actionChecklist;
-  final List<String> boundaryNotes;
+  final String readinessLabelKey;
+  final List<ToolboxI18nTextRef> answerOutline;
+  final List<ToolboxI18nTextRef> evaluationNotes;
+  final List<ToolboxI18nTextRef> followUpQuestions;
+  final List<ToolboxI18nTextRef> actionChecklist;
+  final List<ToolboxI18nTextRef> boundaryNotes;
 }
 
 class ToolboxAiInterviewService {
@@ -93,13 +91,12 @@ class ToolboxAiInterviewService {
     );
 
     return ToolboxAiInterviewResult(
-      normalizedQuestion: question.isEmpty ? _fallbackQuestion(type) : question,
+      normalizedQuestion: question,
+      fallbackQuestionKey: _fallbackQuestionKey(type),
       detectedType: type,
-      typeLabelZh: _typeLabelZh(type),
-      typeLabelEn: _typeLabelEn(type),
+      typeLabelKey: _typeLabelKey(type),
       readinessScore: score,
-      readinessLabelZh: _readinessLabelZh(score),
-      readinessLabelEn: _readinessLabelEn(score),
+      readinessLabelKey: _readinessLabelKey(score),
       answerOutline: _answerOutline(
         question: question,
         role: role,
@@ -118,25 +115,108 @@ class ToolboxAiInterviewService {
       ),
       followUpQuestions: input.includeFollowUps
           ? _followUps(type, input.depth, role)
-          : const <String>[],
-      promptDraft: _promptDraft(
-        question: question,
-        role: role,
-        company: company,
-        highlights: highlights,
-        answerDraft: answerDraft,
-        type: type,
-        depth: input.depth,
-        language: input.language,
-        tone: input.tone,
-      ),
+          : const <ToolboxI18nTextRef>[],
       actionChecklist: _actionChecklist(type, answerDraft),
-      boundaryNotes: const <String>[
-        '本页只做本地练习与答案组织，不进行屏幕捕获、后台监听或实时代答。',
-        '不要粘贴身份证号、未公开薪资、客户资料、公司保密题或受 NDA 约束的内容。',
-        '输出是结构草稿，不代表真实面试官、招聘方或职业顾问的最终判断。',
+      boundaryNotes: const <ToolboxI18nTextRef>[
+        ToolboxI18nTextRef('life.ai_interview.boundary.local_practice'),
+        ToolboxI18nTextRef('life.ai_interview.boundary.no_sensitive_data'),
+        ToolboxI18nTextRef('life.ai_interview.boundary.not_final_advice'),
       ],
     );
+  }
+
+  String renderPromptDraft(
+    ToolboxAiInterviewInput input,
+    String Function(String key, {Map<String, Object?> params}) t,
+  ) {
+    final question = _normalize(input.question);
+    final type = input.type == ToolboxAiInterviewType.auto
+        ? _detectType(question)
+        : input.type;
+    final role = _normalize(input.role);
+    final company = _normalize(input.company);
+    final highlights = _splitSignals(input.resumeHighlights);
+    final answerDraft = _normalize(input.answerDraft);
+
+    String text(
+      String key, {
+      Map<String, Object?> params = const <String, Object?>{},
+    }) {
+      return t(key, params: params);
+    }
+
+    final buffer = StringBuffer()
+      ..writeln(text('life.ai_interview.prompt.coach_intro'))
+      ..writeln(
+        text(
+          'life.ai_interview.prompt.type_line',
+          params: <String, Object?>{'type': text(_typeLabelKey(type))},
+        ),
+      )
+      ..writeln(
+        text(
+          'life.ai_interview.prompt.role_line',
+          params: <String, Object?>{
+            'role': role.isEmpty
+                ? text('life.ai_interview.prompt.not_filled')
+                : role,
+          },
+        ),
+      )
+      ..writeln(
+        text(
+          'life.ai_interview.prompt.company_line',
+          params: <String, Object?>{
+            'company': company.isEmpty
+                ? text('life.ai_interview.prompt.not_filled')
+                : company,
+          },
+        ),
+      )
+      ..writeln(
+        text(
+          'life.ai_interview.prompt.language_line',
+          params: <String, Object?>{
+            'language': text(_languageLabelKey(input.language)),
+          },
+        ),
+      )
+      ..writeln(
+        text(
+          'life.ai_interview.prompt.tone_line',
+          params: <String, Object?>{'tone': text(_toneLabelKey(input.tone))},
+        ),
+      )
+      ..writeln(
+        text(
+          'life.ai_interview.prompt.depth_line',
+          params: <String, Object?>{'depth': text(_depthLabelKey(input.depth))},
+        ),
+      )
+      ..writeln('')
+      ..writeln(text('life.ai_interview.prompt.question_heading'))
+      ..writeln(question.isEmpty ? text(_fallbackQuestionKey(type)) : question)
+      ..writeln('');
+    if (highlights.isNotEmpty) {
+      buffer
+        ..writeln(text('life.ai_interview.prompt.highlights_heading'))
+        ..writeln(highlights.map((item) => '- $item').join('\n'))
+        ..writeln('');
+    }
+    if (answerDraft.isNotEmpty) {
+      buffer
+        ..writeln(text('life.ai_interview.prompt.draft_heading'))
+        ..writeln(answerDraft)
+        ..writeln('');
+    }
+    buffer
+      ..writeln(text('life.ai_interview.prompt.output_heading'))
+      ..writeln(text('life.ai_interview.prompt.output_60s'))
+      ..writeln(text('life.ai_interview.prompt.output_3min'))
+      ..writeln(text('life.ai_interview.prompt.output_followups'))
+      ..writeln(text('life.ai_interview.prompt.output_evidence'))
+      ..writeln(text('life.ai_interview.prompt.output_authenticity'));
+    return buffer.toString().trim();
   }
 
   ToolboxAiInterviewType _detectType(String question) {
@@ -269,7 +349,7 @@ class ToolboxAiInterviewService {
     return (score - strictPenalty).clamp(0, 100);
   }
 
-  List<String> _answerOutline({
+  List<ToolboxI18nTextRef> _answerOutline({
     required String question,
     required String role,
     required String company,
@@ -279,231 +359,316 @@ class ToolboxAiInterviewService {
     required ToolboxAiInterviewLanguage language,
     required ToolboxAiInterviewTone tone,
   }) {
-    final roleText = role.isEmpty ? '目标岗位' : role;
-    final companyText = company.isEmpty ? '目标团队' : company;
+    final roleText = role.isEmpty
+        ? const ToolboxI18nTextRef('life.ai_interview.placeholder.target_role')
+        : role;
+    final companyText = company.isEmpty
+        ? const ToolboxI18nTextRef('life.ai_interview.placeholder.target_team')
+        : company;
     final signalText = highlights.isEmpty
-        ? '挑 1-2 个最有说服力的经历'
+        ? const ToolboxI18nTextRef(
+            'life.ai_interview.placeholder.pick_experience',
+          )
         : highlights.take(3).join(' / ');
 
     final base = switch (type) {
-      ToolboxAiInterviewType.behavioral => <String>[
-        '先用一句话回答结论：你面对的关键矛盾是什么，以及你最终把局面推进到了哪里。',
-        'Situation/Task：补充背景、目标、约束和你的职责，避免把团队成果说成个人全部功劳。',
-        'Action：按 2-3 个动作展开，优先放入沟通、判断、取舍和执行细节。',
-        'Result：给出可验证结果，最好包含数字、时间、质量、用户或团队反馈。',
-        'Learning：用一句复盘收尾，说明这段经验如何迁移到 $roleText。',
+      ToolboxAiInterviewType.behavioral => <ToolboxI18nTextRef>[
+        const ToolboxI18nTextRef(
+          'life.ai_interview.outline.behavioral.conclusion',
+        ),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.outline.behavioral.situation_task',
+        ),
+        const ToolboxI18nTextRef('life.ai_interview.outline.behavioral.action'),
+        const ToolboxI18nTextRef('life.ai_interview.outline.behavioral.result'),
+        ToolboxI18nTextRef(
+          'life.ai_interview.outline.behavioral.learning',
+          params: <String, Object?>{'role': roleText},
+        ),
       ],
-      ToolboxAiInterviewType.technical => <String>[
-        '先复述问题边界：输入、输出、约束、性能目标和不可做的假设。',
-        '给出主方案：核心数据结构、流程、复杂度或关键 API，按步骤说明。',
-        '补充权衡：为什么不用另一个方案，风险在哪里，如何降级或扩展。',
-        '验证方式：单测、日志、监控、灰度、性能数据或异常场景覆盖。',
-        '结合 $signalText，说明你曾经怎么把类似技术判断落到真实项目。',
+      ToolboxAiInterviewType.technical => <ToolboxI18nTextRef>[
+        const ToolboxI18nTextRef(
+          'life.ai_interview.outline.technical.boundary',
+        ),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.outline.technical.solution',
+        ),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.outline.technical.tradeoff',
+        ),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.outline.technical.validation',
+        ),
+        ToolboxI18nTextRef(
+          'life.ai_interview.outline.technical.experience',
+          params: <String, Object?>{'signal': signalText},
+        ),
       ],
-      ToolboxAiInterviewType.systemDesign => <String>[
-        '先确认规模和 SLA：用户量、峰值流量、读写比例、延迟、可用性和数据一致性。',
-        '画出核心链路：客户端、网关、服务、缓存、队列、存储和观测面。',
-        '分层讨论取舍：缓存命中、限流熔断、异步化、分片、容灾和回滚。',
-        '用瓶颈驱动扩展：指出第一阶段能跑、第二阶段如何横向扩展。',
-        '收尾给验证清单：压测指标、告警项、容量预估和失败演练。',
+      ToolboxAiInterviewType.systemDesign => <ToolboxI18nTextRef>[
+        const ToolboxI18nTextRef(
+          'life.ai_interview.outline.system_design.scale',
+        ),
+        const ToolboxI18nTextRef('life.ai_interview.outline.system_design.sla'),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.outline.system_design.core_path',
+        ),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.outline.system_design.cache_queue_storage',
+        ),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.outline.system_design.tradeoffs',
+        ),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.outline.system_design.expand',
+        ),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.outline.system_design.validation',
+        ),
       ],
-      ToolboxAiInterviewType.productCase => <String>[
-        '先定义目标指标：增长、留存、转化、收入、效率或体验，避免泛泛谈方案。',
-        '拆解用户和场景：谁在什么情境下遇到什么问题，现有替代方案是什么。',
-        '给出 2-3 个假设，并说明验证数据、样本来源和优先级。',
-        '提出方案组合：短期实验、中期机制、长期壁垒，并标出风险。',
-        '用复盘口径收尾：如果指标没有变好，下一步会查哪条链路。',
+      ToolboxAiInterviewType.productCase => <ToolboxI18nTextRef>[
+        const ToolboxI18nTextRef(
+          'life.ai_interview.outline.product_case.metric',
+        ),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.outline.product_case.user_scene',
+        ),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.outline.product_case.hypotheses',
+        ),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.outline.product_case.solution_mix',
+        ),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.outline.product_case.review',
+        ),
       ],
-      ToolboxAiInterviewType.hr => <String>[
-        '先正面回答，不绕圈；把动机和岗位匹配讲清楚。',
-        '用 1 个真实证据支撑判断，避免只说性格词或空泛价值观。',
-        '涉及离职、薪资、加班时保持边界：讲事实、讲期待，不攻击前团队。',
-        '把回答落回 $roleText 与 $companyText：你能贡献什么，也想获得什么。',
-        '准备 1 个反问，体现你在认真评估团队和岗位。',
+      ToolboxAiInterviewType.hr => <ToolboxI18nTextRef>[
+        const ToolboxI18nTextRef('life.ai_interview.outline.hr.direct_answer'),
+        const ToolboxI18nTextRef('life.ai_interview.outline.hr.evidence'),
+        const ToolboxI18nTextRef('life.ai_interview.outline.hr.boundary'),
+        ToolboxI18nTextRef(
+          'life.ai_interview.outline.hr.role_company',
+          params: <String, Object?>{'role': roleText, 'company': companyText},
+        ),
+        const ToolboxI18nTextRef('life.ai_interview.outline.hr.question_back'),
       ],
-      ToolboxAiInterviewType.auto => <String>[
-        '先判断题型，再选择 STAR、技术拆解、系统设计或业务 case 框架。',
-        '把答案压成 60-90 秒主线，复杂内容再准备 3 分钟扩展版。',
-        '每段都补一个证据点：数字、上下文、你的动作或复盘。',
+      ToolboxAiInterviewType.auto => <ToolboxI18nTextRef>[
+        const ToolboxI18nTextRef('life.ai_interview.outline.auto.classify'),
+        const ToolboxI18nTextRef('life.ai_interview.outline.auto.compress'),
+        const ToolboxI18nTextRef('life.ai_interview.outline.auto.evidence'),
       ],
     };
 
     final additions = switch (depth) {
-      ToolboxAiInterviewDepth.quick => <String>['快速模式：保留 3 个最强点即可，先保证回答不散。'],
-      ToolboxAiInterviewDepth.standard => <String>['标准模式：准备 60 秒口述版和 3 分钟追问版。'],
-      ToolboxAiInterviewDepth.deep => <String>[
-        '深度模式：额外准备反例、失败路径、替代方案和面试官可能质疑的薄弱点。',
-        '把回答改写成“结论 -> 证据 -> 取舍 -> 复盘”的节奏，减少流水账。',
+      ToolboxAiInterviewDepth.quick => <ToolboxI18nTextRef>[
+        const ToolboxI18nTextRef('life.ai_interview.outline.depth.quick'),
+      ],
+      ToolboxAiInterviewDepth.standard => <ToolboxI18nTextRef>[
+        const ToolboxI18nTextRef('life.ai_interview.outline.depth.standard'),
+      ],
+      ToolboxAiInterviewDepth.deep => <ToolboxI18nTextRef>[
+        const ToolboxI18nTextRef('life.ai_interview.outline.depth.deep_extra'),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.outline.depth.deep_rewrite',
+        ),
       ],
     };
 
     final toneHint = switch (tone) {
-      ToolboxAiInterviewTone.concise => '语气保持短句和强结论，避免解释过满。',
-      ToolboxAiInterviewTone.balanced => '语气保持自然、具体、不过度包装。',
-      ToolboxAiInterviewTone.coaching => '语气可以加入复盘意识，体现可成长性。',
+      ToolboxAiInterviewTone.concise => const ToolboxI18nTextRef(
+        'life.ai_interview.outline.tone.concise',
+      ),
+      ToolboxAiInterviewTone.balanced => const ToolboxI18nTextRef(
+        'life.ai_interview.outline.tone.balanced',
+      ),
+      ToolboxAiInterviewTone.coaching => const ToolboxI18nTextRef(
+        'life.ai_interview.outline.tone.coaching',
+      ),
     };
     final languageHint = switch (language) {
-      ToolboxAiInterviewLanguage.zh => '输出以中文为主。',
-      ToolboxAiInterviewLanguage.en =>
-        'Output in English, with interview-ready phrasing.',
-      ToolboxAiInterviewLanguage.bilingual => '先中文组织逻辑，再给英文口述关键词。',
+      ToolboxAiInterviewLanguage.zh => const ToolboxI18nTextRef(
+        'life.ai_interview.outline.language.zh',
+      ),
+      ToolboxAiInterviewLanguage.en => const ToolboxI18nTextRef(
+        'life.ai_interview.outline.language.en',
+      ),
+      ToolboxAiInterviewLanguage.bilingual => const ToolboxI18nTextRef(
+        'life.ai_interview.outline.language.bilingual',
+      ),
     };
 
-    return <String>[...base, ...additions, toneHint, languageHint];
+    return <ToolboxI18nTextRef>[...base, ...additions, toneHint, languageHint];
   }
 
-  List<String> _evaluationNotes({
+  List<ToolboxI18nTextRef> _evaluationNotes({
     required String answerDraft,
     required List<String> highlights,
     required ToolboxAiInterviewType type,
     required int score,
   }) {
     if (answerDraft.trim().isEmpty) {
-      return const <String>[
-        '还没有回答草稿。先写 3-5 句话，再让本页帮你检查结构和证据密度。',
-        '建议先填岗位、公司和 2-3 个简历亮点，这会让提示词更贴近真实面试。',
+      return const <ToolboxI18nTextRef>[
+        ToolboxI18nTextRef('life.ai_interview.evaluation.empty.no_draft'),
+        ToolboxI18nTextRef('life.ai_interview.evaluation.empty.fill_context'),
       ];
     }
 
-    final notes = <String>[];
+    final notes = <ToolboxI18nTextRef>[];
     final lower = answerDraft.toLowerCase();
     if (!_containsAny(lower, _structureSignals(type))) {
-      notes.add('结构信号偏弱：建议显式写出背景、行动、结果或方案权衡。');
+      notes.add(
+        const ToolboxI18nTextRef('life.ai_interview.evaluation.structure_weak'),
+      );
     }
     if (!RegExp(r'\d|%|万|kpi|qps|ms|用户|收入|成本').hasMatch(answerDraft)) {
-      notes.add('证据密度偏弱：补充数字、时间、规模、质量或反馈。');
+      notes.add(
+        const ToolboxI18nTextRef('life.ai_interview.evaluation.evidence_weak'),
+      );
     }
     if (highlights.isNotEmpty &&
         !highlights.any((item) => answerDraft.contains(item))) {
-      notes.add('简历亮点没有进入回答：至少接入一个可追问的经历关键词。');
+      notes.add(
+        const ToolboxI18nTextRef(
+          'life.ai_interview.evaluation.highlights_missing',
+        ),
+      );
     }
     if (!_containsAny(lower, <String>['复盘', '学到', 'next', '改进', '验证'])) {
-      notes.add('收尾可以更强：补一句复盘、验证方式或迁移到目标岗位的价值。');
+      notes.add(
+        const ToolboxI18nTextRef('life.ai_interview.evaluation.closing_weak'),
+      );
     }
     if (score >= 80) {
-      notes.add('当前草稿已经具备可面试表达的骨架，下一步重点是压缩语言和准备追问。');
+      notes.add(
+        const ToolboxI18nTextRef('life.ai_interview.evaluation.ready_strong'),
+      );
     } else if (score >= 55) {
-      notes.add('当前草稿可用，但还需要增强证据和取舍细节。');
+      notes.add(
+        const ToolboxI18nTextRef('life.ai_interview.evaluation.ready_medium'),
+      );
     } else {
-      notes.add('当前草稿更像素材清单，建议先重组为“结论 -> 证据 -> 行动 -> 结果”。');
+      notes.add(
+        const ToolboxI18nTextRef('life.ai_interview.evaluation.ready_low'),
+      );
     }
     return notes;
   }
 
-  List<String> _followUps(
+  List<ToolboxI18nTextRef> _followUps(
     ToolboxAiInterviewType type,
     ToolboxAiInterviewDepth depth,
     String role,
   ) {
-    final roleText = role.isEmpty ? '这个岗位' : role;
+    final roleRef = role.isEmpty
+        ? const ToolboxI18nTextRef('life.ai_interview.placeholder.target_role')
+        : ToolboxI18nTextRef(
+            'life.ai_interview.param.raw',
+            params: <String, Object?>{'value': role},
+          );
     final base = switch (type) {
-      ToolboxAiInterviewType.behavioral => <String>[
-        '如果对方当时不配合，你具体怎么推进？',
-        '这件事里你个人最关键的贡献是什么？',
-        '如果重来一次，你会怎么做得更好？',
+      ToolboxAiInterviewType.behavioral => <ToolboxI18nTextRef>[
+        const ToolboxI18nTextRef(
+          'life.ai_interview.follow_up.behavioral.push_when_blocked',
+        ),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.follow_up.behavioral.contribution',
+        ),
+        const ToolboxI18nTextRef('life.ai_interview.follow_up.behavioral.redo'),
       ],
-      ToolboxAiInterviewType.technical => <String>[
-        '这个方案的复杂度、瓶颈和最容易出错的边界是什么？',
-        '如果流量或数据量扩大 10 倍，你先改哪里？',
-        '你会怎么设计测试来证明方案可靠？',
+      ToolboxAiInterviewType.technical => <ToolboxI18nTextRef>[
+        const ToolboxI18nTextRef(
+          'life.ai_interview.follow_up.technical.complexity',
+        ),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.follow_up.technical.scale_10x',
+        ),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.follow_up.technical.testing',
+        ),
       ],
-      ToolboxAiInterviewType.systemDesign => <String>[
-        '数据一致性和可用性冲突时，你怎么取舍？',
-        '缓存穿透、热点 key、队列堆积分别怎么处理？',
-        '第一版最小可行架构是什么，什么时候需要拆服务？',
+      ToolboxAiInterviewType.systemDesign => <ToolboxI18nTextRef>[
+        const ToolboxI18nTextRef(
+          'life.ai_interview.follow_up.system_design.consistency_availability',
+        ),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.follow_up.system_design.cache_hot_queue',
+        ),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.follow_up.system_design.mvp_split',
+        ),
       ],
-      ToolboxAiInterviewType.productCase => <String>[
-        '你会先验证哪一个假设，为什么？',
-        '如果核心指标没有变化，你怎么定位问题？',
-        '这个方案会牺牲哪些用户或业务目标？',
+      ToolboxAiInterviewType.productCase => <ToolboxI18nTextRef>[
+        const ToolboxI18nTextRef(
+          'life.ai_interview.follow_up.product_case.first_hypothesis',
+        ),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.follow_up.product_case.metric_no_change',
+        ),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.follow_up.product_case.tradeoff_users',
+        ),
       ],
-      ToolboxAiInterviewType.hr => <String>[
-        '你为什么认为 $roleText 适合你？',
-        '你对团队、管理方式和成长路径有什么期待？',
-        '如果岗位压力比预期更高，你会怎么判断是否继续？',
+      ToolboxAiInterviewType.hr => <ToolboxI18nTextRef>[
+        ToolboxI18nTextRef(
+          'life.ai_interview.follow_up.hr.fit_role',
+          params: <String, Object?>{'role': roleRef},
+        ),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.follow_up.hr.team_expectation',
+        ),
+        const ToolboxI18nTextRef('life.ai_interview.follow_up.hr.pressure'),
       ],
-      ToolboxAiInterviewType.auto => <String>[
-        '这道题最可能考察什么能力？',
-        '你的回答里哪一点最容易被继续追问？',
+      ToolboxAiInterviewType.auto => <ToolboxI18nTextRef>[
+        const ToolboxI18nTextRef('life.ai_interview.follow_up.auto.capability'),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.follow_up.auto.most_challenged',
+        ),
       ],
     };
     if (depth != ToolboxAiInterviewDepth.deep) {
       return base;
     }
-    return <String>[
+    return <ToolboxI18nTextRef>[
       ...base,
-      '面试官如果质疑这个结果不是你主导的，你如何澄清？',
-      '有没有失败版本、替代方案或成本更低的做法？',
+      const ToolboxI18nTextRef(
+        'life.ai_interview.follow_up.deep.ownership_challenge',
+      ),
+      const ToolboxI18nTextRef('life.ai_interview.follow_up.deep.alternatives'),
     ];
   }
 
-  String _promptDraft({
-    required String question,
-    required String role,
-    required String company,
-    required List<String> highlights,
-    required String answerDraft,
-    required ToolboxAiInterviewType type,
-    required ToolboxAiInterviewDepth depth,
-    required ToolboxAiInterviewLanguage language,
-    required ToolboxAiInterviewTone tone,
-  }) {
-    final buffer = StringBuffer()
-      ..writeln('你是严格但友善的面试教练。请帮我准备一段真实、合规、可口述的面试回答。')
-      ..writeln('题型：${_typeLabelZh(type)}')
-      ..writeln('目标岗位：${role.isEmpty ? '未填写' : role}')
-      ..writeln('目标公司/团队：${company.isEmpty ? '未填写' : company}')
-      ..writeln('输出语言：${_languageLabel(language)}')
-      ..writeln('回答风格：${_toneLabel(tone)}')
-      ..writeln('分析深度：${_depthLabel(depth)}')
-      ..writeln('')
-      ..writeln('面试题：')
-      ..writeln(question.isEmpty ? _fallbackQuestion(type) : question)
-      ..writeln('');
-    if (highlights.isNotEmpty) {
-      buffer
-        ..writeln('我的可用经历/亮点：')
-        ..writeln(highlights.map((item) => '- $item').join('\n'))
-        ..writeln('');
-    }
-    if (answerDraft.isNotEmpty) {
-      buffer
-        ..writeln('我的草稿：')
-        ..writeln(answerDraft)
-        ..writeln('');
-    }
-    buffer
-      ..writeln('请输出：')
-      ..writeln('1. 60 秒口述版')
-      ..writeln('2. 3 分钟展开版')
-      ..writeln('3. 面试官可能追问的 5 个问题')
-      ..writeln('4. 需要我补充的事实证据清单')
-      ..writeln('5. 哪些表达听起来不真实或过度包装');
-    return buffer.toString().trim();
-  }
-
-  List<String> _actionChecklist(
+  List<ToolboxI18nTextRef> _actionChecklist(
     ToolboxAiInterviewType type,
     String answerDraft,
   ) {
-    final shared = <String>[
-      '把答案压到 60-90 秒，保留 1 个主故事和 2 个证据点。',
-      '准备一个可追问细节：数字、冲突、取舍、失败或复盘。',
-      '最后用一句话连接目标岗位，不要只停在过去经历。',
+    const shared = <ToolboxI18nTextRef>[
+      ToolboxI18nTextRef('life.ai_interview.action.shared.compress'),
+      ToolboxI18nTextRef('life.ai_interview.action.shared.prepare_detail'),
+      ToolboxI18nTextRef('life.ai_interview.action.shared.connect_role'),
     ];
     if (answerDraft.trim().isEmpty) {
-      return <String>['先写一个粗糙草稿，不追求完美。', '补充岗位、公司和简历亮点后再复制提示词。', ...shared];
+      return const <ToolboxI18nTextRef>[
+        ToolboxI18nTextRef('life.ai_interview.action.empty.write_rough'),
+        ToolboxI18nTextRef('life.ai_interview.action.empty.complete_context'),
+        ...shared,
+      ];
     }
     return switch (type) {
       ToolboxAiInterviewType.technical ||
-      ToolboxAiInterviewType.systemDesign => <String>[
-        '检查边界条件、复杂度、监控和失败降级是否都讲到了。',
-        '准备一张脑内架构图：入口、核心链路、数据层和观测面。',
+      ToolboxAiInterviewType.systemDesign => <ToolboxI18nTextRef>[
+        const ToolboxI18nTextRef(
+          'life.ai_interview.action.tech.check_boundaries',
+        ),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.action.tech.architecture_map',
+        ),
         ...shared,
       ],
-      ToolboxAiInterviewType.productCase => <String>[
-        '明确北极星指标和第一轮实验，不要只罗列功能。',
-        '给出一个反证路径：如果数据不动，先查什么。',
+      ToolboxAiInterviewType.productCase => <ToolboxI18nTextRef>[
+        const ToolboxI18nTextRef('life.ai_interview.action.product.north_star'),
+        const ToolboxI18nTextRef(
+          'life.ai_interview.action.product.disproof_path',
+        ),
         ...shared,
       ],
       _ => shared,
@@ -565,85 +730,67 @@ class ToolboxAiInterviewService {
 
   String _normalize(String text) => text.trim().replaceAll(RegExp(r'\s+'), ' ');
 
-  String _fallbackQuestion(ToolboxAiInterviewType type) {
+  String _fallbackQuestionKey(ToolboxAiInterviewType type) {
     return switch (type) {
-      ToolboxAiInterviewType.technical => '请讲一个你解决复杂技术问题的例子。',
-      ToolboxAiInterviewType.systemDesign => '请设计一个可扩展的核心业务系统。',
-      ToolboxAiInterviewType.productCase => '请分析一个产品指标下降的问题。',
-      ToolboxAiInterviewType.hr => '你为什么想加入这个岗位？',
-      _ => '请讲一次你处理挑战或冲突的经历。',
+      ToolboxAiInterviewType.technical =>
+        'life.ai_interview.fallback_question.technical',
+      ToolboxAiInterviewType.systemDesign =>
+        'life.ai_interview.fallback_question.system_design',
+      ToolboxAiInterviewType.productCase =>
+        'life.ai_interview.fallback_question.product_case',
+      ToolboxAiInterviewType.hr => 'life.ai_interview.fallback_question.hr',
+      _ => 'life.ai_interview.fallback_question.behavioral',
     };
   }
 
-  String _typeLabelZh(ToolboxAiInterviewType type) {
+  String _typeLabelKey(ToolboxAiInterviewType type) {
     return switch (type) {
-      ToolboxAiInterviewType.auto => '自动识别',
-      ToolboxAiInterviewType.behavioral => '行为面试',
-      ToolboxAiInterviewType.technical => '技术问答',
-      ToolboxAiInterviewType.systemDesign => '系统设计',
-      ToolboxAiInterviewType.productCase => '产品/业务 Case',
-      ToolboxAiInterviewType.hr => 'HR/动机题',
+      ToolboxAiInterviewType.auto => 'life.ai_interview.type.auto',
+      ToolboxAiInterviewType.behavioral => 'life.ai_interview.type.behavioral',
+      ToolboxAiInterviewType.technical => 'life.ai_interview.type.technical',
+      ToolboxAiInterviewType.systemDesign =>
+        'life.ai_interview.type.system_design',
+      ToolboxAiInterviewType.productCase =>
+        'life.ai_interview.type.product_case',
+      ToolboxAiInterviewType.hr => 'life.ai_interview.type.hr',
     };
   }
 
-  String _typeLabelEn(ToolboxAiInterviewType type) {
-    return switch (type) {
-      ToolboxAiInterviewType.auto => 'Auto',
-      ToolboxAiInterviewType.behavioral => 'Behavioral',
-      ToolboxAiInterviewType.technical => 'Technical',
-      ToolboxAiInterviewType.systemDesign => 'System design',
-      ToolboxAiInterviewType.productCase => 'Product/case',
-      ToolboxAiInterviewType.hr => 'HR/motivation',
-    };
-  }
-
-  String _readinessLabelZh(int score) {
+  String _readinessLabelKey(int score) {
     if (score >= 80) {
-      return '可进入模拟追问';
+      return 'life.ai_interview.readiness.follow_up';
     }
     if (score >= 55) {
-      return '需要补证据';
+      return 'life.ai_interview.readiness.needs_evidence';
     }
     if (score > 0) {
-      return '需要重组结构';
+      return 'life.ai_interview.readiness.needs_structure';
     }
-    return '等待草稿';
+    return 'life.ai_interview.readiness.waiting';
   }
 
-  String _readinessLabelEn(int score) {
-    if (score >= 80) {
-      return 'Ready for follow-up';
-    }
-    if (score >= 55) {
-      return 'Needs evidence';
-    }
-    if (score > 0) {
-      return 'Needs structure';
-    }
-    return 'Waiting for draft';
-  }
-
-  String _languageLabel(ToolboxAiInterviewLanguage language) {
+  String _languageLabelKey(ToolboxAiInterviewLanguage language) {
     return switch (language) {
-      ToolboxAiInterviewLanguage.zh => '中文',
-      ToolboxAiInterviewLanguage.en => 'English',
-      ToolboxAiInterviewLanguage.bilingual => '中英双语',
+      ToolboxAiInterviewLanguage.zh => 'life.ai_interview.language.zh',
+      ToolboxAiInterviewLanguage.en => 'life.ai_interview.language.en',
+      ToolboxAiInterviewLanguage.bilingual =>
+        'life.ai_interview.language.bilingual',
     };
   }
 
-  String _toneLabel(ToolboxAiInterviewTone tone) {
+  String _toneLabelKey(ToolboxAiInterviewTone tone) {
     return switch (tone) {
-      ToolboxAiInterviewTone.concise => '结论先行、简洁',
-      ToolboxAiInterviewTone.balanced => '自然平衡、具体',
-      ToolboxAiInterviewTone.coaching => '复盘导向、体现成长',
+      ToolboxAiInterviewTone.concise => 'life.ai_interview.tone.concise',
+      ToolboxAiInterviewTone.balanced => 'life.ai_interview.tone.balanced',
+      ToolboxAiInterviewTone.coaching => 'life.ai_interview.tone.coaching',
     };
   }
 
-  String _depthLabel(ToolboxAiInterviewDepth depth) {
+  String _depthLabelKey(ToolboxAiInterviewDepth depth) {
     return switch (depth) {
-      ToolboxAiInterviewDepth.quick => '快速',
-      ToolboxAiInterviewDepth.standard => '标准',
-      ToolboxAiInterviewDepth.deep => '深度',
+      ToolboxAiInterviewDepth.quick => 'life.ai_interview.depth.quick',
+      ToolboxAiInterviewDepth.standard => 'life.ai_interview.depth.standard',
+      ToolboxAiInterviewDepth.deep => 'life.ai_interview.depth.deep',
     };
   }
 }

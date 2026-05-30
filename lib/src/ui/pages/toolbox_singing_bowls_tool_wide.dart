@@ -174,20 +174,25 @@ extension _SingingBowlsWide on _SingingBowlsPracticeCardState {
                 ),
                 wideInfoPill(
                   context,
-                  text: voiceSpec.name(isZh),
+                  text: voiceSpec.name(i18n),
                   accent: spec.glow,
                 ),
                 if (_autoPlayEnabled)
                   wideInfoPill(
                     context,
-                  text: i18n.t('toolbox.sound.bowls.auto_interval_label', params: <String, Object?>{'interval': '${_autoPlayIntervalMs ~/ 1000}'}),
+                    text: i18n.t(
+                      'toolbox.sound.bowls.auto_interval_label',
+                      params: <String, Object?>{
+                        'interval': '${_autoPlayIntervalMs ~/ 1000}',
+                      },
+                    ),
                     accent: spec.accent.withValues(alpha: 0.78),
                   ),
               ],
             ),
             const SizedBox(height: 12),
             Text(
-              spec.name(isZh),
+              spec.name(i18n),
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w900,
                 letterSpacing: -0.3,
@@ -195,7 +200,7 @@ extension _SingingBowlsWide on _SingingBowlsPracticeCardState {
             ),
             const SizedBox(height: 6),
             Text(
-              '${spec.subtitle(isZh)} · ${voiceSpec.description(isZh)}',
+              '${spec.subtitle(i18n)} · ${voiceSpec.description(i18n)}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: spec.accent,
                 fontWeight: FontWeight.w700,
@@ -203,7 +208,7 @@ extension _SingingBowlsWide on _SingingBowlsPracticeCardState {
             ),
             const SizedBox(height: 10),
             Text(
-              spec.description(isZh),
+              spec.description(i18n),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 height: 1.52,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -334,9 +339,7 @@ extension _SingingBowlsWide on _SingingBowlsPracticeCardState {
               dense: true,
               contentPadding: EdgeInsets.zero,
               title: Text(i18n.t('toolbox.sound.bowls.haptics_title')),
-              subtitle: Text(
-                i18n.t('toolbox.sound.bowls.haptics_subtitle'),
-              ),
+              subtitle: Text(i18n.t('toolbox.sound.bowls.haptics_subtitle')),
               onChanged: toggleHaptics,
             ),
             const SizedBox(height: 10),

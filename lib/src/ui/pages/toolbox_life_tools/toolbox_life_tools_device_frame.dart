@@ -59,10 +59,9 @@ class _DeviceFrameToolPageState extends State<_DeviceFrameToolPage> {
       if (file == null) {
         return;
       }
-      final oversizedMessage = _lifeText(
+      final oversizedMessage = _lifeI18nText(
         context,
-        zh: '图片超过 32MB，请先压缩后再导入。',
-        en: 'The image is larger than 32 MB. Compress it before importing.',
+        'inline.plan295.life.the_image_is_larger_than_32_mb_compr.a64eb8a5d824',
       );
       if (file.size > _deviceFrameMaxSourceBytes) {
         throw StateError(oversizedMessage);
@@ -92,10 +91,10 @@ class _DeviceFrameToolPageState extends State<_DeviceFrameToolPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '选择截图失败: $error',
-          en: 'Failed to pick screenshot: $error',
+          'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.device.frame.failed_to_pick_screenshot.70461507aa',
+          params: <String, Object?>{'error': error},
         );
       });
     }
@@ -151,20 +150,17 @@ class _DeviceFrameToolPageState extends State<_DeviceFrameToolPage> {
       _error = null;
     });
 
-    final saveDialogTitle = _lifeText(
+    final saveDialogTitle = _lifeI18nText(
       context,
-      zh: '保存带壳截图',
-      en: 'Save framed screenshot',
+      'inline.plan295.life.save_framed_screenshot.77dee7782207',
     );
-    final browserDownloadText = _lifeText(
+    final browserDownloadText = _lifeI18nText(
       context,
-      zh: '浏览器下载已触发，请查看下载列表。',
-      en: 'Browser download started. Check your downloads.',
+      'inline.plan295.crypto.browser_download_started_check_your.b28d392515b4',
     );
-    final exportCanceledText = _lifeText(
+    final exportCanceledText = _lifeI18nText(
       context,
-      zh: '已取消保存。',
-      en: 'Save canceled.',
+      'inline.plan295.life.save_canceled.50d0c10cdace',
     );
     final displayRatio = View.of(context).devicePixelRatio;
 
@@ -240,10 +236,10 @@ class _DeviceFrameToolPageState extends State<_DeviceFrameToolPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '导出失败: $error',
-          en: 'Export failed: $error',
+          'errorExportFailed',
+          params: <String, Object?>{'error': error},
         );
       });
     } finally {
@@ -282,10 +278,9 @@ class _DeviceFrameToolPageState extends State<_DeviceFrameToolPage> {
     if ((sourceAspect - targetAspect).abs() <= 0.08) {
       return null;
     }
-    return _lifeText(
+    return _lifeI18nText(
       context,
-      zh: '原图比例与机模屏幕不完全一致；若主体被裁切，可把截图适配切换为“完整显示”。',
-      en: 'The source aspect differs from this screen. Switch screenshot fit to "Fit whole image" if important content is cropped.',
+      'inline.plan295.life.the_source_aspect_differs_from_this.6483689570ac',
     );
   }
 
@@ -294,11 +289,13 @@ class _DeviceFrameToolPageState extends State<_DeviceFrameToolPage> {
     final image = _sourceImage;
 
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '带壳截图', en: 'Device frame shot'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '导入本地截图，合成到原创前视机模，按需调整背景、裁切、状态栏并导出 PNG。',
-        en: 'Import a local screenshot, place it in an original front-view mockup, then tune backdrop, fit, status bar, and PNG export.',
+        'inline.plan295.life.device_frame_shot.e3a794041162',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.import_a_local_screenshot_place_it_i.9cf5b3415183',
       ),
       child: Column(
         key: const ValueKey<String>('life-device-frame-page'),
@@ -447,7 +444,10 @@ class _DeviceFrameStagePanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            _lifeText(context, zh: '截图舞台', en: 'Screenshot stage'),
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.screenshot_stage.56b863221d84',
+            ),
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
             ),
@@ -455,15 +455,13 @@ class _DeviceFrameStagePanel extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             hasImage
-                ? _lifeText(
+                ? _lifeI18nText(
                     context,
-                    zh: '正在预览当前合成效果，可继续调整机模、背景或直接导出。',
-                    en: 'Previewing the current composite. Tune the mockup or export it now.',
+                    'inline.plan295.life.previewing_the_current_composite_tun.4b848fbf7597',
                   )
-                : _lifeText(
+                : _lifeI18nText(
                     context,
-                    zh: '下一步：导入一张截图，页面会立刻生成带壳预览。',
-                    en: 'Next: pick a screenshot and the mockup preview appears here.',
+                    'inline.plan295.life.next_pick_a_screenshot_and_the_mocku.6566084b4a4b',
                   ),
             style: theme.textTheme.bodySmall,
           ),
@@ -479,8 +477,14 @@ class _DeviceFrameStagePanel extends StatelessWidget {
                 icon: const Icon(Icons.add_photo_alternate_rounded),
                 label: Text(
                   hasImage
-                      ? _lifeText(context, zh: '更换截图', en: 'Replace image')
-                      : _lifeText(context, zh: '导入截图', en: 'Pick screenshot'),
+                      ? _lifeI18nText(
+                          context,
+                          'inline.plan295.life.replace_image.08c794454d62',
+                        )
+                      : _lifeI18nText(
+                          context,
+                          'inline.plan295.life.pick_screenshot.6bd979625881',
+                        ),
                 ),
               ),
               OutlinedButton.icon(
@@ -490,8 +494,14 @@ class _DeviceFrameStagePanel extends StatelessWidget {
                 icon: const Icon(Icons.download_rounded),
                 label: Text(
                   exporting
-                      ? _lifeText(context, zh: '导出中...', en: 'Exporting...')
-                      : _lifeText(context, zh: '导出 PNG', en: 'Export PNG'),
+                      ? _lifeI18nText(
+                          context,
+                          'inline.plan295.life.exporting.4a7bae70c078',
+                        )
+                      : _lifeI18nText(
+                          context,
+                          'inline.plan295.life.export_png.ed4ae20882a0',
+                        ),
                 ),
               ),
             ],
@@ -499,7 +509,10 @@ class _DeviceFrameStagePanel extends StatelessWidget {
           if (sourceName != null) ...<Widget>[
             const SizedBox(height: 10),
             Text(
-              _lifeText(context, zh: '当前截图: ', en: 'Current screenshot: ') +
+              _lifeI18nText(
+                    context,
+                    'inline.plan295.life.current_screenshot.89d8d0e730c0',
+                  ) +
                   sourceName!,
               style: theme.textTheme.bodySmall,
             ),
@@ -511,19 +524,31 @@ class _DeviceFrameStagePanel extends StatelessWidget {
               runSpacing: 8,
               children: <Widget>[
                 ToolboxMetricCard(
-                  label: _lifeText(context, zh: '原图尺寸', en: 'Source size'),
+                  label: _lifeI18nText(
+                    context,
+                    'inline.plan295.life.source_size.bcee8f1e482c',
+                  ),
                   value: sourceSizeLabel!,
                 ),
                 ToolboxMetricCard(
-                  label: _lifeText(context, zh: '比例', en: 'Aspect'),
+                  label: _lifeI18nText(
+                    context,
+                    'inline.plan295.life.aspect.cf4a9d39d48b',
+                  ),
                   value: sourceAspectLabel!,
                 ),
                 ToolboxMetricCard(
-                  label: _lifeText(context, zh: '机模', en: 'Mockup'),
+                  label: _lifeI18nText(
+                    context,
+                    'inline.plan295.life.mockup.87069b67283d',
+                  ),
                   value: _deviceFramePresetLabel(context, preset),
                 ),
                 ToolboxMetricCard(
-                  label: _lifeText(context, zh: '适配', en: 'Fit'),
+                  label: _lifeI18nText(
+                    context,
+                    'inline.plan295.life.fit.8044bd1bbe38',
+                  ),
                   value: _deviceFrameScreenFitLabel(context, screenFit),
                 ),
               ],
@@ -541,7 +566,10 @@ class _DeviceFrameStagePanel extends StatelessWidget {
             _DeviceFrameInfoBanner(
               icon: Icons.check_circle_rounded,
               text:
-                  _lifeText(context, zh: '导出位置: ', en: 'Saved to: ') +
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.saved_to.6546039c21f2',
+                  ) +
                   savedPath!,
               selectable: true,
             ),
@@ -645,89 +673,93 @@ class _DeviceFrameStylePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '构图设置', en: 'Composition'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '先选机模与背景，再决定截图是填满屏幕还是完整显示。',
-        en: 'Choose the mockup and backdrop, then decide whether the screenshot fills or fits the screen.',
+        'inline.plan295.life.composition.e061eff04394',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.choose_the_mockup_and_backdrop_then.51ab84fe1b4c',
       ),
       children: <Widget>[
         _LifeSegmentedField<_DeviceFramePreset>(
-          label: _lifeText(context, zh: '机模风格', en: 'Mockup preset'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.mockup_preset.592212454ffb',
+          ),
           value: preset,
           options: const <_LifeOption<_DeviceFramePreset>>[
             _LifeOption<_DeviceFramePreset>(
               value: _DeviceFramePreset.titanium,
-              labelZh: '钛金灵动岛',
-              labelEn: 'Titanium island',
+              labelKey: 'inline.plan295.life.titanium_island.cc96da6b5d71',
             ),
             _LifeOption<_DeviceFramePreset>(
               value: _DeviceFramePreset.obsidian,
-              labelZh: '曜石灵动岛',
-              labelEn: 'Obsidian island',
+              labelKey: 'inline.plan295.life.obsidian_island.d979f2c453f2',
             ),
             _LifeOption<_DeviceFramePreset>(
               value: _DeviceFramePreset.graphite,
-              labelZh: '石墨挖孔屏',
-              labelEn: 'Graphite hole-punch',
+              labelKey: 'inline.plan295.life.graphite_hole_punch.6a404cab7936',
             ),
             _LifeOption<_DeviceFramePreset>(
               value: _DeviceFramePreset.frost,
-              labelZh: '冰霜银挖孔屏',
-              labelEn: 'Frost hole-punch',
+              labelKey: 'inline.plan295.life.frost_hole_punch.767828eb59af',
             ),
             _LifeOption<_DeviceFramePreset>(
               value: _DeviceFramePreset.clean,
-              labelZh: '无壳海报',
-              labelEn: 'Clean poster',
+              labelKey: 'inline.plan295.life.clean_poster.7d0c9009a20f',
             ),
           ],
           onChanged: onPresetChanged,
         ),
         const SizedBox(height: 14),
         _LifeSegmentedField<_DeviceFrameBackground>(
-          label: _lifeText(context, zh: '背景氛围', en: 'Backdrop'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.backdrop.0551932c2eba',
+          ),
           value: background,
           options: const <_LifeOption<_DeviceFrameBackground>>[
             _LifeOption<_DeviceFrameBackground>(
               value: _DeviceFrameBackground.studio,
-              labelZh: '柔光棚拍',
-              labelEn: 'Studio',
+              labelKey: 'inline.plan295.life.studio.0ec59319705f',
             ),
             _LifeOption<_DeviceFrameBackground>(
               value: _DeviceFrameBackground.aurora,
-              labelZh: '薄荷渐变',
-              labelEn: 'Aurora',
+              labelKey: 'inline.plan295.life.aurora.509cc7d060d3',
             ),
             _LifeOption<_DeviceFrameBackground>(
               value: _DeviceFrameBackground.midnight,
-              labelZh: '午夜深色',
-              labelEn: 'Midnight',
+              labelKey: 'inline.plan295.life.midnight.7125c74faa32',
             ),
           ],
           onChanged: onBackgroundChanged,
         ),
         const SizedBox(height: 14),
         _LifeSegmentedField<_DeviceFrameScreenFit>(
-          label: _lifeText(context, zh: '截图适配', en: 'Screenshot fit'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.screenshot_fit.0c7c11ef8a96',
+          ),
           value: screenFit,
           options: const <_LifeOption<_DeviceFrameScreenFit>>[
             _LifeOption<_DeviceFrameScreenFit>(
               value: _DeviceFrameScreenFit.cover,
-              labelZh: '裁切填满',
-              labelEn: 'Fill screen',
+              labelKey: 'inline.plan295.life.fill_screen.c130d99e73b9',
             ),
             _LifeOption<_DeviceFrameScreenFit>(
               value: _DeviceFrameScreenFit.contain,
-              labelZh: '完整显示',
-              labelEn: 'Fit whole image',
+              labelKey: 'inline.plan295.life.fit_whole_image.889f3cf4dea8',
             ),
           ],
           onChanged: onScreenFitChanged,
         ),
         const SizedBox(height: 8),
         _LifeSliderField(
-          label: _lifeText(context, zh: '画布留白', en: 'Canvas padding'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.canvas_padding.b8563d740a03',
+          ),
           valueText: '${canvasPadding.toStringAsFixed(0)} px',
           value: canvasPadding,
           min: 12,
@@ -741,12 +773,16 @@ class _DeviceFrameStylePanel extends StatelessWidget {
             contentPadding: EdgeInsets.zero,
             value: showGlare,
             onChanged: onShowGlareChanged,
-            title: Text(_lifeText(context, zh: '显示炫光', en: 'Show glare')),
-            subtitle: Text(
-              _lifeText(
+            title: Text(
+              _lifeI18nText(
                 context,
-                zh: '给屏幕玻璃和边框补一点棚拍反光，让成图更像真实展示图。',
-                en: 'Add a subtle studio reflection so the result feels closer to a real product shot.',
+                'inline.plan295.life.show_glare.86b3cbb4ba98',
+              ),
+            ),
+            subtitle: Text(
+              _lifeI18nText(
+                context,
+                'inline.plan295.life.add_a_subtle_studio_reflection_so_th.c0accbe4e6b9',
               ),
             ),
           ),
@@ -806,11 +842,13 @@ class _DeviceFrameStatusPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '状态栏设置', en: 'Status bar'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '原图顶部被裁掉，或需要统一展示时间、电量和网络状态时再开启。',
-        en: 'Enable this when the source top is cropped or when you need consistent time, battery, and network state.',
+        'inline.plan295.life.status_bar.aefffa2429cf',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.enable_this_when_the_source_top_is_c.5fdde1f95d3c',
       ),
       children: <Widget>[
         SwitchListTile.adaptive(
@@ -818,30 +856,35 @@ class _DeviceFrameStatusPanel extends StatelessWidget {
           contentPadding: EdgeInsets.zero,
           value: showStatusBar,
           onChanged: onShowStatusBarChanged,
-          title: Text(_lifeText(context, zh: '补状态栏', en: 'Add status bar')),
-          subtitle: Text(
-            _lifeText(
+          title: Text(
+            _lifeI18nText(
               context,
-              zh: '开启后可单独控制时间、电量、信号、Wi-Fi 和网络制式。',
-              en: 'When enabled, control time, battery, signal, Wi-Fi, and network label independently.',
+              'inline.plan295.life.add_status_bar.6193c7899043',
+            ),
+          ),
+          subtitle: Text(
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.when_enabled_control_time_battery_si.aa7039f7d362',
             ),
           ),
         ),
         if (showStatusBar) ...<Widget>[
           const SizedBox(height: 8),
           _LifeSegmentedField<_DeviceFrameStatusTone>(
-            label: _lifeText(context, zh: '状态栏配色', en: 'Status style'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.status_style.e495ee959789',
+            ),
             value: statusTone,
             options: const <_LifeOption<_DeviceFrameStatusTone>>[
               _LifeOption<_DeviceFrameStatusTone>(
                 value: _DeviceFrameStatusTone.light,
-                labelZh: '浅色字',
-                labelEn: 'Light text',
+                labelKey: 'inline.plan295.life.light_text.69e7cd253340',
               ),
               _LifeOption<_DeviceFrameStatusTone>(
                 value: _DeviceFrameStatusTone.dark,
-                labelZh: '深色字',
-                labelEn: 'Dark text',
+                labelKey: 'inline.plan295.life.dark_text.20e890f3e407',
               ),
             ],
             onChanged: onStatusToneChanged,
@@ -853,13 +896,19 @@ class _DeviceFrameStatusPanel extends StatelessWidget {
             onChanged: onTimeChanged,
             decoration: InputDecoration(
               border: const OutlineInputBorder(),
-              labelText: _lifeText(context, zh: '时间文案', en: 'Time text'),
+              labelText: _lifeI18nText(
+                context,
+                'inline.plan295.life.time_text.e7495b76c18a',
+              ),
               hintText: '9:41',
             ),
           ),
           const SizedBox(height: 12),
           _LifeSliderField(
-            label: _lifeText(context, zh: '电量百分比', en: 'Battery level'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.battery_level.508b1ef46552',
+            ),
             valueText: '${batteryPercent.round()}%',
             value: batteryPercent,
             min: 1,
@@ -869,14 +918,19 @@ class _DeviceFrameStatusPanel extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           _LifeSegmentedField<bool>(
-            label: _lifeText(context, zh: '电池状态', en: 'Battery state'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.battery_state.df01beb12a1d',
+            ),
             value: charging,
             options: const <_LifeOption<bool>>[
-              _LifeOption<bool>(value: false, labelZh: '普通', labelEn: 'Normal'),
+              _LifeOption<bool>(
+                value: false,
+                labelKey: 'inline.plan295.life.normal.52e6667a59a6',
+              ),
               _LifeOption<bool>(
                 value: true,
-                labelZh: '充电中',
-                labelEn: 'Charging',
+                labelKey: 'inline.plan295.life.charging.5f9c2df896d8',
               ),
             ],
             onChanged: onChargingChanged,
@@ -886,12 +940,18 @@ class _DeviceFrameStatusPanel extends StatelessWidget {
             value: showBatteryPercent,
             onChanged: onShowBatteryPercentChanged,
             title: Text(
-              _lifeText(context, zh: '显示电量数字', en: 'Show battery percent'),
+              _lifeI18nText(
+                context,
+                'inline.plan295.life.show_battery_percent.60745b3afd72',
+              ),
             ),
           ),
           const SizedBox(height: 6),
           _LifeSliderField(
-            label: _lifeText(context, zh: '蜂窝信号强度', en: 'Cellular signal'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.cellular_signal.4a8a3d469bd0',
+            ),
             valueText: '${signalLevel.round()} / 4',
             value: signalLevel,
             min: 0,
@@ -903,11 +963,19 @@ class _DeviceFrameStatusPanel extends StatelessWidget {
             contentPadding: EdgeInsets.zero,
             value: showWifi,
             onChanged: onShowWifiChanged,
-            title: Text(_lifeText(context, zh: '显示 Wi-Fi', en: 'Show Wi-Fi')),
+            title: Text(
+              _lifeI18nText(
+                context,
+                'inline.plan295.life.show_wi_fi.651d4bfa2e76',
+              ),
+            ),
           ),
           if (showWifi)
             _LifeSliderField(
-              label: _lifeText(context, zh: 'Wi-Fi 强度', en: 'Wi-Fi strength'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.wi_fi_strength.b8d4ec5af587',
+              ),
               valueText: '${wifiStrength.round()} / 3',
               value: wifiStrength,
               min: 0,
@@ -917,38 +985,39 @@ class _DeviceFrameStatusPanel extends StatelessWidget {
             ),
           const SizedBox(height: 10),
           _LifeSegmentedField<_DeviceFrameNetworkType>(
-            label: _lifeText(context, zh: '网络制式', en: 'Network label'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.network_label.e438b42a2b0a',
+            ),
             value: networkType,
             options: const <_LifeOption<_DeviceFrameNetworkType>>[
               _LifeOption<_DeviceFrameNetworkType>(
                 value: _DeviceFrameNetworkType.none,
-                labelZh: '无字样',
-                labelEn: 'No text',
+                labelKey: 'inline.plan295.life.no_text.34d3947413e5',
               ),
               _LifeOption<_DeviceFrameNetworkType>(
                 value: _DeviceFrameNetworkType.edge,
-                labelZh: 'E',
-                labelEn: 'E',
+                labelKey:
+                    'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_compass.e_569c50',
               ),
               _LifeOption<_DeviceFrameNetworkType>(
                 value: _DeviceFrameNetworkType.fourG,
-                labelZh: '4G',
-                labelEn: '4G',
+                labelKey:
+                    'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_device_frame_labels.4g_8b353d',
               ),
               _LifeOption<_DeviceFrameNetworkType>(
                 value: _DeviceFrameNetworkType.fiveG,
-                labelZh: '5G',
-                labelEn: '5G',
+                labelKey:
+                    'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_device_frame_labels.5g_c19123',
               ),
               _LifeOption<_DeviceFrameNetworkType>(
                 value: _DeviceFrameNetworkType.lte,
-                labelZh: 'LTE',
-                labelEn: 'LTE',
+                labelKey:
+                    'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_device_frame_labels.lte_276f23',
               ),
               _LifeOption<_DeviceFrameNetworkType>(
                 value: _DeviceFrameNetworkType.wifiOnly,
-                labelZh: '仅 Wi-Fi',
-                labelEn: 'Wi-Fi only',
+                labelKey: 'inline.plan295.life.wi_fi_only.0991304ffff5',
               ),
             ],
             onChanged: onNetworkTypeChanged,
@@ -959,16 +1028,25 @@ class _DeviceFrameStatusPanel extends StatelessWidget {
             runSpacing: 8,
             children: <Widget>[
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '时间', en: 'Time'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.ui.pages.toolbox_human_tests_typing.time_b4685a',
+                ),
                 value: statusSettings.timeText,
               ),
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '电量', en: 'Battery'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.battery.4cfb5f06293f',
+                ),
                 value:
                     '${statusSettings.batteryPercent}% · ${_deviceFrameBatteryStatusLabel(context, statusSettings)}',
               ),
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '网络', en: 'Network'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.network.a842366fbdeb',
+                ),
                 value: _deviceFrameNetworkTypeLabel(context, networkType),
               ),
             ],
@@ -985,13 +1063,12 @@ class _DeviceFrameNotesPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '使用边界', en: 'Notes'),
+      title: _lifeI18nText(context, 'inline.plan295.life.notes.34bde0fb12d6'),
       children: <Widget>[
         Text(
-          _lifeText(
+          _lifeI18nText(
             context,
-            zh: '当前机模均为仓库内原创前视展示图层，参考主流真机的正面观感、边框节奏和 cutout 布局，但不对应任何厂商官方营销素材或精确 OEM 尺寸。',
-            en: 'These mockups are original front-view showcase assets inspired by mainstream device proportions, frame rhythm, and cutout placement, not official OEM marketing materials or exact physical dimensions.',
+            'inline.plan295.life.these_mockups_are_original_front_vie.01b12ba6eda0',
           ),
         ),
       ],

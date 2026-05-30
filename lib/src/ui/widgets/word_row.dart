@@ -137,19 +137,21 @@ class WordRow extends StatelessWidget {
                   children: <Widget>[
                     if (selected)
                       _WordRowTag(
-                        label: '\u5f53\u524d',
+                        label: i18n.t('toolbox.breathing.current'),
                         icon: Icons.navigation_rounded,
                         color: rowAccent,
                       ),
                     if (isFavorite)
                       _WordRowTag(
-                        label: pickUiText(i18n, zh: '\u6536\u85cf', en: 'Fav'),
+                        label: i18n.t('inline.ui.widgets.word_row.fav_b1537f'),
                         icon: Icons.favorite_rounded,
                         color: const Color(0xFFE25A7A),
                       ),
                     if (isTaskWord)
                       _WordRowTag(
-                        label: pickUiText(i18n, zh: '\u4efb\u52a1', en: 'Task'),
+                        label: i18n.t(
+                          'inline.ui.widgets.word_card.task_df1f06',
+                        ),
                         icon: Icons.task_alt_rounded,
                         color: tokens.success,
                       ),
@@ -169,7 +171,7 @@ class WordRow extends StatelessWidget {
               ] else if (!showMeaning) ...[
                 const SizedBox(height: 10),
                 Text(
-                  '\u6587\u672c\u5df2\u9690\u85cf',
+                  i18n.t('word.row.text_hidden'),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: tokens.textSecondary,
                   ),
@@ -202,11 +204,7 @@ class WordRow extends StatelessWidget {
                   final isNarrow = constraints.maxWidth < 420;
                   final moreAction = hasMenuActions
                       ? PopupMenuButton<_WordRowMenuAction>(
-                          tooltip: pickUiText(
-                            i18n,
-                            zh: '\u66f4\u591a\u64cd\u4f5c',
-                            en: 'More actions',
-                          ),
+                          tooltip: i18n.t('toolbox.sleep.assist.locatorMore'),
                           onSelected: (value) {
                             switch (value) {
                               case _WordRowMenuAction.toggleFavorite:
@@ -233,15 +231,11 @@ class WordRow extends StatelessWidget {
                                     Expanded(
                                       child: Text(
                                         isFavorite
-                                            ? pickUiText(
-                                                i18n,
-                                                zh: '\u53d6\u6d88\u6536\u85cf',
-                                                en: 'Unfavorite',
+                                            ? i18n.t(
+                                                'toolbox.sound.focus.editor.unfavorite',
                                               )
-                                            : pickUiText(
-                                                i18n,
-                                                zh: '\u52a0\u5165\u6536\u85cf',
-                                                en: 'Add favorite',
+                                            : i18n.t(
+                                                'inline.ui.pages.practice_notebook_page.add_favorite_278d4a',
                                               ),
                                       ),
                                     ),
@@ -263,16 +257,10 @@ class WordRow extends StatelessWidget {
                                     Expanded(
                                       child: Text(
                                         isTaskWord
-                                            ? pickUiText(
-                                                i18n,
-                                                zh: '\u79fb\u51fa\u4efb\u52a1',
-                                                en: 'Remove task',
+                                            ? i18n.t(
+                                                'inline.ui.widgets.word_card.remove_task_81c5ab',
                                               )
-                                            : pickUiText(
-                                                i18n,
-                                                zh: '\u52a0\u5165\u4efb\u52a1',
-                                                en: 'Add task',
-                                              ),
+                                            : i18n.t('addTodo'),
                                       ),
                                     ),
                                   ],
@@ -303,10 +291,8 @@ class WordRow extends StatelessWidget {
                             onPressed: onFollowAlong,
                             icon: const Icon(Icons.mic_external_on_rounded),
                             label: Text(
-                              pickUiText(
-                                i18n,
-                                zh: '\u8ddf\u8bfb',
-                                en: 'Follow',
+                              i18n.t(
+                                'inline.ui.widgets.word_card.follow_9108bd',
                               ),
                             ),
                           ),
@@ -336,7 +322,7 @@ class WordRow extends StatelessWidget {
                           onPressed: onFollowAlong,
                           icon: const Icon(Icons.mic_external_on_rounded),
                           label: Text(
-                            pickUiText(i18n, zh: '\u8ddf\u8bfb', en: 'Follow'),
+                            i18n.t('inline.ui.widgets.word_card.follow_9108bd'),
                           ),
                         ),
                       if (moreAction != null) ...[const Spacer(), moreAction],

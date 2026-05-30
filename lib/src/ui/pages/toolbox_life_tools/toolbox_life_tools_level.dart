@@ -89,11 +89,13 @@ class _LevelToolPageState extends State<_LevelToolPage> {
   @override
   Widget build(BuildContext context) {
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '水平仪', en: 'Level meter'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '一屏看清水平、垂直、误差和当前持机状态，方便贴墙、摆台和快速找平。',
-        en: 'See horizontal, vertical, error, and holding state on one screen for quick leveling checks.',
+        'inline.plan295.life.level_meter.12381487172b',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.see_horizontal_vertical_error_and_ho.7b04881a71e4',
       ),
       child: _sensorsAvailable
           ? _buildBody(context)
@@ -114,11 +116,13 @@ class _LevelToolPageState extends State<_LevelToolPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         _LifeSettingsPanel(
-          title: _lifeText(context, zh: '模式与舞台', en: 'Mode and stage'),
-          subtitle: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '水平模式同时看俯仰和横滚；垂直模式更适合贴墙和门框校正。',
-            en: 'Level mode watches pitch and roll together; plumb mode is better for walls and door frames.',
+            'inline.plan295.life.mode_and_stage.da87b3ced09f',
+          ),
+          subtitle: _lifeI18nText(
+            context,
+            'inline.plan295.life.level_mode_watches_pitch_and_roll_to.d9bb0454d698',
           ),
           children: <Widget>[
             Wrap(
@@ -127,12 +131,22 @@ class _LevelToolPageState extends State<_LevelToolPage> {
               children: <Widget>[
                 ChoiceChip(
                   selected: !_plumbMode,
-                  label: Text(_lifeText(context, zh: '水平模式', en: 'Level')),
+                  label: Text(
+                    _lifeI18nText(
+                      context,
+                      'inline.plan295.life.level.539dadb65937',
+                    ),
+                  ),
                   onSelected: (_) => setState(() => _plumbMode = false),
                 ),
                 ChoiceChip(
                   selected: _plumbMode,
-                  label: Text(_lifeText(context, zh: '垂直模式', en: 'Plumb')),
+                  label: Text(
+                    _lifeI18nText(
+                      context,
+                      'inline.plan295.life.plumb.072c7db57674',
+                    ),
+                  ),
                   onSelected: (_) => setState(() => _plumbMode = true),
                 ),
                 _LevelStatePill(
@@ -205,33 +219,43 @@ class _LevelToolPageState extends State<_LevelToolPage> {
           runSpacing: 8,
           children: <Widget>[
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '俯仰', en: 'Pitch'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.pitch.0cb07e852905',
+              ),
               value: '${_smoothPitch.toStringAsFixed(1)}°',
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '横滚', en: 'Roll'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.roll.a02089ccbca7',
+              ),
               value: '${_smoothRoll.toStringAsFixed(1)}°',
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '主要误差', en: 'Main error'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.main_error.e4e0df46108b',
+              ),
               value: '${_dominantError().toStringAsFixed(1)}°',
             ),
           ],
         ),
         const SizedBox(height: 12),
         _LifeSettingsPanel(
-          title: _lifeText(context, zh: '读数说明', en: 'Reading notes'),
-          subtitle: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '手机壳凸起、桌面软垫和手持抖动都会影响结果，建议短暂停稳后再看数字。',
-            en: 'Raised cases, soft surfaces, and hand shake all affect the reading. Pause briefly before trusting the number.',
+            'inline.plan295.life.reading_notes.13f00496d11a',
+          ),
+          subtitle: _lifeI18nText(
+            context,
+            'inline.plan295.life.raised_cases_soft_surfaces_and_hand.d3c7779e81a7',
           ),
           children: <Widget>[
             Text(
-              _lifeText(
+              _lifeI18nText(
                 context,
-                zh: '绿色表示已经基本找平；黄色表示接近；仍偏差较大时请缓慢调整，不要边大幅移动边读数。',
-                en: 'Green means level, yellow means close, and larger errors call for slow corrections instead of reading while moving.',
+                'inline.plan295.life.green_means_level_yellow_means_close.4a3d4295b048',
               ),
               style: theme.textTheme.bodyMedium,
             ),
@@ -243,18 +267,19 @@ class _LevelToolPageState extends State<_LevelToolPage> {
 
   Widget _buildUnsupported(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '设备不支持', en: 'Unavailable'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '当前设备没有可用加速度计，所以无法提供水平检测。',
-        en: 'This device does not expose the accelerometer required for leveling.',
+        'inline.plan295.life.unavailable.bd744c3b3507',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.this_device_does_not_expose_the_acce.d57e3272ecbb',
       ),
       children: <Widget>[
         Text(
-          _lifeText(
+          _lifeI18nText(
             context,
-            zh: '请在手机真机上使用该功能，桌面端和多数模拟器通常不会返回可靠的重力方向。',
-            en: 'Use this tool on a physical phone. Desktop targets and most simulators do not provide a reliable gravity vector.',
+            'inline.plan295.life.use_this_tool_on_a_physical_phone_de.4b4ffca91b9b',
           ),
         ),
       ],
@@ -270,31 +295,41 @@ class _LevelToolPageState extends State<_LevelToolPage> {
 
   String _levelStatusText(BuildContext context) {
     if (_isTightLevel) {
-      return _lifeText(context, zh: '已找平', en: 'Level');
+      return _lifeI18nText(context, 'inline.plan295.life.level.454ce987e8a0');
     }
     if (_isNearLevel) {
-      return _lifeText(context, zh: '接近水平', en: 'Almost level');
+      return _lifeI18nText(
+        context,
+        'inline.plan295.life.almost_level.9fb105c4bc6e',
+      );
     }
-    return _lifeText(context, zh: '仍需调整', en: 'Needs adjustment');
+    return _lifeI18nText(
+      context,
+      'inline.plan295.life.needs_adjustment.92cf8cf41e44',
+    );
   }
 
   String _levelHint(BuildContext context) {
     if (_plumbMode) {
-      return _lifeText(
-        context,
-        zh: _isTightLevel ? '已经接近垂直线' : '让气泡回到中心竖线附近',
-        en: _isTightLevel
-            ? 'The device is close to plumb'
-            : 'Bring the bubble back to the center line',
-      );
+      return _isTightLevel
+          ? _lifeI18nText(
+              context,
+              'inline.plan295.life.the_device_is_close_to_plumb.72fcfd39f414',
+            )
+          : _lifeI18nText(
+              context,
+              'inline.plan295.life.bring_the_bubble_back_to_the_center.a0e4bd884d40',
+            );
     }
-    return _lifeText(
-      context,
-      zh: _isTightLevel ? '俯仰和横滚都已经压到很小' : '同时把俯仰和横滚往 0° 收',
-      en: _isTightLevel
-          ? 'Pitch and roll are both tightly centered'
-          : 'Bring both pitch and roll closer to 0°',
-    );
+    return _isTightLevel
+        ? _lifeI18nText(
+            context,
+            'inline.plan295.life.pitch_and_roll_are_both_tightly_cent.73cfa21eb6e0',
+          )
+        : _lifeI18nText(
+            context,
+            'inline.plan295.life.bring_both_pitch_and_roll_closer_to.e885c58ae7d1',
+          );
   }
 }
 

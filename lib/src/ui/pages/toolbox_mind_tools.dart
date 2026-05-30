@@ -16,11 +16,9 @@ class SchulteGridToolPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return ToolboxToolPage(
-      title: pickUiText(i18n, zh: '舒尔特方格', en: 'Schulte grid'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '按顺序点击数字或自定义内容，训练视觉搜索、注意稳定和顺序跟踪。',
-        en: 'Tap numbers or custom tokens in order to train steady attention, sequence tracking, and visual search speed.',
+      title: i18n.t('inline.ui.module.module_access.schulte_grid_0e6b45'),
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_mind_tools.tap_numbers_or_custom_tokens_in_order_to_train_steady_at_2b3c19',
       ),
       child: const SchulteGridTrainingCard(),
     );
@@ -34,11 +32,9 @@ class BreathingToolPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return ToolboxToolPage(
-      title: pickUiText(i18n, zh: '呼吸训练', en: 'Breathing practice'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '移动端优先的呼吸训练，覆盖专注、放松、睡前、BOLT 测试与高海拔模拟等场景。',
-        en: 'Mobile-first breathing practice for focus, relaxation, bedtime, BOLT testing, and altitude-simulation drills.',
+      title: i18n.t('inline.ui.module.module_access.breathing_practice_211f64'),
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_mind_tools.mobile_first_breathing_practice_for_focus_relaxation_bed_b9d364',
       ),
       child: const BreathingPracticeReleaseCard(),
     );
@@ -52,11 +48,9 @@ class PrayerBeadsToolPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return ToolboxToolPage(
-      title: pickUiText(i18n, zh: '静心念珠', en: 'Prayer beads'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '一颗一颗拨动，保持节律，给自己一个安静的计数动作。',
-        en: 'Advance bead by bead to keep a steady rhythm and a quiet counting gesture.',
+      title: i18n.t('inline.ui.module.module_access.prayer_beads_2fe197'),
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_mind_tools.advance_bead_by_bead_to_keep_a_steady_rhythm_and_a_quiet_92c820',
       ),
       child: const PrayerBeadsPracticeCard(),
     );
@@ -70,11 +64,9 @@ class ZenSandToolPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return ToolboxToolPage(
-      title: pickUiText(i18n, zh: '禅意沙盘', en: 'Zen sand tray'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '画耙痕、落石子，把注意力带回手指和当下。',
-        en: 'Draw rake lines, drop a stone, and bring attention back to your fingertips and the present.',
+      title: i18n.t('inline.plan294.zen_sand.zen_sand_tray_6452b86e'),
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_mind_tools.draw_rake_lines_drop_a_stone_and_bring_attention_back_to_cc1b29',
       ),
       child: const _ZenSandTool(),
     );
@@ -105,6 +97,7 @@ class _ZenSandToolState extends State<_ZenSandTool> {
 
   @override
   Widget build(BuildContext context) {
+    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -116,12 +109,12 @@ class _ZenSandToolState extends State<_ZenSandTool> {
               runSpacing: 8,
               children: <Widget>[
                 ChoiceChip(
-                  label: const Text('Rake'),
+                  label: Text(i18n.t('inline.plan294.zen_sand.rake_a4c1efc3')),
                   selected: _mode == _ZenSandMode.draw,
                   onSelected: (_) => setState(() => _mode = _ZenSandMode.draw),
                 ),
                 ChoiceChip(
-                  label: const Text('Stone'),
+                  label: Text(i18n.t('inline.plan295.life.stone.7e89e734d1a3')),
                   selected: _mode == _ZenSandMode.stone,
                   onSelected: (_) => setState(() => _mode = _ZenSandMode.stone),
                 ),
@@ -201,7 +194,11 @@ class _ZenSandToolState extends State<_ZenSandTool> {
                 OutlinedButton.icon(
                   onPressed: () => setState(() => _strokes = <List<Offset>>[]),
                   icon: const Icon(Icons.layers_clear_rounded),
-                  label: const Text('Smooth sand'),
+                  label: Text(
+                    i18n.t(
+                      'literal.ui.pages.toolbox_mind_tools.smooth_sand_5a3f9c',
+                    ),
+                  ),
                 ),
                 OutlinedButton.icon(
                   onPressed: () => setState(() {
@@ -209,7 +206,7 @@ class _ZenSandToolState extends State<_ZenSandTool> {
                     _stones = const <Offset>[];
                   }),
                   icon: const Icon(Icons.delete_sweep_rounded),
-                  label: const Text('Clear all'),
+                  label: Text(i18n.t('toolbox.hub.quick.clear')),
                 ),
               ],
             ),

@@ -49,6 +49,9 @@ class _PlaceChoiceModuleState extends State<_PlaceChoiceModule> {
   String _sceneId = allPlaceSceneCategory.id;
   bool _libraryStatusExpanded = false;
 
+  String _categoryTitle(DailyChoiceCategory category, String languageCode) =>
+      category.title(AppI18n(languageCode));
+
   @override
   Widget build(BuildContext context) {
     final hasInstalledLibrary = widget.libraryStatus.hasInstalledLibrary;
@@ -74,22 +77,20 @@ class _PlaceChoiceModuleState extends State<_PlaceChoiceModule> {
         )
         .length;
     final subtitle = _sceneId == allPlaceSceneCategory.id
-        ? pickUiText(
-            widget.i18n,
-            zh: '${category.subtitleZh}，再从整组地点里随机一个方向。',
-            en: '${category.subtitleEn}, then randomize across the whole set.',
+        ? widget.i18n.t(
+            'inline.plan295.daily_choice.category_subtitleen_then_randomize_a.ef4bd170b52d',
           )
-        : pickUiText(
-            widget.i18n,
-            zh: '${scene.subtitleZh}；当前 $filtered.length 个候选。',
-            en: '${scene.subtitleEn}. $filtered.length candidates right now.',
+        : widget.i18n.t(
+            'inline.plan295.daily_choice.scene_subtitleen_filtered_length_can.4eddf714a17c',
           );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         DailyChoiceCategorySelector(
           i18n: widget.i18n,
-          title: pickUiText(widget.i18n, zh: '选择距离', en: 'Distance'),
+          title: widget.i18n.t(
+            'inline.plan295.daily_choice.distance.818a920ab3e8',
+          ),
           categories: placeCategories,
           selectedId: _placeId,
           accent: widget.accent,
@@ -99,7 +100,9 @@ class _PlaceChoiceModuleState extends State<_PlaceChoiceModule> {
         const SizedBox(height: ToolboxUiTokens.cardSpacing),
         DailyChoiceCategorySelector(
           i18n: widget.i18n,
-          title: pickUiText(widget.i18n, zh: '选择场景', en: 'Scene'),
+          title: widget.i18n.t(
+            'inline.plan295.daily_choice.scene.6f88551df562',
+          ),
           categories: sceneFilters,
           selectedId: _sceneId,
           accent: widget.accent,
@@ -153,26 +156,31 @@ class _PlaceChoiceModuleState extends State<_PlaceChoiceModule> {
         DailyChoiceRandomPanel(
           i18n: widget.i18n,
           accent: widget.accent,
-          title: pickUiText(
-            widget.i18n,
-            zh: _sceneId == allPlaceSceneCategory.id
-                ? '${category.titleZh}去哪里'
-                : '${category.titleZh} · ${scene.titleZh}',
-            en: _sceneId == allPlaceSceneCategory.id
-                ? 'Where to go'
-                : '${category.titleEn} · ${scene.titleEn}',
-          ),
+          title: _sceneId == allPlaceSceneCategory.id
+              ? widget.i18n.t(
+                  'inline.plan295.daily_choice.where_to_go.5e249f9e8d96',
+                  params: <String, Object?>{
+                    'category.titleZh': _categoryTitle(category, 'zh'),
+                  },
+                )
+              : widget.i18n.t(
+                  'inline.plan295.daily_choice.category_titleen_scene_titleen.9cb81855c227',
+                  params: <String, Object?>{
+                    'category.titleZh': _categoryTitle(category, 'zh'),
+                    'scene.titleZh': _categoryTitle(scene, 'zh'),
+                    'category.titleEn': _categoryTitle(category, 'en'),
+                    'scene.titleEn': _categoryTitle(scene, 'en'),
+                  },
+                ),
           subtitle: subtitle,
           options: filtered,
-          emptyText: pickUiText(
-            widget.i18n,
-            zh: _sceneId == allPlaceSceneCategory.id
-                ? '这个距离下暂时没有可用地点，可以在管理里恢复隐藏条目或新增你常去的地点。'
-                : '这个距离和场景组合下暂时没有地点，可换一个场景，或在管理里补充你自己的常去点。',
-            en: _sceneId == allPlaceSceneCategory.id
-                ? 'No destinations are available in this distance tier right now. Restore hidden items or add your own frequent places.'
-                : 'No destinations match this distance and scene yet. Try another scene or add your own place in Manage.',
-          ),
+          emptyText: _sceneId == allPlaceSceneCategory.id
+              ? widget.i18n.t(
+                  'inline.plan295.daily_choice.no_destinations_are_available_in_thi.c62002961f05',
+                )
+              : widget.i18n.t(
+                  'inline.plan295.daily_choice.no_destinations_match_this_distance.974e4f6c0b8b',
+                ),
           onDetail: (option) {
             final handler = widget.onInspectOption;
             if (handler != null) {
@@ -190,7 +198,9 @@ class _PlaceChoiceModuleState extends State<_PlaceChoiceModule> {
             context: context,
             i18n: widget.i18n,
             accent: widget.accent,
-            title: pickUiText(widget.i18n, zh: '出行指南', en: 'Going out guide'),
+            title: widget.i18n.t(
+              'inline.ui.pages.toolbox_daily_choice.daily_choice_modules.going_out_guide_136dac',
+            ),
             modules: placeGuideModules,
           ),
           onManage: () => showDailyChoiceManagerSheet(
@@ -207,8 +217,7 @@ class _PlaceChoiceModuleState extends State<_PlaceChoiceModule> {
             initialContextId: _sceneId == allPlaceSceneCategory.id
                 ? placeSceneCategories.first.id
                 : _sceneId,
-            contextLabelZh: '场景',
-            contextLabelEn: 'Scene',
+            contextLabelKey: 'toolbox.daily_choice.editor.field.scene',
             onInspectOption: widget.onInspectOption,
             onAdjustBuiltInOption: widget.onAdjustBuiltInOption,
             onSaveBuiltInAsCustom: widget.onSaveBuiltInAsCustom,
@@ -244,21 +253,15 @@ class _PlaceChoiceStatusPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final summary = usingAllScenes
-        ? pickUiText(
-            i18n,
-            zh: '当前按“${selectedDistance.titleZh}”收口，共有 $distanceCount 个地点，覆盖 $sceneCoverageCount 个场景。先定距离再随机，比较适合只想立刻出门、不想再做第二层判断的时候。',
-            en: 'The current ${selectedDistance.titleEn} tier contains $distanceCount places across $sceneCoverageCount scenes. Distance-first randomizing works well when you just want to get moving.',
+        ? i18n.t(
+            'inline.plan295.daily_choice.the_current_selecteddistance_titleen.c289a8372f20',
           )
         : candidateCount == 0
-        ? pickUiText(
-            i18n,
-            zh: '当前按“${selectedDistance.titleZh} × ${selectedScene.titleZh}”筛选还没有候选，可切换场景，或在管理里补充你的私藏地点。',
-            en: 'There are no candidates for ${selectedDistance.titleEn} × ${selectedScene.titleEn} yet. Switch the scene or add your own place in Manage.',
+        ? i18n.t(
+            'inline.plan295.daily_choice.there_are_no_candidates_for_selected.02201253e526',
           )
-        : pickUiText(
-            i18n,
-            zh: '当前按“${selectedDistance.titleZh} × ${selectedScene.titleZh}”筛到 $candidateCount 个候选。详情页会给出地图搜索词，数据结构也为粗略定位和开放地理数据扩展留好了口子。',
-            en: 'The current ${selectedDistance.titleEn} × ${selectedScene.titleEn} filter gives $candidateCount candidates. Details include a map query, and the data model already leaves room for coarse location and open geo data later.',
+        : i18n.t(
+            'inline.plan295.daily_choice.the_current_selecteddistance_titleen.c5724f7be4ad',
           );
     return ToolboxSurfaceCard(
       padding: const EdgeInsets.all(16),
@@ -274,41 +277,41 @@ class _PlaceChoiceStatusPanel extends StatelessWidget {
             runSpacing: 8,
             children: <Widget>[
               ToolboxInfoPill(
-                text: pickUiText(
-                  i18n,
-                  zh: '当前距离 ${selectedDistance.titleZh}',
-                  en: 'Distance ${selectedDistance.titleEn}',
+                text: i18n.t(
+                  'inline.plan295.daily_choice.distance_selecteddistance_titleen.d2dae2086fe7',
                 ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
               ),
               ToolboxInfoPill(
-                text: pickUiText(
-                  i18n,
-                  zh: usingAllScenes
-                      ? '场景 全部'
-                      : '当前场景 ${selectedScene.titleZh}',
-                  en: usingAllScenes
-                      ? 'Scene All'
-                      : 'Scene ${selectedScene.titleEn}',
+                text: usingAllScenes
+                    ? i18n.t(
+                        'inline.plan295.daily_choice.scene_all.ace6a6f998cb',
+                      )
+                    : i18n.t(
+                        'inline.plan295.daily_choice.scene_selectedscene_titleen.36a46f133169',
+                        params: <String, Object?>{
+                          'selectedScene.titleZh': selectedScene.title(
+                            AppI18n('zh'),
+                          ),
+                          'selectedScene.titleEn': selectedScene.title(
+                            AppI18n('en'),
+                          ),
+                        },
+                      ),
+                accent: accent,
+                backgroundColor: theme.colorScheme.surfaceContainerLow,
+              ),
+              ToolboxInfoPill(
+                text: i18n.t(
+                  'inline.plan295.daily_choice.distancecount_in_this_tier.70a0d57ac81e',
                 ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
               ),
               ToolboxInfoPill(
-                text: pickUiText(
-                  i18n,
-                  zh: '$distanceCount 个距离内地点',
-                  en: '$distanceCount in this tier',
-                ),
-                accent: accent,
-                backgroundColor: theme.colorScheme.surfaceContainerLow,
-              ),
-              ToolboxInfoPill(
-                text: pickUiText(
-                  i18n,
-                  zh: '$candidateCount 个当前候选',
-                  en: '$candidateCount candidates',
+                text: i18n.t(
+                  'inline.plan295.daily_choice.candidatecount_candidates.fa6ad8b2a1d1',
                 ),
                 accent: accent,
                 backgroundColor: candidateCount == 0
@@ -316,10 +319,8 @@ class _PlaceChoiceStatusPanel extends StatelessWidget {
                     : theme.colorScheme.surfaceContainerLow,
               ),
               ToolboxInfoPill(
-                text: pickUiText(
-                  i18n,
-                  zh: '$sceneCoverageCount 个覆盖场景',
-                  en: '$sceneCoverageCount covered scenes',
+                text: i18n.t(
+                  'inline.plan295.daily_choice.scenecoveragecount_covered_scenes.bd3688135666',
                 ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -383,6 +384,9 @@ class _ActivityChoiceModuleState extends State<_ActivityChoiceModule> {
   String _collectionId = 'all';
   bool _libraryStatusExpanded = false;
 
+  String _categoryTitle(DailyChoiceCategory category, String languageCode) =>
+      category.title(AppI18n(languageCode));
+
   @override
   Widget build(BuildContext context) {
     final categories = <DailyChoiceCategory>[
@@ -406,7 +410,9 @@ class _ActivityChoiceModuleState extends State<_ActivityChoiceModule> {
       children: <Widget>[
         DailyChoiceCategorySelector(
           i18n: widget.i18n,
-          title: pickUiText(widget.i18n, zh: '选择方向', en: 'Direction'),
+          title: widget.i18n.t(
+            'inline.plan295.daily_choice.direction.4a540ce8efd7',
+          ),
           categories: categories,
           selectedId: _activityId,
           accent: widget.accent,
@@ -438,32 +444,29 @@ class _ActivityChoiceModuleState extends State<_ActivityChoiceModule> {
         DailyChoiceRandomPanel(
           i18n: widget.i18n,
           accent: widget.accent,
-          title: pickUiText(
-            widget.i18n,
-            zh: _activityId == randomActivityCategory.id
-                ? '今天干什么'
-                : '${category.titleZh}做什么',
-            en: _activityId == randomActivityCategory.id
-                ? 'What to do today'
-                : 'What to do',
-          ),
+          title: _activityId == randomActivityCategory.id
+              ? widget.i18n.t(
+                  'inline.plan295.daily_choice.what_to_do_today.ddf9c6a572e4',
+                )
+              : widget.i18n.t(
+                  'inline.plan295.daily_choice.what_to_do.f2157bc059ce',
+                  params: <String, Object?>{
+                    'category.titleZh': _categoryTitle(category, 'zh'),
+                  },
+                ),
           subtitle: collectionTitle == null
               ? category.subtitle(widget.i18n)
-              : pickUiText(
-                  widget.i18n,
-                  zh: '${category.subtitleZh}；当前行动集：$collectionTitle。',
-                  en: '${category.subtitleEn}. Current set: $collectionTitle.',
+              : widget.i18n.t(
+                  'inline.plan295.daily_choice.category_subtitleen_current_set_coll.912e0bcfb629',
                 ),
           options: filtered,
-          emptyText: pickUiText(
-            widget.i18n,
-            zh: widget.libraryStatus.hasInstalledLibrary
-                ? '这个方向或行动集暂时没有候选。可以换一个行动集，或在管理里加入/新增行动。'
-                : '还没有安装内置行动库。可以先下载行动库，也可以在管理里新增自己的低阻力行动。',
-            en: widget.libraryStatus.hasInstalledLibrary
-                ? 'No actions match this direction or set. Switch sets or add one in Manage.'
-                : 'The built-in action library is not installed yet. Install it or add your own action.',
-          ),
+          emptyText: widget.libraryStatus.hasInstalledLibrary
+              ? widget.i18n.t(
+                  'inline.plan295.daily_choice.no_actions_match_this_direction_or_s.0774932d65af',
+                )
+              : widget.i18n.t(
+                  'inline.plan295.daily_choice.the_built_in_action_library_is_not_i.3f25a0601cf6',
+                ),
           onDetail: (option) {
             final handler = widget.onInspectOption;
             if (handler != null) {
@@ -481,7 +484,9 @@ class _ActivityChoiceModuleState extends State<_ActivityChoiceModule> {
             context: context,
             i18n: widget.i18n,
             accent: widget.accent,
-            title: pickUiText(widget.i18n, zh: '行动指南', en: 'Action guide'),
+            title: widget.i18n.t(
+              'inline.plan295.daily_choice.action_guide.d5fd9e8501dd',
+            ),
             modules: activityGuideModules,
           ),
           onManage: () => showDailyChoiceManagerSheet(
@@ -563,17 +568,21 @@ class _ActivityCollectionSelector extends StatelessWidget {
         isExpanded: true,
         decoration: InputDecoration(
           prefixIcon: const Icon(Icons.playlist_add_check_rounded),
-          labelText: pickUiText(i18n, zh: '事件集 / 随机池', en: 'Action set'),
-          helperText: pickUiText(
-            i18n,
-            zh: '每次随机会基于当前行动集收口；选择内置行动库则查看全部可用行动。',
-            en: 'Random picks draw from this set; built-in library shows all available actions.',
+          labelText: i18n.t(
+            'inline.plan295.daily_choice.action_set.4eac820898d7',
+          ),
+          helperText: i18n.t(
+            'inline.plan295.daily_choice.random_picks_draw_from_this_set_buil.dfd771915846',
           ),
         ),
         items: <DropdownMenuItem<String>>[
           DropdownMenuItem<String>(
             value: 'all',
-            child: Text(pickUiText(i18n, zh: '内置行动库', en: 'Built-in actions')),
+            child: Text(
+              i18n.t(
+                'inline.plan295.daily_choice.built_in_actions.e9cc78aca202',
+              ),
+            ),
           ),
           ...collections.map(
             (collection) => DropdownMenuItem<String>(
@@ -623,15 +632,11 @@ class _ActivityLibraryStatusPanel extends StatelessWidget {
     final theme = Theme.of(context);
     final hasLibrary = status.hasInstalledLibrary;
     final summary = hasLibrary
-        ? pickUiText(
-            i18n,
-            zh: '已安装 ${status.actionCount} 个行动；随机会结合方向、行动集和隐藏列表生成候选。',
-            en: '${status.actionCount} actions installed. Picks use direction, action set, and hidden items.',
+        ? i18n.t(
+            'inline.plan295.daily_choice.status_actioncount_actions_installed.c084e467eb6d',
           )
-        : pickUiText(
-            i18n,
-            zh: '内置行动库尚未安装。下载后会写入本地 SQLite，行动内容不再硬编码在 App 里。',
-            en: 'The built-in action library is not installed. It will be downloaded and installed into local SQLite.',
+        : i18n.t(
+            'inline.plan295.daily_choice.the_built_in_action_library_is_not_i.3f5ad1b8bbae',
           );
     return ToolboxSurfaceCard(
       padding: const EdgeInsets.all(16),
@@ -652,7 +657,9 @@ class _ActivityLibraryStatusPanel extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  pickUiText(i18n, zh: '行动库状态', en: 'Action library'),
+                  i18n.t(
+                    'inline.plan295.daily_choice.action_library.b4c8dd87e57e',
+                  ),
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
@@ -660,10 +667,14 @@ class _ActivityLibraryStatusPanel extends StatelessWidget {
               ),
               ToolboxInfoPill(
                 text: busy
-                    ? pickUiText(i18n, zh: '处理中', en: 'Busy')
+                    ? i18n.t('inline.plan295.daily_choice.busy.6345fdb4e3c5')
                     : (hasLibrary
-                          ? pickUiText(i18n, zh: '已安装', en: 'Installed')
-                          : pickUiText(i18n, zh: '未安装', en: 'Missing')),
+                          ? i18n.t(
+                              'inline.ui.pages.toolbox_daily_choice.daily_choice_modules.installed_6cb9dc',
+                            )
+                          : i18n.t(
+                              'inline.plan295.daily_choice.missing.d6912d025db4',
+                            )),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
               ),
@@ -680,10 +691,8 @@ class _ActivityLibraryStatusPanel extends StatelessWidget {
           if (status.errorMessage != null) ...<Widget>[
             const SizedBox(height: 8),
             Text(
-              pickUiText(
-                i18n,
-                zh: '上次同步失败：${status.errorMessage}',
-                en: 'Last sync failed: ${status.errorMessage}',
+              i18n.t(
+                'inline.ui.pages.toolbox_daily_choice.daily_choice_modules.last_sync_failed_status_errormessage_9b18da',
               ),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.error,
@@ -706,11 +715,13 @@ class _ActivityLibraryStatusPanel extends StatelessWidget {
                       )
                     : const Icon(Icons.cloud_download_rounded),
                 label: Text(
-                  pickUiText(
-                    i18n,
-                    zh: hasLibrary ? '刷新行动库' : '下载行动库',
-                    en: hasLibrary ? 'Refresh library' : 'Install library',
-                  ),
+                  hasLibrary
+                      ? i18n.t(
+                          'inline.plan295.daily_choice.refresh_library.f433214488f9',
+                        )
+                      : i18n.t(
+                          'inline.plan295.daily_choice.install_library.d88a56daf26d',
+                        ),
                 ),
               ),
               OutlinedButton.icon(
@@ -722,8 +733,10 @@ class _ActivityLibraryStatusPanel extends StatelessWidget {
                 ),
                 label: Text(
                   expanded
-                      ? pickUiText(i18n, zh: '收起说明', en: 'Less')
-                      : pickUiText(i18n, zh: '查看说明', en: 'Details'),
+                      ? i18n.t('inline.plan295.daily_choice.less.137e0473fd42')
+                      : i18n.t(
+                          'inline.plan295.daily_choice.details.05f67dd50434',
+                        ),
                 ),
               ),
             ],
@@ -735,10 +748,8 @@ class _ActivityLibraryStatusPanel extends StatelessWidget {
           if (expanded) ...<Widget>[
             const SizedBox(height: 10),
             Text(
-              pickUiText(
-                i18n,
-                zh: '数据源会从远端 JSON 下载，安装成功后替换本地 SQLite。若下载失败，已有本地库会保留；没有本地库时仍可使用自己的行动集。',
-                en: 'The remote JSON is downloaded and installed into local SQLite. Existing local data is kept if refresh fails; personal action sets still work without the built-in library.',
+              i18n.t(
+                'inline.plan295.daily_choice.the_remote_json_is_downloaded_and_in.dac96638cdec',
               ),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -804,15 +815,17 @@ class _PlaceLibraryStatusPanel extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    pickUiText(
-                      i18n,
-                      zh: hasInstalledLibrary
-                          ? '内置地点库已就绪（${libraryStatus.placeCount} 条）'
-                          : '内置地点库未下载',
-                      en: hasInstalledLibrary
-                          ? 'Place library ready (${libraryStatus.placeCount} entries)'
-                          : 'Place library not downloaded',
-                    ),
+                    hasInstalledLibrary
+                        ? i18n.t(
+                            'inline.plan295.daily_choice.place_library_ready_librarystatus_pl.765c1a239cbf',
+                            params: <String, Object?>{
+                              'libraryStatus.placeCount':
+                                  libraryStatus.placeCount,
+                            },
+                          )
+                        : i18n.t(
+                            'inline.plan295.daily_choice.place_library_not_downloaded.74e85c249713',
+                          ),
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -838,14 +851,12 @@ class _PlaceLibraryStatusPanel extends StatelessWidget {
                     : Icons.cloud_download_rounded,
               ),
               label: Text(
-                pickUiText(
-                  i18n,
-                  zh: busy ? '正在加载地点库…' : '下载内置地点库',
-                  en: libraryInstalling
-                      ? 'Loading place library…'
+                i18n.t(
+                  libraryInstalling
+                      ? 'inline.plan295.daily_choice.loading_place_library.5e033de9127f'
                       : libraryLoading
-                      ? 'Reading place library…'
-                      : 'Download built-in place library',
+                      ? 'toolbox.daily_choice.place.library.reading'
+                      : 'toolbox.daily_choice.place.library.download',
                 ),
               ),
             ),
@@ -853,15 +864,13 @@ class _PlaceLibraryStatusPanel extends StatelessWidget {
           if (expanded) ...<Widget>[
             const SizedBox(height: 10),
             Text(
-              pickUiText(
-                i18n,
-                zh: hasInstalledLibrary
-                    ? '内置地点库已就绪，按距离和场景随机方向。你也可以在管理里补充自己常去的地点。'
-                    : '首次使用可下载内置地点库；下载后按距离和场景筛选随机。',
-                en: hasInstalledLibrary
-                    ? 'The built-in place library is ready. You can also add your own frequent places in Manage.'
-                    : 'Download the built-in place library once to randomize by distance and scene.',
-              ),
+              hasInstalledLibrary
+                  ? i18n.t(
+                      'inline.plan295.daily_choice.the_built_in_place_library_is_ready.70ec927fd18e',
+                    )
+                  : i18n.t(
+                      'inline.plan295.daily_choice.download_the_built_in_place_library.65065fa43c46',
+                    ),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
                 height: 1.35,
@@ -879,10 +888,8 @@ class _PlaceLibraryStatusPanel extends StatelessWidget {
           if (libraryStatus.errorMessage != null && expanded) ...<Widget>[
             const SizedBox(height: 8),
             Text(
-              pickUiText(
-                i18n,
-                zh: '最近一次同步有异常，当前会继续使用本地可用地点库。',
-                en: 'The latest sync reported an error. The page will keep using the local library that is already available.',
+              i18n.t(
+                'inline.plan295.daily_choice.the_latest_sync_reported_an_error_th.05179246d34b',
               ),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.error,

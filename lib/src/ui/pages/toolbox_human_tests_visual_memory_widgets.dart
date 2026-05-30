@@ -149,57 +149,27 @@ class _VisualMemoryLegend extends StatelessWidget {
       children: <Widget>[
         _VisualMemoryLegendItem(
           color: _VisualMemoryCardState.accent,
-          text: pickUiText(
-            i18n,
-            zh: '目标',
-            en: 'Target',
-            ja: 'Target',
-            de: 'Target',
-            fr: 'Objectif',
-            es: 'Meta',
-            ru: 'Цель',
-          ),
+          text: i18n.t('toolbox.breathing.target'),
         ),
         _VisualMemoryLegendItem(
           color: colorScheme.secondary,
-          text: pickUiText(
-            i18n,
-            zh: '已选',
-            en: 'Picked',
-            ja: 'Picked',
-            de: 'Picked',
-            fr: 'Pris',
-            es: 'Picked',
-            ru: 'Выбранный',
+          text: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_visual_memory_widgets.picked_f47f56',
           ),
           icon: Icons.check_rounded,
         ),
         _VisualMemoryLegendItem(
           color: colorScheme.error,
-          text: pickUiText(
-            i18n,
-            zh: '误点',
-            en: 'Miss',
-            ja: 'Miss',
-            de: 'Miss',
-            fr: 'Mlle',
-            es: 'Miss',
-            ru: 'Мисс.',
+          text: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.miss_7876fa',
           ),
           icon: Icons.close_rounded,
         ),
         if (showDistractor)
           _VisualMemoryLegendItem(
             color: _VisualMemoryCardState.distractorColor,
-            text: pickUiText(
-              i18n,
-              zh: '干扰',
-              en: 'Distractor',
-              ja: 'Distractor',
-              de: 'Distractor',
-              fr: 'Détracteur',
-              es: 'Distractor',
-              ru: 'дистрактор',
+            text: i18n.t(
+              'inline.ui.pages.toolbox_human_tests_visual_memory_widgets.distractor_a38341',
             ),
           ),
       ],
@@ -380,15 +350,8 @@ class _VisualMemoryReportDialog extends StatelessWidget {
 
     return _HumanReportDialogFrame(
       title: Text(
-        pickUiText(
-          i18n,
-          zh: '视觉记忆报告',
-          en: 'Visual memory report',
-          ja: 'Visual memory report',
-          de: 'Visual memory report',
-          fr: 'Mémoire visuelle',
-          es: 'Informe de memoria visual',
-          ru: 'Отчет о визуальной памяти',
+        i18n.t(
+          'inline.ui.pages.toolbox_human_tests_visual_memory_widgets.visual_memory_report_0be164',
         ),
       ),
       accent: accent,
@@ -396,81 +359,33 @@ class _VisualMemoryReportDialog extends StatelessWidget {
         _HumanMetricWrap(
           metrics: <(String, String)>[
             (
-              pickUiText(
-                i18n,
-                zh: '最高等级',
-                en: 'Best level',
-                ja: 'ベストレベル',
-                de: 'Best level',
-                fr: 'Meilleur niveau',
-                es: 'Mejor nivel',
-                ru: 'Лучший уровень',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.best_level_6b13a1',
               ),
               '${data.bestLevel}',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '完成关卡',
-                en: 'Cleared',
-                ja: 'クリア済み',
-                de: 'Cleared',
-                fr: 'Effacé',
-                es: 'Despejado',
-                ru: 'очищенный',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_memory.cleared_c85927',
               ),
               '${data.completedRounds}/${data.roundsStarted}',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '回忆率',
-                en: 'Recall',
-                ja: 'Recall',
-                de: 'Recall',
-                fr: 'Rappel',
-                es: 'Recordad',
-                ru: 'напомнить',
-              ),
+              i18n.t('inline.ui.pages.practice_support.recall_4e1a00'),
               '$recall%',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '点击准确',
-                en: 'Accuracy',
-                ja: '精度',
-                de: 'Accuracy',
-                fr: 'Accuracy',
-                es: 'Precisión',
-                ru: 'точность',
-              ),
+              i18n.t('inline.ui.pages.practice_review_page.accuracy_8cf5a1'),
               '$accuracy%',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '总误点',
-                en: 'Misses',
-                ja: 'Misses',
-                de: 'Misses',
-                fr: 'Mlle',
-                es: 'Misses',
-                ru: 'Мисс.',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_auditory.misses_bcc2a1',
               ),
               '${data.wrongTaps}',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '用时',
-                en: 'Time',
-                ja: 'Time',
-                de: 'Time',
-                fr: 'Heure',
-                es: 'Hora',
-                ru: 'Время',
-              ),
+              i18n.t('inline.plan295.life.time.bf469a617001'),
               _formatSeconds(data.duration.inMilliseconds / 1000),
             ),
           ],
@@ -479,15 +394,8 @@ class _VisualMemoryReportDialog extends StatelessWidget {
         _VisualMemoryReportSummary(data: data, accuracy: accuracy),
         const SizedBox(height: 14),
         Text(
-          pickUiText(
-            i18n,
-            zh: '误点来源',
-            en: 'Miss sources',
-            ja: 'Miss sources',
-            de: 'Miss sources',
-            fr: 'Sources manquantes',
-            es: 'Fuentes desaparecidas',
-            ru: 'Мисс источники',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_visual_memory_widgets.miss_sources_d7e2ed',
           ),
           style: Theme.of(
             context,
@@ -497,41 +405,20 @@ class _VisualMemoryReportDialog extends StatelessWidget {
         _HumanMetricWrap(
           metrics: <(String, String)>[
             (
-              pickUiText(
-                i18n,
-                zh: '相近色',
-                en: 'Color decoys',
-                ja: 'カラーデコイ',
-                de: 'Color decoys',
-                fr: 'leurres de couleur',
-                es: 'Color decoys',
-                ru: 'Цветные приманки',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_visual_memory_widgets.color_decoys_4838c3',
               ),
               '${data.colorWrongTaps}',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '灰色干扰',
-                en: 'Gray decoys',
-                ja: 'Gray decoys',
-                de: 'Gray decoys',
-                fr: 'leurres gris',
-                es: 'Decoraciones grises',
-                ru: 'Серые приманки',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_visual_memory_widgets.gray_decoys_712f8c',
               ),
               '${data.distractorWrongTaps}',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '空白格',
-                en: 'Blank cells',
-                ja: 'ブランクセル',
-                de: 'Blank cells',
-                fr: 'Cellules blanches',
-                es: 'Células blancas',
-                ru: 'Бланковые клетки',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_visual_memory_widgets.blank_cells_39b7bc',
               ),
               '${data.blankWrongTaps}',
             ),
@@ -540,15 +427,8 @@ class _VisualMemoryReportDialog extends StatelessWidget {
         if (recentRounds.isNotEmpty) ...<Widget>[
           const SizedBox(height: 16),
           Text(
-            pickUiText(
-              i18n,
-              zh: '最近关卡',
-              en: 'Recent rounds',
-              ja: 'Recent rounds',
-              de: 'Recent rounds',
-              fr: 'Cycles récents',
-              es: 'rondas recientes',
-              ru: 'Последние раунды',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_bimanual.recent_rounds_520a3c',
             ),
             style: Theme.of(
               context,
@@ -589,25 +469,11 @@ class _VisualMemoryReportSummary extends StatelessWidget {
     final mode = _visualMemoryModeLabel(i18n, data.mode);
     final pressure = (data.colorPressure * 100).round();
     final suggestion = accuracy >= 85 && data.completedRounds >= 3
-        ? pickUiText(
-            i18n,
-            zh: '表现稳定，可以尝试提高颜色数量或开启更高干扰强度。',
-            en: 'Stable run. Try more active colors or stronger decoy intensity next.',
-            ja: 'Stable run. Try more active colors or stronger decoy intensity next.',
-            de: 'Stable run. Try more active colors or stronger decoy intensity next.',
-            fr: 'Courage stable. Essayez ensuite des couleurs plus actives ou une intensité de leurre plus forte.',
-            es: 'Corre estable. Pruebe colores más activos o mayor intensidad de decoy después.',
-            ru: 'Стабильный бег. Попробуйте более активные цвета или более сильную интенсивность приманки.',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_human_tests_visual_memory_widgets.stable_run_try_more_active_colors_or_stronger_decoy_inte_7f68c4',
           )
-        : pickUiText(
-            i18n,
-            zh: '先盯住目标色名称和色块，再扫网格位置；相近色不要急着点。',
-            en: 'Anchor on the target color label and swatch first, then scan positions; slow down on similar colors.',
-            ja: '最初にターゲットカラーラベルと色見本にアンカーし、次に位置をスキャンします。同様の色で速度を落とします。',
-            de: 'Anchor on the target color label and swatch first, then scan positions; slow down on similar colors.',
-            fr: 'Anchor sur l\'étiquette de couleur cible et swatch d\'abord, puis scanner les positions; ralentir sur les couleurs similaires.',
-            es: 'Ancla en la etiqueta de color objetivo y swatch primero, luego escanea posiciones; lento en colores similares.',
-            ru: 'Якорь на целевой цветной этикетке и сначала наблюдайте, затем сканируйте позиции; замедляйте на подобных цветах.',
+        : i18n.t(
+            'inline.ui.pages.toolbox_human_tests_visual_memory_widgets.anchor_on_the_target_color_label_and_swatch_first_then_s_5c7bb9',
           );
     return Container(
       width: double.infinity,
@@ -620,15 +486,8 @@ class _VisualMemoryReportSummary extends StatelessWidget {
         border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Text(
-        pickUiText(
-          i18n,
-          zh: '$difficulty · $mode，本次近似色压力约 $pressure%。$suggestion',
-          en: '$difficulty · $mode, near-color pressure was about $pressure%. $suggestion',
-          ja: '$difficulty・$mode、近色圧力は約$pressure%であった。 $suggestion',
-          de: '$difficulty · $mode, near-color pressure was about $pressure%. $suggestion',
-          fr: '$difficulty · $mode, near-color pressure was about $pressure%. $suggestion',
-          es: 'יv0/ título · неv1/ título, presión casi color era alrededor de יv2/%.',
-          ru: '$difficulty $mode, почти цветовое давление было около $pressure%. $suggestion',
+        i18n.t(
+          'inline.ui.pages.toolbox_human_tests_visual_memory_widgets.difficulty_mode_near_color_pressure_was_about_pressure_s_826dee',
         ),
         style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
       ),
@@ -641,80 +500,29 @@ String _visualMemoryDifficultyLabel(
   _VisualMemoryDifficulty difficulty,
 ) {
   return switch (difficulty) {
-    _VisualMemoryDifficulty.relaxed => pickUiText(
-      i18n,
-      zh: '轻量',
-      en: 'Relaxed',
-      ja: 'Relaxed',
-      de: 'Relaxed',
-      fr: 'Détends-toi',
-      es: 'Relajado',
-      ru: 'Расслабленный',
+    _VisualMemoryDifficulty.relaxed => i18n.t(
+      'inline.plan295.daily_choice.relaxed.556d216b95e0',
     ),
-    _VisualMemoryDifficulty.standard => pickUiText(
-      i18n,
-      zh: '标准',
-      en: 'Standard',
-      ja: 'Standard',
-      de: 'Standard',
-      fr: 'Norme',
-      es: 'Estándar',
-      ru: 'Стандарт',
+    _VisualMemoryDifficulty.standard => i18n.t(
+      'inline.ui.pages.toolbox_human_tests_bimanual.standard_b9acb5',
     ),
-    _VisualMemoryDifficulty.challenge => pickUiText(
-      i18n,
-      zh: '进阶',
-      en: 'Challenge',
-      ja: 'チャレンジ',
-      de: 'Challenge',
-      fr: 'Défi',
-      es: 'Desafío',
-      ru: 'Вызов',
+    _VisualMemoryDifficulty.challenge => i18n.t(
+      'inline.ui.pages.toolbox_human_tests_visual_memory_widgets.challenge_dea913',
     ),
-    _VisualMemoryDifficulty.custom => pickUiText(
-      i18n,
-      zh: '自定义',
-      en: 'Custom',
-      ja: 'Custom',
-      de: 'Custom',
-      fr: 'Personnalisé',
-      es: 'Aduanas',
-      ru: 'обычай',
-    ),
+    _VisualMemoryDifficulty.custom => i18n.t('toolbox.sound.harp.custom'),
   };
 }
 
 String _visualMemoryModeLabel(AppI18n i18n, _VisualMemoryMode mode) {
   return switch (mode) {
-    _VisualMemoryMode.positions => pickUiText(
-      i18n,
-      zh: '位置记忆',
-      en: 'Positions',
-      ja: 'Positions',
-      de: 'Positions',
-      fr: 'Positions',
-      es: 'Posiciones',
-      ru: 'Позиции',
+    _VisualMemoryMode.positions => i18n.t(
+      'inline.ui.pages.toolbox_human_tests_visual_memory_widgets.positions_bb6d32',
     ),
-    _VisualMemoryMode.colorTargets => pickUiText(
-      i18n,
-      zh: '彩色目标',
-      en: 'Color targets',
-      ja: 'ターゲット',
-      de: 'Color targets',
-      fr: 'Cibles de couleur',
-      es: 'Objetivos de color',
-      ru: 'Цветовые цели',
+    _VisualMemoryMode.colorTargets => i18n.t(
+      'inline.ui.pages.toolbox_human_tests_visual_memory_widgets.color_targets_124d6a',
     ),
-    _VisualMemoryMode.targetColor => pickUiText(
-      i18n,
-      zh: '指定颜色',
-      en: 'Target color',
-      ja: 'Target color',
-      de: 'Target color',
-      fr: 'Couleur de la cible',
-      es: 'Color blanco',
-      ru: 'Целевой цвет',
+    _VisualMemoryMode.targetColor => i18n.t(
+      'inline.ui.pages.toolbox_human_tests_visual_memory_widgets.target_color_07c19b',
     ),
   };
 }
@@ -736,15 +544,8 @@ class _VisualMemoryReportRoundRow extends StatelessWidget {
     final targetColor = result.targetColor;
     final targetText = targetColor == null
         ? ''
-        : pickUiText(
-            i18n,
-            zh: ' · 目标色 ${targetColor.zh}',
-            en: ' · target ${targetColor.en}',
-            ja: '目標',
-            de: ' · target ${targetColor.en}',
-            fr: ' · target ${targetColor.en}',
-            es: '· objetivo',
-            ru: '· цель ${targetColor.en}',
+        : i18n.t(
+            'inline.ui.pages.toolbox_human_tests_visual_memory_widgets.target_targetcolor_en_d2b139',
           );
     return Container(
       width: double.infinity,
@@ -755,15 +556,8 @@ class _VisualMemoryReportRoundRow extends StatelessWidget {
         border: Border.all(color: statusColor.withValues(alpha: 0.20)),
       ),
       child: Text(
-        pickUiText(
-          i18n,
-          zh: '等级 ${result.level} · ${result.gridSize}x${result.gridSize} · 目标 ${result.targets} · 误点 ${result.mistakes}$targetText',
-          en: 'Level ${result.level} · ${result.gridSize}x${result.gridSize} · targets ${result.targets} · misses ${result.mistakes}$targetText',
-          ja: 'Level ${result.level} · ${result.gridSize}x${result.gridSize} · targets ${result.targets} · misses ${result.mistakes}$targetText',
-          de: 'Level ${result.level} · ${result.gridSize}x${result.gridSize} · targets ${result.targets} · misses ${result.mistakes}$targetText',
-          fr: 'Niveau ${result.level} · ${result.gridSize}x${result.gridSize} · cibles ${result.targets} · ratés ${result.mistakes}$targetText',
-          es: 'Nivel 0/conejecución · 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0',
-          ru: 'Уровень ${result.level} · ${result.gridSize}x${result.gridSize} · цели ${result.targets} · промахи ${result.mistakes}$targetText',
+        i18n.t(
+          'inline.ui.pages.toolbox_human_tests_visual_memory_widgets.level_result_level_result_gridsize_x_result_gridsize_tar_d58e74',
         ),
         style: theme.textTheme.bodySmall?.copyWith(
           height: 1.25,

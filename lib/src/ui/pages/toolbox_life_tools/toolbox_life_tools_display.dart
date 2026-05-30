@@ -29,11 +29,13 @@ class _RulerToolPageState extends State<_RulerToolPage> {
   @override
   Widget build(BuildContext context) {
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '尺子和量角器', en: 'Ruler and protractor'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '把手机边缘当作标尺使用，支持手动校准；量角器可叠加相机背景辅助对角。',
-        en: 'Use the phone edge as a ruler with manual calibration, plus a protractor over a camera background.',
+        'inline.plan295.life.ruler_and_protractor.34ba83f7ca22',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.use_the_phone_edge_as_a_ruler_with_m.b043e721f2f2',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,13 +49,18 @@ class _RulerToolPageState extends State<_RulerToolPage> {
           const SizedBox(height: 12),
           _MeasurementActionCard(
             icon: Icons.straighten_rounded,
-            title: _lifeText(context, zh: '横屏直尺', en: 'Landscape ruler'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '进入横屏全屏后，刻度贴近屏幕长边显示，方便用手机边缘直接量长度。',
-              en: 'Open a landscape fullscreen ruler with ticks pinned to the screen edge for direct length checks.',
+              'inline.plan295.life.landscape_ruler.d12976f81e2a',
             ),
-            actionLabel: _lifeText(context, zh: '打开直尺', en: 'Open ruler'),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.open_a_landscape_fullscreen_ruler_wi.3cc01d2fa130',
+            ),
+            actionLabel: _lifeI18nText(
+              context,
+              'inline.plan295.life.open_ruler.cc0abbb82f14',
+            ),
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
@@ -66,13 +73,18 @@ class _RulerToolPageState extends State<_RulerToolPage> {
           const SizedBox(height: 8),
           _MeasurementActionCard(
             icon: Icons.change_history_rounded,
-            title: _lifeText(context, zh: '量角器', en: 'Protractor'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '打开后会请求相机权限，并把相机画面放在量角器刻度下方作为背景。',
-              en: 'Requests camera access and places the live camera feed under the protractor scale.',
+              'inline.plan295.life.protractor.4836c5739669',
             ),
-            actionLabel: _lifeText(context, zh: '打开量角器', en: 'Open protractor'),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.requests_camera_access_and_places_th.fae9b3318432',
+            ),
+            actionLabel: _lifeI18nText(
+              context,
+              'inline.plan295.life.open_protractor.5937a832a84a',
+            ),
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
@@ -109,19 +121,18 @@ class _MeasurementPreviewCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              _lifeText(
+              _lifeI18nText(
                 context,
-                zh: '校准参数：${pixelsPerCm.toStringAsFixed(1)} px/cm',
-                en: 'Calibration: ${pixelsPerCm.toStringAsFixed(1)} px/cm',
+                'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.display.calibration_px_cm.5686fdab5f',
+                params: <String, Object?>{'p0': pixelsPerCm.toStringAsFixed(1)},
               ),
               style: Theme.of(context).textTheme.titleSmall,
             ),
             const SizedBox(height: 6),
             Text(
-              _lifeText(
+              _lifeI18nText(
                 context,
-                zh: '先看下方 1 cm 参考条是否接近真实长度，不准时可滑动微调，再重置回系统基线。',
-                en: 'Check whether the 1 cm reference below matches reality, then fine tune or reset back to the default baseline.',
+                'inline.plan295.life.check_whether_the_1_cm_reference_bel.57c0fd2dce7f',
               ),
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -148,19 +159,28 @@ class _MeasurementPreviewCard extends StatelessWidget {
                 FilledButton.tonal(
                   onPressed: () => onNudge(-0.5),
                   child: Text(
-                    _lifeText(context, zh: '微调 -0.5', en: 'Fine tune -0.5'),
+                    _lifeI18nText(
+                      context,
+                      'inline.plan295.life.fine_tune_0_5.05dc621ce2e8',
+                    ),
                   ),
                 ),
                 FilledButton.tonal(
                   onPressed: () => onNudge(0.5),
                   child: Text(
-                    _lifeText(context, zh: '微调 +0.5', en: 'Fine tune +0.5'),
+                    _lifeI18nText(
+                      context,
+                      'inline.plan295.life.fine_tune_0_5.8b5bde222ce2',
+                    ),
                   ),
                 ),
                 FilledButton.tonal(
                   onPressed: onReset,
                   child: Text(
-                    _lifeText(context, zh: '重置标准', en: 'Reset standard'),
+                    _lifeI18nText(
+                      context,
+                      'inline.plan295.life.reset_standard.831e268f29d2',
+                    ),
                   ),
                 ),
               ],
@@ -388,10 +408,9 @@ class _ProtractorFullscreenPageState extends State<_ProtractorFullscreenPage> {
       }
       if (cameras.isEmpty) {
         setState(() {
-          _statusText = _lifeText(
+          _statusText = _lifeI18nText(
             context,
-            zh: '没有找到可用相机，仍可使用纯刻度量角器。',
-            en: 'No camera was found. You can still use the protractor scale.',
+            'inline.plan295.life.no_camera_was_found_you_can_still_us.6718af7fa078',
           );
           _loadingCamera = false;
         });
@@ -423,20 +442,17 @@ class _ProtractorFullscreenPageState extends State<_ProtractorFullscreenPage> {
       }
       setState(() {
         _statusText = switch (error.code) {
-          'CameraAccessDenied' => _lifeText(
+          'CameraAccessDenied' => _lifeI18nText(
             context,
-            zh: '相机权限被拒绝，请在系统设置中开启后再试。',
-            en: 'Camera access was denied. Please enable it in system settings and try again.',
+            'inline.plan295.life.camera_access_was_denied_please_enab.db5262ca4e62',
           ),
-          'CameraAccessDeniedWithoutPrompt' => _lifeText(
+          'CameraAccessDeniedWithoutPrompt' => _lifeI18nText(
             context,
-            zh: '系统已禁止再次弹出相机授权，请手动去设置开启。',
-            en: 'The system will not prompt again. Please enable camera access in settings.',
+            'inline.plan295.life.the_system_will_not_prompt_again_ple.4a37553e40e6',
           ),
-          _ => _lifeText(
+          _ => _lifeI18nText(
             context,
-            zh: '相机初始化失败，已降级为纯刻度量角器。',
-            en: 'Camera initialization failed. Falling back to the protractor overlay only.',
+            'inline.plan295.life.camera_initialization_failed_falling.e16c1a383695',
           ),
         };
         _loadingCamera = false;
@@ -446,10 +462,9 @@ class _ProtractorFullscreenPageState extends State<_ProtractorFullscreenPage> {
         return;
       }
       setState(() {
-        _statusText = _lifeText(
+        _statusText = _lifeI18nText(
           context,
-          zh: '当前平台不支持相机插件，已使用静态背景。',
-          en: 'This platform does not support the camera plugin, so a static background is used.',
+          'inline.plan295.life.this_platform_does_not_support_the_c.4ef377927f13',
         );
         _loadingCamera = false;
       });
@@ -458,10 +473,9 @@ class _ProtractorFullscreenPageState extends State<_ProtractorFullscreenPage> {
         return;
       }
       setState(() {
-        _statusText = _lifeText(
+        _statusText = _lifeI18nText(
           context,
-          zh: '量角器背景启动失败，已保留刻度层。',
-          en: 'The protractor background failed to start, but the scale overlay is still available.',
+          'inline.plan295.life.the_protractor_background_failed_to.50230acdb614',
         );
         _loadingCamera = false;
       });
@@ -507,10 +521,9 @@ class _ProtractorFullscreenPageState extends State<_ProtractorFullscreenPage> {
                   if (_loadingCamera)
                     _StatusPill(
                       icon: Icons.hourglass_top_rounded,
-                      label: _lifeText(
+                      label: _lifeI18nText(
                         context,
-                        zh: '正在请求相机权限',
-                        en: 'Requesting camera access',
+                        'inline.plan295.life.requesting_camera_access.1522e9fb2a89',
                       ),
                     )
                   else if (_statusText != null)
@@ -523,10 +536,9 @@ class _ProtractorFullscreenPageState extends State<_ProtractorFullscreenPage> {
                   else
                     _StatusPill(
                       icon: Icons.camera_alt_rounded,
-                      label: _lifeText(
+                      label: _lifeI18nText(
                         context,
-                        zh: '相机背景已开启',
-                        en: 'Camera background active',
+                        'inline.plan295.life.camera_background_active.3cbbd3417ef8',
                       ),
                     ),
                   const Spacer(),

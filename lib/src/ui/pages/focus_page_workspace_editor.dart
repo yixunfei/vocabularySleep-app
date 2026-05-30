@@ -1,4 +1,4 @@
-﻿part of 'focus_page.dart';
+part of 'focus_page.dart';
 
 extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
   _TodoDraftState _todoDraftStateOf(TodoItem todo) {
@@ -13,36 +13,11 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
 
   String _todoDraftStateLabel(AppI18n i18n, _TodoDraftState state) {
     return switch (state) {
-      _TodoDraftState.active => pickUiText(
-        i18n,
-        zh: '进行中',
-        en: 'Active',
-        ja: '進行中',
-        de: 'Aktiv',
-        fr: 'Actives',
-        es: 'Activas',
-        ru: 'Активные',
+      _TodoDraftState.active => i18n.t('toolbox.sleep.rhythm.active'),
+      _TodoDraftState.deferred => i18n.t(
+        'inline.ui.pages.focus_page_workspace_editor.deferred_80bb3d',
       ),
-      _TodoDraftState.deferred => pickUiText(
-        i18n,
-        zh: '延后搁置',
-        en: 'Deferred',
-        ja: '保留中',
-        de: 'Zurueckgestellt',
-        fr: 'Reporte',
-        es: 'Pospuestas',
-        ru: 'Отложено',
-      ),
-      _TodoDraftState.completed => pickUiText(
-        i18n,
-        zh: '已完成',
-        en: 'Completed',
-        ja: '完了',
-        de: 'Erledigt',
-        fr: 'Terminees',
-        es: 'Completadas',
-        ru: 'Выполнено',
-      ),
+      _TodoDraftState.completed => i18n.t('toolbox.sleep.rhythm.completed'),
     };
   }
 
@@ -188,23 +163,23 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
 
   String _todoCalendarReminderLeadLabel(AppI18n i18n, int minutesBefore) {
     if (minutesBefore <= 0) {
-      return pickUiText(i18n, zh: '准时提醒', en: 'At event time');
+      return i18n.t(
+        'inline.ui.pages.focus_page_workspace_editor.at_event_time_c9de75',
+      );
     }
     if (minutesBefore < 60) {
-      return pickUiText(
-        i18n,
-        zh: '提前 $minutesBefore 分钟',
-        en: '$minutesBefore minutes before',
+      return i18n.t(
+        'inline.ui.pages.focus_page_workspace_editor.minutesbefore_minutes_before_44ac9c',
       );
     }
     if (minutesBefore % 60 == 0) {
       final hours = minutesBefore ~/ 60;
-      return pickUiText(i18n, zh: '提前 $hours 小时', en: '$hours hours before');
+      return i18n.t(
+        'inline.ui.pages.focus_page_workspace_editor.hours_hours_before_bdad8b',
+      );
     }
-    return pickUiText(
-      i18n,
-      zh: '提前 $minutesBefore 分钟',
-      en: '$minutesBefore minutes before',
+    return i18n.t(
+      'inline.ui.pages.focus_page_workspace_editor.minutesbefore_minutes_before_44ac9c',
     );
   }
 
@@ -296,15 +271,8 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '状态',
-                        en: 'Status',
-                        ja: '状態',
-                        de: 'Status',
-                        fr: 'Statut',
-                        es: 'Estado',
-                        ru: 'Статус',
+                      i18n.t(
+                        'inline.ui.pages.focus_page_workspace_editor.status_cc59cb',
                       ),
                       style: theme.textTheme.titleSmall,
                     ),
@@ -475,10 +443,8 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
                               Text(
-                                pickUiText(
-                                  i18n,
-                                  zh: '系统待办提醒已关闭',
-                                  en: 'System todo reminders are off',
+                                i18n.t(
+                                  'inline.ui.pages.focus_page_workspace_editor.system_todo_reminders_are_off_8e23d2',
                                 ),
                                 style: theme.textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.w800,
@@ -486,10 +452,8 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                pickUiText(
-                                  i18n,
-                                  zh: '保存后仍会保留应用内时间，但不会在后台创建系统通知。开启后，应用会向系统注册本地提醒；首次使用可能需要授予通知权限。',
-                                  en: 'The time is still saved in the app, but no background system notification will be scheduled. Turn this on to register local reminders; first use may ask for notification permission.',
+                                i18n.t(
+                                  'inline.ui.pages.focus_page_workspace_editor.the_time_is_still_saved_in_the_app_but_no_background_sys_c371de',
                                 ),
                                 style: theme.textTheme.bodySmall,
                               ),
@@ -507,10 +471,8 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
                                   Icons.notifications_active_rounded,
                                 ),
                                 label: Text(
-                                  pickUiText(
-                                    i18n,
-                                    zh: '快捷开启系统提醒',
-                                    en: 'Enable system reminders',
+                                  i18n.t(
+                                    'inline.ui.pages.focus_page_workspace_editor.enable_system_reminders_382bd7',
                                   ),
                                 ),
                               ),
@@ -556,10 +518,8 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
                                 children: <Widget>[
                                   if (showNotificationWarning) ...<Widget>[
                                     Text(
-                                      pickUiText(
-                                        i18n,
-                                        zh: '当前系统未授予通知权限，待办到点后可能不会显示提醒。',
-                                        en: 'Notification permission is not granted, so todo reminders may not appear on time.',
+                                      i18n.t(
+                                        'inline.ui.pages.focus_page_workspace_editor.notification_permission_is_not_granted_so_todo_reminders_dfb98f',
                                       ),
                                       style: theme.textTheme.bodySmall,
                                     ),
@@ -578,10 +538,8 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
                                         Icons.notifications_active_rounded,
                                       ),
                                       label: Text(
-                                        pickUiText(
-                                          i18n,
-                                          zh: '授予通知权限',
-                                          en: 'Enable notifications',
+                                        i18n.t(
+                                          'inline.ui.pages.focus_page_workspace_editor.enable_notifications_b605b6',
                                         ),
                                       ),
                                     ),
@@ -590,10 +548,8 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
                                     if (showNotificationWarning)
                                       const SizedBox(height: 8),
                                     Text(
-                                      pickUiText(
-                                        i18n,
-                                        zh: '闹钟模式建议开启“精确闹钟”，否则系统可能延后提醒时间。',
-                                        en: 'Alarm mode works best with exact alarms enabled. Otherwise the system may delay the reminder.',
+                                      i18n.t(
+                                        'inline.ui.pages.focus_page_workspace_editor.alarm_mode_works_best_with_exact_alarms_enabled_otherwis_d235ec',
                                       ),
                                       style: theme.textTheme.bodySmall,
                                     ),
@@ -610,10 +566,8 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
                                       },
                                       icon: const Icon(Icons.alarm_on_rounded),
                                       label: Text(
-                                        pickUiText(
-                                          i18n,
-                                          zh: '打开精确闹钟设置',
-                                          en: 'Open exact alarm settings',
+                                        i18n.t(
+                                          'inline.ui.pages.focus_page_workspace_editor.open_exact_alarm_settings_613dfa',
                                         ),
                                       ),
                                     ),
@@ -628,27 +582,13 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
                         contentPadding: EdgeInsets.zero,
                         value: syncToSystemCalendar,
                         title: Text(
-                          pickUiText(
-                            i18n,
-                            zh: '同步到系统日历',
-                            en: 'Sync to system calendar',
-                            ja: 'システムカレンダーに同期',
-                            de: 'Mit Systemkalender synchronisieren',
-                            fr: 'Synchroniser avec le calendrier systeme',
-                            es: 'Sincronizar con el calendario del sistema',
-                            ru: 'Синхронизировать с системным календарем',
+                          i18n.t(
+                            'inline.ui.pages.focus_page_workspace_editor.sync_to_system_calendar_488722',
                           ),
                         ),
                         subtitle: Text(
-                          pickUiText(
-                            i18n,
-                            zh: '开启后会写入系统日历事件；关闭后只保留应用内提醒。',
-                            en: 'When enabled, reminders are written to the system calendar. When disabled, they stay only inside the app.',
-                            ja: '有効にするとシステムカレンダーへ予定を作成し、無効にするとアプリ内のリマインダーだけを保持します。',
-                            de: 'Wenn aktiviert, werden Erinnerungen in den Systemkalender geschrieben. Andernfalls bleiben sie nur in der App.',
-                            fr: 'Lorsque cette option est activee, le rappel est ajoute au calendrier systeme. Sinon, il reste uniquement dans l’application.',
-                            es: 'Al activarlo, el recordatorio se agrega al calendario del sistema. Si se desactiva, solo se conserva dentro de la app.',
-                            ru: 'При включении напоминание будет сохранено в системный календарь. При выключении оно останется только внутри приложения.',
+                          i18n.t(
+                            'inline.ui.pages.focus_page_workspace_editor.when_enabled_reminders_are_written_to_the_system_calenda_688238',
                           ),
                         ),
                         onChanged: (value) {
@@ -660,7 +600,9 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
                       if (syncToSystemCalendar) ...<Widget>[
                         const SizedBox(height: 8),
                         Text(
-                          pickUiText(i18n, zh: '提醒方式', en: 'Reminder type'),
+                          i18n.t(
+                            'inline.ui.pages.focus_page_workspace_editor.reminder_type_ab0e26',
+                          ),
                           style: theme.textTheme.titleSmall,
                         ),
                         const SizedBox(height: 8),
@@ -683,10 +625,8 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
                                 value:
                                     _TodoSystemCalendarAlertMode.notification,
                                 title: Text(
-                                  pickUiText(
-                                    i18n,
-                                    zh: '应用通知提醒',
-                                    en: 'App notification reminder',
+                                  i18n.t(
+                                    'inline.ui.pages.focus_page_workspace_editor.app_notification_reminder_2a0b18',
                                   ),
                                 ),
                                 subtitle: Text(
@@ -704,10 +644,8 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
                                     initialValue:
                                         systemCalendarNotificationMinutesBefore,
                                     decoration: InputDecoration(
-                                      labelText: pickUiText(
-                                        i18n,
-                                        zh: '提醒提前时间',
-                                        en: 'Reminder lead time',
+                                      labelText: i18n.t(
+                                        'inline.ui.pages.focus_page_workspace_editor.reminder_lead_time_d2f61c',
                                       ),
                                     ),
                                     items:
@@ -741,10 +679,8 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
                                 contentPadding: EdgeInsets.zero,
                                 value: _TodoSystemCalendarAlertMode.alarm,
                                 title: Text(
-                                  pickUiText(
-                                    i18n,
-                                    zh: '应用闹钟提醒',
-                                    en: 'App alarm reminder',
+                                  i18n.t(
+                                    'inline.ui.pages.focus_page_workspace_editor.app_alarm_reminder_3916cb',
                                   ),
                                 ),
                                 subtitle: Text(
@@ -760,10 +696,8 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
                                   initialValue:
                                       systemCalendarAlarmMinutesBefore,
                                   decoration: InputDecoration(
-                                    labelText: pickUiText(
-                                      i18n,
-                                      zh: '提醒提前时间',
-                                      en: 'Reminder lead time',
+                                    labelText: i18n.t(
+                                      'inline.ui.pages.focus_page_workspace_editor.reminder_lead_time_d2f61c',
                                     ),
                                   ),
                                   items:
@@ -794,10 +728,8 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          pickUiText(
-                            i18n,
-                            zh: '不同系统日历会自行决定这些提醒以通知还是闹钟样式呈现。',
-                            en: 'The app handles the real reminder. System calendar sync only writes a mirrored event when enabled.',
+                          i18n.t(
+                            'inline.ui.pages.focus_page_workspace_editor.the_app_handles_the_real_reminder_system_calendar_sync_o_e59466',
                           ),
                           style: theme.textTheme.bodySmall,
                         ),
@@ -909,15 +841,8 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
       TimeOfDay.fromDateTime(now),
       alwaysUse24HourFormat: MediaQuery.of(context).alwaysUse24HourFormat,
     );
-    final prefix = pickUiText(
-      i18n,
-      zh: '快速笔记',
-      en: 'Quick note',
-      ja: 'クイックノート',
-      de: 'Schnellnotiz',
-      fr: 'Note rapide',
-      es: 'Nota rapida',
-      ru: 'Быстрая заметка',
+    final prefix = i18n.t(
+      'inline.ui.pages.focus_page_workspace_editor.quick_note_7a384a',
     );
     return '$prefix $date $time';
   }
@@ -1058,55 +983,39 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
               if (useRecorderFlow) {
                 switch (voiceState) {
                   case _NoteVoiceInputState.starting:
-                    return pickUiText(
-                      i18n,
-                      zh: '正在启动语音输入…',
-                      en: 'Starting voice input...',
+                    return i18n.t(
+                      'inline.ui.pages.focus_page_workspace_editor.starting_voice_input_4763a2',
                     );
                   case _NoteVoiceInputState.listening:
-                    return pickUiText(
-                      i18n,
-                      zh: '点击结束语音输入',
-                      en: 'Tap to stop voice input',
+                    return i18n.t(
+                      'inline.ui.pages.focus_page_workspace_editor.tap_to_stop_voice_input_c85131',
                     );
                   case _NoteVoiceInputState.finishing:
-                    return pickUiText(
-                      i18n,
-                      zh: '正在转写语音输入…',
-                      en: 'Transcribing voice input...',
+                    return i18n.t(
+                      'inline.ui.pages.focus_page_workspace_editor.transcribing_voice_input_367fa7',
                     );
                   case _NoteVoiceInputState.idle:
-                    return pickUiText(
-                      i18n,
-                      zh: '点击开始语音输入',
-                      en: 'Tap to start voice input',
+                    return i18n.t(
+                      'inline.ui.pages.focus_page_workspace_editor.tap_to_start_voice_input_cfdf1e',
                     );
                 }
               }
               switch (voiceState) {
                 case _NoteVoiceInputState.starting:
-                  return pickUiText(
-                    i18n,
-                    zh: '正在启动听写…',
-                    en: 'Starting dictation...',
+                  return i18n.t(
+                    'inline.ui.pages.focus_page_workspace_editor.starting_dictation_27e6d9',
                   );
                 case _NoteVoiceInputState.listening:
-                  return pickUiText(
-                    i18n,
-                    zh: '点击结束听写',
-                    en: 'Tap to stop dictation',
+                  return i18n.t(
+                    'inline.ui.pages.focus_page_workspace_editor.tap_to_stop_dictation_6ea9cf',
                   );
                 case _NoteVoiceInputState.finishing:
-                  return pickUiText(
-                    i18n,
-                    zh: '正在整理识别结果…',
-                    en: 'Finishing dictation...',
+                  return i18n.t(
+                    'inline.ui.pages.focus_page_workspace_editor.finishing_dictation_5ff177',
                   );
                 case _NoteVoiceInputState.idle:
-                  return pickUiText(
-                    i18n,
-                    zh: '点击开始听写',
-                    en: 'Tap to start dictation',
+                  return i18n.t(
+                    'inline.ui.pages.focus_page_workspace_editor.tap_to_start_dictation_19e617',
                   );
               }
             }
@@ -1200,15 +1109,8 @@ extension _FocusPageWorkspaceEditorExtension on _FocusPageState {
             }
 
             String effectiveVoiceHelperText() {
-              final insertHint = pickUiText(
-                i18n,
-                zh: '识别结果会追加到正文，标题留空时会自动生成摘要。',
-                en: 'Transcribed text is appended to the note body, and an empty title will be auto-filled.',
-                ja: '認識結果は本文に追記され、タイトルが空の場合は自動で要約が入ります。',
-                de: 'Erkannter Text wird an den Inhalt angeh盲ngt, und ein leerer Titel wird automatisch erg盲nzt.',
-                fr: 'Le texte reconnu est ajoute au contenu, et un titre vide sera complete automatiquement.',
-                es: 'El texto reconocido se anade al contenido y el titulo vacio se completa automaticamente.',
-                ru: '袪邪褋锌芯蟹薪邪薪薪褘泄 褌械泻褋褌 写芯斜邪胁谢褟械褌褋褟 胁 蟹邪屑械褌泻褍, 邪 锌褍褋褌芯泄 蟹邪谐芯谢芯胁芯泻 蟹邪锌芯谢薪褟械褌褋褟 邪胁褌芯屑邪褌懈褔械褋泻懈.',
+              final insertHint = i18n.t(
+                'inline.ui.pages.focus_page_workspace_editor.transcribed_text_is_appended_to_the_note_body_and_an_emp_268155',
               );
               final useRecorderFlow =
                   voiceInputProvider != VoiceInputProviderType.system ||

@@ -81,11 +81,7 @@ class _SleepNightRescuePageState extends State<SleepNightRescuePage> {
     );
     final i18n = AppI18n(appState.uiLanguage);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          i18n.t('toolbox.sleep.rescue.saved'),
-        ),
-      ),
+      SnackBar(content: Text(i18n.t('toolbox.sleep.rescue.saved'))),
     );
   }
 
@@ -232,7 +228,7 @@ class _SleepNightRescuePageState extends State<SleepNightRescuePage> {
                     const SizedBox(height: 10),
                     Text(
                       suggestedAction ??
-          i18n.t('toolbox.sleep.rescue.chooseFirst'),
+                          i18n.t('toolbox.sleep.rescue.chooseFirst'),
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -256,9 +252,7 @@ class _SleepNightRescuePageState extends State<SleepNightRescuePage> {
                         OutlinedButton.icon(
                           onPressed: _saveEvent,
                           icon: const Icon(Icons.save_rounded),
-                          label: Text(
-                            i18n.t('toolbox.sleep.rescue.saveEvent'),
-                          ),
+                          label: Text(i18n.t('toolbox.sleep.rescue.saveEvent')),
                         ),
                       ],
                     ),
@@ -275,7 +269,9 @@ class _SleepNightRescuePageState extends State<SleepNightRescuePage> {
                     TextField(
                       controller: _triggerController,
                       decoration: InputDecoration(
-                        labelText: i18n.t('toolbox.sleep.rescue.guessedTrigger'),
+                        labelText: i18n.t(
+                          'toolbox.sleep.rescue.guessedTrigger',
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -296,9 +292,7 @@ class _SleepNightRescuePageState extends State<SleepNightRescuePage> {
                     const SizedBox(height: 8),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        i18n.t('toolbox.sleep.rescue.leftBed'),
-                      ),
+                      title: Text(i18n.t('toolbox.sleep.rescue.leftBed')),
                       value: _hasLeftBed,
                       onChanged: (value) => setState(() => _hasLeftBed = value),
                     ),

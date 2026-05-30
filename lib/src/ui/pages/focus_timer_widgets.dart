@@ -179,8 +179,12 @@ class FocusTimerControlsCard extends StatelessWidget {
           ),
           label: Text(
             focus.lockScreenActive
-                ? pickUiText(i18n, zh: '解除锁定', en: 'Unlock focus')
-                : pickUiText(i18n, zh: '锁定专注', en: 'Lock focus'),
+                ? i18n.t(
+                    'inline.ui.pages.focus_timer_widgets.unlock_focus_82ea6f',
+                  )
+                : i18n.t(
+                    'inline.ui.pages.focus_timer_widgets.lock_focus_812d94',
+                  ),
           ),
         ),
       );
@@ -200,15 +204,15 @@ class FocusTimerControlsCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              pickUiText(i18n, zh: '当前操作', en: 'Current actions'),
+              i18n.t(
+                'inline.ui.pages.focus_timer_widgets.current_actions_bcee43',
+              ),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 6),
             Text(
-              pickUiText(
-                i18n,
-                zh: '保持当前专注节奏，下一步操作会在这里集中显示。',
-                en: 'Keep the current focus flow moving with the next actions collected here.',
+              i18n.t(
+                'inline.ui.pages.focus_timer_widgets.keep_the_current_focus_flow_moving_with_the_next_actions_28ea90',
               ),
               style: Theme.of(context).textTheme.bodySmall,
             ),

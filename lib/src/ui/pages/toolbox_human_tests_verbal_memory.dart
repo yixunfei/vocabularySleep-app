@@ -7,37 +7,16 @@ class VerbalMemoryTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(
-        i18n,
-        zh: '词汇记忆',
-        en: 'Verbal memory',
-        ja: 'Verbal memory',
-        de: 'Verbal memory',
-        fr: 'Mémoire verbale',
-        es: 'Memoria verbal',
-        ru: 'Вербальная память',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_verbal_memory.verbal_memory_4a3a76',
       ),
-      subtitle: pickUiText(
-        i18n,
-        zh: '大脑的内存条有多宽？看你能一口气记住多少词、多少数。',
-        en: 'A memory lab for domain words, digit strings, and spatial arrow sequences with custom stage height.',
-        ja: 'カスタムステージの高さを持つドメインワード、ディジット文字列、空間矢印シーケンスのメモリラボ。',
-        de: 'A memory lab for domain words, digit strings, and spatial arrow sequences with custom stage height.',
-        fr: 'A memory lab for domain words, digit strings, and spatial arrow sequences with custom stage height.',
-        es: 'Un laboratorio de memoria para palabras de dominio, cadenas de dígitos y secuencias de flechas espaciales con altura de etapa personalizada.',
-        ru: 'Лаборатория памяти для доменных слов, цифровых строк и пространственных последовательностей стрелок с пользовательской высотой сцены.',
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_verbal_memory.a_memory_lab_for_domain_words_digit_strings_and_spatial_761cc6',
       ),
       accent: _VerbalMemoryCardState._accent,
       icon: Icons.menu_book_rounded,
-      status: pickUiText(
-        i18n,
-        zh: '记单词、数字串或箭头——选好就开始',
-        en: 'Next: choose a mode and start a continuous run',
-        ja: 'Next: choose a mode and start a continuous run',
-        de: 'Next: choose a mode and start a continuous run',
-        fr: 'Suivant : choisissez un mode et lancez une course continue',
-        es: 'Siguiente: elegir un modo y comenzar un funcionamiento continuo',
-        ru: 'Далее: выберите режим и начните непрерывный бег',
+      status: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_verbal_memory.next_choose_a_mode_and_start_a_continuous_run_181b9d',
       ),
       child: const _VerbalMemoryCard(),
     );
@@ -77,13 +56,8 @@ class _VerbalMemoryCardState extends State<_VerbalMemoryCard> {
   bool _input = false;
   bool _sessionEnded = false;
   bool _reportDialogOpen = false;
-  String _feedbackZh = '';
-  String _feedbackEn = '';
-  String _feedbackJa = '';
-  String _feedbackDe = '';
-  String _feedbackFr = '';
-  String _feedbackEs = '';
-  String _feedbackRu = '';
+  String _feedbackKey = '';
+  Map<String, Object?> _feedbackParams = const <String, Object?>{};
 
   DateTime? _sessionStartedAt;
   DateTime? _roundStartedAt;
@@ -161,15 +135,8 @@ class _VerbalMemoryCardState extends State<_VerbalMemoryCard> {
 
   String _domainSummary(AppI18n i18n) {
     if (_selectedDomains.length == _verbalMemoryDomainOrder.length) {
-      return pickUiText(
-        i18n,
-        zh: '全部领域',
-        en: 'All domains',
-        ja: 'すべてのドメイン',
-        de: 'All domains',
-        fr: 'All domains',
-        es: 'Todos los dominios',
-        ru: 'Все домены',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_verbal_memory.all_domains_6c5e86',
       );
     }
     final labels = _verbalMemoryDomainOrder
@@ -177,112 +144,47 @@ class _VerbalMemoryCardState extends State<_VerbalMemoryCard> {
         .map((domain) => _domainLabel(i18n, domain))
         .join(' / ');
     return labels.isEmpty
-        ? pickUiText(
-            i18n,
-            zh: '全部领域',
-            en: 'All domains',
-            ja: 'すべてのドメイン',
-            de: 'All domains',
-            fr: 'All domains',
-            es: 'Todos los dominios',
-            ru: 'Все домены',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_human_tests_verbal_memory.all_domains_6c5e86',
           )
         : labels;
   }
 
   String _stageStatus(AppI18n i18n) {
     if (!_sessionActive && _attempts == 0) {
-      return pickUiText(
-        i18n,
-        zh: '选好模式后点击开始，结果只用于这次训练复盘。',
-        en: 'Pick a mode and press start. Results are counted only for this run.',
-        ja: 'Pick a mode and press start. Results are counted only for this run.',
-        de: 'Pick a mode and press start. Results are counted only for this run.',
-        fr: 'Pick a mode and press start. Results are counted only for this run.',
-        es: 'Pick a mode and press start. Results are counted only for this run.',
-        ru: 'Pick a mode and press start. Results are counted only for this run.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_verbal_memory.pick_a_mode_and_press_start_results_are_counted_only_for_3ad2d5',
       );
     }
     if (_sessionEnded) {
-      return pickUiText(
-        i18n,
-        zh: '训练已结束，可查看报告或重新开始。',
-        en: 'Run ended. Review the report or start again.',
-        ja: 'Run ended. Review the report or start again.',
-        de: 'Run ended. Review the report or start again.',
-        fr: 'La course s\'est terminée. Examiner le rapport ou recommencer.',
-        es: 'La carrera terminó. Revisa el informe o comienza de nuevo.',
-        ru: 'Бег закончился. Просмотрите отчет или начните заново.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_verbal_memory.run_ended_review_the_report_or_start_again_4f9d6b',
       );
     }
-    if (_feedbackZh.isNotEmpty) {
-      return pickUiText(
-        i18n,
-        zh: _feedbackZh,
-        en: _feedbackEn,
-        ja: _feedbackJa,
-        de: _feedbackDe,
-        fr: _feedbackFr,
-        es: _feedbackEs,
-        ru: _feedbackRu,
-      );
+    if (_feedbackKey.isNotEmpty) {
+      return i18n.t(_feedbackKey, params: _feedbackParams);
     }
     if (_mode == _VerbalMemoryMode.words) {
-      return pickUiText(
-        i18n,
-        zh: '判断当前词是否在本轮训练中出现过。',
-        en: 'Decide whether this word has appeared in this run.',
-        ja: 'Decide whether this word has appeared in this run.',
-        de: 'Decide whether this word has appeared in this run.',
-        fr: 'Décidez si ce mot est apparu dans cette série.',
-        es: 'Decide si esta palabra ha aparecido en esta carrera.',
-        ru: 'Решите, появилось ли это слово в этой серии.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_verbal_memory.decide_whether_this_word_has_appeared_in_this_run_37df9c',
       );
     }
     if (_showing) {
-      return pickUiText(
-        i18n,
-        zh: '观察中，稍后内容会隐藏。',
-        en: 'Viewing now. The prompt will hide shortly.',
-        ja: 'Viewing now. The prompt will hide shortly.',
-        de: 'Viewing now. The prompt will hide shortly.',
-        fr: 'Je regarde maintenant. L\'invite se cachera bientôt.',
-        es: 'Viendo ahora. El aviso se esconderá pronto.',
-        ru: 'Смотреть сейчас. Скоро подсказка скроется.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_verbal_memory.viewing_now_the_prompt_will_hide_shortly_94f743',
       );
     }
     if (_input) {
       return _mode == _VerbalMemoryMode.numbers
-          ? pickUiText(
-              i18n,
-              zh: '输入刚才看到的完整数字串。',
-              en: 'Type the full digit string.',
-              ja: 'Type the full digit string.',
-              de: 'Type the full digit string.',
-              fr: 'Saisissez la chaîne à chiffres entiers.',
-              es: 'Escribe la cadena de dígitos completos.',
-              ru: 'Введите полную цифру строки.',
+          ? i18n.t(
+              'inline.ui.pages.toolbox_human_tests_verbal_memory.type_the_full_digit_string_d3f816',
             )
-          : pickUiText(
-              i18n,
-              zh: '按顺序点击刚才看到的箭头。',
-              en: 'Tap the arrows in the same order.',
-              ja: 'Tap the arrows in the same order.',
-              de: 'Tap the arrows in the same order.',
-              fr: 'Appuyez sur les flèches dans le même ordre.',
-              es: 'Pulsa las flechas en el mismo orden.',
-              ru: 'Нажмите на стрелки в том же порядке.',
+          : i18n.t(
+              'inline.ui.pages.toolbox_human_tests_verbal_memory.tap_the_arrows_in_the_same_order_e854d2',
             );
     }
-    return pickUiText(
-      i18n,
-      zh: '下一轮准备中。',
-      en: 'Preparing the next round.',
-      ja: 'Preparing the next round.',
-      de: 'Preparing the next round.',
-      fr: 'Préparer la prochaine ronde.',
-      es: 'Preparando la próxima ronda.',
-      ru: 'Подготовка следующего раунда.',
+    return i18n.t(
+      'inline.ui.pages.toolbox_human_tests_verbal_memory.preparing_the_next_round_162ada',
     );
   }
 
@@ -304,13 +206,8 @@ class _VerbalMemoryCardState extends State<_VerbalMemoryCard> {
     _numberController.clear();
     _showing = false;
     _input = false;
-    _feedbackZh = '';
-    _feedbackEn = '';
-    _feedbackJa = '';
-    _feedbackDe = '';
-    _feedbackFr = '';
-    _feedbackEs = '';
-    _feedbackRu = '';
+    _feedbackKey = '';
+    _feedbackParams = const <String, Object?>{};
     _currentWord = null;
     _currentWordWasSeen = false;
     _currentNumber = '';
@@ -344,13 +241,8 @@ class _VerbalMemoryCardState extends State<_VerbalMemoryCard> {
     setState(() {
       _sessionActive = true;
       _resetStats();
-      _feedbackZh = '';
-      _feedbackEn = '';
-      _feedbackJa = '';
-      _feedbackDe = '';
-      _feedbackFr = '';
-      _feedbackEs = '';
-      _feedbackRu = '';
+      _feedbackKey = '';
+      _feedbackParams = const <String, Object?>{};
     });
     _beginNextRound();
   }
@@ -374,25 +266,10 @@ class _VerbalMemoryCardState extends State<_VerbalMemoryCard> {
       _sessionEnded = true;
       _showing = false;
       _input = false;
-      _feedbackZh = success ? '训练已结束，已生成本次报告。' : '生命耗尽，训练已结束。';
-      _feedbackEn = success
-          ? 'Run ended. The report is ready.'
-          : 'Lives are gone. The run has ended.';
-      _feedbackJa = success
-          ? 'トレーニングが終了しました。レポートを確認できます。'
-          : 'ライフがなくなりました。トレーニング終了です。';
-      _feedbackDe = success
-          ? 'Training beendet. Der Bericht ist bereit.'
-          : 'Keine Leben mehr. Das Training ist beendet.';
-      _feedbackFr = success
-          ? 'Entraînement terminé. Le rapport est prêt.'
-          : 'Plus de vies. L’entraînement est terminé.';
-      _feedbackEs = success
-          ? 'Entrenamiento terminado. El informe está listo.'
-          : 'Sin vidas. El entrenamiento terminó.';
-      _feedbackRu = success
-          ? 'Тренировка завершена. Отчет готов.'
-          : 'Жизни закончились. Тренировка завершена.';
+      _feedbackKey = success
+          ? 'inline.plan297.human_tests.verbal_memory.run_ended_report_ready'
+          : 'inline.plan297.human_tests.verbal_memory.lives_gone_run_ended';
+      _feedbackParams = const <String, Object?>{};
     });
     if (showReport) {
       _showReportDialog(success: success);
@@ -454,13 +331,8 @@ class _VerbalMemoryCardState extends State<_VerbalMemoryCard> {
     _timer?.cancel();
     _numberController.clear();
     setState(() {
-      _feedbackZh = '';
-      _feedbackEn = '';
-      _feedbackJa = '';
-      _feedbackDe = '';
-      _feedbackFr = '';
-      _feedbackEs = '';
-      _feedbackRu = '';
+      _feedbackKey = '';
+      _feedbackParams = const <String, Object?>{};
       _showing = false;
       _input = false;
       _roundStartedAt = DateTime.now();
@@ -597,47 +469,15 @@ class _VerbalMemoryCardState extends State<_VerbalMemoryCard> {
     }
     final correct = seen == _currentWordWasSeen;
     final expectedLabel = _currentWordWasSeen
-        ? pickUiText(
-            i18n,
-            zh: '见过',
-            en: 'Seen',
-            ja: 'Seen',
-            de: 'Seen',
-            fr: 'Vu',
-            es: 'Visto',
-            ru: 'Видимый',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_human_tests_verbal_memory_view.seen_abb37a',
           )
-        : pickUiText(
-            i18n,
-            zh: '新词',
-            en: 'New',
-            ja: 'New',
-            de: 'New',
-            fr: 'Nouveau',
-            es: 'Nuevo',
-            ru: 'Новый',
-          );
+        : i18n.t('toolbox.sleep.winddown.new');
     final responseLabel = seen
-        ? pickUiText(
-            i18n,
-            zh: '见过',
-            en: 'Seen',
-            ja: 'Seen',
-            de: 'Seen',
-            fr: 'Vu',
-            es: 'Visto',
-            ru: 'Видимый',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_human_tests_verbal_memory_view.seen_abb37a',
           )
-        : pickUiText(
-            i18n,
-            zh: '新词',
-            en: 'New',
-            ja: 'New',
-            de: 'New',
-            fr: 'Nouveau',
-            es: 'Nuevo',
-            ru: 'Новый',
-          );
+        : i18n.t('toolbox.sleep.winddown.new');
     final stimulusLabel = _wordText(i18n, word);
     _seenWordKeys.add(word.key);
     _wordHistory.add(word);
@@ -648,24 +488,10 @@ class _VerbalMemoryCardState extends State<_VerbalMemoryCard> {
       responseLabel: responseLabel,
       sizeLabel: '${_activeWordPool.length}',
       detailLabel: _domainLabel(i18n, word.domain),
-      feedbackCorrectZh: '判断正确，下一轮会提高记忆负荷。',
-      feedbackCorrectEn: 'Correct. The next round raises memory load.',
-      feedbackCorrectJa: '正解です。次のラウンドは少し難しくなります。',
-      feedbackCorrectDe:
-          'Richtig. Die nächste Runde erhöht die Gedächtnislast.',
-      feedbackCorrectFr:
-          'Correct. La prochaine manche augmente la charge de mémoire.',
-      feedbackCorrectEs:
-          'Correcto. La siguiente ronda sube la carga de memoria.',
-      feedbackCorrectRu:
-          'Верно. В следующем раунде нагрузка на память вырастет.',
-      feedbackWrongZh: '判断错误，已扣除 1 次生命。',
-      feedbackWrongEn: 'Wrong. One life was lost.',
-      feedbackWrongJa: '違います。ライフが 1 つ減りました。',
-      feedbackWrongDe: 'Falsch. Ein Leben wurde abgezogen.',
-      feedbackWrongFr: 'Incorrect. Une vie a été retirée.',
-      feedbackWrongEs: 'Incorrecto. Perdiste una vida.',
-      feedbackWrongRu: 'Неверно. Одна жизнь потеряна.',
+      feedbackCorrectKey:
+          'inline.plan297.human_tests.verbal_memory.feedback.correct.correct_the_next_round_raises_memory_load.57618eeb31',
+      feedbackWrongKey:
+          'inline.plan297.human_tests.verbal_memory.feedback.wrong.wrong_one_life_was_lost.ca87bb5d29',
     );
   }
 
@@ -681,22 +507,10 @@ class _VerbalMemoryCardState extends State<_VerbalMemoryCard> {
       responseLabel: answer.isEmpty ? '-' : answer,
       sizeLabel: '${_currentNumber.length}',
       detailLabel: '$_previewMs ms',
-      feedbackCorrectZh: '数字串复现正确，长度会继续增加。',
-      feedbackCorrectEn: 'Digit string matched. Length will keep growing.',
-      feedbackCorrectJa: '数字列は正解です。長さが少しずつ伸びます。',
-      feedbackCorrectDe: 'Zahlenfolge richtig. Die Länge wächst weiter.',
-      feedbackCorrectFr:
-          'Suite de chiffres correcte. La longueur va continuer à augmenter.',
-      feedbackCorrectEs:
-          'Serie de números correcta. La longitud seguirá aumentando.',
-      feedbackCorrectRu: 'Цифры совпали. Длина будет увеличиваться.',
-      feedbackWrongZh: '数字串不一致，已扣除 1 次生命。',
-      feedbackWrongEn: 'Digit string missed. One life was lost.',
-      feedbackWrongJa: '数字列が一致しません。ライフが 1 つ減りました。',
-      feedbackWrongDe: 'Zahlenfolge verfehlt. Ein Leben wurde abgezogen.',
-      feedbackWrongFr: 'Suite de chiffres manquée. Une vie a été retirée.',
-      feedbackWrongEs: 'La serie no coincide. Perdiste una vida.',
-      feedbackWrongRu: 'Цифры не совпали. Одна жизнь потеряна.',
+      feedbackCorrectKey:
+          'inline.plan297.human_tests.verbal_memory.feedback.correct.digit_string_matched_length_will_keep_growing.2a2a31463b',
+      feedbackWrongKey:
+          'inline.plan297.human_tests.verbal_memory.feedback.wrong.digit_string_missed_one_life_was_lost.5c6fc05ec0',
     );
   }
 
@@ -722,20 +536,10 @@ class _VerbalMemoryCardState extends State<_VerbalMemoryCard> {
         responseLabel: responseLabel,
         sizeLabel: '${_currentArrowSequence.length}',
         detailLabel: _arrowSet == _VerbalMemoryArrowSet.eight ? '8' : '4',
-        feedbackCorrectZh: '空间序列复现正确。',
-        feedbackCorrectEn: 'Spatial sequence matched.',
-        feedbackCorrectJa: '空間の順序が一致しました。',
-        feedbackCorrectDe: 'Räumliche Reihenfolge stimmt.',
-        feedbackCorrectFr: 'La séquence spatiale correspond.',
-        feedbackCorrectEs: 'La secuencia espacial coincide.',
-        feedbackCorrectRu: 'Пространственная последовательность совпала.',
-        feedbackWrongZh: '箭头顺序不一致，已扣除 1 次生命。',
-        feedbackWrongEn: 'Arrow order missed. One life was lost.',
-        feedbackWrongJa: '矢印の順序が違います。ライフが 1 つ減りました。',
-        feedbackWrongDe: 'Pfeilfolge verfehlt. Ein Leben wurde abgezogen.',
-        feedbackWrongFr: 'Ordre des flèches manqué. Une vie a été retirée.',
-        feedbackWrongEs: 'El orden de flechas no coincide. Perdiste una vida.',
-        feedbackWrongRu: 'Порядок стрелок неверный. Одна жизнь потеряна.',
+        feedbackCorrectKey:
+            'inline.plan297.human_tests.verbal_memory.feedback.correct.spatial_sequence_matched.164860bd66',
+        feedbackWrongKey:
+            'inline.plan297.human_tests.verbal_memory.feedback.wrong.arrow_order_missed_one_life_was_lost.d8d5ae6b32',
       );
       return;
     }
@@ -747,25 +551,10 @@ class _VerbalMemoryCardState extends State<_VerbalMemoryCard> {
         responseLabel: responseLabel,
         sizeLabel: '${_currentArrowSequence.length}',
         detailLabel: _arrowSet == _VerbalMemoryArrowSet.eight ? '8' : '4',
-        feedbackCorrectZh: '空间序列复现正确，长度会继续增加。',
-        feedbackCorrectEn:
-            'Spatial sequence matched. Length will keep growing.',
-        feedbackCorrectJa: '空間の順序が一致しました。長さが少しずつ伸びます。',
-        feedbackCorrectDe:
-            'Räumliche Reihenfolge stimmt. Die Länge wächst weiter.',
-        feedbackCorrectFr:
-            'La séquence spatiale correspond. La longueur va augmenter.',
-        feedbackCorrectEs:
-            'La secuencia espacial coincide. La longitud seguirá aumentando.',
-        feedbackCorrectRu:
-            'Пространственная последовательность совпала. Длина будет увеличиваться.',
-        feedbackWrongZh: '箭头顺序不一致，已扣除 1 次生命。',
-        feedbackWrongEn: 'Arrow order missed. One life was lost.',
-        feedbackWrongJa: '矢印の順序が違います。ライフが 1 つ減りました。',
-        feedbackWrongDe: 'Pfeilfolge verfehlt. Ein Leben wurde abgezogen.',
-        feedbackWrongFr: 'Ordre des flèches manqué. Une vie a été retirée.',
-        feedbackWrongEs: 'El orden de flechas no coincide. Perdiste una vida.',
-        feedbackWrongRu: 'Порядок стрелок неверный. Одна жизнь потеряна.',
+        feedbackCorrectKey:
+            'inline.plan297.human_tests.verbal_memory.feedback.correct.spatial_sequence_matched_length_will_keep_growing.0025eda5b9',
+        feedbackWrongKey:
+            'inline.plan297.human_tests.verbal_memory.feedback.wrong.arrow_order_missed_one_life_was_lost.30bd76390e',
       );
     }
   }
@@ -784,20 +573,8 @@ class _VerbalMemoryCardState extends State<_VerbalMemoryCard> {
     required String responseLabel,
     required String sizeLabel,
     required String detailLabel,
-    required String feedbackCorrectZh,
-    required String feedbackCorrectEn,
-    required String feedbackCorrectJa,
-    required String feedbackCorrectDe,
-    required String feedbackCorrectFr,
-    required String feedbackCorrectEs,
-    required String feedbackCorrectRu,
-    required String feedbackWrongZh,
-    required String feedbackWrongEn,
-    required String feedbackWrongJa,
-    required String feedbackWrongDe,
-    required String feedbackWrongFr,
-    required String feedbackWrongEs,
-    required String feedbackWrongRu,
+    required String feedbackCorrectKey,
+    required String feedbackWrongKey,
   }) {
     final levelAtRound = _level;
     final responseMs = _roundStartedAt == null
@@ -828,24 +605,14 @@ class _VerbalMemoryCardState extends State<_VerbalMemoryCard> {
         _bestStreak = math.max(_bestStreak, _streak);
         _level += 1;
         _bestLevel = math.max(_bestLevel, _level);
-        _feedbackZh = feedbackCorrectZh;
-        _feedbackEn = feedbackCorrectEn;
-        _feedbackJa = feedbackCorrectJa;
-        _feedbackDe = feedbackCorrectDe;
-        _feedbackFr = feedbackCorrectFr;
-        _feedbackEs = feedbackCorrectEs;
-        _feedbackRu = feedbackCorrectRu;
+        _feedbackKey = feedbackCorrectKey;
+        _feedbackParams = const <String, Object?>{};
       } else {
         _lives -= 1;
         _streak = 0;
         _level = math.max(1, _level - 1);
-        _feedbackZh = feedbackWrongZh;
-        _feedbackEn = feedbackWrongEn;
-        _feedbackJa = feedbackWrongJa;
-        _feedbackDe = feedbackWrongDe;
-        _feedbackFr = feedbackWrongFr;
-        _feedbackEs = feedbackWrongEs;
-        _feedbackRu = feedbackWrongRu;
+        _feedbackKey = feedbackWrongKey;
+        _feedbackParams = const <String, Object?>{};
       }
       _roundResults = <_VerbalMemoryRoundResult>[
         result,

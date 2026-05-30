@@ -89,8 +89,12 @@ class _TriangleToolState extends State<_TriangleTool> {
 
   String _presetSubtitle(AppI18n i18n, _TrianglePreset preset) {
     return switch (preset.id) {
-      'soft_ring' => i18n.t('toolbox.sound.triangle.softer_highs_and_a_shorter'),
-      'bright_ring' => i18n.t('toolbox.sound.triangle.brighter_attack_and_stronger_ring'),
+      'soft_ring' => i18n.t(
+        'toolbox.sound.triangle.softer_highs_and_a_shorter',
+      ),
+      'bright_ring' => i18n.t(
+        'toolbox.sound.triangle.brighter_attack_and_stronger_ring',
+      ),
       _ => i18n.t('toolbox.sound.triangle.balanced_brightness_and_decay_close'),
     };
   }
@@ -542,9 +546,7 @@ class _TriangleToolState extends State<_TriangleTool> {
               .toList(growable: false),
         ),
         const SizedBox(height: 14),
-        Text(
-          i18n.t('toolbox.sound.triangle.ring'),
-        ),
+        Text(i18n.t('toolbox.sound.triangle.ring')),
         Slider(
           value: _ring,
           min: 0.2,
@@ -561,9 +563,7 @@ class _TriangleToolState extends State<_TriangleTool> {
             refreshSheet();
           },
         ),
-        Text(
-          i18n.t('toolbox.sound.triangle.strike'),
-        ),
+        Text(i18n.t('toolbox.sound.triangle.strike')),
         Slider(
           value: _strikePoint,
           min: 0.1,
@@ -582,9 +582,7 @@ class _TriangleToolState extends State<_TriangleTool> {
             refreshSheet();
           },
         ),
-        Text(
-          i18n.t('toolbox.sound.triangle.damping'),
-        ),
+        Text(i18n.t('toolbox.sound.triangle.damping')),
         Slider(
           value: _damping,
           min: 0.0,
@@ -784,7 +782,9 @@ class _TriangleToolState extends State<_TriangleTool> {
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
                           Text(
-                            i18n.t('toolbox.sound.triangle.left_is_softer_right_is'),
+                            i18n.t(
+                              'toolbox.sound.triangle.left_is_softer_right_is',
+                            ),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: Colors.white70,
                             ),
@@ -847,7 +847,9 @@ class _TriangleToolState extends State<_TriangleTool> {
           const SizedBox(height: 12),
           SectionHeader(
             title: i18n.t('toolbox.sound.flute.preset_pack'),
-            subtitle: i18n.t('toolbox.sound.triangle.presets_move_tone_material_and'),
+            subtitle: i18n.t(
+              'toolbox.sound.triangle.presets_move_tone_material_and',
+            ),
           ),
           const SizedBox(height: 10),
           Wrap(
@@ -871,7 +873,9 @@ class _TriangleToolState extends State<_TriangleTool> {
           const SizedBox(height: 14),
           SectionHeader(
             title: i18n.t('toolbox.sound.triangle.strike_stage'),
-            subtitle: i18n.t('toolbox.sound.triangle.tap_directly_on_the_triangle'),
+            subtitle: i18n.t(
+              'toolbox.sound.triangle.tap_directly_on_the_triangle',
+            ),
           ),
           const SizedBox(height: 10),
           _buildTriangleStage(context, i18n, height: 240, immersive: false),
@@ -880,7 +884,9 @@ class _TriangleToolState extends State<_TriangleTool> {
           const SizedBox(height: 14),
           SectionHeader(
             title: i18n.t('toolbox.sound.triangle.tone_and_decay'),
-            subtitle: i18n.t('toolbox.sound.triangle.material_shapes_overtones_while_strike'),
+            subtitle: i18n.t(
+              'toolbox.sound.triangle.material_shapes_overtones_while_strike',
+            ),
           ),
           const SizedBox(height: 10),
           Wrap(
@@ -902,9 +908,7 @@ class _TriangleToolState extends State<_TriangleTool> {
                 .toList(growable: false),
           ),
           const SizedBox(height: 10),
-          Text(
-            i18n.t('toolbox.sound.triangle.ring'),
-          ),
+          Text(i18n.t('toolbox.sound.triangle.ring')),
           Slider(
             value: _ring,
             min: 0.2,
@@ -912,9 +916,7 @@ class _TriangleToolState extends State<_TriangleTool> {
             divisions: 16,
             onChanged: (value) => setState(() => _ring = value),
           ),
-          Text(
-            i18n.t('toolbox.sound.triangle.strike'),
-          ),
+          Text(i18n.t('toolbox.sound.triangle.strike')),
           Slider(
             value: _strikePoint,
             min: 0.1,
@@ -926,9 +928,7 @@ class _TriangleToolState extends State<_TriangleTool> {
               unawaited(_warmUpActivePreset());
             },
           ),
-          Text(
-            i18n.t('toolbox.sound.triangle.damping'),
-          ),
+          Text(i18n.t('toolbox.sound.triangle.damping')),
           Slider(
             value: _damping,
             min: 0.0,

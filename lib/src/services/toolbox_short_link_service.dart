@@ -107,8 +107,7 @@ class ToolboxShortLinkService {
     if (trimmed.isEmpty) {
       throw const FormatException('URL is empty.');
     }
-    final withScheme = RegExp(r'^[a-zA-Z][a-zA-Z0-9+.-]*://')
-            .hasMatch(trimmed)
+    final withScheme = RegExp(r'^[a-zA-Z][a-zA-Z0-9+.-]*://').hasMatch(trimmed)
         ? trimmed
         : 'https://$trimmed';
     final uri = Uri.parse(withScheme);
@@ -124,7 +123,9 @@ class ToolboxShortLinkService {
 
   static String sanitizeAlias(String input) {
     final alias = input.trim().replaceAll(RegExp(r'[^A-Za-z0-9_-]+'), '-');
-    return alias.replaceAll(RegExp(r'-{2,}'), '-').replaceAll(RegExp(r'^-|-$'), '');
+    return alias
+        .replaceAll(RegExp(r'-{2,}'), '-')
+        .replaceAll(RegExp(r'^-|-$'), '');
   }
 
   static String buildLocalAlias(Uri url, {String alias = ''}) {
@@ -161,25 +162,25 @@ class ToolboxShortLinkService {
     try {
       final shortUrl = switch (provider) {
         ToolboxShortLinkProvider.tinyUrl => await _shortenWithTinyUrl(
-            client,
-            normalizedUrl,
-          ),
+          client,
+          normalizedUrl,
+        ),
         ToolboxShortLinkProvider.isGd => await _shortenWithIsGd(
-            client,
-            normalizedUrl,
-            cleanedAlias,
-            host: 'is.gd',
-          ),
+          client,
+          normalizedUrl,
+          cleanedAlias,
+          host: 'is.gd',
+        ),
         ToolboxShortLinkProvider.vGd => await _shortenWithIsGd(
-            client,
-            normalizedUrl,
-            cleanedAlias,
-            host: 'v.gd',
-          ),
+          client,
+          normalizedUrl,
+          cleanedAlias,
+          host: 'v.gd',
+        ),
         ToolboxShortLinkProvider.cleanUri => await _shortenWithCleanUri(
-            client,
-            normalizedUrl,
-          ),
+          client,
+          normalizedUrl,
+        ),
         ToolboxShortLinkProvider.localAlias => throw StateError('unreachable'),
       };
       return ToolboxShortLinkResult(
@@ -242,13 +243,12 @@ class ToolboxShortLinkService {
     }
   }
 
-  static Future<String> _shortenWithTinyUrl(
-    http.Client client,
-    Uri url,
-  ) async {
-    final endpoint = Uri.https('tinyurl.com', '/api-create.php', <String, String>{
-      'url': url.toString(),
-    });
+  static Future<String> _shortenWithTinyUrl(http.Client client, Uri url) async {
+    final endpoint = Uri.https(
+      'tinyurl.com',
+      '/api-create.php',
+      <String, String>{'url': url.toString()},
+    );
     final response = await client
         .get(endpoint, headers: _headers)
         .timeout(const Duration(seconds: 12));

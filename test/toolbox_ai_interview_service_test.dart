@@ -16,10 +16,19 @@ void main() {
       );
 
       expect(result.detectedType, ToolboxAiInterviewType.systemDesign);
-      expect(result.answerOutline.join('\n'), contains('SLA'));
-      expect(result.answerOutline.join('\n'), contains('缓存'));
+      expect(
+        result.answerOutline.map((item) => item.key),
+        contains('life.ai_interview.outline.system_design.sla'),
+      );
+      expect(
+        result.answerOutline.map((item) => item.key),
+        contains('life.ai_interview.outline.system_design.cache_queue_storage'),
+      );
       expect(result.followUpQuestions.length, greaterThan(3));
-      expect(result.promptDraft, contains('系统设计'));
+      expect(
+        result.fallbackQuestionKey,
+        'life.ai_interview.fallback_question.system_design',
+      );
     });
 
     test('scores structured STAR draft higher than empty draft', () {
@@ -40,7 +49,10 @@ void main() {
 
       expect(empty.readinessScore, 0);
       expect(structured.readinessScore, greaterThan(empty.readinessScore));
-      expect(structured.evaluationNotes.join('\n'), contains('可面试表达'));
+      expect(
+        structured.evaluationNotes.map((item) => item.key),
+        contains('life.ai_interview.evaluation.ready_strong'),
+      );
     });
 
     test(
@@ -55,10 +67,15 @@ void main() {
           ),
         );
 
-        expect(result.normalizedQuestion, contains('为什么'));
-        expect(result.promptDraft, contains('真实、合规'));
-        expect(result.promptDraft, contains('中英双语'));
-        expect(result.boundaryNotes.join('\n'), contains('不进行屏幕捕获'));
+        expect(result.normalizedQuestion, isEmpty);
+        expect(
+          result.fallbackQuestionKey,
+          'life.ai_interview.fallback_question.hr',
+        );
+        expect(
+          result.boundaryNotes.map((item) => item.key),
+          contains('life.ai_interview.boundary.local_practice'),
+        );
       },
     );
   });

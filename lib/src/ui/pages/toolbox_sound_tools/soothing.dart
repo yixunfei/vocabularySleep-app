@@ -1,15 +1,15 @@
 part of '../toolbox_sound_tools.dart';
 
 class _SoothingPreset {
-  const _SoothingPreset({
-    required this.id,
-    required this.title,
-    required this.subtitle,
-  });
+  const _SoothingPreset({required this.id});
 
   final String id;
-  final String title;
-  final String subtitle;
+
+  String title(AppI18n i18n) =>
+      i18n.t('toolbox.sound.soothing.preset.$id.title');
+
+  String subtitle(AppI18n i18n) =>
+      i18n.t('toolbox.sound.soothing.preset.$id.subtitle');
 }
 
 class _SoothingMusicTool extends StatefulWidget {
@@ -22,13 +22,9 @@ class _SoothingMusicTool extends StatefulWidget {
 class _SoothingMusicToolState extends State<_SoothingMusicTool>
     with SingleTickerProviderStateMixin {
   static const List<_SoothingPreset> _presets = <_SoothingPreset>[
-    _SoothingPreset(id: 'moon', title: 'Moon', subtitle: 'Soft floating bed'),
-    _SoothingPreset(id: 'mist', title: 'Mist', subtitle: 'Airy and slow'),
-    _SoothingPreset(
-      id: 'harbor',
-      title: 'Harbor',
-      subtitle: 'Brighter for evening focus',
-    ),
+    _SoothingPreset(id: 'moon'),
+    _SoothingPreset(id: 'mist'),
+    _SoothingPreset(id: 'harbor'),
   ];
 
   final ToolboxLoopController _loop = ToolboxLoopController();
@@ -86,6 +82,7 @@ class _SoothingMusicToolState extends State<_SoothingMusicTool>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final i18n = _toolboxI18n(context);
     final preset = _presets.firstWhere((item) => item.id == _presetId);
 
     return Column(
@@ -143,14 +140,14 @@ class _SoothingMusicToolState extends State<_SoothingMusicTool>
                                 ),
                                 const SizedBox(height: 10),
                                 Text(
-                                  preset.title,
+                                  preset.title(i18n),
                                   style: theme.textTheme.titleLarge?.copyWith(
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  preset.subtitle,
+                                  preset.subtitle(i18n),
                                   textAlign: TextAlign.center,
                                   style: theme.textTheme.bodySmall,
                                 ),
@@ -170,7 +167,13 @@ class _SoothingMusicToolState extends State<_SoothingMusicTool>
                         ? Icons.pause_circle_filled_rounded
                         : Icons.play_circle_fill_rounded,
                   ),
-                  label: Text(_playing ? 'Pause ambience' : 'Start ambience'),
+                  label: Text(
+                    i18n.t(
+                      _playing
+                          ? 'toolbox.sound.soothing.pause_ambience'
+                          : 'toolbox.sound.soothing.start_ambience',
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -183,10 +186,11 @@ class _SoothingMusicToolState extends State<_SoothingMusicTool>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const SectionHeader(
-                  title: 'Preset',
-                  subtitle:
-                      'Switch between three locally synthesized textures.',
+                SectionHeader(
+                  title: i18n.t('toolbox.sound.soothing.preset_section_title'),
+                  subtitle: i18n.t(
+                    'toolbox.sound.soothing.preset_section_subtitle',
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Wrap(
@@ -196,7 +200,7 @@ class _SoothingMusicToolState extends State<_SoothingMusicTool>
                       .map((item) {
                         final selected = item.id == _presetId;
                         return ChoiceChip(
-                          label: Text(item.title),
+                          label: Text(item.title(i18n)),
                           selected: selected,
                           onSelected: (_) => _selectPreset(item.id),
                         );
@@ -205,7 +209,12 @@ class _SoothingMusicToolState extends State<_SoothingMusicTool>
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Volume ${(100 * _volume).round()}%',
+                  i18n.t(
+                    'toolbox.sound.soothing.volume_percent',
+                    params: <String, Object?>{
+                      'percent': (100 * _volume).round(),
+                    },
+                  ),
                   style: theme.textTheme.labelLarge,
                 ),
                 Slider(

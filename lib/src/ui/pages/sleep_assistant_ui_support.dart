@@ -17,10 +17,6 @@ String sleepDateKeyFromDateTime(DateTime value) {
   return '$year-$month-$day';
 }
 
-String pickSleepText(AppI18n i18n, {required String zh, required String en}) {
-  return AppI18n.normalizeLanguageCode(i18n.languageCode) == 'zh' ? zh : en;
-}
-
 Color sleepReadableAccent(
   BuildContext context,
   Color color, {
@@ -195,15 +191,33 @@ TextTheme _sleepDarkTextTheme(TextTheme base, ColorScheme colorScheme) {
 
 String sleepIssueLabel(AppI18n i18n, SleepIssueType issue) {
   return switch (issue) {
-    SleepIssueType.difficultyFallingAsleep => i18n.t('toolbox.sleep.support.issue.hard_fall_asleep'),
-    SleepIssueType.frequentAwakenings => i18n.t('toolbox.sleep.support.issue.frequent_awakenings'),
-    SleepIssueType.earlyAwakening => i18n.t('toolbox.sleep.support.issue.early_awakening'),
-    SleepIssueType.nonRestorativeSleep => i18n.t('toolbox.sleep.support.issue.non_restorative'),
-    SleepIssueType.irregularSchedule => i18n.t('toolbox.sleep.support.issue.irregular_schedule'),
-    SleepIssueType.racingThoughts => i18n.t('toolbox.sleep.support.issue.racing_thoughts'),
-    SleepIssueType.daytimeSleepiness => i18n.t('toolbox.sleep.support.issue.daytime_sleepiness'),
-    SleepIssueType.snoringRisk => i18n.t('toolbox.sleep.support.issue.snoring_risk'),
-    SleepIssueType.painOrTension => i18n.t('toolbox.sleep.support.issue.pain_tension'),
+    SleepIssueType.difficultyFallingAsleep => i18n.t(
+      'toolbox.sleep.support.issue.hard_fall_asleep',
+    ),
+    SleepIssueType.frequentAwakenings => i18n.t(
+      'toolbox.sleep.support.issue.frequent_awakenings',
+    ),
+    SleepIssueType.earlyAwakening => i18n.t(
+      'toolbox.sleep.support.issue.early_awakening',
+    ),
+    SleepIssueType.nonRestorativeSleep => i18n.t(
+      'toolbox.sleep.support.issue.non_restorative',
+    ),
+    SleepIssueType.irregularSchedule => i18n.t(
+      'toolbox.sleep.support.issue.irregular_schedule',
+    ),
+    SleepIssueType.racingThoughts => i18n.t(
+      'toolbox.sleep.support.issue.racing_thoughts',
+    ),
+    SleepIssueType.daytimeSleepiness => i18n.t(
+      'toolbox.sleep.support.issue.daytime_sleepiness',
+    ),
+    SleepIssueType.snoringRisk => i18n.t(
+      'toolbox.sleep.support.issue.snoring_risk',
+    ),
+    SleepIssueType.painOrTension => i18n.t(
+      'toolbox.sleep.support.issue.pain_tension',
+    ),
   };
 }
 
@@ -218,64 +232,128 @@ String sleepRiskLabel(AppI18n i18n, SleepRiskLevel risk) {
 
 String sleepNightModeLabel(AppI18n i18n, SleepNightRescueMode mode) {
   return switch (mode) {
-    SleepNightRescueMode.briefAwakening => i18n.t('toolbox.sleep.support.mode.brief'),
-    SleepNightRescueMode.fullyAwake => i18n.t('toolbox.sleep.support.mode.fully_awake'),
-    SleepNightRescueMode.racingThoughts => i18n.t('toolbox.sleep.support.mode.racing_thoughts'),
-    SleepNightRescueMode.bodyActivated => i18n.t('toolbox.sleep.support.mode.body_activated'),
-    SleepNightRescueMode.temperatureDiscomfort => i18n.t('toolbox.sleep.support.mode.temperature'),
+    SleepNightRescueMode.briefAwakening => i18n.t(
+      'toolbox.sleep.support.mode.brief',
+    ),
+    SleepNightRescueMode.fullyAwake => i18n.t(
+      'toolbox.sleep.support.mode.fully_awake',
+    ),
+    SleepNightRescueMode.racingThoughts => i18n.t(
+      'toolbox.sleep.support.mode.racing_thoughts',
+    ),
+    SleepNightRescueMode.bodyActivated => i18n.t(
+      'toolbox.sleep.support.mode.body_activated',
+    ),
+    SleepNightRescueMode.temperatureDiscomfort => i18n.t(
+      'toolbox.sleep.support.mode.temperature',
+    ),
   };
 }
 
 String sleepNightModeBody(AppI18n i18n, SleepNightRescueMode mode) {
   return switch (mode) {
-    SleepNightRescueMode.briefAwakening => i18n.t('toolbox.sleep.support.mode_body.brief'),
-    SleepNightRescueMode.fullyAwake => i18n.t('toolbox.sleep.support.mode_body.fully_awake'),
-    SleepNightRescueMode.racingThoughts => i18n.t('toolbox.sleep.support.mode_body.racing_thoughts'),
-    SleepNightRescueMode.bodyActivated => i18n.t('toolbox.sleep.support.mode_body.body_activated'),
-    SleepNightRescueMode.temperatureDiscomfort => i18n.t('toolbox.sleep.support.mode_body.temperature'),
+    SleepNightRescueMode.briefAwakening => i18n.t(
+      'toolbox.sleep.support.mode_body.brief',
+    ),
+    SleepNightRescueMode.fullyAwake => i18n.t(
+      'toolbox.sleep.support.mode_body.fully_awake',
+    ),
+    SleepNightRescueMode.racingThoughts => i18n.t(
+      'toolbox.sleep.support.mode_body.racing_thoughts',
+    ),
+    SleepNightRescueMode.bodyActivated => i18n.t(
+      'toolbox.sleep.support.mode_body.body_activated',
+    ),
+    SleepNightRescueMode.temperatureDiscomfort => i18n.t(
+      'toolbox.sleep.support.mode_body.temperature',
+    ),
   };
 }
 
 String sleepTrackLabel(AppI18n i18n, SleepPlanTrack track) {
   return switch (track) {
-    SleepPlanTrack.observation => i18n.t('toolbox.sleep.support.track.observation'),
+    SleepPlanTrack.observation => i18n.t(
+      'toolbox.sleep.support.track.observation',
+    ),
     SleepPlanTrack.windDown => i18n.t('toolbox.sleep.support.track.wind_down'),
-    SleepPlanTrack.insomniaSupport => i18n.t('toolbox.sleep.support.track.insomnia'),
-    SleepPlanTrack.rhythmReset => i18n.t('toolbox.sleep.support.track.rhythm_reset'),
-    SleepPlanTrack.environmentFix => i18n.t('toolbox.sleep.support.track.environment'),
-    SleepPlanTrack.daytimeRecovery => i18n.t('toolbox.sleep.support.track.recovery'),
+    SleepPlanTrack.insomniaSupport => i18n.t(
+      'toolbox.sleep.support.track.insomnia',
+    ),
+    SleepPlanTrack.rhythmReset => i18n.t(
+      'toolbox.sleep.support.track.rhythm_reset',
+    ),
+    SleepPlanTrack.environmentFix => i18n.t(
+      'toolbox.sleep.support.track.environment',
+    ),
+    SleepPlanTrack.daytimeRecovery => i18n.t(
+      'toolbox.sleep.support.track.recovery',
+    ),
   };
 }
 
 String sleepProgramLabel(AppI18n i18n, SleepProgramType type) {
   return switch (type) {
-    SleepProgramType.sevenDayRhythmReset => i18n.t('toolbox.sleep.support.program.rhythm_7'),
-    SleepProgramType.fourteenDaySleepReset => i18n.t('toolbox.sleep.support.program.reset_14'),
-    SleepProgramType.insomniaStarter => i18n.t('toolbox.sleep.support.program.starter'),
+    SleepProgramType.sevenDayRhythmReset => i18n.t(
+      'toolbox.sleep.support.program.rhythm_7',
+    ),
+    SleepProgramType.fourteenDaySleepReset => i18n.t(
+      'toolbox.sleep.support.program.reset_14',
+    ),
+    SleepProgramType.insomniaStarter => i18n.t(
+      'toolbox.sleep.support.program.starter',
+    ),
   };
 }
 
 String sleepProgramBody(AppI18n i18n, SleepProgramType type) {
   return switch (type) {
-    SleepProgramType.sevenDayRhythmReset => i18n.t('toolbox.sleep.support.program_body.rhythm_7'),
-    SleepProgramType.fourteenDaySleepReset => i18n.t('toolbox.sleep.support.program_body.reset_14'),
-    SleepProgramType.insomniaStarter => i18n.t('toolbox.sleep.support.program_body.starter'),
+    SleepProgramType.sevenDayRhythmReset => i18n.t(
+      'toolbox.sleep.support.program_body.rhythm_7',
+    ),
+    SleepProgramType.fourteenDaySleepReset => i18n.t(
+      'toolbox.sleep.support.program_body.reset_14',
+    ),
+    SleepProgramType.insomniaStarter => i18n.t(
+      'toolbox.sleep.support.program_body.starter',
+    ),
   };
 }
 
 String sleepRoutineStepTypeLabel(AppI18n i18n, SleepRoutineStepType type) {
   return switch (type) {
-    SleepRoutineStepType.dimLights => i18n.t('toolbox.sleep.support.step.dim_lights'),
-    SleepRoutineStepType.stopScreens => i18n.t('toolbox.sleep.support.step.stop_screens'),
-    SleepRoutineStepType.prepareRoom => i18n.t('toolbox.sleep.support.step.prepare_room'),
-    SleepRoutineStepType.unloadThoughts => i18n.t('toolbox.sleep.support.step.unload_thoughts'),
-    SleepRoutineStepType.breathing => i18n.t('toolbox.sleep.support.step.breathing'),
-    SleepRoutineStepType.stretch => i18n.t('toolbox.sleep.support.step.stretch'),
-    SleepRoutineStepType.warmBath => i18n.t('toolbox.sleep.support.step.warm_bath'),
-    SleepRoutineStepType.whiteNoise => i18n.t('toolbox.sleep.support.step.white_noise'),
-    SleepRoutineStepType.soothingAudio => i18n.t('toolbox.sleep.support.step.soothing_audio'),
-    SleepRoutineStepType.bodyScan => i18n.t('toolbox.sleep.support.step.body_scan'),
-    SleepRoutineStepType.goToBed => i18n.t('toolbox.sleep.support.step.go_to_bed'),
+    SleepRoutineStepType.dimLights => i18n.t(
+      'toolbox.sleep.support.step.dim_lights',
+    ),
+    SleepRoutineStepType.stopScreens => i18n.t(
+      'toolbox.sleep.support.step.stop_screens',
+    ),
+    SleepRoutineStepType.prepareRoom => i18n.t(
+      'toolbox.sleep.support.step.prepare_room',
+    ),
+    SleepRoutineStepType.unloadThoughts => i18n.t(
+      'toolbox.sleep.support.step.unload_thoughts',
+    ),
+    SleepRoutineStepType.breathing => i18n.t(
+      'toolbox.sleep.support.step.breathing',
+    ),
+    SleepRoutineStepType.stretch => i18n.t(
+      'toolbox.sleep.support.step.stretch',
+    ),
+    SleepRoutineStepType.warmBath => i18n.t(
+      'toolbox.sleep.support.step.warm_bath',
+    ),
+    SleepRoutineStepType.whiteNoise => i18n.t(
+      'toolbox.sleep.support.step.white_noise',
+    ),
+    SleepRoutineStepType.soothingAudio => i18n.t(
+      'toolbox.sleep.support.step.soothing_audio',
+    ),
+    SleepRoutineStepType.bodyScan => i18n.t(
+      'toolbox.sleep.support.step.body_scan',
+    ),
+    SleepRoutineStepType.goToBed => i18n.t(
+      'toolbox.sleep.support.step.go_to_bed',
+    ),
   };
 }
 
@@ -290,11 +368,21 @@ String sleepRoutineTemplateName(AppI18n i18n, SleepRoutineTemplate template) {
 
 String sleepRoutineStepLabel(AppI18n i18n, SleepRoutineStep step) {
   return switch (step.label) {
-    'Dim only the lights you can reach' => i18n.t('toolbox.sleep.support.template_step.tiny1'),
-    'Put the screen face down' => i18n.t('toolbox.sleep.support.template_step.tiny2'),
-    'Park one loud thought' => i18n.t('toolbox.sleep.support.template_step.tiny3'),
-    'Longer exhale breathing' => i18n.t('toolbox.sleep.support.template_step.tiny4'),
-    'Get into bed without adding tasks' => i18n.t('toolbox.sleep.support.template_step.tiny5'),
+    'Dim only the lights you can reach' => i18n.t(
+      'toolbox.sleep.support.template_step.tiny1',
+    ),
+    'Put the screen face down' => i18n.t(
+      'toolbox.sleep.support.template_step.tiny2',
+    ),
+    'Park one loud thought' => i18n.t(
+      'toolbox.sleep.support.template_step.tiny3',
+    ),
+    'Longer exhale breathing' => i18n.t(
+      'toolbox.sleep.support.template_step.tiny4',
+    ),
+    'Get into bed without adding tasks' => i18n.t(
+      'toolbox.sleep.support.template_step.tiny5',
+    ),
     _ =>
       step.label.trim().isEmpty
           ? sleepRoutineStepTypeLabel(i18n, step.type)
@@ -319,15 +407,20 @@ String sleepMinutesLabel(int? minutes, {bool long = false, AppI18n? i18n}) {
   }
   final resolved = i18n ?? AppI18n('zh');
   if (hours <= 0) {
-    return pickSleepText(resolved, zh: '$remain 分钟', en: '$remain minutes');
+    return resolved.t(
+      'inline.plan296.ui.pages.sleep.assistant.ui.support.minutes.07e42c7d92',
+      params: <String, Object?>{'remain': remain},
+    );
   }
   if (remain <= 0) {
-    return pickSleepText(resolved, zh: '$hours 小时', en: '$hours hours');
+    return resolved.t(
+      'inline.plan296.ui.pages.sleep.assistant.ui.support.hours.ac8ec21634',
+      params: <String, Object?>{'hours': hours},
+    );
   }
-  return pickSleepText(
-    resolved,
-    zh: '$hours 小时 $remain 分钟',
-    en: '$hours h $remain min',
+  return resolved.t(
+    'inline.plan296.ui.pages.sleep.assistant.ui.support.h_min.9bfae5b952',
+    params: <String, Object?>{'hours': hours, 'remain': remain},
   );
 }
 
@@ -341,12 +434,14 @@ String sleepSecondsLabel(int seconds, {AppI18n? i18n}) {
   }
   final resolved = i18n ?? AppI18n('zh');
   if (minutes <= 0) {
-    return pickSleepText(resolved, zh: '$seconds 秒', en: '$seconds sec');
+    return resolved.t(
+      'inline.plan296.ui.pages.sleep.assistant.ui.support.sec.eff736ba6b',
+      params: <String, Object?>{'seconds': seconds},
+    );
   }
-  return pickSleepText(
-    resolved,
-    zh: '$minutes 分 ${seconds % 60} 秒',
-    en: '$minutes min ${seconds % 60} sec',
+  return resolved.t(
+    'inline.plan296.ui.pages.sleep.assistant.ui.support.min_sec.27e3b4811c',
+    params: <String, Object?>{'minutes': minutes, 'p1': seconds % 60},
   );
 }
 
@@ -526,7 +621,9 @@ String sleepAssessmentFactorTitle(AppI18n i18n, String factorId) {
     'stressLoadLevel' => i18n.t('toolbox.sleep.support.factor.stress'),
     'screenDependenceLevel' => i18n.t('toolbox.sleep.support.factor.screen'),
     'lateWorkFrequency' => i18n.t('toolbox.sleep.support.factor.late_work'),
-    'exerciseLateFrequency' => i18n.t('toolbox.sleep.support.factor.late_exercise'),
+    'exerciseLateFrequency' => i18n.t(
+      'toolbox.sleep.support.factor.late_exercise',
+    ),
     'painImpactLevel' => i18n.t('toolbox.sleep.support.factor.pain'),
     'snoringRisk' => i18n.t('toolbox.sleep.support.factor.snoring'),
     _ => factorId,
@@ -536,9 +633,15 @@ String sleepAssessmentFactorTitle(AppI18n i18n, String factorId) {
 String sleepAssessmentFactorHint(AppI18n i18n, String factorId) {
   return switch (factorId) {
     'stressLoadLevel' => i18n.t('toolbox.sleep.support.factor_hint.stress'),
-    'screenDependenceLevel' => i18n.t('toolbox.sleep.support.factor_hint.screen'),
-    'lateWorkFrequency' => i18n.t('toolbox.sleep.support.factor_hint.late_work'),
-    'exerciseLateFrequency' => i18n.t('toolbox.sleep.support.factor_hint.late_exercise'),
+    'screenDependenceLevel' => i18n.t(
+      'toolbox.sleep.support.factor_hint.screen',
+    ),
+    'lateWorkFrequency' => i18n.t(
+      'toolbox.sleep.support.factor_hint.late_work',
+    ),
+    'exerciseLateFrequency' => i18n.t(
+      'toolbox.sleep.support.factor_hint.late_exercise',
+    ),
     'painImpactLevel' => i18n.t('toolbox.sleep.support.factor_hint.pain'),
     'snoringRisk' => i18n.t('toolbox.sleep.support.factor_hint.snoring'),
     _ => '',
@@ -547,12 +650,16 @@ String sleepAssessmentFactorHint(AppI18n i18n, String factorId) {
 
 String sleepDailyFactorTitle(AppI18n i18n, String factorId) {
   return switch (factorId) {
-    'caffeineAfterCutoff' => i18n.t('toolbox.sleep.support.daily.late_caffeine'),
+    'caffeineAfterCutoff' => i18n.t(
+      'toolbox.sleep.support.daily.late_caffeine',
+    ),
     'lateScreenExposure' => i18n.t('toolbox.sleep.support.daily.late_screens'),
     'alcoholAtNight' => i18n.t('toolbox.sleep.support.daily.alcohol'),
     'morningLightDone' => i18n.t('toolbox.sleep.support.daily.morning_light'),
     'heavyDinner' => i18n.t('toolbox.sleep.support.daily.heavy_dinner'),
-    'intenseExerciseLate' => i18n.t('toolbox.sleep.support.daily.late_exercise'),
+    'intenseExerciseLate' => i18n.t(
+      'toolbox.sleep.support.daily.late_exercise',
+    ),
     'hotBathDone' => i18n.t('toolbox.sleep.support.daily.warm_bath'),
     'stretchingDone' => i18n.t('toolbox.sleep.support.daily.stretching'),
     'whiteNoiseUsed' => i18n.t('toolbox.sleep.support.daily.white_noise'),
@@ -566,10 +673,14 @@ String sleepDailyFactorTitle(AppI18n i18n, String factorId) {
 
 String sleepDailyFactorHint(AppI18n i18n, String factorId) {
   return switch (factorId) {
-    'caffeineAfterCutoff' => i18n.t('toolbox.sleep.support.daily_hint.caffeine'),
+    'caffeineAfterCutoff' => i18n.t(
+      'toolbox.sleep.support.daily_hint.caffeine',
+    ),
     'lateScreenExposure' => i18n.t('toolbox.sleep.support.daily_hint.screens'),
     'alcoholAtNight' => i18n.t('toolbox.sleep.support.daily_hint.alcohol'),
-    'morningLightDone' => i18n.t('toolbox.sleep.support.daily_hint.morning_light'),
+    'morningLightDone' => i18n.t(
+      'toolbox.sleep.support.daily_hint.morning_light',
+    ),
     'clockChecking' => i18n.t('toolbox.sleep.support.daily_hint.clock'),
     'whiteNoiseUsed' => i18n.t('toolbox.sleep.support.daily_hint.white_noise'),
     _ => '',

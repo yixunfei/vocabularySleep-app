@@ -451,28 +451,22 @@ class _BreathingPracticeReleaseCardState
     }
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     final boltHint = _lastBoltSeconds <= 0
-        ? pickUiText(
-            i18n,
-            zh: '建议先做一次 BOLT 测试，确认自己在第一次明确呼吸欲望出现前能稳定停留的秒数。',
-            en: 'Run a BOLT check first so you know how many seconds you can comfortably stay before the first clear urge to breathe.',
+        ? i18n.t(
+            'inline.plan294.breathing.run_a_bolt_check_first_so_you_know_how_many_seco_c2c60be9',
           )
         : _lastBoltSeconds < 20
-        ? pickUiText(
-            i18n,
-            zh: '你最近的 BOLT 是 $_lastBoltSeconds 秒。一般建议先把 BOLT 稳定到 20 秒左右，再尝试高海拔模拟。',
-            en: 'Your recent BOLT is $_lastBoltSeconds s. It is usually better to build toward roughly 20 seconds before trying altitude simulation.',
+        ? i18n.t(
+            'inline.plan294.breathing.your_recent_bolt_is_value_s_it_is_usually_better_b95808b3',
           )
-        : pickUiText(
-            i18n,
-            zh: '你最近的 BOLT 是 $_lastBoltSeconds 秒。练习时仍然只停在舒适边界，不要硬扛。',
-            en: 'Your recent BOLT is $_lastBoltSeconds s. Still stay inside comfort and do not force the hold.',
+        : i18n.t(
+            'inline.plan294.breathing.your_recent_bolt_is_value_s_still_stay_inside_co_42bf0ef2',
           );
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
           title: Text(
-            pickUiText(i18n, zh: '启用高海拔模拟？', en: 'Use altitude simulation?'),
+            i18n.t('inline.plan294.breathing.use_altitude_simulation_728c5c5e'),
           ),
           content: SingleChildScrollView(
             child: Column(
@@ -480,10 +474,8 @@ class _BreathingPracticeReleaseCardState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '这是进阶练习，会加入“长呼气 + 呼后屏息”来模拟更稀薄空气下的呼吸约束。请只在白天、静坐或安全站立时短练。',
-                    en: 'This advanced drill adds a long exhale plus an exhale hold to simulate a thinner-air constraint. Use it only briefly during the day while seated or standing safely.',
+                  i18n.t(
+                    'inline.plan294.breathing.this_advanced_drill_adds_a_long_exhale_plus_an_e_b6ec519e',
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -493,10 +485,8 @@ class _BreathingPracticeReleaseCardState
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '如果出现头晕、胸闷、刺麻或恢复吸气明显失控，请立刻停止并恢复自然呼吸。',
-                    en: 'Stop immediately and return to natural breathing if you get dizzy, tight-chested, tingly, or lose control of the recovery breath.',
+                  i18n.t(
+                    'inline.plan294.breathing.stop_immediately_and_return_to_natural_breathing_9485b3c1',
                   ),
                   style: Theme.of(dialogContext).textTheme.bodySmall,
                 ),
@@ -506,11 +496,11 @@ class _BreathingPracticeReleaseCardState
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+              child: Text(i18n.t('cancel')),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: Text(pickUiText(i18n, zh: '继续选择', en: 'Continue')),
+              child: Text(i18n.t('inline.plan294.breathing.continue_36efcbe3')),
             ),
           ],
         );
@@ -720,42 +710,26 @@ class _BreathingPracticeReleaseCardState
       elapsed.inSeconds ~/ math.max(1, _loopCycleSeconds),
     );
     final nextStep = switch (_scenario.id) {
-      'sleep_46' || 'sleep_478' => pickUiText(
-        i18n,
-        zh: '下一步：放下屏幕，保持环境昏暗，直接进入休息。',
-        en: 'Next: put the screen away, dim the room, and move into rest.',
+      'sleep_46' || 'sleep_478' => i18n.t(
+        'inline.plan294.breathing.next_put_the_screen_away_dim_the_room_and_move_i_1e0ec473',
       ),
-      'box_4444' || 'focus_nasal_44' => pickUiText(
-        i18n,
-        zh: '下一步：立刻开始下一段任务，把刚建立的节拍带进去。',
-        en: 'Next: begin the next task now while the rhythm is still fresh.',
+      'box_4444' || 'focus_nasal_44' => i18n.t(
+        'inline.plan294.breathing.next_begin_the_next_task_now_while_the_rhythm_is_6792f916',
       ),
-      'physiological_sigh_216' => pickUiText(
-        i18n,
-        zh: '下一步：恢复自然呼吸 30-60 秒，再决定是否需要再来一次短练。',
-        en: 'Next: return to natural breathing for 30-60 seconds before deciding whether to repeat.',
+      'physiological_sigh_216' => i18n.t(
+        'inline.plan294.breathing.next_return_to_natural_breathing_for_30_60_secon_59b66ade',
       ),
-      _altitudeScenarioId => pickUiText(
-        i18n,
-        zh: '下一步：先让呼吸完全恢复安静，再决定是否继续；高海拔模拟之间宁可少做，也不要硬顶。',
-        en: 'Next: let the breath fully settle before deciding whether to continue; with altitude simulation, less is better than forcing another round.',
+      _altitudeScenarioId => i18n.t(
+        'inline.plan294.breathing.next_let_the_breath_fully_settle_before_deciding_0c97b72e',
       ),
-      _ => pickUiText(
-        i18n,
-        zh: '下一步：给身体留半分钟安静余量，再进入下一个动作。',
-        en: 'Next: give the body half a minute of quiet space before the next activity.',
+      _ => i18n.t(
+        'inline.plan294.breathing.next_give_the_body_half_a_minute_of_quiet_space__82a0b744',
       ),
     };
     return _BreathingSessionSummary(
-      title: pickUiText(
-        i18n,
-        zh: '完成：${_scenario.name.resolve(i18n)}',
-        en: 'Completed: ${_scenario.name.resolve(i18n)}',
-      ),
-      body: pickUiText(
-        i18n,
-        zh: '本次练习 ${_fmt(elapsed)}，约完成 $cycles 轮。${_scenario.scene.resolve(i18n)}',
-        en: 'Completed ${_fmt(elapsed)} and about $cycles cycles. ${_scenario.scene.resolve(i18n)}',
+      title: i18n.t('inline.plan294.breathing.completed_value_a5eefca9'),
+      body: i18n.t(
+        'inline.plan294.breathing.completed_value_and_about_value_cycles_value_52f6c172',
       ),
       nextStep: nextStep,
     );
@@ -781,29 +755,22 @@ class _BreathingPracticeReleaseCardState
 
   String _voiceLabel(AppI18n i18n) {
     return switch (_voiceAvailability) {
-      _BreathingVoiceAvailability.off => pickUiText(
-        i18n,
-        zh: '语音提示已关闭',
-        en: 'Voice guidance is off',
+      _BreathingVoiceAvailability.off => i18n.t(
+        'inline.plan294.breathing.voice_guidance_is_off_7b585a90',
       ),
-      _BreathingVoiceAvailability.checking => pickUiText(
-        i18n,
-        zh: '正在检查语音资源',
-        en: 'Checking voice resources',
+      _BreathingVoiceAvailability.checking => i18n.t(
+        'inline.plan294.breathing.checking_voice_resources_8592be85',
       ),
       _BreathingVoiceAvailability.ready => switch (_voiceSourceKind) {
-        BreathingCueSourceKind.remote => pickUiText(
-          i18n,
-          zh: '云端缓存语音已就绪',
-          en: 'Cloud voice is ready',
+        BreathingCueSourceKind.remote => i18n.t(
+          'inline.plan294.breathing.cloud_voice_is_ready_57a78687',
         ),
-        BreathingCueSourceKind.asset ||
-        null => pickUiText(i18n, zh: '内置语音已就绪', en: 'Bundled voice is ready'),
+        BreathingCueSourceKind.asset || null => i18n.t(
+          'inline.plan294.breathing.bundled_voice_is_ready_ad8dde21',
+        ),
       },
-      _BreathingVoiceAvailability.unavailable => pickUiText(
-        i18n,
-        zh: '当前场景没有匹配到可用语音',
-        en: 'No usable voice cue matched this scenario',
+      _BreathingVoiceAvailability.unavailable => i18n.t(
+        'inline.plan294.breathing.no_usable_voice_cue_matched_this_scenario_dd320278',
       ),
     };
   }
@@ -811,59 +778,49 @@ class _BreathingPracticeReleaseCardState
   String _voiceSubtitle(AppI18n i18n) {
     switch (_voiceAvailability) {
       case _BreathingVoiceAvailability.off:
-        return pickUiText(
-          i18n,
-          zh: '你仍可使用文字提示和轻震动跟练。',
-          en: 'Text prompts and haptics still work when voice is off.',
+        return i18n.t(
+          'inline.plan294.breathing.text_prompts_and_haptics_still_work_when_voice_i_284e44df',
         );
       case _BreathingVoiceAvailability.checking:
-        return pickUiText(
-          i18n,
-          zh: '优先检查可用语音，并自动判断短节拍是否适合播报。',
-          en: 'Checking available cues, adapting short stages, and keeping pause stages silent by default.',
+        return i18n.t(
+          'inline.plan294.breathing.checking_available_cues_adapting_short_stages_an_91e89833',
         );
       case _BreathingVoiceAvailability.ready:
         final parts = <String>[];
         if (_expectedCueCount > 0) {
           parts.add(
-            pickUiText(
-              i18n,
-              zh: '$_availableCueCount/$_expectedCueCount 个节拍语音已就绪',
-              en: '$_availableCueCount/$_expectedCueCount cues ready',
-            ),
+            i18n.t('inline.plan294.breathing.value_value_cues_ready_d186cb84'),
           );
         }
         if (_shortStageSilentCount > 0) {
           parts.add(
-            pickUiText(
-              i18n,
-              zh: '$_shortStageSilentCount 个短节拍自动改为静默，避免语音压拍',
-              en: '$_shortStageSilentCount short stages stay silent to protect timing',
+            i18n.t(
+              'inline.plan294.breathing.value_short_stages_stay_silent_to_protect_timing_de7c8705',
             ),
           );
         }
-        parts.add(pickUiText(i18n, zh: '停顿阶段保持静音', en: 'Pause stays silent'));
+        parts.add(
+          i18n.t('inline.plan294.breathing.pause_stays_silent_c855c4a9'),
+        );
         return parts.isEmpty
-            ? pickUiText(i18n, zh: '语音可用。', en: 'Voice guidance is available.')
+            ? i18n.t(
+                'inline.plan294.breathing.voice_guidance_is_available_9dc405c5',
+              )
             : parts.join(' · ');
       case _BreathingVoiceAvailability.unavailable:
-        return pickUiText(
-          i18n,
-          zh: '建议先使用文字和震动；如果需要语音，可检查资源包是否完整。',
-          en: 'Use text and haptics for now; check the voice assets if you need audio guidance.',
+        return i18n.t(
+          'inline.plan294.breathing.use_text_and_haptics_for_now_check_the_voice_ass_0bdfc2e6',
         );
     }
   }
 
   String _voiceSourceChipLabel(AppI18n i18n) {
     return switch (_voiceSourceKind) {
-      BreathingCueSourceKind.remote => pickUiText(
-        i18n,
-        zh: '云端缓存',
-        en: 'Cloud cache',
+      BreathingCueSourceKind.remote => i18n.t(
+        'inline.plan294.breathing.cloud_cache_fc27eabe',
       ),
       BreathingCueSourceKind.asset ||
-      null => pickUiText(i18n, zh: '内置资源', en: 'Bundled'),
+      null => i18n.t('inline.plan294.breathing.bundled_abcbb0ae'),
     };
   }
 
@@ -896,7 +853,7 @@ class _BreathingPracticeReleaseCardState
     return _loopStages
         .map(
           (stage) =>
-              '${stage.label.resolve(i18n)} ${stage.seconds}${pickUiText(i18n, zh: '秒', en: 's')}',
+              '${stage.label.resolve(i18n)} ${stage.seconds}${i18n.t('toolbox.breathing.seconds_unit')}',
         )
         .join(' · ');
   }
@@ -906,11 +863,7 @@ class _BreathingPracticeReleaseCardState
     final formatted = value >= 10
         ? value.toStringAsFixed(0)
         : value.toStringAsFixed(1);
-    return pickUiText(
-      i18n,
-      zh: '约 $formatted 轮/分钟',
-      en: '~$formatted cycles/min',
-    );
+    return i18n.t('inline.plan294.breathing.value_cycles_min_e897befc');
   }
 
   String _friendlyVoiceLocation() {
@@ -927,16 +880,12 @@ class _BreathingPracticeReleaseCardState
   _BoltAssessment _boltAssessmentFor(AppI18n i18n, int seconds) {
     if (seconds <= 0) {
       return _BoltAssessment(
-        label: pickUiText(i18n, zh: '尚未测试', en: 'Not tested yet'),
-        body: pickUiText(
-          i18n,
-          zh: '先做一次 BOLT 测试，再根据结果决定是该优先练轻柔鼻呼吸、稳态慢呼吸，还是可以进入更进阶的屏息练习。',
-          en: 'Run one BOLT check first so you can decide whether to prioritize gentle nasal work, steady slow breathing, or more advanced hold work.',
+        label: i18n.t('toolbox.breathing.not_tested_yet'),
+        body: i18n.t(
+          'inline.plan294.breathing.run_one_bolt_check_first_so_you_can_decide_wheth_60a2d6fd',
         ),
-        nextStep: pickUiText(
-          i18n,
-          zh: '先从腹式 4-2-6-2、平息长呼 3-6 这类低刺激练习开始。',
-          en: 'Start with lower-intensity drills such as Diaphragm 4-2-6-2 or Calm 3-6.',
+        nextStep: i18n.t(
+          'inline.plan294.breathing.start_with_lower_intensity_drills_such_as_diaphr_fb0dafff',
         ),
         recommendedScenarioIds: const <String>[
           'diaphragm_4262',
@@ -949,16 +898,12 @@ class _BreathingPracticeReleaseCardState
     }
     if (seconds < 10) {
       return _BoltAssessment(
-        label: pickUiText(i18n, zh: 'BOLT 偏低', en: 'Low BOLT'),
-        body: pickUiText(
-          i18n,
-          zh: '先把重点放在鼻呼吸、放松和轻柔呼气，不要追求长时间屏息或高强度空气饥饿。',
-          en: 'Focus first on nasal breathing, relaxation, and gentle exhales rather than long holds or strong air hunger.',
+        label: i18n.t('inline.plan294.breathing.low_bolt_ec90371b'),
+        body: i18n.t(
+          'inline.plan294.breathing.focus_first_on_nasal_breathing_relaxation_and_ge_6b78cc6e',
         ),
-        nextStep: pickUiText(
-          i18n,
-          zh: '优先做低刺激练习，并把“停在第一次明确呼吸欲望前后”当作上限。',
-          en: 'Stay with low-intensity drills and treat the first clear urge to breathe as the ceiling.',
+        nextStep: i18n.t(
+          'inline.plan294.breathing.stay_with_low_intensity_drills_and_treat_the_fir_6a8b66d3',
         ),
         recommendedScenarioIds: const <String>[
           'diaphragm_4262',
@@ -971,16 +916,12 @@ class _BreathingPracticeReleaseCardState
     }
     if (seconds < 20) {
       return _BoltAssessment(
-        label: pickUiText(i18n, zh: 'BOLT 建设期', en: 'BOLT building'),
-        body: pickUiText(
-          i18n,
-          zh: '已经可以做稳态慢呼吸和短屏息，但仍应把重点放在安静、鼻吸鼻呼与稳定节律上。',
-          en: 'You can start using steady slow breathing and short holds, but the priority is still quiet nasal rhythm rather than hard breath-hold work.',
+        label: i18n.t('inline.plan294.breathing.bolt_building_2a9ed7a6'),
+        body: i18n.t(
+          'inline.plan294.breathing.you_can_start_using_steady_slow_breathing_and_sh_95bbcf39',
         ),
-        nextStep: pickUiText(
-          i18n,
-          zh: '先把 BOLT 稳到 20 秒左右，再考虑高海拔模拟。',
-          en: 'Build toward roughly 20 seconds before considering altitude simulation.',
+        nextStep: i18n.t(
+          'inline.plan294.breathing.build_toward_roughly_20_seconds_before_consideri_275735a2',
         ),
         recommendedScenarioIds: const <String>[
           'coherent_55',
@@ -993,16 +934,12 @@ class _BreathingPracticeReleaseCardState
     }
     if (seconds < 30) {
       return _BoltAssessment(
-        label: pickUiText(i18n, zh: 'BOLT 稳定区', en: 'Stable BOLT'),
-        body: pickUiText(
-          i18n,
-          zh: '你通常已经能承受轻到中等的空气饥饿，可以尝试更明确的节律控制和短时进阶练习。',
-          en: 'You can usually tolerate mild to moderate air hunger now, which opens the door to clearer pacing work and short advanced drills.',
+        label: i18n.t('inline.plan294.breathing.stable_bolt_2ecf7947'),
+        body: i18n.t(
+          'inline.plan294.breathing.you_can_usually_tolerate_mild_to_moderate_air_hu_d7d401e0',
         ),
-        nextStep: pickUiText(
-          i18n,
-          zh: '可以少量尝试高海拔模拟，但恢复吸气仍要安静、可控。',
-          en: 'You can sample altitude simulation briefly, but the recovery inhale still needs to stay calm and controlled.',
+        nextStep: i18n.t(
+          'inline.plan294.breathing.you_can_sample_altitude_simulation_briefly_but_t_271dd6d1',
         ),
         recommendedScenarioIds: const <String>[
           'box_4444',
@@ -1014,16 +951,12 @@ class _BreathingPracticeReleaseCardState
       );
     }
     return _BoltAssessment(
-      label: pickUiText(i18n, zh: 'BOLT 进阶区', en: 'Advanced BOLT'),
-      body: pickUiText(
-        i18n,
-        zh: '你已经有不错的空气饥饿耐受度，可以把短时高海拔模拟、经典 4-7-8 等更进阶节律作为补充，而不是主训练。',
-        en: 'You have a solid tolerance to air hunger now, so brief altitude simulation and advanced rhythms like Classic 4-7-8 can work as supplemental drills rather than the main practice.',
+      label: i18n.t('inline.plan294.breathing.advanced_bolt_bf1f7c51'),
+      body: i18n.t(
+        'inline.plan294.breathing.you_have_a_solid_tolerance_to_air_hunger_now_so__4450c4f3',
       ),
-      nextStep: pickUiText(
-        i18n,
-        zh: '继续把鼻呼吸、低刺激恢复和高强度短练搭配使用，不要把每次都练到极限。',
-        en: 'Keep combining nasal recovery work with short advanced drills, and avoid pushing every session to the limit.',
+      nextStep: i18n.t(
+        'inline.plan294.breathing.keep_combining_nasal_recovery_work_with_short_ad_e6d7f448',
       ),
       recommendedScenarioIds: const <String>[
         _altitudeScenarioId,
@@ -1037,20 +970,14 @@ class _BreathingPracticeReleaseCardState
 
   List<String> _generalTechniqueTips(AppI18n i18n) {
     return <String>[
-      pickUiText(
-        i18n,
-        zh: '基础原则先看鼻呼吸与轻柔呼吸，嘴巴更适合吃饭而不是日常换气。',
-        en: 'Start with nasal and gentle breathing. The mouth is better for eating than for routine ventilation.',
+      i18n.t(
+        'inline.plan294.breathing.start_with_nasal_and_gentle_breathing_the_mouth__b96d24e3',
       ),
-      pickUiText(
-        i18n,
-        zh: '呼吸要安静、平顺、像水流一样连续，不要用力“深吸一大口”。',
-        en: 'Keep the breath quiet, smooth, and continuous like flowing water instead of forcing a giant inhale.',
+      i18n.t(
+        'inline.plan294.breathing.keep_the_breath_quiet_smooth_and_continuous_like_5c2eaaf9',
       ),
-      pickUiText(
-        i18n,
-        zh: 'BOLT 和屏息都停在第一次明确呼吸欲望附近，不做最大憋气测试。',
-        en: 'For both BOLT and breath holds, stop around the first clear urge to breathe rather than testing a maximal hold.',
+      i18n.t(
+        'inline.plan294.breathing.for_both_bolt_and_breath_holds_stop_around_the_f_31509086',
       ),
     ];
   }
@@ -1058,60 +985,48 @@ class _BreathingPracticeReleaseCardState
   List<String> _scenarioTutorialSteps(AppI18n i18n) {
     final steps = <String>[
       for (final entry in _loopStages.asMap().entries)
-        '${entry.key + 1}. ${entry.value.label.resolve(i18n)} ${entry.value.seconds}${pickUiText(i18n, zh: '秒', en: 's')}: ${entry.value.prompt.resolve(i18n)}',
+        '${entry.key + 1}. ${entry.value.label.resolve(i18n)} ${entry.value.seconds}${i18n.t('toolbox.breathing.seconds_unit')}: ${entry.value.prompt.resolve(i18n)}',
     ];
     switch (_scenario.id) {
       case 'diaphragm_4262':
         steps.add(
-          pickUiText(
-            i18n,
-            zh: '用腹部带动节律，肩膀不要跟着抬起；如果一开始不习惯，就先让动作小一点。',
-            en: 'Let the belly drive the rhythm and keep the shoulders out of it; make the motion smaller if you are just learning.',
+          i18n.t(
+            'inline.plan294.breathing.let_the_belly_drive_the_rhythm_and_keep_the_shou_de37da85',
           ),
         );
         break;
       case 'focus_nasal_44' || 'box_4444':
         steps.add(
-          pickUiText(
-            i18n,
-            zh: '把计数感放在节律一致，而不是吸得更大；练完后立刻进入下一段专注任务。',
-            en: 'Keep the count consistent instead of making the breath bigger, then move straight into the next focus task.',
+          i18n.t(
+            'inline.plan294.breathing.keep_the_count_consistent_instead_of_making_the__7c64389f',
           ),
         );
         break;
       case 'sleep_46' || 'sleep_478':
         steps.add(
-          pickUiText(
-            i18n,
-            zh: '睡前模式宁可小口、安静，也不要把自己练清醒；如果越练越精神，就退回 4-6。',
-            en: 'At bedtime, smaller and quieter is better than waking yourself up; step back to 4-6 if the practice makes you more alert.',
+          i18n.t(
+            'inline.plan294.breathing.at_bedtime_smaller_and_quieter_is_better_than_wa_83444abb',
           ),
         );
         break;
       case 'physiological_sigh_216':
         steps.add(
-          pickUiText(
-            i18n,
-            zh: '把它当作 1 到 2 分钟的短练，练完先恢复自然呼吸 30 到 60 秒，再决定要不要继续。',
-            en: 'Treat it as a 1-2 minute drill, then return to natural breathing for 30-60 seconds before deciding whether to continue.',
+          i18n.t(
+            'inline.plan294.breathing.treat_it_as_a_1_2_minute_drill_then_return_to_na_b3075856',
           ),
         );
         break;
       case _altitudeScenarioId:
         steps.add(
-          pickUiText(
-            i18n,
-            zh: '高海拔模拟只停在“明确想呼吸但还能稳住”的边界；恢复吸气必须安静，不能猛吸。',
-            en: 'In altitude simulation, stop at the edge where the urge to breathe is clear but still controlled, and keep the recovery inhale quiet rather than sharp.',
+          i18n.t(
+            'inline.plan294.breathing.in_altitude_simulation_stop_at_the_edge_where_th_b420eb57',
           ),
         );
         break;
       default:
         steps.add(
-          pickUiText(
-            i18n,
-            zh: '如果某一段开始费力、发紧或想追求更大口，先把幅度减小，再继续跟节律。',
-            en: 'If any phase starts to feel effortful or tight, shrink the breath before trying to continue the rhythm.',
+          i18n.t(
+            'inline.plan294.breathing.if_any_phase_starts_to_feel_effortful_or_tight_s_de43f735',
           ),
         );
         break;
@@ -1224,36 +1139,34 @@ class _BreathingPracticeReleaseCardState
             ),
           ),
           title: Text(
-            pickUiText(i18n, zh: '呼吸说明', en: 'Breathing guide'),
+            i18n.t('inline.plan294.breathing.breathing_guide_187d125e'),
             style: Theme.of(
               context,
             ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
           ),
           subtitle: Text(
-            pickUiText(
-              i18n,
-              zh: '展开查看研究依据、身体要点、适用时机和节拍说明。',
-              en: 'Expand for research basis, body focus, when to use, and cycle flow.',
+            i18n.t(
+              'inline.plan294.breathing.expand_for_research_basis_body_focus_when_to_use_4f1dac47',
             ),
             style: Theme.of(context).textTheme.bodySmall,
           ),
           children: <Widget>[
             BreathingInsightTile(
-              title: pickUiText(i18n, zh: '研究依据', en: 'Research basis'),
+              title: i18n.t('inline.plan294.breathing.research_basis_7ab521bc'),
               body: _scenario.researchBasis.resolve(i18n),
               icon: Icons.science_outlined,
               tint: _theme.orbEnd,
             ),
             const SizedBox(height: 10),
             BreathingInsightTile(
-              title: pickUiText(i18n, zh: '作用机制', en: 'How it works'),
+              title: i18n.t('inline.plan294.breathing.how_it_works_7873349c'),
               body: _scenario.mechanism.resolve(i18n),
               icon: Icons.monitor_heart_outlined,
               tint: _theme.orbStart,
             ),
             const SizedBox(height: 12),
             Text(
-              pickUiText(i18n, zh: '身体关注', en: 'Body focus'),
+              i18n.t('inline.plan294.breathing.body_focus_0bfc282f'),
               style: Theme.of(
                 context,
               ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -1262,7 +1175,7 @@ class _BreathingPracticeReleaseCardState
             Text(_scenario.bodyFocus.resolve(i18n)),
             const SizedBox(height: 10),
             Text(
-              pickUiText(i18n, zh: '适用情境', en: 'When to use'),
+              i18n.t('inline.plan294.breathing.when_to_use_5a03e079'),
               style: Theme.of(
                 context,
               ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -1271,7 +1184,7 @@ class _BreathingPracticeReleaseCardState
             Text(_scenario.whenToUse.resolve(i18n)),
             const SizedBox(height: 10),
             Text(
-              pickUiText(i18n, zh: '节拍流程', en: 'Cycle flow'),
+              i18n.t('inline.plan294.breathing.cycle_flow_d49b5ac3'),
               style: Theme.of(
                 context,
               ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -1347,7 +1260,7 @@ class _BreathingPracticeReleaseCardState
               ScenarioTagChip(label: _paceLabel(i18n), color: _theme.orbStart),
               if (_scenario.advanced)
                 ScenarioTagChip(
-                  label: pickUiText(i18n, zh: '进阶', en: 'Advanced'),
+                  label: i18n.t('inline.plan294.breathing.advanced_5895a1d0'),
                   color: Theme.of(context).colorScheme.error,
                 ),
             ],
@@ -1387,36 +1300,38 @@ class _BreathingPracticeReleaseCardState
                   ),
                 ),
                 title: Text(
-                  pickUiText(i18n, zh: '呼吸说明', en: 'Breathing guide'),
+                  i18n.t('inline.plan294.breathing.breathing_guide_187d125e'),
                   style: Theme.of(
                     context,
                   ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 subtitle: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '展开查看研究依据、身体要点、适用时机和节拍说明。',
-                    en: 'Expand for research basis, body focus, when to use, and cycle flow.',
+                  i18n.t(
+                    'inline.plan294.breathing.expand_for_research_basis_body_focus_when_to_use_4f1dac47',
                   ),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 children: <Widget>[
                   BreathingInsightTile(
-                    title: pickUiText(i18n, zh: '研究依据', en: 'Research basis'),
+                    title: i18n.t(
+                      'inline.plan294.breathing.research_basis_7ab521bc',
+                    ),
                     body: _scenario.researchBasis.resolve(i18n),
                     icon: Icons.science_outlined,
                     tint: _theme.orbEnd,
                   ),
                   const SizedBox(height: 10),
                   BreathingInsightTile(
-                    title: pickUiText(i18n, zh: '作用机制', en: 'How it works'),
+                    title: i18n.t(
+                      'inline.plan294.breathing.how_it_works_7873349c',
+                    ),
                     body: _scenario.mechanism.resolve(i18n),
                     icon: Icons.monitor_heart_outlined,
                     tint: _theme.orbStart,
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    pickUiText(i18n, zh: '身体关注', en: 'Body focus'),
+                    i18n.t('inline.plan294.breathing.body_focus_0bfc282f'),
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -1425,7 +1340,7 @@ class _BreathingPracticeReleaseCardState
                   Text(_scenario.bodyFocus.resolve(i18n)),
                   const SizedBox(height: 10),
                   Text(
-                    pickUiText(i18n, zh: '适用情境', en: 'When to use'),
+                    i18n.t('inline.plan294.breathing.when_to_use_5a03e079'),
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -1434,7 +1349,7 @@ class _BreathingPracticeReleaseCardState
                   Text(_scenario.whenToUse.resolve(i18n)),
                   const SizedBox(height: 12),
                   Text(
-                    pickUiText(i18n, zh: '练习步骤', en: 'Practice steps'),
+                    i18n.t('toolbox.breathing.practice_steps'),
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -1464,19 +1379,15 @@ class _BreathingPracticeReleaseCardState
                       ),
                       if (_expectedCueCount > 0)
                         ScenarioTagChip(
-                          label: pickUiText(
-                            i18n,
-                            zh: '语音覆盖 $_availableCueCount/$_expectedCueCount',
-                            en: 'Coverage $_availableCueCount/$_expectedCueCount',
+                          label: i18n.t(
+                            'inline.plan294.breathing.coverage_value_value_20b6e21e',
                           ),
                           color: _theme.orbStart,
                         ),
                       if (_shortStageSilentCount > 0)
                         ScenarioTagChip(
-                          label: pickUiText(
-                            i18n,
-                            zh: '短节拍静默 $_shortStageSilentCount',
-                            en: 'Silent short $_shortStageSilentCount',
+                          label: i18n.t(
+                            'inline.plan294.breathing.silent_short_value_267977bd',
                           ),
                           color: _theme.accent,
                         ),
@@ -1485,17 +1396,15 @@ class _BreathingPracticeReleaseCardState
                   if (_friendlyVoiceLocation().isNotEmpty) ...<Widget>[
                     const SizedBox(height: 8),
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '最近匹配语音：${_friendlyVoiceLocation()}',
-                        en: 'Last matched cue: ${_friendlyVoiceLocation()}',
+                      i18n.t(
+                        'inline.plan294.breathing.last_matched_cue_value_b5ab39e2',
                       ),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
                   const SizedBox(height: 12),
                   Text(
-                    pickUiText(i18n, zh: '节拍流程', en: 'Cycle flow'),
+                    i18n.t('inline.plan294.breathing.cycle_flow_d49b5ac3'),
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -1507,7 +1416,7 @@ class _BreathingPracticeReleaseCardState
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    pickUiText(i18n, zh: '通用技巧', en: 'Core technique'),
+                    i18n.t('inline.plan294.breathing.core_technique_146539d7'),
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -1539,8 +1448,10 @@ class _BreathingPracticeReleaseCardState
                 ),
                 label: Text(
                   _previewing
-                      ? pickUiText(i18n, zh: '停止预听', en: 'Stop preview')
-                      : pickUiText(i18n, zh: '预听引导', en: 'Preview guidance'),
+                      ? i18n.t('inline.plan294.breathing.stop_preview_7fb28c98')
+                      : i18n.t(
+                          'inline.plan294.breathing.preview_guidance_3ef9cb3e',
+                        ),
                 ),
               ),
               OutlinedButton.icon(
@@ -1554,11 +1465,7 @@ class _BreathingPracticeReleaseCardState
                       },
                 icon: const Icon(Icons.schedule_rounded),
                 label: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '使用建议 ${_scenario.recommendedMinutes} 分钟',
-                    en: 'Use ${_scenario.recommendedMinutes} min',
-                  ),
+                  i18n.t('inline.plan294.breathing.use_value_min_24233949'),
                 ),
               ),
             ],
@@ -1566,7 +1473,7 @@ class _BreathingPracticeReleaseCardState
           if (_scenario.caution != null) ...<Widget>[
             const SizedBox(height: 12),
             SafetyNoteCard(
-              title: pickUiText(i18n, zh: '注意', en: 'Caution'),
+              title: i18n.t('toolbox.breathing.caution'),
               body: _scenario.caution!.resolve(i18n),
             ),
           ],
@@ -1579,33 +1486,25 @@ class _BreathingPracticeReleaseCardState
     final assessment = _boltAssessmentFor(i18n, _lastBoltSeconds);
     final liveSeconds = (_boltElapsed.inMilliseconds / 1000).toStringAsFixed(1);
     final currentValue = _boltRunning
-        ? '$liveSeconds ${pickUiText(i18n, zh: '秒', en: 's')}'
+        ? '$liveSeconds ${i18n.t('toolbox.breathing.seconds_unit')}'
         : _lastBoltSeconds > 0
-        ? '$_lastBoltSeconds ${pickUiText(i18n, zh: '秒', en: 's')}'
+        ? '$_lastBoltSeconds ${i18n.t('toolbox.breathing.seconds_unit')}'
         : '--';
     final bestValue = _bestBoltSeconds > 0
-        ? '$_bestBoltSeconds ${pickUiText(i18n, zh: '秒', en: 's')}'
+        ? '$_bestBoltSeconds ${i18n.t('toolbox.breathing.seconds_unit')}'
         : '--';
     final boltSteps = <String>[
-      pickUiText(
-        i18n,
-        zh: '先坐稳 30 到 60 秒，让呼吸恢复安静，再开始测试。',
-        en: 'Sit quietly for 30-60 seconds first so the breath settles before you test.',
+      i18n.t(
+        'inline.plan294.breathing.sit_quietly_for_30_60_seconds_first_so_the_breat_5ad70a5c',
       ),
-      pickUiText(
-        i18n,
-        zh: '用鼻子轻轻小吸、轻轻小呼，然后开始计时并捏住鼻子。',
-        en: 'Take a small inhale and small exhale through the nose, then start timing and pinch the nose.',
+      i18n.t(
+        'inline.plan294.breathing.take_a_small_inhale_and_small_exhale_through_the_d1951ee3',
       ),
-      pickUiText(
-        i18n,
-        zh: '在第一次明确想呼吸时就停止，不做最大憋气挑战。',
-        en: 'Stop at the first clear urge to breathe rather than turning this into a maximal-hold challenge.',
+      i18n.t(
+        'inline.plan294.breathing.stop_at_the_first_clear_urge_to_breathe_rather_t_53fccdef',
       ),
-      pickUiText(
-        i18n,
-        zh: '测试后用安静鼻呼吸恢复；如果恢复时想猛吸，说明这次憋得太久了。',
-        en: 'Recover with quiet nasal breathing. If you need to gasp on recovery, you held too long.',
+      i18n.t(
+        'inline.plan294.breathing.recover_with_quiet_nasal_breathing_if_you_need_t_39d1a9a7',
       ),
     ];
 
@@ -1644,21 +1543,19 @@ class _BreathingPracticeReleaseCardState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          pickUiText(i18n, zh: 'BOLT 测试', en: 'BOLT test'),
+                          i18n.t('toolbox.breathing.bolt_test'),
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.w800),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          pickUiText(
-                            i18n,
-                            zh: _boltExpanded
-                                ? '测的是第一次明确呼吸欲望前的舒适停留，不是拼最长憋气。'
-                                : '默认折叠显示摘要，展开后查看步骤、结果解读与推荐练习。',
-                            en: _boltExpanded
-                                ? 'This measures your comfortable pause before the first clear urge to breathe, not the longest possible hold.'
-                                : 'Collapsed by default for a compact summary. Expand for steps, interpretation, and drill recommendations.',
-                          ),
+                          _boltExpanded
+                              ? i18n.t(
+                                  'inline.plan295.breathing.this_measures_your_comfortable_pause.b6af45648e35',
+                                )
+                              : i18n.t(
+                                  'inline.plan295.breathing.collapsed_by_default_for_a_compact_s.6370f8a32d7a',
+                                ),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
@@ -1681,17 +1578,16 @@ class _BreathingPracticeReleaseCardState
             runSpacing: 8,
             children: <Widget>[
               ScenarioTagChip(
-                label:
-                    '${pickUiText(i18n, zh: '当前', en: 'Current')} $currentValue',
+                label: '${i18n.t('toolbox.breathing.current')} $currentValue',
                 color: assessment.tint,
               ),
               ScenarioTagChip(
                 label:
-                    '${pickUiText(i18n, zh: '区间', en: 'Band')} ${assessment.label}',
+                    '${i18n.t('inline.plan294.breathing.band_070340a8')} ${assessment.label}',
                 color: _theme.orbEnd,
               ),
               ScenarioTagChip(
-                label: '${pickUiText(i18n, zh: '最佳', en: 'Best')} $bestValue',
+                label: '${i18n.t('toolbox.breathing.best')} $bestValue',
                 color: _theme.orbStart,
               ),
             ],
@@ -1716,10 +1612,10 @@ class _BreathingPracticeReleaseCardState
                 ),
                 label: Text(
                   _boltPreparing
-                      ? pickUiText(i18n, zh: '准备中', en: 'Preparing')
+                      ? i18n.t('toolbox.breathing.preparing')
                       : _boltRunning
-                      ? pickUiText(i18n, zh: '记录结果', en: 'Save result')
-                      : pickUiText(i18n, zh: '开始测试', en: 'Start test'),
+                      ? i18n.t('inline.plan294.breathing.save_result_dc50a487')
+                      : i18n.t('toolbox.breathing.start_test'),
                 ),
               ),
               OutlinedButton.icon(
@@ -1731,7 +1627,7 @@ class _BreathingPracticeReleaseCardState
                     ? () => unawaited(_resetBoltTest())
                     : null,
                 icon: const Icon(Icons.restart_alt_rounded),
-                label: Text(pickUiText(i18n, zh: '重置', en: 'Reset')),
+                label: Text(i18n.t('appearanceReset')),
               ),
               TextButton.icon(
                 onPressed: () => setState(() => _boltExpanded = !_boltExpanded),
@@ -1741,11 +1637,9 @@ class _BreathingPracticeReleaseCardState
                       : Icons.unfold_more_rounded,
                 ),
                 label: Text(
-                  pickUiText(
-                    i18n,
-                    zh: _boltExpanded ? '收起详情' : '展开详情',
-                    en: _boltExpanded ? 'Collapse' : 'Expand',
-                  ),
+                  _boltExpanded
+                      ? i18n.t('inline.plan295.breathing.collapse.0b47184ebf0f')
+                      : i18n.t('inline.plan295.breathing.expand.face3cd93c1c'),
                 ),
               ),
             ],
@@ -1762,28 +1656,27 @@ class _BreathingPracticeReleaseCardState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   BreathingInsightTile(
-                    title: pickUiText(
-                      i18n,
-                      zh: _lastBoltSeconds > 0
-                          ? '结果解读：${assessment.label}'
-                          : '怎么理解 BOLT',
-                      en: _lastBoltSeconds > 0
-                          ? 'Interpretation: ${assessment.label}'
-                          : 'How to read BOLT',
-                    ),
+                    title: _lastBoltSeconds > 0
+                        ? i18n.t(
+                            'inline.plan295.breathing.interpretation_assessment_label.fc570901e88f',
+                            params: <String, Object?>{
+                              'assessment.label': assessment.label,
+                            },
+                          )
+                        : i18n.t(
+                            'inline.plan295.breathing.how_to_read_bolt.8942d80de46d',
+                          ),
                     body: _lastBoltSeconds > 0
                         ? '${assessment.body} ${assessment.nextStep}'
-                        : pickUiText(
-                            i18n,
-                            zh: 'BOLT 常被用来粗略判断你当前对空气饥饿的耐受度，以及更适合做轻柔练习还是进阶屏息。',
-                            en: 'BOLT is often used as a rough read on your current tolerance to air hunger and whether you should emphasize gentle work or more advanced breath holds.',
+                        : i18n.t(
+                            'inline.plan294.breathing.bolt_is_often_used_as_a_rough_read_on_your_curre_149decb3',
                           ),
                     icon: Icons.insights_rounded,
                     tint: assessment.tint,
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    pickUiText(i18n, zh: '测试步骤', en: 'Test steps'),
+                    i18n.t('toolbox.breathing.test_steps'),
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -1797,7 +1690,7 @@ class _BreathingPracticeReleaseCardState
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    pickUiText(i18n, zh: '推荐练习', en: 'Recommended drills'),
+                    i18n.t('toolbox.breathing.recommended_drills'),
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -1829,10 +1722,8 @@ class _BreathingPracticeReleaseCardState
                   if (!assessment.altitudeReady) ...<Widget>[
                     const SizedBox(height: 10),
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '当前结果不建议直接进入高海拔模拟，先把鼻呼吸和安静恢复练稳。',
-                        en: 'This score does not suggest going straight into altitude simulation yet. Build nasal breathing and calm recovery first.',
+                      i18n.t(
+                        'inline.plan294.breathing.this_score_does_not_suggest_going_straight_into__62a21d43',
                       ),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
@@ -1857,10 +1748,10 @@ class _BreathingPracticeReleaseCardState
     );
     final stageLabel = _textOn
         ? _stage.label.resolve(i18n)
-        : pickUiText(i18n, zh: '跟随光球', en: 'Follow the orb');
+        : i18n.t('inline.plan294.breathing.follow_the_orb_faac40d5');
     final stagePrompt = _textOn
         ? _stage.prompt.resolve(i18n)
-        : pickUiText(i18n, zh: '保持自然呼吸', en: 'Keep the breath natural');
+        : i18n.t('inline.plan294.breathing.keep_the_breath_natural_a64ed4b6');
 
     return Container(
       width: double.infinity,
@@ -1891,11 +1782,9 @@ class _BreathingPracticeReleaseCardState
                 ),
               ),
               BreathingMetricPill(
-                label: pickUiText(i18n, zh: '单轮时长', en: 'Cycle'),
-                value: pickUiText(
-                  i18n,
-                  zh: '$_loopCycleSeconds 秒',
-                  en: '$_loopCycleSeconds s',
+                label: i18n.t('inline.plan294.breathing.cycle_1ca94239'),
+                value: i18n.t(
+                  'inline.ui.pages.toolbox_breathing_tool.loopcycleseconds_s_0c3e97',
                 ),
               ),
             ],
@@ -2027,10 +1916,8 @@ class _BreathingPracticeReleaseCardState
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        pickUiText(
-                          i18n,
-                          zh: '本段剩 $remainStage 秒 · 第 ${_rounds + 1} 轮 · 下一步 ${_nextStage.label.resolve(i18n)}',
-                          en: '$remainStage s left · Round ${_rounds + 1} · Next ${_nextStage.label.resolve(i18n)}',
+                        i18n.t(
+                          'inline.plan294.breathing.value_s_left_round_value_next_value_43938d7c',
                         ),
                         style: Theme.of(
                           context,
@@ -2067,19 +1954,17 @@ class _BreathingPracticeReleaseCardState
             alignment: WrapAlignment.center,
             children: <Widget>[
               BreathingMetricPill(
-                label: pickUiText(i18n, zh: '目标', en: 'Target'),
-                value: pickUiText(
-                  i18n,
-                  zh: '$_targetMinutes 分钟',
-                  en: '$_targetMinutes min',
+                label: i18n.t('toolbox.breathing.target'),
+                value: i18n.t(
+                  'inline.ui.pages.toolbox_breathing_tool.targetminutes_min_029964',
                 ),
               ),
               BreathingMetricPill(
-                label: pickUiText(i18n, zh: '已完成', en: 'Done'),
+                label: i18n.t('inline.plan294.breathing.done_fe297e5a'),
                 value: _fmt(_elapsed),
               ),
               BreathingMetricPill(
-                label: pickUiText(i18n, zh: '剩余', en: 'Left'),
+                label: i18n.t('inline.plan294.breathing.left_a0d89e6f'),
                 value:
                     '${remainSession ~/ 60}:${(remainSession % 60).toString().padLeft(2, '0')}',
               ),
@@ -2106,10 +1991,10 @@ class _BreathingPracticeReleaseCardState
                 ),
                 label: Text(
                   _sessionPreparing
-                      ? pickUiText(i18n, zh: '准备中', en: 'Preparing')
+                      ? i18n.t('toolbox.breathing.preparing')
                       : _running
-                      ? pickUiText(i18n, zh: '暂停', en: 'Pause')
-                      : pickUiText(i18n, zh: '开始', en: 'Start'),
+                      ? i18n.t('inline.plan294.breathing.pause_b6fe36b8')
+                      : i18n.t('toolbox.breathing.start'),
                 ),
               ),
               OutlinedButton.icon(
@@ -2117,14 +2002,14 @@ class _BreathingPracticeReleaseCardState
                     ? null
                     : () => unawaited(_skipStage()),
                 icon: const Icon(Icons.skip_next_rounded),
-                label: Text(pickUiText(i18n, zh: '下一阶段', en: 'Next stage')),
+                label: Text(i18n.t('toolbox.breathing.next_stage')),
               ),
               OutlinedButton.icon(
                 onPressed: _sessionPreparing
                     ? null
                     : () => unawaited(_resetSession()),
                 icon: const Icon(Icons.refresh_rounded),
-                label: Text(pickUiText(i18n, zh: '重置', en: 'Reset')),
+                label: Text(i18n.t('appearanceReset')),
               ),
             ],
           ),
@@ -2142,14 +2027,14 @@ class _BreathingPracticeReleaseCardState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(i18n, zh: '训练设置', en: 'Session setup'),
+            i18n.t('inline.plan294.breathing.session_setup_0a4f32d7'),
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 12),
           Text(
-            pickUiText(i18n, zh: '主题', en: 'Theme'),
+            i18n.t('appearanceThemeTitle'),
             style: Theme.of(
               context,
             ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -2174,7 +2059,7 @@ class _BreathingPracticeReleaseCardState
           ),
           const SizedBox(height: 14),
           Text(
-            pickUiText(i18n, zh: '时长', en: 'Duration'),
+            i18n.t('inline.plan294.breathing.duration_7b90564f'),
             style: Theme.of(
               context,
             ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -2193,7 +2078,9 @@ class _BreathingPracticeReleaseCardState
                     },
                     tint: _theme.accent,
                     label: Text(
-                      pickUiText(i18n, zh: '$minutes 分钟', en: '$minutes min'),
+                      i18n.t(
+                        'inline.ui.pages.toolbox_breathing_tool.minutes_min_373b41',
+                      ),
                     ),
                   ),
                 )
@@ -2203,12 +2090,10 @@ class _BreathingPracticeReleaseCardState
           SwitchListTile.adaptive(
             value: _includeHoldStage,
             onChanged: (value) => unawaited(_setIncludeHoldStage(value)),
-            title: Text(pickUiText(i18n, zh: '屏息阶段', en: 'Breath-hold stage')),
+            title: Text(i18n.t('toolbox.breathing.breath_hold_stage')),
             subtitle: Text(
-              pickUiText(
-                i18n,
-                zh: '默认开启。关闭后会跳过所有屏息步骤，只保留吸气/呼气/停顿。',
-                en: 'On by default. Turn this off to skip all hold phases and keep only inhale, exhale, and pause.',
+              i18n.t(
+                'inline.plan294.breathing.on_by_default_turn_this_off_to_skip_all_hold_pha_51f0422b',
               ),
             ),
             contentPadding: EdgeInsets.zero,
@@ -2216,12 +2101,12 @@ class _BreathingPracticeReleaseCardState
           SwitchListTile.adaptive(
             value: _includeRecoveryStage,
             onChanged: (value) => unawaited(_setIncludeRecoveryStage(value)),
-            title: Text(pickUiText(i18n, zh: '保留恢复段', en: 'Recovery stage')),
+            title: Text(
+              i18n.t('inline.plan294.breathing.recovery_stage_25591247'),
+            ),
             subtitle: Text(
-              pickUiText(
-                i18n,
-                zh: '关闭后只保留主要呼吸步骤，更适合连续跟练；停顿阶段也不会播报语音。',
-                en: 'When off, the loop keeps only the main breathing phases for smoother repetition, and pause stages stay silent.',
+              i18n.t(
+                'inline.plan294.breathing.when_off_the_loop_keeps_only_the_main_breathing__90b5dbd6',
               ),
             ),
             contentPadding: EdgeInsets.zero,
@@ -2229,12 +2114,10 @@ class _BreathingPracticeReleaseCardState
           SwitchListTile.adaptive(
             value: _voiceOn,
             onChanged: (value) => unawaited(_setVoiceEnabled(value)),
-            title: Text(pickUiText(i18n, zh: '语音提示', en: 'Voice cues')),
+            title: Text(i18n.t('toolbox.breathing.voice_cues')),
             subtitle: Text(
-              pickUiText(
-                i18n,
-                zh: '优先下载并缓存云端语音；语音会跟随吸气/呼气/屏息阶段，停顿阶段默认保持静音。',
-                en: 'Cloud cues are downloaded and cached first. Voice follows inhale, exhale, and hold phases, while pause stays silent by default.',
+              i18n.t(
+                'inline.plan294.breathing.cloud_cues_are_downloaded_and_cached_first_voice_d82f5299',
               ),
             ),
             contentPadding: EdgeInsets.zero,
@@ -2245,12 +2128,10 @@ class _BreathingPracticeReleaseCardState
               setState(() => _textOn = value);
               _savePrefs();
             },
-            title: Text(pickUiText(i18n, zh: '文字提示', en: 'Text cues')),
+            title: Text(i18n.t('inline.plan294.breathing.text_cues_2c05233d')),
             subtitle: Text(
-              pickUiText(
-                i18n,
-                zh: '显示当前动作、身体提示和倒计时；如果想闭眼练习，可以只保留语音与震动。',
-                en: 'Show the current action, body prompt, and countdown. Turn this off for eyes-closed practice.',
+              i18n.t(
+                'inline.plan294.breathing.show_the_current_action_body_prompt_and_countdow_80d08090',
               ),
             ),
             contentPadding: EdgeInsets.zero,
@@ -2261,12 +2142,10 @@ class _BreathingPracticeReleaseCardState
               setState(() => _hapticOn = value);
               _savePrefs();
             },
-            title: Text(pickUiText(i18n, zh: '震动反馈', en: 'Haptics')),
+            title: Text(i18n.t('inline.plan294.breathing.haptics_b2ca72e4')),
             subtitle: Text(
-              pickUiText(
-                i18n,
-                zh: '阶段切换时给轻微触感，适合不盯着屏幕也能跟练。',
-                en: 'Adds subtle pulses on stage changes so you can follow without staring at the screen.',
+              i18n.t(
+                'inline.plan294.breathing.adds_subtle_pulses_on_stage_changes_so_you_can_f_f66b095f',
               ),
             ),
             contentPadding: EdgeInsets.zero,
@@ -2287,11 +2166,11 @@ class _BreathingPracticeReleaseCardState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             SectionHeader(
-              title: pickUiText(i18n, zh: '呼吸训练场景', en: 'Breathing scenarios'),
-              subtitle: pickUiText(
-                i18n,
-                zh: '针对移动端优化：修复乱码、重做窄屏布局、改进语音播报与短节拍适配，并补充更有依据的训练场景。',
-                en: 'Optimized for mobile: cleaned copy, improved narrow-screen layout, better cue timing, and more evidence-aware breathing scenarios.',
+              title: i18n.t(
+                'inline.plan294.breathing.breathing_scenarios_516fd8a0',
+              ),
+              subtitle: i18n.t(
+                'inline.plan294.breathing.optimized_for_mobile_cleaned_copy_improved_narro_b34cae79',
               ),
             ),
             const SizedBox(height: 12),
@@ -2308,25 +2187,25 @@ class _BreathingPracticeReleaseCardState
               runSpacing: 10,
               children: <Widget>[
                 ToolboxMetricCard(
-                  label: pickUiText(i18n, zh: '轮数', en: 'Rounds'),
+                  label: i18n.t('inline.plan294.breathing.rounds_06b0afec'),
                   value: '$_rounds',
                 ),
                 ToolboxMetricCard(
-                  label: pickUiText(i18n, zh: '已完成场次', en: 'Sessions'),
+                  label: i18n.t('inline.plan294.breathing.sessions_56f23224'),
                   value: '$_completedSessions',
                 ),
                 ToolboxMetricCard(
-                  label: pickUiText(i18n, zh: '累计时长', en: 'Total time'),
+                  label: i18n.t('inline.plan294.breathing.total_time_edee2084'),
                   value: _fmt(Duration(seconds: _totalSeconds)),
                 ),
                 ToolboxMetricCard(
-                  label: pickUiText(i18n, zh: '语音来源', en: 'Voice'),
+                  label: i18n.t('inline.plan294.breathing.voice_e0595c4f'),
                   value: _voiceSourceChipLabel(i18n),
                 ),
                 ToolboxMetricCard(
-                  label: pickUiText(i18n, zh: 'BOLT', en: 'BOLT'),
+                  label: i18n.t('toolbox.breathing.bolt'),
                   value: _lastBoltSeconds > 0
-                      ? '$_lastBoltSeconds ${pickUiText(i18n, zh: '秒', en: 's')}'
+                      ? '$_lastBoltSeconds ${i18n.t('toolbox.breathing.seconds_unit')}'
                       : '--',
                 ),
               ],
@@ -2343,11 +2222,9 @@ class _BreathingPracticeReleaseCardState
             _buildSettingsCard(context, i18n),
             const SizedBox(height: 14),
             SafetyNoteCard(
-              title: pickUiText(i18n, zh: '安全提醒', en: 'Safety note'),
-              body: pickUiText(
-                i18n,
-                zh: '不要在驾驶、骑行或任何需要持续警觉的场景中使用。若出现头晕、胸闷、刺痛或明显不适，请立刻停止并恢复自然呼吸。睡前与长呼气模式应以舒适为先，不把自己练到缺氧感。',
-                en: 'Do not use while driving or in any situation that requires continuous alertness. Stop immediately if you feel dizzy, tight-chested, tingly, or clearly uncomfortable. Keep bedtime and long-exhale work comfortably below the point of air hunger.',
+              title: i18n.t('inline.plan294.breathing.safety_note_e100b974'),
+              body: i18n.t(
+                'inline.plan294.breathing.do_not_use_while_driving_or_in_any_situation_tha_abad4d6c',
               ),
             ),
           ],

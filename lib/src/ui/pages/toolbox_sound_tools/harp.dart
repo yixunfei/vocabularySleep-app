@@ -494,7 +494,9 @@ class _HarpToolState extends State<_HarpTool>
       'bright' => i18n.t('toolbox.sound.harp.clear_attack_for_active_strum'),
       'nylon' => i18n.t('toolbox.sound.harp.round_body_with_light_transient'),
       'glass' => i18n.t('toolbox.sound.harp.thin_body_and_sparkling_top'),
-      'concert' => i18n.t('toolbox.sound.harp.pedalharp_like_balance_and_sustain'),
+      'concert' => i18n.t(
+        'toolbox.sound.harp.pedalharp_like_balance_and_sustain',
+      ),
       'steel' => i18n.t('toolbox.sound.harp.stronger_core_and_brighter_attack'),
       _ => i18n.t('toolbox.sound.harp.balanced_and_soft'),
     };
@@ -537,9 +539,15 @@ class _HarpToolState extends State<_HarpTool>
 
   String _realismDescription(AppI18n i18n, _HarpRealismPreset preset) {
     return switch (preset.id) {
-      'pedal_harp' => i18n.t('toolbox.sound.harp.balanced_sustain_for_melodic_passages'),
-      'steel_studio' => i18n.t('toolbox.sound.harp.tight_transient_and_clear_note'),
-      'chamber_soft' => i18n.t('toolbox.sound.harp.soft_fingerpluck_with_gentle_bloom'),
+      'pedal_harp' => i18n.t(
+        'toolbox.sound.harp.balanced_sustain_for_melodic_passages',
+      ),
+      'steel_studio' => i18n.t(
+        'toolbox.sound.harp.tight_transient_and_clear_note',
+      ),
+      'chamber_soft' => i18n.t(
+        'toolbox.sound.harp.soft_fingerpluck_with_gentle_bloom',
+      ),
       _ => i18n.t('toolbox.sound.harp.round_body_with_controlled_hall'),
     };
   }
@@ -1396,7 +1404,9 @@ class _HarpToolState extends State<_HarpTool>
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  i18n.t('toolbox.sound.harp.tap_for_single_note_swipe'),
+                                  i18n.t(
+                                    'toolbox.sound.harp.tap_for_single_note_swipe',
+                                  ),
                                   style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(color: Colors.white),
                                 ),
@@ -1539,9 +1549,7 @@ class _HarpToolState extends State<_HarpTool>
                 OutlinedButton.icon(
                   onPressed: _playArpeggio,
                   icon: const Icon(Icons.auto_awesome_rounded),
-                  label: Text(
-                    i18n.t('toolbox.sound.harp.auto_arpeggio'),
-                  ),
+                  label: Text(i18n.t('toolbox.sound.harp.auto_arpeggio')),
                 ),
                 FilledButton.tonalIcon(
                   onPressed: () => _openHarpSettingsSheet(context, i18n),

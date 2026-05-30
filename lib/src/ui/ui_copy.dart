@@ -11,99 +11,30 @@ import '../services/online_ambient_catalog_service.dart';
 import '../state/app_state.dart';
 import 'theme/app_theme.dart';
 
-String pickUiText(
-  AppI18n i18n, {
-  required String zh,
-  required String en,
-  String? ja,
-  String? de,
-  String? fr,
-  String? es,
-  String? ru,
-}) {
-  return switch (AppI18n.normalizeLanguageCode(i18n.languageCode)) {
-    'zh' => zh,
-    'ja' => ja ?? en,
-    'de' => de ?? en,
-    'fr' => fr ?? en,
-    'es' => es ?? en,
-    'ru' => ru ?? en,
-    _ => en,
-  };
-}
-
 String experienceModeTitle(AppI18n i18n, AppExperienceMode mode) {
   return switch (mode) {
-    AppExperienceMode.sleep => pickUiText(
-      i18n,
-      zh: '助眠',
-      en: 'Sleep',
-      ja: '睡眠',
-      de: 'Schlaf',
-      fr: 'Sommeil',
-      es: 'Sueño',
-      ru: 'Сон',
+    AppExperienceMode.sleep => i18n.t(
+      'toolbox.sound.soothing.v2.mode.sleep.title',
     ),
-    AppExperienceMode.focus => pickUiText(
-      i18n,
-      zh: '专注',
-      en: 'Focus',
-      ja: '集中',
-      de: 'Fokus',
-      fr: 'Concentration',
-      es: 'Enfoque',
-      ru: 'Фокус',
-    ),
+    AppExperienceMode.focus => i18n.t('ambientCategoryFocus'),
   };
 }
 
 String experienceModeDescription(AppI18n i18n, AppExperienceMode mode) {
   return switch (mode) {
-    AppExperienceMode.sleep => pickUiText(
-      i18n,
-      zh: '更柔和的视觉与环境音，帮助放松和入睡。',
-      en: 'Calmer visuals centered on playback and ambient sound.',
-      ja: '再生と環境音を中心にした、より落ち着いた体験です。',
-      de: 'Ruhigere Darstellung mit Fokus auf Wiedergabe und Umgebungsgeräusche.',
-      fr: 'Une expérience plus apaisée autour de la lecture et de l’audio ambiant.',
-      es: 'Una experiencia más calmada centrada en reproducción y audio ambiental.',
-      ru: 'Более спокойный режим с упором на воспроизведение и фоновые звуки.',
+    AppExperienceMode.sleep => i18n.t(
+      'inline.ui.ui_copy.calmer_visuals_centered_on_playback_and_ambient_sound_0c1474',
     ),
-    AppExperienceMode.focus => pickUiText(
-      i18n,
-      zh: '更高的信息密度，适合搜索、浏览与练习。',
-      en: 'Sharper information density for search, browsing, and practice.',
-      ja: '検索・閲覧・練習向けの高密度レイアウトです。',
-      de: 'Höhere Informationsdichte für Suche, Lesen und Üben.',
-      fr: 'Une densité d’information plus forte pour chercher, parcourir et pratiquer.',
-      es: 'Más densidad de información para buscar, navegar y practicar.',
-      ru: 'Более плотный интерфейс для поиска, просмотра и тренировки.',
+    AppExperienceMode.focus => i18n.t(
+      'inline.ui.ui_copy.sharper_information_density_for_search_browsing_and_prac_a24f4e',
     ),
   };
 }
 
 String playOrderLabel(AppI18n i18n, PlayOrder order) {
   return switch (order) {
-    PlayOrder.sequential => pickUiText(
-      i18n,
-      zh: '顺序',
-      en: 'Sequential',
-      ja: '順序',
-      de: 'Reihenfolge',
-      fr: 'Séquentiel',
-      es: 'Secuencial',
-      ru: 'По порядку',
-    ),
-    PlayOrder.random => pickUiText(
-      i18n,
-      zh: '随机',
-      en: 'Shuffle',
-      ja: 'シャッフル',
-      de: 'Zufällig',
-      fr: 'Aléatoire',
-      es: 'Aleatorio',
-      ru: 'Случайно',
-    ),
+    PlayOrder.sequential => i18n.t('inline.ui.ui_copy.sequential_4b7b2d'),
+    PlayOrder.random => i18n.t('inline.ui.ui_copy.shuffle_034c48'),
   };
 }
 
@@ -129,15 +60,11 @@ String asrProviderLabel(AppI18n i18n, AsrProviderType provider) {
 String voiceInputProviderLabel(AppI18n i18n, VoiceInputProviderType provider) {
   return switch (provider) {
     VoiceInputProviderType.api => i18n.t('siliconFlowApi'),
-    VoiceInputProviderType.offline => pickUiText(
-      i18n,
-      zh: '离线引擎',
-      en: 'Offline engine',
+    VoiceInputProviderType.offline => i18n.t(
+      'inline.ui.ui_copy.offline_engine_204382',
     ),
-    VoiceInputProviderType.system => pickUiText(
-      i18n,
-      zh: '系统语音识别',
-      en: 'System speech recognition',
+    VoiceInputProviderType.system => i18n.t(
+      'inline.ui.pages.voice_input_settings_page.system_speech_recognition_4b0cef',
     ),
   };
 }
@@ -155,19 +82,31 @@ String localizedFieldLabel(AppI18n i18n, WordFieldItem item) {
   final key = normalizeFieldKey(item.key);
   return switch (key) {
     'meaning' => i18n.t('fieldMeaning'),
-    'pronunciations' => pickUiText(i18n, zh: '发音', en: 'Pronunciations'),
-    'parts_of_speech' => pickUiText(i18n, zh: '词性', en: 'Parts of speech'),
+    'pronunciations' => i18n.t(
+      'inline.ui.pages.playback_advanced_page.pronunciations_de7c4f',
+    ),
+    'parts_of_speech' => i18n.t(
+      'inline.ui.pages.playback_advanced_page.parts_of_speech_b53f33',
+    ),
     'examples' => i18n.t('fieldExamples'),
-    'collocations' => pickUiText(i18n, zh: '搭配', en: 'Collocations'),
-    'usage' => pickUiText(i18n, zh: '用法说明', en: 'Usage'),
-    'confusions' => pickUiText(i18n, zh: '易混辨析', en: 'Confusions'),
+    'collocations' => i18n.t(
+      'inline.ui.pages.playback_advanced_page.collocations_d8364a',
+    ),
+    'usage' => i18n.t('inline.ui.pages.playback_advanced_page.usage_71f840'),
+    'confusions' => i18n.t(
+      'inline.ui.pages.playback_advanced_page.confusions_75dad4',
+    ),
     'etymology' => i18n.t('fieldEtymology'),
     'roots' => i18n.t('fieldRoots'),
     'affixes' => i18n.t('fieldAffixes'),
-    'morphology' => pickUiText(i18n, zh: '形态信息', en: 'Morphology'),
+    'morphology' => i18n.t(
+      'inline.ui.pages.playback_advanced_page.morphology_fda537',
+    ),
     'variations' => i18n.t('fieldVariations'),
     'memory' => i18n.t('fieldMemory'),
-    'culture' => pickUiText(i18n, zh: '文化背景', en: 'Culture'),
+    'culture' => i18n.t(
+      'inline.ui.pages.playback_advanced_page.culture_faa85e',
+    ),
     'story' => i18n.t('fieldStory'),
     _ => item.label.trim().isEmpty ? key : item.label.trim(),
   };
@@ -175,11 +114,11 @@ String localizedFieldLabel(AppI18n i18n, WordFieldItem item) {
 
 String localizedWordFieldGroupLabel(AppI18n i18n, String groupKey) {
   return switch (groupKey) {
-    'core' => pickUiText(i18n, zh: '核心', en: 'Core'),
-    'usage' => pickUiText(i18n, zh: '用法', en: 'Usage'),
-    'linguistics' => pickUiText(i18n, zh: '语言学', en: 'Linguistics'),
-    'memory' => pickUiText(i18n, zh: '记忆', en: 'Memory'),
-    _ => pickUiText(i18n, zh: '其他字段', en: 'Other fields'),
+    'core' => i18n.t('inline.ui.ui_copy.core_8a310a'),
+    'usage' => i18n.t('inline.ui.pages.playback_advanced_page.usage_71f840'),
+    'linguistics' => i18n.t('inline.ui.ui_copy.linguistics_a67ea5'),
+    'memory' => i18n.t('fieldMemory'),
+    _ => i18n.t('inline.ui.ui_copy.other_fields_0eb180'),
   };
 }
 
@@ -355,27 +294,10 @@ const Map<String, String> _moodistZhNames = <String, String>{
   'binaural/binaural-theta': '双耳节拍 Theta',
 };
 
-String pageLabelPlay(AppI18n i18n) => pickUiText(
-  i18n,
-  zh: '播放',
-  en: 'Play',
-  ja: '再生',
-  de: 'Wiedergabe',
-  fr: 'Lecture',
-  es: 'Reproducir',
-  ru: 'Воспроизведение',
-);
+String pageLabelPlay(AppI18n i18n) => i18n.t('play');
 
-String pageLabelStudy(AppI18n i18n) => pickUiText(
-  i18n,
-  zh: '学习',
-  en: 'Study',
-  ja: '学習',
-  de: 'Lernen',
-  fr: 'Étude',
-  es: 'Estudio',
-  ru: 'Учёба',
-);
+String pageLabelStudy(AppI18n i18n) =>
+    i18n.t('toolbox.sound.soothing.v2.mode.study.title');
 
 String appHomeTabLabel(AppI18n i18n, AppHomeTab tab) {
   return switch (tab) {
@@ -403,34 +325,32 @@ String focusStartupTabLabel(AppI18n i18n, FocusStartupTab tab) {
 
 String weatherCodeLabel(AppI18n i18n, int weatherCode, {required bool isDay}) {
   if (weatherCode == 0) {
-    return pickUiText(
-      i18n,
-      zh: isDay ? '晴朗' : '晴夜',
-      en: isDay ? 'Clear' : 'Clear night',
+    return i18n.t(
+      isDay ? 'weather.condition.clear.day' : 'weather.condition.clear.night',
     );
   }
   if (weatherCode == 1 || weatherCode == 2) {
-    return pickUiText(i18n, zh: '多云间晴', en: 'Partly cloudy');
+    return i18n.t('inline.ui.ui_copy.partly_cloudy_f3f0f7');
   }
   if (weatherCode == 3) {
-    return pickUiText(i18n, zh: '阴天', en: 'Overcast');
+    return i18n.t('inline.ui.ui_copy.overcast_f0fac7');
   }
   if (weatherCode == 45 || weatherCode == 48) {
-    return pickUiText(i18n, zh: '有雾', en: 'Foggy');
+    return i18n.t('inline.ui.ui_copy.foggy_3cb7a7');
   }
   if (<int>{51, 53, 55, 56, 57}.contains(weatherCode)) {
-    return pickUiText(i18n, zh: '毛毛雨', en: 'Drizzle');
+    return i18n.t('inline.ui.ui_copy.drizzle_8fa37d');
   }
   if (<int>{61, 63, 65, 66, 67, 80, 81, 82}.contains(weatherCode)) {
-    return pickUiText(i18n, zh: '下雨', en: 'Rain');
+    return i18n.t('ambientCategoryRain');
   }
   if (<int>{71, 73, 75, 77, 85, 86}.contains(weatherCode)) {
-    return pickUiText(i18n, zh: '下雪', en: 'Snow');
+    return i18n.t('inline.ui.ui_copy.snow_b0ef6c');
   }
   if (<int>{95, 96, 99}.contains(weatherCode)) {
-    return pickUiText(i18n, zh: '雷暴', en: 'Thunderstorm');
+    return i18n.t('inline.ui.ui_copy.thunderstorm_e9506c');
   }
-  return pickUiText(i18n, zh: '天气变化', en: 'Changeable');
+  return i18n.t('inline.ui.ui_copy.changeable_725ceb');
 }
 
 IconData weatherCodeIcon(int weatherCode, {required bool isDay}) {
@@ -472,48 +392,14 @@ IconData weatherCodeIcon(int weatherCode, {required bool isDay}) {
   return Icons.cloud_sync_rounded;
 }
 
-String pageLabelLibrary(AppI18n i18n) => pickUiText(
-  i18n,
-  zh: '词库',
-  en: 'Library',
-  ja: '単語帳',
-  de: 'Bibliothek',
-  fr: 'Bibliothèque',
-  es: 'Biblioteca',
-  ru: 'Словарь',
-);
+String pageLabelLibrary(AppI18n i18n) => i18n.t('ambientNameFocusLibrary');
 
-String pageLabelPractice(AppI18n i18n) => pickUiText(
-  i18n,
-  zh: '练习',
-  en: 'Practice',
-  ja: '練習',
-  de: 'Üben',
-  fr: 'Pratique',
-  es: 'Práctica',
-  ru: 'Практика',
-);
+String pageLabelPractice(AppI18n i18n) =>
+    i18n.t('inline.ui.module.module_access.practice_edc3b5');
 
 String pageLabelFocus(AppI18n i18n) => i18n.t('focusTitle');
 
-String pageLabelMore(AppI18n i18n) => pickUiText(
-  i18n,
-  zh: '更多',
-  en: 'More',
-  ja: 'その他',
-  de: 'Mehr',
-  fr: 'Plus',
-  es: 'Más',
-  ru: 'Ещё',
-);
+String pageLabelMore(AppI18n i18n) =>
+    i18n.t('inline.ui.module.module_access.more_25e68b');
 
-String pageLabelToolbox(AppI18n i18n) => pickUiText(
-  i18n,
-  zh: '工具箱',
-  en: 'Toolbox',
-  ja: 'ツール',
-  de: 'Werkzeuge',
-  fr: 'Outils',
-  es: 'Caja',
-  ru: 'Инструменты',
-);
+String pageLabelToolbox(AppI18n i18n) => i18n.t('toolbox.hub.page.title');

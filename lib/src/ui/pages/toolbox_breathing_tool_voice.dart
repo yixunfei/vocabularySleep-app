@@ -51,9 +51,7 @@ extension _BreathingVoiceHelpers on _BreathingPracticeReleaseCardState {
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: Text(
-                i18n.t('toolbox.breathing.keep_chinese_voice'),
-              ),
+              child: Text(i18n.t('toolbox.breathing.keep_chinese_voice')),
             ),
           ],
         );

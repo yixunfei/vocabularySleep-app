@@ -115,7 +115,10 @@ class _DualTeamModeState extends State<_DualTeamMode> {
           onPressed: _openImmersive,
           icon: const Icon(Icons.fullscreen_rounded),
           label: Text(
-            _lifeText(context, zh: '全屏横屏记分', en: 'Fullscreen landscape'),
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.fullscreen_landscape.4837319ba296',
+            ),
           ),
         ),
       ],
@@ -148,30 +151,32 @@ class _DualTeamModeState extends State<_DualTeamMode> {
       });
     }
 
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        fullscreenDialog: true,
-        builder: (_) => _ScoreboardImmersivePage(
-          initialScoreA: _scoreA,
-          initialScoreB: _scoreB,
-          initialTeamAName: _teamAName,
-          initialTeamBName: _teamBName,
-          initialTeamAColor: _teamAColor,
-          initialTeamBColor: _teamBColor,
-          initialSeconds: _seconds,
-          initialCountdown: _countdown,
-          initialRunning: _running,
-          stepEnabled: _stepEnabled,
-          stepValue: _stepValue,
-          teamAName: _nameACtrl.text,
-          teamBName: _nameBCtrl.text,
-        ),
-      ),
-    ).then((_) {
-      if (mounted) {
-        setState(() {});
-      }
-    });
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute<void>(
+            fullscreenDialog: true,
+            builder: (_) => _ScoreboardImmersivePage(
+              initialScoreA: _scoreA,
+              initialScoreB: _scoreB,
+              initialTeamAName: _teamAName,
+              initialTeamBName: _teamBName,
+              initialTeamAColor: _teamAColor,
+              initialTeamBColor: _teamBColor,
+              initialSeconds: _seconds,
+              initialCountdown: _countdown,
+              initialRunning: _running,
+              stepEnabled: _stepEnabled,
+              stepValue: _stepValue,
+              teamAName: _nameACtrl.text,
+              teamBName: _nameBCtrl.text,
+            ),
+          ),
+        )
+        .then((_) {
+          if (mounted) {
+            setState(() {});
+          }
+        });
   }
 
   Widget _buildSettingsToggle(ThemeData theme) {
@@ -191,7 +196,7 @@ class _DualTeamModeState extends State<_DualTeamMode> {
             ),
             const SizedBox(width: 4),
             Text(
-              _lifeText(context, zh: '设置', en: 'Settings'),
+              _lifeI18nText(context, 'arb.settings_b74cfc'),
               style: theme.textTheme.labelLarge?.copyWith(
                 color: theme.colorScheme.primary,
               ),
@@ -221,7 +226,7 @@ class _DualTeamModeState extends State<_DualTeamMode> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              _lifeText(context, zh: '队伍 A', en: 'Team A'),
+              _lifeI18nText(context, 'inline.plan295.life.team_a.9dec853e2faa'),
               style: theme.textTheme.labelLarge?.copyWith(
                 color: _teamAColor,
                 fontWeight: FontWeight.w700,
@@ -254,7 +259,7 @@ class _DualTeamModeState extends State<_DualTeamMode> {
             ),
             const SizedBox(height: 14),
             Text(
-              _lifeText(context, zh: '队伍 B', en: 'Team B'),
+              _lifeI18nText(context, 'inline.plan295.life.team_b.6af737243c50'),
               style: theme.textTheme.labelLarge?.copyWith(
                 color: _teamBColor,
                 fontWeight: FontWeight.w700,
@@ -313,7 +318,12 @@ class _DualTeamModeState extends State<_DualTeamMode> {
             children: <Widget>[
               ChoiceChip(
                 selected: !_countdown,
-                label: Text(_lifeText(context, zh: '正计时', en: 'Count up')),
+                label: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.count_up.42d88a782f14',
+                  ),
+                ),
                 onSelected: (_) {
                   if (_running) return;
                   setState(() {
@@ -325,7 +335,12 @@ class _DualTeamModeState extends State<_DualTeamMode> {
               const SizedBox(width: 8),
               ChoiceChip(
                 selected: _countdown,
-                label: Text(_lifeText(context, zh: '倒计时', en: 'Countdown')),
+                label: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.ui.pages.toolbox_human_tests_time_perception.countdown_da672d',
+                  ),
+                ),
                 onSelected: (_) {
                   if (_running) return;
                   setState(() {
@@ -376,8 +391,14 @@ class _DualTeamModeState extends State<_DualTeamMode> {
                 ),
                 label: Text(
                   _running
-                      ? _lifeText(context, zh: '暂停', en: 'Pause')
-                      : _lifeText(context, zh: '开始', en: 'Start'),
+                      ? _lifeI18nText(
+                          context,
+                          'inline.plan294.breathing.pause_b6fe36b8',
+                        )
+                      : _lifeI18nText(
+                          context,
+                          'inline.ui.pages.toolbox_breathing_tool.start_28545d',
+                        ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -480,11 +501,7 @@ class _TeamPanel extends StatelessWidget {
               disabled: score <= 0,
             ),
             const SizedBox(width: 14),
-            _ScoreButton(
-              icon: Icons.add_rounded,
-              onTap: onPlus,
-              color: color,
-            ),
+            _ScoreButton(icon: Icons.add_rounded, onTap: onPlus, color: color),
           ],
         ),
       ],

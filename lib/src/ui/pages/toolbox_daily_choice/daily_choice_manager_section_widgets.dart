@@ -4,20 +4,16 @@ class _ManagerSearchField extends StatefulWidget {
   const _ManagerSearchField({
     required this.i18n,
     required this.initialText,
-    required this.labelZh,
-    required this.labelEn,
-    required this.hintZh,
-    required this.hintEn,
+    required this.labelKey,
+    required this.hintKey,
     required this.onDraftChanged,
     required this.onCommitted,
   });
 
   final AppI18n i18n;
   final String initialText;
-  final String labelZh;
-  final String labelEn;
-  final String hintZh;
-  final String hintEn;
+  final String labelKey;
+  final String hintKey;
   final ValueChanged<String> onDraftChanged;
   final ValueChanged<String> onCommitted;
 
@@ -90,12 +86,8 @@ class _ManagerSearchFieldState extends State<_ManagerSearchField> {
           minWidth: 42,
           minHeight: 42,
         ),
-        labelText: pickUiText(
-          widget.i18n,
-          zh: widget.labelZh,
-          en: widget.labelEn,
-        ),
-        hintText: pickUiText(widget.i18n, zh: widget.hintZh, en: widget.hintEn),
+        labelText: widget.i18n.t(widget.labelKey),
+        hintText: widget.i18n.t(widget.hintKey),
       ),
       onChanged: widget.onDraftChanged,
       onSubmitted: (_) {
@@ -248,10 +240,8 @@ class _ManagerTraitFilterSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          pickUiText(
-            i18n,
-            zh: '只看这个${group.titleZh}',
-            en: 'Filter by ${group.titleEn}',
+          i18n.t(
+            'inline.plan295.daily_choice.filter_by_group_titleen.a79a5a261df1',
           ),
           style: theme.textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w900,
@@ -277,11 +267,11 @@ class _ManagerTraitFilterSection extends StatelessWidget {
               onTap: () => onSelected('all'),
               leading: const Icon(Icons.grid_view_rounded, size: 18),
               showLabel: selectedId == 'all',
-              tooltip: pickUiText(i18n, zh: '全部', en: 'All'),
+              tooltip: i18n.t('all'),
               padding: selectedId == 'all'
                   ? const EdgeInsets.symmetric(horizontal: 12, vertical: 10)
                   : const EdgeInsets.all(12),
-              label: Text(pickUiText(i18n, zh: '全部', en: 'All')),
+              label: Text(i18n.t('all')),
             ),
             ...group.options.map((option) {
               final selected = selectedId == option.id;
@@ -539,51 +529,38 @@ String _managerActionKey(String actionId, String optionId) {
 
 String _managerActionLoadingText(AppI18n i18n, String actionId) {
   return switch (actionId) {
-    _managerActionInspect => pickUiText(
-      i18n,
-      zh: '正在读取菜谱详情...',
-      en: 'Loading recipe details...',
+    _managerActionInspect => i18n.t(
+      'inline.plan295.daily_choice.loading_recipe_details.18be2f54d0ea',
     ),
-    _managerActionAdjust => pickUiText(
-      i18n,
-      zh: '正在准备个人调整...',
-      en: 'Preparing adjustment...',
+    _managerActionAdjust => i18n.t(
+      'inline.plan295.daily_choice.preparing_adjustment.dae797a91864',
     ),
-    _managerActionSaveAs => pickUiText(
-      i18n,
-      zh: '正在准备另存副本...',
-      en: 'Preparing a copy...',
+    _managerActionSaveAs => i18n.t(
+      'inline.plan295.daily_choice.preparing_a_copy.aba2958384b9',
     ),
-    _ => pickUiText(i18n, zh: '正在处理...', en: 'Working...'),
+    _ => i18n.t('inline.plan295.daily_choice.working.457fdf6ac894'),
   };
 }
 
 String _managerActionErrorText(AppI18n i18n, String actionId, Object error) {
   return switch (actionId) {
-    _managerActionInspect => pickUiText(
-      i18n,
-      zh: '详情读取失败：$error',
-      en: 'Details could not be loaded: $error',
+    _managerActionInspect => i18n.t(
+      'inline.plan295.daily_choice.details_could_not_be_loaded_error.8303d11f304d',
     ),
-    _managerActionAdjust => pickUiText(
-      i18n,
-      zh: '个人调整准备失败：$error',
-      en: 'Adjustment could not be prepared: $error',
+    _managerActionAdjust => i18n.t(
+      'inline.plan295.daily_choice.adjustment_could_not_be_prepared_err.3076513e8c93',
     ),
-    _managerActionSaveAs => pickUiText(
-      i18n,
-      zh: '另存前读取失败：$error',
-      en: 'Copy could not be prepared: $error',
+    _managerActionSaveAs => i18n.t(
+      'inline.plan295.daily_choice.copy_could_not_be_prepared_error.9b7fd3a7963c',
     ),
-    _ => pickUiText(i18n, zh: '操作失败：$error', en: 'Action failed: $error'),
+    _ => i18n.t('inline.plan295.daily_choice.action_failed_error.8f6169f58adf'),
   };
 }
 
 Widget _managerAsyncActionButton({
   required AppI18n i18n,
   required IconData icon,
-  required String labelZh,
-  required String labelEn,
+  required String labelKey,
   required bool loading,
   required bool enabled,
   required VoidCallback onPressed,
@@ -597,7 +574,7 @@ Widget _managerAsyncActionButton({
             child: CircularProgressIndicator(strokeWidth: 2),
           )
         : Icon(icon),
-    label: Text(pickUiText(i18n, zh: labelZh, en: labelEn)),
+    label: Text(i18n.t(labelKey)),
   );
 }
 
@@ -628,7 +605,7 @@ List<Widget> _managerCollectionActions({
         onAddMultiple(selectedIds);
       },
       icon: const Icon(Icons.favorite_border_rounded),
-      label: Text(pickUiText(i18n, zh: '喜欢/加入', en: 'Like / add')),
+      label: Text(i18n.t('inline.plan295.daily_choice.like_add.750bcc296915')),
     ),
   ];
   if (selectedCollection != null &&
@@ -637,7 +614,9 @@ List<Widget> _managerCollectionActions({
       TextButton.icon(
         onPressed: () => onRemove(selectedCollection.id),
         icon: const Icon(Icons.playlist_remove_rounded),
-        label: Text(pickUiText(i18n, zh: '移出当前集合', en: 'Remove from set')),
+        label: Text(
+          i18n.t('inline.plan295.daily_choice.remove_from_set.5af23c2e2d3b'),
+        ),
       ),
     );
   }
@@ -671,7 +650,9 @@ List<Widget> _managerWearCollectionActions({
         onAddMultiple(selectedIds);
       },
       icon: const Icon(Icons.checkroom_rounded),
-      label: Text(pickUiText(i18n, zh: '加入衣橱', en: 'Add to wardrobe')),
+      label: Text(
+        i18n.t('inline.plan295.daily_choice.add_to_wardrobe.c7673b62c7f8'),
+      ),
     ),
   ];
   if (selectedCollection != null &&
@@ -680,7 +661,11 @@ List<Widget> _managerWearCollectionActions({
       TextButton.icon(
         onPressed: () => onRemove(selectedCollection.id),
         icon: const Icon(Icons.playlist_remove_rounded),
-        label: Text(pickUiText(i18n, zh: '移出当前衣橱', en: 'Remove from wardrobe')),
+        label: Text(
+          i18n.t(
+            'inline.plan295.daily_choice.remove_from_wardrobe.71596b58a9bc',
+          ),
+        ),
       ),
     );
   }
@@ -714,7 +699,9 @@ List<Widget> _managerActivityCollectionActions({
         onAddMultiple(selectedIds);
       },
       icon: const Icon(Icons.playlist_add_check_rounded),
-      label: Text(pickUiText(i18n, zh: '加入行动集', en: 'Add to set')),
+      label: Text(
+        i18n.t('inline.plan295.daily_choice.add_to_set.652ece696528'),
+      ),
     ),
   ];
   if (selectedCollection != null &&
@@ -723,7 +710,9 @@ List<Widget> _managerActivityCollectionActions({
       TextButton.icon(
         onPressed: () => onRemove(selectedCollection.id),
         icon: const Icon(Icons.playlist_remove_rounded),
-        label: Text(pickUiText(i18n, zh: '移出当前行动集', en: 'Remove from set')),
+        label: Text(
+          i18n.t('inline.plan295.daily_choice.remove_from_set.e940f8248acf'),
+        ),
       ),
     );
   }
@@ -748,7 +737,11 @@ Future<Set<String>?> _showWearCollectionPicker({
       return StatefulBuilder(
         builder: (context, setDialogState) {
           return AlertDialog(
-            title: Text(pickUiText(i18n, zh: '加入衣橱', en: 'Add to wardrobe')),
+            title: Text(
+              i18n.t(
+                'inline.plan295.daily_choice.add_to_wardrobe.c7673b62c7f8',
+              ),
+            ),
             content: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
               child: SingleChildScrollView(
@@ -771,10 +764,8 @@ Future<Set<String>?> _showWearCollectionPicker({
                           contentPadding: EdgeInsets.zero,
                           title: Text(collection.title(i18n)),
                           subtitle: Text(
-                            pickUiText(
-                              i18n,
-                              zh: '${collection.optionIds.length} 套搭配',
-                              en: '${collection.optionIds.length} outfits',
+                            i18n.t(
+                              'inline.plan295.daily_choice.collection_optionids_length_outfits.fcbd023a8667',
                             ),
                           ),
                         ),
@@ -786,14 +777,16 @@ Future<Set<String>?> _showWearCollectionPicker({
             actions: <Widget>[
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+                child: Text(i18n.t('cancel')),
               ),
               FilledButton.icon(
                 onPressed: selectedIds.isEmpty
                     ? null
                     : () => Navigator.of(context).pop(selectedIds),
                 icon: const Icon(Icons.check_rounded),
-                label: Text(pickUiText(i18n, zh: '确认加入', en: 'Add')),
+                label: Text(
+                  i18n.t('inline.plan295.daily_choice.add.3c978f7543ce'),
+                ),
               ),
             ],
           );
@@ -821,7 +814,11 @@ Future<Set<String>?> _showActivityCollectionPicker({
       return StatefulBuilder(
         builder: (context, setDialogState) {
           return AlertDialog(
-            title: Text(pickUiText(i18n, zh: '加入行动集', en: 'Add to action set')),
+            title: Text(
+              i18n.t(
+                'inline.plan295.daily_choice.add_to_action_set.3e3a1da3b4c2',
+              ),
+            ),
             content: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
               child: SingleChildScrollView(
@@ -844,10 +841,8 @@ Future<Set<String>?> _showActivityCollectionPicker({
                           contentPadding: EdgeInsets.zero,
                           title: Text(collection.title(i18n)),
                           subtitle: Text(
-                            pickUiText(
-                              i18n,
-                              zh: '${collection.optionIds.length} 个行动',
-                              en: '${collection.optionIds.length} actions',
+                            i18n.t(
+                              'inline.plan295.daily_choice.collection_optionids_length_actions.2327f5e73732',
                             ),
                           ),
                         ),
@@ -859,14 +854,16 @@ Future<Set<String>?> _showActivityCollectionPicker({
             actions: <Widget>[
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+                child: Text(i18n.t('cancel')),
               ),
               FilledButton.icon(
                 onPressed: selectedIds.isEmpty
                     ? null
                     : () => Navigator.of(context).pop(selectedIds),
                 icon: const Icon(Icons.check_rounded),
-                label: Text(pickUiText(i18n, zh: '确认加入', en: 'Add')),
+                label: Text(
+                  i18n.t('inline.plan295.daily_choice.add.3c978f7543ce'),
+                ),
               ),
             ],
           );
@@ -894,7 +891,9 @@ Future<Set<String>?> _showEatCollectionPicker({
       return StatefulBuilder(
         builder: (context, setDialogState) {
           return AlertDialog(
-            title: Text(pickUiText(i18n, zh: '喜欢/加入', en: 'Like / add')),
+            title: Text(
+              i18n.t('inline.plan295.daily_choice.like_add.750bcc296915'),
+            ),
             content: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
               child: SingleChildScrollView(
@@ -917,10 +916,8 @@ Future<Set<String>?> _showEatCollectionPicker({
                           contentPadding: EdgeInsets.zero,
                           title: Text(collection.title(i18n)),
                           subtitle: Text(
-                            pickUiText(
-                              i18n,
-                              zh: '${collection.optionIds.length} 道菜',
-                              en: '${collection.optionIds.length} recipes',
+                            i18n.t(
+                              'inline.plan295.daily_choice.collection_optionids_length_recipes.44a4a08c31f4',
                             ),
                           ),
                         ),
@@ -932,14 +929,16 @@ Future<Set<String>?> _showEatCollectionPicker({
             actions: <Widget>[
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+                child: Text(i18n.t('cancel')),
               ),
               FilledButton.icon(
                 onPressed: selectedIds.isEmpty
                     ? null
                     : () => Navigator.of(context).pop(selectedIds),
                 icon: const Icon(Icons.check_rounded),
-                label: Text(pickUiText(i18n, zh: '确认加入', en: 'Add')),
+                label: Text(
+                  i18n.t('inline.plan295.daily_choice.add.3c978f7543ce'),
+                ),
               ),
             ],
           );

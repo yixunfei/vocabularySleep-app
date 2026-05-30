@@ -859,8 +859,7 @@ class _VoiceSettingsPageState extends ConsumerState<VoiceSettingsPage> {
                       max: 512,
                       divisions: 15,
                       value: tts.maxApiCacheMb.clamp(32, 512).toDouble(),
-                      label:
-                          '${tts.maxApiCacheMb.clamp(32, 512).toInt()} MB',
+                      label: '${tts.maxApiCacheMb.clamp(32, 512).toInt()} MB',
                       onChanged: (value) {
                         state.updateConfig(
                           config.copyWith(

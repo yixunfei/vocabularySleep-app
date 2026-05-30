@@ -7,37 +7,16 @@ class TapSpeedTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(
-        i18n,
-        zh: '手速测试',
-        en: 'Tap speed',
-        ja: 'Tap speed',
-        de: 'Tap speed',
-        fr: 'Vitesse de la touche',
-        es: 'Velocidad',
-        ru: 'Скорость нажатия',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_action.tap_speed_1d5f49',
       ),
-      subtitle: pickUiText(
-        i18n,
-        zh: '十秒倒计时，疯狂点击——连击越高越过瘾。',
-        en: 'Classic, target chase, and rhythm hit modes for speed and accuracy.',
-        ja: 'Measure tap speed, stability, and accuracy across classic, target chase, and rhythm modes.',
-        de: 'Measure tap speed, stability, and accuracy across classic, target chase, and rhythm modes.',
-        fr: 'Mesurer la vitesse, la stabilité et la précision du robinet sur les modes classiques, de poursuite des cibles et de rythme.',
-        es: 'Medir la velocidad del grifo, la estabilidad y la precisión a través de los modos clásicos, persecución del objetivo y ritmo.',
-        ru: 'Измерьте скорость касания, стабильность и точность в классических, целевых режимах погони и ритме.',
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_action.classic_target_chase_and_rhythm_hit_modes_for_speed_and_349b91',
       ),
       accent: const Color(0xFFC05180),
       icon: Icons.touch_app_rounded,
-      status: pickUiText(
-        i18n,
-        zh: '经典连点、目标追击或节奏命中——纯拼手速',
-        en: 'Next: choose a mode and start',
-        ja: 'Next: choose a mode and start',
-        de: 'Next: choose a mode and start',
-        fr: 'Suivant : choisissez un mode et démarrez',
-        es: 'Siguiente: elegir un modo y comenzar',
-        ru: 'Далее: выберите режим и начните',
+      status: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_action.next_choose_a_mode_and_start_46e406',
       ),
       child: const _TapSpeedTestCard(),
     );
@@ -203,70 +182,28 @@ class _TapSpeedTestCardState extends State<_TapSpeedTestCard> {
 
   String _modeLabel(AppI18n i18n, _TapSpeedMode mode) {
     return switch (mode) {
-      _TapSpeedMode.classic => pickUiText(
-        i18n,
-        zh: '经典连点',
-        en: 'Classic',
-        ja: 'クラシック',
-        de: 'Classic',
-        fr: 'Classique',
-        es: 'Clásico',
-        ru: 'Классика',
+      _TapSpeedMode.classic => i18n.t(
+        'inline.plan295.life.classic.184f87f1be60',
       ),
-      _TapSpeedMode.targetChase => pickUiText(
-        i18n,
-        zh: '目标追击',
-        en: 'Target chase',
-        ja: 'Target chase',
-        de: 'Target chase',
-        fr: 'Cible poursuite',
-        es: 'Persecución del objetivo',
-        ru: 'Погоня за целью',
+      _TapSpeedMode.targetChase => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_action.target_chase_ff1621',
       ),
-      _TapSpeedMode.rhythm => pickUiText(
-        i18n,
-        zh: '节奏命中',
-        en: 'Rhythm hit',
-        ja: 'Rhythm hit',
-        de: 'Rhythm hit',
-        fr: 'Coup de rythme',
-        es: 'Rhythm hit',
-        ru: 'Ритмовый удар',
+      _TapSpeedMode.rhythm => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_action.rhythm_hit_a57e96',
       ),
     };
   }
 
   String _modeHint(AppI18n i18n) {
     return switch (_mode) {
-      _TapSpeedMode.classic => pickUiText(
-        i18n,
-        zh: '任意点击舞台，尽量保持稳定高速。',
-        en: 'Tap anywhere on the stage and keep a stable high pace.',
-        ja: 'Tap anywhere on the stage and keep a stable high pace.',
-        de: 'Tap anywhere on the stage and keep a stable high pace.',
-        fr: 'Appuyez n\'importe où sur la scène et garder un rythme stable.',
-        es: 'Toque en cualquier lugar del escenario y mantenga un ritmo alto estable.',
-        ru: 'Нажмите в любом месте на сцене и держите стабильный высокий темп.',
+      _TapSpeedMode.classic => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_action.tap_anywhere_on_the_stage_and_keep_a_stable_high_pace_050362',
       ),
-      _TapSpeedMode.targetChase => pickUiText(
-        i18n,
-        zh: '只点亮起的目标格，点错会断连击。',
-        en: 'Tap only the lit target tile. Wrong taps break combo.',
-        ja: 'Tap only the lit target tile. Wrong taps break combo.',
-        de: 'Tap only the lit target tile. Wrong taps break combo.',
-        fr: 'Appuyez uniquement sur la tuile de cible allumée. Les mauvais robinets brisent le combo.',
-        es: 'Toca sólo la baldosa de destino iluminada. Grifos equivocados rompen combo.',
-        ru: 'Нажмите только на зажженную целевую плитку. Неправильные краны разрушают комбо.',
+      _TapSpeedMode.targetChase => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_action.tap_only_the_lit_target_tile_wrong_taps_break_combo_0f954f',
       ),
-      _TapSpeedMode.rhythm => pickUiText(
-        i18n,
-        zh: '目标按节奏跳动，抓住亮起的格子。',
-        en: 'The target jumps on a rhythm. Catch the lit tile.',
-        ja: 'The target jumps on a rhythm. Catch the lit tile.',
-        de: 'The target jumps on a rhythm. Catch the lit tile.',
-        fr: 'La cible saute sur un rythme. Attrape la tuile allumée.',
-        es: 'El objetivo salta a ritmo. Coge la baldosa iluminada.',
-        ru: 'Цель прыгает в ритме. Поймай зажженную плитку.',
+      _TapSpeedMode.rhythm => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_action.the_target_jumps_on_a_rhythm_catch_the_lit_tile_c5d31f',
       ),
     };
   }
@@ -282,68 +219,25 @@ class _TapSpeedTestCardState extends State<_TapSpeedTestCard> {
         _HumanMetricWrap(
           metrics: <(String, String)>[
             (
-              pickUiText(
-                i18n,
-                zh: '命中',
-                en: 'Hits',
-                ja: 'Hits',
-                de: 'Hits',
-                fr: 'Coups',
-                es: 'Golpes',
-                ru: 'Хиты',
-              ),
+              i18n.t('inline.ui.pages.toolbox_human_tests_action.hits_fe10b3'),
               '$_count',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '剩余',
-                en: 'Left',
-                ja: 'Left',
-                de: 'Left',
-                fr: 'Gauche',
-                es: 'Izquierda',
-                ru: 'Левый',
-              ),
+              i18n.t('inline.plan294.breathing.left_a0d89e6f'),
               _formatSeconds(secondsLeft),
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '每秒',
-                en: 'Per sec',
-                ja: 'Per sec',
-                de: 'Per sec',
-                fr: 'Par sec',
-                es: 'Per sec',
-                ru: 'Через секунду',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_action.per_sec_600db1',
               ),
               (_running || _done) ? _cps.toStringAsFixed(1) : '-',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '准确率',
-                en: 'Accuracy',
-                ja: '精度',
-                de: 'Accuracy',
-                fr: 'Accuracy',
-                es: 'Precisión',
-                ru: 'точность',
-              ),
+              i18n.t('inline.ui.pages.practice_review_page.accuracy_8cf5a1'),
               _attempts <= 0 ? '-' : '${(_accuracy * 100).round()}%',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '连击',
-                en: 'Combo',
-                ja: 'コンボ',
-                de: 'Combo',
-                fr: 'Combo',
-                es: 'Combo',
-                ru: 'Комбинация',
-              ),
+              i18n.t('inline.ui.pages.toolbox_human_tests_action.combo_e9df71'),
               '$_combo',
             ),
           ],
@@ -391,25 +285,11 @@ class _TapSpeedTestCardState extends State<_TapSpeedTestCard> {
                 children: <Widget>[
                   _HumanActionButton(
                     label: _running
-                        ? pickUiText(
-                            i18n,
-                            zh: '挑战中',
-                            en: 'Running',
-                            ja: 'Running',
-                            de: 'Running',
-                            fr: 'Courir',
-                            es: 'Corriendo',
-                            ru: 'бегать',
+                        ? i18n.t(
+                            'inline.ui.pages.toolbox_human_tests_action.running_6a424b',
                           )
-                        : pickUiText(
-                            i18n,
-                            zh: '开始挑战',
-                            en: 'Start challenge',
-                            ja: 'Start challenge',
-                            de: 'Start challenge',
-                            fr: 'Démarrage',
-                            es: 'Inicio desafío',
-                            ru: 'Начинать вызов',
+                        : i18n.t(
+                            'inline.ui.pages.toolbox_human_tests_action.start_challenge_9e0ecb',
                           ),
                     icon: _running
                         ? Icons.flash_on_rounded
@@ -420,15 +300,8 @@ class _TapSpeedTestCardState extends State<_TapSpeedTestCard> {
                     onPressed: _restart,
                     icon: const Icon(Icons.restart_alt_rounded),
                     label: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '重新开始',
-                        en: 'Restart',
-                        ja: 'Restart',
-                        de: 'Restart',
-                        fr: 'Redémarrer',
-                        es: 'Restart',
-                        ru: 'Перезапустить',
+                      i18n.t(
+                        'inline.ui.pages.practice_session_page.restart_8b7fcc',
                       ),
                     ),
                   ),
@@ -437,18 +310,7 @@ class _TapSpeedTestCardState extends State<_TapSpeedTestCard> {
                         ? null
                         : () => unawaited(_showReport()),
                     icon: const Icon(Icons.analytics_rounded),
-                    label: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '报告',
-                        en: 'Report',
-                        ja: 'Report',
-                        de: 'Report',
-                        fr: 'Rapport annuel',
-                        es: 'Informe',
-                        ru: 'Доклад',
-                      ),
-                    ),
+                    label: Text(i18n.t('toolbox.sleep.assist.reportCard')),
                   ),
                 ],
               ),
@@ -461,40 +323,19 @@ class _TapSpeedTestCardState extends State<_TapSpeedTestCard> {
 
   Widget _buildTapSettingsSection(AppI18n i18n, ThemeData theme) {
     return _HumanSettingsSection(
-      title: pickUiText(
-        i18n,
-        zh: '手速设置',
-        en: 'Tap settings',
-        ja: 'Tap settings',
-        de: 'Tap settings',
-        fr: 'Paramètres de la touche',
-        es: 'Ajustes',
-        ru: 'Настройки касания',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_action.tap_settings_c70439',
       ),
-      subtitle: pickUiText(
-        i18n,
-        zh: '选择玩法和挑战时长，运行中设置会锁定。',
-        en: 'Choose mode and duration. Settings lock while running.',
-        ja: 'モードと期間を選択します。実行中は設定がロックされます。',
-        de: 'Choose mode and duration. Settings lock while running.',
-        fr: 'Choisissez le mode et la durée. Réglages verrouillés pendant l\'exécution.',
-        es: 'Elige el modo y la duración. Los ajustes se bloquean mientras corren.',
-        ru: 'Выберите режим и продолжительность. Настройка замка во время бега.',
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_action.choose_mode_and_duration_settings_lock_while_running_124529',
       ),
       initiallyExpanded: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(
-              i18n,
-              zh: '玩法模式',
-              en: 'Game mode',
-              ja: 'Game mode',
-              de: 'Game mode',
-              fr: 'Mode jeu',
-              es: 'Modo de juego',
-              ru: 'Режим игры',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_action.game_mode_e4d1de',
             ),
             style: theme.textTheme.labelLarge?.copyWith(
               fontWeight: FontWeight.w800,
@@ -516,16 +357,7 @@ class _TapSpeedTestCardState extends State<_TapSpeedTestCard> {
           ),
           const SizedBox(height: 10),
           Text(
-            pickUiText(
-              i18n,
-              zh: '挑战时长',
-              en: 'Duration',
-              ja: 'Duration',
-              de: 'Duration',
-              fr: 'Durée',
-              es: 'Duración',
-              ru: 'Продолжительность',
-            ),
+            i18n.t('toolbox.breathing.duration'),
             style: theme.textTheme.labelLarge,
           ),
           Slider(
@@ -635,25 +467,11 @@ class _TapSpeedStage extends StatelessWidget {
                   width: constraints.maxWidth,
                   child: Text(
                     running
-                        ? pickUiText(
-                            i18n,
-                            zh: '点击亮起目标',
-                            en: 'Tap the lit target',
-                            ja: 'Tap the lit target',
-                            de: 'Tap the lit target',
-                            fr: 'Appuyez sur la cible allumée',
-                            es: 'Toque el objetivo encendido',
-                            ru: 'Нажмите на освещенную цель',
+                        ? i18n.t(
+                            'inline.ui.pages.toolbox_human_tests_action.tap_the_lit_target_259da6',
                           )
-                        : pickUiText(
-                            i18n,
-                            zh: '开始后目标会亮起',
-                            en: 'Targets light up after start',
-                            ja: 'Targets light up after start',
-                            de: 'Targets light up after start',
-                            fr: 'Les cibles s\'allument après le départ',
-                            es: 'Los objetivos se iluminan después de empezar',
-                            ru: 'Цели загораются после старта',
+                        : i18n.t(
+                            'inline.ui.pages.toolbox_human_tests_action.targets_light_up_after_start_a77a5a',
                           ),
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
@@ -699,25 +517,11 @@ class _TapSpeedClassicPad extends StatelessWidget {
           ),
           child: Text(
             running
-                ? pickUiText(
-                    i18n,
-                    zh: '点击',
-                    en: 'Tap',
-                    ja: 'Tap',
-                    de: 'Tap',
-                    fr: 'Appuyez sur',
-                    es: 'Tap',
-                    ru: 'нажатие',
+                ? i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_action.tap_4c3724',
                   )
-                : pickUiText(
-                    i18n,
-                    zh: '点击开始',
-                    en: 'Tap to start',
-                    ja: 'Tap to start',
-                    de: 'Tap to start',
-                    fr: 'Appuyez sur pour démarrer',
-                    es: 'Pulsa para empezar',
-                    ru: 'Нажмите, чтобы начать',
+                : i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_action.tap_to_start_9ab8b0',
                   ),
             style: theme.textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.w900,
@@ -774,59 +578,24 @@ class _TapSpeedReportDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final title = cps >= 8.5 && accuracy >= 0.9
-        ? pickUiText(
-            i18n,
-            zh: '爆发型选手',
-            en: 'Burst specialist',
-            ja: 'バースト専門家',
-            de: 'Burst specialist',
-            fr: 'Spécialiste des bourrages',
-            es: 'Especialista en Burst',
-            ru: 'Специалист Burst',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_human_tests_action.burst_specialist_777590',
           )
         : cps >= 6.5
-        ? pickUiText(
-            i18n,
-            zh: '高速稳定',
-            en: 'Fast and steady',
-            ja: 'Fast and steady',
-            de: 'Fast and steady',
-            fr: 'Rapide et stable',
-            es: 'Rápido y estable',
-            ru: 'Быстрый и устойчивый',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_human_tests_action.fast_and_steady_6aacef',
           )
         : accuracy < 0.75
-        ? pickUiText(
-            i18n,
-            zh: '需要稳手',
-            en: 'Needs control',
-            ja: 'Needs control',
-            de: 'Needs control',
-            fr: 'Contrôle des besoins',
-            es: 'Control de necesidades',
-            ru: 'Требуется контроль',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_human_tests_action.needs_control_4db7d5',
           )
-        : pickUiText(
-            i18n,
-            zh: '稳定练习中',
-            en: 'Steady practice',
-            ja: 'Steady practice',
-            de: 'Steady practice',
-            fr: 'Pratique stable',
-            es: 'Práctica constante',
-            ru: 'Устойчивая практика',
+        : i18n.t(
+            'inline.ui.pages.toolbox_human_tests_action.steady_practice_c21f29',
           );
     return AlertDialog(
       title: Text(
-        pickUiText(
-          i18n,
-          zh: '手速报告',
-          en: 'Tap speed report',
-          ja: 'Tap speed report',
-          de: 'Tap speed report',
-          fr: 'Rapport de vitesse de la touche',
-          es: 'Informe de velocidad',
-          ru: 'Отчет о скорости',
+        i18n.t(
+          'inline.ui.pages.toolbox_human_tests_action.tap_speed_report_53d3f2',
         ),
       ),
       content: SizedBox(
@@ -841,54 +610,24 @@ class _TapSpeedReportDialog extends StatelessWidget {
                 runSpacing: 10,
                 children: <Widget>[
                   _ColorVisionReportMetric(
-                    label: pickUiText(
-                      i18n,
-                      zh: '称号',
-                      en: 'Title',
-                      ja: 'Title',
-                      de: 'Title',
-                      fr: 'Titre',
-                      es: 'Título',
-                      ru: 'Название',
-                    ),
+                    label: i18n.t('noteTitle'),
                     value: title,
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(
-                      i18n,
-                      zh: '每秒',
-                      en: 'Per sec',
-                      ja: 'Per sec',
-                      de: 'Per sec',
-                      fr: 'Par sec',
-                      es: 'Per sec',
-                      ru: 'Через секунду',
+                    label: i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_action.per_sec_600db1',
                     ),
                     value: cps.toStringAsFixed(1),
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(
-                      i18n,
-                      zh: '命中/尝试',
-                      en: 'Hits/attempts',
-                      ja: 'Hits/attempts',
-                      de: 'Hits/attempts',
-                      fr: 'Coups/coups',
-                      es: 'Hits/attempts',
-                      ru: 'Хиты/попытки',
+                    label: i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_action.hits_attempts_e2479b',
                     ),
                     value: '$taps/$attempts',
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(
-                      i18n,
-                      zh: '最佳连击',
-                      en: 'Best combo',
-                      ja: 'ベストコンボ',
-                      de: 'Best combo',
-                      fr: 'Meilleur combo',
-                      es: 'Mejor combo',
-                      ru: 'Лучшее сочетание',
+                    label: i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_action.best_combo_65a7d7',
                     ),
                     value: '$bestCombo',
                   ),
@@ -896,15 +635,8 @@ class _TapSpeedReportDialog extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _ColorVisionReportSection(
-                title: pickUiText(
-                  i18n,
-                  zh: '本次设置',
-                  en: 'Session settings',
-                  ja: 'Session settings',
-                  de: 'Session settings',
-                  fr: 'Paramètres de la session',
-                  es: 'Ajustes del período de sesiones',
-                  ru: 'Параметры сеанса',
+                title: i18n.t(
+                  'inline.ui.pages.practice_session_page.session_settings_35f8c2',
                 ),
                 child: Wrap(
                   spacing: 8,
@@ -918,37 +650,16 @@ class _TapSpeedReportDialog extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _ColorVisionReportSection(
-                title: pickUiText(
-                  i18n,
-                  zh: '练习建议',
-                  en: 'Training note',
-                  ja: 'Training note',
-                  de: 'Training note',
-                  fr: 'Note de formation',
-                  es: 'Nota de capacitación',
-                  ru: 'Учебная записка',
+                title: i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_action.training_note_0dc151',
                 ),
                 child: Text(
                   accuracy < 0.8
-                      ? pickUiText(
-                          i18n,
-                          zh: '先降低误触，目标追击模式下保持拇指回到中心再点下一格。',
-                          en: 'Reduce mis-taps first. In target chase, return to center before the next tile.',
-                          ja: 'Reduce mis-taps first. In target chase, return to center before the next tile.',
-                          de: 'Reduce mis-taps first. In target chase, return to center before the next tile.',
-                          fr: 'Réduire les erreurs d\'abord. Dans la poursuite de la cible, retournez au centre avant la prochaine tuile.',
-                          es: 'Reduzca los errores primero. En persecución objetivo, volver al centro antes de la siguiente ficha.',
-                          ru: 'Сначала уменьшите количество ошибок. В погоне за целью, вернитесь в центр перед следующей плиткой.',
+                      ? i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_action.reduce_mis_taps_first_in_target_chase_return_to_center_b_99b2d1',
                         )
-                      : pickUiText(
-                          i18n,
-                          zh: '准确率稳定，可以缩短休息间隔或切换到节奏命中练习爆发。',
-                          en: 'Accuracy is stable. Shorten rests or switch to rhythm hit for burst practice.',
-                          ja: '精度は安定しています。休憩時間を短くするか、バースト練習のためにリズムヒットに切り替えます。',
-                          de: 'Accuracy is stable. Shorten rests or switch to rhythm hit for burst practice.',
-                          fr: 'Accuracy is stable. Shorten rests or switch to rhythm hit for burst practice.',
-                          es: 'La precisión es estable. Acortar los descansos o cambiar al ritmo de la práctica de la explosión.',
-                          ru: 'Точность стабильна. Укоротить отдых или переключиться на ритм-хит для лопнувшей практики.',
+                      : i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_action.accuracy_is_stable_shorten_rests_or_switch_to_rhythm_hit_9283c9',
                         ),
                   style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
                 ),
@@ -960,18 +671,7 @@ class _TapSpeedReportDialog extends StatelessWidget {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(
-            pickUiText(
-              i18n,
-              zh: '关闭',
-              en: 'Close',
-              ja: '閉じる',
-              de: 'Close',
-              fr: 'Fermer',
-              es: 'Cerca',
-              ru: 'Закрыть',
-            ),
-          ),
+          child: Text(i18n.t('inline.plan295.life.close.370fb8697deb')),
         ),
       ],
     );

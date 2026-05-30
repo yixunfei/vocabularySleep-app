@@ -15,7 +15,8 @@ extension _AppStatePractice on AppState {
         autoAddWeakWordsToTask ?? _practiceStore.autoAddWeakWordsToTask;
     final nextAutoPlay =
         autoPlayPronunciation ?? _practiceStore.autoPlayPronunciation;
-    final nextShowHints = showHintsByDefault ?? _practiceStore.showHintsByDefault;
+    final nextShowHints =
+        showHintsByDefault ?? _practiceStore.showHintsByDefault;
     final nextShowAnswerFeedbackDialog =
         showAnswerFeedbackDialog ?? _practiceStore.showAnswerFeedbackDialog;
     final nextQuestionType =
@@ -24,7 +25,8 @@ extension _AppStatePractice on AppState {
         nextAutoAdd != _practiceStore.autoAddWeakWordsToTask ||
         nextAutoPlay != _practiceStore.autoPlayPronunciation ||
         nextShowHints != _practiceStore.showHintsByDefault ||
-        nextShowAnswerFeedbackDialog != _practiceStore.showAnswerFeedbackDialog ||
+        nextShowAnswerFeedbackDialog !=
+            _practiceStore.showAnswerFeedbackDialog ||
         nextQuestionType != _practiceStore.defaultQuestionType;
     if (!changed) {
       return;
@@ -377,7 +379,8 @@ extension _AppStatePractice on AppState {
     if (sourceWords.isEmpty) {
       return 0;
     }
-    final resolvedStartMode = startMode ?? _practiceStore.roundSettings.startMode;
+    final resolvedStartMode =
+        startMode ?? _practiceStore.roundSettings.startMode;
     return switch (resolvedStartMode) {
       PracticeRoundStartMode.fromStart => 0,
       PracticeRoundStartMode.currentWord => math.max(
@@ -414,7 +417,8 @@ extension _AppStatePractice on AppState {
         : _indexOfWordEntry(sourceWords, anchorWord);
     final storedCursor = normalizedKey.isEmpty
         ? 0
-        : (_practiceStore.launchCursors[normalizedKey] ?? 0) % sourceWords.length;
+        : (_practiceStore.launchCursors[normalizedKey] ?? 0) %
+              sourceWords.length;
     final startIndex = anchorIndex >= 0 ? anchorIndex : storedCursor;
     final batch = <WordEntry>[];
     for (var offset = 0; offset < safeBatchSize; offset += 1) {
@@ -725,8 +729,10 @@ extension _AppStatePractice on AppState {
       _practiceStore.weakWords,
       preferredEntries: trackedEntries,
     );
-    _practiceStore.autoAddWeakWordsToTask = data.sessionPrefs.autoAddWeakWordsToTask;
-    _practiceStore.autoPlayPronunciation = data.sessionPrefs.autoPlayPronunciation;
+    _practiceStore.autoAddWeakWordsToTask =
+        data.sessionPrefs.autoAddWeakWordsToTask;
+    _practiceStore.autoPlayPronunciation =
+        data.sessionPrefs.autoPlayPronunciation;
     _practiceStore.showHintsByDefault = data.sessionPrefs.showHintsByDefault;
     _practiceStore.showAnswerFeedbackDialog =
         data.sessionPrefs.showAnswerFeedbackDialog;

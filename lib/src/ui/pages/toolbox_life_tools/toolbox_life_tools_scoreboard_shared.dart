@@ -15,9 +15,7 @@ class _ScoreButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveColor = disabled
-        ? color.withValues(alpha: 0.25)
-        : color;
+    final effectiveColor = disabled ? color.withValues(alpha: 0.25) : color;
     return InkWell(
       onTap: disabled ? null : onTap,
       borderRadius: BorderRadius.circular(14),
@@ -59,7 +57,13 @@ class _ColorPicker extends StatelessWidget {
       runSpacing: 3,
       children: <Widget>[
         for (final c in _teamColorPresets)
-          _buildSwatch(context, theme, c, c.toARGB32() == value.toARGB32(), size),
+          _buildSwatch(
+            context,
+            theme,
+            c,
+            c.toARGB32() == value.toARGB32(),
+            size,
+          ),
         _buildCustomSwatch(context, theme, hasCustom ? value : null, size),
       ],
     );
@@ -123,11 +127,9 @@ class _ColorPicker extends StatelessWidget {
         ? (cc.computeLuminance() > 0.5 ? Colors.black87 : Colors.white)
         : theme.colorScheme.outlineVariant;
     return GestureDetector(
-      onTap: () => _showCustomColorDialog(context, cc ?? value).then(
-        (c) {
-          if (c != null) onChanged(c);
-        },
-      ),
+      onTap: () => _showCustomColorDialog(context, cc ?? value).then((c) {
+        if (c != null) onChanged(c);
+      }),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
         width: size,
@@ -170,7 +172,12 @@ Future<Color?> _showCustomColorDialog(BuildContext context, Color initial) {
           final c = current();
           final brightness = ThemeData.estimateBrightnessForColor(c);
           return AlertDialog(
-            title: Text(_lifeText(context, zh: '自定义颜色', en: 'Custom color')),
+            title: Text(
+              _lifeI18nText(
+                context,
+                'inline.plan295.life.custom_color.a6784365f1bf',
+              ),
+            ),
             content: SizedBox(
               width: 280,
               child: Column(
@@ -203,7 +210,10 @@ Future<Color?> _showCustomColorDialog(BuildContext context, Color initial) {
                   _hslSlider(
                     ctx,
                     setState,
-                    _lifeText(context, zh: '色相', en: 'Hue'),
+                    _lifeI18nText(
+                      context,
+                      'inline.ui.pages.appearance_studio_page.hue_ba0351',
+                    ),
                     hue,
                     0,
                     360,
@@ -212,7 +222,10 @@ Future<Color?> _showCustomColorDialog(BuildContext context, Color initial) {
                   _hslSlider(
                     ctx,
                     setState,
-                    _lifeText(context, zh: '饱和度', en: 'Saturation'),
+                    _lifeI18nText(
+                      context,
+                      'inline.ui.pages.appearance_studio_page.saturation_99178f',
+                    ),
                     saturation,
                     0,
                     1,
@@ -221,7 +234,10 @@ Future<Color?> _showCustomColorDialog(BuildContext context, Color initial) {
                   _hslSlider(
                     ctx,
                     setState,
-                    _lifeText(context, zh: '亮度', en: 'Lightness'),
+                    _lifeI18nText(
+                      context,
+                      'inline.ui.pages.appearance_studio_page.lightness_dc0429',
+                    ),
                     lightness,
                     0,
                     1,
@@ -233,11 +249,16 @@ Future<Color?> _showCustomColorDialog(BuildContext context, Color initial) {
             actions: <Widget>[
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: Text(_lifeText(context, zh: '取消', en: 'Cancel')),
+                child: Text(_lifeI18nText(context, 'cancel')),
               ),
               FilledButton(
                 onPressed: () => Navigator.of(ctx).pop(current()),
-                child: Text(_lifeText(context, zh: '确定', en: 'Confirm')),
+                child: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.confirm.52b54a010786',
+                  ),
+                ),
               ),
             ],
           );
@@ -317,17 +338,18 @@ class _FlipScoreState extends State<_FlipScore>
   void initState() {
     super.initState();
     _previous = widget.score;
-    _controller = AnimationController(
-      vsync: widget.vsync,
-      duration: const Duration(milliseconds: 480),
-    )..addStatusListener((status) {
-        if (status == AnimationStatus.completed && mounted) {
-          setState(() {
-            _previous = widget.score;
-            _animating = false;
-          });
-        }
-      });
+    _controller =
+        AnimationController(
+          vsync: widget.vsync,
+          duration: const Duration(milliseconds: 480),
+        )..addStatusListener((status) {
+          if (status == AnimationStatus.completed && mounted) {
+            setState(() {
+              _previous = widget.score;
+              _animating = false;
+            });
+          }
+        });
   }
 
   @override
@@ -355,9 +377,8 @@ class _FlipScoreState extends State<_FlipScore>
         final displayScore = showPrevious ? _previous : widget.score;
         final t = _controller.value;
 
-        final foldAngle = (Curves.easeInOutCubic.transform(
-                  (t / 0.55).clamp(0.0, 1.0),
-                )) *
+        final foldAngle =
+            (Curves.easeInOutCubic.transform((t / 0.55).clamp(0.0, 1.0))) *
             math.pi *
             0.98;
         final activeAngle = showPrevious ? foldAngle : 0.0;
@@ -397,11 +418,7 @@ class _FlipScoreState extends State<_FlipScore>
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: cardBorder, width: 1.5),
             boxShadow: <BoxShadow>[
-              BoxShadow(
-                color: cardShadow,
-                blurRadius: 16,
-                spreadRadius: 2,
-              ),
+              BoxShadow(color: cardShadow, blurRadius: 16, spreadRadius: 2),
             ],
           ),
           child: ClipRRect(

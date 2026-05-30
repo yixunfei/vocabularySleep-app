@@ -187,10 +187,8 @@ class _FocusPageState extends ConsumerState<FocusPage>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                pickUiText(
-                  AppI18n(state.uiLanguage),
-                  zh: '待办已完成：${todo.content}',
-                  en: 'Todo completed: ${todo.content}',
+                AppI18n(state.uiLanguage).t(
+                  'inline.ui.pages.focus_page.todo_completed_todo_content_a6cd67',
                 ),
               ),
             ),
@@ -206,10 +204,8 @@ class _FocusPageState extends ConsumerState<FocusPage>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                pickUiText(
-                  AppI18n(state.uiLanguage),
-                  zh: '提醒已稍后 ${action?.snoozeMinutes ?? 10} 分钟',
-                  en: 'Reminder snoozed for ${action?.snoozeMinutes ?? 10} minutes',
+                AppI18n(state.uiLanguage).t(
+                  'inline.ui.pages.focus_page.reminder_snoozed_for_action_snoozeminutes_10_minutes_4d9024',
                 ),
               ),
             ),
@@ -272,31 +268,15 @@ class _FocusPageState extends ConsumerState<FocusPage>
                   : i18n.t('breakPhaseComplete'),
             ),
             content: Text(
-              pickUiText(
-                i18n,
-                zh: '提醒会持续到你确认，或在超时后自动停止。',
-                en: 'The reminder keeps playing until you confirm it, or it times out automatically.',
-                ja: 'リマインダーは確認するまで続き、一定時間後に自動停止します。',
-                de: 'Die Erinnerung laeuft weiter, bis du bestaetigst oder das Zeitlimit erreicht ist.',
-                fr: 'Le rappel continue jusqu’a confirmation ou jusqu’a l’arret automatique apres delai.',
-                es: 'El aviso seguira activo hasta que lo confirmes o se detendra al agotarse el tiempo.',
-                ru: 'Напоминание будет продолжаться, пока вы не подтвердите его, либо остановится по тайм-ауту.',
+              i18n.t(
+                'inline.ui.pages.focus_page.the_reminder_keeps_playing_until_you_confirm_it_or_it_ti_291c43',
               ),
             ),
             actions: <Widget>[
               FilledButton(
                 onPressed: () => Navigator.of(dialogContext).pop(true),
                 child: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '知道了',
-                    en: 'Acknowledge',
-                    ja: '確認しました',
-                    de: 'Bestaetigen',
-                    fr: 'Confirmer',
-                    es: 'Confirmar',
-                    ru: 'Подтвердить',
-                  ),
+                  i18n.t('inline.ui.pages.focus_page.acknowledge_e20c1f'),
                 ),
               ),
             ],

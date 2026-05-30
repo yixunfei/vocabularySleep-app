@@ -48,9 +48,16 @@ class _SudokuGameState extends State<_SudokuGame> {
               List<int>.generate(81, (i) => _solution[i]).toString();
     });
     if (_solved && context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Sudoku solved!')));
+      final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            i18n.t(
+              'literal.ui.pages.toolbox_mini_games_sudoku.sudoku_solved_fe0129',
+            ),
+          ),
+        ),
+      );
     }
   }
 
@@ -58,6 +65,7 @@ class _SudokuGameState extends State<_SudokuGame> {
 
   @override
   Widget build(BuildContext context) {
+    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     final filled = _board.where((value) => value != 0).length;
     return Card(
       child: Padding(
@@ -69,14 +77,27 @@ class _SudokuGameState extends State<_SudokuGame> {
               spacing: 10,
               runSpacing: 10,
               children: <Widget>[
-                ToolboxMetricCard(label: 'Filled', value: '$filled / 81'),
                 ToolboxMetricCard(
-                  label: 'Conflicts',
+                  label: i18n.t(
+                    'literal.ui.pages.toolbox_mini_games_sudoku.filled_fbd3b9',
+                  ),
+                  value: '$filled / 81',
+                ),
+                ToolboxMetricCard(
+                  label: i18n.t(
+                    'inline.ui.pages.toolbox_sudoku_card.conflicts_102401',
+                  ),
                   value: '${_conflicts.length}',
                 ),
                 ToolboxMetricCard(
-                  label: 'Status',
-                  value: _solved ? 'Solved' : 'Playing',
+                  label: i18n.t(
+                    'inline.ui.pages.focus_page_workspace_editor.status_cc59cb',
+                  ),
+                  value: _solved
+                      ? i18n.t(
+                          'inline.ui.pages.toolbox_sudoku_card.solved_001b7e',
+                        )
+                      : i18n.t('toolbox.sound.focus.stagePulseMoving'),
                 ),
               ],
             ),
@@ -165,12 +186,16 @@ class _SudokuGameState extends State<_SudokuGame> {
                 OutlinedButton.icon(
                   onPressed: _clear,
                   icon: const Icon(Icons.backspace_outlined),
-                  label: const Text('Clear'),
+                  label: Text(i18n.t('clearValue')),
                 ),
                 OutlinedButton.icon(
                   onPressed: _newGame,
                   icon: const Icon(Icons.refresh_rounded),
-                  label: const Text('New game'),
+                  label: Text(
+                    i18n.t(
+                      'inline.ui.pages.toolbox_sudoku_card.new_game_2a5e2a',
+                    ),
+                  ),
                 ),
               ],
             ),

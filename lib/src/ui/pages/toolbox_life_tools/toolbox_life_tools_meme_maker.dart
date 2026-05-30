@@ -84,10 +84,10 @@ class _MemeMakerToolPageState extends State<_MemeMakerToolPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '选择图片失败: $error',
-          en: 'Failed to pick image: $error',
+          'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.compress.failed_to_pick_image.6e0bad236d',
+          params: <String, Object?>{'error': error},
         );
       });
     }
@@ -118,15 +118,13 @@ class _MemeMakerToolPageState extends State<_MemeMakerToolPage> {
       _error = null;
     });
     try {
-      final saveDialogTitle = _lifeText(
+      final saveDialogTitle = _lifeI18nText(
         context,
-        zh: '保存表情包',
-        en: 'Save meme image',
+        'inline.plan295.life.save_meme_image.9a273f3ddb7e',
       );
-      final browserDownloadText = _lifeText(
+      final browserDownloadText = _lifeI18nText(
         context,
-        zh: '浏览器下载已触发，请查看下载列表。',
-        en: 'Browser download started. Check your downloads.',
+        'inline.plan295.crypto.browser_download_started_check_your.b28d392515b4',
       );
       final bytes = await ToolboxMemeService.renderPng(request);
       final sourceName = _sourceName ?? 'meme';
@@ -183,10 +181,10 @@ class _MemeMakerToolPageState extends State<_MemeMakerToolPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '导出失败: $error',
-          en: 'Export failed: $error',
+          'errorExportFailed',
+          params: <String, Object?>{'error': error},
         );
       });
     } finally {
@@ -239,61 +237,69 @@ class _MemeMakerToolPageState extends State<_MemeMakerToolPage> {
 
   String _layerLabel(String id) {
     return switch (id) {
-      'top' => _lifeText(context, zh: '顶部文案', en: 'Top caption'),
-      'bottom' => _lifeText(context, zh: '底部文案', en: 'Bottom caption'),
-      'sticker' => _lifeText(context, zh: '贴纸文案', en: 'Sticker'),
+      'top' => _lifeI18nText(
+        context,
+        'inline.plan295.life.top_caption.9d1a5a7d70eb',
+      ),
+      'bottom' => _lifeI18nText(
+        context,
+        'inline.plan295.life.bottom_caption.6456c37bf6a7',
+      ),
+      'sticker' => _lifeI18nText(
+        context,
+        'inline.plan295.life.sticker.8768a9a94403',
+      ),
       _ => id,
     };
   }
 
   String _fontFamilyLabel(ToolboxMemeFontFamily family) {
     return switch (family) {
-      ToolboxMemeFontFamily.sans => _lifeText(context, zh: '无衬线', en: 'Sans'),
-      ToolboxMemeFontFamily.serif => _lifeText(context, zh: '衬线', en: 'Serif'),
-      ToolboxMemeFontFamily.monospace => _lifeText(
+      ToolboxMemeFontFamily.sans => _lifeI18nText(
         context,
-        zh: '等宽',
-        en: 'Mono',
+        'inline.plan295.life.sans.95a53d0ea1a0',
+      ),
+      ToolboxMemeFontFamily.serif => _lifeI18nText(
+        context,
+        'inline.plan295.life.serif.5664f9e7718a',
+      ),
+      ToolboxMemeFontFamily.monospace => _lifeI18nText(
+        context,
+        'inline.plan295.life.mono.6193ef478e21',
       ),
     };
   }
 
   String _bubbleStyleLabel(ToolboxMemeBubbleStyle style) {
     return switch (style) {
-      ToolboxMemeBubbleStyle.classic => _lifeText(
+      ToolboxMemeBubbleStyle.classic => _lifeI18nText(
         context,
-        zh: '经典描边',
-        en: 'Classic outline',
+        'inline.plan295.life.classic_outline.f47319870fd0',
       ),
-      ToolboxMemeBubbleStyle.panel => _lifeText(
+      ToolboxMemeBubbleStyle.panel => _lifeI18nText(
         context,
-        zh: '字幕卡片',
-        en: 'Panel caption',
+        'inline.plan295.life.panel_caption.f2a7e0627328',
       ),
-      ToolboxMemeBubbleStyle.sticker => _lifeText(
+      ToolboxMemeBubbleStyle.sticker => _lifeI18nText(
         context,
-        zh: '贴纸气泡',
-        en: 'Sticker bubble',
+        'inline.plan295.life.sticker_bubble.c5d36ea5534c',
       ),
     };
   }
 
   String _alignLabel(ToolboxMemeTextAlignMode align) {
     return switch (align) {
-      ToolboxMemeTextAlignMode.left => _lifeText(
+      ToolboxMemeTextAlignMode.left => _lifeI18nText(
         context,
-        zh: '左对齐',
-        en: 'Left',
+        'inline.plan295.life.left.ff9407b2b65a',
       ),
-      ToolboxMemeTextAlignMode.center => _lifeText(
+      ToolboxMemeTextAlignMode.center => _lifeI18nText(
         context,
-        zh: '居中',
-        en: 'Center',
+        'inline.plan295.life.center.78ebf5f3d988',
       ),
-      ToolboxMemeTextAlignMode.right => _lifeText(
+      ToolboxMemeTextAlignMode.right => _lifeI18nText(
         context,
-        zh: '右对齐',
-        en: 'Right',
+        'inline.plan295.life.right.280d5954b34e',
       ),
     };
   }
@@ -306,18 +312,23 @@ class _MemeMakerToolPageState extends State<_MemeMakerToolPage> {
     final selected = _selectedLayer;
 
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '表情包制作', en: 'Meme maker'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '导入本地图片，在预览区直接拖动和缩放文字图层，再按同一套参数导出真实 PNG。',
-        en: 'Import a local image, drag and scale text layers directly in preview, then export a real PNG driven by the same layer model.',
+        'inline.plan295.life.meme_maker.b757bab40693',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.import_a_local_image_drag_and_scale.f0d2529aec26',
       ),
       child: Column(
         key: const ValueKey<String>('life-meme-page'),
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '素材与导出', en: 'Source and export'),
+            title: _lifeI18nText(
+              context,
+              'inline.plan295.life.source_and_export.19dc44788194',
+            ),
             children: <Widget>[
               Wrap(
                 spacing: 8,
@@ -328,7 +339,10 @@ class _MemeMakerToolPageState extends State<_MemeMakerToolPage> {
                     onPressed: _pickImage,
                     icon: const Icon(Icons.image_search_rounded),
                     label: Text(
-                      _lifeText(context, zh: '导入图片', en: 'Pick image'),
+                      _lifeI18nText(
+                        context,
+                        'inline.plan295.life.pick_image.21467c886080',
+                      ),
                     ),
                   ),
                   OutlinedButton.icon(
@@ -339,8 +353,14 @@ class _MemeMakerToolPageState extends State<_MemeMakerToolPage> {
                     icon: const Icon(Icons.download_rounded),
                     label: Text(
                       _exporting
-                          ? _lifeText(context, zh: '导出中...', en: 'Exporting...')
-                          : _lifeText(context, zh: '导出 PNG', en: 'Export PNG'),
+                          ? _lifeI18nText(
+                              context,
+                              'inline.plan295.life.exporting.4a7bae70c078',
+                            )
+                          : _lifeI18nText(
+                              context,
+                              'inline.plan295.life.export_png.ed4ae20882a0',
+                            ),
                     ),
                   ),
                 ],
@@ -348,14 +368,20 @@ class _MemeMakerToolPageState extends State<_MemeMakerToolPage> {
               if (_sourceName != null) ...<Widget>[
                 const SizedBox(height: 8),
                 Text(
-                  _lifeText(context, zh: '当前素材: ', en: 'Current image: ') +
+                  _lifeI18nText(
+                        context,
+                        'inline.plan295.life.current_image.a93514ea0751',
+                      ) +
                       _sourceName!,
                 ),
               ],
               if (_savedPath != null) ...<Widget>[
                 const SizedBox(height: 8),
                 SelectableText(
-                  _lifeText(context, zh: '导出位置: ', en: 'Saved to: ') +
+                  _lifeI18nText(
+                        context,
+                        'inline.plan295.life.saved_to.6546039c21f2',
+                      ) +
                       _savedPath!,
                 ),
               ],
@@ -370,18 +396,23 @@ class _MemeMakerToolPageState extends State<_MemeMakerToolPage> {
           ),
           const SizedBox(height: 12),
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '画面预览', en: 'Preview'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '点选图层后可直接拖动位置、双指缩放，蓝色边框表示当前正在编辑的图层。',
-              en: 'Tap a layer to edit it, drag to move, and pinch to scale. The blue frame marks the active layer.',
+              'inline.plan295.life.preview.1cee2fa795cb',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.tap_a_layer_to_edit_it_drag_to_move.b4bbae8649d8',
             ),
             children: <Widget>[
               Row(
                 children: <Widget>[
                   Expanded(
                     child: _LifeSliderField(
-                      label: _lifeText(context, zh: '预览缩放', en: 'Preview zoom'),
+                      label: _lifeI18nText(
+                        context,
+                        'inline.plan295.life.preview_zoom.9a8a7c278d2d',
+                      ),
                       valueText: '${(_stageZoom * 100).round()}%',
                       value: _stageZoom,
                       min: 1,
@@ -401,7 +432,10 @@ class _MemeMakerToolPageState extends State<_MemeMakerToolPage> {
                     },
                     icon: const Icon(Icons.center_focus_strong_rounded),
                     label: Text(
-                      _lifeText(context, zh: '重置视图', en: 'Reset view'),
+                      _lifeI18nText(
+                        context,
+                        'inline.plan295.life.reset_view.4eac02008da8',
+                      ),
                     ),
                   ),
                 ],
@@ -412,10 +446,9 @@ class _MemeMakerToolPageState extends State<_MemeMakerToolPage> {
                   child: image == null
                       ? Center(
                           child: Text(
-                            _lifeText(
+                            _lifeI18nText(
                               context,
-                              zh: '先导入一张本地图片再开始做表情包。',
-                              en: 'Pick a local image to start making a meme.',
+                              'inline.plan295.life.pick_a_local_image_to_start_making_a.2a876f36abda',
                             ),
                             key: const ValueKey<String>('life-meme-empty'),
                           ),
@@ -455,11 +488,13 @@ class _MemeMakerToolPageState extends State<_MemeMakerToolPage> {
           ),
           const SizedBox(height: 12),
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '文案输入', en: 'Layer text'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '顶部、底部和贴纸文案分别对应三个独立图层，后续样式和层级会作用到当前选中的图层。',
-              en: 'Top, bottom, and sticker captions map to three independent layers. Style and order controls apply to the currently selected layer.',
+              'inline.plan295.life.layer_text.5882a9c00c4b',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.top_bottom_and_sticker_captions_map.3d376c103f6a',
             ),
             children: <Widget>[
               TextField(
@@ -467,7 +502,10 @@ class _MemeMakerToolPageState extends State<_MemeMakerToolPage> {
                 controller: _topController,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
-                  labelText: _lifeText(context, zh: '顶部文案', en: 'Top caption'),
+                  labelText: _lifeI18nText(
+                    context,
+                    'inline.plan295.life.top_caption.9d1a5a7d70eb',
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
@@ -476,10 +514,9 @@ class _MemeMakerToolPageState extends State<_MemeMakerToolPage> {
                 controller: _bottomController,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
-                  labelText: _lifeText(
+                  labelText: _lifeI18nText(
                     context,
-                    zh: '底部文案',
-                    en: 'Bottom caption',
+                    'inline.plan295.life.bottom_caption.6456c37bf6a7',
                   ),
                 ),
               ),
@@ -489,14 +526,20 @@ class _MemeMakerToolPageState extends State<_MemeMakerToolPage> {
                 controller: _stickerController,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
-                  labelText: _lifeText(context, zh: '贴纸文案', en: 'Sticker text'),
+                  labelText: _lifeI18nText(
+                    context,
+                    'inline.plan295.life.sticker_text.616ed3c4ac34',
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '图层样式', en: 'Layer style'),
+            title: _lifeI18nText(
+              context,
+              'inline.plan295.life.layer_style.474f1caa2da3',
+            ),
             children: <Widget>[
               Wrap(
                 spacing: 8,
@@ -521,32 +564,36 @@ class _MemeMakerToolPageState extends State<_MemeMakerToolPage> {
                     onPressed: () => _moveLayerOrder(-1),
                     icon: const Icon(Icons.vertical_align_top_rounded),
                     label: Text(
-                      _lifeText(context, zh: '上移层级', en: 'Bring forward'),
+                      _lifeI18nText(
+                        context,
+                        'inline.plan295.life.bring_forward.44ed806ee4a5',
+                      ),
                     ),
                   ),
                   FilledButton.tonalIcon(
                     onPressed: () => _moveLayerOrder(1),
                     icon: const Icon(Icons.vertical_align_bottom_rounded),
                     label: Text(
-                      _lifeText(context, zh: '下移层级', en: 'Send backward'),
+                      _lifeI18nText(
+                        context,
+                        'inline.plan295.life.send_backward.6a8f6647e20d',
+                      ),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
               _LifeSegmentedField<ToolboxMemeBubbleStyle>(
-                label: _lifeText(context, zh: '图层风格', en: 'Bubble style'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.bubble_style.502d09b36860',
+                ),
                 value: selected.bubbleStyle,
                 options: ToolboxMemeBubbleStyle.values
                     .map(
                       (style) => _LifeOption<ToolboxMemeBubbleStyle>(
                         value: style,
-                        labelZh: switch (style) {
-                          ToolboxMemeBubbleStyle.classic => '经典描边',
-                          ToolboxMemeBubbleStyle.panel => '字幕卡片',
-                          ToolboxMemeBubbleStyle.sticker => '贴纸气泡',
-                        },
-                        labelEn: _bubbleStyleLabel(style),
+                        labelText: _bubbleStyleLabel(style),
                       ),
                     )
                     .toList(growable: false),
@@ -556,18 +603,16 @@ class _MemeMakerToolPageState extends State<_MemeMakerToolPage> {
               ),
               const SizedBox(height: 12),
               _LifeSegmentedField<ToolboxMemeFontFamily>(
-                label: _lifeText(context, zh: '字体家族', en: 'Font family'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.font_family.b093e5173612',
+                ),
                 value: selected.fontFamily,
                 options: ToolboxMemeFontFamily.values
                     .map(
                       (family) => _LifeOption<ToolboxMemeFontFamily>(
                         value: family,
-                        labelZh: switch (family) {
-                          ToolboxMemeFontFamily.sans => '无衬线',
-                          ToolboxMemeFontFamily.serif => '衬线',
-                          ToolboxMemeFontFamily.monospace => '等宽',
-                        },
-                        labelEn: _fontFamilyLabel(family),
+                        labelText: _fontFamilyLabel(family),
                       ),
                     )
                     .toList(growable: false),
@@ -577,18 +622,16 @@ class _MemeMakerToolPageState extends State<_MemeMakerToolPage> {
               ),
               const SizedBox(height: 12),
               _LifeSegmentedField<ToolboxMemeTextAlignMode>(
-                label: _lifeText(context, zh: '对齐方式', en: 'Text align'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.text_align.204141d7e7ae',
+                ),
                 value: selected.align,
                 options: ToolboxMemeTextAlignMode.values
                     .map(
                       (align) => _LifeOption<ToolboxMemeTextAlignMode>(
                         value: align,
-                        labelZh: switch (align) {
-                          ToolboxMemeTextAlignMode.left => '左对齐',
-                          ToolboxMemeTextAlignMode.center => '居中',
-                          ToolboxMemeTextAlignMode.right => '右对齐',
-                        },
-                        labelEn: _alignLabel(align),
+                        labelText: _alignLabel(align),
                       ),
                     )
                     .toList(growable: false),
@@ -600,7 +643,12 @@ class _MemeMakerToolPageState extends State<_MemeMakerToolPage> {
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 value: selected.bold,
-                title: Text(_lifeText(context, zh: '粗体', en: 'Bold')),
+                title: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.bold.77e6053e8fa0',
+                  ),
+                ),
                 onChanged: (value) {
                   _updateSelectedLayer(selected.copyWith(bold: value));
                 },
@@ -608,14 +656,22 @@ class _MemeMakerToolPageState extends State<_MemeMakerToolPage> {
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 value: selected.italic,
-                title: Text(_lifeText(context, zh: '斜体', en: 'Italic')),
+                title: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.italic.665a2ebe74b8',
+                  ),
+                ),
                 onChanged: (value) {
                   _updateSelectedLayer(selected.copyWith(italic: value));
                 },
               ),
               const SizedBox(height: 4),
               _LifeSliderField(
-                label: _lifeText(context, zh: '基础字号', en: 'Base text size'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.base_text_size.361d4f79046d',
+                ),
                 valueText: selected.fontScale.toStringAsFixed(2),
                 value: selected.fontScale,
                 min: 0.05,
@@ -625,7 +681,10 @@ class _MemeMakerToolPageState extends State<_MemeMakerToolPage> {
                 },
               ),
               _LifeSliderField(
-                label: _lifeText(context, zh: '图层缩放', en: 'Layer scale'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.layer_scale.1bda7016395d',
+                ),
                 valueText: selected.scale.toStringAsFixed(2),
                 value: selected.scale,
                 min: 0.45,
@@ -635,7 +694,10 @@ class _MemeMakerToolPageState extends State<_MemeMakerToolPage> {
                 },
               ),
               _LifeSliderField(
-                label: _lifeText(context, zh: '文字边距', en: 'Text padding'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.text_padding.a28b5c556eba',
+                ),
                 valueText: selected.paddingScale.toStringAsFixed(2),
                 value: selected.paddingScale,
                 min: 0.02,
@@ -744,14 +806,12 @@ class _MemePreviewStageState extends State<_MemePreviewStage> {
                 stageSize,
               );
               final delta = currentCanvasPoint - startCanvasPoint;
-              final nextCenterX =
-                  (_startCenterX + delta.dx / stageSize.width)
-                      .clamp(0.08, 0.92)
-                      .toDouble();
-              final nextCenterY =
-                  (_startCenterY + delta.dy / stageSize.height)
-                      .clamp(0.08, 0.92)
-                      .toDouble();
+              final nextCenterX = (_startCenterX + delta.dx / stageSize.width)
+                  .clamp(0.08, 0.92)
+                  .toDouble();
+              final nextCenterY = (_startCenterY + delta.dy / stageSize.height)
+                  .clamp(0.08, 0.92)
+                  .toDouble();
               final nextScale = (_startScale * details.scale)
                   .clamp(0.45, 2.2)
                   .toDouble();
@@ -767,13 +827,11 @@ class _MemePreviewStageState extends State<_MemePreviewStage> {
             final nextZoom = (_startStageZoom * details.scale)
                 .clamp(1.0, 3.0)
                 .toDouble();
-            final nextOffset =
-                _clampViewportOffset(
-                  _startStageOffset +
-                      (details.localFocalPoint - startPoint),
-                  stageSize,
-                  nextZoom,
-                );
+            final nextOffset = _clampViewportOffset(
+              _startStageOffset + (details.localFocalPoint - startPoint),
+              stageSize,
+              nextZoom,
+            );
             widget.onViewportChanged(nextZoom, nextOffset);
           },
           onScaleEnd: (_) {

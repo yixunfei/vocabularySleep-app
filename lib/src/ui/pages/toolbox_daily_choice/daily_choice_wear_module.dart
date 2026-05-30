@@ -206,39 +206,29 @@ class _WearChoiceModuleState extends State<_WearChoiceModule> {
     final showRainShortcut =
         suggestion != null && suggestion.suggestRainScene && _sceneId != 'rain';
     final baseSubtitle = _temperatureId == 'all' && _sceneId == 'all'
-        ? pickUiText(
-            widget.i18n,
-            zh: collection == null
-                ? '当前浏览全部衣柜。内置数据适合参考，真正好用的结果会来自你逐步整理出的个人衣柜。'
-                : '当前只从这个衣柜里抽取。放进来的都应该是你真实拥有、愿意反复穿的组合。',
-            en: collection == null
-                ? 'Browsing all wardrobes. Built-ins are references; the best results come from your own saved wardrobe.'
-                : 'Random picks now come from this wardrobe only, ideally from outfits you actually own and repeat.',
-          )
+        ? collection == null
+              ? widget.i18n.t(
+                  'inline.plan295.daily_choice.browsing_all_wardrobes_built_ins_are.569122525c2c',
+                )
+              : widget.i18n.t(
+                  'inline.plan295.daily_choice.random_picks_now_come_from_this_ward.bbdfd79c6a80',
+                )
         : (exact.isEmpty && tempFiltered.isNotEmpty
-              ? pickUiText(
-                  widget.i18n,
-                  zh: '当前场景暂无精确项，先从同温度搭配里随机。',
-                  en: 'No exact scene match yet; randomizing from the same temperature.',
+              ? widget.i18n.t(
+                  'inline.plan295.daily_choice.no_exact_scene_match_yet_randomizing.2caac60ab788',
                 )
               : (exact.length == 1 && tempFiltered.length > 1
-                    ? pickUiText(
-                        widget.i18n,
-                        zh: '当前场景条目较少，已混入同温度稳妥备选，让随机更有变化。',
-                        en: 'This scene has only one exact match, so same-temperature backups are mixed in for more variety.',
+                    ? widget.i18n.t(
+                        'inline.plan295.daily_choice.this_scene_has_only_one_exact_match.b6cbf82eedd7',
                       )
                     : (_temperatureManuallyEdited && suggestion != null
-                          ? pickUiText(
-                              widget.i18n,
-                              zh: '当前为手动选择：${temperature.titleZh}。天气默认建议是 ${_wearTemperatureCategory(suggestion.temperatureId).titleZh}。',
-                              en: 'Manual selection: ${temperature.titleEn}. Weather suggests ${_wearTemperatureCategory(suggestion.temperatureId).titleEn}.',
+                          ? widget.i18n.t(
+                              'inline.plan295.daily_choice.manual_selection_temperature_titleen.645fc37db6a4',
                             )
                           : scene.subtitle(widget.i18n))));
     final filterNote = _activeTraitFilterCount > 0
-        ? pickUiText(
-            widget.i18n,
-            zh: ' 已应用 $_activeTraitFilterCount 项高级筛选。',
-            en: ' $_activeTraitFilterCount advanced filter(s) applied.',
+        ? widget.i18n.t(
+            'inline.plan295.daily_choice.activetraitfiltercount_advanced_filt.d8fbf6fd3e2f',
           )
         : '';
     final panelSubtitle = '$baseSubtitle$filterNote';
@@ -321,7 +311,9 @@ class _WearChoiceModuleState extends State<_WearChoiceModule> {
         const SizedBox(height: ToolboxUiTokens.cardSpacing),
         DailyChoiceCategorySelector(
           i18n: widget.i18n,
-          title: pickUiText(widget.i18n, zh: '选择气温', en: 'Temperature'),
+          title: widget.i18n.t(
+            'inline.plan295.daily_choice.temperature.2cc4112c1a72',
+          ),
           categories: wearTemperatureFilterCategories,
           selectedId: _temperatureId,
           accent: widget.accent,
@@ -331,7 +323,9 @@ class _WearChoiceModuleState extends State<_WearChoiceModule> {
         const SizedBox(height: ToolboxUiTokens.cardSpacing),
         DailyChoiceCategorySelector(
           i18n: widget.i18n,
-          title: pickUiText(widget.i18n, zh: '选择场景', en: 'Scene'),
+          title: widget.i18n.t(
+            'inline.plan295.daily_choice.scene.6f88551df562',
+          ),
           categories: wearSceneFilterCategories,
           selectedId: _sceneId,
           accent: widget.accent,
@@ -386,22 +380,18 @@ class _WearChoiceModuleState extends State<_WearChoiceModule> {
         DailyChoiceRandomPanel(
           i18n: widget.i18n,
           accent: widget.accent,
-          title: pickUiText(
-            widget.i18n,
-            zh: '${temperature.titleZh} · ${scene.titleZh}',
-            en: '${temperature.titleEn} · ${scene.titleEn}',
+          title: widget.i18n.t(
+            'inline.ui.pages.toolbox_daily_choice.daily_choice_wear_module.temperature_titleen_scene_titleen_5fc52d',
           ),
           subtitle: panelSubtitle,
           options: traitFiltered,
-          emptyText: pickUiText(
-            widget.i18n,
-            zh: collection != null
-                ? '这个衣柜在当前筛选下没有可选搭配。可以放宽筛选，或把你真实会穿的组合加入这个衣柜。'
-                : '当前没有命中的搭配。可以先参考内置衣柜，也可以在管理里新建自己的真实衣柜搭配。',
-            en: collection != null
-                ? 'This wardrobe has no matching outfits. Relax filters or add a real outfit you would actually wear.'
-                : 'No matching outfits yet. Use built-ins as references, or add your own wardrobe outfit in Manage.',
-          ),
+          emptyText: collection != null
+              ? widget.i18n.t(
+                  'inline.plan295.daily_choice.this_wardrobe_has_no_matching_outfit.0da182c24691',
+                )
+              : widget.i18n.t(
+                  'inline.plan295.daily_choice.no_matching_outfits_yet_use_built_in.5074618037d3',
+                ),
           onDetail: (option) =>
               widget.onInspectOption?.call(option) ??
               showDailyChoiceDetailSheet(
@@ -414,7 +404,9 @@ class _WearChoiceModuleState extends State<_WearChoiceModule> {
             context: context,
             i18n: widget.i18n,
             accent: widget.accent,
-            title: pickUiText(widget.i18n, zh: '穿搭指南与衣橱方法', en: 'Outfit guide'),
+            title: widget.i18n.t(
+              'inline.plan295.daily_choice.outfit_guide.fe4e609752d1',
+            ),
             modules: wearGuideModules,
           ),
           onManage: () => showDailyChoiceManagerSheet(
@@ -529,17 +521,17 @@ class _WearAdvisorPanel extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          pickUiText(i18n, zh: '评估建议', en: 'Outfit check'),
+                          i18n.t(
+                            'inline.plan295.daily_choice.outfit_check.6ae7ea008203',
+                          ),
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w900,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          pickUiText(
-                            i18n,
-                            zh: '出门前检查比例、颜色、层级和场景，不遮挡主页面。',
-                            en: 'Check proportion, color, layers, and scene without covering the page.',
+                          i18n.t(
+                            'inline.plan295.daily_choice.check_proportion_color_layers_and_sc.dbd6a08dee4c',
                           ),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
@@ -638,7 +630,7 @@ class _WearAdvisorAuditTool extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          pickUiText(i18n, zh: '出门前 30 秒', en: '30-second check'),
+          i18n.t('inline.plan295.daily_choice.30_second_check.323ea2d1d63a'),
           style: theme.textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w900,
           ),
@@ -652,10 +644,8 @@ class _WearAdvisorAuditTool extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          pickUiText(
-            i18n,
-            zh: '已通过 $checked / $total 项；少于 4 项时先调整，不急着出门。',
-            en: '$checked / $total passed. If fewer than 4 pass, adjust before leaving.',
+          i18n.t(
+            'inline.plan295.daily_choice.checked_total_passed_if_fewer_than_4.5ca16f184329',
           ),
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
@@ -675,19 +665,12 @@ class _WearAdvisorAuditTool extends StatelessWidget {
         _WearAdvisorBulletSection(
           i18n: i18n,
           icon: Icons.auto_fix_high_rounded,
-          titleZh: '临门修正',
-          titleEn: 'Quick fixes',
-          itemsZh: const <String>[
-            '太正式：先换鞋或包，让整体松一点。',
-            '太松散：加腰线、换利落下装或收窄鞋口。',
-            '太暗沉：把亮点放在脸部附近，不要全身加色。',
-            '天气不稳：多带薄外层，比临时硬扛更舒服。',
-          ],
-          itemsEn: const <String>[
-            'Too formal: change shoes or bag first.',
-            'Too loose: define waist, clean up bottoms, or narrow the shoe line.',
-            'Too dull: lift color near the face instead of adding color everywhere.',
-            'Unstable weather: carry a thin layer instead of forcing the outfit.',
+          titleKey: 'daily_choice.wear.advisor.quick_fixes.title',
+          itemKeys: const <String>[
+            'daily_choice.wear.advisor.quick_fixes.too_formal',
+            'daily_choice.wear.advisor.quick_fixes.too_loose',
+            'daily_choice.wear.advisor.quick_fixes.too_dull',
+            'daily_choice.wear.advisor.quick_fixes.unstable_weather',
           ],
         ),
       ],
@@ -804,19 +787,15 @@ class _WearAdvisorColorTool extends StatelessWidget {
         _WearAdvisorBulletSection(
           i18n: i18n,
           icon: Icons.palette_rounded,
-          titleZh: '推荐搭配',
-          titleEn: 'Good pairings',
-          itemsZh: advice.pairZh,
-          itemsEn: advice.pairEn,
+          titleKey: 'daily_choice.wear.advisor.color.good_pairings',
+          itemKeys: advice.pairKeys,
         ),
         const SizedBox(height: 8),
         _WearAdvisorBulletSection(
           i18n: i18n,
           icon: Icons.block_rounded,
-          titleZh: '谨慎避雷',
-          titleEn: 'Use carefully',
-          itemsZh: advice.avoidZh,
-          itemsEn: advice.avoidEn,
+          titleKey: 'daily_choice.wear.advisor.color.use_carefully',
+          itemKeys: advice.avoidKeys,
         ),
       ],
     );
@@ -856,19 +835,15 @@ class _WearAdvisorLayerTool extends StatelessWidget {
         _WearAdvisorBulletSection(
           i18n: i18n,
           icon: Icons.layers_rounded,
-          titleZh: '层级公式',
-          titleEn: 'Layer formula',
-          itemsZh: formula.formulaZh,
-          itemsEn: formula.formulaEn,
+          titleKey: 'daily_choice.wear.advisor.layer.formula',
+          itemKeys: formula.formulaKeys,
         ),
         const SizedBox(height: 8),
         _WearAdvisorBulletSection(
           i18n: i18n,
           icon: Icons.rule_rounded,
-          titleZh: '检查点',
-          titleEn: 'Checks',
-          itemsZh: formula.checkZh,
-          itemsEn: formula.checkEn,
+          titleKey: 'daily_choice.wear.advisor.layer.checks',
+          itemKeys: formula.checkKeys,
         ),
       ],
     );
@@ -908,19 +883,15 @@ class _WearAdvisorSceneTool extends StatelessWidget {
         _WearAdvisorBulletSection(
           i18n: i18n,
           icon: Icons.flag_rounded,
-          titleZh: '第一优先级',
-          titleEn: 'First priority',
-          itemsZh: scene.priorityZh,
-          itemsEn: scene.priorityEn,
+          titleKey: 'daily_choice.wear.advisor.scene.first_priority',
+          itemKeys: scene.priorityKeys,
         ),
         const SizedBox(height: 8),
         _WearAdvisorBulletSection(
           i18n: i18n,
           icon: Icons.warning_amber_rounded,
-          titleZh: '常见失误',
-          titleEn: 'Common misses',
-          itemsZh: scene.avoidZh,
-          itemsEn: scene.avoidEn,
+          titleKey: 'daily_choice.wear.advisor.scene.common_misses',
+          itemKeys: scene.avoidKeys,
         ),
       ],
     );
@@ -968,25 +939,18 @@ class _WearAdvisorBulletSection extends StatelessWidget {
   const _WearAdvisorBulletSection({
     required this.i18n,
     required this.icon,
-    required this.titleZh,
-    required this.titleEn,
-    required this.itemsZh,
-    required this.itemsEn,
+    required this.titleKey,
+    required this.itemKeys,
   });
 
   final AppI18n i18n;
   final IconData icon;
-  final String titleZh;
-  final String titleEn;
-  final List<String> itemsZh;
-  final List<String> itemsEn;
+  final String titleKey;
+  final List<String> itemKeys;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final items = AppI18n.normalizeLanguageCode(i18n.languageCode) == 'zh'
-        ? itemsZh
-        : itemsEn;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(10),
@@ -1005,7 +969,7 @@ class _WearAdvisorBulletSection extends StatelessWidget {
               Icon(icon, size: 17, color: theme.colorScheme.primary),
               const SizedBox(width: 6),
               Text(
-                pickUiText(i18n, zh: titleZh, en: titleEn),
+                i18n.t(titleKey),
                 style: theme.textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w900,
                 ),
@@ -1013,7 +977,7 @@ class _WearAdvisorBulletSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          for (final item in items)
+          for (final itemKey in itemKeys)
             Padding(
               padding: const EdgeInsets.only(bottom: 4),
               child: Row(
@@ -1022,7 +986,7 @@ class _WearAdvisorBulletSection extends StatelessWidget {
                   const Text('• '),
                   Expanded(
                     child: Text(
-                      item,
+                      i18n.t(itemKey),
                       style: theme.textTheme.bodySmall?.copyWith(height: 1.35),
                     ),
                   ),
@@ -1046,169 +1010,126 @@ class _WearAdvisorTool extends _WearAdvisorChoice {
   const _WearAdvisorTool({
     required this.id,
     required this.icon,
-    required this.titleZh,
-    required this.titleEn,
+    required this.titleKey,
   });
 
   @override
   final String id;
   @override
   final IconData icon;
-  final String titleZh;
-  final String titleEn;
+  final String titleKey;
 
   @override
-  String title(AppI18n i18n) => pickUiText(i18n, zh: titleZh, en: titleEn);
+  String title(AppI18n i18n) => i18n.t(titleKey);
 }
 
 class _WearAdvisorCheck {
   const _WearAdvisorCheck({
     required this.id,
-    required this.titleZh,
-    required this.titleEn,
-    required this.bodyZh,
-    required this.bodyEn,
+    required this.titleKey,
+    required this.bodyKey,
   });
 
   final String id;
-  final String titleZh;
-  final String titleEn;
-  final String bodyZh;
-  final String bodyEn;
+  final String titleKey;
+  final String bodyKey;
 
-  String title(AppI18n i18n) => pickUiText(i18n, zh: titleZh, en: titleEn);
-  String body(AppI18n i18n) => pickUiText(i18n, zh: bodyZh, en: bodyEn);
+  String title(AppI18n i18n) => i18n.t(titleKey);
+  String body(AppI18n i18n) => i18n.t(bodyKey);
 }
 
 class _WearColorAdvice extends _WearAdvisorTool {
   const _WearColorAdvice({
     required super.id,
     required super.icon,
-    required super.titleZh,
-    required super.titleEn,
-    required this.pairZh,
-    required this.pairEn,
-    required this.avoidZh,
-    required this.avoidEn,
+    required super.titleKey,
+    required this.pairKeys,
+    required this.avoidKeys,
   });
 
-  final List<String> pairZh;
-  final List<String> pairEn;
-  final List<String> avoidZh;
-  final List<String> avoidEn;
+  final List<String> pairKeys;
+  final List<String> avoidKeys;
 }
 
 class _WearLayerFormula extends _WearAdvisorTool {
   const _WearLayerFormula({
     required super.id,
     required super.icon,
-    required super.titleZh,
-    required super.titleEn,
-    required this.formulaZh,
-    required this.formulaEn,
-    required this.checkZh,
-    required this.checkEn,
+    required super.titleKey,
+    required this.formulaKeys,
+    required this.checkKeys,
   });
 
-  final List<String> formulaZh;
-  final List<String> formulaEn;
-  final List<String> checkZh;
-  final List<String> checkEn;
+  final List<String> formulaKeys;
+  final List<String> checkKeys;
 }
 
 class _WearSceneAdvice extends _WearAdvisorTool {
   const _WearSceneAdvice({
     required super.id,
     required super.icon,
-    required super.titleZh,
-    required super.titleEn,
-    required this.priorityZh,
-    required this.priorityEn,
-    required this.avoidZh,
-    required this.avoidEn,
+    required super.titleKey,
+    required this.priorityKeys,
+    required this.avoidKeys,
   });
 
-  final List<String> priorityZh;
-  final List<String> priorityEn;
-  final List<String> avoidZh;
-  final List<String> avoidEn;
+  final List<String> priorityKeys;
+  final List<String> avoidKeys;
 }
 
 const List<_WearAdvisorTool> _wearAdvisorTools = <_WearAdvisorTool>[
   _WearAdvisorTool(
     id: 'audit',
     icon: Icons.fact_check_rounded,
-    titleZh: '评估',
-    titleEn: 'Check',
+    titleKey: 'daily_choice.wear.advisor.tool.audit',
   ),
   _WearAdvisorTool(
     id: 'color',
     icon: Icons.palette_rounded,
-    titleZh: '颜色',
-    titleEn: 'Color',
+    titleKey: 'daily_choice.wear.advisor.tool.color',
   ),
   _WearAdvisorTool(
     id: 'layer',
     icon: Icons.layers_rounded,
-    titleZh: '层级',
-    titleEn: 'Layers',
+    titleKey: 'daily_choice.wear.advisor.tool.layer',
   ),
   _WearAdvisorTool(
     id: 'scene',
     icon: Icons.event_available_rounded,
-    titleZh: '场景',
-    titleEn: 'Scene',
+    titleKey: 'daily_choice.wear.advisor.tool.scene',
   ),
 ];
 
 const List<_WearAdvisorCheck> _wearAdvisorAuditChecks = <_WearAdvisorCheck>[
   _WearAdvisorCheck(
     id: 'temperature',
-    titleZh: '温度与体感',
-    titleEn: 'Temperature',
-    bodyZh: '确认体感、风、雨、空调房和室内外温差，不只看气温数字。',
-    bodyEn:
-        'Check feels-like temperature, wind, rain, AC, and indoor-outdoor swing.',
+    titleKey: 'daily_choice.wear.advisor.audit.temperature.title',
+    bodyKey: 'daily_choice.wear.advisor.audit.temperature.body',
   ),
   _WearAdvisorCheck(
     id: 'movement',
-    titleZh: '行动自由',
-    titleEn: 'Movement',
-    bodyZh: '坐下、走路、抬手都不需要分心照顾衣服。',
-    bodyEn:
-        'Sitting, walking, and raising arms should not need constant fixing.',
+    titleKey: 'daily_choice.wear.advisor.audit.movement.title',
+    bodyKey: 'daily_choice.wear.advisor.audit.movement.body',
   ),
   _WearAdvisorCheck(
     id: 'scene',
-    titleZh: '场景合适',
-    titleEn: 'Scene fit',
-    bodyZh: '不比今天角色更用力，也不要让重要场合显得敷衍。',
-    bodyEn:
-        'Do not overdress for the role, but do not underplay important scenes.',
+    titleKey: 'daily_choice.wear.advisor.audit.scene.title',
+    bodyKey: 'daily_choice.wear.advisor.audit.scene.body',
   ),
   _WearAdvisorCheck(
     id: 'proportion',
-    titleZh: '比例收口',
-    titleEn: 'Proportion',
-    bodyZh: '上下量感有分工，腰线、裤长或鞋口至少有一个清楚收口。',
-    bodyEn:
-        'Top and bottom share volume; waist, hem, or shoe line has a clear finish.',
+    titleKey: 'daily_choice.wear.advisor.audit.proportion.title',
+    bodyKey: 'daily_choice.wear.advisor.audit.proportion.body',
   ),
   _WearAdvisorCheck(
     id: 'shoes_bag',
-    titleZh: '鞋包统一',
-    titleEn: 'Shoes and bag',
-    bodyZh: '鞋底安全，包的大小够用，金属色和皮革语气不打架。',
-    bodyEn:
-        'Soles are safe, bag size works, and metals or leather tones do not clash.',
+    titleKey: 'daily_choice.wear.advisor.audit.shoes_bag.title',
+    bodyKey: 'daily_choice.wear.advisor.audit.shoes_bag.body',
   ),
   _WearAdvisorCheck(
     id: 'care',
-    titleZh: '维护与细节',
-    titleEn: 'Care details',
-    bodyZh: '易皱、沾毛、防晒、保暖、备用干物和洗护限制都已考虑。',
-    bodyEn:
-        'Wrinkles, lint, sun, warmth, dry backup, and care limits are accounted for.',
+    titleKey: 'daily_choice.wear.advisor.audit.care.title',
+    bodyKey: 'daily_choice.wear.advisor.audit.care.body',
   ),
 ];
 
@@ -1216,86 +1137,71 @@ const List<_WearColorAdvice> _wearColorAdvices = <_WearColorAdvice>[
   _WearColorAdvice(
     id: 'black',
     icon: Icons.contrast_rounded,
-    titleZh: '黑色单品',
-    titleEn: 'Black',
-    pairZh: <String>['配白、灰、牛仔蓝最稳。', '加米色或浅卡其会更柔和。', '想提气色，把亮点放在上半身或配饰。'],
-    pairEn: <String>[
-      'White, grey, and denim blue are safest.',
-      'Beige or light khaki softens the look.',
-      'Place accents near the upper body or accessories.',
+    titleKey: 'daily_choice.wear.advisor.color.black.title',
+    pairKeys: <String>[
+      'daily_choice.wear.advisor.color.black.pair_1',
+      'daily_choice.wear.advisor.color.black.pair_2',
+      'daily_choice.wear.advisor.color.black.pair_3',
     ],
-    avoidZh: <String>['全黑时注意材质层次，否则容易闷。', '黑色贴脸可能显沉，可靠领口或配饰提亮。'],
-    avoidEn: <String>[
-      'All black needs texture or it can feel flat.',
-      'Black near the face can feel heavy; lift it with neckline or accessories.',
+    avoidKeys: <String>[
+      'daily_choice.wear.advisor.color.black.avoid_1',
+      'daily_choice.wear.advisor.color.black.avoid_2',
     ],
   ),
   _WearColorAdvice(
     id: 'white',
     icon: Icons.light_mode_rounded,
-    titleZh: '白色单品',
-    titleEn: 'White',
-    pairZh: <String>['配海军蓝、灰、卡其会干净。', '白上衣适合承接彩色小配饰。', '白裤装更适合挺括或有厚度的面料。'],
-    pairEn: <String>[
-      'Navy, grey, and khaki keep it clean.',
-      'White tops support small colorful accents.',
-      'White bottoms work better in structured fabrics.',
+    titleKey: 'daily_choice.wear.advisor.color.white.title',
+    pairKeys: <String>[
+      'daily_choice.wear.advisor.color.white.pair_1',
+      'daily_choice.wear.advisor.color.white.pair_2',
+      'daily_choice.wear.advisor.color.white.pair_3',
     ],
-    avoidZh: <String>['薄白下装容易透，先看光线和内搭。', '大面积白色雨天、通勤挤车要谨慎。'],
-    avoidEn: <String>[
-      'Thin white bottoms can be sheer; check light and underlayers.',
-      'Large white areas need care on rainy or crowded commutes.',
+    avoidKeys: <String>[
+      'daily_choice.wear.advisor.color.white.avoid_1',
+      'daily_choice.wear.advisor.color.white.avoid_2',
     ],
   ),
   _WearColorAdvice(
     id: 'navy',
     icon: Icons.water_rounded,
-    titleZh: '海军蓝',
-    titleEn: 'Navy',
-    pairZh: <String>['配白、浅灰、牛仔蓝有通勤感。', '配棕色皮鞋或腰带会更稳重。', '想休闲时加条纹、帆布或小白鞋。'],
-    pairEn: <String>[
-      'White, light grey, and denim feel work-ready.',
-      'Brown leather shoes or belt add steadiness.',
-      'Stripes, canvas, or white sneakers make it casual.',
+    titleKey: 'daily_choice.wear.advisor.color.navy.title',
+    pairKeys: <String>[
+      'daily_choice.wear.advisor.color.navy.pair_1',
+      'daily_choice.wear.advisor.color.navy.pair_2',
+      'daily_choice.wear.advisor.color.navy.pair_3',
     ],
-    avoidZh: <String>['避免和过暗黑色混在一起看不出层次。', '正式场景里少用过亮荧光色破坏克制感。'],
-    avoidEn: <String>[
-      'Avoid mixing with very dark black without contrast.',
-      'Keep neon accents away from formal navy looks.',
+    avoidKeys: <String>[
+      'daily_choice.wear.advisor.color.navy.avoid_1',
+      'daily_choice.wear.advisor.color.navy.avoid_2',
     ],
   ),
   _WearColorAdvice(
     id: 'khaki',
     icon: Icons.tonality_rounded,
-    titleZh: '卡其米色',
-    titleEn: 'Khaki',
-    pairZh: <String>['配白、海军蓝、黑色最省心。', '同色系可用深浅差做层次。', '加棕色、金色配件会更温和。'],
-    pairEn: <String>[
-      'White, navy, and black are easy anchors.',
-      'Use light-dark shifts within the same family.',
-      'Brown or gold accessories soften it.',
+    titleKey: 'daily_choice.wear.advisor.color.khaki.title',
+    pairKeys: <String>[
+      'daily_choice.wear.advisor.color.khaki.pair_1',
+      'daily_choice.wear.advisor.color.khaki.pair_2',
+      'daily_choice.wear.advisor.color.khaki.pair_3',
     ],
-    avoidZh: <String>['全身米色要避开肤色太近的问题。', '软塌面料过多会显得没精神。'],
-    avoidEn: <String>[
-      'All beige can wash you out if too close to skin tone.',
-      'Too many limp fabrics can look tired.',
+    avoidKeys: <String>[
+      'daily_choice.wear.advisor.color.khaki.avoid_1',
+      'daily_choice.wear.advisor.color.khaki.avoid_2',
     ],
   ),
   _WearColorAdvice(
     id: 'accent',
     icon: Icons.color_lens_rounded,
-    titleZh: '彩色亮点',
-    titleEn: 'Accent',
-    pairZh: <String>['一次只保留一个主亮点。', '把彩色放在围巾、包、鞋或上衣小面积。', '用黑白灰、海军蓝或牛仔稳定它。'],
-    pairEn: <String>[
-      'Keep one main accent at a time.',
-      'Use color on scarf, bag, shoes, or a small top area.',
-      'Anchor it with black, white, grey, navy, or denim.',
+    titleKey: 'daily_choice.wear.advisor.color.accent.title',
+    pairKeys: <String>[
+      'daily_choice.wear.advisor.color.accent.pair_1',
+      'daily_choice.wear.advisor.color.accent.pair_2',
+      'daily_choice.wear.advisor.color.accent.pair_3',
     ],
-    avoidZh: <String>['不要多个高饱和彩色平均分布。', '靠近脸的颜色先看气色，不只看流行。'],
-    avoidEn: <String>[
-      'Avoid several loud colors in equal weight.',
-      'Near-face color should flatter you, not only follow trends.',
+    avoidKeys: <String>[
+      'daily_choice.wear.advisor.color.accent.avoid_1',
+      'daily_choice.wear.advisor.color.accent.avoid_2',
     ],
   ),
 ];
@@ -1304,65 +1210,53 @@ const List<_WearLayerFormula> _wearLayerFormulas = <_WearLayerFormula>[
   _WearLayerFormula(
     id: 'hot',
     icon: Icons.wb_sunny_rounded,
-    titleZh: '炎热',
-    titleEn: 'Hot',
-    formulaZh: <String>['透气单层 + 防晒部件 + 易走鞋。', '材质优先棉麻、天丝、薄针织或速干。'],
-    formulaEn: <String>[
-      'Breathable single layer + sun protection + walkable shoes.',
-      'Prefer cotton-linen, Tencel, thin knit, or quick-dry fabrics.',
+    titleKey: 'daily_choice.wear.advisor.layer.hot.title',
+    formulaKeys: <String>[
+      'daily_choice.wear.advisor.layer.hot.formula_1',
+      'daily_choice.wear.advisor.layer.hot.formula_2',
     ],
-    checkZh: <String>['浅色不等于凉快，透气和不贴身更重要。', '空调房准备薄外层，不要靠厚面料硬扛。'],
-    checkEn: <String>[
-      'Light color is not enough; airflow and non-clingy fit matter.',
-      'Carry a thin layer for AC instead of wearing heavy fabric.',
+    checkKeys: <String>[
+      'daily_choice.wear.advisor.layer.hot.check_1',
+      'daily_choice.wear.advisor.layer.hot.check_2',
     ],
   ),
   _WearLayerFormula(
     id: 'mild',
     icon: Icons.filter_drama_rounded,
-    titleZh: '温和',
-    titleEn: 'Mild',
-    formulaZh: <String>['基础内层 + 轻外套 / 衬衫外穿 + 利落鞋。', '把亮点放在颜色、鞋包或一件配饰。'],
-    formulaEn: <String>[
-      'Base layer + light jacket or overshirt + clean shoes.',
-      'Put the accent on color, shoes, bag, or one accessory.',
+    titleKey: 'daily_choice.wear.advisor.layer.mild.title',
+    formulaKeys: <String>[
+      'daily_choice.wear.advisor.layer.mild.formula_1',
+      'daily_choice.wear.advisor.layer.mild.formula_2',
     ],
-    checkZh: <String>['早晚温差大时外层要能塞包或拿在手里。', '裤长和鞋口决定整套是否清爽。'],
-    checkEn: <String>[
-      'If mornings and evenings swing, the outer layer must pack or carry easily.',
-      'Hem and shoe line decide whether it feels clean.',
+    checkKeys: <String>[
+      'daily_choice.wear.advisor.layer.mild.check_1',
+      'daily_choice.wear.advisor.layer.mild.check_2',
     ],
   ),
   _WearLayerFormula(
     id: 'cold',
     icon: Icons.ac_unit_rounded,
-    titleZh: '冷天',
-    titleEn: 'Cold',
-    formulaZh: <String>['排汗内层 + 保暖中层 + 挡风外层。', '颈部、手部、脚踝和鞋底要一起看。'],
-    formulaEn: <String>[
-      'Moisture-managing base + warm mid-layer + wind-blocking outer.',
-      'Check neck, hands, ankles, and sole grip together.',
+    titleKey: 'daily_choice.wear.advisor.layer.cold.title',
+    formulaKeys: <String>[
+      'daily_choice.wear.advisor.layer.cold.formula_1',
+      'daily_choice.wear.advisor.layer.cold.formula_2',
     ],
-    checkZh: <String>['不要只堆厚外套，中层空气层更重要。', '室内久坐时外层要容易脱。'],
-    checkEn: <String>[
-      'Do not rely only on a thick coat; the mid-layer air gap matters.',
-      'Outerwear should come off easily for long indoor sitting.',
+    checkKeys: <String>[
+      'daily_choice.wear.advisor.layer.cold.check_1',
+      'daily_choice.wear.advisor.layer.cold.check_2',
     ],
   ),
   _WearLayerFormula(
     id: 'rain',
     icon: Icons.umbrella_rounded,
-    titleZh: '雨天',
-    titleEn: 'Rain',
-    formulaZh: <String>['快干内层 + 防泼外层 + 防滑鞋。', '裤脚不拖地，包里留备用干物。'],
-    formulaEn: <String>[
-      'Quick-dry layer + water-repellent shell + grippy shoes.',
-      'Keep hems off the ground and pack dry backup items.',
+    titleKey: 'daily_choice.wear.advisor.layer.rain.title',
+    formulaKeys: <String>[
+      'daily_choice.wear.advisor.layer.rain.formula_1',
+      'daily_choice.wear.advisor.layer.rain.formula_2',
     ],
-    checkZh: <String>['长裙、阔裤和浅色麂皮雨天都要谨慎。', '伞、帽子、包口和鞋面一起防水。'],
-    checkEn: <String>[
-      'Long skirts, wide pants, and light suede need caution in rain.',
-      'Umbrella, hat, bag opening, and shoe upper all need weather control.',
+    checkKeys: <String>[
+      'daily_choice.wear.advisor.layer.rain.check_1',
+      'daily_choice.wear.advisor.layer.rain.check_2',
     ],
   ),
 ];
@@ -1371,84 +1265,69 @@ const List<_WearSceneAdvice> _wearSceneAdvices = <_WearSceneAdvice>[
   _WearSceneAdvice(
     id: 'commute',
     icon: Icons.work_rounded,
-    titleZh: '通勤',
-    titleEn: 'Commute',
-    priorityZh: <String>['耐坐、耐走、耐空调。', '颜色和轮廓先稳，亮点小面积。'],
-    priorityEn: <String>[
-      'Survive sitting, walking, and AC.',
-      'Keep color and shape stable; use small accents.',
+    titleKey: 'daily_choice.wear.advisor.scene.commute.title',
+    priorityKeys: <String>[
+      'daily_choice.wear.advisor.scene.commute.priority_1',
+      'daily_choice.wear.advisor.scene.commute.priority_2',
     ],
-    avoidZh: <String>['鞋太难走。', '外套太容易皱。', '包容量不够导致手上东西太多。'],
-    avoidEn: <String>[
-      'Shoes that cannot walk.',
-      'Jackets that wrinkle too easily.',
-      'Bags too small for the day.',
+    avoidKeys: <String>[
+      'daily_choice.wear.advisor.scene.commute.avoid_1',
+      'daily_choice.wear.advisor.scene.commute.avoid_2',
+      'daily_choice.wear.advisor.scene.commute.avoid_3',
     ],
   ),
   _WearSceneAdvice(
     id: 'business',
     icon: Icons.business_center_rounded,
-    titleZh: '正式',
-    titleEn: 'Business',
-    priorityZh: <String>['肩线、裤线、鞋面干净。', '颜色少一点，材质挺一点。'],
-    priorityEn: <String>[
-      'Clean shoulder line, trouser line, and shoes.',
-      'Use fewer colors and more structure.',
+    titleKey: 'daily_choice.wear.advisor.scene.business.title',
+    priorityKeys: <String>[
+      'daily_choice.wear.advisor.scene.business.priority_1',
+      'daily_choice.wear.advisor.scene.business.priority_2',
     ],
-    avoidZh: <String>['图案过多。', '面料过软塌。', '配饰声音太大或太抢。'],
-    avoidEn: <String>[
-      'Too many patterns.',
-      'Fabric too limp.',
-      'Accessories that are noisy or distracting.',
+    avoidKeys: <String>[
+      'daily_choice.wear.advisor.scene.business.avoid_1',
+      'daily_choice.wear.advisor.scene.business.avoid_2',
+      'daily_choice.wear.advisor.scene.business.avoid_3',
     ],
   ),
   _WearSceneAdvice(
     id: 'date',
     icon: Icons.favorite_rounded,
-    titleZh: '约会',
-    titleEn: 'Date',
-    priorityZh: <String>['舒服、亲近、一个记忆点。', '脸部附近可以更柔和或更提气色。'],
-    priorityEn: <String>[
-      'Comfort, approachability, and one memorable point.',
-      'Near-face color can be softer or more flattering.',
+    titleKey: 'daily_choice.wear.advisor.scene.date.title',
+    priorityKeys: <String>[
+      'daily_choice.wear.advisor.scene.date.priority_1',
+      'daily_choice.wear.advisor.scene.date.priority_2',
     ],
-    avoidZh: <String>['为了拍照牺牲行动。', '香水、配饰或鞋过度用力。'],
-    avoidEn: <String>[
-      'Sacrificing movement for photos.',
-      'Overdoing fragrance, accessories, or shoes.',
+    avoidKeys: <String>[
+      'daily_choice.wear.advisor.scene.date.avoid_1',
+      'daily_choice.wear.advisor.scene.date.avoid_2',
     ],
   ),
   _WearSceneAdvice(
     id: 'exercise',
     icon: Icons.directions_run_rounded,
-    titleZh: '运动',
-    titleEn: 'Exercise',
-    priorityZh: <String>['排汗、活动范围、鞋底支撑。', '外层要能快速穿脱。'],
-    priorityEn: <String>[
-      'Sweat control, movement range, and sole support.',
-      'Outer layer should go on and off quickly.',
+    titleKey: 'daily_choice.wear.advisor.scene.exercise.title',
+    priorityKeys: <String>[
+      'daily_choice.wear.advisor.scene.exercise.priority_1',
+      'daily_choice.wear.advisor.scene.exercise.priority_2',
     ],
-    avoidZh: <String>['棉厚卫衣长时间贴身。', '裤腰或肩背影响动作。'],
-    avoidEn: <String>[
-      'Heavy cotton staying wet against skin.',
-      'Waistband or shoulders restricting movement.',
+    avoidKeys: <String>[
+      'daily_choice.wear.advisor.scene.exercise.avoid_1',
+      'daily_choice.wear.advisor.scene.exercise.avoid_2',
     ],
   ),
   _WearSceneAdvice(
     id: 'rain',
     icon: Icons.umbrella_rounded,
-    titleZh: '雨天',
-    titleEn: 'Rain',
-    priorityZh: <String>['防滑、快干、不拖地。', '包口、鞋面、裤脚先处理。'],
-    priorityEn: <String>[
-      'Grip, quick-dry, and no dragging hems.',
-      'Handle bag opening, shoe upper, and hems first.',
+    titleKey: 'daily_choice.wear.advisor.scene.rain.title',
+    priorityKeys: <String>[
+      'daily_choice.wear.advisor.scene.rain.priority_1',
+      'daily_choice.wear.advisor.scene.rain.priority_2',
     ],
-    avoidZh: <String>['长裤堆脚面。', '浅色绒面鞋。', '需要双手一直整理的外套。'],
-    avoidEn: <String>[
-      'Pants pooling on shoes.',
-      'Light suede shoes.',
-      'Outerwear that needs constant fixing.',
+    avoidKeys: <String>[
+      'daily_choice.wear.advisor.scene.rain.avoid_1',
+      'daily_choice.wear.advisor.scene.rain.avoid_2',
+      'daily_choice.wear.advisor.scene.rain.avoid_3',
     ],
   ),
 ];
@@ -1498,7 +1377,9 @@ class _WearWeatherPanel extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    pickUiText(i18n, zh: '天气建议', en: 'Weather suggestion'),
+                    i18n.t(
+                      'inline.ui.pages.toolbox_daily_choice.daily_choice_wear_module.weather_suggestion_727ad3',
+                    ),
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w900,
                     ),
@@ -1506,19 +1387,15 @@ class _WearWeatherPanel extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     weatherLoading
-                        ? pickUiText(
-                            i18n,
-                            zh: '正在读取当前天气，读取完成后会默认推荐合适的气温档位。',
-                            en: 'Loading weather. A suitable temperature band will be selected by default when ready.',
+                        ? i18n.t(
+                            'inline.plan295.daily_choice.loading_weather_a_suitable_temperatu.f26f894528ec',
                           )
-                        : pickUiText(
-                            i18n,
-                            zh: weatherEnabled
-                                ? '正在等待全局天气数据，当前先查看全部气温，你也可以手动改档位。'
-                                : '当前先查看全部气温；若天气提醒已读取天气，这里会自动用于穿搭建议。',
-                            en: weatherEnabled
-                                ? 'Waiting for global weather data. The module shows all temperatures for now, and you can adjust it manually.'
-                                : 'Showing all temperatures for now. If startup weather has loaded, it will be used here automatically.',
+                        : weatherEnabled
+                        ? i18n.t(
+                            'inline.plan295.daily_choice.waiting_for_global_weather_data_the.c3d0ea11819f',
+                          )
+                        : i18n.t(
+                            'inline.plan295.daily_choice.showing_all_temperatures_for_now_if.e4468a625592',
                           ),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       height: 1.4,
@@ -1547,7 +1424,7 @@ class _WearWeatherPanel extends StatelessWidget {
         snapshot.todayMaxTemperatureCelsius != null &&
             snapshot.todayMinTemperatureCelsius != null
         ? '${snapshot.todayMinTemperatureCelsius!.round()}°C ~ ${snapshot.todayMaxTemperatureCelsius!.round()}°C'
-        : pickUiText(i18n, zh: '暂无高低温', en: 'No high-low yet');
+        : i18n.t('inline.plan295.daily_choice.no_high_low_yet.d5eb46277c71');
 
     return ToolboxSurfaceCard(
       padding: const EdgeInsets.all(16),
@@ -1579,7 +1456,9 @@ class _WearWeatherPanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickUiText(i18n, zh: '天气建议', en: 'Weather suggestion'),
+                      i18n.t(
+                        'inline.ui.pages.toolbox_daily_choice.daily_choice_wear_module.weather_suggestion_727ad3',
+                      ),
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w900,
                       ),
@@ -1596,7 +1475,9 @@ class _WearWeatherPanel extends StatelessWidget {
               ),
               if (weatherLoading)
                 ToolboxInfoPill(
-                  text: pickUiText(i18n, zh: '更新中', en: 'Refreshing'),
+                  text: i18n.t(
+                    'inline.plan295.daily_choice.refreshing.7a82b4defcd1',
+                  ),
                   accent: accent,
                   backgroundColor: theme.colorScheme.surfaceContainerLow,
                 ),
@@ -1608,37 +1489,29 @@ class _WearWeatherPanel extends StatelessWidget {
             runSpacing: 8,
             children: <Widget>[
               ToolboxInfoPill(
-                text: pickUiText(
-                  i18n,
-                  zh: '当前 ${snapshot.temperatureCelsius.round()}°C',
-                  en: '${snapshot.temperatureCelsius.round()}°C now',
+                text: i18n.t(
+                  'inline.plan295.daily_choice.snapshot_temperaturecelsius_round_c.b812c43c7215',
                 ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
               ),
               ToolboxInfoPill(
-                text: pickUiText(
-                  i18n,
-                  zh: '体感 ${snapshot.apparentTemperatureCelsius.round()}°C',
-                  en: 'Feels ${snapshot.apparentTemperatureCelsius.round()}°C',
+                text: i18n.t(
+                  'inline.plan295.daily_choice.feels_snapshot_apparenttemperaturece.3782d2ebb643',
                 ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
               ),
               ToolboxInfoPill(
-                text: pickUiText(
-                  i18n,
-                  zh: '高低温 $highLow',
-                  en: 'High-low $highLow',
+                text: i18n.t(
+                  'inline.plan295.daily_choice.high_low_highlow.14a0357434f6',
                 ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
               ),
               ToolboxInfoPill(
-                text: pickUiText(
-                  i18n,
-                  zh: '推荐 ${recommendedTemperature.titleZh}',
-                  en: 'Suggest ${recommendedTemperature.titleEn}',
+                text: i18n.t(
+                  'inline.plan295.daily_choice.suggest_recommendedtemperature_title.9edbb2638d54',
                 ),
                 accent: accent,
                 backgroundColor: usingSuggestedTemperature
@@ -1692,7 +1565,9 @@ class _WearWeatherPanel extends StatelessWidget {
                     onPressed: onRestoreSuggestedTemperature,
                     icon: const Icon(Icons.refresh_rounded),
                     label: Text(
-                      pickUiText(i18n, zh: '恢复天气推荐', en: 'Use suggestion'),
+                      i18n.t(
+                        'inline.plan295.daily_choice.use_suggestion.3d39fe797dc7',
+                      ),
                     ),
                   ),
                 if (onSwitchToRainScene != null)
@@ -1700,7 +1575,9 @@ class _WearWeatherPanel extends StatelessWidget {
                     onPressed: onSwitchToRainScene,
                     icon: const Icon(Icons.umbrella_rounded),
                     label: Text(
-                      pickUiText(i18n, zh: '切到雨天场景', en: 'Switch to rain'),
+                      i18n.t(
+                        'inline.plan295.daily_choice.switch_to_rain.d907ae33a5d3',
+                      ),
                     ),
                   ),
               ],
@@ -1716,30 +1593,30 @@ class _WearWeatherSuggestion {
   const _WearWeatherSuggestion({
     required this.snapshot,
     required this.temperatureId,
-    required this.summaryZh,
-    required this.summaryEn,
-    required this.notesZh,
-    required this.notesEn,
+    required this.apparentTemperature,
+    required this.noteKeys,
+    required this.noteParams,
     required this.suggestRainScene,
   });
 
   final WeatherSnapshot snapshot;
   final String temperatureId;
-  final String summaryZh;
-  final String summaryEn;
-  final List<String> notesZh;
-  final List<String> notesEn;
+  final int apparentTemperature;
+  final List<String> noteKeys;
+  final Map<String, Map<String, Object?>> noteParams;
   final bool suggestRainScene;
 
-  String summary(AppI18n i18n) =>
-      pickUiText(i18n, zh: summaryZh, en: summaryEn);
+  String summary(AppI18n i18n) => i18n.t(
+    'daily_choice.wear.weather.suggestion.summary',
+    params: <String, Object?>{
+      'temperature': apparentTemperature,
+      'category': _wearTemperatureCategory(temperatureId).title(i18n),
+    },
+  );
 
-  List<String> notes(AppI18n i18n) {
-    if (AppI18n.normalizeLanguageCode(i18n.languageCode) == 'zh') {
-      return notesZh;
-    }
-    return notesEn.isEmpty ? notesZh : notesEn;
-  }
+  List<String> notes(AppI18n i18n) => noteKeys
+      .map((key) => i18n.t(key, params: noteParams[key] ?? const {}))
+      .toList(growable: false);
 }
 
 _WearWeatherSuggestion? _buildWearWeatherSuggestion(WeatherSnapshot? snapshot) {
@@ -1748,7 +1625,6 @@ _WearWeatherSuggestion? _buildWearWeatherSuggestion(WeatherSnapshot? snapshot) {
   }
   final apparent = snapshot.apparentTemperatureCelsius;
   final temperatureId = _wearTemperatureIdFor(apparent);
-  final recommended = _wearTemperatureCategory(temperatureId);
   final range =
       ((snapshot.todayMaxTemperatureCelsius ?? apparent) -
               (snapshot.todayMinTemperatureCelsius ?? apparent))
@@ -1756,51 +1632,35 @@ _WearWeatherSuggestion? _buildWearWeatherSuggestion(WeatherSnapshot? snapshot) {
   final rainy = _wearWeatherCodesRain.contains(snapshot.weatherCode);
   final snowy = _wearWeatherCodesSnow.contains(snapshot.weatherCode);
   final windy = snapshot.windSpeedKph >= 24;
-  final notesZh = <String>[];
-  final notesEn = <String>[];
+  final noteKeys = <String>[];
+  final noteParams = <String, Map<String, Object?>>{};
   if (range >= 8) {
-    notesZh.add('今天温差 ${range.round()}°C，优先选可穿脱的外层。');
-    notesEn.add(
-      'The temperature swing is ${range.round()}°C today, so keep the outer layer easy to remove.',
-    );
+    const key = 'daily_choice.wear.weather.note.temperature_swing';
+    noteKeys.add(key);
+    noteParams[key] = <String, Object?>{'range': range.round()};
   }
   if (rainy) {
-    notesZh.add('当前有降水，鞋底防滑、面料快干会更稳妥。');
-    notesEn.add(
-      'There is precipitation, so grippy soles and quick-dry fabrics are safer.',
-    );
+    noteKeys.add('daily_choice.wear.weather.note.rain');
   }
   if (snowy) {
-    notesZh.add('当前有降雪，保暖和抓地力要优先于轻薄造型。');
-    notesEn.add(
-      'Snow is expected, so warmth and traction matter more than light styling.',
-    );
+    noteKeys.add('daily_choice.wear.weather.note.snow');
   }
   if (windy) {
-    notesZh.add('风速约 ${snapshot.windSpeedKph.round()} km/h，尽量带一层防风外搭。');
-    notesEn.add(
-      'Wind is around ${snapshot.windSpeedKph.round()} km/h, so add a wind-blocking layer.',
-    );
+    const key = 'daily_choice.wear.weather.note.wind';
+    noteKeys.add(key);
+    noteParams[key] = <String, Object?>{'speed': snapshot.windSpeedKph.round()};
   }
   if (apparent >= 30) {
-    notesZh.add('高温时段尽量减少暴晒，补水和防晒都别省。');
-    notesEn.add(
-      'During high heat, limit sun exposure and keep hydration plus sun protection in place.',
-    );
+    noteKeys.add('daily_choice.wear.weather.note.heat');
   } else if (apparent <= 5) {
-    notesZh.add('低温里别只顾上半身，颈部、手部和脚踝也要一起保暖。');
-    notesEn.add(
-      'In low temperatures, keep the neck, hands, and ankles warm too.',
-    );
+    noteKeys.add('daily_choice.wear.weather.note.cold');
   }
   return _WearWeatherSuggestion(
     snapshot: snapshot,
     temperatureId: temperatureId,
-    summaryZh: '根据当前体感 ${apparent.round()}°C，默认推荐“${recommended.titleZh}”档位。',
-    summaryEn:
-        'Based on a feels-like temperature of ${apparent.round()}°C, the default suggestion is ${recommended.titleEn}.',
-    notesZh: notesZh,
-    notesEn: notesEn,
+    apparentTemperature: apparent.round(),
+    noteKeys: noteKeys,
+    noteParams: noteParams,
     suggestRainScene: rainy,
   );
 }
@@ -1892,7 +1752,7 @@ class _WearCollectionSelectorPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(i18n, zh: '我的衣柜', en: 'My wardrobe'),
+            i18n.t('inline.plan295.daily_choice.my_wardrobe.4ffd2eddbe7f'),
             style: theme.textTheme.labelLarge?.copyWith(
               fontWeight: FontWeight.w900,
               color: theme.colorScheme.onSurfaceVariant,
@@ -1900,10 +1760,8 @@ class _WearCollectionSelectorPanel extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            pickUiText(
-              i18n,
-              zh: '优先从你真实拥有、愿意反复穿的搭配里随机。',
-              en: 'Prioritize outfits you actually own and repeat.',
+            i18n.t(
+              'inline.plan295.daily_choice.prioritize_outfits_you_actually_own.693bfe2029df',
             ),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
@@ -1913,10 +1771,8 @@ class _WearCollectionSelectorPanel extends StatelessWidget {
           const SizedBox(height: 8),
           if (userCollections.isEmpty)
             Text(
-              pickUiText(
-                i18n,
-                zh: '还没有自己的衣柜。先在管理里新建一套真实搭配，随机会更有用。',
-                en: 'No personal wardrobe yet. Add a real outfit in Manage to make random picks useful.',
+              i18n.t(
+                'inline.plan295.daily_choice.no_personal_wardrobe_yet_add_a_real.ee7bfe2dc3b6',
               ),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -1947,7 +1803,11 @@ class _WearCollectionSelectorPanel extends StatelessWidget {
             tint: accent,
             onTap: () => onSelected('all'),
             leading: const Icon(Icons.all_inclusive_rounded, size: 18),
-            label: Text(pickUiText(i18n, zh: '全部可用', en: 'All available')),
+            label: Text(
+              i18n.t(
+                'inline.ui.pages.toolbox_daily_choice.daily_choice_wear_module.all_available_b723ec',
+              ),
+            ),
           ),
           if (builtInCollections.isNotEmpty) ...<Widget>[
             const SizedBox(height: 10),
@@ -1962,7 +1822,9 @@ class _WearCollectionSelectorPanel extends StatelessWidget {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        pickUiText(i18n, zh: '内置参考', en: 'Built-in references'),
+                        i18n.t(
+                          'inline.ui.pages.toolbox_daily_choice.daily_choice_wear_module.built_in_references_01087c',
+                        ),
                         style: theme.textTheme.labelSmall?.copyWith(
                           fontWeight: FontWeight.w900,
                           color: theme.colorScheme.onSurfaceVariant,
@@ -2062,7 +1924,9 @@ class _WearAdvancedSettingsPanel extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          pickUiText(i18n, zh: '高级筛选', en: 'Advanced filters'),
+                          i18n.t(
+                            'inline.plan295.daily_choice.advanced_filters.356ca34887f6',
+                          ),
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w900,
                           ),
@@ -2070,15 +1934,11 @@ class _WearAdvancedSettingsPanel extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           activeCount > 0
-                              ? pickUiText(
-                                  i18n,
-                                  zh: '已启用 $activeCount 项筛选',
-                                  en: '$activeCount filter(s) enabled',
+                              ? i18n.t(
+                                  'inline.plan295.daily_choice.activecount_filter_s_enabled.39fb4a8c5390',
                                 )
-                              : pickUiText(
-                                  i18n,
-                                  zh: '按性别参考、年龄阶段、风格、版型和面料缩小范围',
-                                  en: 'Narrow by gender reference, age stage, style, silhouette, and fabric',
+                              : i18n.t(
+                                  'inline.plan295.daily_choice.narrow_by_gender_reference_age_stage.9aa91a3903e5',
                                 ),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
@@ -2090,10 +1950,8 @@ class _WearAdvancedSettingsPanel extends StatelessWidget {
                   ),
                   if (activeCount > 0)
                     ToolboxInfoPill(
-                      text: pickUiText(
-                        i18n,
-                        zh: '$activeCount 项',
-                        en: '$activeCount active',
+                      text: i18n.t(
+                        'inline.plan295.daily_choice.activecount_active.ff742077cc87',
                       ),
                       accent: accent,
                       backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -2138,7 +1996,9 @@ class _WearAdvancedSettingsPanel extends StatelessWidget {
                 onPressed: activeCount > 0 ? onReset : null,
                 icon: const Icon(Icons.clear_all_rounded),
                 label: Text(
-                  pickUiText(i18n, zh: '重置全部筛选', en: 'Reset all filters'),
+                  i18n.t(
+                    'inline.plan295.daily_choice.reset_all_filters.9fc1c34bf733',
+                  ),
                 ),
               ),
             ),
@@ -2241,12 +2101,16 @@ class _WearLibraryStatusPanel extends StatelessWidget {
     final hasInstalledLibrary = libraryStatus.hasInstalledLibrary;
     final busy = libraryLoading || libraryInstalling;
     final compactStatusLabel = libraryLoading
-        ? pickUiText(i18n, zh: '加载中', en: 'Loading')
+        ? i18n.t(
+            'inline.ui.pages.toolbox_daily_choice.daily_choice_eat_module.loading_8285c7',
+          )
         : !hasInstalledLibrary
-        ? pickUiText(i18n, zh: '尚未加载', en: 'Not installed')
+        ? i18n.t('inline.plan295.daily_choice.not_installed.37e25c2c84db')
         : libraryInstalling
-        ? pickUiText(i18n, zh: '加载中', en: 'Loading')
-        : pickUiText(i18n, zh: '已就绪', en: 'Ready');
+        ? i18n.t(
+            'inline.ui.pages.toolbox_daily_choice.daily_choice_eat_module.loading_8285c7',
+          )
+        : i18n.t('timerIdle');
 
     return ToolboxSurfaceCard(
       padding: const EdgeInsets.all(14),
@@ -2261,7 +2125,9 @@ class _WearLibraryStatusPanel extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: Text(
-                  pickUiText(i18n, zh: '穿搭参考库', en: 'Outfit reference'),
+                  i18n.t(
+                    'inline.plan295.daily_choice.outfit_reference.d19c5e75d27a',
+                  ),
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
@@ -2274,11 +2140,13 @@ class _WearLibraryStatusPanel extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               IconButton(
-                tooltip: pickUiText(
-                  i18n,
-                  zh: expanded ? '收起' : '展开',
-                  en: expanded ? 'Collapse' : 'Expand',
-                ),
+                tooltip: expanded
+                    ? i18n.t(
+                        'inline.plan295.daily_choice.collapse.ad0db950964e',
+                      )
+                    : i18n.t(
+                        'inline.ui.widgets.word_detail_sections.expand_70ba34',
+                      ),
                 onPressed: onToggleExpanded,
                 style: IconButton.styleFrom(
                   backgroundColor: accent.withValues(alpha: 0.1),
@@ -2300,19 +2168,15 @@ class _WearLibraryStatusPanel extends StatelessWidget {
               runSpacing: 8,
               children: <Widget>[
                 ToolboxInfoPill(
-                  text: pickUiText(
-                    i18n,
-                    zh: '总库 ${libraryStatus.outfitCount}',
-                    en: 'Total ${libraryStatus.outfitCount}',
+                  text: i18n.t(
+                    'inline.plan295.daily_choice.total_librarystatus_outfitcount.b65025c2ec8f',
                   ),
                   accent: accent,
                   backgroundColor: theme.colorScheme.surfaceContainerLow,
                 ),
                 ToolboxInfoPill(
-                  text: pickUiText(
-                    i18n,
-                    zh: '当前池 $candidateCount',
-                    en: 'Pool $candidateCount',
+                  text: i18n.t(
+                    'inline.plan295.daily_choice.pool_candidatecount.2886b3be61e9',
                   ),
                   accent: accent,
                   backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -2330,14 +2194,12 @@ class _WearLibraryStatusPanel extends StatelessWidget {
                     : Icons.cloud_download_rounded,
               ),
               label: Text(
-                pickUiText(
-                  i18n,
-                  zh: busy ? '正在加载穿搭参考…' : '下载内置参考衣柜',
-                  en: libraryInstalling
-                      ? 'Loading outfit references…'
+                i18n.t(
+                  libraryInstalling
+                      ? 'daily_choice.wear.library.loading'
                       : libraryLoading
-                      ? 'Reading outfit references…'
-                      : 'Download built-in reference',
+                      ? 'daily_choice.wear.library.reading'
+                      : 'daily_choice.wear.library.download',
                 ),
               ),
             ),
@@ -2345,15 +2207,13 @@ class _WearLibraryStatusPanel extends StatelessWidget {
           if (expanded) ...<Widget>[
             const SizedBox(height: 10),
             Text(
-              pickUiText(
-                i18n,
-                zh: hasInstalledLibrary
-                    ? '内置参考已就绪。你可以先借它找方向，再把真正适合自己的组合另存到我的衣柜。'
-                    : '首次使用可下载内置参考衣柜；之后建议把自己的真实搭配逐步录入。',
-                en: hasInstalledLibrary
-                    ? 'Built-in references are ready. Use them for direction, then save your real outfits into your wardrobe.'
-                    : 'Download the built-in reference once, then gradually add your real outfits.',
-              ),
+              hasInstalledLibrary
+                  ? i18n.t(
+                      'inline.plan295.daily_choice.built_in_references_are_ready_use_th.7e6e14bcbfb3',
+                    )
+                  : i18n.t(
+                      'inline.plan295.daily_choice.download_the_built_in_reference_once.a89851978b7a',
+                    ),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
                 height: 1.35,
@@ -2371,10 +2231,8 @@ class _WearLibraryStatusPanel extends StatelessWidget {
           if (libraryStatus.errorMessage != null && expanded) ...<Widget>[
             const SizedBox(height: 8),
             Text(
-              pickUiText(
-                i18n,
-                zh: '最近一次同步有异常，当前会继续使用本地可用穿搭库。',
-                en: 'The latest sync reported an error. The page will keep using the local library that is already available.',
+              i18n.t(
+                'inline.plan295.daily_choice.the_latest_sync_reported_an_error_th.8e0b62c698cf',
               ),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.error,

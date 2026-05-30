@@ -1,4 +1,5 @@
 import '../../i18n/app_i18n.dart';
+import '../../i18n/app_i18n_catalog.dart';
 
 class SoothingMusicCopy {
   const SoothingMusicCopy._();
@@ -71,7 +72,10 @@ class SoothingMusicCopy {
     Map<String, Object?> params = const <String, Object?>{},
   }) {
     final language = AppI18n.normalizeLanguageCode(i18n.languageCode);
-    final localized = _localized[language]?[key];
+    final catalogKey = 'toolbox.sound.soothing.v2.$key';
+    final localized =
+        AppI18nCatalog.lookup(language, catalogKey) ??
+        _localized[language]?[key];
     final fallback = _localized['en']?[key];
     var value = localized ?? fallback ?? key;
     for (final entry in params.entries) {

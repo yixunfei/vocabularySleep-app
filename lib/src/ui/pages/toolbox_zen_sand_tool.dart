@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../i18n/app_i18n.dart';
 import '../../services/toolbox_zen_sand_prefs_service.dart';
 import '../../services/toolbox_zen_sand_sound_service.dart';
 
@@ -15,10 +16,9 @@ part 'toolbox_zen_sand_tool_widgets.dart';
 const List<_ZenBackgroundSpec> _backgrounds = <_ZenBackgroundSpec>[
   _ZenBackgroundSpec(
     id: 'sunlit_garden',
-    labelZh: '暖金沙',
-    labelEn: 'Warm Sand',
-    descriptionZh: '细密金砂与平行底纹，适合慢慢梳理呼吸和注意力。',
-    descriptionEn: 'Fine golden grains with calm parallel base lines.',
+    labelKey: 'inline.plan294.zen_sand.warm_sand_52cb197b',
+    descriptionKey:
+        'inline.plan294.zen_sand.fine_golden_grains_with_calm_parallel_base_lines_9a115534',
     startColor: Color(0xFFF9E6BE),
     endColor: Color(0xFFE6C98A),
     accent: Color(0xFFD6A958),
@@ -31,10 +31,9 @@ const List<_ZenBackgroundSpec> _backgrounds = <_ZenBackgroundSpec>[
   ),
   _ZenBackgroundSpec(
     id: 'tidal_shore',
-    labelZh: '潮汐浅滩',
-    labelEn: 'Tidal Shore',
-    descriptionZh: '轻海雾与退潮纹路，更适合波纹和留白构图。',
-    descriptionEn: 'Shoreline contours with sea-mist light and softer rhythm.',
+    labelKey: 'inline.plan294.zen_sand.tidal_shore_ad00bd83',
+    descriptionKey:
+        'inline.plan294.zen_sand.shoreline_contours_with_sea_mist_light_and_softe_a2c8984b',
     startColor: Color(0xFFF4E8D7),
     endColor: Color(0xFFD8D1C6),
     accent: Color(0xFF7DAFC2),
@@ -47,10 +46,9 @@ const List<_ZenBackgroundSpec> _backgrounds = <_ZenBackgroundSpec>[
   ),
   _ZenBackgroundSpec(
     id: 'moon_ash',
-    labelZh: '月灰石庭',
-    labelEn: 'Moon Ash',
-    descriptionZh: '冷灰砂面与环形静波，适合极简景石布局。',
-    descriptionEn: 'Cool ash-grey sand with orbital ripples for stone layouts.',
+    labelKey: 'inline.plan294.zen_sand.moon_ash_bed2efee',
+    descriptionKey:
+        'inline.plan294.zen_sand.cool_ash_grey_sand_with_orbital_ripples_for_ston_4b9b6c13',
     startColor: Color(0xFFE6E1DD),
     endColor: Color(0xFFBDB5AF),
     accent: Color(0xFF7C879D),
@@ -63,10 +61,9 @@ const List<_ZenBackgroundSpec> _backgrounds = <_ZenBackgroundSpec>[
   ),
   _ZenBackgroundSpec(
     id: 'rose_clay',
-    labelZh: '暮色陶砂',
-    labelEn: 'Rose Clay',
-    descriptionZh: '微暖陶土调，适合更柔和的指尖与抚平笔触。',
-    descriptionEn: 'Warm clay tones for softer fingertip and smoothing trails.',
+    labelKey: 'inline.plan294.zen_sand.rose_clay_2fa71791',
+    descriptionKey:
+        'inline.plan294.zen_sand.warm_clay_tones_for_softer_fingertip_and_smoothi_a9999373',
     startColor: Color(0xFFF2D7CA),
     endColor: Color(0xFFD2AC97),
     accent: Color(0xFFC97563),
@@ -83,107 +80,114 @@ const List<_ZenToolSpec> _tools = <_ZenToolSpec>[
   _ZenToolSpec(
     id: 'rake',
     icon: Icons.drag_handle_rounded,
-    labelZh: '木耙',
-    labelEn: 'Rake',
-    helpZh: '拖动画出多齿沙纹，用来建立秩序感和节奏。',
-    helpEn: 'Drag multi-prong grooves to build rhythm and order.',
+    labelKey: 'inline.plan294.zen_sand.rake_a4c1efc3',
+    helpKey:
+        'inline.plan294.zen_sand.drag_multi_prong_grooves_to_build_rhythm_and_ord_495f3ef4',
     tint: Color(0xFFB98538),
   ),
   _ZenToolSpec(
     id: 'finger',
     icon: Icons.draw_rounded,
-    labelZh: '指尖',
-    labelEn: 'Fingertip',
-    helpZh: '更宽更柔的单线笔触，像手指轻轻划过沙面。',
-    helpEn: 'A wider single groove like tracing the tray by hand.',
+    labelKey: 'inline.plan294.zen_sand.fingertip_6789b36e',
+    helpKey:
+        'inline.plan294.zen_sand.a_wider_single_groove_like_tracing_the_tray_by_h_e4d7bdec',
     tint: Color(0xFFB45D4B),
   ),
   _ZenToolSpec(
     id: 'paint',
     icon: Icons.format_paint_rounded,
-    labelZh: '涂料',
-    labelEn: 'Pigment',
-    helpZh: '用可调色颜料做涂抹和涂鸦，适合创作主题色层。',
-    helpEn: 'Lay down colored pigment for doodles and themed accents.',
+    labelKey: 'inline.plan294.zen_sand.pigment_6e3c4b38',
+    helpKey:
+        'inline.plan294.zen_sand.lay_down_colored_pigment_for_doodles_and_themed__a83a4a33',
     tint: Color(0xFF4E6F52),
     supportsColor: true,
   ),
   _ZenToolSpec(
     id: 'water',
     icon: Icons.water_drop_rounded,
-    labelZh: '水迹',
-    labelEn: 'Water',
-    helpZh: '半透明水痕会顺着路径铺开，适合做流动质感。',
-    helpEn: 'Spread translucent water trails for a fluid texture.',
+    labelKey: 'inline.plan294.zen_sand.water_2ad7f9af',
+    helpKey:
+        'inline.plan294.zen_sand.spread_translucent_water_trails_for_a_fluid_text_93a16dc4',
     tint: Color(0xFF4E8FA8),
     supportsColor: true,
   ),
   _ZenToolSpec(
     id: 'wave',
     icon: Icons.waves_rounded,
-    labelZh: '波纹',
-    labelEn: 'Ripple',
-    helpZh: '生成起伏曲线，适合呼吸节奏与水波感。',
-    helpEn: 'Paint rhythmic waves for breathing and water-like motion.',
+    labelKey: 'inline.plan294.zen_sand.ripple_b003de86',
+    helpKey:
+        'inline.plan294.zen_sand.paint_rhythmic_waves_for_breathing_and_water_lik_d2a96a39',
     tint: Color(0xFF4E8FA8),
   ),
   _ZenToolSpec(
     id: 'shovel',
     icon: Icons.construction_rounded,
-    labelZh: '沙铲',
-    labelEn: 'Shovel',
-    helpZh: '宽面推开沙层，在两侧留下起伏堆线。',
-    helpEn: 'Push sand aside with a broad shovel and raised banks.',
+    labelKey: 'inline.plan294.zen_sand.shovel_aa7c95fc',
+    helpKey:
+        'inline.plan294.zen_sand.push_sand_aside_with_a_broad_shovel_and_raised_b_7eae82ac',
     tint: Color(0xFF9D744B),
   ),
   _ZenToolSpec(
     id: 'gravel',
     icon: Icons.blur_on_rounded,
-    labelZh: '沙砾',
-    labelEn: 'Gravel',
-    helpZh: '沿着笔迹堆出颗粒沙砾，适合铺路与点缀。',
-    helpEn: 'Build granular gravel trails for paths and texture accents.',
+    labelKey: 'inline.plan294.zen_sand.gravel_f5aa0f90',
+    helpKey:
+        'inline.plan294.zen_sand.build_granular_gravel_trails_for_paths_and_textu_58e84293',
     tint: Color(0xFF7B7468),
   ),
   _ZenToolSpec(
     id: 'smooth',
     icon: Icons.auto_fix_high_rounded,
-    labelZh: '抚平',
-    labelEn: 'Smooth',
-    helpZh: '局部抚平已有痕迹，让沙面重新安静下来。',
-    helpEn: 'Calm a local area and restore a quieter surface.',
+    labelKey: 'inline.plan294.zen_sand.smooth_01d517c9',
+    helpKey:
+        'inline.plan294.zen_sand.calm_a_local_area_and_restore_a_quieter_surface_e2b87a19',
     tint: Color(0xFF8C877B),
   ),
   _ZenToolSpec(
     id: 'stone',
     icon: Icons.circle_rounded,
-    labelZh: '景石',
-    labelEn: 'Stone',
-    helpZh: '轻点安放景石，为画面建立重心和留白。',
-    helpEn: 'Tap to place stones and set a visual anchor.',
+    labelKey: 'inline.plan294.zen_sand.stone_f1841328',
+    helpKey:
+        'inline.plan294.zen_sand.tap_to_place_stones_and_set_a_visual_anchor_e9953d31',
     tint: Color(0xFF5F5C63),
     isPlacement: true,
   ),
 ];
 
 const List<_ZenColorSpec> _paintPalette = <_ZenColorSpec>[
-  _ZenColorSpec(value: 0xFF4E6F52, labelZh: '苔绿', labelEn: 'Moss'),
-  _ZenColorSpec(value: 0xFF6D5D8C, labelZh: '暮紫', labelEn: 'Dusk'),
-  _ZenColorSpec(value: 0xFF9B5A56, labelZh: '陶红', labelEn: 'Clay'),
-  _ZenColorSpec(value: 0xFF3A7CA5, labelZh: '湖蓝', labelEn: 'Lake'),
-  _ZenColorSpec(value: 0xFFC58A3A, labelZh: '暖金', labelEn: 'Amber'),
-  _ZenColorSpec(value: 0xFF5C677D, labelZh: '雾蓝灰', labelEn: 'Slate'),
+  _ZenColorSpec(
+    value: 0xFF4E6F52,
+    labelKey: 'inline.plan294.zen_sand.moss_cac52fb2',
+  ),
+  _ZenColorSpec(
+    value: 0xFF6D5D8C,
+    labelKey: 'inline.plan294.zen_sand.dusk_57fab8a5',
+  ),
+  _ZenColorSpec(
+    value: 0xFF9B5A56,
+    labelKey: 'inline.plan294.zen_sand.clay_7bd2a595',
+  ),
+  _ZenColorSpec(
+    value: 0xFF3A7CA5,
+    labelKey: 'inline.plan294.zen_sand.lake_7bd7155c',
+  ),
+  _ZenColorSpec(
+    value: 0xFFC58A3A,
+    labelKey: 'inline.plan294.zen_sand.amber_f4630a77',
+  ),
+  _ZenColorSpec(
+    value: 0xFF5C677D,
+    labelKey: 'inline.plan294.zen_sand.slate_889c1791',
+  ),
 ];
 
 const List<_ZenRitualPresetSpec> _ritualPresets = <_ZenRitualPresetSpec>[
   _ZenRitualPresetSpec(
     id: 'breath_tides',
     icon: Icons.air_rounded,
-    titleZh: '呼吸潮纹',
-    titleEn: 'Breath Tides',
-    descriptionZh: '从舒缓波纹起笔，适合睡前放松、慢速呼吸和单手描摹。',
-    descriptionEn:
-        'Start from soft tidal waves for bedtime unwinding and slow breathing.',
+    titleKey: 'inline.plan294.zen_sand.breath_tides_7a5ff4c3',
+    descriptionKey:
+        'inline.plan294.zen_sand.start_from_soft_tidal_waves_for_bedtime_unwindin_392f506f',
     backgroundId: 'tidal_shore',
     toolId: 'wave',
     brushSize: 32,
@@ -192,11 +196,9 @@ const List<_ZenRitualPresetSpec> _ritualPresets = <_ZenRitualPresetSpec>[
   _ZenRitualPresetSpec(
     id: 'stone_balance',
     icon: Icons.filter_vintage_rounded,
-    titleZh: '平衡石庭',
-    titleEn: 'Balanced Stones',
-    descriptionZh: '先摆重心石，再沿石旁留白，适合安静构图和减压。',
-    descriptionEn:
-        'Place anchor stones first, then leave calm space around them.',
+    titleKey: 'inline.plan294.zen_sand.balanced_stones_ca887c2f',
+    descriptionKey:
+        'inline.plan294.zen_sand.place_anchor_stones_first_then_leave_calm_space__d1018f78',
     backgroundId: 'moon_ash',
     toolId: 'stone',
     brushSize: 42,
@@ -205,11 +207,9 @@ const List<_ZenRitualPresetSpec> _ritualPresets = <_ZenRitualPresetSpec>[
   _ZenRitualPresetSpec(
     id: 'water_path',
     icon: Icons.water_drop_rounded,
-    titleZh: '沁润溪路',
-    titleEn: 'Water Path',
-    descriptionZh: '先铺一条水痕小径，再补砂砾与石点，适合做流动层次。',
-    descriptionEn:
-        'Lay down a damp path first, then add gravel and stones for flow.',
+    titleKey: 'inline.plan294.zen_sand.water_path_26aeb0da',
+    descriptionKey:
+        'inline.plan294.zen_sand.lay_down_a_damp_path_first_then_add_gravel_and_s_1c3e7626',
     backgroundId: 'rose_clay',
     toolId: 'water',
     brushSize: 30,
@@ -219,11 +219,9 @@ const List<_ZenRitualPresetSpec> _ritualPresets = <_ZenRitualPresetSpec>[
   _ZenRitualPresetSpec(
     id: 'focus_furrows',
     icon: Icons.center_focus_strong_rounded,
-    titleZh: '专注耙纹',
-    titleEn: 'Focus Furrows',
-    descriptionZh: '用规律耙纹和中轴构图稳住视线，适合短时专注重置。',
-    descriptionEn:
-        'Use rhythmic rake furrows and a stable centerline for quick refocus.',
+    titleKey: 'inline.plan294.zen_sand.focus_furrows_3ef944ac',
+    descriptionKey:
+        'inline.plan294.zen_sand.use_rhythmic_rake_furrows_and_a_stable_centerlin_103f6814',
     backgroundId: 'sunlit_garden',
     toolId: 'rake',
     brushSize: 30,
@@ -313,11 +311,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
   bool _immersiveLockedLandscape = false;
   String? get _lastPresetId => _canvasStore.lastPresetId;
 
-  bool get _isZh => Localizations.localeOf(
-    context,
-  ).languageCode.toLowerCase().startsWith('zh');
-
-  String _text(String zh, String en) => _isZh ? zh : en;
+  AppI18n get _i18n => AppI18n(Localizations.localeOf(context).languageCode);
 
   _ZenBackgroundSpec get _background =>
       _backgroundById[_backgroundId] ?? _backgrounds.first;
@@ -387,24 +381,25 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
 
   String get _soundDescriptor {
     if (!_soundEnabled) {
-      return _text('静音', 'Muted');
+      return _i18n.t('toolbox.sound.harp.muted');
     }
     return switch (_toolId) {
-      'rake' => _text('梭梭沙纹', 'Rake hush'),
-      'finger' => _text('指尖沙沙', 'Finger brush'),
-      'paint' => _text('涂抹摩挲', 'Pigment sweep'),
-      'water' => _text('沁润水痕', 'Water bloom'),
-      'wave' => _text('起伏细浪', 'Ripple flow'),
-      'shovel' => _text('推砂划擦', 'Shovel scrape'),
-      'gravel' => _text('砂砾颗粒', 'Pebble grain'),
-      'smooth' => _text('抚平刷刷', 'Soft smoothing'),
-      'stone' => _text('石落轻扣', 'Stone drop'),
-      _ => _text('环境轻声', 'Ambient touch'),
+      'rake' => _i18n.t('inline.plan294.zen_sand.rake_hush_3584d945'),
+      'finger' => _i18n.t('inline.plan294.zen_sand.finger_brush_3b05ae0e'),
+      'paint' => _i18n.t('inline.plan294.zen_sand.pigment_sweep_e2c8f4dd'),
+      'water' => _i18n.t('inline.plan294.zen_sand.water_bloom_ea381a8c'),
+      'wave' => _i18n.t('inline.plan294.zen_sand.ripple_flow_c4c65915'),
+      'shovel' => _i18n.t('inline.plan294.zen_sand.shovel_scrape_b8ec0e82'),
+      'gravel' => _i18n.t('inline.plan294.zen_sand.pebble_grain_bc777b7a'),
+      'smooth' => _i18n.t('inline.plan294.zen_sand.soft_smoothing_5bc3566d'),
+      'stone' => _i18n.t('inline.plan294.zen_sand.stone_drop_78cfc750'),
+      _ => _i18n.t('inline.plan294.zen_sand.ambient_touch_07e82031'),
     };
   }
 
-  String get _anchorLabel =>
-      _drawFromContactPoint ? _text('贴点', 'Contact') : _text('抬笔', 'Lifted');
+  String get _anchorLabel => _drawFromContactPoint
+      ? _i18n.t('inline.plan294.zen_sand.contact_16111722')
+      : _i18n.t('inline.plan294.zen_sand.lifted_68f90cae');
 
   ZenSandSoundKind? _soundKindForToolId(String toolId) {
     return switch (toolId) {
@@ -1146,7 +1141,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
       );
     }
     _persist();
-    _showFloatingMessage(_text('已一键抹平笔触。', 'Smoothed all strokes.'));
+    _showFloatingMessage(
+      _i18n.t('inline.plan294.zen_sand.smoothed_all_strokes_4a922ac6'),
+    );
   }
 
   Future<void> _clearAll() async {
@@ -1155,21 +1152,22 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(_text('清空当前沙盘？', 'Clear this tray?')),
+          title: Text(
+            _i18n.t('inline.plan294.zen_sand.clear_this_tray_e577191e'),
+          ),
           content: Text(
-            _text(
-              '这会移除所有笔触和景石，但会保留当前场景和工具设置。',
-              'This removes all strokes and stones but keeps the current scene and tool setup.',
+            _i18n.t(
+              'inline.plan294.zen_sand.this_removes_all_strokes_and_stones_but_keeps_th_33441800',
             ),
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: Text(_text('取消', 'Cancel')),
+              child: Text(_i18n.t('toolbox.sleep.core.cancel')),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: Text(_text('清空', 'Clear')),
+              child: Text(_i18n.t('inline.plan294.zen_sand.clear_ea17218b')),
             ),
           ],
         );
@@ -1236,10 +1234,13 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     _persist();
     _showFloatingMessage(
       replace
-          ? _text('已套用“${preset.titleZh}”预设。', 'Applied "${preset.titleEn}".')
-          : _text(
-              '已将“${preset.titleZh}”叠加到当前沙盘。',
-              'Layered "${preset.titleEn}" onto the current tray.',
+          ? _i18n.t(
+              'inline.plan294.zen_sand.applied_value_3041c0f2',
+              params: <String, Object?>{'preset.title': preset.title(_i18n)},
+            )
+          : _i18n.t(
+              'inline.plan294.zen_sand.layered_value_onto_the_current_tray_2f704183',
+              params: <String, Object?>{'preset.title': preset.title(_i18n)},
             ),
     );
   }
@@ -1252,28 +1253,33 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
         builder: (context) {
           return AlertDialog(
             title: Text(
-              _text('将预设用于当前沙盘？', 'Use this preset on the current tray?'),
+              _i18n.t(
+                'inline.plan294.zen_sand.use_this_preset_on_the_current_tray_7813cc46',
+              ),
             ),
             content: Text(
-              _text(
-                '可以直接替换当前沙盘，也可以把预设作为新一层叠加到现有构图上。',
-                'You can replace the current tray or layer the preset on top of the existing composition.',
+              _i18n.t(
+                'inline.plan294.zen_sand.you_can_replace_the_current_tray_or_layer_the_pr_c84d675f',
               ),
             ),
             actions: <Widget>[
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: Text(_text('取消', 'Cancel')),
+                child: Text(_i18n.t('toolbox.sleep.core.cancel')),
               ),
               FilledButton.tonal(
                 onPressed: () =>
                     Navigator.of(context).pop(_ZenRitualApplyMode.append),
-                child: Text(_text('叠加', 'Layer it')),
+                child: Text(
+                  _i18n.t('inline.plan294.zen_sand.layer_it_7a7351cd'),
+                ),
               ),
               FilledButton(
                 onPressed: () =>
                     Navigator.of(context).pop(_ZenRitualApplyMode.replace),
-                child: Text(_text('替换当前沙盘', 'Replace tray')),
+                child: Text(
+                  _i18n.t('inline.plan294.zen_sand.replace_tray_87c9c8e8'),
+                ),
               ),
             ],
           );
@@ -1311,10 +1317,11 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   _ZenSheetHeader(
-                    title: _text('起手预设', 'Quick rituals'),
-                    subtitle: _text(
-                      '先用一个构图预设起笔，再继续手工修整，移动端会更容易进入状态。',
-                      'Start from a guided composition, then keep shaping it by hand on mobile.',
+                    title: _i18n.t(
+                      'inline.plan294.zen_sand.quick_rituals_ca432955',
+                    ),
+                    subtitle: _i18n.t(
+                      'inline.plan294.zen_sand.start_from_a_guided_composition_then_keep_shapin_74b1c3c6',
                     ),
                   ),
                   const SizedBox(height: 18),
@@ -1329,7 +1336,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                                 width: cardWidth,
                                 child: _ZenRitualCard(
                                   preset: preset,
-                                  isZh: _isZh,
+                                  i18n: _i18n,
                                   selected: preset.id == _lastPresetId,
                                   onTap: () =>
                                       Navigator.of(context).pop(preset),
@@ -1377,10 +1384,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   _ZenSheetHeader(
-                    title: _text('场景背景', 'Scenes'),
-                    subtitle: _text(
-                      '不同底纹会改变沙面的情绪和层次。',
-                      'Different base patterns change the tray mood and visual rhythm.',
+                    title: _i18n.t('inline.plan294.zen_sand.scenes_ba2abd25'),
+                    subtitle: _i18n.t(
+                      'inline.plan294.zen_sand.different_base_patterns_change_the_tray_mood_and_f4a7af6b',
                     ),
                   ),
                   const SizedBox(height: 18),
@@ -1395,7 +1401,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                                 width: cardWidth,
                                 child: _ZenBackgroundCard(
                                   background: background,
-                                  isZh: _isZh,
+                                  i18n: _i18n,
                                   selected: background.id == _backgroundId,
                                   onTap: () {
                                     _selectBackground(background.id);
@@ -1438,15 +1444,18 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     _ZenSheetHeader(
-                      title: _text('工具与控制', 'Tools & controls'),
-                      subtitle: _text(
-                        '调整笔触宽度、切换工具，并管理触感反馈。',
-                        'Adjust stroke width, switch tools, and manage tactile feedback.',
+                      title: _i18n.t(
+                        'inline.plan294.zen_sand.tools_controls_887d8f27',
+                      ),
+                      subtitle: _i18n.t(
+                        'inline.plan294.zen_sand.adjust_stroke_width_switch_tools_and_manage_tact_11a577f5',
                       ),
                     ),
                     const SizedBox(height: 18),
                     _ZenSectionCard(
-                      title: _text('绘画工具', 'Drawing tools'),
+                      title: _i18n.t(
+                        'inline.plan294.zen_sand.drawing_tools_caba94b8',
+                      ),
                       child: Wrap(
                         spacing: 10,
                         runSpacing: 10,
@@ -1454,7 +1463,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                             .map((tool) {
                               return _ZenToolCard(
                                 tool: tool,
-                                isZh: _isZh,
+                                i18n: _i18n,
                                 selected: tool.id == _toolId,
                                 onTap: () =>
                                     refresh(() => _selectTool(tool.id)),
@@ -1465,7 +1474,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                     ),
                     const SizedBox(height: 14),
                     _ZenSectionCard(
-                      title: _text('笔触宽度', 'Brush width'),
+                      title: _i18n.t(
+                        'inline.plan294.zen_sand.brush_width_b9be43a0',
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
@@ -1483,7 +1494,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                               ),
                               const SizedBox(width: 14),
                               _ZenActionBadge(
-                                label: _text('尺寸', 'Size'),
+                                label: _i18n.t(
+                                  'inline.ui.pages.toolbox_human_tests_number_memory.size_f820b6',
+                                ),
                                 value: _brushSize.round().toString(),
                                 accent: _tool.tint,
                               ),
@@ -1508,7 +1521,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                     if (_toolSupportsColor) ...<Widget>[
                       const SizedBox(height: 14),
                       _ZenSectionCard(
-                        title: _text('颜色盘', 'Color palette'),
+                        title: _i18n.t(
+                          'inline.plan294.zen_sand.color_palette_ff93e6cb',
+                        ),
                         child: Wrap(
                           spacing: 10,
                           runSpacing: 10,
@@ -1516,7 +1531,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                               .map((color) {
                                 return _ZenColorChip(
                                   color: color.color,
-                                  label: color.label(_isZh),
+                                  label: color.label(_i18n),
                                   selected: color.value == _colorValue,
                                   onTap: () => refresh(
                                     () => _setColorValue(color.value),
@@ -1528,14 +1543,17 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                       ),
                     ],
                     _ZenSectionCard(
-                      title: _text('体验设置', 'Experience'),
+                      title: _i18n.t(
+                        'inline.plan294.zen_sand.experience_87860396',
+                      ),
                       child: Column(
                         children: <Widget>[
                           _ZenToggleRow(
-                            title: _text('触感反馈', 'Haptics'),
-                            subtitle: _text(
-                              '切换工具、落石和撤销时给出轻微振动。',
-                              'Adds light feedback when switching tools, placing stones, and undoing.',
+                            title: _i18n.t(
+                              'inline.plan294.zen_sand.haptics_07807c2c',
+                            ),
+                            subtitle: _i18n.t(
+                              'inline.plan294.zen_sand.adds_light_feedback_when_switching_tools_placing_a5367beb',
                             ),
                             value: _hapticsEnabled,
                             activeColor: _background.accent,
@@ -1544,10 +1562,11 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                           ),
                           const Divider(height: 18),
                           _ZenToggleRow(
-                            title: _text('操作提示', 'Guidance'),
-                            subtitle: _text(
-                              '在画布上显示当前工具的手势说明。',
-                              'Shows contextual hints for the active tool.',
+                            title: _i18n.t(
+                              'inline.plan294.zen_sand.guidance_743ca088',
+                            ),
+                            subtitle: _i18n.t(
+                              'inline.plan294.zen_sand.shows_contextual_hints_for_the_active_tool_092bf296',
                             ),
                             value: _guideEnabled,
                             activeColor: _background.accent,
@@ -1556,10 +1575,11 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                           ),
                           const Divider(height: 18),
                           _ZenToggleRow(
-                            title: _text('沙盘音效', 'Sand sounds'),
-                            subtitle: _text(
-                              '给木耙、水迹、沙铲和景石加入轻柔摩擦声，连续拖动时会自动节流。',
-                              'Adds gentle rake, water, shovel, and stone textures with throttled playback during drags.',
+                            title: _i18n.t(
+                              'inline.plan294.zen_sand.sand_sounds_6d793d5a',
+                            ),
+                            subtitle: _i18n.t(
+                              'inline.plan294.zen_sand.adds_gentle_rake_water_shovel_and_stone_textures_acacdca7',
                             ),
                             value: _soundEnabled,
                             activeColor: _background.accent,
@@ -1570,16 +1590,17 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              _text('触点锚定', 'Touch anchor'),
+                              _i18n.t(
+                                'inline.plan294.zen_sand.touch_anchor_56ad621f',
+                              ),
                               style: Theme.of(context).textTheme.titleSmall
                                   ?.copyWith(fontWeight: FontWeight.w800),
                             ),
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            _text(
-                              '可以直接从接触点落笔，或把笔尖上移一段距离，减少手指遮挡。',
-                              'Draw directly from the contact point or lift the tip upward so your finger covers less of the mark.',
+                            _i18n.t(
+                              'inline.plan294.zen_sand.draw_directly_from_the_contact_point_or_lift_the_72c2208c',
                             ),
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
@@ -1593,14 +1614,22 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                             runSpacing: 8,
                             children: <Widget>[
                               ChoiceChip(
-                                label: Text(_text('贴合触点', 'Contact point')),
+                                label: Text(
+                                  _i18n.t(
+                                    'inline.plan294.zen_sand.contact_point_9599e4a3',
+                                  ),
+                                ),
                                 selected: _drawFromContactPoint,
                                 onSelected: (_) => refresh(
                                   () => _setDrawFromContactPoint(true),
                                 ),
                               ),
                               ChoiceChip(
-                                label: Text(_text('上移笔尖', 'Lifted tip')),
+                                label: Text(
+                                  _i18n.t(
+                                    'inline.plan294.zen_sand.lifted_tip_4690e67a',
+                                  ),
+                                ),
                                 selected: !_drawFromContactPoint,
                                 onSelected: (_) => refresh(
                                   () => _setDrawFromContactPoint(false),
@@ -1626,7 +1655,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                                 ),
                                 const SizedBox(width: 12),
                                 _ZenActionBadge(
-                                  label: _text('偏移', 'Offset'),
+                                  label: _i18n.t(
+                                    'inline.plan294.zen_sand.offset_55471588',
+                                  ),
                                   value: '${(_touchOffset * 100).round()}%',
                                   accent: _background.accent,
                                 ),
@@ -1638,14 +1669,15 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                     ),
                     const SizedBox(height: 14),
                     _ZenSectionCard(
-                      title: _text('手势与缩放', 'Gestures & zoom'),
+                      title: _i18n.t(
+                        'inline.plan294.zen_sand.gestures_zoom_c48e52a0',
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            _text(
-                              '单指负责绘制或落石，双指负责缩放和平移；如果想避开手指遮挡，可以切到上移笔尖。',
-                              'Single-finger input keeps drawing or placing stones, while two fingers handle zoom and pan for detail work.',
+                            _i18n.t(
+                              'inline.plan294.zen_sand.single_finger_input_keeps_drawing_or_placing_sto_3b88f40f',
                             ),
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
@@ -1670,7 +1702,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                                 icon: _immersiveMode
                                     ? Icons.fullscreen_exit_rounded
                                     : Icons.fullscreen_rounded,
-                                label: _text('沉浸模式', 'Immersive'),
+                                label: _i18n.t(
+                                  'inline.plan294.zen_sand.immersive_93f9418b',
+                                ),
                                 accent: _tool.tint,
                                 onTap: () => refresh(_toggleImmersiveMode),
                               ),
@@ -1713,10 +1747,11 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               _ZenSheetHeader(
-                title: _text('沉浸控制', 'Immersive controls'),
-                subtitle: _text(
-                  '画布保持全屏，常用操作收在这里。',
-                  'Keep the tray full screen; controls stay folded here.',
+                title: _i18n.t(
+                  'inline.plan294.zen_sand.immersive_controls_6458c157',
+                ),
+                subtitle: _i18n.t(
+                  'inline.plan294.zen_sand.keep_the_tray_full_screen_controls_stay_folded_h_546c35e3',
                 ),
               ),
               const SizedBox(height: 14),
@@ -1726,37 +1761,41 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                 children: <Widget>[
                   _ZenCompactActionChip(
                     icon: Icons.fullscreen_exit_rounded,
-                    label: _text('退出全屏', 'Exit full screen'),
+                    label: _i18n.t(
+                      'inline.plan294.zen_sand.exit_full_screen_8a439134',
+                    ),
                     accent: _tool.tint,
                     onTap: () => closeAndRun(() => _setImmersiveMode(false)),
                   ),
                   _ZenCompactActionChip(
                     icon: Icons.landscape_rounded,
-                    label: _text('场景', 'Scenes'),
+                    label: _i18n.t('inline.plan294.zen_sand.scenes_6e7b57f5'),
                     accent: _background.accent,
                     onTap: () => closeAndOpen(_openSceneSheet),
                   ),
                   _ZenCompactActionChip(
                     icon: Icons.tune_rounded,
-                    label: _text('工具', 'Tools'),
+                    label: _i18n.t('toolbox.sleep.rhythm.tools'),
                     accent: _tool.tint,
                     onTap: () => closeAndOpen(_openControlSheet),
                   ),
                   _ZenCompactActionChip(
                     icon: Icons.auto_awesome_rounded,
-                    label: _text('预设', 'Rituals'),
+                    label: _i18n.t('inline.plan294.zen_sand.rituals_21b1f8ba'),
                     accent: _background.accent,
                     onTap: () => closeAndOpen(_openRitualSheet),
                   ),
                   _ZenCompactActionChip(
                     icon: Icons.auto_fix_high_rounded,
-                    label: _text('一键抹平', 'Smooth all'),
+                    label: _i18n.t(
+                      'inline.plan294.zen_sand.smooth_all_5a5b3412',
+                    ),
                     accent: _background.accent,
                     onTap: _canSmoothAll ? () => closeAndRun(_smoothAll) : null,
                   ),
                   _ZenCompactActionChip(
                     icon: Icons.undo_rounded,
-                    label: _text('撤销', 'Undo'),
+                    label: _i18n.t('toolbox.hub.edit.snackbar_restore'),
                     accent: _tool.tint,
                     onTap: _actions.isNotEmpty
                         ? () => closeAndRun(_undo)
@@ -1764,7 +1803,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                   ),
                   _ZenCompactActionChip(
                     icon: Icons.redo_rounded,
-                    label: _text('重做', 'Redo'),
+                    label: _i18n.t('inline.plan294.zen_sand.redo_ad4de30e'),
                     accent: _tool.tint,
                     onTap: _redoStack.isNotEmpty
                         ? () => closeAndRun(_redo)
@@ -1772,7 +1811,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                   ),
                   _ZenCompactActionChip(
                     icon: Icons.center_focus_strong_rounded,
-                    label: _text('重置视角', 'Reset view'),
+                    label: _i18n.t(
+                      'inline.plan294.zen_sand.reset_view_6f33ae0f',
+                    ),
                     accent: _background.accent,
                     onTap: _viewportScale > 1.01
                         ? () => closeAndRun(() => _resetViewport())
@@ -1780,7 +1821,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                   ),
                   _ZenCompactActionChip(
                     icon: Icons.delete_sweep_rounded,
-                    label: _text('清空沙盘', 'Clear tray'),
+                    label: _i18n.t(
+                      'inline.plan294.zen_sand.clear_tray_5f60c4fc',
+                    ),
                     accent: const Color(0xFF8B6651),
                     onTap: _actions.isEmpty
                         ? null
@@ -1883,7 +1926,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                     child: _ZenGlassPill(
                       icon: _tool.icon,
                       accent: _tool.tint,
-                      label: _tool.help(_isZh),
+                      label: _tool.help(_i18n),
                     ),
                   ),
                   SizedBox(height: sectionGap),
@@ -1928,7 +1971,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
 
   Widget _buildImmersiveMenuButton() {
     return Tooltip(
-      message: _text('沉浸控制', 'Immersive controls'),
+      message: _i18n.t('inline.plan294.zen_sand.immersive_controls_6458c157'),
       child: Material(
         color: Colors.white.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(20),
@@ -1957,7 +2000,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
             children: <Widget>[
               _ZenQuickIconButton(
                 icon: Icons.arrow_back_rounded,
-                tooltip: _text('返回', 'Back'),
+                tooltip: _i18n.t('toolbox.sound.locator.cue_label_back'),
                 onPressed: () => Navigator.of(context).maybePop(),
               ),
               const SizedBox(width: 12),
@@ -1966,7 +2009,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      _text('禅意沙盘', 'Zen sand tray'),
+                      _i18n.t('inline.plan294.zen_sand.zen_sand_tray_6452b86e'),
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: const Color(0xFF1E1813),
@@ -1974,9 +2017,8 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _text(
-                        '像在沙面上作画一样，自由涂鸦、铺陈留白、安放景石。',
-                        'Sketch freely as if drawing on sand, leaving space and placing stones.',
+                      _i18n.t(
+                        'inline.plan294.zen_sand.sketch_freely_as_if_drawing_on_sand_leaving_spac_9409e4f8',
                       ),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: const Color(0xFF4D443A),
@@ -1989,13 +2031,15 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
               const SizedBox(width: 12),
               _ZenQuickIconButton(
                 icon: Icons.landscape_rounded,
-                tooltip: _text('切换场景', 'Scenes'),
+                tooltip: _i18n.t('inline.plan294.zen_sand.scenes_950fed49'),
                 onPressed: _openSceneSheet,
               ),
               const SizedBox(width: 8),
               _ZenQuickIconButton(
                 icon: Icons.tune_rounded,
-                tooltip: _text('工具与控制', 'Tools & controls'),
+                tooltip: _i18n.t(
+                  'inline.plan294.zen_sand.tools_controls_887d8f27',
+                ),
                 onPressed: _openControlSheet,
               ),
             ],
@@ -2007,7 +2051,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
           children: <Widget>[
             _ZenQuickIconButton(
               icon: Icons.arrow_back_rounded,
-              tooltip: _text('返回', 'Back'),
+              tooltip: _i18n.t('toolbox.sound.locator.cue_label_back'),
               onPressed: () => Navigator.of(context).maybePop(),
             ),
             const SizedBox(width: 10),
@@ -2016,7 +2060,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    _text('禅意沙盘', 'Zen sand tray'),
+                    _i18n.t('inline.plan294.zen_sand.zen_sand_tray_6452b86e'),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleMedium?.copyWith(
@@ -2026,9 +2070,8 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    _text(
-                      '拖动即可留下连续沙纹。',
-                      'Drag to leave continuous sand trails.',
+                    _i18n.t(
+                      'inline.plan294.zen_sand.drag_to_leave_continuous_sand_trails_5018b479',
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -2043,13 +2086,15 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
             const SizedBox(width: 10),
             _ZenQuickIconButton(
               icon: Icons.landscape_rounded,
-              tooltip: _text('切换场景', 'Scenes'),
+              tooltip: _i18n.t('inline.plan294.zen_sand.scenes_950fed49'),
               onPressed: _openSceneSheet,
             ),
             const SizedBox(width: 8),
             _ZenQuickIconButton(
               icon: Icons.tune_rounded,
-              tooltip: _text('工具与控制', 'Tools & controls'),
+              tooltip: _i18n.t(
+                'inline.plan294.zen_sand.tools_controls_887d8f27',
+              ),
               onPressed: _openControlSheet,
             ),
           ],
@@ -2068,22 +2113,24 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
             runSpacing: 8,
             children: <Widget>[
               _ZenMiniStatusPill(
-                label: _text('场景', 'Scene'),
-                value: _background.label(_isZh),
+                label: _i18n.t(
+                  'inline.ui.pages.toolbox_daily_choice.daily_choice_wear_module.scene_d8ab7f',
+                ),
+                value: _background.label(_i18n),
                 accent: _background.accent,
               ),
               _ZenMiniStatusPill(
-                label: _text('工具', 'Tool'),
-                value: _tool.label(_isZh),
+                label: _i18n.t('inline.plan294.zen_sand.tool_4e3ea81e'),
+                value: _tool.label(_i18n),
                 accent: _tool.tint,
               ),
               _ZenMiniStatusPill(
-                label: _text('音效', 'Sound'),
+                label: _i18n.t('inline.plan294.zen_sand.sound_b6a29d0c'),
                 value: _soundDescriptor,
                 accent: _soundEnabled ? _tool.tint : const Color(0xFF9D8D7E),
               ),
               _ZenMiniStatusPill(
-                label: _text('笔触', 'Brush'),
+                label: _i18n.t('inline.plan294.zen_sand.brush_184dcd1d'),
                 value: _brushSize.round().toString(),
                 accent: Color.lerp(_tool.tint, Colors.white, 0.15)!,
               ),
@@ -2096,39 +2143,41 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
           child: Row(
             children: <Widget>[
               _ZenActionBadge(
-                label: _text('场景', 'Scene'),
-                value: _background.label(_isZh),
+                label: _i18n.t(
+                  'inline.ui.pages.toolbox_daily_choice.daily_choice_wear_module.scene_d8ab7f',
+                ),
+                value: _background.label(_i18n),
                 accent: _background.accent,
               ),
               const SizedBox(width: 10),
               _ZenActionBadge(
-                label: _text('笔触', 'Strokes'),
+                label: _i18n.t('inline.plan294.zen_sand.strokes_fdf5550d'),
                 value: _strokeCount.toString(),
                 accent: _tool.tint,
               ),
               const SizedBox(width: 10),
               _ZenActionBadge(
-                label: _text('景石', 'Stones'),
+                label: _i18n.t('inline.plan294.zen_sand.stones_d3c847a8'),
                 value: _stoneCount.toString(),
                 accent: const Color(0xFF6A6670),
               ),
               const SizedBox(width: 10),
               _ZenActionBadge(
-                label: _text('宽度', 'Brush'),
+                label: _i18n.t('inline.plan294.zen_sand.brush_069e54de'),
                 value: _brushSize.round().toString(),
                 accent: Color.lerp(_tool.tint, Colors.white, 0.15)!,
               ),
               const SizedBox(width: 10),
               _ZenActionBadge(
-                label: _text('缩放', 'Zoom'),
+                label: _i18n.t('inline.plan294.zen_sand.zoom_6dd471dd'),
                 value: '${_viewportScale.toStringAsFixed(1)}x',
                 accent: _background.accent,
               ),
               if (_toolSupportsColor) ...<Widget>[
                 const SizedBox(width: 10),
                 _ZenActionBadge(
-                  label: _text('颜色', 'Color'),
-                  value: _activeColorSpec.label(_isZh),
+                  label: _i18n.t('todoColorOption'),
+                  value: _activeColorSpec.label(_i18n),
                   accent: Color(_colorValue),
                 ),
               ],
@@ -2158,7 +2207,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        _text('起手预设', 'Quick rituals'),
+                        _i18n.t(
+                          'inline.plan294.zen_sand.quick_rituals_ca432955',
+                        ),
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: const Color(0xFF281F16),
@@ -2166,9 +2217,8 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        _text(
-                          '空白沙盘也可以直接画；预设只是帮你更快进入手感。',
-                          'Blank trays are welcome too. Presets simply get you into the flow faster.',
+                        _i18n.t(
+                          'inline.plan294.zen_sand.blank_trays_are_welcome_too_presets_simply_get_y_cb590ceb',
                         ),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: const Color(0xFF655949),
@@ -2181,7 +2231,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                 const SizedBox(width: 10),
                 _ZenCompactActionChip(
                   icon: Icons.auto_awesome_rounded,
-                  label: _text('全部', 'Browse'),
+                  label: _i18n.t('inline.plan294.zen_sand.browse_bbe647d9'),
                   accent: _background.accent,
                   onTap: _openRitualSheet,
                 ),
@@ -2197,7 +2247,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                         padding: const EdgeInsets.only(right: 10),
                         child: _ZenRitualQuickChip(
                           preset: preset,
-                          isZh: _isZh,
+                          i18n: _i18n,
                           selected: preset.id == _lastPresetId,
                           onTap: () {
                             unawaited(_useRitualPreset(preset));
@@ -2214,21 +2264,28 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
               runSpacing: 8,
               children: <Widget>[
                 _ZenCanvasHint(
-                  label: _text(
-                    '声音：$_soundDescriptor',
-                    'Sound: $_soundDescriptor',
+                  label: _i18n.t(
+                    'inline.plan294.zen_sand.sound_value_9fd56fdd',
+                    params: <String, Object?>{
+                      '_soundDescriptor': _soundDescriptor,
+                    },
                   ),
                   accent: _soundEnabled ? _tool.tint : const Color(0xFF9D8D7E),
                 ),
                 _ZenCanvasHint(
-                  label: _text('触点：$_anchorLabel', 'Anchor: $_anchorLabel'),
+                  label: _i18n.t(
+                    'inline.plan294.zen_sand.anchor_value_5a9e2f63',
+                    params: <String, Object?>{'_anchorLabel': _anchorLabel},
+                  ),
                   accent: _background.accent,
                 ),
                 if (_lastPreset != null)
                   _ZenCanvasHint(
-                    label: _text(
-                      '上次：${_lastPreset!.title(_isZh)}',
-                      'Last: ${_lastPreset!.title(_isZh)}',
+                    label: _i18n.t(
+                      'inline.plan294.zen_sand.last_value_eb6c6831',
+                      params: <String, Object?>{
+                        '_lastPreset!.title(_i18n)': _lastPreset!.title(_i18n),
+                      },
                     ),
                     accent: _lastPreset!.accent,
                   ),
@@ -2360,13 +2417,11 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                                     top: 12,
                                     child: _ZenCanvasHint(
                                       label: _tool.isPlacement
-                                          ? _text(
-                                              '轻点放置景石',
-                                              'Tap to place stones',
+                                          ? _i18n.t(
+                                              'inline.plan294.zen_sand.tap_to_place_stones_29293c79',
                                             )
-                                          : _text(
-                                              '单指绘制，双指缩放/平移',
-                                              'One finger draws, two fingers zoom/pan',
+                                          : _i18n.t(
+                                              'inline.plan294.zen_sand.one_finger_draws_two_fingers_zoom_pan_6165c2d4',
                                             ),
                                       accent: _tool.tint,
                                     ),
@@ -2376,9 +2431,8 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                                     left: 12,
                                     top: _guideEnabled ? 56 : 12,
                                     child: _ZenCanvasHint(
-                                      label: _text(
-                                        '双指已识别，停顿后进入缩放/平移',
-                                        'Two fingers detected. Hold briefly to zoom/pan',
+                                      label: _i18n.t(
+                                        'inline.plan294.zen_sand.two_fingers_detected_hold_briefly_to_zoom_pan_a9a2eafa',
                                       ),
                                       accent: _background.accent,
                                     ),
@@ -2389,8 +2443,8 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                                     bottom: 12,
                                     child: _ZenCanvasHint(
                                       label: _toolSupportsColor
-                                          ? _activeColorSpec.label(_isZh)
-                                          : _tool.label(_isZh),
+                                          ? _activeColorSpec.label(_i18n)
+                                          : _tool.label(_i18n),
                                       accent: _toolSupportsColor
                                           ? Color(_colorValue)
                                           : _tool.tint,
@@ -2421,35 +2475,35 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
         children: <Widget>[
           _ZenCompactActionChip(
             icon: Icons.auto_awesome_rounded,
-            label: _text('起手预设', 'Rituals'),
+            label: _i18n.t('inline.plan294.zen_sand.rituals_376073e0'),
             accent: _background.accent,
             onTap: _openRitualSheet,
           ),
           const SizedBox(width: 10),
           _ZenCompactActionChip(
             icon: Icons.undo_rounded,
-            label: _text('撤销', 'Undo'),
+            label: _i18n.t('toolbox.hub.edit.snackbar_restore'),
             accent: _tool.tint,
             onTap: _actions.isNotEmpty ? _undo : null,
           ),
           const SizedBox(width: 10),
           _ZenCompactActionChip(
             icon: Icons.redo_rounded,
-            label: _text('重做', 'Redo'),
+            label: _i18n.t('inline.plan294.zen_sand.redo_ad4de30e'),
             accent: _tool.tint,
             onTap: _redoStack.isNotEmpty ? _redo : null,
           ),
           const SizedBox(width: 10),
           _ZenCompactActionChip(
             icon: Icons.auto_fix_high_rounded,
-            label: _text('一键抹平', 'Smooth all'),
+            label: _i18n.t('inline.plan294.zen_sand.smooth_all_5a5b3412'),
             accent: _background.accent,
             onTap: _canSmoothAll ? _smoothAll : null,
           ),
           const SizedBox(width: 10),
           _ZenCompactActionChip(
             icon: Icons.delete_sweep_rounded,
-            label: _text('清空沙盘', 'Clear tray'),
+            label: _i18n.t('inline.plan294.zen_sand.clear_tray_5f60c4fc'),
             accent: const Color(0xFF8B6651),
             onTap: _actions.isEmpty
                 ? null
@@ -2460,7 +2514,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
           const SizedBox(width: 10),
           _ZenCompactActionChip(
             icon: Icons.center_focus_strong_rounded,
-            label: _text('重置视角', 'Reset view'),
+            label: _i18n.t('inline.plan294.zen_sand.reset_view_6f33ae0f'),
             accent: _background.accent,
             onTap: _viewportScale > 1.01 ? _resetViewport : null,
           ),
@@ -2470,8 +2524,8 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                 ? Icons.fullscreen_exit_rounded
                 : Icons.fullscreen_rounded,
             label: _immersiveMode
-                ? _text('退出全屏', 'Exit full screen')
-                : _text('沉浸模式', 'Immersive'),
+                ? _i18n.t('inline.plan294.zen_sand.exit_full_screen_8a439134')
+                : _i18n.t('inline.plan294.zen_sand.immersive_93f9418b'),
             accent: _tool.tint,
             onTap: _toggleImmersiveMode,
           ),
@@ -2489,7 +2543,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                _background.label(_isZh),
+                _background.label(_i18n),
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                   color: color,
@@ -2497,7 +2551,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
               ),
               const SizedBox(height: 2),
               Text(
-                _background.description(_isZh),
+                _background.description(_i18n),
                 maxLines: immersive ? 1 : 2,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -2511,7 +2565,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
         const SizedBox(width: 12),
         _ZenMiniMetric(
           icon: _tool.icon,
-          label: _tool.label(_isZh),
+          label: _tool.label(_i18n),
           accent: _tool.tint,
         ),
       ],
@@ -2533,7 +2587,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
             Row(
               children: <Widget>[
                 Text(
-                  _text('颜色色盘', 'Color palette'),
+                  _i18n.t('inline.plan294.zen_sand.color_palette_a0f67e9e'),
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: const Color(0xFF281F16),
@@ -2541,8 +2595,8 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                 ),
                 const Spacer(),
                 _ZenActionBadge(
-                  label: _text('当前', 'Active'),
-                  value: _activeColorSpec.label(_isZh),
+                  label: _i18n.t('toolbox.sound.soothing.v2.mode.active'),
+                  value: _activeColorSpec.label(_i18n),
                   accent: Color(_colorValue),
                 ),
               ],
@@ -2558,7 +2612,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                   final color = _paintPalette[index];
                   return _ZenColorChip(
                     color: color.color,
-                    label: color.label(_isZh),
+                    label: color.label(_i18n),
                     selected: color.value == _colorValue,
                     onTap: () => _setColorValue(color.value),
                   );
@@ -2610,7 +2664,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        _tool.label(_isZh),
+                        _tool.label(_i18n),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.labelLarge?.copyWith(
@@ -2630,33 +2684,37 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                     children: <Widget>[
                       _ZenDockButton(
                         icon: Icons.landscape_rounded,
-                        label: _text('场景', 'Scenes'),
+                        label: _i18n.t(
+                          'inline.plan294.zen_sand.scenes_6e7b57f5',
+                        ),
                         onPressed: _openSceneSheet,
                       ),
                       const SizedBox(width: 4),
                       _ZenDockButton(
                         icon: Icons.tune_rounded,
-                        label: _text('工具', 'Tools'),
+                        label: _i18n.t('toolbox.sleep.rhythm.tools'),
                         onPressed: _openControlSheet,
                       ),
                       const SizedBox(width: 4),
                       _ZenDockButton(
                         icon: Icons.undo_rounded,
-                        label: _text('撤销', 'Undo'),
+                        label: _i18n.t('toolbox.hub.edit.snackbar_restore'),
                         enabled: _actions.isNotEmpty,
                         onPressed: _undo,
                       ),
                       const SizedBox(width: 4),
                       _ZenDockButton(
                         icon: Icons.redo_rounded,
-                        label: _text('重做', 'Redo'),
+                        label: _i18n.t('inline.plan294.zen_sand.redo_ad4de30e'),
                         enabled: _redoStack.isNotEmpty,
                         onPressed: _redo,
                       ),
                       const SizedBox(width: 4),
                       _ZenDockButton(
                         icon: Icons.auto_fix_high_rounded,
-                        label: _text('抹平', 'Smooth'),
+                        label: _i18n.t(
+                          'inline.plan294.zen_sand.smooth_a6a61c2c',
+                        ),
                         enabled: _canSmoothAll,
                         onPressed: _smoothAll,
                       ),
@@ -2692,7 +2750,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  _tool.help(_isZh),
+                  _tool.help(_i18n),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -2708,33 +2766,35 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                   children: <Widget>[
                     _ZenDockButton(
                       icon: Icons.landscape_rounded,
-                      label: _text('场景', 'Scenes'),
+                      label: _i18n.t('inline.plan294.zen_sand.scenes_6e7b57f5'),
                       onPressed: _openSceneSheet,
                     ),
                     const SizedBox(width: 8),
                     _ZenDockButton(
                       icon: Icons.tune_rounded,
-                      label: _text('控制', 'Control'),
+                      label: _i18n.t(
+                        'inline.plan294.zen_sand.control_ef4bd302',
+                      ),
                       onPressed: _openControlSheet,
                     ),
                     const SizedBox(width: 8),
                     _ZenDockButton(
                       icon: Icons.undo_rounded,
-                      label: _text('撤销', 'Undo'),
+                      label: _i18n.t('toolbox.hub.edit.snackbar_restore'),
                       enabled: _actions.isNotEmpty,
                       onPressed: _undo,
                     ),
                     const SizedBox(width: 8),
                     _ZenDockButton(
                       icon: Icons.redo_rounded,
-                      label: _text('重做', 'Redo'),
+                      label: _i18n.t('inline.plan294.zen_sand.redo_ad4de30e'),
                       enabled: _redoStack.isNotEmpty,
                       onPressed: _redo,
                     ),
                     const SizedBox(width: 8),
                     _ZenDockButton(
                       icon: Icons.auto_fix_high_rounded,
-                      label: _text('抹平', 'Smooth'),
+                      label: _i18n.t('inline.plan294.zen_sand.smooth_a6a61c2c'),
                       enabled: _canSmoothAll,
                       onPressed: _smoothAll,
                     ),
@@ -2752,7 +2812,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                     final tool = _tools[index];
                     return _ZenCompactToolChip(
                       tool: tool,
-                      isZh: _isZh,
+                      i18n: _i18n,
                       selected: tool.id == _toolId,
                       onTap: () => _selectTool(tool.id),
                     );
@@ -2786,7 +2846,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                _tool.help(_isZh),
+                _tool.help(_i18n),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -2802,27 +2862,27 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                 children: <Widget>[
                   _ZenDockButton(
                     icon: Icons.landscape_rounded,
-                    label: _text('场景', 'Scenes'),
+                    label: _i18n.t('inline.plan294.zen_sand.scenes_6e7b57f5'),
                     onPressed: _openSceneSheet,
                   ),
                   const SizedBox(width: 8),
                   _ZenDockButton(
                     icon: Icons.undo_rounded,
-                    label: _text('撤销', 'Undo'),
+                    label: _i18n.t('toolbox.hub.edit.snackbar_restore'),
                     enabled: _actions.isNotEmpty,
                     onPressed: _undo,
                   ),
                   const SizedBox(width: 8),
                   _ZenDockButton(
                     icon: Icons.redo_rounded,
-                    label: _text('重做', 'Redo'),
+                    label: _i18n.t('inline.plan294.zen_sand.redo_ad4de30e'),
                     enabled: _redoStack.isNotEmpty,
                     onPressed: _redo,
                   ),
                   const SizedBox(width: 8),
                   _ZenDockButton(
                     icon: Icons.auto_fix_high_rounded,
-                    label: _text('抹平', 'Smooth'),
+                    label: _i18n.t('inline.plan294.zen_sand.smooth_a6a61c2c'),
                     enabled: _canSmoothAll,
                     onPressed: _smoothAll,
                   ),
@@ -2832,8 +2892,8 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                         ? Icons.fullscreen_exit_rounded
                         : Icons.fullscreen_rounded,
                     label: _immersiveMode
-                        ? _text('退出全屏', 'Exit full')
-                        : _text('沉浸', 'Immersive'),
+                        ? _i18n.t('inline.plan294.zen_sand.exit_full_98da2b3d')
+                        : _i18n.t('inline.plan294.zen_sand.immersive_4041d79c'),
                     onPressed: _toggleImmersiveMode,
                   ),
                 ],
@@ -2842,10 +2902,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
             const SizedBox(height: 12),
             _ZenDrawerSectionCard(
               icon: Icons.handyman_rounded,
-              title: _text('工具抽屉', 'Tool drawer'),
-              subtitle: _text(
-                '折叠查看全部工具，避免在手机上反复横向滑动。',
-                'Open the folded tool drawer instead of swiping through everything on mobile.',
+              title: _i18n.t('inline.plan294.zen_sand.tool_drawer_77cc4fe0'),
+              subtitle: _i18n.t(
+                'inline.plan294.zen_sand.open_the_folded_tool_drawer_instead_of_swiping_t_e3b3867d',
               ),
               expanded: _expandedDrawerSections.contains(
                 _ZenDrawerSection.tools,
@@ -2858,7 +2917,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                     .map(
                       (tool) => _ZenCompactToolChip(
                         tool: tool,
-                        isZh: _isZh,
+                        i18n: _i18n,
                         selected: tool.id == _toolId,
                         onTap: () => _selectTool(tool.id),
                       ),
@@ -2869,10 +2928,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
             const SizedBox(height: 10),
             _ZenDrawerSectionCard(
               icon: Icons.brush_rounded,
-              title: _text('笔触与材质', 'Brush & material'),
-              subtitle: _text(
-                '快速调笔触宽度，并预览当前工具在沙面上的表现。',
-                'Tune brush size and preview how the active tool behaves on sand.',
+              title: _i18n.t('inline.plan294.zen_sand.brush_material_8ffc47b8'),
+              subtitle: _i18n.t(
+                'inline.plan294.zen_sand.tune_brush_size_and_preview_how_the_active_tool__2cd8384d',
               ),
               expanded: _expandedDrawerSections.contains(
                 _ZenDrawerSection.brush,
@@ -2893,7 +2951,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                       ),
                       const SizedBox(width: 12),
                       _ZenActionBadge(
-                        label: _text('尺寸', 'Size'),
+                        label: _i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_number_memory.size_f820b6',
+                        ),
                         value: _brushSize.round().toString(),
                         accent: _tool.tint,
                       ),
@@ -2915,10 +2975,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
             const SizedBox(height: 10),
             _ZenDrawerSectionCard(
               icon: Icons.tune_rounded,
-              title: _text('体验设置', 'Experience'),
-              subtitle: _text(
-                '把触感、持续音效和触点锚定集中到一个折叠卡片里。',
-                'Keep haptics, continuous sand audio, and touch anchoring in one folded card.',
+              title: _i18n.t('inline.plan294.zen_sand.experience_87860396'),
+              subtitle: _i18n.t(
+                'inline.plan294.zen_sand.keep_haptics_continuous_sand_audio_and_touch_anc_f7409dac',
               ),
               expanded: _expandedDrawerSections.contains(
                 _ZenDrawerSection.experience,
@@ -2927,10 +2986,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
               child: Column(
                 children: <Widget>[
                   _ZenToggleRow(
-                    title: _text('触感反馈', 'Haptics'),
-                    subtitle: _text(
-                      '切换工具、落石和撤销时给出轻微振动。',
-                      'Adds light feedback when switching tools, placing stones, and undoing.',
+                    title: _i18n.t('inline.plan294.zen_sand.haptics_07807c2c'),
+                    subtitle: _i18n.t(
+                      'inline.plan294.zen_sand.adds_light_feedback_when_switching_tools_placing_a5367beb',
                     ),
                     value: _hapticsEnabled,
                     activeColor: _background.accent,
@@ -2938,10 +2996,11 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                   ),
                   const Divider(height: 18),
                   _ZenToggleRow(
-                    title: _text('沙盘音效', 'Sand sounds'),
-                    subtitle: _text(
-                      '拖动时持续播放沙沙底噪，停手即停。',
-                      'Keeps a continuous sand texture running while you drag and stops as soon as you lift.',
+                    title: _i18n.t(
+                      'inline.plan294.zen_sand.sand_sounds_6d793d5a',
+                    ),
+                    subtitle: _i18n.t(
+                      'inline.plan294.zen_sand.keeps_a_continuous_sand_texture_running_while_yo_13e25ba6',
                     ),
                     value: _soundEnabled,
                     activeColor: _background.accent,
@@ -2949,10 +3008,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                   ),
                   const Divider(height: 18),
                   _ZenToggleRow(
-                    title: _text('操作提示', 'Guidance'),
-                    subtitle: _text(
-                      '在画布上显示当前工具的手势说明。',
-                      'Shows contextual hints for the active tool.',
+                    title: _i18n.t('inline.plan294.zen_sand.guidance_743ca088'),
+                    subtitle: _i18n.t(
+                      'inline.plan294.zen_sand.shows_contextual_hints_for_the_active_tool_092bf296',
                     ),
                     value: _guideEnabled,
                     activeColor: _background.accent,
@@ -2962,7 +3020,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      _text('触点锚定', 'Touch anchor'),
+                      _i18n.t('inline.plan294.zen_sand.touch_anchor_56ad621f'),
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: const Color(0xFF281F16),
@@ -2971,9 +3029,8 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    _text(
-                      '按画布相对尺寸自适应对齐，可直接贴合触点，也可把笔尖抬到手指上方。',
-                      'The anchor now adapts relative to canvas size, so you can draw right under the touch or lift the tip above your finger.',
+                    _i18n.t(
+                      'inline.plan294.zen_sand.the_anchor_now_adapts_relative_to_canvas_size_so_7f5b1820',
                     ),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: const Color(0xFF655949),
@@ -2986,12 +3043,20 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                     runSpacing: 8,
                     children: <Widget>[
                       ChoiceChip(
-                        label: Text(_text('贴合触点', 'Contact point')),
+                        label: Text(
+                          _i18n.t(
+                            'inline.plan294.zen_sand.contact_point_9599e4a3',
+                          ),
+                        ),
                         selected: _drawFromContactPoint,
                         onSelected: (_) => _setDrawFromContactPoint(true),
                       ),
                       ChoiceChip(
-                        label: Text(_text('上移笔尖', 'Lifted tip')),
+                        label: Text(
+                          _i18n.t(
+                            'inline.plan294.zen_sand.lifted_tip_4690e67a',
+                          ),
+                        ),
                         selected: !_drawFromContactPoint,
                         onSelected: (_) => _setDrawFromContactPoint(false),
                       ),
@@ -3013,7 +3078,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                         ),
                         const SizedBox(width: 12),
                         _ZenActionBadge(
-                          label: _text('偏移', 'Offset'),
+                          label: _i18n.t(
+                            'inline.plan294.zen_sand.offset_55471588',
+                          ),
                           value: '${(_touchOffset * 100).round()}%',
                           accent: _background.accent,
                         ),
@@ -3026,10 +3093,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
             const SizedBox(height: 10),
             _ZenDrawerSectionCard(
               icon: Icons.zoom_out_map_rounded,
-              title: _text('手势与视角', 'Gestures & view'),
-              subtitle: _text(
-                '把缩放、视角和沉浸模式也收进折叠卡片里。',
-                'Keep zoom, view reset, and immersive mode inside a folded card as well.',
+              title: _i18n.t('inline.plan294.zen_sand.gestures_view_f9a45e5e'),
+              subtitle: _i18n.t(
+                'inline.plan294.zen_sand.keep_zoom_view_reset_and_immersive_mode_inside_a_89746823',
               ),
               expanded: _expandedDrawerSections.contains(
                 _ZenDrawerSection.gestures,
@@ -3039,9 +3105,8 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    _text(
-                      '单指绘制或落石，双指缩放和平移；水迹长按会继续向周围积湿加深。',
-                      'Use one finger for drawing or stones and two fingers for zoom/pan; holding the water tool keeps building damp diffusion.',
+                    _i18n.t(
+                      'inline.plan294.zen_sand.use_one_finger_for_drawing_or_stones_and_two_fin_12d354dc',
                     ),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: const Color(0xFF655949),
@@ -3064,8 +3129,12 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                             ? Icons.fullscreen_exit_rounded
                             : Icons.fullscreen_rounded,
                         label: _immersiveMode
-                            ? _text('退出全屏', 'Exit full screen')
-                            : _text('沉浸模式', 'Immersive'),
+                            ? _i18n.t(
+                                'inline.plan294.zen_sand.exit_full_screen_8a439134',
+                              )
+                            : _i18n.t(
+                                'inline.plan294.zen_sand.immersive_93f9418b',
+                              ),
                         accent: _tool.tint,
                         onTap: _toggleImmersiveMode,
                       ),

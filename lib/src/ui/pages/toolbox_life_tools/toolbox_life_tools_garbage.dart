@@ -15,22 +15,16 @@ enum _GarbageCategory {
 
 class _GarbageCategoryInfo {
   const _GarbageCategoryInfo({
-    required this.titleZh,
-    required this.titleEn,
-    required this.shortZh,
-    required this.shortEn,
-    required this.guideZh,
-    required this.guideEn,
+    required this.titleKey,
+    required this.shortKey,
+    required this.guideKey,
     required this.color,
     required this.icon,
   });
 
-  final String titleZh;
-  final String titleEn;
-  final String shortZh;
-  final String shortEn;
-  final String guideZh;
-  final String guideEn;
+  final String titleKey;
+  final String shortKey;
+  final String guideKey;
   final Color color;
   final IconData icon;
 }
@@ -76,67 +70,55 @@ class _GarbageRemoteState {
 const Map<_GarbageCategory, _GarbageCategoryInfo>
 _garbageCategoryInfos = <_GarbageCategory, _GarbageCategoryInfo>{
   _GarbageCategory.recyclable: _GarbageCategoryInfo(
-    titleZh: '可回收物',
-    titleEn: 'Recyclable',
-    shortZh: '适宜回收循环利用',
-    shortEn: 'Suitable for reuse and recycling',
-    guideZh: '尽量清空内容物，保持干燥整洁；玻璃、金属和尖锐物请包好再投放。',
-    guideEn:
-        'Empty and keep items dry where possible; wrap glass, metal, and sharp edges before disposal.',
+    titleKey: 'inline.plan295.life.recyclable.f9500e64e94d',
+    shortKey:
+        'inline.plan295.life.suitable_for_reuse_and_recycling.f010d7c8fbee',
+    guideKey:
+        'inline.plan295.life.empty_and_keep_items_dry_where_possi.76151a96209d',
     color: Color(0xFF2878C8),
     icon: Icons.recycling_rounded,
   ),
   _GarbageCategory.hazardous: _GarbageCategoryInfo(
-    titleZh: '有害垃圾',
-    titleEn: 'Hazardous',
-    shortZh: '含有毒有害成分',
-    shortEn: 'Contains harmful substances',
-    guideZh: '保持完整密封，优先投放到专用收集点；电池、灯管、药品不要混入普通垃圾桶。',
-    guideEn:
-        'Keep sealed and intact, then use designated collection points; do not mix batteries, lamps, or medicine with ordinary waste.',
+    titleKey: 'inline.plan295.life.hazardous.d1634d861daf',
+    shortKey: 'inline.plan295.life.contains_harmful_substances.ba36a3c60d57',
+    guideKey:
+        'inline.plan295.life.keep_sealed_and_intact_then_use_desi.b8d31f6df1da',
     color: Color(0xFFD34B4B),
     icon: Icons.warning_amber_rounded,
   ),
   _GarbageCategory.kitchen: _GarbageCategoryInfo(
-    titleZh: '湿垃圾 / 厨余垃圾',
-    titleEn: 'Wet or kitchen waste',
-    shortZh: '易腐烂的生物质生活废弃物',
-    shortEn: 'Perishable organic household waste',
-    guideZh: '投放前沥干水分，去掉塑料袋、牙签、餐巾纸、包装盒等非厨余物。',
-    guideEn:
-        'Drain liquid first and remove bags, toothpicks, napkins, wrappers, and containers.',
+    titleKey: 'inline.plan295.life.wet_or_kitchen_waste.71544bee65f0',
+    shortKey:
+        'inline.plan295.life.perishable_organic_household_waste.ad970a06df3f',
+    guideKey:
+        'inline.plan295.life.drain_liquid_first_and_remove_bags_t.fc03573af050',
     color: Color(0xFF3F8F57),
     icon: Icons.restaurant_rounded,
   ),
   _GarbageCategory.residual: _GarbageCategoryInfo(
-    titleZh: '干垃圾 / 其他垃圾',
-    titleEn: 'Dry or residual waste',
-    shortZh: '暂不适合回收或资源化',
-    shortEn: 'Not currently recyclable or compostable',
-    guideZh: '尽量压缩体积后投放；被污染、难清洗或复合材料通常归入干垃圾或其他垃圾。',
-    guideEn:
-        'Compress when possible; contaminated, hard-to-clean, or composite items are usually residual waste.',
+    titleKey: 'inline.plan295.life.dry_or_residual_waste.59ffef94c58d',
+    shortKey:
+        'inline.plan295.life.not_currently_recyclable_or_composta.d4cedf254e4e',
+    guideKey:
+        'inline.plan295.life.compress_when_possible_contaminated.b9a8e4b3f959',
     color: Color(0xFF6F7480),
     icon: Icons.delete_outline_rounded,
   ),
   _GarbageCategory.bulky: _GarbageCategoryInfo(
-    titleZh: '大件垃圾',
-    titleEn: 'Bulky waste',
-    shortZh: '预约回收或专项收运',
-    shortEn: 'Needs appointment or special handling',
-    guideZh: '不要直接丢入普通桶，优先联系物业、社区或正规回收渠道处理。',
-    guideEn:
-        'Do not put it in regular bins; contact property management, community service, or certified recyclers.',
+    titleKey: 'inline.plan295.life.bulky_waste.50e657389b6d',
+    shortKey:
+        'inline.plan295.life.needs_appointment_or_special_handlin.44a00c5df6f7',
+    guideKey:
+        'inline.plan295.life.do_not_put_it_in_regular_bins_contac.f7ab69c9e407',
     color: Color(0xFF8B6B2F),
     icon: Icons.local_shipping_rounded,
   ),
   _GarbageCategory.unknown: _GarbageCategoryInfo(
-    titleZh: '未知分类',
-    titleEn: 'Unknown',
-    shortZh: '远程数据未标明分类',
-    shortEn: 'No mapped category from remote data',
-    guideZh: '请打开来源页面或按当地分类规则确认。',
-    guideEn: 'Open the source page or confirm with local sorting rules.',
+    titleKey: 'inline.plan295.life.unknown.77495444af30',
+    shortKey:
+        'inline.plan295.life.no_mapped_category_from_remote_data.8569fd1e2c06',
+    guideKey:
+        'inline.plan295.life.open_the_source_page_or_confirm_with.b8d63013288a',
     color: Color(0xFF7C8794),
     icon: Icons.help_outline_rounded,
   ),
@@ -155,30 +137,26 @@ _GarbageCategory _garbageCategoryFromRemote(int category) {
 
 String _garbageRemoteErrorText(BuildContext context, Object? error) {
   if (error == null) {
-    return _lifeText(
+    return _lifeI18nText(
       context,
-      zh: '远程数据暂不可用。',
-      en: 'Remote data is unavailable.',
+      'inline.plan295.life.remote_data_is_unavailable.0ab147a67d91',
     );
   }
   if (error is TimeoutException) {
-    return _lifeText(
+    return _lifeI18nText(
       context,
-      zh: '远程请求超时，请稍后重试或打开来源页面查询。',
-      en: 'Remote request timed out. Try again later or open the source page.',
+      'inline.plan295.life.remote_request_timed_out_try_again_l.89a0262b1fe1',
     );
   }
   if (error is FormatException) {
-    return _lifeText(
+    return _lifeI18nText(
       context,
-      zh: '远程数据格式变化，暂时无法解析。',
-      en: 'Remote data format changed and cannot be parsed yet.',
+      'inline.plan295.life.remote_data_format_changed_and_canno.5cf415e18f7c',
     );
   }
-  return _lifeText(
+  return _lifeI18nText(
     context,
-    zh: '远程请求失败，请检查网络后重试。',
-    en: 'Remote request failed. Check the network and retry.',
+    'inline.plan295.life.remote_request_failed_check_the_netw.240a58074f47',
   );
 }
 
@@ -293,20 +271,28 @@ class _GarbageSortingToolPageState extends State<_GarbageSortingToolPage> {
   @override
   Widget build(BuildContext context) {
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '垃圾分类查询', en: 'Garbage sorting'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '请求腾讯远程分类数据，输入物品名称后实时筛选结果。',
-        en: 'Fetch Tencent remote sorting data and filter by item name.',
+        'inline.plan295.life.garbage_sorting.3e693c2be494',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.fetch_tencent_remote_sorting_data_an.eea3a46eac10',
       ),
       appBarActions: <Widget>[
         IconButton(
-          tooltip: _lifeText(context, zh: '刷新远程数据', en: 'Refresh remote data'),
+          tooltip: _lifeI18nText(
+            context,
+            'inline.plan295.life.refresh_remote_data.6a4c3aad5934',
+          ),
           onPressed: _remoteState.loading ? null : _loadRemoteData,
           icon: const Icon(Icons.refresh_rounded),
         ),
         IconButton(
-          tooltip: _lifeText(context, zh: '打开在线查询', en: 'Open online query'),
+          tooltip: _lifeI18nText(
+            context,
+            'inline.plan295.life.open_online_query.f769c47dbfe1',
+          ),
           onPressed: () {
             _openExternal(context, 'https://tool.browser.qq.com/garbage.html');
           },
@@ -340,7 +326,10 @@ class _GarbageSortingToolPageState extends State<_GarbageSortingToolPage> {
               suffixIcon: _query.isEmpty
                   ? null
                   : IconButton(
-                      tooltip: _lifeText(context, zh: '清空', en: 'Clear'),
+                      tooltip: _lifeI18nText(
+                        context,
+                        'inline.plan294.zen_sand.clear_ea17218b',
+                      ),
                       onPressed: () {
                         _controller.clear();
                         setState(() => _query = '');
@@ -348,10 +337,9 @@ class _GarbageSortingToolPageState extends State<_GarbageSortingToolPage> {
                       icon: const Icon(Icons.close_rounded),
                     ),
               border: const OutlineInputBorder(),
-              labelText: _lifeText(
+              labelText: _lifeI18nText(
                 context,
-                zh: '搜索远程数据，例如：纸巾、苹果核、电池',
-                en: 'Search remote data, e.g. tissue, apple core, battery',
+                'inline.plan295.life.search_remote_data_e_g_tissue_apple.16ca974913a8',
               ),
             ),
             onChanged: (value) => setState(() => _query = value),
@@ -370,20 +358,21 @@ class _GarbageSortingToolPageState extends State<_GarbageSortingToolPage> {
           ),
           const SizedBox(height: 16),
           SectionHeader(
-            title: _lifeText(context, zh: '查询结果', en: 'Results'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '输入物品名称后显示匹配结果；具体投放仍以所在城市和社区要求为准。',
-              en: 'Enter an item name to show matches; local city and community rules still apply.',
+              'inline.plan295.life.results.f26b34f465de',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.enter_an_item_name_to_show_matches_l.1f117f850486',
             ),
           ),
           const SizedBox(height: 10),
           if (_remoteState.loading)
             _RemoteLoadingPanel(
-              text: _lifeText(
+              text: _lifeI18nText(
                 context,
-                zh: '正在请求远程分类数据...',
-                en: 'Fetching remote sorting data...',
+                'inline.plan295.life.fetching_remote_sorting_data.abf2d5749d24',
               ),
             )
           else if (_remoteState.error != null)
@@ -529,10 +518,9 @@ class _GarbageHeroCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      _lifeText(
+                      _lifeI18nText(
                         context,
-                        zh: '远程分类数据',
-                        en: 'Remote sorting data',
+                        'inline.plan295.life.remote_sorting_data.4e956901969a',
                       ),
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
@@ -541,16 +529,17 @@ class _GarbageHeroCard extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       loading
-                          ? _lifeText(
+                          ? _lifeI18nText(
                               context,
-                              zh: '正在请求腾讯远程资源',
-                              en: 'Fetching Tencent remote resource',
+                              'inline.plan295.life.fetching_tencent_remote_resource.368123ac9337',
                             )
                           : error == null
-                          ? _lifeText(
+                          ? _lifeI18nText(
                               context,
-                              zh: '已加载 $totalCount 条远程分类记录',
-                              en: '$totalCount remote sorting records loaded',
+                              'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.garbage.remote_sorting_records_loaded.7256467f49',
+                              params: <String, Object?>{
+                                'totalCount': totalCount,
+                              },
                             )
                           : _garbageRemoteErrorText(context, error),
                       style: theme.textTheme.bodySmall,
@@ -560,7 +549,10 @@ class _GarbageHeroCard extends StatelessWidget {
               ),
               if (error != null && !loading)
                 IconButton(
-                  tooltip: _lifeText(context, zh: '重试', en: 'Retry'),
+                  tooltip: _lifeI18nText(
+                    context,
+                    'inline.plan295.life.retry.da2bb8aff35f',
+                  ),
                   onPressed: onRetry,
                   icon: const Icon(Icons.refresh_rounded),
                 ),
@@ -608,7 +600,7 @@ class _GarbageCategoryFilters extends StatelessWidget {
       children: <Widget>[
         ChoiceChip(
           selected: selectedCategory == null,
-          label: Text(_lifeText(context, zh: '全部', en: 'All')),
+          label: Text(_lifeI18nText(context, 'all')),
           onSelected: (_) => onChanged(null),
         ),
         for (final category in _GarbageCategory.values)
@@ -623,7 +615,7 @@ class _GarbageCategoryFilters extends StatelessWidget {
                     : _garbageCategoryInfos[category]!.color,
               ),
               label: Text(
-                '${_lifeText(context, zh: _garbageCategoryInfos[category]!.titleZh, en: _garbageCategoryInfos[category]!.titleEn)} ${countFor(category)}',
+                '${_lifeI18nText(context, _garbageCategoryInfos[category]!.titleKey)} ${countFor(category)}',
               ),
               onSelected: (_) => onChanged(category),
             ),
@@ -646,9 +638,9 @@ class _GarbageCategoryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final label = _lifeText(context, zh: info.titleZh, en: info.titleEn);
+    final label = _lifeI18nText(context, info.titleKey);
     return Tooltip(
-      message: _lifeText(context, zh: info.guideZh, en: info.guideEn),
+      message: _lifeI18nText(context, info.guideKey),
       child: InkWell(
         borderRadius: BorderRadius.circular(999),
         onTap: onTap,
@@ -736,19 +728,17 @@ class _GarbageResultCard extends StatelessWidget {
                       children: <Widget>[
                         _GarbagePill(
                           icon: info.icon,
-                          text: _lifeText(
-                            context,
-                            zh: info.titleZh,
-                            en: info.titleEn,
-                          ),
+                          text: _lifeI18nText(context, info.titleKey),
                           color: info.color,
                         ),
                         _GarbagePill(
                           icon: Icons.cloud_done_rounded,
-                          text: _lifeText(
+                          text: _lifeI18nText(
                             context,
-                            zh: '远程分类码 ${item.rawCategory}',
-                            en: 'Remote category ${item.rawCategory}',
+                            'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.garbage.remote_category.89f188c568',
+                            params: <String, Object?>{
+                              'rawCategory': item.rawCategory,
+                            },
                           ),
                           color: theme.colorScheme.primary,
                         ),
@@ -760,10 +750,10 @@ class _GarbageResultCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Text(_lifeText(context, zh: info.shortZh, en: info.shortEn)),
+          Text(_lifeI18nText(context, info.shortKey)),
           const SizedBox(height: 8),
           Text(
-            _lifeText(context, zh: info.guideZh, en: info.guideEn),
+            _lifeI18nText(context, info.guideKey),
             style: theme.textTheme.bodySmall,
           ),
         ],
@@ -838,7 +828,9 @@ class _GarbageErrorPanel extends StatelessWidget {
           FilledButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh_rounded),
-            label: Text(_lifeText(context, zh: '重新请求', en: 'Retry')),
+            label: Text(
+              _lifeI18nText(context, 'inline.plan295.life.retry.5fa085a7caca'),
+            ),
           ),
         ],
       ),
@@ -854,11 +846,13 @@ class _GarbageStartPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '开始查询', en: 'Start search'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '输入物品名称开始查询，或打开腾讯在线查询页继续查。',
-        en: 'Enter an item name to search, or open Tencent online query.',
+        'inline.plan295.life.start_search.cc85f951d7c6',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.enter_an_item_name_to_search_or_open.da89bcf2734a',
       ),
       children: <Widget>[
         Align(
@@ -867,7 +861,10 @@ class _GarbageStartPanel extends StatelessWidget {
             onPressed: onOpenOnline,
             icon: const Icon(Icons.open_in_new_rounded),
             label: Text(
-              _lifeText(context, zh: '打开在线查询', en: 'Open online query'),
+              _lifeI18nText(
+                context,
+                'inline.plan295.life.open_online_query.f769c47dbfe1',
+              ),
             ),
           ),
         ),
@@ -902,29 +899,37 @@ class _GarbageEmptyState extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            _lifeText(context, zh: '远程数据中暂未命中', en: 'No remote match yet'),
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.no_remote_match_yet.a0590bbf8514',
+            ),
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            _lifeText(
-              context,
-              zh: selectedCategory == null
-                  ? '可以换一个常见名称试试，或打开在线查询确认「$query」。'
-                  : '当前分类筛选下没有结果，可以取消分类筛选，或打开在线查询确认「$query」。',
-              en: selectedCategory == null
-                  ? 'Try another common name, or open the online query for "$query".'
-                  : 'No result under this category filter. Clear it, or open the online query for "$query".',
-            ),
+            selectedCategory == null
+                ? _lifeI18nText(
+                    context,
+                    'inline.plan295.life.try_another_common_name_or_open_the.a1163c2aac83',
+                    params: <String, Object?>{'query': query},
+                  )
+                : _lifeI18nText(
+                    context,
+                    'inline.plan295.life.no_result_under_this_category_filter.6e6727353522',
+                    params: <String, Object?>{'query': query},
+                  ),
           ),
           const SizedBox(height: 12),
           FilledButton.icon(
             onPressed: onOpenOnline,
             icon: const Icon(Icons.open_in_new_rounded),
             label: Text(
-              _lifeText(context, zh: '打开腾讯查询', en: 'Open Tencent query'),
+              _lifeI18nText(
+                context,
+                'inline.plan295.life.open_tencent_query.c1c53b74a1ee',
+              ),
             ),
           ),
         ],
@@ -943,55 +948,66 @@ class _GarbageRulePanel extends StatelessWidget {
     const examples = <_LifeOption<String>>[
       _LifeOption<String>(
         value: '塑料瓶',
-        labelZh: '塑料瓶',
-        labelEn: 'Plastic bottle',
+        labelKey: 'inline.plan295.life.plastic_bottle.16f3b703846d',
       ),
       _LifeOption<String>(
         value: '过期药品',
-        labelZh: '过期药品',
-        labelEn: 'Expired medicine',
+        labelKey: 'inline.plan295.life.expired_medicine.2c60ac5be890',
       ),
-      _LifeOption<String>(value: '茶叶渣', labelZh: '茶叶渣', labelEn: 'Tea leaves'),
+      _LifeOption<String>(
+        value: '茶叶渣',
+        labelKey: 'inline.plan297.life.tea_leaves.ea432679b184',
+      ),
       _LifeOption<String>(
         value: '外卖餐盒',
-        labelZh: '外卖餐盒',
-        labelEn: 'Takeout container',
+        labelKey: 'inline.plan295.life.takeout_container.dee2e83fba1c',
       ),
-      _LifeOption<String>(value: '沙发', labelZh: '沙发', labelEn: 'Sofa'),
+      _LifeOption<String>(
+        value: '沙发',
+        labelKey: 'inline.plan295.life.sofa.f6fdf84ea12c',
+      ),
     ];
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '远程查询提示', en: 'Remote query tips'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '当前页会先请求腾讯远程数据，再在应用内筛选；没命中时可换常用名称或打开来源页。',
-        en: 'This page fetches Tencent remote data first, then filters locally; try common names or open the source page if missing.',
+        'inline.plan295.life.remote_query_tips.4f6057f2a755',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.this_page_fetches_tencent_remote_dat.56d23332af87',
       ),
       children: <Widget>[
         _GarbageRuleRow(
           icon: Icons.cloud_sync_rounded,
-          title: _lifeText(context, zh: '远程数据源', en: 'Remote data source'),
-          body: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '分类记录来自腾讯 QQ 浏览器工具箱公开 JSON 资源，刷新按钮会重新请求。',
-            en: 'Sorting records come from Tencent QQ Browser toolbox public JSON. Refresh fetches again.',
+            'inline.plan295.life.remote_data_source.3043ade89665',
+          ),
+          body: _lifeI18nText(
+            context,
+            'inline.plan295.life.sorting_records_come_from_tencent_qq.b5a0ba3f7461',
           ),
         ),
         _GarbageRuleRow(
           icon: Icons.search_rounded,
-          title: _lifeText(context, zh: '输入常用物品名', en: 'Use common item names'),
-          body: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '远程数据按物品名称匹配，复杂描述建议拆成短词查询。',
-            en: 'Remote data matches item names, so split complex descriptions into short terms.',
+            'inline.plan295.life.use_common_item_names.17723ca44d0e',
+          ),
+          body: _lifeI18nText(
+            context,
+            'inline.plan295.life.remote_data_matches_item_names_so_sp.1ba8e1861cb0',
           ),
         ),
         _GarbageRuleRow(
           icon: Icons.fact_check_outlined,
-          title: _lifeText(context, zh: '地区口径仍需确认', en: 'Confirm local rules'),
-          body: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '远程结果可作参考，投放时仍以所在城市和社区最新规则为准。',
-            en: 'Remote results are references; city and community rules still apply.',
+            'inline.plan295.life.confirm_local_rules.858b7407350d',
+          ),
+          body: _lifeI18nText(
+            context,
+            'inline.plan295.life.remote_results_are_references_city_a.454266c7ac98',
           ),
         ),
         Wrap(
@@ -1076,17 +1092,19 @@ class _GarbageSourcePanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            _lifeText(context, zh: '来源说明', en: 'Source note'),
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.source_note.8ee4b62d5e8e',
+            ),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '本页请求腾讯工具箱远程 JSON 并在应用内筛选；如果远程资源不可用，可打开来源页面继续查询。',
-              en: 'This page requests Tencent toolbox remote JSON and filters in app. If unavailable, open the source page.',
+              'inline.plan295.life.this_page_requests_tencent_toolbox_r.f998b6b611bf',
             ),
             style: theme.textTheme.bodySmall,
           ),
@@ -1095,7 +1113,10 @@ class _GarbageSourcePanel extends StatelessWidget {
             onPressed: onOpenOnline,
             icon: const Icon(Icons.open_in_new_rounded),
             label: Text(
-              _lifeText(context, zh: '打开来源页面', en: 'Open source page'),
+              _lifeI18nText(
+                context,
+                'inline.plan295.life.open_source_page.037a8f6ca915',
+              ),
             ),
           ),
         ],

@@ -38,10 +38,7 @@ extension _HarpSettingsSheet on _HarpToolState {
                 .toList(growable: false),
           ),
           const SizedBox(height: 20),
-          Text(
-            i18n.t('toolbox.sound.harp.theme_timbre'),
-            style: titleStyle(),
-          ),
+          Text(i18n.t('toolbox.sound.harp.theme_timbre'), style: titleStyle()),
           const SizedBox(height: 8),
           Text(
             i18n.t('toolbox.sound.harp.timbre'),
@@ -128,10 +125,7 @@ extension _HarpSettingsSheet on _HarpToolState {
             },
           ),
           const SizedBox(height: 20),
-          Text(
-            i18n.t('toolbox.sound.harp.scale_harmony'),
-            style: titleStyle(),
-          ),
+          Text(i18n.t('toolbox.sound.harp.scale_harmony'), style: titleStyle()),
           const SizedBox(height: 8),
           Text(
             i18n.t('toolbox.sound.flute.scale'),
@@ -245,9 +239,7 @@ extension _HarpSettingsSheet on _HarpToolState {
               ),
               childrenPadding: const EdgeInsets.only(bottom: 8),
               children: <Widget>[
-                Text(
-                  i18n.t('toolbox.sound.harp.chord_root'),
-                ),
+                Text(i18n.t('toolbox.sound.harp.chord_root')),
                 Slider(
                   value: _chordRootIndex.toDouble(),
                   min: 0,
@@ -260,9 +252,7 @@ extension _HarpSettingsSheet on _HarpToolState {
                     });
                   },
                 ),
-                Text(
-                  i18n.t('toolbox.sound.harp.damping'),
-                ),
+                Text(i18n.t('toolbox.sound.harp.damping')),
                 Slider(
                   value: _damping,
                   min: 4,
@@ -283,9 +273,7 @@ extension _HarpSettingsSheet on _HarpToolState {
                     _invalidateAudioPlayers();
                   },
                 ),
-                Text(
-                  i18n.t('toolbox.sound.harp.sweep_deadzone_px'),
-                ),
+                Text(i18n.t('toolbox.sound.harp.sweep_deadzone_px')),
                 Slider(
                   value: _swipeThreshold,
                   min: 0.4,

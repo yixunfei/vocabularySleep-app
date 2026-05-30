@@ -161,7 +161,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                 return AlertDialog(
                   key: const ValueKey<String>('startup-todo-prompt-dialog'),
                   title: Text(
-                    pickUiText(i18n, zh: '今日待办提示', en: 'Today at a glance'),
+                    i18n.t('inline.ui.app_shell.today_at_a_glance_badd58'),
                   ),
                   content: SizedBox(
                     width: 440,
@@ -183,10 +183,8 @@ class _AppShellState extends ConsumerState<AppShell> {
                             contentPadding: EdgeInsets.zero,
                             value: suppressForToday,
                             title: Text(
-                              pickUiText(
-                                i18n,
-                                zh: '今日不再弹出',
-                                en: "Don't show again today",
+                              i18n.t(
+                                'inline.ui.app_shell.don_t_show_again_today_698b48',
                               ),
                             ),
                             onChanged: (value) {
@@ -203,7 +201,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                     FilledButton(
                       key: const ValueKey<String>('startup-todo-prompt-close'),
                       onPressed: () => Navigator.of(dialogContext).pop(),
-                      child: Text(pickUiText(i18n, zh: '知道了', en: 'Close')),
+                      child: Text(i18n.t('close')),
                     ),
                   ],
                 );
@@ -543,15 +541,8 @@ class _AppShellState extends ConsumerState<AppShell> {
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
         content: Text(
-          pickUiText(
-            i18n,
-            zh: '当前处于专注锁屏状态，请长按底部解锁条退出专注。',
-            en: 'Focus lock is active. Long press the unlock bar to exit focus.',
-            ja: '集中ロック中です。下部の解除バーを長押しして終了してください。',
-            de: 'Der Fokus-Sperrbildschirm ist aktiv. Halte die Entsperrleiste gedrückt, um den Fokus zu beenden.',
-            fr: 'Le verrouillage du mode concentration est actif. Maintenez la barre de déverrouillage pour quitter.',
-            es: 'El bloqueo de enfoque está activo. Mantén pulsada la barra de desbloqueo para salir del enfoque.',
-            ru: 'Блокировка фокуса активна. Нажмите и удерживайте полосу разблокировки, чтобы выйти из режима.',
+          i18n.t(
+            'inline.ui.app_shell.focus_lock_is_active_long_press_the_unlock_bar_to_exit_f_2a0273',
           ),
         ),
       ),
@@ -565,60 +556,20 @@ class _AppShellState extends ConsumerState<AppShell> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Text(
-            pickUiText(
-              i18n,
-              zh: '确认退出',
-              en: 'Exit app?',
-              ja: 'アプリを終了しますか',
-              de: 'App beenden?',
-              fr: 'Quitter l’application ?',
-              es: '¿Salir de la app?',
-              ru: 'Выйти из приложения?',
-            ),
-          ),
+          title: Text(i18n.t('inline.ui.app_shell.exit_app_9db3fc')),
           content: Text(
-            pickUiText(
-              i18n,
-              zh: '将退出当前应用，是否继续？',
-              en: 'This will close the current app. Continue?',
-              ja: '現在のアプリを終了します。続行しますか。',
-              de: 'Die aktuelle App wird geschlossen. Fortfahren?',
-              fr: 'L’application va se fermer. Continuer ?',
-              es: 'La aplicación se cerrará. ¿Continuar?',
-              ru: 'Приложение будет закрыто. Продолжить?',
+            i18n.t(
+              'inline.ui.app_shell.this_will_close_the_current_app_continue_b96207',
             ),
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(
-                pickUiText(
-                  i18n,
-                  zh: '取消',
-                  en: 'Cancel',
-                  ja: 'キャンセル',
-                  de: 'Abbrechen',
-                  fr: 'Annuler',
-                  es: 'Cancelar',
-                  ru: 'Отмена',
-                ),
-              ),
+              child: Text(i18n.t('cancel')),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: Text(
-                pickUiText(
-                  i18n,
-                  zh: '退出',
-                  en: 'Exit',
-                  ja: '終了',
-                  de: 'Beenden',
-                  fr: 'Quitter',
-                  es: 'Salir',
-                  ru: 'Выйти',
-                ),
-              ),
+              child: Text(i18n.t('inline.ui.app_shell.exit_b3ed31')),
             ),
           ],
         );
@@ -639,15 +590,13 @@ class _AppShellState extends ConsumerState<AppShell> {
         _buildStartupPromptSectionHeader(
           i18n,
           icon: Icons.today_rounded,
-          title: pickUiText(i18n, zh: '今日进行中待办', en: 'Today\'s active todos'),
+          title: i18n.t('inline.ui.app_shell.today_s_active_todos_cc8a28'),
         ),
         const SizedBox(height: 8),
         if (todos.isEmpty)
           Text(
-            pickUiText(
-              i18n,
-              zh: '今天没有进行中的待办事项。',
-              en: 'No active todos scheduled for today.',
+            i18n.t(
+              'inline.ui.app_shell.no_active_todos_scheduled_for_today_aa0061',
             ),
             style: theme.textTheme.bodyMedium,
           )
@@ -666,7 +615,7 @@ class _AppShellState extends ConsumerState<AppShell> {
         _buildStartupPromptSectionHeader(
           i18n,
           icon: Icons.format_quote_rounded,
-          title: pickUiText(i18n, zh: '每日一言', en: 'Daily quote'),
+          title: i18n.t('inline.ui.app_shell.daily_quote_09cf28'),
         ),
         const SizedBox(height: 8),
         if (state.startupDailyQuoteLoading && quote.isEmpty)
@@ -680,11 +629,7 @@ class _AppShellState extends ConsumerState<AppShell> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '正在获取今日一言...',
-                    en: 'Loading today\'s quote...',
-                  ),
+                  i18n.t('inline.ui.app_shell.loading_today_s_quote_107d22'),
                   style: theme.textTheme.bodyMedium,
                 ),
               ),
@@ -693,10 +638,8 @@ class _AppShellState extends ConsumerState<AppShell> {
         else
           Text(
             quote.isEmpty
-                ? pickUiText(
-                    i18n,
-                    zh: '暂时无法获取每日一言。',
-                    en: 'Unable to load the daily quote right now.',
+                ? i18n.t(
+                    'inline.ui.app_shell.unable_to_load_the_daily_quote_right_now_608b1d',
                   )
                 : quote,
             style: theme.textTheme.bodyMedium?.copyWith(height: 1.45),
@@ -715,7 +658,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           _buildStartupPromptSectionHeader(
             i18n,
             icon: Icons.cloud_rounded,
-            title: pickUiText(i18n, zh: '天气', en: 'Weather'),
+            title: i18n.t('inline.ui.app_shell.weather_783a11'),
           ),
           const SizedBox(height: 8),
           Row(
@@ -728,11 +671,7 @@ class _AppShellState extends ConsumerState<AppShell> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '正在更新天气...',
-                    en: 'Refreshing weather...',
-                  ),
+                  i18n.t('inline.ui.app_shell.refreshing_weather_ab623a'),
                   style: theme.textTheme.bodyMedium,
                 ),
               ),
@@ -748,15 +687,13 @@ class _AppShellState extends ConsumerState<AppShell> {
         _buildStartupPromptSectionHeader(
           i18n,
           icon: Icons.cloud_rounded,
-          title: pickUiText(i18n, zh: '天气', en: 'Weather'),
+          title: i18n.t('inline.ui.app_shell.weather_783a11'),
         ),
         const SizedBox(height: 8),
         if (snapshot == null)
           Text(
-            pickUiText(
-              i18n,
-              zh: '暂时无法获取天气信息。',
-              en: 'Unable to load weather right now.',
+            i18n.t(
+              'inline.ui.app_shell.unable_to_load_weather_right_now_61fb76',
             ),
             style: theme.textTheme.bodyMedium,
           )
@@ -794,10 +731,16 @@ class _AppShellState extends ConsumerState<AppShell> {
                     if (snapshot.todayMaxTemperatureCelsius != null ||
                         snapshot.todayMinTemperatureCelsius != null)
                       Text(
-                        pickUiText(
-                          i18n,
-                          zh: '最高 ${snapshot.todayMaxTemperatureCelsius?.round() ?? '--'}° / 最低 ${snapshot.todayMinTemperatureCelsius?.round() ?? '--'}°',
-                          en: 'High ${snapshot.todayMaxTemperatureCelsius?.round() ?? '--'}° / Low ${snapshot.todayMinTemperatureCelsius?.round() ?? '--'}°',
+                        i18n.t(
+                          'inline.plan296.ui.app.shell.high_low.8bbbc30c46',
+                          params: <String, Object?>{
+                            'p0':
+                                snapshot.todayMaxTemperatureCelsius?.round() ??
+                                '--',
+                            'p1':
+                                snapshot.todayMinTemperatureCelsius?.round() ??
+                                '--',
+                          },
                         ),
                         style: theme.textTheme.bodySmall,
                       ),
@@ -886,10 +829,8 @@ class _AppShellState extends ConsumerState<AppShell> {
                 ),
                 if (todo.dueAt != null)
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '提醒时间 ${_formatStartupPromptTime(todo.dueAt!)}',
-                      en: 'Reminder ${_formatStartupPromptTime(todo.dueAt!)}',
+                    i18n.t(
+                      'inline.ui.app_shell.reminder_formatstartupprompttime_todo_dueat_25a81e',
                     ),
                     style: theme.textTheme.bodySmall,
                   ),
@@ -937,10 +878,10 @@ class _AppShellState extends ConsumerState<AppShell> {
     final today = DateTime.now();
     final tomorrow = today.add(const Duration(days: 1));
     if (DateUtils.isSameDay(date, today)) {
-      return pickUiText(i18n, zh: '今天', en: 'Today');
+      return i18n.t('inline.ui.app_shell.today_23dc4e');
     }
     if (DateUtils.isSameDay(date, tomorrow)) {
-      return pickUiText(i18n, zh: '明天', en: 'Tomorrow');
+      return i18n.t('inline.ui.app_shell.tomorrow_08dc97');
     }
     return '${date.month}/${date.day}';
   }
@@ -1218,12 +1159,10 @@ class _AppShellState extends ConsumerState<AppShell> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Text(
-                pickUiText(
-                  i18n,
-                  zh: failed ? '资源预热失败' : '正在后台预热资源',
-                  en: failed
-                      ? 'Background prewarm failed'
-                      : 'Prewarming resources in background',
+                i18n.t(
+                  failed
+                      ? 'appShell.remotePrewarm.failedTitle'
+                      : 'appShell.remotePrewarm.runningTitle',
                 ),
                 style: Theme.of(
                   context,
@@ -1232,15 +1171,19 @@ class _AppShellState extends ConsumerState<AppShell> {
               const SizedBox(height: 4),
               Text(
                 failed
-                    ? pickUiText(
-                        i18n,
-                        zh: '首次下载未完成，稍后会在实际使用时继续按需拉取。',
-                        en: 'Initial downloads did not finish. Resources will still download on demand when opened.',
+                    ? i18n.t(
+                        'inline.ui.app_shell.initial_downloads_did_not_finish_resources_will_still_do_01aa75',
                       )
-                    : pickUiText(
-                        i18n,
-                        zh: '已完成 ${state.remotePrewarmCompletedCount} / ${state.remotePrewarmTotalCount}，当前：${current.isEmpty ? '准备中' : current}',
-                        en: '${state.remotePrewarmCompletedCount} / ${state.remotePrewarmTotalCount} complete. Current: ${current.isEmpty ? 'Preparing…' : current}',
+                    : i18n.t(
+                        'inline.plan296.ui.app.shell.complete_current.eb38379612',
+                        params: <String, Object?>{
+                          'remotePrewarmCompletedCount':
+                              state.remotePrewarmCompletedCount,
+                          'remotePrewarmTotalCount':
+                              state.remotePrewarmTotalCount,
+                          'p2': current.isEmpty ? '准备中' : current,
+                          'p3': current.isEmpty ? 'Preparing…' : current,
+                        },
                       ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -1262,16 +1205,8 @@ class _AppShellState extends ConsumerState<AppShell> {
     final processed = state.wordbookImportProcessedEntries;
     final total = state.wordbookImportTotalEntries;
     final subtitle = total == null || total <= 0
-        ? pickUiText(
-            i18n,
-            zh: '正在解析并导入，请稍候…',
-            en: 'Parsing and importing, please wait...',
-          )
-        : pickUiText(
-            i18n,
-            zh: '已处理 $processed / $total',
-            en: 'Processed $processed / $total',
-          );
+        ? i18n.t('inline.ui.app_shell.parsing_and_importing_please_wait_1b254d')
+        : i18n.t('inline.ui.app_shell.processed_processed_total_11a7cb');
     return Material(
       elevation: 4,
       color: Colors.transparent,
@@ -1298,10 +1233,8 @@ class _AppShellState extends ConsumerState<AppShell> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '正在后台导入词本：${state.wordbookImportName}',
-                        en: 'Importing in background: ${state.wordbookImportName}',
+                      i18n.t(
+                        'inline.ui.app_shell.importing_in_background_state_wordbookimportname_57cc79',
                       ),
                       style: Theme.of(context).textTheme.titleSmall,
                       maxLines: 1,

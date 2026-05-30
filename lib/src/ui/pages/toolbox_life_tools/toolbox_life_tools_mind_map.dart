@@ -119,11 +119,13 @@ class _MindMapToolPageState extends State<_MindMapToolPage> {
   @override
   Widget build(BuildContext context) {
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '简易思维导图', en: 'Simple mind map'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '本地创建节点关系，整理想法并导出图片。',
-        en: 'Create local node relations, organize ideas, and export an image.',
+        'inline.plan295.life.simple_mind_map.e5993d3e2573',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.create_local_node_relations_organize.ef42d5588354',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,11 +155,13 @@ class _MindMapToolPageState extends State<_MindMapToolPage> {
   Widget _buildStagePanel(BuildContext context) {
     final theme = Theme.of(context);
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '导图舞台', en: 'Mind map stage'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '当前选中节点会在下方操作区同步编辑，也可以进入全屏便捷模式拖拽整理。',
-        en: 'The selected node is edited below, or arranged by drag in fullscreen quick mode.',
+        'inline.plan295.life.mind_map_stage.e8d2ae744a80',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.the_selected_node_is_edited_below_or.c99223bad58b',
       ),
       children: <Widget>[
         Wrap(
@@ -165,15 +169,24 @@ class _MindMapToolPageState extends State<_MindMapToolPage> {
           runSpacing: 10,
           children: <Widget>[
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '节点数', en: 'Nodes'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.nodes.adf879e89029',
+              ),
               value: '${_nodes.length}',
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '分支数', en: 'Branches'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.branches.862abda12737',
+              ),
               value: '$_branchCount',
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '层级', en: 'Depth'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.depth.4d7a23482351',
+              ),
               value: '${_maxDepth + 1}',
             ),
           ],
@@ -187,14 +200,20 @@ class _MindMapToolPageState extends State<_MindMapToolPage> {
                 onPressed: _openFullscreenMode,
                 icon: const Icon(Icons.open_in_full_rounded),
                 label: Text(
-                  _lifeText(context, zh: '全屏便捷模式', en: 'Fullscreen quick mode'),
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.fullscreen_quick_mode.c39aa66c28ac',
+                  ),
                 ),
               ),
             ),
             const SizedBox(width: 10),
             IconButton.filledTonal(
               key: const ValueKey<String>('life_mind_map_reflow_inline_button'),
-              tooltip: _lifeText(context, zh: '自动重排', en: 'Auto arrange'),
+              tooltip: _lifeI18nText(
+                context,
+                'inline.plan295.life.auto_arrange.6010d89e52da',
+              ),
               onPressed: _nodeAnchors.isEmpty ? null : _resetNodeAnchors,
               icon: const Icon(Icons.auto_fix_high_rounded),
             ),
@@ -220,7 +239,10 @@ class _MindMapToolPageState extends State<_MindMapToolPage> {
               ),
               const SizedBox(width: 8),
               Text(
-                _lifeText(context, zh: '当前节点', en: 'Active node'),
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.active_node.88e5e196208c',
+                ),
                 style: theme.textTheme.labelLarge,
               ),
               const SizedBox(width: 8),
@@ -252,7 +274,10 @@ class _MindMapToolPageState extends State<_MindMapToolPage> {
 
   Widget _buildActionsPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '节点操作', en: 'Node actions'),
+      title: _lifeI18nText(
+        context,
+        'inline.plan295.life.node_actions.ba9c814683d1',
+      ),
       children: <Widget>[
         TextField(
           key: const ValueKey<String>('life_mind_map_title_field'),
@@ -260,7 +285,10 @@ class _MindMapToolPageState extends State<_MindMapToolPage> {
           textInputAction: TextInputAction.done,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
-            labelText: _lifeText(context, zh: '节点标题', en: 'Node title'),
+            labelText: _lifeI18nText(
+              context,
+              'inline.plan295.life.node_title.56915dce29c0',
+            ),
           ),
           onChanged: _renameSelected,
         ),
@@ -273,56 +301,68 @@ class _MindMapToolPageState extends State<_MindMapToolPage> {
               key: const ValueKey<String>('life_mind_map_add_child_button'),
               onPressed: _addChild,
               icon: const Icon(Icons.account_tree_rounded),
-              label: Text(_lifeText(context, zh: '添加子节点', en: 'Add child')),
+              label: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.add_child.c714076a5fea',
+                ),
+              ),
             ),
             FilledButton.tonalIcon(
               key: const ValueKey<String>('life_mind_map_add_sibling_button'),
               onPressed: _selectedNode.parentId == null ? null : _addSibling,
               icon: const Icon(Icons.call_split_rounded),
-              label: Text(_lifeText(context, zh: '添加同级', en: 'Add sibling')),
+              label: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.add_sibling.3810e08aac41',
+                ),
+              ),
             ),
             OutlinedButton.icon(
               key: const ValueKey<String>('life_mind_map_delete_button'),
               onPressed: _selectedNode.parentId == null ? null : _deleteNode,
               icon: const Icon(Icons.delete_outline_rounded),
-              label: Text(_lifeText(context, zh: '删除节点', en: 'Delete')),
+              label: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.delete.c500e9f9b9b5',
+                ),
+              ),
             ),
           ],
         ),
         const SizedBox(height: 12),
         _LifeColorField(
-          label: _lifeText(context, zh: '节点颜色', en: 'Node color'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.node_color.095183641f1f',
+          ),
           value: _selectedNode.color,
           options: const <_LifeColorOption>[
             _LifeColorOption(
               color: Color(0xFF527A8D),
-              labelZh: '蓝灰',
-              labelEn: 'Blue gray',
+              labelKey: 'inline.plan295.life.blue_gray.0d33ea7e8f46',
             ),
             _LifeColorOption(
               color: Color(0xFFD2904F),
-              labelZh: '琥珀',
-              labelEn: 'Amber',
+              labelKey: 'inline.plan295.life.amber.f22e10c17a13',
             ),
             _LifeColorOption(
               color: Color(0xFF7D6BB3),
-              labelZh: '紫藤',
-              labelEn: 'Wisteria',
+              labelKey: 'inline.plan295.life.wisteria.b4803a82ff2a',
             ),
             _LifeColorOption(
               color: Color(0xFF5F9C78),
-              labelZh: '草绿',
-              labelEn: 'Moss',
+              labelKey: 'inline.plan295.life.moss.73aada12e131',
             ),
             _LifeColorOption(
               color: Color(0xFFC45E6C),
-              labelZh: '玫瑰',
-              labelEn: 'Rose',
+              labelKey: 'inline.plan295.life.rose.01c14bd709f8',
             ),
             _LifeColorOption(
               color: Color(0xFF6A7A3D),
-              labelZh: '橄榄',
-              labelEn: 'Olive',
+              labelKey: 'inline.plan295.life.olive.77f39e96b47c',
             ),
           ],
           onChanged: _setSelectedColor,
@@ -333,31 +373,34 @@ class _MindMapToolPageState extends State<_MindMapToolPage> {
 
   Widget _buildTemplatePanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '快速模板', en: 'Quick templates'),
+      title: _lifeI18nText(
+        context,
+        'inline.plan295.life.quick_templates.dcb3d6a1e678',
+      ),
       children: <Widget>[
         _LifeSegmentedField<_MindMapTemplate>(
-          label: _lifeText(context, zh: '模板', en: 'Template'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.template.a5232ed073b1',
+          ),
           value: _template,
           options: const <_LifeOption<_MindMapTemplate>>[
             _LifeOption<_MindMapTemplate>(
               value: _MindMapTemplate.blank,
-              labelZh: '空白',
-              labelEn: 'Blank',
+              labelKey:
+                  'inline.ui.pages.toolbox_human_tests_auditory_lab.blank_06d198',
             ),
             _LifeOption<_MindMapTemplate>(
               value: _MindMapTemplate.plan,
-              labelZh: '项目计划',
-              labelEn: 'Project plan',
+              labelKey: 'inline.plan295.life.project_plan.edce932a7b90',
             ),
             _LifeOption<_MindMapTemplate>(
               value: _MindMapTemplate.meeting,
-              labelZh: '会议记录',
-              labelEn: 'Meeting notes',
+              labelKey: 'inline.plan295.life.meeting_notes.aca47c111244',
             ),
             _LifeOption<_MindMapTemplate>(
               value: _MindMapTemplate.study,
-              labelZh: '学习主题',
-              labelEn: 'Study topic',
+              labelKey: 'inline.plan295.life.study_topic.486205b5348e',
             ),
           ],
           onChanged: (value) => _applyTemplate(value),
@@ -367,7 +410,12 @@ class _MindMapToolPageState extends State<_MindMapToolPage> {
           key: const ValueKey<String>('life_mind_map_clear_button'),
           onPressed: () => _applyTemplate(_MindMapTemplate.blank),
           icon: const Icon(Icons.restart_alt_rounded),
-          label: Text(_lifeText(context, zh: '清空为单节点', en: 'Reset blank')),
+          label: Text(
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.reset_blank.a9704e19fd43',
+            ),
+          ),
         ),
       ],
     );
@@ -376,15 +424,16 @@ class _MindMapToolPageState extends State<_MindMapToolPage> {
   Widget _buildOutlinePanel(BuildContext context) {
     final root = _rootNode;
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '结构大纲', en: 'Outline'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(context, 'inline.plan295.life.outline.d49be6c65948'),
+      subtitle: _lifeI18nText(
         context,
-        zh: '完整标题在这里保留，不受画布节点宽度影响。',
-        en: 'Full titles remain readable here.',
+        'inline.plan295.life.full_titles_remain_readable_here.016700e77a05',
       ),
       children: <Widget>[
         if (root == null)
-          Text(_lifeText(context, zh: '暂无节点', en: 'No nodes'))
+          Text(
+            _lifeI18nText(context, 'inline.plan295.life.no_nodes.14ea242f16aa'),
+          )
         else
           ..._buildOutlineTiles(context, root, 0),
       ],
@@ -393,7 +442,10 @@ class _MindMapToolPageState extends State<_MindMapToolPage> {
 
   Widget _buildExportPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '导出', en: 'Export'),
+      title: _lifeI18nText(
+        context,
+        'inline.ui.pages.practice_notebook_page_actions.export_bc626a',
+      ),
       children: <Widget>[
         Row(
           children: <Widget>[
@@ -409,8 +461,14 @@ class _MindMapToolPageState extends State<_MindMapToolPage> {
                     : const Icon(Icons.image_rounded),
                 label: Text(
                   _exporting
-                      ? _lifeText(context, zh: '导出中...', en: 'Exporting...')
-                      : _lifeText(context, zh: '导出 PNG', en: 'Export PNG'),
+                      ? _lifeI18nText(
+                          context,
+                          'inline.plan295.life.exporting.4a7bae70c078',
+                        )
+                      : _lifeI18nText(
+                          context,
+                          'inline.plan295.life.export_png.ed4ae20882a0',
+                        ),
                 ),
               ),
             ),
@@ -422,7 +480,12 @@ class _MindMapToolPageState extends State<_MindMapToolPage> {
                 ),
                 onPressed: _copyMarkdownOutline,
                 icon: const Icon(Icons.copy_rounded),
-                label: Text(_lifeText(context, zh: '复制大纲', en: 'Copy outline')),
+                label: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.copy_outline.68056499f12a',
+                  ),
+                ),
               ),
             ),
           ],
@@ -553,7 +616,7 @@ class _MindMapToolPageState extends State<_MindMapToolPage> {
 
   void _renameSelected(String value) {
     final nextTitle = value.trim().isEmpty
-        ? _lifeText(context, zh: '未命名', en: 'Untitled')
+        ? _lifeI18nText(context, 'inline.plan295.life.untitled.23547dcf51dd')
         : value.trim();
     setState(() {
       _nodes = _nodes
@@ -669,27 +732,26 @@ class _MindMapToolPageState extends State<_MindMapToolPage> {
       _serial = nodes.length;
       _errorMessage = null;
       _statusMessage = announce
-          ? _lifeText(context, zh: '模板已应用。', en: 'Template applied.')
+          ? _lifeI18nText(
+              context,
+              'inline.plan295.life.template_applied.a71c16798a76',
+            )
           : null;
     });
     _syncTitleController(nodes.first.title);
   }
 
   List<_MindMapNode> _templateNodes(_MindMapTemplate template) {
-    String text({required String zh, required String en}) {
-      return _lifeText(context, zh: zh, en: en);
-    }
-
     _MindMapNode node(
       String id,
       String? parentId,
-      String title,
+      String titleKey,
       int colorIndex,
     ) {
       return _MindMapNode(
         id: id,
         parentId: parentId,
-        title: title,
+        title: _lifeI18nText(context, titleKey),
         color: _palette[colorIndex % _palette.length],
       );
     }
@@ -697,28 +759,28 @@ class _MindMapToolPageState extends State<_MindMapToolPage> {
     switch (template) {
       case _MindMapTemplate.blank:
         return <_MindMapNode>[
-          node('root', null, text(zh: '中心主题', en: 'Central topic'), 0),
+          node('root', null, 'life.mind_map.template.blank.root', 0),
         ];
       case _MindMapTemplate.plan:
         return <_MindMapNode>[
-          node('root', null, text(zh: '项目计划', en: 'Project plan'), 0),
-          node('n1', 'root', text(zh: '目标', en: 'Goals'), 1),
-          node('n2', 'root', text(zh: '任务', en: 'Tasks'), 2),
-          node('n3', 'root', text(zh: '风险', en: 'Risks'), 3),
+          node('root', null, 'life.mind_map.template.plan.root', 0),
+          node('n1', 'root', 'life.mind_map.template.plan.goals', 1),
+          node('n2', 'root', 'life.mind_map.template.plan.tasks', 2),
+          node('n3', 'root', 'life.mind_map.template.plan.risks', 3),
         ];
       case _MindMapTemplate.meeting:
         return <_MindMapNode>[
-          node('root', null, text(zh: '会议记录', en: 'Meeting notes'), 0),
-          node('n1', 'root', text(zh: '议题', en: 'Topics'), 1),
-          node('n2', 'root', text(zh: '结论', en: 'Decisions'), 2),
-          node('n3', 'root', text(zh: '待办', en: 'Actions'), 3),
+          node('root', null, 'life.mind_map.template.meeting.root', 0),
+          node('n1', 'root', 'life.mind_map.template.meeting.topics', 1),
+          node('n2', 'root', 'life.mind_map.template.meeting.decisions', 2),
+          node('n3', 'root', 'life.mind_map.template.meeting.actions', 3),
         ];
       case _MindMapTemplate.study:
         return <_MindMapNode>[
-          node('root', null, text(zh: '学习主题', en: 'Study topic'), 0),
-          node('n1', 'root', text(zh: '概念', en: 'Concepts'), 1),
-          node('n2', 'root', text(zh: '例子', en: 'Examples'), 2),
-          node('n3', 'root', text(zh: '复习', en: 'Review'), 3),
+          node('root', null, 'life.mind_map.template.study.root', 0),
+          node('n1', 'root', 'life.mind_map.template.study.concepts', 1),
+          node('n2', 'root', 'life.mind_map.template.study.examples', 2),
+          node('n3', 'root', 'life.mind_map.template.study.review', 3),
         ];
     }
   }
@@ -730,7 +792,11 @@ class _MindMapToolPageState extends State<_MindMapToolPage> {
 
   String _nextBranchTitle(String parentId) {
     final next = _childrenOf(parentId).length + 1;
-    return _lifeText(context, zh: '新分支 $next', en: 'New branch $next');
+    return _lifeI18nText(
+      context,
+      'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.mind.map.new_branch.e05996182d',
+      params: <String, Object?>{'next': next},
+    );
   }
 
   void _seedAnchorForNewNode({required String id, required String? parentId}) {
@@ -774,8 +840,14 @@ class _MindMapToolPageState extends State<_MindMapToolPage> {
     setState(() {
       _snapToGrid = value;
       _statusMessage = value
-          ? _lifeText(context, zh: '吸附已开启。', en: 'Snap enabled.')
-          : _lifeText(context, zh: '吸附已关闭。', en: 'Snap disabled.');
+          ? _lifeI18nText(
+              context,
+              'inline.plan295.life.snap_enabled.0af04952424a',
+            )
+          : _lifeI18nText(
+              context,
+              'inline.plan295.life.snap_disabled.882c6c0f7464',
+            );
       _errorMessage = null;
     });
   }
@@ -783,10 +855,9 @@ class _MindMapToolPageState extends State<_MindMapToolPage> {
   void _resetNodeAnchors() {
     setState(() {
       _nodeAnchors = const <String, Offset>{};
-      _statusMessage = _lifeText(
+      _statusMessage = _lifeI18nText(
         context,
-        zh: '节点已自动重排。',
-        en: 'Nodes auto arranged.',
+        'inline.plan295.life.nodes_auto_arranged.ab1e661457cc',
       );
       _errorMessage = null;
     });
@@ -851,26 +922,26 @@ class _MindMapToolPageState extends State<_MindMapToolPage> {
       return;
     }
     setState(() {
-      _statusMessage = _lifeText(context, zh: '大纲已复制。', en: 'Outline copied.');
+      _statusMessage = _lifeI18nText(
+        context,
+        'inline.plan295.life.outline_copied.e8d64675d180',
+      );
       _errorMessage = null;
     });
   }
 
   Future<void> _exportPng() async {
-    final saveDialogTitle = _lifeText(
+    final saveDialogTitle = _lifeI18nText(
       context,
-      zh: '保存思维导图',
-      en: 'Save mind map',
+      'inline.plan295.life.save_mind_map.b092bd048e1f',
     );
-    final browserDownloadMessage = _lifeText(
+    final browserDownloadMessage = _lifeI18nText(
       context,
-      zh: '浏览器下载已触发，请查看下载列表。',
-      en: 'Browser download started. Check your downloads.',
+      'inline.plan295.crypto.browser_download_started_check_your.b28d392515b4',
     );
-    final exportFailedPrefix = _lifeText(
+    final exportFailedPrefix = _lifeI18nText(
       context,
-      zh: '导出失败',
-      en: 'Export failed',
+      'inline.plan295.life.export_failed.35703f3feaf8',
     );
     setState(() {
       _exporting = true;

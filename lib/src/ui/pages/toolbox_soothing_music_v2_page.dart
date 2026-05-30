@@ -25,7 +25,6 @@ import '../motion/app_motion.dart';
 import '../legacy_style.dart';
 import '../modal_helpers.dart';
 import '../theme/app_theme.dart';
-import '../ui_copy.dart';
 
 part 'toolbox_soothing_music_v2_widgets.dart';
 part 'toolbox_soothing_music_v2_models.dart';
@@ -345,9 +344,15 @@ class _SoothingMusicV2PageState extends ConsumerState<SoothingMusicV2Page>
 
   String _playbackModeLabel(AppI18n i18n, SoothingPlaybackMode mode) {
     return switch (mode) {
-      SoothingPlaybackMode.singleLoop => i18n.t('toolbox.sound.soothing.playback_single_loop'),
-      SoothingPlaybackMode.modeCycle => i18n.t('toolbox.sound.soothing.playback_mode_cycle'),
-      SoothingPlaybackMode.arrangement => i18n.t('toolbox.sound.soothing.playback_arrangement'),
+      SoothingPlaybackMode.singleLoop => i18n.t(
+        'toolbox.sound.soothing.playback_single_loop',
+      ),
+      SoothingPlaybackMode.modeCycle => i18n.t(
+        'toolbox.sound.soothing.playback_mode_cycle',
+      ),
+      SoothingPlaybackMode.arrangement => i18n.t(
+        'toolbox.sound.soothing.playback_arrangement',
+      ),
     };
   }
 
@@ -361,9 +366,15 @@ class _SoothingMusicV2PageState extends ConsumerState<SoothingMusicV2Page>
     }
     final activeTemplate = _activeArrangementTemplate;
     if (activeTemplate != null) {
-      return i18n.t('toolbox.sound.soothing.arrangement_template', params: <String, Object?>{'name': activeTemplate.name});
+      return i18n.t(
+        'toolbox.sound.soothing.arrangement_template',
+        params: <String, Object?>{'name': activeTemplate.name},
+      );
     }
-    return i18n.t('toolbox.sound.soothing.arrangement_steps', params: <String, Object?>{'steps': '$steps'});
+    return i18n.t(
+      'toolbox.sound.soothing.arrangement_steps',
+      params: <String, Object?>{'steps': '$steps'},
+    );
   }
 
   SoothingPlaybackArrangementTemplate? get _activeArrangementTemplate {
@@ -403,14 +414,17 @@ class _SoothingMusicV2PageState extends ConsumerState<SoothingMusicV2Page>
       1,
       currentStep.repeatCount,
     );
-    return i18n.t('toolbox.sound.soothing.arrangement_progress', params: <String, Object?>{
-      'current': '${currentIndex + 1}',
-      'total': '${_arrangementSteps.length}',
-      'mode': currentMode.title(i18n),
-      'track': trackLabel,
-      'repeat': '$repeat',
-      'max': '${currentStep.repeatCount}',
-    });
+    return i18n.t(
+      'toolbox.sound.soothing.arrangement_progress',
+      params: <String, Object?>{
+        'current': '${currentIndex + 1}',
+        'total': '${_arrangementSteps.length}',
+        'mode': currentMode.title(i18n),
+        'track': trackLabel,
+        'repeat': '$repeat',
+        'max': '${currentStep.repeatCount}',
+      },
+    );
   }
 
   void _setPlaybackMode(SoothingPlaybackMode mode) {

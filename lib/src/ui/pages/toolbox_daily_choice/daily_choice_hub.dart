@@ -901,8 +901,7 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
       initialCategoryId: detail.categoryId,
       contexts: placeSceneCategories,
       initialContextId: detail.contextId,
-      contextLabelZh: '场景',
-      contextLabelEn: 'Scene',
+      contextLabelKey: 'toolbox.daily_choice.editor.field.scene',
       option: detail,
     );
     return result?.option;
@@ -930,8 +929,7 @@ class _DailyChoiceHubState extends ConsumerState<DailyChoiceHub> {
       initialCategoryId: detail.categoryId,
       contexts: placeSceneCategories,
       initialContextId: detail.contextId,
-      contextLabelZh: '场景',
-      contextLabelEn: 'Scene',
+      contextLabelKey: 'toolbox.daily_choice.editor.field.scene',
       option: detail,
       forceNewId: true,
     );

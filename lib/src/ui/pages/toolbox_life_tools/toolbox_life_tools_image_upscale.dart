@@ -92,11 +92,13 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
       );
     }
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '图片扩大', en: 'Image upscale'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '本地插值放大与补像素扩展，用于把小图转成指定更大分辨率。',
-        en: 'Local interpolation upscale and canvas expansion for larger target resolutions.',
+        'inline.plan295.life.image_upscale.36aed877fe01',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.local_interpolation_upscale_and_canv.9fb961eecdb8',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,11 +127,13 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
 
   Widget _buildStagePanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '主舞台信息', en: 'Stage overview'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '先选图，再决定是插值放大还是仅扩展画布。结果可导出为 PNG 或 JPEG。',
-        en: 'Pick an image, then choose interpolation upscale or canvas-only expansion. Export as PNG or JPEG.',
+        'inline.plan295.life.stage_overview.47aaca2aabf1',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.pick_an_image_then_choose_interpolat.a2f69addfd85',
       ),
       children: <Widget>[
         Wrap(
@@ -137,15 +141,24 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
           runSpacing: 10,
           children: <Widget>[
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '当前模式', en: 'Current mode'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.current_mode.30bf20a5acbd',
+              ),
               value: _modeLabel(_mode, context),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '算法', en: 'Algorithm'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.crypto.algorithm.8435288f5f2f',
+              ),
               value: _algorithmLabel(_algorithm, context),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '输出格式', en: 'Export format'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.export_format.375fc1be842b',
+              ),
               value: _formatLabel(_format, context),
             ),
           ],
@@ -158,12 +171,20 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
                 key: const ValueKey<String>('life_image_upscale_pick_button'),
                 onPressed: _processing || _saving ? null : _pickImage,
                 icon: const Icon(Icons.photo_library_rounded),
-                label: Text(_lifeText(context, zh: '选择图片', en: 'Pick image')),
+                label: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.pick_image.9ce43eb388b3',
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 10),
             IconButton.filledTonal(
-              tooltip: _lifeText(context, zh: '清空', en: 'Clear'),
+              tooltip: _lifeI18nText(
+                context,
+                'inline.plan294.zen_sand.clear_ea17218b',
+              ),
               onPressed: _processing || _saving ? null : _resetAll,
               icon: const Icon(Icons.clear_rounded),
             ),
@@ -173,10 +194,9 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
         _LifePreviewFrame(
           child: _sourcePreview == null
               ? Text(
-                  _lifeText(
+                  _lifeI18nText(
                     context,
-                    zh: '尚未选择图片。',
-                    en: 'No image selected yet.',
+                    'inline.plan295.life.no_image_selected_yet.1d4a4b1c698c',
                   ),
                 )
               : Column(
@@ -184,7 +204,10 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
                   children: <Widget>[
                     Text(
                       _sourceName ??
-                          _lifeText(context, zh: '未命名图片', en: 'Unnamed image'),
+                          _lifeI18nText(
+                            context,
+                            'inline.plan295.life.unnamed_image.e89ca462aeab',
+                          ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -222,33 +245,35 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
     final clampedHeight = _targetHeight.clamp(32, maxHeight).toDouble();
 
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '扩大参数', en: 'Upscale settings'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '支持常见插值算法、指定宽高和仅补像素扩边，适合先把图做大再进入其他图像流程。',
-        en: 'Use common interpolation algorithms, exact target size, or pixel-expansion canvas modes before other image workflows.',
+        'inline.plan295.life.upscale_settings.6ef8ad1fe903',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.use_common_interpolation_algorithms.4688ec98af92',
       ),
       children: <Widget>[
         KeyedSubtree(
           key: const ValueKey<String>('life_image_upscale_mode_field'),
           child: _LifeSegmentedField<_ImageUpscaleMode>(
-            label: _lifeText(context, zh: '扩大模式', en: 'Upscale mode'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.upscale_mode.693d7c5c6529',
+            ),
             value: _mode,
             options: const <_LifeOption<_ImageUpscaleMode>>[
               const _LifeOption<_ImageUpscaleMode>(
                 value: _ImageUpscaleMode.ratio,
-                labelZh: '按倍率放大',
-                labelEn: 'By scale',
+                labelKey: 'inline.plan295.life.by_scale.ea8b02907910',
               ),
               const _LifeOption<_ImageUpscaleMode>(
                 value: _ImageUpscaleMode.size,
-                labelZh: '指定宽高',
-                labelEn: 'Target size',
+                labelKey: 'inline.plan295.life.target_size.f5281cce0aac',
               ),
               const _LifeOption<_ImageUpscaleMode>(
                 value: _ImageUpscaleMode.canvas,
-                labelZh: '补像素扩展',
-                labelEn: 'Canvas expand',
+                labelKey: 'inline.plan295.life.canvas_expand.0d27fe89de89',
               ),
             ],
             onChanged: (value) => setState(() => _mode = value),
@@ -258,33 +283,36 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
         KeyedSubtree(
           key: const ValueKey<String>('life_image_upscale_algorithm_field'),
           child: _LifeSegmentedField<_ImageUpscaleAlgorithm>(
-            label: _lifeText(context, zh: '插值算法', en: 'Interpolation'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.interpolation.8b6ac3aa65a1',
+            ),
             value: _algorithm,
             options: const <_LifeOption<_ImageUpscaleAlgorithm>>[
               const _LifeOption<_ImageUpscaleAlgorithm>(
                 value: _ImageUpscaleAlgorithm.duplicate,
-                labelZh: 'Fast duplicate',
-                labelEn: 'Fast duplicate',
+                labelKey:
+                    'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_upscale.fast_duplicate_19fe43',
               ),
               const _LifeOption<_ImageUpscaleAlgorithm>(
                 value: _ImageUpscaleAlgorithm.nearest,
-                labelZh: 'Nearest',
-                labelEn: 'Nearest',
+                labelKey:
+                    'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_upscale.nearest_27b4ad',
               ),
               const _LifeOption<_ImageUpscaleAlgorithm>(
                 value: _ImageUpscaleAlgorithm.linear,
-                labelZh: 'Linear',
-                labelEn: 'Linear',
+                labelKey:
+                    'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_upscale.linear_0dcc7e',
               ),
               const _LifeOption<_ImageUpscaleAlgorithm>(
                 value: _ImageUpscaleAlgorithm.cubic,
-                labelZh: 'Cubic',
-                labelEn: 'Cubic',
+                labelKey:
+                    'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_upscale.cubic_175f76',
               ),
               const _LifeOption<_ImageUpscaleAlgorithm>(
                 value: _ImageUpscaleAlgorithm.average,
-                labelZh: 'Average',
-                labelEn: 'Average',
+                labelKey:
+                    'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_upscale.average_9c484a',
               ),
             ],
             onChanged: (value) => setState(() => _algorithm = value),
@@ -294,18 +322,19 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
         KeyedSubtree(
           key: const ValueKey<String>('life_image_upscale_format_field'),
           child: _LifeSegmentedField<_ImageUpscaleFormat>(
-            label: _lifeText(context, zh: '导出格式', en: 'Export format'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.export_format.798da28c2095',
+            ),
             value: _format,
             options: const <_LifeOption<_ImageUpscaleFormat>>[
               const _LifeOption<_ImageUpscaleFormat>(
                 value: _ImageUpscaleFormat.png,
-                labelZh: 'PNG 无损',
-                labelEn: 'PNG lossless',
+                labelKey: 'inline.plan295.life.png_lossless.de21e3ccbc6d',
               ),
               const _LifeOption<_ImageUpscaleFormat>(
                 value: _ImageUpscaleFormat.jpg,
-                labelZh: 'JPEG 较小',
-                labelEn: 'JPEG smaller',
+                labelKey: 'inline.plan295.life.jpeg_smaller.590d2284a5b8',
               ),
             ],
             onChanged: (value) => setState(() => _format = value),
@@ -317,7 +346,10 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               _LifeSliderField(
-                label: _lifeText(context, zh: '放大倍率', en: 'Scale factor'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.scale_factor.dab68efca3e3',
+                ),
                 valueText: '${_scale.toStringAsFixed(2)}x',
                 value: _scale.clamp(1.0, _maxScale).toDouble(),
                 min: 1.0,
@@ -341,15 +373,13 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
                 ),
                 enabled: _hasSource && !_processing && !_saving,
                 decoration: InputDecoration(
-                  labelText: _lifeText(
+                  labelText: _lifeI18nText(
                     context,
-                    zh: '自定义倍率',
-                    en: 'Custom scale',
+                    'inline.plan295.life.custom_scale.405d379ffb69',
                   ),
-                  hintText: _lifeText(
+                  hintText: _lifeI18nText(
                     context,
-                    zh: '例如 2 / 3.5 / 12',
-                    en: 'For example 2 / 3.5 / 12',
+                    'inline.plan295.life.for_example_2_3_5_12.8a2e1c4ebee8',
                   ),
                   suffixText: 'x',
                 ),
@@ -360,7 +390,10 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
           )
         else ...<Widget>[
           _LifeSliderField(
-            label: _lifeText(context, zh: '目标宽度', en: 'Target width'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.target_width.28e0428cadba',
+            ),
             valueText: '${clampedWidth.round()} px',
             value: clampedWidth,
             min: 32,
@@ -372,7 +405,10 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
           ),
           const SizedBox(height: 12),
           _LifeSliderField(
-            label: _lifeText(context, zh: '目标高度', en: 'Target height'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.target_height.ac54c80c0ee8',
+            ),
             valueText: '${clampedHeight.round()} px',
             value: clampedHeight,
             min: 32,
@@ -388,28 +424,27 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
           KeyedSubtree(
             key: const ValueKey<String>('life_image_upscale_canvas_mode_field'),
             child: _LifeSegmentedField<_ImageUpscaleCanvasMode>(
-              label: _lifeText(context, zh: '补像素策略', en: 'Canvas fill'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.canvas_fill.b63ff848a9bc',
+              ),
               value: _canvasMode,
               options: const <_LifeOption<_ImageUpscaleCanvasMode>>[
                 const _LifeOption<_ImageUpscaleCanvasMode>(
                   value: _ImageUpscaleCanvasMode.edge,
-                  labelZh: '边缘拉伸',
-                  labelEn: 'Edge extend',
+                  labelKey: 'inline.plan295.life.edge_extend.efde37c9108d',
                 ),
                 const _LifeOption<_ImageUpscaleCanvasMode>(
                   value: _ImageUpscaleCanvasMode.mirror,
-                  labelZh: '镜像补边',
-                  labelEn: 'Mirror fill',
+                  labelKey: 'inline.plan295.life.mirror_fill.9281515b28ed',
                 ),
                 const _LifeOption<_ImageUpscaleCanvasMode>(
                   value: _ImageUpscaleCanvasMode.solid,
-                  labelZh: '纯色填充',
-                  labelEn: 'Solid color',
+                  labelKey: 'inline.plan295.life.solid_color.eb1e35ce00b9',
                 ),
                 const _LifeOption<_ImageUpscaleCanvasMode>(
                   value: _ImageUpscaleCanvasMode.transparent,
-                  labelZh: '透明留白',
-                  labelEn: 'Transparent',
+                  labelKey: 'inline.plan295.life.transparent.fd7f50f5a927',
                 ),
               ],
               onChanged: (value) => setState(() => _canvasMode = value),
@@ -418,33 +453,31 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
           if (_canvasMode == _ImageUpscaleCanvasMode.solid) ...<Widget>[
             const SizedBox(height: 12),
             _LifeColorField(
-              label: _lifeText(context, zh: '扩展背景色', en: 'Canvas color'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.canvas_color.3ca332bf78d6',
+              ),
               value: _canvasColor,
               options: const <_LifeColorOption>[
                 _LifeColorOption(
                   color: Color(0xFFF4F0E8),
-                  labelZh: '米白',
-                  labelEn: 'Warm ivory',
+                  labelKey: 'inline.plan295.life.warm_ivory.638874eeb403',
                 ),
                 _LifeColorOption(
                   color: Color(0xFF111827),
-                  labelZh: '深墨',
-                  labelEn: 'Ink dark',
+                  labelKey: 'inline.plan295.life.ink_dark.29252d08994a',
                 ),
                 _LifeColorOption(
                   color: Color(0xFF2563EB),
-                  labelZh: '蓝底',
-                  labelEn: 'Blue',
+                  labelKey: 'inline.plan295.life.blue.e74cca65888f',
                 ),
                 _LifeColorOption(
                   color: Color(0xFF16A34A),
-                  labelZh: '绿底',
-                  labelEn: 'Green',
+                  labelKey: 'inline.plan295.life.green.c52c94d8b79e',
                 ),
                 _LifeColorOption(
                   color: Color(0xFFF97316),
-                  labelZh: '橙底',
-                  labelEn: 'Orange',
+                  labelKey: 'inline.plan295.life.orange.314513e06d79',
                 ),
               ],
               onChanged: (value) => setState(() => _canvasColor = value),
@@ -454,7 +487,10 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
         if (_usesJpegQuality) ...<Widget>[
           const SizedBox(height: 12),
           _LifeSliderField(
-            label: _lifeText(context, zh: 'JPEG 质量', en: 'JPEG quality'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.jpeg_quality.6f509fde325f',
+            ),
             valueText: '${_jpegQuality.round()}',
             value: _jpegQuality,
             min: 60,
@@ -465,19 +501,21 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
         ],
         const SizedBox(height: 8),
         Text(
-          _lifeText(
+          _lifeI18nText(
             context,
-            zh: '说明：当前为本地插值放大与画布扩展，不是生成式 AI 超分辨率，无法凭空恢复真实细节。',
-            en: 'Note: this is local interpolation and canvas expansion, not generative AI super-resolution, so it cannot recreate true missing details.',
+            'inline.plan295.life.note_this_is_local_interpolation_and.f3fdedfff2f6',
           ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 8),
         Text(
-          _lifeText(
+          _lifeI18nText(
             context,
-            zh: '预期输出: ${_expectedWidth()}x${_expectedHeight()}',
-            en: 'Expected output: ${_expectedWidth()}x${_expectedHeight()}',
+            'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.upscale.expected_output_x.ae4ed3378c',
+            params: <String, Object?>{
+              'p0': _expectedWidth(),
+              'p1': _expectedHeight(),
+            },
           ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
@@ -502,8 +540,11 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
                 : const Icon(Icons.auto_fix_high_rounded),
             label: Text(
               _processing
-                  ? _lifeText(context, zh: '处理中...', en: 'Processing...')
-                  : _lifeText(context, zh: '开始扩大', en: 'Upscale'),
+                  ? _lifeI18nText(context, 'processing')
+                  : _lifeI18nText(
+                      context,
+                      'inline.plan295.life.upscale.f3c3c4008080',
+                    ),
             ),
           ),
         ),
@@ -522,8 +563,14 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
                 : const Icon(Icons.save_alt_rounded),
             label: Text(
               _saving
-                  ? _lifeText(context, zh: '保存中...', en: 'Saving...')
-                  : _lifeText(context, zh: '导出结果', en: 'Export'),
+                  ? _lifeI18nText(
+                      context,
+                      'inline.plan295.life.saving.2c9b4d88c6ff',
+                    )
+                  : _lifeI18nText(
+                      context,
+                      'inline.plan295.crypto.export.f7657dd92440',
+                    ),
             ),
           ),
         ),
@@ -557,7 +604,11 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        _lifeText(context, zh: '已保存: $_savedPath', en: 'Saved: $_savedPath'),
+        _lifeI18nText(
+          context,
+          'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.saved.7b5e2b53bc',
+          params: <String, Object?>{'_savedPath': _savedPath},
+        ),
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: Theme.of(context).colorScheme.onPrimaryContainer,
         ),
@@ -568,11 +619,13 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
   Widget _buildMetricsPanel(BuildContext context) {
     if (!_hasSource) {
       return _LifeSettingsPanel(
-        title: _lifeText(context, zh: '结果信息', en: 'Result metrics'),
-        subtitle: _lifeText(
+        title: _lifeI18nText(
           context,
-          zh: '选图并执行扩大后显示输出尺寸、体积和算法信息。',
-          en: 'Pick an image and run upscale to inspect size, bytes, and algorithm info.',
+          'inline.plan295.life.result_metrics.7fb4d460e8b5',
+        ),
+        subtitle: _lifeI18nText(
+          context,
+          'inline.plan295.life.pick_an_image_and_run_upscale_to_ins.cd06fd468d45',
         ),
         children: const <Widget>[],
       );
@@ -582,11 +635,13 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
         ? (_resultSize / _sourceSize).toStringAsFixed(2)
         : '--';
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '结果信息', en: 'Result metrics'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '查看放大后的像素、体积和当前处理方式。',
-        en: 'Review output pixels, file size, and active processing path.',
+        'inline.plan295.life.result_metrics.7fb4d460e8b5',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.review_output_pixels_file_size_and_a.e702d35d94d5',
       ),
       children: <Widget>[
         Wrap(
@@ -594,27 +649,45 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
           runSpacing: 10,
           children: <Widget>[
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '原图尺寸', en: 'Source pixels'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.source_pixels.39158dd7994b',
+              ),
               value: '${_sourceWidth}x$_sourceHeight',
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '输出尺寸', en: 'Output pixels'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.output_pixels.7d68371a55a4',
+              ),
               value: _hasResult ? '${_resultWidth}x$_resultHeight' : '--',
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '原图体积', en: 'Source size'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.source_size.b47053a82484',
+              ),
               value: _formatBytes(_sourceSize),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '结果体积', en: 'Output size'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.output_size.bbdae54e8de3',
+              ),
               value: _hasResult ? _formatBytes(_resultSize) : '--',
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '体积倍率', en: 'Byte ratio'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.byte_ratio.076b1dfef3d2',
+              ),
               value: _hasResult ? '${sizeRatio}x' : '--',
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '处理详情', en: 'Processing detail'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.processing_detail.e7253e93fc50',
+              ),
               value: _hasResult ? (_resultDetail ?? '--') : '--',
             ),
           ],
@@ -625,11 +698,10 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
 
   Widget _buildPreviewPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '预览对比', en: 'Preview'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(context, 'inline.plan295.life.preview.5f7afb14e386'),
+      subtitle: _lifeI18nText(
         context,
-        zh: '左侧原图，右侧扩大结果。窄屏下自动改为上下排列。',
-        en: 'Source on the left and upscale result on the right. On narrow screens this stacks vertically.',
+        'inline.plan295.life.source_on_the_left_and_upscale_resul.66fc2d7f3bf5',
       ),
       children: <Widget>[
         LayoutBuilder(
@@ -640,15 +712,13 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
                 children: <Widget>[
                   _previewTile(
                     context: context,
-                    titleZh: '原图',
-                    titleEn: 'Source',
+                    titleKey: 'inline.plan295.life.source.bd1f1bbdfe8e',
                     image: _sourcePreview,
                   ),
                   const SizedBox(height: 10),
                   _previewTile(
                     context: context,
-                    titleZh: '扩大后',
-                    titleEn: 'Upscaled',
+                    titleKey: 'inline.plan295.life.upscaled.0580d6bc1ed7',
                     image: _resultPreview,
                   ),
                 ],
@@ -659,8 +729,7 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
                 Expanded(
                   child: _previewTile(
                     context: context,
-                    titleZh: '原图',
-                    titleEn: 'Source',
+                    titleKey: 'inline.plan295.life.source.bd1f1bbdfe8e',
                     image: _sourcePreview,
                   ),
                 ),
@@ -668,8 +737,7 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
                 Expanded(
                   child: _previewTile(
                     context: context,
-                    titleZh: '扩大后',
-                    titleEn: 'Upscaled',
+                    titleKey: 'inline.plan295.life.upscaled.0580d6bc1ed7',
                     image: _resultPreview,
                   ),
                 ),
@@ -683,8 +751,7 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
 
   Widget _previewTile({
     required BuildContext context,
-    required String titleZh,
-    required String titleEn,
+    required String titleKey,
     required ui.Image? image,
   }) {
     return Container(
@@ -699,7 +766,7 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            _lifeText(context, zh: titleZh, en: titleEn),
+            _lifeI18nText(context, titleKey),
             style: Theme.of(
               context,
             ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -710,7 +777,10 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
             child: image == null
                 ? Center(
                     child: Text(
-                      _lifeText(context, zh: '暂无预览', en: 'No preview'),
+                      _lifeI18nText(
+                        context,
+                        'inline.plan295.crypto.no_preview.b2c10e9d539d',
+                      ),
                     ),
                   )
                 : ClipRRect(
@@ -772,10 +842,10 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '选择图片失败: $error',
-          en: 'Failed to pick image: $error',
+          'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.compress.failed_to_pick_image.6e0bad236d',
+          params: <String, Object?>{'error': error},
         );
       });
     }
@@ -834,10 +904,10 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '扩大失败: $error',
-          en: 'Upscale failed: $error',
+          'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.upscale.upscale_failed.78f8fb476d',
+          params: <String, Object?>{'error': error},
         );
       });
     } finally {
@@ -867,10 +937,9 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
       String? savedPath;
       try {
         savedPath = await FilePicker.platform.saveFile(
-          dialogTitle: _lifeText(
+          dialogTitle: _lifeI18nText(
             context,
-            zh: '保存扩大结果',
-            en: 'Save upscaled image',
+            'inline.plan295.life.save_upscaled_image.03390afabac6',
           ),
           fileName: fileName,
           type: FileType.custom,
@@ -888,10 +957,9 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
       if (savedPath == null || savedPath.trim().isEmpty) {
         if (kIsWeb) {
           setState(() {
-            _savedPath = _lifeText(
+            _savedPath = _lifeI18nText(
               context,
-              zh: '浏览器下载已触发，请查看下载列表。',
-              en: 'Browser download started. Check your downloads.',
+              'inline.plan295.crypto.browser_download_started_check_your.b28d392515b4',
             );
           });
           return;
@@ -926,10 +994,10 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '保存失败: $error',
-          en: 'Save failed: $error',
+          'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.save_failed.733e2f2246',
+          params: <String, Object?>{'error': error},
         );
       });
     } finally {
@@ -1123,11 +1191,20 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
   String _modeLabel(_ImageUpscaleMode mode, BuildContext context) {
     switch (mode) {
       case _ImageUpscaleMode.ratio:
-        return _lifeText(context, zh: '按倍率放大', en: 'By scale');
+        return _lifeI18nText(
+          context,
+          'inline.plan295.life.by_scale.ea8b02907910',
+        );
       case _ImageUpscaleMode.size:
-        return _lifeText(context, zh: '指定宽高', en: 'Target size');
+        return _lifeI18nText(
+          context,
+          'inline.plan295.life.target_size.f5281cce0aac',
+        );
       case _ImageUpscaleMode.canvas:
-        return _lifeText(context, zh: '补像素扩展', en: 'Canvas expand');
+        return _lifeI18nText(
+          context,
+          'inline.plan295.life.canvas_expand.0d27fe89de89',
+        );
     }
   }
 
@@ -1137,7 +1214,10 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
   ) {
     switch (algorithm) {
       case _ImageUpscaleAlgorithm.duplicate:
-        return _lifeText(context, zh: 'Fast duplicate', en: 'Fast duplicate');
+        return _lifeI18nText(
+          context,
+          'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_upscale.fast_duplicate_19fe43',
+        );
       case _ImageUpscaleAlgorithm.nearest:
         return 'Nearest';
       case _ImageUpscaleAlgorithm.linear:
@@ -1152,9 +1232,15 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
   String _formatLabel(_ImageUpscaleFormat format, BuildContext context) {
     switch (format) {
       case _ImageUpscaleFormat.png:
-        return _lifeText(context, zh: 'PNG 无损', en: 'PNG lossless');
+        return _lifeI18nText(
+          context,
+          'inline.plan295.life.png_lossless.de21e3ccbc6d',
+        );
       case _ImageUpscaleFormat.jpg:
-        return _lifeText(context, zh: 'JPEG 较小', en: 'JPEG smaller');
+        return _lifeI18nText(
+          context,
+          'inline.plan295.life.jpeg_smaller.590d2284a5b8',
+        );
     }
   }
 

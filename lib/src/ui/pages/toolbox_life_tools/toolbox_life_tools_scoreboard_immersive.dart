@@ -175,13 +175,21 @@ class _ScoreboardImmersivePageState extends State<_ScoreboardImmersivePage>
                             Expanded(
                               child: FilledButton.tonalIcon(
                                 onPressed: _toggleTimer,
-                                icon: Icon(_running
-                                    ? Icons.pause_rounded
-                                    : Icons.play_arrow_rounded),
+                                icon: Icon(
+                                  _running
+                                      ? Icons.pause_rounded
+                                      : Icons.play_arrow_rounded,
+                                ),
                                 label: Text(
                                   _running
-                                      ? _lifeText(context, zh: '暂停', en: 'Pause')
-                                      : _lifeText(context, zh: '开始', en: 'Start'),
+                                      ? _lifeI18nText(
+                                          context,
+                                          'inline.plan294.breathing.pause_b6fe36b8',
+                                        )
+                                      : _lifeI18nText(
+                                          context,
+                                          'inline.ui.pages.toolbox_breathing_tool.start_28545d',
+                                        ),
                                 ),
                               ),
                             ),
@@ -191,7 +199,7 @@ class _ScoreboardImmersivePageState extends State<_ScoreboardImmersivePage>
                                 onPressed: _resetTimer,
                                 icon: const Icon(Icons.refresh_rounded),
                                 label: Text(
-                                  _lifeText(context, zh: '重置', en: 'Reset'),
+                                  _lifeI18nText(context, 'appearanceReset'),
                                 ),
                               ),
                             ),
@@ -202,7 +210,10 @@ class _ScoreboardImmersivePageState extends State<_ScoreboardImmersivePage>
                           onPressed: () => Navigator.of(context).pop(),
                           icon: const Icon(Icons.close_rounded),
                           label: Text(
-                            _lifeText(context, zh: '退出全屏', en: 'Exit fullscreen'),
+                            _lifeI18nText(
+                              context,
+                              'inline.plan295.life.exit_fullscreen.9afc176b038f',
+                            ),
                           ),
                         ),
                       ],
@@ -228,10 +239,7 @@ class _ScoreboardImmersivePageState extends State<_ScoreboardImmersivePage>
           child: SafeArea(
             child: Stack(
               fit: StackFit.expand,
-              children: <Widget>[
-                _buildContent(),
-                _buildHud(),
-              ],
+              children: <Widget>[_buildContent(), _buildHud()],
             ),
           ),
         ),

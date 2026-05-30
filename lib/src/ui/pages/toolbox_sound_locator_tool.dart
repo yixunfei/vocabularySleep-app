@@ -86,7 +86,7 @@ class _SoundLocatorToolPageState extends ConsumerState<SoundLocatorToolPage>
         }
         setState(() {
           _starting = false;
-                    _errorText = _copy(key: 'toolbox.sound.locator.error_mic_denied');
+          _errorText = _copy(key: 'toolbox.sound.locator.error_mic_denied');
         });
         return;
       }
@@ -218,9 +218,7 @@ class _SoundLocatorToolPageState extends ConsumerState<SoundLocatorToolPage>
     final frame = _frame ?? SoundLocatorFrame.idle(_profile);
     final confirmation = _locator.confirmFromMovementSamples(_anchorSamples);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(i18n.t('toolbox.sound.locator.page_title')),
-      ),
+      appBar: AppBar(title: Text(i18n.t('toolbox.sound.locator.page_title'))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
           ToolboxUiTokens.pageHorizontalPadding,
@@ -514,7 +512,10 @@ class _LocatorHeroPanel extends StatelessWidget {
     if (abs <= 8) {
       return i18n.t('toolbox.sound.locator.source_in_front');
     }
-    return i18n.t('toolbox.sound.locator.source_offset', params: <String, Object?>{'side': side, 'deg': abs.toStringAsFixed(0)});
+    return i18n.t(
+      'toolbox.sound.locator.source_offset',
+      params: <String, Object?>{'side': side, 'deg': abs.toStringAsFixed(0)},
+    );
   }
 
   String _statusLabel(
@@ -530,19 +531,35 @@ class _LocatorHeroPanel extends StatelessWidget {
       return i18n.t('toolbox.sound.locator.status_idle');
     }
     return switch (frame.quality) {
-      SoundLocatorQuality.professional => i18n.t('toolbox.sound.locator.status_professional'),
-      SoundLocatorQuality.strong => i18n.t('toolbox.sound.locator.status_stable'),
-      SoundLocatorQuality.usable => i18n.t('toolbox.sound.locator.status_usable'),
-      SoundLocatorQuality.poor => i18n.t('toolbox.sound.locator.status_low_confidence'),
-      SoundLocatorQuality.unavailable => i18n.t('toolbox.sound.locator.status_listening'),
+      SoundLocatorQuality.professional => i18n.t(
+        'toolbox.sound.locator.status_professional',
+      ),
+      SoundLocatorQuality.strong => i18n.t(
+        'toolbox.sound.locator.status_stable',
+      ),
+      SoundLocatorQuality.usable => i18n.t(
+        'toolbox.sound.locator.status_usable',
+      ),
+      SoundLocatorQuality.poor => i18n.t(
+        'toolbox.sound.locator.status_low_confidence',
+      ),
+      SoundLocatorQuality.unavailable => i18n.t(
+        'toolbox.sound.locator.status_listening',
+      ),
     };
   }
 
   String _engineLabel(AppI18n i18n, SoundLocatorEngineMode mode) {
     return switch (mode) {
-      SoundLocatorEngineMode.mobileMove => i18n.t('toolbox.sound.locator.engine_mobile_move'),
-      SoundLocatorEngineMode.mobileStereo => i18n.t('toolbox.sound.locator.engine_mobile_stereo'),
-      SoundLocatorEngineMode.odasOptional => i18n.t('toolbox.sound.locator.engine_array_optional'),
+      SoundLocatorEngineMode.mobileMove => i18n.t(
+        'toolbox.sound.locator.engine_mobile_move',
+      ),
+      SoundLocatorEngineMode.mobileStereo => i18n.t(
+        'toolbox.sound.locator.engine_mobile_stereo',
+      ),
+      SoundLocatorEngineMode.odasOptional => i18n.t(
+        'toolbox.sound.locator.engine_array_optional',
+      ),
     };
   }
 
@@ -665,10 +682,18 @@ class _MovementConfirmationPanel extends StatelessWidget {
     SoundLocatorMoveConfirmation confirmation,
   ) {
     return switch (confirmation.confirmation) {
-      SoundLocatorConfirmation.locked => i18n.t('toolbox.sound.locator.confirm_locked'),
-      SoundLocatorConfirmation.tracking => i18n.t('toolbox.sound.locator.confirm_tracking'),
-      SoundLocatorConfirmation.tentative => i18n.t('toolbox.sound.locator.confirm_tentative'),
-      SoundLocatorConfirmation.unconfirmed => i18n.t('toolbox.sound.locator.confirm_unconfirmed'),
+      SoundLocatorConfirmation.locked => i18n.t(
+        'toolbox.sound.locator.confirm_locked',
+      ),
+      SoundLocatorConfirmation.tracking => i18n.t(
+        'toolbox.sound.locator.confirm_tracking',
+      ),
+      SoundLocatorConfirmation.tentative => i18n.t(
+        'toolbox.sound.locator.confirm_tentative',
+      ),
+      SoundLocatorConfirmation.unconfirmed => i18n.t(
+        'toolbox.sound.locator.confirm_unconfirmed',
+      ),
     };
   }
 
@@ -679,8 +704,12 @@ class _MovementConfirmationPanel extends StatelessWidget {
     return switch (cue) {
       SoundLocatorMoveCue.stay => i18n.t('toolbox.sound.locator.cue_stay'),
       SoundLocatorMoveCue.stepLeft => i18n.t('toolbox.sound.locator.cue_left'),
-      SoundLocatorMoveCue.stepRight => i18n.t('toolbox.sound.locator.cue_right'),
-      SoundLocatorMoveCue.stepForward => i18n.t('toolbox.sound.locator.cue_forward'),
+      SoundLocatorMoveCue.stepRight => i18n.t(
+        'toolbox.sound.locator.cue_right',
+      ),
+      SoundLocatorMoveCue.stepForward => i18n.t(
+        'toolbox.sound.locator.cue_forward',
+      ),
       SoundLocatorMoveCue.stepBack => i18n.t('toolbox.sound.locator.cue_back'),
     };
   }
@@ -731,10 +760,18 @@ class _AnchorSampleTile extends StatelessWidget {
 String _cueLabel(AppI18n i18n, SoundLocatorMoveCue cue) {
   return switch (cue) {
     SoundLocatorMoveCue.stay => i18n.t('toolbox.sound.locator.cue_label_stay'),
-    SoundLocatorMoveCue.stepLeft => i18n.t('toolbox.sound.locator.cue_label_left'),
-    SoundLocatorMoveCue.stepRight => i18n.t('toolbox.sound.locator.cue_label_right'),
-    SoundLocatorMoveCue.stepForward => i18n.t('toolbox.sound.locator.cue_label_forward'),
-    SoundLocatorMoveCue.stepBack => i18n.t('toolbox.sound.locator.cue_label_back'),
+    SoundLocatorMoveCue.stepLeft => i18n.t(
+      'toolbox.sound.locator.cue_label_left',
+    ),
+    SoundLocatorMoveCue.stepRight => i18n.t(
+      'toolbox.sound.locator.cue_label_right',
+    ),
+    SoundLocatorMoveCue.stepForward => i18n.t(
+      'toolbox.sound.locator.cue_label_forward',
+    ),
+    SoundLocatorMoveCue.stepBack => i18n.t(
+      'toolbox.sound.locator.cue_label_back',
+    ),
   };
 }
 
@@ -819,9 +856,7 @@ class _CapabilityPanel extends StatelessWidget {
                 fontWeight: FontWeight.w800,
               ),
             ),
-            subtitle: Text(
-              i18n.t('toolbox.sound.locator.try_stereo_subtitle'),
-            ),
+            subtitle: Text(i18n.t('toolbox.sound.locator.try_stereo_subtitle')),
           ),
           _StatusNotice(
             icon: Icons.info_outline_rounded,
@@ -947,10 +982,18 @@ class _SourceCandidateTile extends StatelessWidget {
 
   String _sourceTitle(AppI18n i18n, SoundLocatorSource source) {
     return switch (source.confirmation) {
-      SoundLocatorConfirmation.locked => i18n.t('toolbox.sound.locator.source_locked'),
-      SoundLocatorConfirmation.tracking => i18n.t('toolbox.sound.locator.source_tracking'),
-      SoundLocatorConfirmation.tentative => i18n.t('toolbox.sound.locator.source_candidate'),
-      SoundLocatorConfirmation.unconfirmed => i18n.t('toolbox.sound.locator.source_activity'),
+      SoundLocatorConfirmation.locked => i18n.t(
+        'toolbox.sound.locator.source_locked',
+      ),
+      SoundLocatorConfirmation.tracking => i18n.t(
+        'toolbox.sound.locator.source_tracking',
+      ),
+      SoundLocatorConfirmation.tentative => i18n.t(
+        'toolbox.sound.locator.source_candidate',
+      ),
+      SoundLocatorConfirmation.unconfirmed => i18n.t(
+        'toolbox.sound.locator.source_activity',
+      ),
     };
   }
 }
@@ -1024,7 +1067,9 @@ class _AdvancedRoutePanel extends StatelessWidget {
                         _StatusNotice(
                           icon: Icons.check_circle_outline_rounded,
                           tint: const Color(0xFF16A34A),
-                          text: i18n.t('toolbox.sound.locator.odas_default_path'),
+                          text: i18n.t(
+                            'toolbox.sound.locator.odas_default_path',
+                          ),
                         ),
                         const SizedBox(height: 10),
                         _RequirementList(i18n: i18n),

@@ -48,7 +48,14 @@ extension _PianoToolStateLogic on _PianoToolState {
 
   String _displayKeyLayoutLabel(AppI18n i18n, _PianoKeyLayoutPreset layout) {
     final endMidi = layout.startMidi + layout.keyCount - 1;
-    return i18n.t('toolbox.sound.piano.keyLayoutRange', params: {'count': '${layout.keyCount}', 'range': '${_noteLabelForMidi(layout.startMidi)}-${_noteLabelForMidi(endMidi)}'});
+    return i18n.t(
+      'toolbox.sound.piano.keyLayoutRange',
+      params: {
+        'count': '${layout.keyCount}',
+        'range':
+            '${_noteLabelForMidi(layout.startMidi)}-${_noteLabelForMidi(endMidi)}',
+      },
+    );
   }
 
   String _displayPresetLabel(AppI18n i18n, _PianoPreset preset) {
@@ -106,19 +113,31 @@ extension _PianoToolStateLogic on _PianoToolState {
   }
 
   String _displayTouchLabelFixed(AppI18n i18n) {
-    return i18n.t('toolbox.sound.piano.touch', params: {'percent': '${(100 * _touch).round()}'});
+    return i18n.t(
+      'toolbox.sound.piano.touch',
+      params: {'percent': '${(100 * _touch).round()}'},
+    );
   }
 
   String _displaySpaceLabelFixed(AppI18n i18n) {
-    return i18n.t('toolbox.sound.piano.space', params: {'percent': '${(_reverb * 100).round()}'});
+    return i18n.t(
+      'toolbox.sound.piano.space',
+      params: {'percent': '${(_reverb * 100).round()}'},
+    );
   }
 
   String _displayDecayLabelFixed(AppI18n i18n) {
-    return i18n.t('toolbox.sound.piano.decay', params: {'value': '${_decay.toStringAsFixed(2)}'});
+    return i18n.t(
+      'toolbox.sound.piano.decay',
+      params: {'value': '${_decay.toStringAsFixed(2)}'},
+    );
   }
 
   String _displayGestureThresholdLabelFixed(AppI18n i18n) {
-    return i18n.t('toolbox.sound.piano.gestureSensitivity', params: {'percent': '${(_gestureThresholdScale * 100).round()}'});
+    return i18n.t(
+      'toolbox.sound.piano.gestureSensitivity',
+      params: {'percent': '${(_gestureThresholdScale * 100).round()}'},
+    );
   }
 
   void _applyKeyLayoutById(String layoutId) {
@@ -1007,6 +1026,3 @@ extension _PianoToolStateLogic on _PianoToolState {
     );
   }
 }
-
-
-

@@ -140,18 +140,7 @@ class _NumberMemoryNumberInput extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: enabled ? onApply : null,
             icon: const Icon(Icons.check_rounded),
-            label: Text(
-              pickUiText(
-                i18n,
-                zh: '应用',
-                en: 'Apply',
-                ja: '適用',
-                de: 'Apply',
-                fr: 'Appliquer',
-                es: 'Aplicar',
-                ru: 'Применять',
-              ),
-            ),
+            label: Text(i18n.t('toolbox.sound.soothing.apply')),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(88, 48),
               textStyle: const TextStyle(fontWeight: FontWeight.w800),

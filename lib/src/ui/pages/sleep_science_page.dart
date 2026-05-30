@@ -271,9 +271,7 @@ class _ScienceReferenceIndex extends StatelessWidget {
               fontWeight: FontWeight.w900,
             ),
           ),
-          subtitle: Text(
-            i18n.t('toolbox.sleep.science.referenceSource'),
-          ),
+          subtitle: Text(i18n.t('toolbox.sleep.science.referenceSource')),
           childrenPadding: const EdgeInsets.fromLTRB(18, 0, 18, 16),
           children: <Widget>[
             _ReferenceGroup(

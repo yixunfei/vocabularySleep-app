@@ -31,75 +31,23 @@ class SettingsHomePage extends ConsumerWidget {
       config.voiceInput.provider,
     );
     final asrStatus = config.asr.enabled
-        ? pickUiText(
-            i18n,
-            zh: '已启用',
-            en: 'Enabled',
-            ja: '有効',
-            de: 'Aktiv',
-            fr: 'Activé',
-            es: 'Activado',
-            ru: 'Включено',
-          )
-        : pickUiText(
-            i18n,
-            zh: '已关闭',
-            en: 'Disabled',
-            ja: '無効',
-            de: 'Aus',
-            fr: 'Désactivé',
-            es: 'Desactivado',
-            ru: 'Выключено',
-          );
+        ? i18n.t('toolbox.sleep.tools.enabled')
+        : i18n.t('toolbox.sleep.tools.disabled');
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          pickUiText(
-            i18n,
-            zh: '设置中心',
-            en: 'Settings center',
-            ja: '設定センター',
-            de: 'Einstellungszentrale',
-            fr: 'Centre des réglages',
-            es: 'Centro de ajustes',
-            ru: 'Центр настроек',
-          ),
-        ),
+        title: Text(i18n.t('inline.ui.pages.more_page.settings_center_5780d6')),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: <Widget>[
           PageHeader(
-            eyebrow: pickUiText(
-              i18n,
-              zh: '设置',
-              en: 'Settings',
-              ja: '設定',
-              de: 'Einstellungen',
-              fr: 'Réglages',
-              es: 'Ajustes',
-              ru: 'Настройки',
+            eyebrow: i18n.t('settings'),
+            title: i18n.t(
+              'inline.ui.pages.settings_home_page.unified_settings_ddaa4e',
             ),
-            title: pickUiText(
-              i18n,
-              zh: '统一配置中心',
-              en: 'Unified settings',
-              ja: '統合設定ハブ',
-              de: 'Zentrale Einstellungen',
-              fr: 'Réglages unifiés',
-              es: 'Ajustes unificados',
-              ru: 'Единый центр настроек',
-            ),
-            subtitle: pickUiText(
-              i18n,
-              zh: '把播放、语音、识别和外观分别放到独立页面，减少来回切换。',
-              en: 'Manage playback, voice, recognition, and appearance in dedicated pages.',
-              ja: '再生・音声・認識・外観を専用ページでまとめて管理します。',
-              de: 'Verwalte Wiedergabe, Stimme, Erkennung und Design auf eigenen Seiten.',
-              fr: 'Gérez lecture, voix, reconnaissance et apparence dans des pages dédiées.',
-              es: 'Gestiona reproducción, voz, reconocimiento y apariencia en páginas dedicadas.',
-              ru: 'Управляйте воспроизведением, голосом, распознаванием и внешним видом на отдельных страницах.',
+            subtitle: i18n.t(
+              'inline.ui.pages.settings_home_page.manage_playback_voice_recognition_and_appearance_in_dedi_c71fb1',
             ),
           ),
           const SizedBox(height: 16),
@@ -110,15 +58,15 @@ class SettingsHomePage extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    pickUiText(i18n, zh: '启动提示', en: 'Startup prompt'),
+                    i18n.t(
+                      'inline.ui.pages.settings_home_page.startup_prompt_5be8f6',
+                    ),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '进入主界面时弹出今日待办、每日一言和天气摘要。',
-                      en: 'Show today\'s todos, daily quote, and weather after entering the main screen.',
+                    i18n.t(
+                      'inline.ui.pages.settings_home_page.show_today_s_todos_daily_quote_and_weather_after_enterin_8a8513',
                     ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
@@ -127,23 +75,17 @@ class SettingsHomePage extends ConsumerWidget {
                     contentPadding: EdgeInsets.zero,
                     value: state.startupTodoPromptEnabled,
                     title: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '开启今日待办提示',
-                        en: 'Enable today prompt',
+                      i18n.t(
+                        'inline.ui.pages.settings_home_page.enable_today_prompt_025f9b',
                       ),
                     ),
                     subtitle: Text(
                       state.startupTodoPromptEnabled
-                          ? pickUiText(
-                              i18n,
-                              zh: '已开启，可在弹窗中选择“今日不再弹出”。',
-                              en: 'Enabled. You can still mute it for the rest of the day from the popup.',
+                          ? i18n.t(
+                              'inline.ui.pages.settings_home_page.enabled_you_can_still_mute_it_for_the_rest_of_the_day_fr_0ab148',
                             )
-                          : pickUiText(
-                              i18n,
-                              zh: '关闭后启动时不会自动弹出今日摘要。',
-                              en: 'When off, the startup summary will not appear automatically.',
+                          : i18n.t(
+                              'inline.ui.pages.settings_home_page.when_off_the_startup_summary_will_not_appear_automatical_093d7e',
                             ),
                     ),
                     onChanged: state.setStartupTodoPromptEnabled,
@@ -160,15 +102,15 @@ class SettingsHomePage extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    pickUiText(i18n, zh: '导航体验', en: 'Navigation behavior'),
+                    i18n.t(
+                      'inline.ui.pages.settings_home_page.navigation_behavior_19ebce',
+                    ),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '控制全局底部导航栏在滚动页面中的显示方式。',
-                      en: 'Control how the global bottom navigation behaves while pages scroll.',
+                    i18n.t(
+                      'inline.ui.pages.settings_home_page.control_how_the_global_bottom_navigation_behaves_while_p_821f9f',
                     ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
@@ -177,23 +119,17 @@ class SettingsHomePage extends ConsumerWidget {
                     contentPadding: EdgeInsets.zero,
                     value: state.bottomNavigationAutoHideEnabled,
                     title: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '下滑时自动隐藏底部导航',
-                        en: 'Auto-hide bottom navigation on scroll',
+                      i18n.t(
+                        'inline.ui.pages.settings_home_page.auto_hide_bottom_navigation_on_scroll_9c1fa6',
                       ),
                     ),
                     subtitle: Text(
                       state.bottomNavigationAutoHideEnabled
-                          ? pickUiText(
-                              i18n,
-                              zh: '已开启。页面下滑时收起底部导航，上滑或点击屏幕后显示。',
-                              en: 'Enabled. The bottom navigation hides on downward scroll and returns when you scroll up or tap the screen.',
+                          ? i18n.t(
+                              'inline.ui.pages.settings_home_page.enabled_the_bottom_navigation_hides_on_downward_scroll_a_eba1be',
                             )
-                          : pickUiText(
-                              i18n,
-                              zh: '已关闭。底部导航会始终保留，适合优先保持入口可见。',
-                              en: 'Disabled. The bottom navigation stays visible so the main entry points remain available.',
+                          : i18n.t(
+                              'inline.ui.pages.settings_home_page.disabled_the_bottom_navigation_stays_visible_so_the_main_d209a6',
                             ),
                     ),
                     onChanged: state.setBottomNavigationAutoHideEnabled,
@@ -210,19 +146,15 @@ class SettingsHomePage extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '权限与系统操作',
-                      en: 'Permissions & system actions',
+                    i18n.t(
+                      'inline.ui.pages.settings_home_page.permissions_system_actions_4b5e3e',
                     ),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '集中管理会触发系统通知、后台提醒或修改系统设置的功能。关闭后，下次使用对应功能时会提示快捷开启。',
-                      en: 'Manage features that create system notifications, background reminders, or change system settings. When off, the next use shows a quick-enable prompt.',
+                    i18n.t(
+                      'inline.ui.pages.settings_home_page.manage_features_that_create_system_notifications_backgro_76c0c2',
                     ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
@@ -231,23 +163,17 @@ class SettingsHomePage extends ConsumerWidget {
                     contentPadding: EdgeInsets.zero,
                     value: state.todoSystemRemindersEnabled,
                     title: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '允许待办系统提醒',
-                        en: 'Allow system todo reminders',
+                      i18n.t(
+                        'inline.ui.pages.settings_home_page.allow_system_todo_reminders_5c6a86',
                       ),
                     ),
                     subtitle: Text(
                       state.todoSystemRemindersEnabled
-                          ? pickUiText(
-                              i18n,
-                              zh: '已开启。专注/放松待办可在后台注册系统通知；首次使用仍需系统通知权限。',
-                              en: 'Enabled. Focus and relaxation todos may register background system notifications; first use can still require notification permission.',
+                          ? i18n.t(
+                              'inline.ui.pages.settings_home_page.enabled_focus_and_relaxation_todos_may_register_backgrou_d5e14d',
                             )
-                          : pickUiText(
-                              i18n,
-                              zh: '已关闭。待办时间只保存在应用内，不会创建后台通知。',
-                              en: 'Disabled. Todo times stay inside the app and no background notification is scheduled.',
+                          : i18n.t(
+                              'inline.ui.pages.settings_home_page.disabled_todo_times_stay_inside_the_app_and_no_backgroun_5a301d',
                             ),
                     ),
                     onChanged: state.setTodoSystemRemindersEnabled,
@@ -257,23 +183,17 @@ class SettingsHomePage extends ConsumerWidget {
                     contentPadding: EdgeInsets.zero,
                     value: state.toolboxAutoAdjustSystemVolumeEnabled,
                     title: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '允许声学测试自动调整系统音量',
-                        en: 'Allow acoustic auto volume adjustment',
+                      i18n.t(
+                        'inline.ui.pages.settings_home_page.allow_acoustic_auto_volume_adjustment_8f973f',
                       ),
                     ),
                     subtitle: Text(
                       state.toolboxAutoAdjustSystemVolumeEnabled
-                          ? pickUiText(
-                              i18n,
-                              zh: '已开启。声学测试会先检查音量，并在可自动调整的平台上把媒体音量调到建议范围。',
-                              en: 'Enabled. Acoustic tests check volume and may set media volume to the recommended range on supported platforms.',
+                          ? i18n.t(
+                              'inline.ui.pages.settings_home_page.enabled_acoustic_tests_check_volume_and_may_set_media_vo_755429',
                             )
-                          : pickUiText(
-                              i18n,
-                              zh: '已关闭。声学测试不会自动修改系统媒体音量，只会提示手动校准或快捷开启。',
-                              en: 'Disabled. Acoustic tests will not change system media volume automatically and will show manual calibration or quick enable.',
+                          : i18n.t(
+                              'inline.ui.pages.settings_home_page.disabled_acoustic_tests_will_not_change_system_media_vol_a9c96f',
                             ),
                     ),
                     onChanged: state.setToolboxAutoAdjustSystemVolumeEnabled,
@@ -290,63 +210,47 @@ class SettingsHomePage extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '当前配置摘要',
-                      en: 'Current summary',
-                      ja: '現在の概要',
-                      de: 'Aktuelle Zusammenfassung',
-                      fr: 'Résumé actuel',
-                      es: 'Resumen actual',
-                      ru: 'Текущее состояние',
+                    i18n.t(
+                      'inline.ui.pages.settings_home_page.current_summary_14c0f8',
                     ),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '播放: ${playOrderLabel(i18n, config.order)} · ${config.showText ? '显示文本' : '隐藏文本'}',
-                      en: 'Playback: ${playOrderLabel(i18n, config.order)} · ${config.showText ? 'Text On' : 'Text Off'}',
-                      ja: '再生: ${playOrderLabel(i18n, config.order)} · ${config.showText ? 'テキスト表示' : 'テキスト非表示'}',
-                      de: 'Wiedergabe: ${playOrderLabel(i18n, config.order)} · ${config.showText ? 'Text an' : 'Text aus'}',
-                      fr: 'Lecture : ${playOrderLabel(i18n, config.order)} · ${config.showText ? 'Texte visible' : 'Texte masqué'}',
-                      es: 'Reproducción: ${playOrderLabel(i18n, config.order)} · ${config.showText ? 'Texto visible' : 'Texto oculto'}',
-                      ru: 'Воспроизведение: ${playOrderLabel(i18n, config.order)} · ${config.showText ? 'Текст включён' : 'Текст скрыт'}',
+                    i18n.t(
+                      'inline.plan296.ui.pages.settings.home.page.playback.4c5292ccff',
+                      params: <String, Object?>{
+                        'p0': playOrderLabel(i18n, config.order),
+                        'p1': config.showText ? '显示文本' : '隐藏文本',
+                        'p2': config.showText ? 'Text On' : 'Text Off',
+                        'p3': config.showText ? 'テキスト表示' : 'テキスト非表示',
+                        'p4': config.showText ? 'Text an' : 'Text aus',
+                        'p5': config.showText
+                            ? 'Texte visible'
+                            : 'Texte masqué',
+                        'p6': config.showText
+                            ? 'Texto visible'
+                            : 'Texto oculto',
+                        'p7': config.showText ? 'Текст включён' : 'Текст скрыт',
+                      },
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '语音: ${ttsProviderLabel(i18n, config.tts.provider)}',
-                      en: 'Voice: ${ttsProviderLabel(i18n, config.tts.provider)}',
-                      ja: '音声: ${ttsProviderLabel(i18n, config.tts.provider)}',
-                      de: 'Stimme: ${ttsProviderLabel(i18n, config.tts.provider)}',
-                      fr: 'Voix : ${ttsProviderLabel(i18n, config.tts.provider)}',
-                      es: 'Voz: ${ttsProviderLabel(i18n, config.tts.provider)}',
-                      ru: 'Голос: ${ttsProviderLabel(i18n, config.tts.provider)}',
+                    i18n.t(
+                      'inline.ui.pages.settings_home_page.voice_ttsproviderlabel_i18n_config_tts_provider_be7301',
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '语音输入: $voiceInputLabel · ${asrLanguageLabel(i18n, config.voiceInput.language)}',
-                      en: 'Voice input: $voiceInputLabel · ${asrLanguageLabel(i18n, config.voiceInput.language)}',
+                    i18n.t(
+                      'inline.ui.pages.settings_home_page.voice_input_voiceinputlabel_asrlanguagelabel_i18n_config_82e5e9',
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '识别: $asrStatus · ${asrProviderLabel(i18n, config.asr.provider)}',
-                      en: 'Recognition: $asrStatus · ${asrProviderLabel(i18n, config.asr.provider)}',
-                      ja: '認識: $asrStatus · ${asrProviderLabel(i18n, config.asr.provider)}',
-                      de: 'Erkennung: $asrStatus · ${asrProviderLabel(i18n, config.asr.provider)}',
-                      fr: 'Reconnaissance : $asrStatus · ${asrProviderLabel(i18n, config.asr.provider)}',
-                      es: 'Reconocimiento: $asrStatus · ${asrProviderLabel(i18n, config.asr.provider)}',
-                      ru: 'Распознавание: $asrStatus · ${asrProviderLabel(i18n, config.asr.provider)}',
+                    i18n.t(
+                      'inline.ui.pages.settings_home_page.recognition_asrstatus_asrproviderlabel_i18n_config_asr_p_30aa7c',
                     ),
                   ),
                 ],
@@ -361,29 +265,15 @@ class SettingsHomePage extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '体验模式',
-                      en: 'Experience mode',
-                      ja: '体験モード',
-                      de: 'Erlebnismodus',
-                      fr: 'Mode d’expérience',
-                      es: 'Modo de experiencia',
-                      ru: 'Режим использования',
+                    i18n.t(
+                      'inline.ui.pages.appearance_studio_page.experience_mode_933582',
                     ),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: 'Sleep 更安静，Focus 更强调信息密度。',
-                      en: 'Sleep keeps visuals calm; Focus favors information density.',
-                      ja: 'Sleep は落ち着いた表示、Focus は情報密度を重視します。',
-                      de: 'Sleep bleibt ruhig, Focus setzt auf mehr Informationsdichte.',
-                      fr: 'Sleep garde une ambiance calme ; Focus privilégie la densité d’information.',
-                      es: 'Sleep mantiene una vista calmada; Focus prioriza la densidad de información.',
-                      ru: 'Sleep делает интерфейс спокойнее, а Focus повышает плотность информации.',
+                    i18n.t(
+                      'inline.ui.pages.settings_home_page.sleep_keeps_visuals_calm_focus_favors_information_densit_da93f9',
                     ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
@@ -415,25 +305,11 @@ class SettingsHomePage extends ConsumerWidget {
           const SizedBox(height: 16),
           SettingTile(
             icon: Icons.play_circle_outline_rounded,
-            title: pickUiText(
-              i18n,
-              zh: '播放高级设置',
-              en: 'Playback advanced',
-              ja: '再生の詳細設定',
-              de: 'Erweiterte Wiedergabe',
-              fr: 'Lecture avancée',
-              es: 'Reproducción avanzada',
-              ru: 'Расширенное воспроизведение',
+            title: i18n.t(
+              'inline.ui.pages.playback_advanced_page.playback_advanced_9d4699',
             ),
-            subtitle: pickUiText(
-              i18n,
-              zh: '播放顺序、文本可见性与节奏参数。',
-              en: 'Order, text visibility, and pacing settings.',
-              ja: '再生順序、テキスト表示、テンポを調整します。',
-              de: 'Reihenfolge, Textsichtbarkeit und Tempo anpassen.',
-              fr: 'Réglez l’ordre, la visibilité du texte et le rythme.',
-              es: 'Ajusta el orden, la visibilidad del texto y el ritmo.',
-              ru: 'Настройте порядок, видимость текста и темп воспроизведения.',
+            subtitle: i18n.t(
+              'inline.ui.pages.settings_home_page.order_text_visibility_and_pacing_settings_34f466',
             ),
             trailing: Text(
               playOrderLabel(i18n, config.order),
@@ -444,25 +320,11 @@ class SettingsHomePage extends ConsumerWidget {
           const SizedBox(height: 12),
           SettingTile(
             icon: Icons.record_voice_over_rounded,
-            title: pickUiText(
-              i18n,
-              zh: '语音设置',
-              en: 'Voice settings',
-              ja: '音声設定',
-              de: 'Stimmeinstellungen',
-              fr: 'Réglages vocaux',
-              es: 'Ajustes de voz',
-              ru: 'Настройки голоса',
+            title: i18n.t(
+              'inline.ui.pages.help_center_page.voice_settings_9938df',
             ),
-            subtitle: pickUiText(
-              i18n,
-              zh: 'TTS 提供方、语速和音量。',
-              en: 'TTS provider, speed, and volume.',
-              ja: 'TTS プロバイダー、速度、音量を調整します。',
-              de: 'TTS-Anbieter, Geschwindigkeit und Lautstärke.',
-              fr: 'Choisissez le fournisseur TTS, la vitesse et le volume.',
-              es: 'Proveedor TTS, velocidad y volumen.',
-              ru: 'Провайдер TTS, скорость и громкость.',
+            subtitle: i18n.t(
+              'inline.ui.pages.settings_home_page.tts_provider_speed_and_volume_5c1731',
             ),
             trailing: Text(
               ttsProviderLabel(i18n, config.tts.provider),
@@ -473,11 +335,11 @@ class SettingsHomePage extends ConsumerWidget {
           const SizedBox(height: 12),
           SettingTile(
             icon: Icons.mic_rounded,
-            title: pickUiText(i18n, zh: '语音输入设置', en: 'Voice input settings'),
-            subtitle: pickUiText(
-              i18n,
-              zh: '快速笔记语音输入的引擎、语言与离线模型。',
-              en: 'Provider, language, and offline package for quick-note voice input.',
+            title: i18n.t(
+              'inline.ui.pages.help_center_page.voice_input_settings_2bf6ed',
+            ),
+            subtitle: i18n.t(
+              'inline.ui.pages.settings_home_page.provider_language_and_offline_package_for_quick_note_voi_597a4b',
             ),
             trailing: Text(
               voiceInputLabel,
@@ -488,25 +350,9 @@ class SettingsHomePage extends ConsumerWidget {
           const SizedBox(height: 12),
           SettingTile(
             icon: Icons.hearing_rounded,
-            title: pickUiText(
-              i18n,
-              zh: '识别与练习',
-              en: 'Recognition',
-              ja: '認識と練習',
-              de: 'Erkennung',
-              fr: 'Reconnaissance',
-              es: 'Reconocimiento',
-              ru: 'Распознавание',
-            ),
-            subtitle: pickUiText(
-              i18n,
-              zh: 'ASR 开关、引擎和练习相关配置。',
-              en: 'ASR switch, engine, and practice recognition options.',
-              ja: 'ASR のオンオフ、エンジン、練習関連設定です。',
-              de: 'ASR-Schalter, Engine und Übungsoptionen.',
-              fr: 'Activation ASR, moteur et options d’entraînement.',
-              es: 'Interruptor ASR, motor y opciones de práctica.',
-              ru: 'Переключатель ASR, движок и параметры тренировки.',
+            title: i18n.t('settingsTabAsr'),
+            subtitle: i18n.t(
+              'inline.ui.pages.settings_home_page.asr_switch_engine_and_practice_recognition_options_7d89ec',
             ),
             trailing: Text(
               '$asrStatus · ${asrProviderLabel(i18n, config.asr.provider)}',
@@ -517,73 +363,36 @@ class SettingsHomePage extends ConsumerWidget {
           const SizedBox(height: 12),
           SettingTile(
             icon: Icons.palette_outlined,
-            title: pickUiText(
-              i18n,
-              zh: '外观工作室',
-              en: 'Appearance studio',
-              ja: '外観スタジオ',
-              de: 'Design-Studio',
-              fr: 'Studio d’apparence',
-              es: 'Estudio de apariencia',
-              ru: 'Студия оформления',
+            title: i18n.t(
+              'inline.ui.pages.appearance_studio_page.appearance_studio_9d4889',
             ),
-            subtitle: pickUiText(
-              i18n,
-              zh: '布局密度、背景和面板风格。',
-              en: 'Layout density, background, and panel style.',
-              ja: 'レイアウト密度、背景、パネルスタイルを調整します。',
-              de: 'Layoutdichte, Hintergrund und Panel-Stil.',
-              fr: 'Densité de mise en page, arrière-plan et style des panneaux.',
-              es: 'Densidad, fondo y estilo de paneles.',
-              ru: 'Плотность интерфейса, фон и стиль панелей.',
+            subtitle: i18n.t(
+              'inline.ui.pages.settings_home_page.layout_density_background_and_panel_style_6bb1f0',
             ),
             onTap: () => _open(context, const AppearanceStudioPage()),
           ),
           const SizedBox(height: 12),
           SettingTile(
             icon: Icons.extension_rounded,
-            title: pickUiText(i18n, zh: '模块管理', en: 'Module management'),
-            subtitle: pickUiText(
-              i18n,
-              zh: '按模块启用或停用功能入口。',
-              en: 'Enable or disable feature entry points by module.',
+            title: i18n.t(
+              'inline.ui.pages.module_management_page.module_management_e20d5f',
+            ),
+            subtitle: i18n.t(
+              'inline.ui.pages.settings_home_page.enable_or_disable_feature_entry_points_by_module_541e83',
             ),
             onTap: () => _open(context, const ModuleManagementPage()),
           ),
           const SizedBox(height: 12),
           SettingTile(
             icon: Icons.language_rounded,
-            title: pickUiText(
-              i18n,
-              zh: '语言与通用',
-              en: 'Language',
-              ja: '言語と一般',
-              de: 'Sprache',
-              fr: 'Langue',
-              es: 'Idioma',
-              ru: 'Язык',
-            ),
-            subtitle: pickUiText(
-              i18n,
-              zh: '界面语言与显示偏好。',
-              en: 'Interface language and display preferences.',
-              ja: '表示言語と表示設定を管理します。',
-              de: 'Oberflächensprache und Anzeigeeinstellungen.',
-              fr: 'Langue de l’interface et préférences d’affichage.',
-              es: 'Idioma de la interfaz y preferencias visuales.',
-              ru: 'Язык интерфейса и параметры отображения.',
+            title: i18n.t('language'),
+            subtitle: i18n.t(
+              'inline.ui.pages.settings_home_page.interface_language_and_display_preferences_62fdbd',
             ),
             trailing: Text(
               state.uiLanguageFollowsSystem
-                  ? pickUiText(
-                      i18n,
-                      zh: '跟随系统',
-                      en: 'Follow system',
-                      ja: 'システムに従う',
-                      de: 'Systemsprache folgen',
-                      fr: 'Suivre le système',
-                      es: 'Seguir al sistema',
-                      ru: 'Следовать системе',
+                  ? i18n.t(
+                      'inline.ui.pages.language_settings_page.follow_system_ef2221',
                     )
                   : i18n.languageName(state.uiLanguage),
               style: Theme.of(context).textTheme.labelLarge,

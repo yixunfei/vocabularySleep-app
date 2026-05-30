@@ -354,15 +354,27 @@ class _PickupToolState extends State<_PickupTool>
     }
     score = score.clamp(0, 100);
     if (score >= 90) {
-      return i18n.t('toolbox.sound.pickup.quality_excellent', params: {'score': '\$score'});
+      return i18n.t(
+        'toolbox.sound.pickup.quality_excellent',
+        params: {'score': '\$score'},
+      );
     }
     if (score >= 75) {
-      return i18n.t('toolbox.sound.pickup.quality_good', params: {'score': '\$score'});
+      return i18n.t(
+        'toolbox.sound.pickup.quality_good',
+        params: {'score': '\$score'},
+      );
     }
     if (score >= 60) {
-      return i18n.t('toolbox.sound.pickup.quality_fair', params: {'score': '\$score'});
+      return i18n.t(
+        'toolbox.sound.pickup.quality_fair',
+        params: {'score': '\$score'},
+      );
     }
-    return i18n.t('toolbox.sound.pickup.quality_needs_work', params: {'score': '\$score'});
+    return i18n.t(
+      'toolbox.sound.pickup.quality_needs_work',
+      params: {'score': '\$score'},
+    );
   }
 
   String _guidance(AppI18n i18n) {
@@ -443,7 +455,9 @@ class _PickupToolState extends State<_PickupTool>
         setState(() {
           _hasPermission = false;
           _starting = false;
-          _error = _toolboxI18n(context).t('toolbox.sound.pickup.error_perm_denied');
+          _error = _toolboxI18n(
+            context,
+          ).t('toolbox.sound.pickup.error_perm_denied');
         });
         return;
       }
@@ -1155,7 +1169,10 @@ class _PickupToolState extends State<_PickupTool>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          i18n.t('toolbox.sound.pickup.advice_label', params: {'text': _guidance(i18n)}),
+                          i18n.t(
+                            'toolbox.sound.pickup.advice_label',
+                            params: {'text': _guidance(i18n)},
+                          ),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: Colors.white70,
                             height: 1.4,
@@ -1880,7 +1897,9 @@ class _PickupToolState extends State<_PickupTool>
               const SizedBox(height: 14),
               SectionHeader(
                 title: i18n.t('toolbox.sound.pickup.pickup_stage'),
-                subtitle: compact ? i18n.t('toolbox.sound.pickup.pickup_stage_compact') : i18n.t('toolbox.sound.pickup.pickup_stage_full'),
+                subtitle: compact
+                    ? i18n.t('toolbox.sound.pickup.pickup_stage_compact')
+                    : i18n.t('toolbox.sound.pickup.pickup_stage_full'),
               ),
               const SizedBox(height: 10),
               _buildMeterStage(context, i18n, theme),
@@ -1897,7 +1916,11 @@ class _PickupToolState extends State<_PickupTool>
                           : Icons.mic_rounded,
                     ),
                     label: Text(
-                      i18n.t(_monitoring ? 'toolbox.sound.pickup.stop_monitor' : 'toolbox.sound.pickup.start_monitor'),
+                      i18n.t(
+                        _monitoring
+                            ? 'toolbox.sound.pickup.stop_monitor'
+                            : 'toolbox.sound.pickup.start_monitor',
+                      ),
                     ),
                   ),
                   OutlinedButton.icon(
@@ -1910,7 +1933,11 @@ class _PickupToolState extends State<_PickupTool>
                           : Icons.ac_unit_rounded,
                     ),
                     label: Text(
-                      i18n.t(_freezeFrame ? 'toolbox.sound.pickup.resume_live' : 'toolbox.sound.pickup.freeze_snapshot'),
+                      i18n.t(
+                        _freezeFrame
+                            ? 'toolbox.sound.pickup.resume_live'
+                            : 'toolbox.sound.pickup.freeze_snapshot',
+                      ),
                     ),
                   ),
                   OutlinedButton.icon(
@@ -1961,7 +1988,11 @@ class _PickupToolState extends State<_PickupTool>
                             : Icons.bar_chart_rounded,
                       ),
                       label: Text(
-                        i18n.t(_showStats ? 'toolbox.sound.pickup.hide_stats' : 'toolbox.sound.pickup.show_stats'),
+                        i18n.t(
+                          _showStats
+                              ? 'toolbox.sound.pickup.hide_stats'
+                              : 'toolbox.sound.pickup.show_stats',
+                        ),
                       ),
                     ),
                   if (!_showGuide && !_monitoring)
@@ -2043,7 +2074,10 @@ class _PickupToolState extends State<_PickupTool>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          i18n.t('toolbox.sound.pickup.preamp_pct', params: {'pct': '\${(_preamp * 100).round()}'}),
+                          i18n.t(
+                            'toolbox.sound.pickup.preamp_pct',
+                            params: {'pct': '\${(_preamp * 100).round()}'},
+                          ),
                           style: theme.textTheme.bodyMedium,
                         ),
                         Slider(
@@ -2065,7 +2099,10 @@ class _PickupToolState extends State<_PickupTool>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          i18n.t('toolbox.sound.pickup.gate_pct', params: {'pct': '\${(_gate * 100).round()}'}),
+                          i18n.t(
+                            'toolbox.sound.pickup.gate_pct',
+                            params: {'pct': '\${(_gate * 100).round()}'},
+                          ),
                           style: theme.textTheme.bodyMedium,
                         ),
                         Slider(
@@ -2090,7 +2127,10 @@ class _PickupToolState extends State<_PickupTool>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          i18n.t('toolbox.sound.pickup.presence_pct', params: {'pct': '\${(_presence * 100).round()}'}),
+                          i18n.t(
+                            'toolbox.sound.pickup.presence_pct',
+                            params: {'pct': '\${(_presence * 100).round()}'},
+                          ),
                           style: theme.textTheme.bodyMedium,
                         ),
                         Slider(

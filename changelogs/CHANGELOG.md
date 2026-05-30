@@ -1,3 +1,211 @@
+## [Unreleased-PLAN_296-I18N-SINGLE-CATALOG-CLEANUP] - 2026-05-30
+
+### Reason
+- Finished the interrupted i18n cleanup for Life Tools and removed source-pair/runtime helper dependence from this path.
+
+### Added
+- `lib/src/services/toolbox_i18n_text_ref.dart`
+  - Adds a small `key + params` reference object so services can return localizable UI text without hardcoded visible strings.
+
+### Changed
+- `lib/src/services/toolbox_ai_interview_service.dart`
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_ai_interview.dart`
+- Life Tools service/UI files for City Compare, Offer Select, Work Worth, ID Photo, Compass, Date Calculator, Time Screen, Mind Map, and Number Marks
+  - Migrated visible service/UI copy to `life.*` JSON catalog keys rendered through `AppI18n.t(key, params: ...)`.
+- `lib/l10n/catalog/app_texts_*.json`
+- `lib/l10n/catalog/app_text_registry.json`
+  - Added and translated 321 Life Tools runtime keys across zh/en/ja/de/fr/es/ru.
+
+### Risk Changes
+- External translation was verified against the local OpenAI-compatible endpoint and used only to populate JSON catalog files; runtime code still reads the external catalog only.
+- Historical registry audit entries still mention old `pickUiText` source-pair records, but current Dart code no longer references the old helpers.
+
+### Validation
+- Old helper scan across `lib/test` Dart files: no matches.
+- Life Tools key coverage: 321 referenced keys, missing 0 across seven locale catalogs, registry missing 0, placeholder mismatch 0.
+- `dart analyze <PLAN_296 touched Dart files>`: no issues.
+- `flutter test test/app_i18n_catalog_test.dart --reporter compact`: passed.
+- `flutter test test/toolbox_ai_interview_service_test.dart test/toolbox_city_compare_service_test.dart test/toolbox_offer_select_service_test.dart --reporter compact`: passed.
+
+## [Unreleased-PLAN_297-HUMAN-TESTS-I18N-CATALOG-CLEANUP] - 2026-05-30
+
+### Reason
+- Cleaned Human Tests module i18n remnants so scoped UI/model copy no longer depends on `pickUiText(...)` or source-pair lookup.
+
+### Added
+- `plans/PLAN_297_human_tests_i18n_catalog_cleanup.md`
+  - Records scope, risk boundaries, and verification steps for this Human Tests cleanup.
+
+### Changed
+- `lib/src/ui/pages/toolbox_human_tests*.dart`
+  - Migrated Human Tests labels, dynamic feedback, typing passages, verbal memory data, number-memory prompts, visual search hints, and auditory stimuli to `AppI18n.t(key, params: ...)`.
+- `lib/l10n/catalog/app_texts_*.json`
+- `lib/l10n/catalog/app_text_registry.json`
+  - Added seven-locale catalog entries and registry records for PLAN_297 runtime keys.
+
+### Risk Changes
+- Some surrounding Human Tests files already carried unrelated working-tree edits and analyzer warnings; this pass did not revert them.
+- The Windows PowerShell form of the requested wildcard `rg` path is invalid, so validation used the equivalent `lib/src/ui/pages -g "toolbox_human_tests*.dart"` command.
+
+### Validation
+- `rg -n "pickUiText" lib/src/ui/pages -g "toolbox_human_tests*.dart"`: no matches.
+- PLAN_297 key coverage check: 268 referenced keys, missing 0 across seven locale catalogs, registry missing 0, placeholder mismatch 0.
+- `dart format <touched Human Tests Dart files>` completed.
+- `dart analyze <touched Human Tests Dart files>`: no errors; 16 warnings and 2 infos remain in touched files.
+
+## [Unreleased-PLAN_298-I18N-PICKUITEXT-CLEANUP-MINI-GAMES-MISC] - 2026-05-30
+
+### Reason
+- Cleaned up old `pickUiText(...)` calls in the user-specified mini-game and miscellaneous non-Daily/Life/Human UI files, wiring text through external JSON catalog keys and `AppI18n.t(...)`.
+
+### Added
+- `plans/PLAN_298_i18n_pick_ui_text_cleanup_mini_games_misc.md`
+  - Records this migration scope, risks, execution notes, and validation results.
+- `plans/PLAN_298_added_keys.json`
+  - Records the 313 catalog keys added or touched in this pass.
+
+### Changed
+- `lib/src/ui/app_shell.dart`
+- `lib/src/ui/pages/module_management_page.dart`
+- `lib/src/ui/pages/play_page.dart`
+- `lib/src/ui/pages/play_page_weather.dart`
+- `lib/src/ui/pages/toolbox_mind_tools_schulte.dart`
+- `lib/src/ui/pages/toolbox_mini_games*.dart`
+- `lib/src/ui/pages/toolbox_prayer_beads_tool.dart`
+- `lib/src/ui/pages/toolbox_sudoku_card.dart`
+- `lib/src/ui/pages/wordbook_editor_page.dart`
+- `lib/src/ui/pages/wordbook_management_page.dart`
+  - Replaced scoped direct `pickUiText(...)` calls and local `_text/_t` wrappers with `AppI18n.t(key, params: ...)`.
+- `lib/l10n/catalog/app_texts_*.json`
+- `lib/l10n/catalog/app_text_registry.json`
+  - Added seven-locale catalog entries and registry records for the new runtime keys.
+
+### Risk Changes
+- Some source Chinese strings were already mojibake, so zh catalog text was rebuilt from readable context and English meaning; non-zh locales use stable English fallback for these new keys.
+- The working tree contains many unrelated edits from other agents; this pass did not revert or normalize unrelated changes.
+
+### Validation
+- `rg -n "pickUiText|String _text\(|String _t\(|_text\(|_t\(" <specified files>`: no matches.
+- PLAN_298 key validation: 313 keys, missing 0, registry missing 0, placeholder mismatch 0.
+- `dart analyze <touched Dart files>`: no migration-caused errors; existing warnings/info remain in `app_shell.dart`, `toolbox_mini_games_roulette_view.dart`, and `toolbox_sudoku_card.dart`.
+
+## [Unreleased-PLAN_294-I18N-TOOLBOX-MODULE-TITLES-SETTINGS] - 2026-05-30
+
+### 原因
+- 用户明确指出音钵、舒缓轻音类型、木鱼、舒尔特方格、呼吸训练、沙盘和生活实用模块仍有标题说明、设置项和选项文本未完成本地化。
+
+### 新增
+- `plans/PLAN_294_i18n_toolbox_module_titles_settings_followup.md`
+  - 记录本轮点名模块 i18n 补漏范围、风险边界、key 统计和验证结果。
+- `plans/PLAN_294_added_keys.json`
+  - 记录本轮新增 485 个 catalog key 清单，便于后续复查。
+- `plans/PLAN_294_pairs_snapshot.json`
+  - 保留本轮 source-pair 扫描快照。
+
+### 修改
+- `lib/src/ui/pages/toolbox_sound_tools/soothing.dart`
+  - 将旧版舒缓轻音预设、按钮、预设区标题说明和音量文案改为 `AppI18n.t(...)` 语义 key。
+- `lib/src/ui/pages/toolbox_soothing_music_v2_copy.dart`
+- `lib/src/ui/pages/toolbox_soothing_music_v2_*.dart`
+  - 将舒缓轻音 v2 的 `SoothingMusicCopy.text(...)` 接入 JSON catalog，补齐 9 种模式类型、37 个曲目名、筛选/定时/错误/继续播放设置等七语言文案。
+- `lib/src/ui/pages/toolbox_sound_tools/woodfish.dart`
+- `lib/src/ui/pages/toolbox_zen_sand_tool*.dart`
+- `lib/src/ui/pages/toolbox_singing_bowls_tool*.dart`
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart`
+  - 将木鱼、禅意沙盘、音钵和生活实用入口的标题、说明、设置项、弹窗与动态提示统一接入 `pickUiText(...)`/catalog 反查。
+- `lib/l10n/catalog/app_texts_*.json`
+- `lib/l10n/catalog/app_text_registry.json`
+  - 新增/登记 485 个七语言 key，并修正音钵命名、动态占位符和非中英文回退英文问题。
+- `docs/i18n/I18N_TEXT_AUDIT.md`
+  - 补充 PLAN_294 覆盖范围、统计和校验结果。
+
+### 风险变更
+- 生活实用模块文件众多，本轮只收口 hub/入口和用户点名相关展示文案；其它生活工具内的大型数据、单位、URL、导出文件名和服务状态仍按非本轮候选保留。
+- 对纯数值、单位、乐理代码和资源路径不做强制翻译，避免污染业务数据或播放资源。
+
+### 验证
+- `dart format lib\src\ui\pages\toolbox_sound_tools\soothing.dart lib\src\ui\pages\toolbox_sound_tools\woodfish.dart lib\src\ui\pages\toolbox_zen_sand_tool.dart lib\src\ui\pages\toolbox_zen_sand_tool_config.dart lib\src\ui\pages\toolbox_zen_sand_tool_widgets.dart lib\src\ui\pages\toolbox_singing_bowls_tool.dart lib\src\ui\pages\toolbox_singing_bowls_tool_layout.dart lib\src\ui\pages\toolbox_singing_bowls_tool_sheet.dart lib\src\ui\pages\toolbox_singing_bowls_tool_sheet_controls.dart lib\src\ui\pages\toolbox_singing_bowls_tool_specs.dart lib\src\ui\pages\toolbox_singing_bowls_tool_wide.dart lib\src\ui\pages\toolbox_singing_bowls_tool_wide_tiles.dart lib\src\ui\pages\toolbox_soothing_music_v2_copy.dart lib\src\ui\pages\toolbox_soothing_music_v2_labels.dart lib\src\ui\pages\toolbox_soothing_music_v2_page.dart lib\src\ui\pages\toolbox_soothing_music_v2_stage.dart lib\src\ui\pages\toolbox_soothing_music_v2_arrangement.dart`
+- `dart analyze lib\src\ui\pages\toolbox_sound_tools.dart lib\src\ui\pages\toolbox_soothing_music_v2_page.dart lib\src\ui\pages\toolbox_singing_bowls_tool.dart lib\src\ui\pages\toolbox_mind_tools.dart lib\src\ui\pages\toolbox_mind_tools_schulte.dart lib\src\ui\pages\toolbox_breathing_tool.dart lib\src\ui\pages\toolbox_breathing_tool_voice.dart lib\src\ui\pages\toolbox_zen_sand_tool.dart lib\src\ui\pages\toolbox_life_tools.dart lib\src\ui\pages\toolbox_life_tools\toolbox_life_tools_hub.dart lib\src\i18n\app_i18n_catalog.dart lib\src\ui\ui_copy.dart test\app_i18n_catalog_test.dart`
+- `flutter test test\app_i18n_catalog_test.dart --reporter compact`
+- PLAN_294 485 个 key 七语言校验：缺失 0，占位符不一致 0，registry missing 0，非预期英文回退 0。
+- 点名模块 479 处 `pickUiText/_uiText/_text/_lifeText` helper source-pair 扫描：缺失 0。
+
+## [Unreleased-PLAN_293-I18N-DIRECT-UI-LITERAL-FOLLOWUP] - 2026-05-30
+
+### 原因
+- 用户指出上一轮仍有弹窗、标题、设置项和工具页状态文案未完全纳入多语言管理，本轮继续按高可信 UI 出口做人工收口。
+
+### 新增
+- `plans/PLAN_293_i18n_direct_ui_literal_followup.md`
+  - 记录直接 UI 硬编码二次收口范围、风险边界、剩余候选分类和验证结果。
+
+### 修改
+- `lib/src/ui/pages/toolbox_sound_tools/focus_arrangement_editor.dart`
+- `lib/src/ui/pages/toolbox_sound_tools/focus.dart`
+  - 将 Focus 编排编辑器的弹窗、SnackBar、输入框、按钮、模板预设、状态 chip 与节拍摘要统一接入 `AppI18n.t(...)`。
+- `lib/src/ui/pages/toolbox_sound_tools/deck.dart`
+  - 将 Deck 全屏快速启动 tooltip、快捷提示和当前乐器状态接入运行时 key。
+- `lib/src/ui/widgets/word_row.dart`
+  - 将“当前”“文本已隐藏”等单词行状态文案接入 `pickUiText(...)`，由 catalog source-pair 统一管理多语言。
+- `lib/src/ui/pages/toolbox_life_tools.dart`
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_reverse_image.dart`
+  - 为 life tools part 文件增加运行时 key helper，并将以图搜图 Google Lens 手动降级提示、失败摘要和结构化结果摘要改为语义 key + 参数。
+- `lib/src/ui/pages/toolbox_daily_choice/daily_choice_place_map_panel.dart`
+  - 在展示层映射定位/IP 粗略定位 service 诊断，避免英文诊断原文直接拼进用户可见错误提示。
+- `lib/l10n/catalog/app_texts_*.json`
+- `lib/l10n/catalog/app_text_registry.json`
+  - 新增/登记 18 个运行时 key，并保留本轮 Focus 编辑器 39 个 key 的七语言文案。
+- `docs/i18n/I18N_TEXT_AUDIT.md`
+  - 补充 PLAN_293 二次收口结果、剩余扫描候选边界和验证数据。
+
+### 风险变更
+- `daily_choice_place_map_service.dart` 保留英文诊断字符串作为内部状态来源；最终展示文本已在面板层本地化，避免侵入 service 逻辑。
+- 收尾扫描中剩余命中大多是数值、温度、序号、文件名 hint、项目符号、服务诊断或已包含 `i18n.t(...)` 的拼接误报，本轮不进行批量替换。
+
+### 验证
+- `dart format lib\src\ui\pages\toolbox_daily_choice\daily_choice_place_map_panel.dart lib\src\ui\pages\toolbox_life_tools.dart lib\src\ui\pages\toolbox_life_tools\toolbox_life_tools_reverse_image.dart lib\src\ui\pages\toolbox_sound_tools\deck.dart lib\src\ui\widgets\word_row.dart`
+- `dart analyze lib\src\ui\pages\toolbox_daily_choice\daily_choice_hub.dart lib\src\ui\pages\toolbox_life_tools.dart lib\src\ui\pages\toolbox_life_tools\toolbox_life_tools_reverse_image.dart lib\src\ui\pages\toolbox_sound_tools.dart lib\src\ui\pages\toolbox_sound_tools\deck.dart lib\src\ui\pages\toolbox_sound_tools\focus.dart lib\src\ui\pages\toolbox_sound_tools\focus_arrangement_editor.dart lib\src\ui\widgets\word_row.dart lib\src\i18n\app_i18n_catalog.dart lib\src\ui\ui_copy.dart test\app_i18n_catalog_test.dart`
+- `flutter test test\app_i18n_catalog_test.dart --reporter compact`
+- PLAN_293 相关 57 个 key 七语言校验：缺失 0，占位符不一致 0，`???` 可疑文本 0。
+
+## [Unreleased-PLAN_292-I18N-RUNTIME-FULL-WIRING] - 2026-05-30
+
+### 原因
+- 用户反馈上一轮仍有大量弹窗、标题、设置项和工具页面文本没有真正纳入运行时多语言显示，要求全面排查并完成统一管理。
+
+### 新增
+- `plans/PLAN_292_i18n_runtime_full_wiring.md`
+  - 记录本轮 i18n 运行时接入、硬编码收口、验证和剩余风险。
+
+### 修改
+- `lib/src/i18n/app_i18n_catalog.dart`
+  - 新增 `zh/en` source-pair、英文 source 和旧内联动态模板索引，用于把已登记的 `pickUiText(...)` 文案接入 JSON catalog。
+  - 支持动态旧文案模板保留运行时变量，例如语言名、数量、状态等。
+- `lib/src/ui/ui_copy.dart`
+  - `pickUiText(...)` 现在中文/英文保留当前代码源文本，其他语言优先读取集中 catalog，避免旧内联写法继续回退英文。
+- `lib/src/ui/pages/toolbox_mind_tools.dart`
+- `lib/src/ui/pages/toolbox_mini_games_sudoku.dart`
+- `lib/src/ui/pages/toolbox_life_tools/toolbox_life_tools_hub.dart`
+- `lib/src/ui/pages/toolbox_sound_tools/deck.dart`
+  - 首批收口明确用户可见的直接硬编码按钮、指标、SnackBar 与状态提示。
+- `lib/l10n/catalog/app_texts_*.json`
+  - 新增声音工具 Deck 的 `quick_tips` 与 `current_instrument` 七语言 key。
+- `lib/l10n/catalog/app_text_registry.json`
+  - 登记本轮新增运行时 key 和 PLAN_292 接入摘要。
+- `docs/i18n/I18N_TEXT_AUDIT.md`
+  - 补充 2026-05-30 运行时接入结果与剩余候选边界。
+- `test/app_i18n_catalog_test.dart`
+  - 覆盖旧 `pickUiText` source-pair 反查、动态模板变量保留和 catalog 回退行为。
+
+### 风险变更
+- 本轮不批量替换 `dart_string_literal_candidate`，因为其中混有内容数据、资源路径、单位/乐理/数值、存储 key、日志和测试文本；后续仍需按页面/模块人工判断。
+- 动态模板索引限定在 `inline.*` 文案，避免过宽模板误匹配普通数值或技术字符串。
+
+### 验证
+- `dart analyze lib\src\i18n\app_i18n_catalog.dart lib\src\ui\ui_copy.dart lib\src\ui\pages\toolbox_mind_tools.dart lib\src\ui\pages\toolbox_mini_games.dart lib\src\ui\pages\toolbox_life_tools.dart lib\src\ui\pages\toolbox_sound_tools\deck.dart test\app_i18n_catalog_test.dart`
+- `flutter test test\app_i18n_catalog_test.dart --reporter compact`
+- `inline_pick_ui_text` 审计：4076 条 source-pair 命中，缺失 0；其中 397 条含动态值由模板索引覆盖。
+
 ## [Unreleased-PLAN_291-I18N-LOCALE-COMPLETION-REDO] - 2026-05-29
 
 ### 原因

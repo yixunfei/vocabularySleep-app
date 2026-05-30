@@ -546,11 +546,13 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   @override
   Widget build(BuildContext context) {
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '图片/音频/视频隐写', en: 'Media steganography'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '本地加密文本并写入媒体，也可独立加密文件或计算哈希。',
-        en: 'Encrypt text into media, encrypt files, or calculate hashes locally.',
+        'inline.plan295.crypto.media_steganography.ae000f7887ea',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.crypto.encrypt_text_into_media_encrypt_file.6902c8ad0625',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -588,10 +590,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             const SizedBox(height: 10),
             _buildMessagePanel(
               context,
-              text: _lifeText(
+              text: _lifeI18nText(
                 context,
-                zh: '已保存: $_savedPath',
-                en: 'Saved: $_savedPath',
+                'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.saved.7b5e2b53bc',
+                params: <String, Object?>{'_savedPath': _savedPath},
               ),
               icon: Icons.check_circle_outline_rounded,
               color: Theme.of(context).colorScheme.primaryContainer,
@@ -653,7 +655,12 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             ).colorScheme.primary.withValues(alpha: 0.35),
           ),
         ),
-        title: Text(_lifeText(context, zh: '高级加密参数', en: 'Advanced crypto')),
+        title: Text(
+          _lifeI18nText(
+            context,
+            'inline.plan295.crypto.advanced_crypto.3f9a90e0b348',
+          ),
+        ),
         subtitle: Text(
           '${_keyBits.bits}-bit · ${_macAlgorithm.id} · ${_signatureMode.label} · ${_locatorAlgorithm.label}/${_locatorStrength.id}',
           maxLines: 1,
@@ -664,23 +671,26 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               _LifeSegmentedField<ToolboxCryptoKeyBits>(
-                label: _lifeText(context, zh: '密钥材料', en: 'Key bits'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.crypto.key_bits.187269d6b250',
+                ),
                 value: _keyBits,
                 options: const <_LifeOption<ToolboxCryptoKeyBits>>[
                   _LifeOption<ToolboxCryptoKeyBits>(
                     value: ToolboxCryptoKeyBits.bits256,
-                    labelZh: '256-bit',
-                    labelEn: '256-bit',
+                    labelKey:
+                        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.256_bit_374d7d',
                   ),
                   _LifeOption<ToolboxCryptoKeyBits>(
                     value: ToolboxCryptoKeyBits.bits512,
-                    labelZh: '512-bit',
-                    labelEn: '512-bit',
+                    labelKey:
+                        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.512_bit_74e578',
                   ),
                   _LifeOption<ToolboxCryptoKeyBits>(
                     value: ToolboxCryptoKeyBits.bits1024,
-                    labelZh: '1024-bit',
-                    labelEn: '1024-bit',
+                    labelKey:
+                        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.1024_bit_5414a9',
                   ),
                 ],
                 onChanged: _busy
@@ -689,18 +699,21 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               ),
               const SizedBox(height: 12),
               _LifeSegmentedField<ToolboxCryptoMacAlgorithm>(
-                label: _lifeText(context, zh: '校验哈希', en: 'MAC hash'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.crypto.mac_hash.f7ae2017d6ed',
+                ),
                 value: _macAlgorithm,
                 options: const <_LifeOption<ToolboxCryptoMacAlgorithm>>[
                   _LifeOption<ToolboxCryptoMacAlgorithm>(
                     value: ToolboxCryptoMacAlgorithm.sha256,
-                    labelZh: 'SHA-256',
-                    labelEn: 'SHA-256',
+                    labelKey:
+                        'literal.services.toolbox_crypto_service.sha_256_8104c0',
                   ),
                   _LifeOption<ToolboxCryptoMacAlgorithm>(
                     value: ToolboxCryptoMacAlgorithm.whirlpool,
-                    labelZh: 'Whirlpool',
-                    labelEn: 'Whirlpool',
+                    labelKey:
+                        'literal.services.toolbox_crypto_service.whirlpool_b998b2',
                   ),
                 ],
                 onChanged: _busy
@@ -709,28 +722,30 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               ),
               const SizedBox(height: 12),
               _LifeSegmentedField<ToolboxCryptoSignatureMode>(
-                label: _lifeText(context, zh: '签名层', en: 'Signature'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.crypto.signature.a27f12dbd0aa',
+                ),
                 value: _signatureMode,
                 options: const <_LifeOption<ToolboxCryptoSignatureMode>>[
                   _LifeOption<ToolboxCryptoSignatureMode>(
                     value: ToolboxCryptoSignatureMode.none,
-                    labelZh: '无',
-                    labelEn: 'None',
+                    labelKey: 'ref.wordTransitionStyleNone',
                   ),
                   _LifeOption<ToolboxCryptoSignatureMode>(
                     value: ToolboxCryptoSignatureMode.weakSha256,
-                    labelZh: '弱签名版 快',
-                    labelEn: 'Weak fast',
+                    labelKey:
+                        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.weak_fast_df2355',
                   ),
                   _LifeOption<ToolboxCryptoSignatureMode>(
                     value: ToolboxCryptoSignatureMode.rsaSha256,
-                    labelZh: 'SHA-256/RSA',
-                    labelEn: 'SHA-256/RSA',
+                    labelKey:
+                        'literal.services.toolbox_crypto_service.sha_256_rsa_315a26',
                   ),
                   _LifeOption<ToolboxCryptoSignatureMode>(
                     value: ToolboxCryptoSignatureMode.ecdsaSha256,
-                    labelZh: 'ECDSA',
-                    labelEn: 'ECDSA',
+                    labelKey:
+                        'literal.services.toolbox_crypto_service.ecdsa_890a3a',
                   ),
                 ],
                 onChanged: _busy
@@ -756,13 +771,15 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                     : (value) => setState(() => _dualLayerEnabled = value),
                 secondary: const Icon(Icons.layers_rounded),
                 title: Text(
-                  _lifeText(context, zh: '双层可否认模式', en: 'Dual layer'),
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.crypto.dual_layer.9d7703c2e1ed',
+                  ),
                 ),
                 subtitle: Text(
-                  _lifeText(
+                  _lifeI18nText(
                     context,
-                    zh: '显式写入表层与深层两份内容；表层口令只还原表层内容。',
-                    en: 'Explicitly writes cover and hidden content; the cover passphrase reveals only the cover layer.',
+                    'inline.plan295.crypto.explicitly_writes_cover_and_hidden_c.a293ba98ad55',
                   ),
                 ),
               ),
@@ -771,10 +788,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                 _buildInlineNotice(
                   context,
                   icon: Icons.privacy_tip_rounded,
-                  text: _lifeText(
+                  text: _lifeI18nText(
                     context,
-                    zh: '双层模式会写入表层与深层两份载荷。请保存原始载体；修改双层内容时应重新生成，不要重复写入同一隐写文件。',
-                    en: 'Dual-layer mode writes cover and hidden payloads. Keep the original carrier; regenerate from it instead of writing into an existing stego file.',
+                    'inline.plan295.crypto.dual_layer_mode_writes_cover_and_hid.688598b49f5a',
                   ),
                 ),
               ],
@@ -786,10 +802,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.security_update_warning_rounded),
-                  labelText: _lifeText(
+                  labelText: _lifeI18nText(
                     context,
-                    zh: '最大错误尝试次数',
-                    en: 'Max wrong attempts',
+                    'inline.plan295.crypto.max_wrong_attempts.6959d4319854',
                   ),
                   helperText: _maxErrorAttemptsRiskText(context),
                   helperMaxLines: 3,
@@ -809,10 +824,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.auto_delete_rounded),
-                  labelText: _lifeText(
+                  labelText: _lifeI18nText(
                     context,
-                    zh: '成功还原次数上限',
-                    en: 'Max successful reveals',
+                    'inline.plan295.crypto.max_successful_reveals.a01dd55e3e17',
                   ),
                   helperText: _maxSuccessfulRevealsRiskText(context),
                   helperMaxLines: 4,
@@ -824,51 +838,51 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               ),
               const SizedBox(height: 12),
               _LifeSegmentedField<ToolboxSteganographyLocatorAlgorithm>(
-                label: _lifeText(
+                label: _lifeI18nText(
                   context,
-                  zh: '定位密钥算法',
-                  en: 'Locator algorithm',
+                  'inline.plan295.crypto.locator_algorithm.111bf25c9873',
                 ),
                 value: _locatorAlgorithm,
-                options:
-                    const <_LifeOption<ToolboxSteganographyLocatorAlgorithm>>[
-                      _LifeOption<ToolboxSteganographyLocatorAlgorithm>(
-                        value: ToolboxSteganographyLocatorAlgorithm.sha256,
-                        labelZh: 'SHA-256',
-                        labelEn: 'SHA-256',
-                      ),
-                      _LifeOption<ToolboxSteganographyLocatorAlgorithm>(
-                        value: ToolboxSteganographyLocatorAlgorithm.sha512,
-                        labelZh: 'SHA-512',
-                        labelEn: 'SHA-512',
-                      ),
-                    ],
+                options: const <_LifeOption<ToolboxSteganographyLocatorAlgorithm>>[
+                  _LifeOption<ToolboxSteganographyLocatorAlgorithm>(
+                    value: ToolboxSteganographyLocatorAlgorithm.sha256,
+                    labelKey:
+                        'literal.services.toolbox_crypto_service.sha_256_8104c0',
+                  ),
+                  _LifeOption<ToolboxSteganographyLocatorAlgorithm>(
+                    value: ToolboxSteganographyLocatorAlgorithm.sha512,
+                    labelKey:
+                        'literal.services.toolbox_crypto_service.sha_512_746cf7',
+                  ),
+                ],
                 onChanged: _busy
                     ? (_) {}
                     : (value) => setState(() => _locatorAlgorithm = value),
               ),
               const SizedBox(height: 12),
               _LifeSegmentedField<ToolboxSteganographyLocatorStrength>(
-                label: _lifeText(context, zh: '定位密钥强度', en: 'Locator strength'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.crypto.locator_strength.1a07a07caf35',
+                ),
                 value: _locatorStrength,
-                options:
-                    const <_LifeOption<ToolboxSteganographyLocatorStrength>>[
-                      _LifeOption<ToolboxSteganographyLocatorStrength>(
-                        value: ToolboxSteganographyLocatorStrength.standard,
-                        labelZh: '标准 4096',
-                        labelEn: 'Standard 4096',
-                      ),
-                      _LifeOption<ToolboxSteganographyLocatorStrength>(
-                        value: ToolboxSteganographyLocatorStrength.strong,
-                        labelZh: '加强 12000',
-                        labelEn: 'Strong 12000',
-                      ),
-                      _LifeOption<ToolboxSteganographyLocatorStrength>(
-                        value: ToolboxSteganographyLocatorStrength.extreme,
-                        labelZh: '极限 24000',
-                        labelEn: 'Extreme 24000',
-                      ),
-                    ],
+                options: const <_LifeOption<ToolboxSteganographyLocatorStrength>>[
+                  _LifeOption<ToolboxSteganographyLocatorStrength>(
+                    value: ToolboxSteganographyLocatorStrength.standard,
+                    labelKey:
+                        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.standard_4096_4d6ce0',
+                  ),
+                  _LifeOption<ToolboxSteganographyLocatorStrength>(
+                    value: ToolboxSteganographyLocatorStrength.strong,
+                    labelKey:
+                        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.strong_12000_325e9b',
+                  ),
+                  _LifeOption<ToolboxSteganographyLocatorStrength>(
+                    value: ToolboxSteganographyLocatorStrength.extreme,
+                    labelKey:
+                        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.extreme_24000_ad0947',
+                  ),
+                ],
                 onChanged: _busy
                     ? (_) {}
                     : (value) => setState(() => _locatorStrength = value),
@@ -887,10 +901,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         _buildInlineNotice(
           context,
           icon: Icons.account_tree_rounded,
-          text: _lifeText(
+          text: _lifeI18nText(
             context,
-            zh: '自由级联会按下方顺序逐层加密，每层独立派生所选长度的密钥材料。',
-            en: 'Custom cascade encrypts in the order below, deriving independent key material for every stage.',
+            'inline.plan295.crypto.custom_cascade_encrypts_in_the_order.5ccc9729aa9e',
           ),
         ),
         const SizedBox(height: 10),
@@ -922,7 +935,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  _lifeText(context, zh: '定位设置', en: 'Locator'),
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.crypto.locator.b1be49c6bc09',
+                  ),
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
               ),
@@ -930,18 +946,21 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           ),
           const SizedBox(height: 12),
           _LifeSegmentedField<ToolboxSteganographyLocatorAlgorithm>(
-            label: _lifeText(context, zh: '定位密钥算法', en: 'Locator algorithm'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.crypto.locator_algorithm.111bf25c9873',
+            ),
             value: _locatorAlgorithm,
             options: const <_LifeOption<ToolboxSteganographyLocatorAlgorithm>>[
               _LifeOption<ToolboxSteganographyLocatorAlgorithm>(
                 value: ToolboxSteganographyLocatorAlgorithm.sha256,
-                labelZh: 'SHA-256',
-                labelEn: 'SHA-256',
+                labelKey:
+                    'literal.services.toolbox_crypto_service.sha_256_8104c0',
               ),
               _LifeOption<ToolboxSteganographyLocatorAlgorithm>(
                 value: ToolboxSteganographyLocatorAlgorithm.sha512,
-                labelZh: 'SHA-512',
-                labelEn: 'SHA-512',
+                labelKey:
+                    'literal.services.toolbox_crypto_service.sha_512_746cf7',
               ),
             ],
             onChanged: _busy
@@ -950,23 +969,26 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           ),
           const SizedBox(height: 12),
           _LifeSegmentedField<ToolboxSteganographyLocatorStrength>(
-            label: _lifeText(context, zh: '定位密钥强度', en: 'Locator strength'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.crypto.locator_strength.1a07a07caf35',
+            ),
             value: _locatorStrength,
             options: const <_LifeOption<ToolboxSteganographyLocatorStrength>>[
               _LifeOption<ToolboxSteganographyLocatorStrength>(
                 value: ToolboxSteganographyLocatorStrength.standard,
-                labelZh: '标准 4096',
-                labelEn: 'Standard 4096',
+                labelKey:
+                    'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.standard_4096_4d6ce0',
               ),
               _LifeOption<ToolboxSteganographyLocatorStrength>(
                 value: ToolboxSteganographyLocatorStrength.strong,
-                labelZh: '加强 12000',
-                labelEn: 'Strong 12000',
+                labelKey:
+                    'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.strong_12000_325e9b',
               ),
               _LifeOption<ToolboxSteganographyLocatorStrength>(
                 value: ToolboxSteganographyLocatorStrength.extreme,
-                labelZh: '极限 24000',
-                labelEn: 'Extreme 24000',
+                labelKey:
+                    'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.extreme_24000_ad0947',
               ),
             ],
             onChanged: _busy
@@ -983,45 +1005,64 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     final modeLabel = switch (_workspace) {
       _CryptoWorkspace.steganography =>
         _mode == _StegoMode.embed
-            ? _lifeText(context, zh: '写入密文', en: 'Embed secret')
-            : _lifeText(context, zh: '还原信息', en: 'Reveal message'),
+            ? _lifeI18nText(
+                context,
+                'inline.plan295.crypto.embed_secret.d269b139d092',
+              )
+            : _lifeI18nText(
+                context,
+                'inline.plan295.crypto.reveal_message.8ac6fa6d6d32',
+              ),
       _CryptoWorkspace.file =>
         _fileMode == _FileCryptoMode.encrypt
-            ? _lifeText(context, zh: '文件写入', en: 'Embed file')
-            : _lifeText(context, zh: '文件还原', en: 'Reveal file'),
-      _CryptoWorkspace.hash => _lifeText(
+            ? _lifeI18nText(
+                context,
+                'inline.plan295.crypto.embed_file.74e82c21375c',
+              )
+            : _lifeI18nText(
+                context,
+                'inline.plan295.crypto.reveal_file.9b10709f7962',
+              ),
+      _CryptoWorkspace.hash => _lifeI18nText(
         context,
-        zh: '哈希校验',
-        en: 'Hash digest',
+        'inline.plan295.crypto.hash_digest.90114149c380',
       ),
     };
     final workspaceLabel = _workspaceLabel(context, _workspace);
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '加密工作台', en: 'Crypto stage'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '当前: $workspaceLabel / $modeLabel / $mediaLabel。密钥文件可与口令叠加使用。',
-        en: 'Current: $workspaceLabel / $modeLabel / $mediaLabel. A key file can be combined with the passphrase.',
+        'inline.plan295.crypto.crypto_stage.1c23c0810f0a',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.current_a_key_file_can_be.08fe5bc36b',
+        params: <String, Object?>{
+          'workspaceLabel': workspaceLabel,
+          'modeLabel': modeLabel,
+          'mediaLabel': mediaLabel,
+        },
       ),
       children: <Widget>[
         _LifeSegmentedField<_CryptoWorkspace>(
-          label: _lifeText(context, zh: '功能', en: 'Function'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.crypto.function.3610cd5968f2',
+          ),
           value: _workspace,
           options: const <_LifeOption<_CryptoWorkspace>>[
             _LifeOption<_CryptoWorkspace>(
               value: _CryptoWorkspace.steganography,
-              labelZh: '隐写',
-              labelEn: 'Stego',
+              labelKey: 'inline.plan295.crypto.stego.1cc36bd69b84',
             ),
             _LifeOption<_CryptoWorkspace>(
               value: _CryptoWorkspace.file,
-              labelZh: '文件',
-              labelEn: 'File',
+              labelKey:
+                  'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.file_225ba0',
             ),
             _LifeOption<_CryptoWorkspace>(
               value: _CryptoWorkspace.hash,
-              labelZh: '哈希',
-              labelEn: 'Hash',
+              labelKey: 'inline.plan295.crypto.hash.c499c69bcca6',
             ),
           ],
           onChanged: _busy
@@ -1039,33 +1080,36 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         const SizedBox(height: 12),
         if (_workspace == _CryptoWorkspace.hash) ...<Widget>[
           _LifeSegmentedField<ToolboxCryptoHashAlgorithm>(
-            label: _lifeText(context, zh: '哈希算法', en: 'Hash algorithm'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.crypto.hash_algorithm.86a4a467de16',
+            ),
             value: _hashAlgorithm,
             options: const <_LifeOption<ToolboxCryptoHashAlgorithm>>[
               _LifeOption<ToolboxCryptoHashAlgorithm>(
                 value: ToolboxCryptoHashAlgorithm.sha256,
-                labelZh: 'SHA-256',
-                labelEn: 'SHA-256',
+                labelKey:
+                    'literal.services.toolbox_crypto_service.sha_256_8104c0',
               ),
               _LifeOption<ToolboxCryptoHashAlgorithm>(
                 value: ToolboxCryptoHashAlgorithm.sha512,
-                labelZh: 'SHA-512',
-                labelEn: 'SHA-512',
+                labelKey:
+                    'literal.services.toolbox_crypto_service.sha_512_746cf7',
               ),
               _LifeOption<ToolboxCryptoHashAlgorithm>(
                 value: ToolboxCryptoHashAlgorithm.sha3_256,
-                labelZh: 'SHA3-256',
-                labelEn: 'SHA3-256',
+                labelKey:
+                    'literal.services.toolbox_crypto_service.sha3_256_226282',
               ),
               _LifeOption<ToolboxCryptoHashAlgorithm>(
                 value: ToolboxCryptoHashAlgorithm.blake2b256,
-                labelZh: 'BLAKE2b',
-                labelEn: 'BLAKE2b',
+                labelKey:
+                    'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.blake2b_533777',
               ),
               _LifeOption<ToolboxCryptoHashAlgorithm>(
                 value: ToolboxCryptoHashAlgorithm.whirlpool,
-                labelZh: 'Whirlpool',
-                labelEn: 'Whirlpool',
+                labelKey:
+                    'literal.services.toolbox_crypto_service.whirlpool_b998b2',
               ),
             ],
             onChanged: _busy
@@ -1082,49 +1126,61 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                   context,
                   mode: _StegoMode.embed,
                   icon: Icons.lock_rounded,
-                  label: _lifeText(context, zh: '写入', en: 'Embed'),
+                  label: _lifeI18nText(
+                    context,
+                    'inline.plan295.crypto.embed.4540f8f9375d',
+                  ),
                 ),
                 _buildModeChip(
                   context,
                   mode: _StegoMode.reveal,
                   icon: Icons.lock_open_rounded,
-                  label: _lifeText(context, zh: '还原', en: 'Reveal'),
+                  label: _lifeI18nText(
+                    context,
+                    'inline.plan295.crypto.reveal.4317a923361e',
+                  ),
                 ),
               ] else ...<Widget>[
                 _buildFileModeChip(
                   context,
                   mode: _FileCryptoMode.encrypt,
                   icon: Icons.lock_rounded,
-                  label: _lifeText(context, zh: '加密', en: 'Encrypt'),
+                  label: _lifeI18nText(
+                    context,
+                    'inline.plan295.crypto.encrypt.1fc135dfc95f',
+                  ),
                 ),
                 _buildFileModeChip(
                   context,
                   mode: _FileCryptoMode.decrypt,
                   icon: Icons.lock_open_rounded,
-                  label: _lifeText(context, zh: '解密', en: 'Decrypt'),
+                  label: _lifeI18nText(
+                    context,
+                    'inline.plan295.crypto.decrypt.30d8321efe61',
+                  ),
                 ),
               ],
             ],
           ),
           const SizedBox(height: 12),
           _LifeSegmentedField<ToolboxSteganographyMediaKind>(
-            label: _lifeText(context, zh: '媒体类型', en: 'Media type'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.crypto.media_type.a93164fdf789',
+            ),
             value: _mediaKind,
             options: const <_LifeOption<ToolboxSteganographyMediaKind>>[
               _LifeOption<ToolboxSteganographyMediaKind>(
                 value: ToolboxSteganographyMediaKind.image,
-                labelZh: '图片',
-                labelEn: 'Image',
+                labelKey: 'inline.plan295.crypto.image.baebdc30e7e4',
               ),
               _LifeOption<ToolboxSteganographyMediaKind>(
                 value: ToolboxSteganographyMediaKind.audio,
-                labelZh: '音频',
-                labelEn: 'Audio',
+                labelKey: 'inline.plan295.crypto.audio.253158c06f3c',
               ),
               _LifeOption<ToolboxSteganographyMediaKind>(
                 value: ToolboxSteganographyMediaKind.video,
-                labelZh: '视频',
-                labelEn: 'Video',
+                labelKey: 'inline.plan295.crypto.video.2074eae3b2ea',
               ),
             ],
             onChanged: _busy
@@ -1139,68 +1195,71 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           const SizedBox(height: 12),
           if (!_isRevealMode) ...<Widget>[
             _LifeSegmentedField<ToolboxCryptoAlgorithm>(
-              label: _lifeText(context, zh: '加密算法', en: 'Encryption'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.crypto.encryption.8a35d6135b6c',
+              ),
               value: _encryption,
               options: const <_LifeOption<ToolboxCryptoAlgorithm>>[
                 _LifeOption<ToolboxCryptoAlgorithm>(
                   value: ToolboxCryptoAlgorithm.aesGcm,
-                  labelZh: 'AES 强',
-                  labelEn: 'AES strong',
+                  labelKey:
+                      'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.aes_strong_4821e8',
                 ),
                 _LifeOption<ToolboxCryptoAlgorithm>(
                   value: ToolboxCryptoAlgorithm.chacha20Poly1305,
-                  labelZh: 'ChaCha20',
-                  labelEn: 'ChaCha20',
+                  labelKey:
+                      'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.chacha20_3538f3',
                 ),
                 _LifeOption<ToolboxCryptoAlgorithm>(
                   value: ToolboxCryptoAlgorithm.twofishGcm,
-                  labelZh: 'Twofish 强',
-                  labelEn: 'Twofish strong',
+                  labelKey:
+                      'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.twofish_strong_f62d39',
                 ),
                 _LifeOption<ToolboxCryptoAlgorithm>(
                   value: ToolboxCryptoAlgorithm.camelliaGcm,
-                  labelZh: 'Camellia 强',
-                  labelEn: 'Camellia strong',
+                  labelKey:
+                      'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.camellia_strong_9da626',
                 ),
                 _LifeOption<ToolboxCryptoAlgorithm>(
                   value: ToolboxCryptoAlgorithm.aesTwofishGcm,
-                  labelZh: 'AES+Twofish 强+',
-                  labelEn: 'AES+Twofish strong+',
+                  labelKey:
+                      'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.aes_twofish_strong_ebec16',
                 ),
                 _LifeOption<ToolboxCryptoAlgorithm>(
                   value: ToolboxCryptoAlgorithm.aesCamelliaGcm,
-                  labelZh: 'AES+Camellia 强+',
-                  labelEn: 'AES+Camellia strong+',
+                  labelKey:
+                      'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.aes_camellia_strong_12afe9',
                 ),
                 _LifeOption<ToolboxCryptoAlgorithm>(
                   value: ToolboxCryptoAlgorithm.aesTwofishCamelliaGcm,
-                  labelZh: '三重 强+',
-                  labelEn: 'Triple strong+',
+                  labelKey:
+                      'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.triple_strong_b76cc2',
                 ),
                 _LifeOption<ToolboxCryptoAlgorithm>(
                   value: ToolboxCryptoAlgorithm.customCascade,
-                  labelZh: '自由级联 强',
-                  labelEn: 'Custom strong',
+                  labelKey:
+                      'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.custom_strong_634ee4',
                 ),
                 _LifeOption<ToolboxCryptoAlgorithm>(
                   value: ToolboxCryptoAlgorithm.sha256RsaSignature,
-                  labelZh: 'RSA 签名 强',
-                  labelEn: 'RSA signed',
+                  labelKey:
+                      'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.rsa_signed_9ebb16',
                 ),
                 _LifeOption<ToolboxCryptoAlgorithm>(
                   value: ToolboxCryptoAlgorithm.ecdsaSignature,
-                  labelZh: 'ECDSA 签名 强',
-                  labelEn: 'ECDSA signed',
+                  labelKey:
+                      'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.ecdsa_signed_5aa308',
                 ),
                 _LifeOption<ToolboxCryptoAlgorithm>(
                   value: ToolboxCryptoAlgorithm.whirlpoolDigest,
-                  labelZh: 'Whirlpool 校验 强',
-                  labelEn: 'Whirlpool strong',
+                  labelKey:
+                      'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.whirlpool_strong_e1298e',
                 ),
                 _LifeOption<ToolboxCryptoAlgorithm>(
                   value: ToolboxCryptoAlgorithm.none,
-                  labelZh: '不加密 明文',
-                  labelEn: 'No encryption plain',
+                  labelKey:
+                      'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.no_encryption_plain_549173',
                 ),
               ],
               onChanged: _busy
@@ -1216,23 +1275,26 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             _buildAlgorithmSafetyNotice(context),
             const SizedBox(height: 12),
             _LifeSegmentedField<ToolboxCryptoStrength>(
-              label: _lifeText(context, zh: '强度', en: 'Strength'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.crypto.strength.6ceaff5bfe8e',
+              ),
               value: _strength,
               options: const <_LifeOption<ToolboxCryptoStrength>>[
                 _LifeOption<ToolboxCryptoStrength>(
                   value: ToolboxCryptoStrength.standard,
-                  labelZh: '标准 2^16',
-                  labelEn: 'Standard 2^16',
+                  labelKey:
+                      'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.standard_2_16_213606',
                 ),
                 _LifeOption<ToolboxCryptoStrength>(
                   value: ToolboxCryptoStrength.strong,
-                  labelZh: '加强 2^17',
-                  labelEn: 'Strong 2^17',
+                  labelKey:
+                      'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.strong_2_17_b7753b',
                 ),
                 _LifeOption<ToolboxCryptoStrength>(
                   value: ToolboxCryptoStrength.extreme,
-                  labelZh: '极限 2^18',
-                  labelEn: 'Extreme 2^18',
+                  labelKey:
+                      'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.extreme_2_18_2a2353',
                 ),
               ],
               onChanged: _busy
@@ -1250,22 +1312,29 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   Widget _buildInputPanel(BuildContext context) {
     final hasSource = _sourceBytes != null;
     final sourceText = hasSource
-        ? '${_sourceName ?? _lifeText(context, zh: '未命名媒体', en: 'Unnamed media')} · ${_formatBytes(_sourceBytes!.length)}'
-        : _lifeText(context, zh: '尚未选择媒体。', en: 'No media selected yet.');
+        ? '${_sourceName ?? _lifeI18nText(context, 'inline.plan295.crypto.unnamed_media.1a870df9500f')} · ${_formatBytes(_sourceBytes!.length)}'
+        : _lifeI18nText(
+            context,
+            'inline.plan295.crypto.no_media_selected_yet.d02fab4a20b3',
+          );
     return _LifeSettingsPanel(
       title: _mode == _StegoMode.embed
-          ? _lifeText(context, zh: '载体与文本', en: 'Carrier and text')
-          : _lifeText(context, zh: '待还原媒体', en: 'Media to reveal'),
-      subtitle: _mode == _StegoMode.embed
-          ? _lifeText(
+          ? _lifeI18nText(
               context,
-              zh: '选择一个媒体文件，并输入需要隐藏的文本。',
-              en: 'Pick a media file and enter the text to hide.',
+              'inline.plan295.crypto.carrier_and_text.8ff488c78d48',
             )
-          : _lifeText(
+          : _lifeI18nText(
               context,
-              zh: '选择之前生成的隐写媒体，并输入对应口令。',
-              en: 'Pick a generated stego media file and enter its passphrase.',
+              'inline.plan295.crypto.media_to_reveal.482a64631786',
+            ),
+      subtitle: _mode == _StegoMode.embed
+          ? _lifeI18nText(
+              context,
+              'inline.plan295.crypto.pick_a_media_file_and_enter_the_text.30c0565a208a',
+            )
+          : _lifeI18nText(
+              context,
+              'inline.plan295.crypto.pick_a_generated_stego_media_file_an.4e6ecca4b30f',
             ),
       children: <Widget>[
         Row(
@@ -1276,12 +1345,20 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                 onPressed: _busy ? null : _pickMedia,
                 style: _greenActionButtonStyle(context),
                 icon: Icon(_mediaIcon(_mediaKind)),
-                label: Text(_lifeText(context, zh: '选择媒体', en: 'Pick media')),
+                label: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.crypto.pick_media.8c87c919dd52',
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 10),
             IconButton.filledTonal(
-              tooltip: _lifeText(context, zh: '清空', en: 'Clear'),
+              tooltip: _lifeI18nText(
+                context,
+                'inline.plan294.zen_sand.clear_ea17218b',
+              ),
               onPressed: _busy ? null : _resetAll,
               icon: const Icon(Icons.clear_rounded),
             ),
@@ -1312,8 +1389,14 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             decoration: InputDecoration(
               border: const OutlineInputBorder(),
               labelText: _dualLayerEnabled
-                  ? _lifeText(context, zh: '深层隐藏文本', en: 'Hidden layer text')
-                  : _lifeText(context, zh: '隐藏文本', en: 'Secret text'),
+                  ? _lifeI18nText(
+                      context,
+                      'inline.plan295.crypto.hidden_layer_text.67996b8e305d',
+                    )
+                  : _lifeI18nText(
+                      context,
+                      'inline.plan295.crypto.secret_text.5afebe4c8226',
+                    ),
             ),
           ),
           if (_dualLayerEnabled) ...<Widget>[
@@ -1324,15 +1407,13 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               maxLines: 4,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
-                labelText: _lifeText(
+                labelText: _lifeI18nText(
                   context,
-                  zh: '表层文本',
-                  en: 'Cover layer text',
+                  'inline.plan295.crypto.cover_layer_text.54090799a895',
                 ),
-                helperText: _lifeText(
+                helperText: _lifeI18nText(
                   context,
-                  zh: '使用表层口令还原时只显示这段内容。',
-                  en: 'Only this content is shown when revealing with the cover passphrase.',
+                  'inline.plan295.crypto.only_this_content_is_shown_when_reve.df0a084f484a',
                 ),
               ),
             ),
@@ -1349,24 +1430,27 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             border: const OutlineInputBorder(),
             prefixIcon: const Icon(Icons.vpn_key_rounded),
             labelText: _dualLayerEnabled
-                ? _lifeText(context, zh: '深层口令', en: 'Hidden passphrase')
-                : _lifeText(context, zh: '口令', en: 'Passphrase'),
-            helperText: _mode == _StegoMode.reveal
-                ? _lifeText(
+                ? _lifeI18nText(
                     context,
-                    zh: '请输入写入时使用的口令和密钥文件。',
-                    en: 'Use the passphrase and key file from embedding.',
+                    'inline.plan295.crypto.hidden_passphrase.e7d401009cf7',
+                  )
+                : _lifeI18nText(
+                    context,
+                    'inline.plan295.crypto.passphrase.92b3035c1d12',
+                  ),
+            helperText: _mode == _StegoMode.reveal
+                ? _lifeI18nText(
+                    context,
+                    'inline.plan295.crypto.use_the_passphrase_and_key_file_from.32f6378125e0',
                   )
                 : _encryption.requiresSecret
-                ? _lifeText(
+                ? _lifeI18nText(
                     context,
-                    zh: '口令或密钥文件至少提供一个，还原时必须一致。',
-                    en: 'Use a passphrase or key file; the same inputs are required when revealing.',
+                    'inline.plan295.crypto.use_a_passphrase_or_key_file_the_sam.50193458ceb4',
                   )
-                : _lifeText(
+                : _lifeI18nText(
                     context,
-                    zh: '不加密模式可留空。',
-                    en: 'Can be empty for no encryption.',
+                    'inline.plan295.crypto.can_be_empty_for_no_encryption.83a3b9d640f9',
                   ),
           ),
         ),
@@ -1381,11 +1465,13 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             decoration: InputDecoration(
               border: const OutlineInputBorder(),
               prefixIcon: const Icon(Icons.key_rounded),
-              labelText: _lifeText(context, zh: '表层口令', en: 'Cover passphrase'),
-              helperText: _lifeText(
+              labelText: _lifeI18nText(
                 context,
-                zh: '表层口令必须与深层口令不同；表层不使用当前密钥文件。',
-                en: 'Must differ from the hidden passphrase. The cover layer does not use the selected key file.',
+                'inline.plan295.crypto.cover_passphrase.42c7b5942bac',
+              ),
+              helperText: _lifeI18nText(
+                context,
+                'inline.plan295.crypto.must_differ_from_the_hidden_passphra.6ffee4a44b43',
               ),
             ),
           ),
@@ -1433,10 +1519,19 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                       ),
                 label: Text(
                   _busy
-                      ? _lifeText(context, zh: '处理中...', en: 'Working...')
+                      ? _lifeI18nText(
+                          context,
+                          'inline.plan295.crypto.working.c85bfe260dff',
+                        )
                       : _mode == _StegoMode.embed
-                      ? _lifeText(context, zh: '生成隐写媒体', en: 'Generate stego')
-                      : _lifeText(context, zh: '还原文本', en: 'Reveal text'),
+                      ? _lifeI18nText(
+                          context,
+                          'inline.plan295.crypto.generate_stego.388ccea2136d',
+                        )
+                      : _lifeI18nText(
+                          context,
+                          'inline.plan295.crypto.reveal_text.1382920ca59b',
+                        ),
                 ),
               ),
             ),
@@ -1447,7 +1542,12 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                 onPressed: _busy || _outputBytes == null ? null : _saveOutput,
                 style: _greenActionButtonStyle(context),
                 icon: const Icon(Icons.save_alt_rounded),
-                label: Text(_lifeText(context, zh: '导出结果', en: 'Export')),
+                label: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.crypto.export.f7657dd92440',
+                  ),
+                ),
               ),
             ),
           ],
@@ -1462,7 +1562,12 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                   ? null
                   : _previewTextWrite,
               icon: const Icon(Icons.fact_check_rounded),
-              label: Text(_lifeText(context, zh: '预览写入', en: 'Preview write')),
+              label: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.crypto.preview_write.01a4546d7dc0',
+                ),
+              ),
             ),
           ),
         ],
@@ -1473,38 +1578,43 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   Widget _buildFilePanel(BuildContext context) {
     final hasSource = _sourceBytes != null;
     final sourceText = hasSource
-        ? '${_sourceName ?? _lifeText(context, zh: '未命名媒体', en: 'Unnamed media')} · ${_formatBytes(_sourceBytes!.length)}'
-        : _lifeText(
+        ? '${_sourceName ?? _lifeI18nText(context, 'inline.plan295.crypto.unnamed_media.1a870df9500f')} · ${_formatBytes(_sourceBytes!.length)}'
+        : _lifeI18nText(
             context,
-            zh: '尚未选择载体媒体。',
-            en: 'No carrier media selected yet.',
+            'inline.plan295.crypto.no_carrier_media_selected_yet.c4a640e196b0',
           );
     final hasFile = _fileBytes != null;
     final fileText = hasFile
-        ? '${_fileName ?? _lifeText(context, zh: '未命名文件', en: 'Unnamed file')} · ${_formatBytes(_fileBytes!.length)}'
-        : _lifeText(context, zh: '尚未选择文件。', en: 'No file selected yet.');
+        ? '${_fileName ?? _lifeI18nText(context, 'inline.plan295.crypto.unnamed_file.39c2b3e183d0')} · ${_formatBytes(_fileBytes!.length)}'
+        : _lifeI18nText(
+            context,
+            'inline.plan295.crypto.no_file_selected_yet.c331376825ef',
+          );
     final hasCoverFile = _coverFileBytes != null;
     final coverFileText = hasCoverFile
-        ? '${_coverFileName ?? _lifeText(context, zh: '未命名表层文件', en: 'Unnamed cover file')} · ${_formatBytes(_coverFileBytes!.length)}'
-        : _lifeText(
+        ? '${_coverFileName ?? _lifeI18nText(context, 'inline.plan295.crypto.unnamed_cover_file.0d4ac9a6898e')} · ${_formatBytes(_coverFileBytes!.length)}'
+        : _lifeI18nText(
             context,
-            zh: '尚未选择表层文件。',
-            en: 'No cover file selected yet.',
+            'inline.plan295.crypto.no_cover_file_selected_yet.144f37e90cec',
           );
     return _LifeSettingsPanel(
       title: _fileMode == _FileCryptoMode.encrypt
-          ? _lifeText(context, zh: '文件写入媒体', en: 'File into media')
-          : _lifeText(context, zh: '从媒体还原文件', en: 'Restore file from media'),
-      subtitle: _fileMode == _FileCryptoMode.encrypt
-          ? _lifeText(
+          ? _lifeI18nText(
               context,
-              zh: '选择载体和要隐藏的文件，加密后的文件数据会写入图片、音频或视频。',
-              en: 'Pick a carrier and a file; encrypted file bytes are embedded into image, audio, or video.',
+              'inline.plan295.crypto.file_into_media.b8fde19df9ee',
             )
-          : _lifeText(
+          : _lifeI18nText(
               context,
-              zh: '选择之前生成的隐写媒体，使用相同口令和密钥文件还原文件。',
-              en: 'Pick generated stego media and reveal the file with the same passphrase and key file.',
+              'inline.plan295.crypto.restore_file_from_media.4c481022de02',
+            ),
+      subtitle: _fileMode == _FileCryptoMode.encrypt
+          ? _lifeI18nText(
+              context,
+              'inline.plan295.crypto.pick_a_carrier_and_a_file_encrypted.a6717f9525c5',
+            )
+          : _lifeI18nText(
+              context,
+              'inline.plan295.crypto.pick_generated_stego_media_and_revea.65f0fe1ac220',
             ),
       children: <Widget>[
         Row(
@@ -1515,12 +1625,20 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                 onPressed: _busy ? null : _pickMedia,
                 style: _greenActionButtonStyle(context),
                 icon: const Icon(Icons.perm_media_rounded),
-                label: Text(_lifeText(context, zh: '选择载体', en: 'Pick carrier')),
+                label: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.crypto.pick_carrier.6e113c7a6d6e',
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 10),
             IconButton.filledTonal(
-              tooltip: _lifeText(context, zh: '清空', en: 'Clear'),
+              tooltip: _lifeI18nText(
+                context,
+                'inline.plan294.zen_sand.clear_ea17218b',
+              ),
               onPressed: _busy ? null : _resetFileCarrier,
               icon: const Icon(Icons.clear_rounded),
             ),
@@ -1552,12 +1670,20 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                   onPressed: _busy ? null : _pickCryptoFile,
                   style: _greenActionButtonStyle(context),
                   icon: const Icon(Icons.description_rounded),
-                  label: Text(_lifeText(context, zh: '选择文件', en: 'Pick file')),
+                  label: Text(
+                    _lifeI18nText(
+                      context,
+                      'inline.plan295.crypto.pick_file.32fb96644740',
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
               IconButton.filledTonal(
-                tooltip: _lifeText(context, zh: '清空文件', en: 'Clear file'),
+                tooltip: _lifeI18nText(
+                  context,
+                  'inline.plan295.crypto.clear_file.b10cbf37539f',
+                ),
                 onPressed: _busy ? null : _resetFileCrypto,
                 icon: const Icon(Icons.close_rounded),
               ),
@@ -1592,16 +1718,18 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                     style: _greenActionButtonStyle(context),
                     icon: const Icon(Icons.layers_rounded),
                     label: Text(
-                      _lifeText(context, zh: '选择表层文件', en: 'Pick cover file'),
+                      _lifeI18nText(
+                        context,
+                        'inline.plan295.crypto.pick_cover_file.2a4125dfc302',
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 10),
                 IconButton.filledTonal(
-                  tooltip: _lifeText(
+                  tooltip: _lifeI18nText(
                     context,
-                    zh: '清空表层文件',
-                    en: 'Clear cover file',
+                    'inline.plan295.crypto.clear_cover_file.51459c53e3aa',
                   ),
                   onPressed: _busy ? null : _resetCoverFileCrypto,
                   icon: const Icon(Icons.close_rounded),
@@ -1636,12 +1764,17 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             border: const OutlineInputBorder(),
             prefixIcon: const Icon(Icons.vpn_key_rounded),
             labelText: _dualLayerEnabled && _fileMode == _FileCryptoMode.encrypt
-                ? _lifeText(context, zh: '深层口令', en: 'Hidden passphrase')
-                : _lifeText(context, zh: '口令', en: 'Passphrase'),
-            helperText: _lifeText(
+                ? _lifeI18nText(
+                    context,
+                    'inline.plan295.crypto.hidden_passphrase.e7d401009cf7',
+                  )
+                : _lifeI18nText(
+                    context,
+                    'inline.plan295.crypto.passphrase.92b3035c1d12',
+                  ),
+            helperText: _lifeI18nText(
               context,
-              zh: '口令可与密钥文件叠加使用，解密时必须一致。',
-              en: 'Can be combined with a key file and must match for decryption.',
+              'inline.plan295.crypto.can_be_combined_with_a_key_file_and.1ffed2ca72be',
             ),
           ),
         ),
@@ -1657,11 +1790,13 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             decoration: InputDecoration(
               border: const OutlineInputBorder(),
               prefixIcon: const Icon(Icons.key_rounded),
-              labelText: _lifeText(context, zh: '表层口令', en: 'Cover passphrase'),
-              helperText: _lifeText(
+              labelText: _lifeI18nText(
                 context,
-                zh: '表层口令只还原表层文件，并且不使用当前密钥文件。',
-                en: 'The cover passphrase reveals only the cover file and does not use the selected key file.',
+                'inline.plan295.crypto.cover_passphrase.42c7b5942bac',
+              ),
+              helperText: _lifeI18nText(
+                context,
+                'inline.plan295.crypto.the_cover_passphrase_reveals_only_th.e819e2ac0103',
               ),
             ),
           ),
@@ -1708,10 +1843,19 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                       ),
                 label: Text(
                   _busy
-                      ? _lifeText(context, zh: '处理中...', en: 'Working...')
+                      ? _lifeI18nText(
+                          context,
+                          'inline.plan295.crypto.working.c85bfe260dff',
+                        )
                       : _fileMode == _FileCryptoMode.encrypt
-                      ? _lifeText(context, zh: '写入文件', en: 'Embed file')
-                      : _lifeText(context, zh: '还原文件', en: 'Reveal file'),
+                      ? _lifeI18nText(
+                          context,
+                          'inline.plan295.crypto.embed_file.0f9a763c4665',
+                        )
+                      : _lifeI18nText(
+                          context,
+                          'inline.plan295.crypto.reveal_file.30110309c176',
+                        ),
                 ),
               ),
             ),
@@ -1724,7 +1868,12 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                     : _saveFileOutput,
                 style: _greenActionButtonStyle(context),
                 icon: const Icon(Icons.save_alt_rounded),
-                label: Text(_lifeText(context, zh: '导出文件', en: 'Export')),
+                label: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.crypto.export.0aea636010e0',
+                  ),
+                ),
               ),
             ),
           ],
@@ -1743,7 +1892,12 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                   ? null
                   : _previewFileWrite,
               icon: const Icon(Icons.fact_check_rounded),
-              label: Text(_lifeText(context, zh: '预览写入', en: 'Preview write')),
+              label: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.crypto.preview_write.01a4546d7dc0',
+                ),
+              ),
             ),
           ),
         ],
@@ -1755,14 +1909,19 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     final source = _fileBytes ?? _sourceBytes;
     final name = _fileName ?? _sourceName;
     final sourceText = source == null
-        ? _lifeText(context, zh: '尚未选择文件。', en: 'No file selected yet.')
-        : '${name ?? _lifeText(context, zh: '未命名文件', en: 'Unnamed file')} · ${_formatBytes(source.length)}';
+        ? _lifeI18nText(
+            context,
+            'inline.plan295.crypto.no_file_selected_yet.c331376825ef',
+          )
+        : '${name ?? _lifeI18nText(context, 'inline.plan295.crypto.unnamed_file.39c2b3e183d0')} · ${_formatBytes(source.length)}';
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '哈希校验', en: 'Hash digest'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '选择任意文件并计算摘要，用于校验文件完整性或记录指纹。',
-        en: 'Pick any file and calculate a digest for integrity checks.',
+        'inline.plan295.crypto.hash_digest.90114149c380',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.crypto.pick_any_file_and_calculate_a_digest.7236f3988537',
       ),
       children: <Widget>[
         Row(
@@ -1773,12 +1932,20 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                 onPressed: _busy ? null : _pickHashFile,
                 style: _greenActionButtonStyle(context),
                 icon: const Icon(Icons.file_open_rounded),
-                label: Text(_lifeText(context, zh: '选择文件', en: 'Pick file')),
+                label: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.crypto.pick_file.32fb96644740',
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 10),
             IconButton.filledTonal(
-              tooltip: _lifeText(context, zh: '清空', en: 'Clear'),
+              tooltip: _lifeI18nText(
+                context,
+                'inline.plan294.zen_sand.clear_ea17218b',
+              ),
               onPressed: _busy ? null : _resetHash,
               icon: const Icon(Icons.clear_rounded),
             ),
@@ -1814,8 +1981,14 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                 : const Icon(Icons.functions_rounded),
             label: Text(
               _busy
-                  ? _lifeText(context, zh: '处理中...', en: 'Working...')
-                  : _lifeText(context, zh: '计算哈希', en: 'Calculate hash'),
+                  ? _lifeI18nText(
+                      context,
+                      'inline.plan295.crypto.working.c85bfe260dff',
+                    )
+                  : _lifeI18nText(
+                      context,
+                      'inline.plan295.crypto.calculate_hash.c14e85390338',
+                    ),
             ),
           ),
         ),
@@ -1832,30 +2005,38 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         return _buildWritePreviewPanel(context, preview);
       }
       return _LifeSettingsPanel(
-        title: _lifeText(context, zh: '结果', en: 'Result'),
-        subtitle: _lifeText(
+        title: _lifeI18nText(
           context,
-          zh: '执行写入或还原后，这里会显示载荷信息和文本结果。',
-          en: 'After embedding or revealing, payload metrics and text appear here.',
+          'inline.ui.pages.toolbox_human_tests_memory.result_7f4e06',
+        ),
+        subtitle: _lifeI18nText(
+          context,
+          'inline.plan295.crypto.after_embedding_or_revealing_payload.faf76c822ad6',
         ),
         children: <Widget>[
-          Text(_lifeText(context, zh: '暂无结果。', en: 'No result yet.')),
+          Text(
+            _lifeI18nText(
+              context,
+              'inline.plan295.crypto.no_result_yet.ec5979dbfff5',
+            ),
+          ),
         ],
       );
     }
 
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '结果', en: 'Result'),
+      title: _lifeI18nText(
+        context,
+        'inline.ui.pages.toolbox_human_tests_memory.result_7f4e06',
+      ),
       subtitle: _mode == _StegoMode.embed
-          ? _lifeText(
+          ? _lifeI18nText(
               context,
-              zh: '已生成可导出的隐写媒体。',
-              en: 'A stego media file is ready to export.',
+              'inline.plan295.crypto.a_stego_media_file_is_ready_to_expor.30d737047505',
             )
-          : _lifeText(
+          : _lifeI18nText(
               context,
-              zh: '已从媒体中还原文本。',
-              en: 'Text has been revealed from the media.',
+              'inline.plan295.crypto.text_has_been_revealed_from_the_medi.ad7d7073d832',
             ),
       children: <Widget>[
         if (embed != null) ...<Widget>[
@@ -1864,30 +2045,42 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             runSpacing: 10,
             children: <Widget>[
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '原文件', en: 'Source'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.crypto.source.43c32f0f6d5f',
+                ),
                 value: _formatBytes(embed.sourceBytes),
               ),
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '结果文件', en: 'Output'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.crypto.output.c96e3b239a69',
+                ),
                 value: _formatBytes(embed.outputBytes),
               ),
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '载荷', en: 'Payload'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.crypto.payload.c49239eb0674',
+                ),
                 value: _formatBytes(embed.payloadBytes),
               ),
               if (embed.capacityBytes != null)
                 ToolboxMetricCard(
-                  label: _lifeText(context, zh: '容量', en: 'Capacity'),
+                  label: _lifeI18nText(
+                    context,
+                    'inline.plan295.crypto.capacity.087427ad50cb',
+                  ),
                   value: _formatBytes(embed.capacityBytes!),
                 ),
             ],
           ),
           const SizedBox(height: 12),
           SelectableText(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '密文预览: ${embed.cipherPreview}',
-              en: 'Cipher preview: ${embed.cipherPreview}',
+              'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.cipher_preview.0d704547d0',
+              params: <String, Object?>{'cipherPreview': embed.cipherPreview},
             ),
             key: const ValueKey<String>('life_stego_cipher_preview'),
           ),
@@ -1898,15 +2091,24 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             runSpacing: 10,
             children: <Widget>[
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '载荷', en: 'Payload'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.crypto.payload.c49239eb0674',
+                ),
                 value: _formatBytes(reveal.payloadBytes),
               ),
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '算法', en: 'Algorithm'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.crypto.algorithm.8435288f5f2f',
+                ),
                 value: _encryptionLabel(context, reveal.encryption),
               ),
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '强度', en: 'Strength'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.crypto.strength.6ceaff5bfe8e',
+                ),
                 value: _strengthLabel(context, reveal.strength),
               ),
             ],
@@ -1930,30 +2132,38 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         return _buildWritePreviewPanel(context, preview);
       }
       return _LifeSettingsPanel(
-        title: _lifeText(context, zh: '文件结果', en: 'File result'),
-        subtitle: _lifeText(
+        title: _lifeI18nText(
           context,
-          zh: '执行写入或还原后，这里会显示载荷、算法和导出状态。',
-          en: 'After embedding or revealing, payload metrics and algorithm details appear here.',
+          'inline.plan295.crypto.file_result.aeb81128e66e',
+        ),
+        subtitle: _lifeI18nText(
+          context,
+          'inline.plan295.crypto.after_embedding_or_revealing_payload.882367be609c',
         ),
         children: <Widget>[
-          Text(_lifeText(context, zh: '暂无结果。', en: 'No result yet.')),
+          Text(
+            _lifeI18nText(
+              context,
+              'inline.plan295.crypto.no_result_yet.ec5979dbfff5',
+            ),
+          ),
         ],
       );
     }
 
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '文件结果', en: 'File result'),
+      title: _lifeI18nText(
+        context,
+        'inline.plan295.crypto.file_result.aeb81128e66e',
+      ),
       subtitle: _fileMode == _FileCryptoMode.encrypt
-          ? _lifeText(
+          ? _lifeI18nText(
               context,
-              zh: '已生成可导出的隐写媒体。',
-              en: 'A stego media file is ready to export.',
+              'inline.plan295.crypto.a_stego_media_file_is_ready_to_expor.30d737047505',
             )
-          : _lifeText(
+          : _lifeI18nText(
               context,
-              zh: '已从媒体还原文件内容，可导出保存。',
-              en: 'The hidden file has been revealed and can be exported.',
+              'inline.plan295.crypto.the_hidden_file_has_been_revealed_an.b0014c24e865',
             ),
       children: <Widget>[
         Wrap(
@@ -1961,27 +2171,42 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           runSpacing: 10,
           children: <Widget>[
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '载体', en: 'Carrier'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.crypto.carrier.74dd5c193871',
+              ),
               value: _formatBytes(_sourceBytes?.length ?? 0),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '输出', en: 'Output'),
+              label: _lifeI18nText(
+                context,
+                'inline.ui.pages.toolbox_human_tests_auditory.output_dafb97',
+              ),
               value: _formatBytes(_fileOutputBytes?.length ?? 0),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '算法', en: 'Algorithm'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.crypto.algorithm.8435288f5f2f',
+              ),
               value: _encryptionLabel(
                 context,
                 reveal?.encryption ?? _encryption,
               ),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '强度', en: 'Strength'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.crypto.strength.6ceaff5bfe8e',
+              ),
               value: _strengthLabel(context, reveal?.strength ?? _strength),
             ),
             if (embed?.capacityBytes != null)
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '容量', en: 'Capacity'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.crypto.capacity.087427ad50cb',
+                ),
                 value: _formatBytes(embed!.capacityBytes!),
               ),
           ],
@@ -1989,20 +2214,20 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         if (embed != null) ...<Widget>[
           const SizedBox(height: 12),
           SelectableText(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '密文预览: ${embed.cipherPreview}',
-              en: 'Cipher preview: ${embed.cipherPreview}',
+              'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.cipher_preview.0d704547d0',
+              params: <String, Object?>{'cipherPreview': embed.cipherPreview},
             ),
           ),
         ],
         if (reveal != null && reveal.fileName != null) ...<Widget>[
           const SizedBox(height: 12),
           SelectableText(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '文件名: ${reveal.fileName}',
-              en: 'File name: ${reveal.fileName}',
+              'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.file_name.a83051dc77',
+              params: <String, Object?>{'fileName': reveal.fileName},
             ),
           ),
         ],
@@ -2019,18 +2244,22 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         ? (check.coverRequiredBytes ?? 0) + (check.hiddenRequiredBytes ?? 0)
         : check.requiredBytes;
     final capacityLabel = check.dualLayer && check.perLayerCapacityBytes != null
-        ? _lifeText(
+        ? _lifeI18nText(
             context,
-            zh: '每层 ${_formatBytes(check.perLayerCapacityBytes!)}',
-            en: '${_formatBytes(check.perLayerCapacityBytes!)} per layer',
+            'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.per_layer.1bb9c04354',
+            params: <String, Object?>{
+              'p0': _formatBytes(check.perLayerCapacityBytes!),
+            },
           )
         : _formatBytes(check.capacityBytes);
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '写入预览', en: 'Write preview'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '预检已通过；生成前可核对容量、输出大小和层级。',
-        en: 'Preflight passed. Review capacity, output size, and layers before export.',
+        'inline.plan295.crypto.write_preview.204420b174fc',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.crypto.preflight_passed_review_capacity_out.3269f78636b0',
       ),
       children: <Widget>[
         Wrap(
@@ -2038,21 +2267,33 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           runSpacing: 10,
           children: <Widget>[
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '媒介', en: 'Carrier'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.crypto.carrier.6550a85a589f',
+              ),
               value:
                   check.carrierLabel ?? _mediaLabel(context, check.mediaKind),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '容量', en: 'Capacity'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.crypto.capacity.087427ad50cb',
+              ),
               value: capacityLabel,
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '预计载荷', en: 'Payload est.'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.crypto.payload_est.a432d1159362',
+              ),
               value: _formatBytes(usedBytes),
             ),
             if (outputBytes != null)
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '预计输出', en: 'Output est.'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.crypto.output_est.55ee8a4f2cab',
+                ),
                 value: _formatBytes(outputBytes),
               ),
           ],
@@ -2062,10 +2303,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           _buildInlineNotice(
             context,
             icon: Icons.layers_rounded,
-            text: _lifeText(
+            text: _lifeI18nText(
               context,
-              zh: '双层写入会生成表层与深层两份载荷；不同口令会还原不同层。',
-              en: 'Dual-layer writing creates cover and hidden payloads; different passphrases reveal different layers.',
+              'inline.plan295.crypto.dual_layer_writing_creates_cover_and.e6e32eee8b05',
             ),
           ),
         ],
@@ -2077,19 +2317,29 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     final result = _hashResult;
     if (result == null) {
       return _LifeSettingsPanel(
-        title: _lifeText(context, zh: '哈希结果', en: 'Hash result'),
-        subtitle: _lifeText(
+        title: _lifeI18nText(
           context,
-          zh: '计算后会显示十六进制和 Base64 摘要。',
-          en: 'Hex and Base64 digests appear after calculation.',
+          'inline.plan295.crypto.hash_result.f13a54ecd693',
+        ),
+        subtitle: _lifeI18nText(
+          context,
+          'inline.plan295.crypto.hex_and_base64_digests_appear_after.02e03fad9a32',
         ),
         children: <Widget>[
-          Text(_lifeText(context, zh: '暂无结果。', en: 'No result yet.')),
+          Text(
+            _lifeI18nText(
+              context,
+              'inline.plan295.crypto.no_result_yet.ec5979dbfff5',
+            ),
+          ),
         ],
       );
     }
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '哈希结果', en: 'Hash result'),
+      title: _lifeI18nText(
+        context,
+        'inline.plan295.crypto.hash_result.f13a54ecd693',
+      ),
       subtitle: _hashLabel(context, result.algorithm),
       children: <Widget>[
         SelectableText(
@@ -2105,25 +2355,28 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   Widget _buildPreviewPanel(BuildContext context) {
     if (_mediaKind != ToolboxSteganographyMediaKind.image) {
       return _LifeSettingsPanel(
-        title: _lifeText(context, zh: '媒体预览', en: 'Media preview'),
-        subtitle: _lifeText(
+        title: _lifeI18nText(
           context,
-          zh: '音频和视频当前显示文件状态，导出后可用系统播放器打开。',
-          en: 'Audio and video show file state here; exported files can be opened in system players.',
+          'inline.plan295.crypto.media_preview.51b3df5ad671',
+        ),
+        subtitle: _lifeI18nText(
+          context,
+          'inline.plan295.crypto.audio_and_video_show_file_state_here.929cd3bce02f',
         ),
         children: <Widget>[
           _LifePreviewFrame(
             child: Text(
               _outputBytes == null
-                  ? _lifeText(
+                  ? _lifeI18nText(
                       context,
-                      zh: '等待生成或还原。',
-                      en: 'Waiting for generate or reveal.',
+                      'inline.plan295.crypto.waiting_for_generate_or_reveal.404eae4246c4',
                     )
-                  : _lifeText(
+                  : _lifeI18nText(
                       context,
-                      zh: '结果媒体大小: ${_formatBytes(_outputBytes!.length)}',
-                      en: 'Output media size: ${_formatBytes(_outputBytes!.length)}',
+                      'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.output_media_size.1a32d280bd',
+                      params: <String, Object?>{
+                        'p0': _formatBytes(_outputBytes!.length),
+                      },
                     ),
             ),
           ),
@@ -2132,11 +2385,13 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     }
 
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '图片预览', en: 'Image preview'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '左侧原图，右侧隐写 PNG。',
-        en: 'Source image on the left, stego PNG on the right.',
+        'inline.plan295.crypto.image_preview.0bc6c6304b1c',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.crypto.source_image_on_the_left_stego_png_o.cfaa355a469f',
       ),
       children: <Widget>[
         LayoutBuilder(
@@ -2146,16 +2401,14 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               Expanded(
                 child: _imageTile(
                   context: context,
-                  titleZh: '原图',
-                  titleEn: 'Source',
+                  titleKey: 'inline.plan295.life.source.bd1f1bbdfe8e',
                   image: _sourcePreview,
                 ),
               ),
               Expanded(
                 child: _imageTile(
                   context: context,
-                  titleZh: '隐写后',
-                  titleEn: 'Stego',
+                  titleKey: 'inline.plan295.crypto.stego.1cc36bd69b84',
                   image: _outputPreview,
                 ),
               ),
@@ -2165,15 +2418,13 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                 children: <Widget>[
                   _imageTile(
                     context: context,
-                    titleZh: '原图',
-                    titleEn: 'Source',
+                    titleKey: 'inline.plan295.life.source.bd1f1bbdfe8e',
                     image: _sourcePreview,
                   ),
                   const SizedBox(height: 10),
                   _imageTile(
                     context: context,
-                    titleZh: '隐写后',
-                    titleEn: 'Stego',
+                    titleKey: 'inline.plan295.crypto.stego.1cc36bd69b84',
                     image: _outputPreview,
                   ),
                 ],
@@ -2194,27 +2445,27 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
 
   Widget _buildBoundaryPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '边界说明', en: 'Boundaries'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '本工具只在本地处理文件，不上传媒体。',
-        en: 'This tool processes files locally and does not upload media.',
+        'inline.plan295.crypto.boundaries.c3b0bac973d2',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.crypto.this_tool_processes_files_locally_an.450bd6c842a1',
       ),
       children: <Widget>[
         Text(
-          _lifeText(
+          _lifeI18nText(
             context,
-            zh: '图片使用无损 PNG 随机像素 LSB；音频支持 WAV/PCM 样本随机 LSB；视频支持 MP4/MOV 容器 free box 写入。不要把图片另存为 JPEG，不要把 WAV 转成 MP3，也不要重封装会剥离 free box 的视频。',
-            en: 'Images use lossless PNG randomized pixel LSB. Audio supports WAV/PCM randomized sample LSB. Video supports MP4/MOV container free-box payloads. Do not re-save images as JPEG, convert WAV to MP3, or remux video with tools that strip free boxes.',
+            'inline.plan295.crypto.images_use_lossless_png_randomized_p.268855c6e883',
           ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 8),
         Text(
-          _lifeText(
+          _lifeI18nText(
             context,
-            zh: '公开策略头、尾部防篡改和错误/成功次数限制只作为格式提示与本机当前文件的最佳努力清理；真正的数据认证来自加密 envelope 的 MAC/AEAD。',
-            en: 'Public policy headers, tamper hints, and error/success counters are format hints and best-effort cleanup for the current local file. Real authentication comes from the crypto envelope MAC/AEAD.',
+            'inline.plan295.crypto.public_policy_headers_tamper_hints_a.77fe1d465c7b',
           ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
@@ -2369,7 +2620,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     final hasKeyFiles = _keyFileEntries.isNotEmpty;
     final summary = hasKeyFiles
         ? _keyFileSummary(context)
-        : _lifeText(context, zh: '尚未选择密钥文件。', en: 'No key files selected.');
+        : _lifeI18nText(
+            context,
+            'inline.plan295.crypto.no_key_files_selected.618b460527ba',
+          );
     return _LifePreviewFrame(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2383,14 +2637,16 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      _lifeText(context, zh: '使用密钥文件', en: 'Use key files'),
+                      _lifeI18nText(
+                        context,
+                        'inline.plan295.crypto.use_key_files.32a60283b1c6',
+                      ),
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
                     Text(
-                      _lifeText(
+                      _lifeI18nText(
                         context,
-                        zh: '开启后，所选文件会按稳定规则排序后参与派生。',
-                        en: 'When enabled, selected files are sorted and mixed into key derivation.',
+                        'inline.plan295.crypto.when_enabled_selected_files_are_sort.9ed0d7d6bfc9',
                       ),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
@@ -2418,7 +2674,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                   onPressed: _busy ? null : _pickKeyFile,
                   icon: const Icon(Icons.upload_file_rounded, size: 18),
                   label: Text(
-                    _lifeText(context, zh: '导入', en: 'Import'),
+                    _lifeI18nText(
+                      context,
+                      'inline.ui.pages.wordbook_management_page.import_3c273d',
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                   style: _compactGreenButtonStyle(context),
@@ -2427,7 +2686,12 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                   key: const ValueKey<String>('life_crypto_generate_key_file'),
                   onPressed: _busy ? null : _showKeyFileDialog,
                   icon: const Icon(Icons.casino_rounded, size: 18),
-                  label: Text(_lifeText(context, zh: '生成', en: 'Generate')),
+                  label: Text(
+                    _lifeI18nText(
+                      context,
+                      'inline.plan295.crypto.generate.5b935d8599b2',
+                    ),
+                  ),
                   style: _compactButtonStyle(),
                 ),
                 FilledButton.icon(
@@ -2436,14 +2700,18 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                       ? null
                       : _saveKeyFile,
                   icon: const Icon(Icons.save_alt_rounded, size: 18),
-                  label: Text(_lifeText(context, zh: '导出', en: 'Export')),
+                  label: Text(
+                    _lifeI18nText(
+                      context,
+                      'inline.ui.pages.practice_notebook_page_actions.export_bc626a',
+                    ),
+                  ),
                   style: _compactGreenButtonStyle(context),
                 ),
                 IconButton.outlined(
-                  tooltip: _lifeText(
+                  tooltip: _lifeI18nText(
                     context,
-                    zh: '清空密钥文件',
-                    en: 'Clear key files',
+                    'inline.plan295.crypto.clear_key_files.6d4d47f368c7',
                   ),
                   onPressed: _busy || !hasKeyFiles ? null : _clearKeyFiles,
                   icon: const Icon(Icons.close_rounded, size: 18),
@@ -2504,17 +2772,21 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     final names = _keyFileEntries.take(3).map((entry) => entry.name).join(', ');
     final suffix = count > 3 ? ' +${count - 3}' : '';
     final bytes = _keyFileBytes == null ? 0 : _keyFileBytes!.length;
-    return _lifeText(
+    return _lifeI18nText(
       context,
-      zh: '$count 个密钥文件 · ${_formatBytes(bytes)} · $names$suffix',
-      en: '$count key file(s) · ${_formatBytes(bytes)} · $names$suffix',
+      'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.key_file_s.83f8e7cf6c',
+      params: <String, Object?>{
+        'count': count,
+        'p1': _formatBytes(bytes),
+        'names': names,
+        'suffix': suffix,
+      },
     );
   }
 
   Widget _imageTile({
     required BuildContext context,
-    required String titleZh,
-    required String titleEn,
+    required String titleKey,
     required ui.Image? image,
   }) {
     return Container(
@@ -2529,7 +2801,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            _lifeText(context, zh: titleZh, en: titleEn),
+            _lifeI18nText(context, titleKey),
             style: Theme.of(
               context,
             ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -2540,7 +2812,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             child: image == null
                 ? Center(
                     child: Text(
-                      _lifeText(context, zh: '暂无预览', en: 'No preview'),
+                      _lifeI18nText(
+                        context,
+                        'inline.plan295.crypto.no_preview.b2c10e9d539d',
+                      ),
                     ),
                   )
                 : ClipRRect(
@@ -2608,10 +2883,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '选择媒体失败: ${_friendlyError(context, error)}',
-          en: 'Failed to pick media: ${_friendlyError(context, error)}',
+          'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.failed_to_pick_media.49d8cb7a65',
+          params: <String, Object?>{'p0': _friendlyError(context, error)},
         );
       });
     }
@@ -2665,10 +2940,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '选择密钥文件失败: ${_friendlyError(context, error)}',
-          en: 'Failed to pick key file: ${_friendlyError(context, error)}',
+          'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.failed_to_pick_key_file.bfbd8e09ee',
+          params: <String, Object?>{'p0': _friendlyError(context, error)},
         );
       });
     }
@@ -2680,7 +2955,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       builder: (dialogContext) {
         return AlertDialog(
           title: Text(
-            _lifeText(context, zh: '生成密钥文件', en: 'Generate key file'),
+            _lifeI18nText(
+              context,
+              'inline.plan295.crypto.generate_key_file.06f29dbbe70e',
+            ),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -2691,11 +2969,13 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
-                  labelText: _lifeText(context, zh: '字节长度', en: 'Bytes'),
-                  helperText: _lifeText(
+                  labelText: _lifeI18nText(
                     context,
-                    zh: '建议至少 256 字节，可输入 32 到 1048576。',
-                    en: 'Recommended: at least 256 bytes. Range: 32 to 1048576.',
+                    'inline.plan295.crypto.bytes.ac32cd01a7f2',
+                  ),
+                  helperText: _lifeI18nText(
+                    context,
+                    'inline.plan295.crypto.recommended_at_least_256_bytes_range.d52faaf90aec',
                   ),
                 ),
               ),
@@ -2704,7 +2984,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(_lifeText(context, zh: '取消', en: 'Cancel')),
+              child: Text(_lifeI18nText(context, 'cancel')),
             ),
             FilledButton.icon(
               onPressed: () async {
@@ -2712,7 +2992,12 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                 await _generateKeyFile();
               },
               icon: const Icon(Icons.casino_rounded),
-              label: Text(_lifeText(context, zh: '生成', en: 'Generate')),
+              label: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.crypto.generate.5b935d8599b2',
+                ),
+              ),
             ),
           ],
         );
@@ -2724,10 +3009,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     final length = int.tryParse(_keyFileLengthController.text.trim());
     if (length == null) {
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '密钥文件长度必须是数字。',
-          en: 'Key file length must be a number.',
+          'inline.plan295.crypto.key_file_length_must_be_a_number.d99d926bec5a',
         );
       });
       return;
@@ -2749,10 +3033,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       });
     } catch (error) {
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '生成密钥文件失败: ${_friendlyError(context, error)}',
-          en: 'Key file generation failed: ${_friendlyError(context, error)}',
+          'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.key_file_generation_failed.0330236fb2',
+          params: <String, Object?>{'p0': _friendlyError(context, error)},
         );
       });
     }
@@ -2772,7 +3056,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     try {
       final fileName = _keyFileName ?? 'vocabulary_sleep_keyfile.bin';
       final pickedPath = await _pickSavePath(
-        dialogTitle: _lifeText(context, zh: '保存密钥文件', en: 'Save key file'),
+        dialogTitle: _lifeI18nText(
+          context,
+          'inline.plan295.crypto.save_key_file.b4a521515a1f',
+        ),
         fileName: fileName,
         extension: 'bin',
         bytes: bytes,
@@ -2792,10 +3079,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       if (savedPath == null) {
         if (kIsWeb) {
           setState(() {
-            _statusMessage = _lifeText(
+            _statusMessage = _lifeI18nText(
               context,
-              zh: '浏览器下载已触发，请查看下载列表。',
-              en: 'Browser download started. Check your downloads.',
+              'inline.plan295.crypto.browser_download_started_check_your.b28d392515b4',
             );
           });
           return;
@@ -2808,10 +3094,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '保存密钥文件失败: $error',
-          en: 'Save key file failed: $error',
+          'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.save_key_file_failed.011bfe5571',
+          params: <String, Object?>{'error': error},
         );
       });
     } finally {
@@ -2900,10 +3186,14 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '$errorZh: ${_friendlyError(context, error)}',
-          en: '$errorEn: ${_friendlyError(context, error)}',
+          'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.text.9286016a39',
+          params: <String, Object?>{
+            'errorZh': errorZh,
+            'p1': _friendlyError(context, error),
+            'errorEn': errorEn,
+          },
         );
       });
     }
@@ -3032,23 +3322,30 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Text(_lifeText(context, zh: '确认不加密', en: 'Confirm plaintext')),
-          content: Text(
-            _lifeText(
+          title: Text(
+            _lifeI18nText(
               context,
-              zh: '当前选择“不加密”，payload 只会经过封装和隐写，不会被加密。空密码会让还原门槛更低，请确认仍要生成。',
-              en: 'No encryption is selected. The payload will be packaged and hidden, but not encrypted. An empty passphrase lowers the recovery barrier; confirm before generating.',
+              'inline.plan295.crypto.confirm_plaintext.5b54b2c87d91',
+            ),
+          ),
+          content: Text(
+            _lifeI18nText(
+              context,
+              'inline.plan295.crypto.no_encryption_is_selected_the_payloa.d305dc3cb84d',
             ),
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(_lifeText(context, zh: '取消', en: 'Cancel')),
+              child: Text(_lifeI18nText(context, 'cancel')),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
               child: Text(
-                _lifeText(context, zh: '继续生成', en: 'Generate anyway'),
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.crypto.generate_anyway.3cfb2d39c15b',
+                ),
               ),
             ),
           ],
@@ -3100,26 +3397,27 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  _lifeText(
+                  _lifeI18nText(
                     context,
-                    zh: '密码错误会清空隐藏内容',
-                    en: 'Wrong passwords can wipe hidden data',
+                    'inline.plan295.crypto.wrong_passwords_can_wipe_hidden_data.2bca7d0dab83',
                   ),
                 ),
               ),
             ],
           ),
           content: Text(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '已设置为 $attempts 次。还原文件时如果密码错误达到该次数，当前文件中的隐藏内容会被清空。',
-              en: 'Set to $attempts. During reveal, reaching this many wrong passwords wipes hidden data in the current file.',
+              'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.set_to_during_reveal_reaching_this.555dd57402',
+              params: <String, Object?>{'attempts': attempts},
             ),
           ),
           actions: <Widget>[
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(_lifeText(context, zh: '知道了', en: 'OK')),
+              child: Text(
+                _lifeI18nText(context, 'inline.plan295.crypto.ok.4eccec341e82'),
+              ),
             ),
           ],
         );
@@ -3139,26 +3437,27 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  _lifeText(
+                  _lifeI18nText(
                     context,
-                    zh: '成功还原后会清理载荷',
-                    en: 'Successful reveals can wipe data',
+                    'inline.plan295.crypto.successful_reveals_can_wipe_data.2746005621a5',
                   ),
                 ),
               ),
             ],
           ),
           content: Text(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '已设置成功还原 $attempts 次后清理隐藏内容。此操作只是本机当前文件的最佳努力清理，无法约束已复制文件或外部备份。',
-              en: 'Hidden data will be cleaned after $attempts successful reveal(s). This is best-effort cleanup for the current local file only and cannot limit copied files or external backups.',
+              'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.hidden_data_will_be_cleaned_after.a96962c9b7',
+              params: <String, Object?>{'attempts': attempts},
             ),
           ),
           actions: <Widget>[
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(_lifeText(context, zh: '知道了', en: 'OK')),
+              child: Text(
+                _lifeI18nText(context, 'inline.plan295.crypto.ok.4eccec341e82'),
+              ),
             ),
           ],
         );
@@ -3254,10 +3553,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         _embedResult = result;
         _outputBytes = result.bytes;
         _outputPreview = preview;
-        _statusMessage = _lifeText(
+        _statusMessage = _lifeI18nText(
           context,
-          zh: '已生成隐写媒体，请导出结果文件。',
-          en: 'Stego media is ready. Export the result file.',
+          'inline.plan295.crypto.stego_media_is_ready_export_the_resu.2d6f5c4298f1',
         );
       });
       oldPreview?.dispose();
@@ -3266,10 +3564,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '生成失败: ${_friendlyError(context, error)}',
-          en: 'Generate failed: ${_friendlyError(context, error)}',
+          'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.generate_failed.9051755c17',
+          params: <String, Object?>{'p0': _friendlyError(context, error)},
         );
       });
     } finally {
@@ -3311,10 +3609,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       }
       setState(() {
         _revealResult = result;
-        _statusMessage = _lifeText(
+        _statusMessage = _lifeI18nText(
           context,
-          zh: '已还原文本，请复制需要保存的数据。',
-          en: 'Text has been revealed. Copy the data you need to keep.',
+          'inline.plan295.crypto.text_has_been_revealed_copy_the_data.5964183b7429',
         );
       });
       _registerDecodeSuccess(source);
@@ -3332,10 +3629,13 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       }
       setState(() {
         final extra = protectionMessage == null ? '' : ' $protectionMessage';
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '还原失败: ${_friendlyError(context, error)}$extra',
-          en: 'Reveal failed: ${_friendlyError(context, error)}$extra',
+          'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.reveal_failed.b7699c69e6',
+          params: <String, Object?>{
+            'p0': _friendlyError(context, error),
+            'extra': extra,
+          },
         );
       });
     } finally {
@@ -3354,10 +3654,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     if (_dualLayerEnabled &&
         (_coverFileBytes == null || _coverFileBytes!.isEmpty)) {
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '请先选择表层文件。',
-          en: 'Pick a cover file first.',
+          'inline.plan295.crypto.pick_a_cover_file_first.2c52c7321183',
         );
       });
       return;
@@ -3387,10 +3686,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     if (_dualLayerEnabled &&
         (_coverFileBytes == null || _coverFileBytes!.isEmpty)) {
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '请先选择表层文件。',
-          en: 'Pick a cover file first.',
+          'inline.plan295.crypto.pick_a_cover_file_first.2c52c7321183',
         );
       });
       return;
@@ -3456,10 +3754,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       setState(() {
         _fileEmbedResult = result;
         _fileOutputBytes = result.bytes;
-        _statusMessage = _lifeText(
+        _statusMessage = _lifeI18nText(
           context,
-          zh: '已生成隐写媒体，请导出结果文件。',
-          en: 'Stego media is ready. Export the result file.',
+          'inline.plan295.crypto.stego_media_is_ready_export_the_resu.2d6f5c4298f1',
         );
       });
     } catch (error) {
@@ -3467,10 +3764,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '文件加密失败: ${_friendlyError(context, error)}',
-          en: 'File encryption failed: ${_friendlyError(context, error)}',
+          'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.file_encryption_failed.d42af41ff1',
+          params: <String, Object?>{'p0': _friendlyError(context, error)},
         );
       });
     } finally {
@@ -3513,10 +3810,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       setState(() {
         _fileRevealResult = result;
         _fileOutputBytes = result.bytes;
-        _statusMessage = _lifeText(
+        _statusMessage = _lifeI18nText(
           context,
-          zh: '已还原文件，请导出保存。',
-          en: 'The hidden file has been revealed. Export it to save.',
+          'inline.plan295.crypto.the_hidden_file_has_been_revealed_ex.59730d54ffe5',
         );
         if (result.fileName != null && result.fileName!.trim().isNotEmpty) {
           _fileName = result.fileName;
@@ -3541,10 +3837,13 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       }
       setState(() {
         final extra = protectionMessage == null ? '' : ' $protectionMessage';
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '文件解密失败: ${_friendlyError(context, error)}$extra',
-          en: 'File decryption failed: ${_friendlyError(context, error)}$extra',
+          'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.file_decryption_failed.a153daac72',
+          params: <String, Object?>{
+            'p0': _friendlyError(context, error),
+            'extra': extra,
+          },
         );
       });
     } finally {
@@ -3580,10 +3879,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '哈希计算失败: ${_friendlyError(context, error)}',
-          en: 'Hash failed: ${_friendlyError(context, error)}',
+          'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.hash_failed.127db70632',
+          params: <String, Object?>{'p0': _friendlyError(context, error)},
         );
       });
     } finally {
@@ -3611,7 +3910,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       final fileName = '${baseName}_stego.${embed.outputExtension}';
 
       final pickedPath = await _pickSavePath(
-        dialogTitle: _lifeText(context, zh: '保存隐写媒体', en: 'Save stego media'),
+        dialogTitle: _lifeI18nText(
+          context,
+          'inline.plan295.crypto.save_stego_media.f5e69b4bf942',
+        ),
         fileName: fileName,
         extension: embed.outputExtension,
         bytes: result,
@@ -3634,10 +3936,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       if (savedPath == null) {
         if (kIsWeb) {
           setState(() {
-            _statusMessage = _lifeText(
+            _statusMessage = _lifeI18nText(
               context,
-              zh: '浏览器下载已触发，请查看下载列表。',
-              en: 'Browser download started. Check your downloads.',
+              'inline.plan295.crypto.browser_download_started_check_your.b28d392515b4',
             );
           });
           return;
@@ -3653,10 +3954,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '保存失败: $error',
-          en: 'Save failed: $error',
+          'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.save_failed.733e2f2246',
+          params: <String, Object?>{'error': error},
         );
       });
     } finally {
@@ -3700,7 +4001,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           : '${baseName}_revealed.$outputExtension';
 
       final pickedPath = await _pickSavePath(
-        dialogTitle: _lifeText(context, zh: '保存文件结果', en: 'Save file result'),
+        dialogTitle: _lifeI18nText(
+          context,
+          'inline.plan295.crypto.save_file_result.93309a5473ff',
+        ),
         fileName: fileName,
         extension: outputExtension,
         bytes: result,
@@ -3724,15 +4028,13 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           ui.Image? oldSource;
           setState(() {
             _statusMessage = shouldUnloadCarrier
-                ? _lifeText(
+                ? _lifeI18nText(
                     context,
-                    zh: '浏览器下载已触发，请查看下载列表。载体已从内存卸载。',
-                    en: 'Browser download started. Check your downloads. The carrier has been unloaded from memory.',
+                    'inline.plan295.crypto.browser_download_started_check_your.9c21a0a61aae',
                   )
-                : _lifeText(
+                : _lifeI18nText(
                     context,
-                    zh: '浏览器下载已触发，请查看下载列表。',
-                    en: 'Browser download started. Check your downloads.',
+                    'inline.plan295.crypto.browser_download_started_check_your.b28d392515b4',
                   );
             if (shouldUnloadCarrier) {
               oldSource = _detachCarrierState();
@@ -3748,10 +4050,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         _savedPath = savedPath;
         if (shouldUnloadCarrier) {
           oldSource = _detachCarrierState();
-          _statusMessage = _lifeText(
+          _statusMessage = _lifeI18nText(
             context,
-            zh: '文件已导出，载体已从内存卸载。',
-            en: 'The file was exported and the carrier has been unloaded from memory.',
+            'inline.plan295.crypto.the_file_was_exported_and_the_carrie.2dd13d997dc0',
           );
         }
       });
@@ -3761,10 +4062,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '保存失败: $error',
-          en: 'Save failed: $error',
+          'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.save_failed.733e2f2246',
+          params: <String, Object?>{'error': error},
         );
       });
     } finally {
@@ -4003,10 +4304,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         offset: _maxErrorAttemptsController.text.length,
       );
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '最大错误尝试次数必须是 0 到 255 之间的整数，已重置为 0（无限）。',
-          en: 'Max wrong attempts must be an integer from 0 to 255. It has been reset to 0 (unlimited).',
+          'inline.plan295.crypto.max_wrong_attempts_must_be_an_intege.aa06f0b0cb1f',
         );
       });
       return null;
@@ -4023,10 +4323,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         offset: _maxSuccessfulRevealsController.text.length,
       );
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '成功还原次数上限必须是 0 到 255 之间的整数，已重置为 0（不限制）。',
-          en: 'Max successful reveals must be an integer from 0 to 255. It has been reset to 0 (unlimited).',
+          'inline.plan295.crypto.max_successful_reveals_must_be_an_in.4d51465ac069',
         );
       });
       return null;
@@ -4042,10 +4341,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     setState(() {
       _busy = true;
       _savedPath = null;
-      _statusMessage = _lifeText(
+      _statusMessage = _lifeI18nText(
         context,
-        zh: '正在检查载体容量...',
-        en: 'Checking carrier capacity...',
+        'inline.plan295.crypto.checking_carrier_capacity.ff0b23d0b83f',
       );
       _error = null;
     });
@@ -4103,10 +4401,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         _statusMessage = null;
         _writePreview = null;
         _writePreviewOutputBytes = null;
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '写入前检查失败: ${_friendlyError(context, error)}',
-          en: 'Preflight check failed: ${_friendlyError(context, error)}',
+          'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.preflight_check_failed.c49c74dffb',
+          params: <String, Object?>{'p0': _friendlyError(context, error)},
         );
       });
       return false;
@@ -4126,10 +4424,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     setState(() {
       _busy = true;
       _savedPath = null;
-      _statusMessage = _lifeText(
+      _statusMessage = _lifeI18nText(
         context,
-        zh: '正在检查载体容量...',
-        en: 'Checking carrier capacity...',
+        'inline.plan295.crypto.checking_carrier_capacity.ff0b23d0b83f',
       );
       _error = null;
     });
@@ -4191,10 +4488,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         _statusMessage = null;
         _writePreview = null;
         _writePreviewOutputBytes = null;
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '写入前检查失败: ${_friendlyError(context, error)}',
-          en: 'Preflight check failed: ${_friendlyError(context, error)}',
+          'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.preflight_check_failed.c49c74dffb',
+          params: <String, Object?>{'p0': _friendlyError(context, error)},
         );
       });
       return false;
@@ -4211,30 +4508,56 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   ) {
     final side = math.max(1, math.sqrt(check.minimumPixels).ceil());
     if (check.mediaKind == ToolboxSteganographyMediaKind.audio) {
-      return _lifeText(
+      return _lifeI18nText(
         context,
-        zh: '载荷超过当前 WAV/PCM 音频容量。当前最大 ${_formatBytes(check.capacityBytes)}，当前设置需要 ${_formatBytes(check.requiredBytes)}。请减少内容，或换用更长的未压缩 WAV 音频；建议载体至少 ${_formatBytes(check.minimumCarrierBytes ?? 0)}，文件不超过 ${_formatBytes(ToolboxSteganographyService.maxTailCarrierBytes)}。',
-        en: 'The payload exceeds this WAV/PCM audio capacity. Max: ${_formatBytes(check.capacityBytes)}; current settings need ${_formatBytes(check.requiredBytes)}. Reduce the content or use a longer uncompressed WAV file; suggested carrier size is at least ${_formatBytes(check.minimumCarrierBytes ?? 0)} and under ${_formatBytes(ToolboxSteganographyService.maxTailCarrierBytes)}.',
+        'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.the_payload_exceeds_this_wav_pcm.357a1e2e89',
+        params: <String, Object?>{
+          'p0': _formatBytes(check.capacityBytes),
+          'p1': _formatBytes(check.requiredBytes),
+          'p2': _formatBytes(check.minimumCarrierBytes ?? 0),
+          'p3': _formatBytes(ToolboxSteganographyService.maxTailCarrierBytes),
+        },
       );
     }
     if (check.mediaKind == ToolboxSteganographyMediaKind.video) {
-      return _lifeText(
+      return _lifeI18nText(
         context,
-        zh: '载荷超过当前 MP4/MOV 容器写入上限。当前可追加 ${_formatBytes(check.capacityBytes)}，当前设置需要 ${_formatBytes(check.requiredBytes)}。请减少内容，或换用更小的 MP4/MOV 载体；输出文件需保持不超过 ${_formatBytes(ToolboxSteganographyService.maxTailCarrierBytes)}。',
-        en: 'The payload exceeds this MP4/MOV container capacity. Append capacity: ${_formatBytes(check.capacityBytes)}; current settings need ${_formatBytes(check.requiredBytes)}. Reduce the content or use a smaller MP4/MOV carrier; output must stay under ${_formatBytes(ToolboxSteganographyService.maxTailCarrierBytes)}.',
+        'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.the_payload_exceeds_this_mp4_mov.b750508333',
+        params: <String, Object?>{
+          'p0': _formatBytes(check.capacityBytes),
+          'p1': _formatBytes(check.requiredBytes),
+          'p2': _formatBytes(ToolboxSteganographyService.maxTailCarrierBytes),
+        },
       );
     }
     if (check.dualLayer) {
-      return _lifeText(
+      return _lifeI18nText(
         context,
-        zh: '载荷超过当前图片容量。当前图片 ${check.width}x${check.height}，每层最大 ${_formatBytes(check.perLayerCapacityBytes ?? 0)}；表层需要 ${_formatBytes(check.coverRequiredBytes ?? 0)}，深层需要 ${_formatBytes(check.hiddenRequiredBytes ?? 0)}。请减少内容，或换用至少 $side x $side 像素、总像素不超过 ${ToolboxSteganographyService.maxImagePixels}、文件不超过 ${_formatBytes(ToolboxSteganographyService.maxImageCarrierBytes)} 的图片。',
-        en: 'The payload exceeds this image capacity. Current image: ${check.width}x${check.height}, max per layer: ${_formatBytes(check.perLayerCapacityBytes ?? 0)}; cover needs ${_formatBytes(check.coverRequiredBytes ?? 0)}, hidden needs ${_formatBytes(check.hiddenRequiredBytes ?? 0)}. Reduce the content or use an image of at least $side x $side pixels, no more than ${ToolboxSteganographyService.maxImagePixels} total pixels, and under ${_formatBytes(ToolboxSteganographyService.maxImageCarrierBytes)}.',
+        'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.the_payload_exceeds_this_image_capacity.b5e206c196',
+        params: <String, Object?>{
+          'width': check.width,
+          'height': check.height,
+          'p2': _formatBytes(check.perLayerCapacityBytes ?? 0),
+          'p3': _formatBytes(check.coverRequiredBytes ?? 0),
+          'p4': _formatBytes(check.hiddenRequiredBytes ?? 0),
+          'side': side,
+          'maxImagePixels': ToolboxSteganographyService.maxImagePixels,
+          'p7': _formatBytes(ToolboxSteganographyService.maxImageCarrierBytes),
+        },
       );
     }
-    return _lifeText(
+    return _lifeI18nText(
       context,
-      zh: '载荷超过当前图片容量。当前图片 ${check.width}x${check.height}，最大 ${_formatBytes(check.capacityBytes)}；当前设置需要预留 ${_formatBytes(check.requiredBytes)}。请减少内容，或换用至少 $side x $side 像素、总像素不超过 ${ToolboxSteganographyService.maxImagePixels}、文件不超过 ${_formatBytes(ToolboxSteganographyService.maxImageCarrierBytes)} 的图片。',
-      en: 'The payload exceeds this image capacity. Current image: ${check.width}x${check.height}, max: ${_formatBytes(check.capacityBytes)}; current settings need ${_formatBytes(check.requiredBytes)}. Reduce the content or use an image of at least $side x $side pixels, no more than ${ToolboxSteganographyService.maxImagePixels} total pixels, and under ${_formatBytes(ToolboxSteganographyService.maxImageCarrierBytes)}.',
+      'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.the_payload_exceeds_this_image_capacity.6da5ecf7a2',
+      params: <String, Object?>{
+        'width': check.width,
+        'height': check.height,
+        'p2': _formatBytes(check.capacityBytes),
+        'p3': _formatBytes(check.requiredBytes),
+        'side': side,
+        'maxImagePixels': ToolboxSteganographyService.maxImagePixels,
+        'p6': _formatBytes(ToolboxSteganographyService.maxImageCarrierBytes),
+      },
     );
   }
 
@@ -4262,19 +4585,22 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     final raw = _maxErrorAttemptsController.text.trim();
     final parsed = raw.isEmpty ? 0 : int.tryParse(raw);
     if (parsed == null || parsed < 0 || parsed > 255) {
-      return _lifeText(
+      return _lifeI18nText(
         context,
-        zh: '输入无效。必须为 0 到 255；确认生成时会重置为 0（无限）。',
-        en: 'Invalid input. Use 0-255; it will reset to 0 (unlimited) before generation.',
+        'inline.plan295.crypto.invalid_input_use_0_255_it_will_rese.2082059fb1e5',
       );
     }
     final current = parsed == 0
-        ? _lifeText(context, zh: '无限', en: 'unlimited')
-        : _lifeText(context, zh: '$parsed 次', en: '$parsed attempt(s)');
-    return _lifeText(
+        ? _lifeI18nText(context, 'inline.plan295.crypto.unlimited.f2b082dc2b60')
+        : _lifeI18nText(
+            context,
+            'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.attempt_s.791b90caaa',
+            params: <String, Object?>{'parsed': parsed},
+          );
+    return _lifeI18nText(
       context,
-      zh: '当前为 $current，最大 255 次。解密密码错误达到设置次数会销毁当前文件隐藏内容。',
-      en: 'Current: $current, maximum 255. Reaching the limit with wrong decryption passwords destroys hidden data in the current file.',
+      'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.current_maximum_255_reaching_the_limit.c2addfc0a4',
+      params: <String, Object?>{'current': current},
     );
   }
 
@@ -4282,19 +4608,22 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     final raw = _maxSuccessfulRevealsController.text.trim();
     final parsed = raw.isEmpty ? 0 : int.tryParse(raw);
     if (parsed == null || parsed < 0 || parsed > 255) {
-      return _lifeText(
+      return _lifeI18nText(
         context,
-        zh: '输入无效。必须为 0 到 255；确认生成时会重置为 0（不限制）。',
-        en: 'Invalid input. Use 0-255; it will reset to 0 (unlimited) before generation.',
+        'inline.plan295.crypto.invalid_input_use_0_255_it_will_rese.f51193f604ca',
       );
     }
     final current = parsed == 0
-        ? _lifeText(context, zh: '不限制', en: 'unlimited')
-        : _lifeText(context, zh: '$parsed 次', en: '$parsed reveal(s)');
-    return _lifeText(
+        ? _lifeI18nText(context, 'inline.plan295.crypto.unlimited.7ab81d778468')
+        : _lifeI18nText(
+            context,
+            'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.reveal_s.ef7097bdac',
+            params: <String, Object?>{'parsed': parsed},
+          );
+    return _lifeI18nText(
       context,
-      zh: '当前为 $current。达到成功还原次数后会清理当前文件隐藏内容；复制文件或备份不受此限制。',
-      en: 'Current: $current. Hidden data is cleaned after the limit is reached; copied files or backups are not limited.',
+      'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.current_hidden_data_is_cleaned_after.5d209883f4',
+      params: <String, Object?>{'current': current},
     );
   }
 
@@ -4352,15 +4681,13 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         ui.Image? oldSource;
         setState(() {
           oldSource = _detachCarrierState();
-          _statusMessage = _lifeText(
-            context,
-            zh: wroteSource
-                ? '成功还原次数已用尽，源文件隐藏内容已清理，载体已从内存卸载。'
-                : '成功还原次数已用尽，当前内存载体隐藏内容已清理并卸载。',
-            en: wroteSource
-                ? 'Successful reveal limit was reached; hidden data was cleaned from the source file and the carrier was unloaded from memory.'
-                : 'Successful reveal limit was reached; hidden data was cleaned from the in-memory carrier and unloaded.',
-          );
+          _statusMessage = wroteSource
+              ? AppI18n(Localizations.localeOf(context).languageCode).t(
+                  'inline.plan295.crypto.successful_reveal_limit_was_reached.5435e8975742',
+                )
+              : AppI18n(Localizations.localeOf(context).languageCode).t(
+                  'inline.plan295.crypto.successful_reveal_limit_was_reached.7384f1352063',
+                );
         });
         oldSource?.dispose();
         return;
@@ -4377,15 +4704,21 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       setState(() {
         _sourceBytes = result.bytes;
         _sourcePreview = preview;
-        _statusMessage = _lifeText(
-          context,
-          zh: wroteSource
-              ? '成功还原次数剩余 ${result.remainingSuccessfulReveals}，源文件已更新。'
-              : '成功还原次数剩余 ${result.remainingSuccessfulReveals}，当前内存载体已更新。',
-          en: wroteSource
-              ? 'Remaining successful reveals: ${result.remainingSuccessfulReveals}. Source file was updated.'
-              : 'Remaining successful reveals: ${result.remainingSuccessfulReveals}. In-memory carrier was updated.',
-        );
+        _statusMessage = wroteSource
+            ? AppI18n(Localizations.localeOf(context).languageCode).t(
+                'inline.plan295.crypto.remaining_successful_reveals_result.c34efd72ab27',
+                params: <String, Object?>{
+                  'result.remainingSuccessfulReveals':
+                      result.remainingSuccessfulReveals,
+                },
+              )
+            : AppI18n(Localizations.localeOf(context).languageCode).t(
+                'inline.plan295.crypto.remaining_successful_reveals_result.d4becbbdd62c',
+                params: <String, Object?>{
+                  'result.remainingSuccessfulReveals':
+                      result.remainingSuccessfulReveals,
+                },
+              );
       });
       oldSource?.dispose();
     } on Object {
@@ -4491,19 +4824,19 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     if (status.locked) {
       return _decodeLockText(context, status.remaining ?? _decodeLockDuration);
     }
-    return _lifeText(
+    return _lifeI18nText(
       context,
-      zh: '当前文件错误次数 ${status.windowCount}。',
-      en: 'Current file error count: ${status.windowCount}.',
+      'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.current_file_error_count.d454c2a872',
+      params: <String, Object?>{'windowCount': status.windowCount},
     );
   }
 
   String _decodeLockText(BuildContext context, Duration remaining) {
     final minutes = math.max(1, remaining.inMinutes + 1);
-    return _lifeText(
+    return _lifeI18nText(
       context,
-      zh: '当前文件还原已锁定，约 $minutes 分钟后可重试。',
-      en: 'Reveal for the current file is locked. Try again in about $minutes minute(s).',
+      'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.reveal_for_the_current_file_is.c2ac6b41df',
+      params: <String, Object?>{'minutes': minutes},
     );
   }
 
@@ -4558,20 +4891,22 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       oldSource?.dispose();
       oldOutput?.dispose();
       final target = wroteSource
-          ? _lifeText(
+          ? _lifeI18nText(
               context,
-              zh: '已复写源文件，载体已从内存卸载。',
-              en: 'Source file was overwritten and the carrier was unloaded from memory.',
+              'inline.plan295.crypto.source_file_was_overwritten_and_the.fa084b5dac75',
             )
-          : _lifeText(
+          : _lifeI18nText(
               context,
-              zh: '已清理并卸载当前内存载体；当前平台未提供可复写路径。',
-              en: 'Current in-memory carrier was cleaned and unloaded; this platform did not provide a writable source path.',
+              'inline.plan295.crypto.current_in_memory_carrier_was_cleane.42b8531024cf',
             );
-      return _lifeText(
+      return _lifeI18nText(
         context,
-        zh: '$zhReason $target',
-        en: '$enReason $target',
+        'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.text.6aa573903c',
+        params: <String, Object?>{
+          'zhReason': zhReason,
+          'target': target,
+          'enReason': enReason,
+        },
       );
     } on Object {
       return null;
@@ -4588,37 +4923,35 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
 
   String _mediaLabel(BuildContext context, ToolboxSteganographyMediaKind kind) {
     return switch (kind) {
-      ToolboxSteganographyMediaKind.image => _lifeText(
+      ToolboxSteganographyMediaKind.image => _lifeI18nText(
         context,
-        zh: '图片',
-        en: 'Image',
+        'inline.plan295.crypto.image.baebdc30e7e4',
       ),
-      ToolboxSteganographyMediaKind.audio => _lifeText(
+      ToolboxSteganographyMediaKind.audio => _lifeI18nText(
         context,
-        zh: '音频',
-        en: 'Audio',
+        'inline.plan295.crypto.audio.253158c06f3c',
       ),
-      ToolboxSteganographyMediaKind.video => _lifeText(
+      ToolboxSteganographyMediaKind.video => _lifeI18nText(
         context,
-        zh: '视频',
-        en: 'Video',
+        'inline.plan295.crypto.video.2074eae3b2ea',
       ),
     };
   }
 
   String _workspaceLabel(BuildContext context, _CryptoWorkspace workspace) {
     return switch (workspace) {
-      _CryptoWorkspace.steganography => _lifeText(
+      _CryptoWorkspace.steganography => _lifeI18nText(
         context,
-        zh: '隐写',
-        en: 'Stego',
+        'inline.plan295.crypto.stego.1cc36bd69b84',
       ),
-      _CryptoWorkspace.file => _lifeText(
+      _CryptoWorkspace.file => _lifeI18nText(
         context,
-        zh: '文件加密',
-        en: 'File crypto',
+        'inline.plan295.crypto.file_crypto.4c82d6da1401',
       ),
-      _CryptoWorkspace.hash => _lifeText(context, zh: '哈希', en: 'Hash'),
+      _CryptoWorkspace.hash => _lifeI18nText(
+        context,
+        'inline.plan295.crypto.hash.c499c69bcca6',
+      ),
     };
   }
 
@@ -4627,49 +4960,42 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     ToolboxCryptoAlgorithm encryption,
   ) {
     return switch (encryption) {
-      ToolboxCryptoAlgorithm.none => _lifeText(
+      ToolboxCryptoAlgorithm.none => _lifeI18nText(
         context,
-        zh: '安全性: 明文。不会加密 payload，生成前会再次确认；任何拿到载体的人都可能还原内容。',
-        en: 'Safety: plaintext. Payloads are not encrypted and generation asks for confirmation; anyone with the carrier may recover the content.',
+        'inline.plan295.crypto.safety_plaintext_payloads_are_not_en.c9d14d506bae',
       ),
-      ToolboxCryptoAlgorithm.sha256Stream => _lifeText(
+      ToolboxCryptoAlgorithm.sha256Stream => _lifeI18nText(
         context,
-        zh: '安全性: 弱，仅用于旧载荷还原；新加密已移除。',
-        en: 'Safety: weak, reveal-only for legacy payloads. New encryption has been removed.',
+        'inline.plan295.crypto.safety_weak_reveal_only_for_legacy_p.61ee18060c48',
       ),
-      ToolboxCryptoAlgorithm.rc4Legacy => _lifeText(
+      ToolboxCryptoAlgorithm.rc4Legacy => _lifeI18nText(
         context,
-        zh: '安全性: 弱，仅用于 RC4 旧载荷还原；新加密已移除。',
-        en: 'Safety: weak, reveal-only for legacy RC4 payloads. New encryption has been removed.',
+        'inline.plan295.crypto.safety_weak_reveal_only_for_legacy_r.b2d2476f90d6',
       ),
       ToolboxCryptoAlgorithm.aesTwofishGcm ||
       ToolboxCryptoAlgorithm.aesCamelliaGcm ||
       ToolboxCryptoAlgorithm.aesTwofishCamelliaGcm ||
-      ToolboxCryptoAlgorithm.customCascade => _lifeText(
+      ToolboxCryptoAlgorithm.customCascade => _lifeI18nText(
         context,
-        zh: '安全性: 强+。使用 scrypt 2^16 起步、随机填充、独立派生密钥材料和认证校验。',
-        en: 'Safety: strong+. Uses scrypt from 2^16, random padding, independent key material, and authentication.',
+        'inline.plan295.crypto.safety_strong_uses_scrypt_from_2_16.8feed7f300b8',
       ),
-      _ => _lifeText(
+      _ => _lifeI18nText(
         context,
-        zh: '安全性: 强。默认 256-bit 以上密钥材料，使用随机盐、随机填充和认证校验。',
-        en: 'Safety: strong. Uses at least 256-bit key material, random salt, random padding, and authentication.',
+        'inline.plan295.crypto.safety_strong_uses_at_least_256_bit.613a35fa8bda',
       ),
     };
   }
 
   String _signaturePerformanceText(BuildContext context) {
     return switch (_effectiveSignatureMode) {
-      ToolboxCryptoSignatureMode.weakSha256 => _lifeText(
+      ToolboxCryptoSignatureMode.weakSha256 => _lifeI18nText(
         context,
-        zh: '弱签名是快速轻量标签，不生成公私钥，不提供第三方来源证明。',
-        en: 'Weak signature is a fast lightweight tag. It does not generate public/private keys or prove third-party origin.',
+        'inline.plan295.crypto.weak_signature_is_a_fast_lightweight.f453d8022986',
       ),
       ToolboxCryptoSignatureMode.rsaSha256 ||
-      ToolboxCryptoSignatureMode.ecdsaSha256 => _lifeText(
+      ToolboxCryptoSignatureMode.ecdsaSha256 => _lifeI18nText(
         context,
-        zh: 'RSA/ECDSA 是高成本完整性附加校验，不提供独立来源证明；移动设备可能需要等待。',
-        en: 'RSA/ECDSA are high-cost integrity checks, not independent origin proof. Slower mobile devices may need more time.',
+        'inline.plan295.crypto.rsa_ecdsa_are_high_cost_integrity_ch.4d07d07f51af',
       ),
       ToolboxCryptoSignatureMode.none => '',
     };
@@ -4680,75 +5006,61 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     ToolboxCryptoAlgorithm encryption,
   ) {
     return switch (encryption) {
-      ToolboxCryptoAlgorithm.aesGcm => _lifeText(
+      ToolboxCryptoAlgorithm.aesGcm => _lifeI18nText(
         context,
-        zh: 'AES-GCM',
-        en: 'AES-GCM',
+        'literal.services.toolbox_crypto_service.aes_gcm_110e45',
       ),
-      ToolboxCryptoAlgorithm.chacha20Poly1305 => _lifeText(
+      ToolboxCryptoAlgorithm.chacha20Poly1305 => _lifeI18nText(
         context,
-        zh: 'ChaCha20-Poly1305',
-        en: 'ChaCha20-Poly1305',
+        'literal.services.toolbox_crypto_service.chacha20_poly1305_6ca5b2',
       ),
-      ToolboxCryptoAlgorithm.twofishGcm => _lifeText(
+      ToolboxCryptoAlgorithm.twofishGcm => _lifeI18nText(
         context,
-        zh: 'Twofish-GCM',
-        en: 'Twofish-GCM',
+        'literal.services.toolbox_crypto_service.twofish_gcm_5aebe0',
       ),
-      ToolboxCryptoAlgorithm.camelliaGcm => _lifeText(
+      ToolboxCryptoAlgorithm.camelliaGcm => _lifeI18nText(
         context,
-        zh: 'Camellia-GCM',
-        en: 'Camellia-GCM',
+        'literal.services.toolbox_crypto_service.camellia_gcm_55360c',
       ),
-      ToolboxCryptoAlgorithm.aesTwofishGcm => _lifeText(
+      ToolboxCryptoAlgorithm.aesTwofishGcm => _lifeI18nText(
         context,
-        zh: 'AES + Twofish',
-        en: 'AES + Twofish',
+        'literal.services.toolbox_crypto_service.aes_twofish_d984ce',
       ),
-      ToolboxCryptoAlgorithm.aesCamelliaGcm => _lifeText(
+      ToolboxCryptoAlgorithm.aesCamelliaGcm => _lifeI18nText(
         context,
-        zh: 'AES + Camellia',
-        en: 'AES + Camellia',
+        'literal.services.toolbox_crypto_service.aes_camellia_37b745',
       ),
-      ToolboxCryptoAlgorithm.aesTwofishCamelliaGcm => _lifeText(
+      ToolboxCryptoAlgorithm.aesTwofishCamelliaGcm => _lifeI18nText(
         context,
-        zh: 'AES + Twofish + Camellia',
-        en: 'AES + Twofish + Camellia',
+        'literal.services.toolbox_crypto_service.aes_twofish_camellia_a9f46e',
       ),
-      ToolboxCryptoAlgorithm.customCascade => _lifeText(
+      ToolboxCryptoAlgorithm.customCascade => _lifeI18nText(
         context,
-        zh: '自由级联',
-        en: 'Custom cascade',
+        'inline.plan295.crypto.custom_cascade.d93fe5b2930c',
       ),
-      ToolboxCryptoAlgorithm.sha256RsaSignature => _lifeText(
+      ToolboxCryptoAlgorithm.sha256RsaSignature => _lifeI18nText(
         context,
-        zh: 'SHA-256/RSA 签名',
-        en: 'SHA-256/RSA signature',
+        'inline.plan295.crypto.sha_256_rsa_signature.4ad2344cb150',
       ),
-      ToolboxCryptoAlgorithm.ecdsaSignature => _lifeText(
+      ToolboxCryptoAlgorithm.ecdsaSignature => _lifeI18nText(
         context,
-        zh: 'ECDSA 签名',
-        en: 'ECDSA signature',
+        'inline.plan295.crypto.ecdsa_signature.703fd2ae2949',
       ),
-      ToolboxCryptoAlgorithm.whirlpoolDigest => _lifeText(
+      ToolboxCryptoAlgorithm.whirlpoolDigest => _lifeI18nText(
         context,
-        zh: 'Whirlpool 校验',
-        en: 'Whirlpool MAC',
+        'inline.plan295.crypto.whirlpool_mac.c8b95dda4d12',
       ),
-      ToolboxCryptoAlgorithm.sha256Stream => _lifeText(
+      ToolboxCryptoAlgorithm.sha256Stream => _lifeI18nText(
         context,
-        zh: 'SHA256 流',
-        en: 'SHA256 stream',
+        'inline.plan295.crypto.sha256_stream.497d6a375d82',
       ),
-      ToolboxCryptoAlgorithm.rc4Legacy => _lifeText(
+      ToolboxCryptoAlgorithm.rc4Legacy => _lifeI18nText(
         context,
-        zh: 'RC4 兼容',
-        en: 'RC4 legacy',
+        'inline.plan295.crypto.rc4_legacy.4fb4fec5554f',
       ),
-      ToolboxCryptoAlgorithm.none => _lifeText(
+      ToolboxCryptoAlgorithm.none => _lifeI18nText(
         context,
-        zh: '不加密',
-        en: 'No encryption',
+        'inline.plan295.crypto.no_encryption.86752caad95a',
       ),
     };
   }
@@ -4762,30 +5074,26 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       ToolboxCryptoCascadeCipher.chacha20 => 'ChaCha20',
       ToolboxCryptoCascadeCipher.twofish => 'Twofish',
       ToolboxCryptoCascadeCipher.camellia => 'Camellia',
-      ToolboxCryptoCascadeCipher.sha256Stream => _lifeText(
+      ToolboxCryptoCascadeCipher.sha256Stream => _lifeI18nText(
         context,
-        zh: 'SHA256 流',
-        en: 'SHA256 stream',
+        'inline.plan295.crypto.sha256_stream.497d6a375d82',
       ),
     };
   }
 
   String _strengthLabel(BuildContext context, ToolboxCryptoStrength strength) {
     return switch (strength) {
-      ToolboxCryptoStrength.standard => _lifeText(
+      ToolboxCryptoStrength.standard => _lifeI18nText(
         context,
-        zh: '标准',
-        en: 'Standard',
+        'inline.ui.pages.toolbox_human_tests_bimanual.standard_b9acb5',
       ),
-      ToolboxCryptoStrength.strong => _lifeText(
+      ToolboxCryptoStrength.strong => _lifeI18nText(
         context,
-        zh: '加强',
-        en: 'Strong',
+        'inline.plan295.crypto.strong.1871a3e17f16',
       ),
-      ToolboxCryptoStrength.extreme => _lifeText(
+      ToolboxCryptoStrength.extreme => _lifeI18nText(
         context,
-        zh: '极限',
-        en: 'Extreme',
+        'inline.plan295.crypto.extreme.9e40ee107b5e',
       ),
     };
   }
@@ -4835,231 +5143,222 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       return '$error';
     }
     return switch (message) {
-      'Source media is empty.' => _lifeText(
+      'Source media is empty.' => _lifeI18nText(
         context,
-        zh: '媒体文件为空。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.source_media_is_empty_f981db',
       ),
-      'Input bytes are empty.' => _lifeText(
+      'Input bytes are empty.' => _lifeI18nText(
         context,
-        zh: '输入文件为空。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.input_bytes_are_empty_963697',
       ),
-      'Input file is too large.' => _lifeText(
+      'Secret text is empty.' => _lifeI18nText(
         context,
-        zh: '输入文件过大，最大 ${_formatBytes(ToolboxCryptoService.maxPlainBytes)}。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.secret_text_is_empty_8db87a',
       ),
-      'Source media is too large.' => _lifeText(
+      'This encryption mode requires a passphrase or key file.' => _lifeI18nText(
         context,
-        zh: '媒体文件过大，最大 ${_formatBytes(ToolboxSteganographyService.maxTailCarrierBytes)}。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.this_encryption_mode_requires_a_passphrase_or_key_file_682033',
       ),
-      'Image file is too large.' => _lifeText(
+      'This encryption mode requires a passphrase.' => _lifeI18nText(
         context,
-        zh: '图片文件过大，最大 ${_formatBytes(ToolboxSteganographyService.maxImageCarrierBytes)}。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.this_encryption_mode_requires_a_passphrase_ef206a',
       ),
-      'Image dimensions are too large.' => _lifeText(
+      'Passphrase or key file is required.' => _lifeI18nText(
         context,
-        zh: '图片像素尺寸过大，最大 ${ToolboxSteganographyService.maxImagePixels} 像素。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.passphrase_or_key_file_is_required_2c18e5',
       ),
-      _ when message.startsWith('Selected file is too large. Limit:') =>
-        _lifeText(
-          context,
-          zh: '所选文件过大。${message.replaceFirst('Selected file is too large. ', '')}',
-          en: message,
-        ),
-      'Secret text is empty.' => _lifeText(context, zh: '隐藏文本为空。', en: message),
-      'This encryption mode requires a passphrase or key file.' => _lifeText(
+      'Key file mismatch or missing key file.' => _lifeI18nText(
         context,
-        zh: '当前加密模式需要口令或密钥文件。',
-        en: message,
-      ),
-      'This encryption mode requires a passphrase.' => _lifeText(
-        context,
-        zh: '当前加密模式需要填写口令。',
-        en: message,
-      ),
-      'Passphrase or key file is required.' => _lifeText(
-        context,
-        zh: '请填写口令或选择密钥文件。',
-        en: message,
-      ),
-      'Key file mismatch or missing key file.' => _lifeText(
-        context,
-        zh: '密钥文件不匹配，或缺少密钥文件。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.key_file_mismatch_or_missing_key_file_866ed2',
       ),
       'Legacy or weak algorithms can only decrypt existing payloads.' =>
-        _lifeText(
+        _lifeI18nText(
           context,
-          zh: 'RC4 和 SHA256 流仅保留旧载荷解密兼容，不能用于新加密。',
-          en: message,
+          'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.legacy_or_weak_algorithms_can_only_decrypt_existing_payl_8b8564',
         ),
-      'SHA256 stream can only decrypt existing legacy payloads.' => _lifeText(
+      'SHA256 stream can only decrypt existing legacy payloads.' => _lifeI18nText(
         context,
-        zh: 'SHA256 流仅保留旧载荷解密兼容，不能加入新的自由级联。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.sha256_stream_can_only_decrypt_existing_legacy_payloads_6cc0e2',
       ),
       'Audio steganography requires a frequency-domain backend before new payloads can be generated.' =>
-        _lifeText(
+        _lifeI18nText(
           context,
-          zh: '音频新写入需要 DCT/DWT/回声隐藏等频域后端；当前仅支持旧载荷还原。',
-          en: message,
+          'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.audio_steganography_requires_a_frequency_domain_backend_5d676c',
         ),
       'Video steganography requires a frame-level or motion-vector backend before new payloads can be generated.' =>
-        _lifeText(context, zh: '视频新写入需要帧内或运动矢量级后端；当前仅支持旧载荷还原。', en: message),
-      'Unsupported image format. Pick PNG/JPG/WebP/GIF style images.' =>
-        _lifeText(
+        _lifeI18nText(
           context,
-          zh: '不支持该图片格式，请选择 PNG/JPG/WebP/GIF 等常见图片。',
-          en: message,
+          'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.video_steganography_requires_a_frame_level_or_motion_vec_193d4a',
         ),
-      'Unsupported image format or no hidden payload found.' => _lifeText(
+      'Unsupported image format. Pick PNG/JPG/WebP/GIF style images.' =>
+        _lifeI18nText(
+          context,
+          'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.unsupported_image_format_pick_png_jpg_webp_gif_style_ima_e5fc6b',
+        ),
+      'Unsupported image format or no hidden payload found.' => _lifeI18nText(
         context,
-        zh: '不支持该图片格式，或未发现隐写载荷。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.unsupported_image_format_or_no_hidden_payload_found_aa3cff',
       ),
-      'Image is too small.' => _lifeText(context, zh: '图片尺寸太小。', en: message),
-      'No hidden image payload found.' => _lifeText(
+      'Image is too small.' => _lifeI18nText(
         context,
-        zh: '未在图片中发现隐写载荷。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.image_is_too_small_cea140',
       ),
-      'Hidden image payload is damaged or incomplete.' => _lifeText(
+      'No hidden image payload found.' => _lifeI18nText(
         context,
-        zh: '图片中的隐写载荷损坏或不完整。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.no_hidden_image_payload_found_620d89',
       ),
-      'No hidden payload found.' => _lifeText(
+      'Hidden image payload is damaged or incomplete.' => _lifeI18nText(
         context,
-        zh: '未发现隐写载荷。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.hidden_image_payload_is_damaged_or_incomplete_c5f981',
       ),
-      'Hidden payload is damaged or incomplete.' => _lifeText(
+      'No hidden payload found.' => _lifeI18nText(
         context,
-        zh: '隐写载荷损坏或不完整。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.no_hidden_payload_found_673c74',
       ),
-      'Unsupported payload version.' => _lifeText(
+      'Hidden payload is damaged or incomplete.' => _lifeI18nText(
         context,
-        zh: '不支持该载荷版本。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.hidden_payload_is_damaged_or_incomplete_ad8e2a',
       ),
-      'Unsupported crypto version.' => _lifeText(
+      'Unsupported payload version.' => _lifeI18nText(
         context,
-        zh: '不支持该加密文件版本。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.unsupported_payload_version_787bf2',
       ),
-      'Hidden payload is invalid.' => _lifeText(
+      'Unsupported crypto version.' => _lifeI18nText(
         context,
-        zh: '隐写载荷格式无效。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.unsupported_crypto_version_d47531',
       ),
-      'Crypto envelope is invalid.' => _lifeText(
+      'Hidden payload is invalid.' => _lifeI18nText(
         context,
-        zh: '加密文件格式无效。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.hidden_payload_is_invalid_edfa3f',
       ),
-      'Crypto envelope is too large.' => _lifeText(
+      'Crypto envelope is invalid.' => _lifeI18nText(
         context,
-        zh: '加密数据过大，已拒绝处理。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.crypto_envelope_is_invalid_d06fb8',
       ),
-      'Crypto KDF parameters are invalid.' => _lifeText(
+      'Crypto envelope is too large.' => _lifeI18nText(
         context,
-        zh: '加密文件的 KDF 参数无效或超过上限。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.crypto_envelope_is_too_large_7e830a',
       ),
-      'This payload requires a passphrase.' => _lifeText(
+      'Crypto KDF parameters are invalid.' => _lifeI18nText(
         context,
-        zh: '该载荷需要口令。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.crypto_kdf_parameters_are_invalid_4b6aaf',
       ),
-      'Passphrase mismatch or payload is damaged.' => _lifeText(
+      'This payload requires a passphrase.' => _lifeI18nText(
         context,
-        zh: '口令不匹配，或载荷已损坏。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.this_payload_requires_a_passphrase_faaf89',
       ),
-      'Payload is damaged.' => _lifeText(context, zh: '载荷已损坏。', en: message),
-      'Payload checksum failed.' => _lifeText(
+      'Passphrase mismatch or payload is damaged.' => _lifeI18nText(
         context,
-        zh: '载荷校验失败。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.passphrase_mismatch_or_payload_is_damaged_b73f8c',
       ),
-      'Payload padding is invalid.' => _lifeText(
+      'Payload is damaged.' => _lifeI18nText(
         context,
-        zh: '载荷随机填充无效，文件可能已损坏。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.payload_is_damaged_cb7dd6',
       ),
-      'Payload text is not valid UTF-8.' => _lifeText(
+      'Payload checksum failed.' => _lifeI18nText(
         context,
-        zh: '载荷文本不是有效 UTF-8。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.payload_checksum_failed_7f5459',
       ),
-      'Hidden payload header is invalid.' => _lifeText(
+      'Payload padding is invalid.' => _lifeI18nText(
         context,
-        zh: '隐写载荷头无效。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.payload_padding_is_invalid_4d30d9',
       ),
-      'Hidden payload length is invalid.' => _lifeText(
+      'Payload text is not valid UTF-8.' => _lifeI18nText(
         context,
-        zh: '隐写载荷长度无效。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.payload_text_is_not_valid_utf_8_05aaa3',
       ),
-      'Hidden payload body is invalid.' => _lifeText(
+      'Hidden payload header is invalid.' => _lifeI18nText(
         context,
-        zh: '隐写载荷内容无效。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.hidden_payload_header_is_invalid_60d5ac',
       ),
-      'Hidden payload tamper check failed.' => _lifeText(
+      'Hidden payload length is invalid.' => _lifeI18nText(
         context,
-        zh: '隐写数据防篡改校验失败。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.hidden_payload_length_is_invalid_600382',
       ),
-      'Max error attempts must be between 0 and 255.' => _lifeText(
+      'Hidden payload body is invalid.' => _lifeI18nText(
         context,
-        zh: '最大错误尝试次数必须在 0 到 255 之间。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.hidden_payload_body_is_invalid_43f76e',
       ),
-      'Max successful reveals must be between 0 and 255.' => _lifeText(
+      'Hidden payload tamper check failed.' => _lifeI18nText(
         context,
-        zh: '成功还原次数上限必须在 0 到 255 之间。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.hidden_payload_tamper_check_failed_c1de3f',
+      ),
+      'Max error attempts must be between 0 and 255.' => _lifeI18nText(
+        context,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.max_error_attempts_must_be_between_0_and_255_3479c5',
+      ),
+      'Max successful reveals must be between 0 and 255.' => _lifeI18nText(
+        context,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.max_successful_reveals_must_be_between_0_and_255_5c0d55',
       ),
       'Carrier already contains hidden data. Use the original carrier, clear the hidden data, or embed the encrypted file as a new payload.' =>
-        _lifeText(
+        _lifeI18nText(
           context,
-          zh: '该载体已被当前隐写格式占用。请使用原始文件重新生成，或先清理隐藏内容；如需多层，请把加密文件作为新的隐写载荷。',
-          en: message,
+          'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.carrier_already_contains_hidden_data_use_the_original_ca_ebd54f',
         ),
-      'Dual-layer mode currently supports image carriers only.' => _lifeText(
+      'Dual-layer mode currently supports image carriers only.' => _lifeI18nText(
         context,
-        zh: '双层模式当前仅支持图片载体。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.dual_layer_mode_currently_supports_image_carriers_only_c8fa28',
       ),
-      'Dual-layer mode requires both passphrases.' => _lifeText(
+      'Dual-layer mode requires both passphrases.' => _lifeI18nText(
         context,
-        zh: '双层模式需要同时填写表层口令和深层口令。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.dual_layer_mode_requires_both_passphrases_d983b4',
       ),
-      'Dual-layer passphrases must be different.' => _lifeText(
+      'Dual-layer passphrases must be different.' => _lifeI18nText(
         context,
-        zh: '表层口令必须与深层口令不同。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.dual_layer_passphrases_must_be_different_7af16f',
       ),
-      'Payload is too large.' => _lifeText(context, zh: '载荷过大。', en: message),
-      _ when message.endsWith('is not available yet.') => _lifeText(
+      'Payload is too large.' => _lifeI18nText(
         context,
-        zh: '该算法暂未接入可靠加密后端。',
-        en: message,
+        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.payload_is_too_large_23c83a',
       ),
-      _ when message.startsWith('Secret payload is too large') => _lifeText(
+      'Input file is too large.' => _lifeI18nText(
         context,
-        zh: '隐藏文本超过当前图片容量。',
-        en: message,
+        'inline.plan296.crypto.error.input_file_too_large_with_limit',
+        params: <String, Object?>{
+          'limit': _formatBytes(ToolboxCryptoService.maxPlainBytes),
+        },
+      ),
+      'Source media is too large.' => _lifeI18nText(
+        context,
+        'inline.plan296.crypto.error.source_media_too_large_with_limit',
+        params: <String, Object?>{
+          'limit': _formatBytes(
+            ToolboxSteganographyService.maxTailCarrierBytes,
+          ),
+        },
+      ),
+      'Image file is too large.' => _lifeI18nText(
+        context,
+        'inline.plan296.crypto.error.image_file_too_large_with_limit',
+        params: <String, Object?>{
+          'limit': _formatBytes(
+            ToolboxSteganographyService.maxImageCarrierBytes,
+          ),
+        },
+      ),
+      'Image dimensions are too large.' => _lifeI18nText(
+        context,
+        'inline.plan296.crypto.error.image_dimensions_too_large_with_limit',
+        params: <String, Object?>{
+          'pixels': ToolboxSteganographyService.maxImagePixels,
+        },
+      ),
+      _ when message.startsWith('Selected file is too large. Limit:') =>
+        _lifeI18nText(
+          context,
+          'inline.plan296.crypto.error.selected_file_too_large',
+          params: <String, Object?>{
+            'detail': message.replaceFirst('Selected file is too large. ', ''),
+          },
+        ),
+      _ when message.endsWith('is not available yet.') => _lifeI18nText(
+        context,
+        'inline.plan296.crypto.error.algorithm_unavailable',
+      ),
+      _ when message.startsWith('Secret payload is too large') => _lifeI18nText(
+        context,
+        'inline.plan296.crypto.error.secret_payload_too_large',
       ),
       _ => message,
     };

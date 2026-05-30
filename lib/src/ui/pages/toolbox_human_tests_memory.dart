@@ -7,37 +7,16 @@ class ChimpTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(
-        i18n,
-        zh: '黑猩猩测试',
-        en: 'Chimp test',
-        ja: 'CHIMP TEST',
-        de: 'Chimp test',
-        fr: 'Essai de chimie',
-        es: 'Prueba de chimpancé',
-        ru: 'шимпанзе',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_memory.chimp_test_705527',
       ),
-      subtitle: pickUiText(
-        i18n,
-        zh: '记住数字位置并在遮盖后按顺序点击，难度随轮次自动提升。',
-        en: 'Includes classic, sequential-number, and color-sequence modes with board size, answer assists, and reports.',
-        ja: 'Includes classic, sequential-number, and color-sequence modes with board size, answer assists, and reports.',
-        de: 'Includes classic, sequential-number, and color-sequence modes with board size, answer assists, and reports.',
-        fr: 'Inclut les modes classiques, séquentiels et séquentielle avec la taille du tableau, les aides-réponses et les rapports.',
-        es: 'Incluye modos clásicos, número secuencial y secuencia de color con tamaño de la tabla, ayudas de respuesta e informes.',
-        ru: 'Включает классические режимы последовательного числа и цветовой последовательности с размером платы, ассистами ответов и отчетами.',
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_memory.includes_classic_sequential_number_and_color_sequence_mo_7ea5da',
       ),
       accent: const Color(0xFF6C8D42),
       icon: Icons.grid_view_rounded,
-      status: pickUiText(
-        i18n,
-        zh: '数字闪过就遮住，按记忆顺序逐个点击',
-        en: 'Next: replay the shown order by tapping targets',
-        ja: 'Next: replay the shown order by tapping targets',
-        de: 'Next: replay the shown order by tapping targets',
-        fr: 'Suivant : rejouer l\'ordre affiché en tapant des cibles',
-        es: 'Siguiente: volver a reproducir el orden mostrado mediante el uso de objetivos',
-        ru: 'Далее: переиграйте показанный порядок, нажав на цели',
+      status: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_memory.next_replay_the_shown_order_by_tapping_targets_7f9ce6',
       ),
       child: const _ChimpTestCard(),
     );
@@ -54,28 +33,12 @@ class _ChimpTestCard extends StatefulWidget {
 enum _ChimpMode { classic, sequential, colorSequence }
 
 class _ChimpColorToken {
-  const _ChimpColorToken({
-    required this.color,
-    required this.zh,
-    required this.en,
-    required this.ja,
-    required this.de,
-    required this.fr,
-    required this.es,
-    required this.ru,
-  });
+  const _ChimpColorToken({required this.color, required this.labelKey});
 
   final Color color;
-  final String zh;
-  final String en;
-  final String ja;
-  final String de;
-  final String fr;
-  final String es;
-  final String ru;
+  final String labelKey;
 
-  String label(AppI18n i18n) =>
-      pickUiText(i18n, zh: zh, en: en, ja: ja, de: de, fr: fr, es: es, ru: ru);
+  String label(AppI18n i18n) => i18n.t(labelKey);
 }
 
 class _ChimpTestCardState extends State<_ChimpTestCard> {
@@ -86,83 +49,35 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
   static const List<_ChimpColorToken> _colorPalette = <_ChimpColorToken>[
     _ChimpColorToken(
       color: Color(0xFFE86D6D),
-      zh: '红色',
-      en: 'Red',
-      ja: '赤',
-      de: 'Rot',
-      fr: 'Rouge',
-      es: 'Rojo',
-      ru: 'Красный',
+      labelKey: 'inline.plan297.human_tests.memory.color.red.7414460a9e',
     ),
     _ChimpColorToken(
       color: Color(0xFF5AA7E8),
-      zh: '蓝色',
-      en: 'Blue',
-      ja: '青',
-      de: 'Blau',
-      fr: 'Bleu',
-      es: 'Azul',
-      ru: 'Синий',
+      labelKey: 'inline.plan297.human_tests.memory.color.blue.709aec8dac',
     ),
     _ChimpColorToken(
       color: Color(0xFF69B97E),
-      zh: '绿色',
-      en: 'Green',
-      ja: '緑',
-      de: 'Grün',
-      fr: 'Vert',
-      es: 'Verde',
-      ru: 'Зеленый',
+      labelKey: 'inline.plan297.human_tests.memory.color.green.73f310e247',
     ),
     _ChimpColorToken(
       color: Color(0xFFE8B45A),
-      zh: '黄色',
-      en: 'Yellow',
-      ja: '黄色',
-      de: 'Gelb',
-      fr: 'Jaune',
-      es: 'Amarillo',
-      ru: 'Желтый',
+      labelKey: 'inline.plan297.human_tests.memory.color.yellow.c52f6d87d0',
     ),
     _ChimpColorToken(
       color: Color(0xFFC283E6),
-      zh: '紫色',
-      en: 'Purple',
-      ja: '紫',
-      de: 'Violett',
-      fr: 'Violet',
-      es: 'Morado',
-      ru: 'Фиолетовый',
+      labelKey: 'inline.plan297.human_tests.memory.color.purple.d8c97fdf64',
     ),
     _ChimpColorToken(
       color: Color(0xFF58B5A8),
-      zh: '青色',
-      en: 'Cyan',
-      ja: 'シアン',
-      de: 'Türkis',
-      fr: 'Cyan',
-      es: 'Cian',
-      ru: 'Бирюзовый',
+      labelKey: 'inline.plan297.human_tests.memory.color.cyan.c2ceed9654',
     ),
     _ChimpColorToken(
       color: Color(0xFFE69252),
-      zh: '橙色',
-      en: 'Orange',
-      ja: 'オレンジ',
-      de: 'Orange',
-      fr: 'Orange',
-      es: 'Naranja',
-      ru: 'Оранжевый',
+      labelKey: 'inline.plan297.human_tests.memory.color.orange.a7b0feedb2',
     ),
     _ChimpColorToken(
       color: Color(0xFF8AA0E8),
-      zh: '靛蓝',
-      en: 'Indigo',
-      ja: 'インディゴ',
-      de: 'Indigo',
-      fr: 'Indigo',
-      es: 'Índigo',
-      ru: 'Индиго',
+      labelKey: 'inline.plan297.human_tests.memory.color.indigo.32b3e46bfd',
     ),
   ];
 
@@ -213,35 +128,14 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
 
   String _modeLabel(AppI18n i18n, _ChimpMode mode) {
     return switch (mode) {
-      _ChimpMode.classic => pickUiText(
-        i18n,
-        zh: '经典模式',
-        en: 'Classic mode',
-        ja: 'クラシックモード',
-        de: 'Classic mode',
-        fr: 'Mode classique',
-        es: 'Modo clásico',
-        ru: 'Классический режим',
+      _ChimpMode.classic => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_memory.classic_mode_a03b8d',
       ),
-      _ChimpMode.sequential => pickUiText(
-        i18n,
-        zh: '顺序数字模式',
-        en: 'Sequential number mode',
-        ja: 'Sequential number mode',
-        de: 'Sequential number mode',
-        fr: 'Mode numéro séquentiel',
-        es: 'Modo de número secuencial',
-        ru: 'Режим последовательного числа',
+      _ChimpMode.sequential => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_memory.sequential_number_mode_bebc5b',
       ),
-      _ChimpMode.colorSequence => pickUiText(
-        i18n,
-        zh: '颜色顺序模式',
-        en: 'Color sequence mode',
-        ja: 'カラーシーケンスモードカラー',
-        de: 'Color sequence mode',
-        fr: 'Mode séquence couleur',
-        es: 'Modo de secuencia de color',
-        ru: 'Режим цветовой последовательности',
+      _ChimpMode.colorSequence => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_memory.color_sequence_mode_b66f18',
       ),
     };
   }
@@ -289,101 +183,45 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
     }
     final colorName = _colorName(i18n, _targetColor!);
     final sequenceLabel = _targetStepIndexes.map((step) => 'x$step').join(', ');
-    return pickUiText(
-      i18n,
-      zh: '目标颜色：$colorName，请按顺序点击 $sequenceLabel',
-      en: 'Target color: $colorName. Tap $sequenceLabel in order.',
-      ja: 'Target color: $colorName. Tap $sequenceLabel in order.',
-      de: 'Target color: $colorName. Tap $sequenceLabel in order.',
-      fr: 'Couleur cible : $colorName. Appuyez sur $sequenceLabel dans l\'ordre.',
-      es: 'Color de blanco: <v0/ título. Toque en orden.',
-      ru: 'Цвет цели: $colorName. Нажмите $sequenceLabel в порядке.',
+    return i18n.t(
+      'inline.ui.pages.toolbox_human_tests_memory.target_color_colorname_tap_sequencelabel_in_order_624267',
     );
   }
 
   String _statusText(AppI18n i18n) {
     if (_showingSequence) {
       return _mode == _ChimpMode.colorSequence
-          ? pickUiText(
-              i18n,
-              zh: '依次显示：${_colorSequenceSummary(i18n)}',
-              en: 'Showing sequence: ${_colorSequenceSummary(i18n)}',
-              ja: 'Showing sequence: ${_colorSequenceSummary(i18n)}',
-              de: 'Showing sequence: ${_colorSequenceSummary(i18n)}',
-              fr: 'Affichage de la séquence : ${_colorSequenceSummary(i18n)}',
-              es: 'Visualización de la secuencia:',
-              ru: 'Показ последовательности: ${_colorSequenceSummary(i18n)}',
+          ? i18n.t(
+              'inline.ui.pages.toolbox_human_tests_memory.showing_sequence_colorsequencesummary_i18n_ce5324',
             )
-          : pickUiText(
-              i18n,
-              zh: '正在按顺序播放，请记住位置',
-              en: 'Playing in order, memorize positions',
-              ja: 'Playing in order, memorize positions',
-              de: 'Playing in order, memorize positions',
-              fr: 'Jouer dans l\'ordre, mémoriser les positions',
-              es: 'Jugar en orden, memorizar posiciones',
-              ru: 'Играть по порядку, запоминать позиции',
+          : i18n.t(
+              'inline.ui.pages.toolbox_human_tests_memory.playing_in_order_memorize_positions_1aa220',
             );
     }
     if (_failed) {
-      return pickUiText(
-        i18n,
-        zh: '顺序错误，本轮结束。',
-        en: 'Wrong order. This set has ended.',
-        ja: 'Wrong order. This set has ended.',
-        de: 'Wrong order. This set has ended.',
-        fr: 'Mauvais ordre. Cet ensemble est terminé.',
-        es: 'Orden incorrecta. Este set ha terminado.',
-        ru: 'Неправильный приказ. Этот набор закончился.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_memory.wrong_order_this_set_has_ended_02f491',
       );
     }
     if (_complete) {
       return _sessionEnded
-          ? pickUiText(
-              i18n,
-              zh: '完成上限目标，本轮结束。',
-              en: 'Target cap cleared. This set is complete.',
-              ja: 'Target cap cleared. This set is complete.',
-              de: 'Target cap cleared. This set is complete.',
-              fr: 'La cible est dégagée. Cet ensemble est terminé.',
-              es: 'Gorra de blanco. Este set está completo.',
-              ru: 'Цель снята. Этот набор завершен.',
+          ? i18n.t(
+              'inline.ui.pages.toolbox_human_tests_memory.target_cap_cleared_this_set_is_complete_37399f',
             )
-          : pickUiText(
-              i18n,
-              zh: '完成，本轮目标数量已提升。',
-              en: 'Complete. Target count increased.',
-              ja: '完了しました。ターゲット数が増加',
-              de: 'Complete. Target count increased.',
-              fr: 'Complète. Le nombre de cibles a augmenté.',
-              es: 'Completa. El recuento de objetivos aumentó.',
-              ru: 'Полный. Количество целей увеличилось.',
+          : i18n.t(
+              'inline.ui.pages.toolbox_human_tests_memory.complete_target_count_increased_ec0339',
             );
     }
     if (_showNextHint && _nextExpectedCell != null) {
-      return pickUiText(
-        i18n,
-        zh: '提示：下一格已用描边标出。',
-        en: 'Hint: the next cell is outlined.',
-        ja: 'Hint: the next cell is outlined.',
-        de: 'Hint: the next cell is outlined.',
-        fr: 'Conseil : la cellule suivante est décrite.',
-        es: 'Hint: se describe la siguiente celda.',
-        ru: 'Подсказка: очерчена следующая ячейка.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_memory.hint_the_next_cell_is_outlined_06a8ac',
       );
     }
     if (_mode == _ChimpMode.colorSequence && _positions.isNotEmpty) {
       return _targetHint(i18n);
     }
-    return pickUiText(
-      i18n,
-      zh: '点击开始后按顺序完成目标。',
-      en: 'Press Start, then finish targets in order.',
-      ja: 'Press Start, then finish targets in order.',
-      de: 'Press Start, then finish targets in order.',
-      fr: 'Appuyez sur Démarrer, puis terminez les cibles en ordre.',
-      es: 'Presione Inicio, luego termine objetivos en orden.',
-      ru: 'Нажмите «Пуск», затем завершите цели по порядку.',
+    return i18n.t(
+      'inline.ui.pages.toolbox_human_tests_memory.press_start_then_finish_targets_in_order_74523f',
     );
   }
 
@@ -810,73 +648,24 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
+            (i18n.t('toolbox.sound.piano.mode'), _modeLabel(i18n, _mode)),
             (
-              pickUiText(
-                i18n,
-                zh: '模式',
-                en: 'Mode',
-                ja: 'Mode',
-                de: 'Mode',
-                fr: 'Mode',
-                es: 'Modo',
-                ru: 'Режим',
-              ),
-              _modeLabel(i18n, _mode),
-            ),
-            (
-              pickUiText(
-                i18n,
-                zh: '目标数',
-                en: 'Targets',
-                ja: 'Targets',
-                de: 'Targets',
-                fr: 'Objectifs',
-                es: 'Metas',
-                ru: 'Цели',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_aim_widgets.targets_d13c96',
               ),
               '$_targetCount',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '表格',
-                en: 'Board',
-                ja: 'ボード',
-                de: 'Board',
-                fr: 'Conseil',
-                es: 'Junta',
-                ru: 'Совет',
-              ),
+              i18n.t('inline.ui.pages.toolbox_human_tests_memory.board_113334'),
               '$_gridSize x $_gridSize',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '下一个',
-                en: 'Next',
-                ja: 'Next',
-                de: 'Next',
-                fr: 'Suivant',
-                es: 'Siguiente',
-                ru: 'Следующий',
-              ),
+              i18n.t('next'),
               _positions.isEmpty || _complete
                   ? '-'
                   : '$_next/${math.max(1, _targetCount)}',
             ),
-            (
-              pickUiText(
-                i18n,
-                zh: '最佳',
-                en: 'Best',
-                ja: 'ベスト',
-                de: 'Best',
-                fr: 'Meilleur',
-                es: 'Mejor',
-                ru: 'Лучший',
-              ),
-              '$_bestCompletedTargets',
-            ),
+            (i18n.t('toolbox.breathing.best'), '$_bestCompletedTargets'),
           ],
         ),
         const SizedBox(height: 12),
@@ -884,25 +673,9 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
           child: Column(
             children: <Widget>[
               _HumanSettingsSection(
-                title: pickUiText(
-                  i18n,
-                  zh: '记忆设置',
-                  en: 'Settings',
-                  ja: 'Settings',
-                  de: 'Settings',
-                  fr: 'Paramètres',
-                  es: 'Ajustes',
-                  ru: 'Настройки',
-                ),
-                subtitle: pickUiText(
-                  i18n,
-                  zh: '表格大小、目标上限和辅助提示都在这里。',
-                  en: 'Mode, board size, difficulty cap, and assists',
-                  ja: 'Mode, board size, difficulty cap, and assists',
-                  de: 'Mode, board size, difficulty cap, and assists',
-                  fr: 'Mode, taille de la planche, bouchon de difficulté et aides',
-                  es: 'Modo, tamaño de la tabla, tapa de dificultad, y ayuda',
-                  ru: 'Режим, размер платы, кепка сложности и ассисты',
+                title: i18n.t('settings'),
+                subtitle: i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_memory.mode_board_size_difficulty_cap_and_assists_09be90',
                 ),
                 initiallyExpanded: true,
                 child: Column(
@@ -929,15 +702,8 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '最大表格大小',
-                        en: 'Max board size',
-                        ja: 'Max board size',
-                        de: 'Max board size',
-                        fr: 'Taille maximale du tableau',
-                        es: 'Tamaño máximo de la tabla',
-                        ru: 'Максимальный размер платы',
+                      i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_memory.max_board_size_fc548b',
                       ),
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
@@ -960,15 +726,8 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
                             },
                     ),
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '最大目标数',
-                        en: 'Set target cap',
-                        ja: 'Set target cap',
-                        de: 'Set target cap',
-                        fr: 'Définir le plafond cible',
-                        es: 'Set target cap',
-                        ru: 'Установить целевой предел',
+                      i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_memory.set_target_cap_cf9ed0',
                       ),
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
@@ -990,15 +749,8 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
                     if (_mode != _ChimpMode.classic) ...<Widget>[
                       const SizedBox(height: 10),
                       Text(
-                        pickUiText(
-                          i18n,
-                          zh: '数字/颜色切换速度',
-                          en: 'Number/color switch speed',
-                          ja: 'Number/color switch speed',
-                          de: 'Number/color switch speed',
-                          fr: 'Vitesse du commutateur couleur/nombre',
-                          es: 'Velocidad de conmutación número/color',
-                          ru: 'Скорость цветового переключения',
+                        i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_memory.number_color_switch_speed_25b9c8',
                         ),
                         style: Theme.of(context).textTheme.labelLarge,
                       ),
@@ -1019,15 +771,8 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
                     ],
                     if (_mode == _ChimpMode.colorSequence) ...<Widget>[
                       Text(
-                        pickUiText(
-                          i18n,
-                          zh: '颜色数量',
-                          en: 'Color count',
-                          ja: 'カラーカウント',
-                          de: 'Color count',
-                          fr: 'Nombre de couleurs',
-                          es: 'Conteo de color',
-                          ru: 'Количество цветов',
+                        i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_memory.color_count_47de48',
                         ),
                         style: Theme.of(context).textTheme.labelLarge,
                       ),
@@ -1050,27 +795,13 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        pickUiText(
-                          i18n,
-                          zh: '显示答案',
-                          en: 'Show answer',
-                          ja: 'Show answer',
-                          de: 'Show answer',
-                          fr: 'Afficher la réponse',
-                          es: 'Respuesta del programa',
-                          ru: 'Показать ответ',
+                        i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_memory.show_answer_611b2f',
                         ),
                       ),
                       subtitle: Text(
-                        pickUiText(
-                          i18n,
-                          zh: '在输入阶段保留数字、颜色或目标位置。',
-                          en: 'Keep numbers, colors, or target positions visible during input.',
-                          ja: 'Keep numbers, colors, or target positions visible during input.',
-                          de: 'Keep numbers, colors, or target positions visible during input.',
-                          fr: 'Gardez les nombres, les couleurs ou les positions cibles visibles lors de l\'entrée.',
-                          es: 'Mantenga los números, colores o posiciones de destino visibles durante la entrada.',
-                          ru: 'Держите цифры, цвета или целевые позиции видимыми во время ввода.',
+                        i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_memory.keep_numbers_colors_or_target_positions_visible_during_i_0b001d',
                         ),
                       ),
                       value: _showAnswer,
@@ -1083,27 +814,13 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        pickUiText(
-                          i18n,
-                          zh: '下一个提示',
-                          en: 'Next-step hint',
-                          ja: 'Next-step hint',
-                          de: 'Next-step hint',
-                          fr: 'Conseil de la prochaine étape',
-                          es: 'Insinuación del siguiente paso',
-                          ru: 'Следующий шаг намек',
+                        i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_memory.next_step_hint_9df1c2',
                         ),
                       ),
                       subtitle: Text(
-                        pickUiText(
-                          i18n,
-                          zh: '用轻描边提示下一次应点击的位置。',
-                          en: 'Off by default. Outline the next expected cell.',
-                          ja: 'Off by default. Outline the next expected cell.',
-                          de: 'Off by default. Outline the next expected cell.',
-                          fr: 'Arrêt par défaut. Décrivez la prochaine cellule attendue.',
-                          es: 'Por defecto. Establezca la siguiente celda esperada.',
-                          ru: 'По умолчанию. Опишите следующую ожидаемую ячейку.',
+                        i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_memory.off_by_default_outline_the_next_expected_cell_7bd6ba',
                         ),
                       ),
                       value: _showNextHint,
@@ -1116,27 +833,13 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        pickUiText(
-                          i18n,
-                          zh: '一次错误保护',
-                          en: 'One-mistake rescue',
-                          ja: 'One-mistake rescue',
-                          de: 'One-mistake rescue',
-                          fr: 'Une erreur de sauvetage',
-                          es: 'Rescate de un solo golpe',
-                          ru: 'Спасение с одной ошибкой',
+                        i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_memory.one_mistake_rescue_2bdd0b',
                         ),
                       ),
                       subtitle: Text(
-                        pickUiText(
-                          i18n,
-                          zh: '每轮第一次点错只警告，不立即结束。',
-                          en: 'Off by default. The first wrong tap warns instead of ending the round.',
-                          ja: 'Off by default. The first wrong tap warns instead of ending the round.',
-                          de: 'Off by default. The first wrong tap warns instead of ending the round.',
-                          fr: 'Arrêt par défaut. Le premier mauvais robinet avertit au lieu de terminer la ronde.',
-                          es: 'Por defecto. El primer golpe equivocado advierte en lugar de terminar la ronda.',
-                          ru: 'По умолчанию. Первый неправильный кран предупреждает вместо того, чтобы заканчивать раунд.',
+                        i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_memory.off_by_default_the_first_wrong_tap_warns_instead_of_endi_62df64',
                         ),
                       ),
                       value: _oneMistakeRescue,
@@ -1149,27 +852,13 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        pickUiText(
-                          i18n,
-                          zh: '结束后显示报告',
-                          en: 'Auto report',
-                          ja: '自動レポート',
-                          de: 'Auto report',
-                          fr: 'Rapport automatique',
-                          es: 'Informe automático',
-                          ru: 'Автоотчет',
+                        i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_auditory.auto_report_4b91e0',
                         ),
                       ),
                       subtitle: Text(
-                        pickUiText(
-                          i18n,
-                          zh: '测试结束后自动打开这次报告。',
-                          en: 'Show the statistical report when the test ends.',
-                          ja: 'Show the statistical report when the test ends.',
-                          de: 'Show the statistical report when the test ends.',
-                          fr: 'Afficher le rapport statistique à la fin du test.',
-                          es: 'Mostrar el informe estadístico cuando termine el examen.',
-                          ru: 'Показать статистический отчет, когда тест заканчивается.',
+                        i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_memory.show_the_statistical_report_when_the_test_ends_9cbaf9',
                         ),
                       ),
                       value: _autoReport,
@@ -1275,25 +964,9 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
                 children: <Widget>[
                   _HumanActionButton(
                     label: _positions.isEmpty || _sessionEnded || _failed
-                        ? pickUiText(
-                            i18n,
-                            zh: '开始',
-                            en: 'Start',
-                            ja: 'Start',
-                            de: 'Start',
-                            fr: 'Démarrer',
-                            es: 'Comienzo',
-                            ru: 'Начинать',
-                          )
-                        : pickUiText(
-                            i18n,
-                            zh: '下一轮',
-                            en: 'Next round',
-                            ja: 'Next round',
-                            de: 'Next round',
-                            fr: 'Prochain tour',
-                            es: 'Siguiente ronda',
-                            ru: 'Следующий раунд',
+                        ? i18n.t('toolbox.breathing.start')
+                        : i18n.t(
+                            'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.next_round_ad9935',
                           ),
                     icon: Icons.play_arrow_rounded,
                     onPressed: _showingSequence ? null : _startRound,
@@ -1301,18 +974,7 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
                   OutlinedButton.icon(
                     onPressed: _resetSession,
                     icon: const Icon(Icons.restart_alt_rounded),
-                    label: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '重置',
-                        en: 'Reset',
-                        ja: 'Reset',
-                        de: 'Reset',
-                        fr: 'Réinitialiser',
-                        es: 'Reset',
-                        ru: 'сброс',
-                      ),
-                    ),
+                    label: Text(i18n.t('appearanceReset')),
                   ),
                   OutlinedButton.icon(
                     onPressed: _attemptedRounds == 0 || _reportDialogOpen
@@ -1321,18 +983,7 @@ class _ChimpTestCardState extends State<_ChimpTestCard> {
                             success: _sessionEnded && !_failed,
                           ),
                     icon: const Icon(Icons.analytics_rounded),
-                    label: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '报告',
-                        en: 'Report',
-                        ja: 'Report',
-                        de: 'Report',
-                        fr: 'Rapport annuel',
-                        es: 'Informe',
-                        ru: 'Доклад',
-                      ),
-                    ),
+                    label: Text(i18n.t('toolbox.sleep.assist.reportCard')),
                   ),
                 ],
               ),
@@ -1410,15 +1061,8 @@ class _ChimpCompletionReportDialog extends StatelessWidget {
 
     return _HumanReportDialogFrame(
       title: Text(
-        pickUiText(
-          i18n,
-          zh: '黑猩猩测试报告',
-          en: 'Chimp test report',
-          ja: 'CHIMP TEST REPORT',
-          de: 'Chimp test report',
-          fr: 'Procès-verbal d\'essai du pompe',
-          es: 'Informe de prueba de chimpancés',
-          ru: 'Отчет об испытаниях шимпанзе',
+        i18n.t(
+          'inline.ui.pages.toolbox_human_tests_memory.chimp_test_report_7ee181',
         ),
       ),
       accent: accent,
@@ -1426,154 +1070,54 @@ class _ChimpCompletionReportDialog extends StatelessWidget {
         _HumanMetricWrap(
           metrics: <(String, String)>[
             (
-              pickUiText(
-                i18n,
-                zh: '结论',
-                en: 'Result',
-                ja: 'Result',
-                de: 'Result',
-                fr: 'Résultat',
-                es: 'Resultado',
-                ru: 'Результат',
-              ),
+              i18n.t('inline.plan295.life.result.e1843313cacb'),
               success
-                  ? pickUiText(
-                      i18n,
-                      zh: '完成',
-                      en: 'Cleared',
-                      ja: 'クリア済み',
-                      de: 'Cleared',
-                      fr: 'Effacé',
-                      es: 'Despejado',
-                      ru: 'очищенный',
+                  ? i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_memory.cleared_c85927',
                     )
-                  : pickUiText(
-                      i18n,
-                      zh: '中断',
-                      en: 'Stopped',
-                      ja: 'Stopped',
-                      de: 'Stopped',
-                      fr: 'Arrêts',
-                      es: 'Detenido',
-                      ru: 'остановлен',
+                  : i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_memory.stopped_348036',
                     ),
             ),
+            (i18n.t('toolbox.sound.piano.mode'), modeLabel),
             (
-              pickUiText(
-                i18n,
-                zh: '模式',
-                en: 'Mode',
-                ja: 'Mode',
-                de: 'Mode',
-                fr: 'Mode',
-                es: 'Modo',
-                ru: 'Режим',
-              ),
-              modeLabel,
-            ),
-            (
-              pickUiText(
-                i18n,
-                zh: '表格',
-                en: 'Board',
-                ja: 'ボード',
-                de: 'Board',
-                fr: 'Conseil',
-                es: 'Junta',
-                ru: 'Совет',
-              ),
+              i18n.t('inline.ui.pages.toolbox_human_tests_memory.board_113334'),
               '$gridSize x $gridSize',
             ),
+            (i18n.t('rounds'), '$completedRounds/$attemptedRounds'),
             (
-              pickUiText(
-                i18n,
-                zh: '完成轮次',
-                en: 'Rounds',
-                ja: 'Rounds',
-                de: 'Rounds',
-                fr: 'Rondes',
-                es: 'Rondas',
-                ru: 'Круги',
-              ),
-              '$completedRounds/$attemptedRounds',
-            ),
-            (
-              pickUiText(
-                i18n,
-                zh: '失败轮次',
-                en: 'Failed',
-                ja: 'Failed',
-                de: 'Failed',
-                fr: 'Échec',
-                es: 'Failed',
-                ru: 'неудачник',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_memory.failed_2896ef',
               ),
               '$failedRounds',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '最佳目标',
-                en: 'Best targets',
-                ja: 'ベストターゲット',
-                de: 'Best targets',
-                fr: 'Meilleures cibles',
-                es: 'Mejores objetivos',
-                ru: 'Лучшие цели',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_memory.best_targets_b32608',
               ),
               '$bestCompletedTargets/$maxTargetCount',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '准确率',
-                en: 'Accuracy',
-                ja: '精度',
-                de: 'Accuracy',
-                fr: 'Accuracy',
-                es: 'Precisión',
-                ru: 'точность',
-              ),
+              i18n.t('inline.ui.pages.practice_review_page.accuracy_8cf5a1'),
               '${accuracy.round()}%',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '错误',
-                en: 'Mistakes',
-                ja: 'Mistakes',
-                de: 'Mistakes',
-                fr: 'Erreurs',
-                es: 'Errores',
-                ru: 'Ошибки',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_bimanual.mistakes_ea8156',
               ),
               '$mistakes',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '平均用时',
-                en: 'Avg time',
-                ja: '時間平均',
-                de: 'Avg time',
-                fr: 'Avg temps',
-                es: 'Tiempo de entrada',
-                ru: 'Время авг',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_cognition.avg_time_a74bf4',
               ),
               averageDuration == null
                   ? '-'
                   : _formatSeconds(averageDuration.inMilliseconds / 1000),
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '最快用时',
-                en: 'Best time',
-                ja: 'ベストタイム',
-                de: 'Best time',
-                fr: 'Meilleur moment',
-                es: 'El mejor tiempo',
-                ru: 'Лучшее время',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_drag_tracking.best_time_1330b3',
               ),
               bestDuration == null ? '-' : _formatSeconds(bestDuration / 1000),
             ),
@@ -1581,51 +1125,26 @@ class _ChimpCompletionReportDialog extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         _ChimpReportBlock(
-          title: pickUiText(
-            i18n,
-            zh: '复盘',
-            en: 'Analysis',
-            ja: '分析',
-            de: 'Analysis',
-            fr: 'Analyse',
-            es: 'Análisis',
-            ru: 'Анализ',
+          title: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_memory.analysis_b0b53c',
           ),
           body: analysis,
           accent: accent,
         ),
         const SizedBox(height: 10),
         _ChimpReportBlock(
-          title: pickUiText(
-            i18n,
-            zh: '辅助状态',
-            en: 'Assists',
-            ja: 'アシスト',
-            de: 'Hilfen',
-            fr: 'Aides',
-            es: 'Ayudas',
-            ru: 'Подсказки',
+          title: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_memory.assists_c1835d',
           ),
           body: assisted
-              ? pickUiText(
-                  i18n,
-                  zh: '已开启辅助：${_enabledAssistLabels(i18n).join(' / ')}。这次成绩适合自己复盘，不建议和无辅助成绩直接比较。',
-                  en: 'Assists enabled: ${_enabledAssistLabels(i18n).join(' / ')}. Treat this as practice feedback, not a clean-score comparison.',
-                  ja: 'アシスト有効: ${_enabledAssistLabels(i18n).join(' / ')}。練習用のフィードバックとして見てください。',
-                  de: 'Hilfen aktiv: ${_enabledAssistLabels(i18n).join(' / ')}. Das ist Übungsfeedback, kein reiner Vergleichswert.',
-                  fr: 'Aides activées : ${_enabledAssistLabels(i18n).join(' / ')}. À lire comme retour d’entraînement, pas comme score pur.',
-                  es: 'Ayudas activadas: ${_enabledAssistLabels(i18n).join(' / ')}. Tómalo como práctica, no como puntuación limpia.',
-                  ru: 'Подсказки включены: ${_enabledAssistLabels(i18n).join(' / ')}. Это обратная связь для тренировки, не чистый результат.',
+              ? i18n.t(
+                  'inline.plan296.ui.pages.toolbox.human.tests.memory.assists_enabled_treat_this_as_practice.2f4835b9fc',
+                  params: <String, Object?>{
+                    'p0': _enabledAssistLabels(i18n).join(' / '),
+                  },
                 )
-              : pickUiText(
-                  i18n,
-                  zh: '没有开启答案或提示，成绩更接近真实记忆表现。',
-                  en: 'No answer or hint assist was enabled, so the score is closer to a clean memory test.',
-                  ja: 'No answer or hint assist was enabled, so the score is closer to a clean memory test.',
-                  de: 'No answer or hint assist was enabled, so the score is closer to a clean memory test.',
-                  fr: 'Aucune réponse ou indice d\'aide n\'a été activé, de sorte que le score est plus proche d\'un test de mémoire propre.',
-                  es: 'No se ha habilitado respuesta ni ayuda indirecta, por lo que la puntuación está más cerca de una prueba de memoria limpia.',
-                  ru: 'Никакого ответа или подсказки не было включено, поэтому оценка ближе к чистому тесту памяти.',
+              : i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_memory.no_answer_or_hint_assist_was_enabled_so_the_score_is_clo_d9fe90',
                 ),
           accent: accent,
         ),
@@ -1636,37 +1155,14 @@ class _ChimpCompletionReportDialog extends StatelessWidget {
   List<String> _enabledAssistLabels(AppI18n i18n) {
     return <String>[
       if (showAnswer)
-        pickUiText(
-          i18n,
-          zh: '显示答案',
-          en: 'Show answer',
-          ja: '答えを表示',
-          de: 'Antwort anzeigen',
-          fr: 'Afficher la réponse',
-          es: 'Mostrar respuesta',
-          ru: 'Показать ответ',
-        ),
+        i18n.t('inline.ui.pages.toolbox_human_tests_memory.show_answer_611b2f'),
       if (showNextHint)
-        pickUiText(
-          i18n,
-          zh: '下一个提示',
-          en: 'Next-step hint',
-          ja: '次のヒント',
-          de: 'Nächster Hinweis',
-          fr: 'Indice suivant',
-          es: 'Pista siguiente',
-          ru: 'Подсказка следующего шага',
+        i18n.t(
+          'inline.ui.pages.toolbox_human_tests_memory.next_step_hint_9df1c2',
         ),
       if (oneMistakeRescue)
-        pickUiText(
-          i18n,
-          zh: '一次错误保护',
-          en: 'One-mistake rescue',
-          ja: '1回ミス救済',
-          de: 'Ein Fehler frei',
-          fr: 'Une erreur tolérée',
-          es: 'Un fallo permitido',
-          ru: 'Одна ошибка прощается',
+        i18n.t(
+          'inline.ui.pages.toolbox_human_tests_memory.one_mistake_rescue_2bdd0b',
         ),
     ];
   }
@@ -1680,62 +1176,27 @@ class _ChimpCompletionReportDialog extends StatelessWidget {
     int mistakes,
   ) {
     if (bestTargets >= targetCap && accuracy >= 95) {
-      return pickUiText(
-        i18n,
-        zh: '准确率很稳，已经触达本轮上限。可以调大目标上限或表格尺寸继续加压。',
-        en: 'Accuracy is steady and the cap is cleared. Raise target cap or board size for more pressure.',
-        ja: '精度は安定しており、キャップはクリアされています。ターゲットキャップまたはボードのサイズを上げて、より多くの圧力をかけます。',
-        de: 'Accuracy is steady and the cap is cleared. Raise target cap or board size for more pressure.',
-        fr: 'Accuracy is steady and the cap is cleared. Raise target cap or board size for more pressure.',
-        es: 'La precisión es estable y la tapa se limpia. Aumentar el límite objetivo o el tamaño de la tabla para más presión.',
-        ru: 'Точность стабильна, а крышка очищена. Увеличьте размер крышки или доски для большего давления.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_memory.accuracy_is_steady_and_the_cap_is_cleared_raise_target_c_eb4f86',
       );
     }
     if (accuracy >= 85) {
-      return pickUiText(
-        i18n,
-        zh: '整体很稳。可以逐步关闭辅助，或缩短播放间隔来练瞬时记忆。',
-        en: 'Performance is stable. Next, turn assists off or lower playback delay for instant memory.',
-        ja: 'Performance is stable. Next, turn assists off or lower playback delay for instant memory.',
-        de: 'Performance is stable. Next, turn assists off or lower playback delay for instant memory.',
-        fr: 'La performance est stable. Ensuite, éteignez les aides ou réduisez le délai de lecture pour la mémoire instantanée.',
-        es: 'El rendimiento es estable. A continuación, apague ayudas apagado o menor retraso de reproducción para la memoria instantánea.',
-        ru: 'Производительность стабильна. Затем выключите ассисты или уменьшите задержку воспроизведения для мгновенной памяти.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_memory.performance_is_stable_next_turn_assists_off_or_lower_pla_88fcb6',
       );
     }
     if (mistakes > 0) {
-      return pickUiText(
-        i18n,
-        zh: '主要失误来自顺序。可以先打开下一个提示熟悉路线，再关闭提示测记忆。',
-        en: 'Most loss comes from order errors. Practice route planning with next-step hints, then test without them.',
-        ja: 'Most loss comes from order errors. Practice route planning with next-step hints, then test without them.',
-        de: 'Most loss comes from order errors. Practice route planning with next-step hints, then test without them.',
-        fr: 'La plupart des pertes proviennent d\'erreurs de commande. Pratiquer la planification de l\'itinéraire avec des conseils de prochaine étape, puis tester sans eux.',
-        es: 'La mayoría de la pérdida proviene de errores de orden. Practicar la planificación de la ruta con pistas de próximo paso, luego probar sin ellas.',
-        ru: 'Большая часть потерь связана с ошибками заказа. Практикуйте планирование маршрута с подсказками следующего шага, а затем тестируйте без них.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_memory.most_loss_comes_from_order_errors_practice_route_plannin_4f0b7f',
       );
     }
     if (averageTime != null && averageTime.inMilliseconds > 6000) {
-      return pickUiText(
-        i18n,
-        zh: '准确但节奏偏慢。可以保持当前目标数，尝试更快完成每轮。',
-        en: 'Accurate, but pace is slow. Keep the target count and try to finish each round faster.',
-        ja: '正確だが、ペースが遅い。ターゲット数を維持し、各ラウンドをより早く終了するようにしてください。',
-        de: 'Accurate, but pace is slow. Keep the target count and try to finish each round faster.',
-        fr: 'Accurate, but pace is slow. Keep the target count and try to finish each round faster.',
-        es: 'Es preciso, pero el ritmo es lento. Mantenga la cuenta del objetivo y trate de terminar cada ronda más rápido.',
-        ru: 'Точный, но темп медленный. Держите счет цели и старайтесь закончить каждый раунд быстрее.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_memory.accurate_but_pace_is_slow_keep_the_target_count_and_try_a946ce',
       );
     }
-    return pickUiText(
-      i18n,
-      zh: '先以较小表格和较低目标数建立稳定顺序，再逐步增加难度。',
-      en: 'Start with a smaller board and lower target count, then scale difficulty gradually.',
-      ja: 'Start with a smaller board and lower target count, then scale difficulty gradually.',
-      de: 'Start with a smaller board and lower target count, then scale difficulty gradually.',
-      fr: 'Commencez par un tableau plus petit et un compte cible plus bas, puis échellez la difficulté progressivement.',
-      es: 'Comience con una tabla más pequeña y conteo de objetivos más bajo, luego escala dificultad gradualmente.',
-      ru: 'Начните с меньшей платы и более низкого количества целей, а затем постепенно масштабируйте сложность.',
+    return i18n.t(
+      'inline.ui.pages.toolbox_human_tests_memory.start_with_a_smaller_board_and_lower_target_count_then_s_e189da',
     );
   }
 }
@@ -1786,37 +1247,16 @@ class SequenceMemoryTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(
-        i18n,
-        zh: '序列记忆',
-        en: 'Sequence memory',
-        ja: 'Sequence memory',
-        de: 'Sequence memory',
-        fr: 'Mémoire de séquence',
-        es: 'Memoria de secuencias',
-        ru: 'память последовательностей',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_memory.sequence_memory_8c2989',
       ),
-      subtitle: pickUiText(
-        i18n,
-        zh: '观察亮灯顺序，按相同顺序点击色块。',
-        en: 'Watch the light sequence, then tap the panels in the same order.',
-        ja: 'Watch the light sequence, then tap the panels in the same order.',
-        de: 'Watch the light sequence, then tap the panels in the same order.',
-        fr: 'Regardez la séquence lumineuse, puis appuyez sur les panneaux dans le même ordre.',
-        es: 'Mira la secuencia de luz, luego toca los paneles en el mismo orden.',
-        ru: 'Следите за световой последовательностью, затем нажмите на панели в том же порядке.',
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_memory.watch_the_light_sequence_then_tap_the_panels_in_the_same_79dacb',
       ),
       accent: const Color(0xFF7C6BC8),
       icon: Icons.auto_awesome_motion_rounded,
-      status: pickUiText(
-        i18n,
-        zh: '看清亮灯顺序，照着点一遍',
-        en: 'Next: replay the sequence',
-        ja: 'Next: replay the sequence',
-        de: 'Next: replay the sequence',
-        fr: 'Suivant : rejouer la séquence',
-        es: 'Siguiente: reproducir la secuencia',
-        ru: 'Next: Повторить последовательность',
+      status: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_memory.next_replay_the_sequence_08cd45',
       ),
       child: const _SequenceMemoryCard(),
     );
@@ -2032,68 +1472,24 @@ class _SequenceMemoryCardState extends State<_SequenceMemoryCard> {
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
+            (i18n.t('toolbox.sound.pickup.level'), '$_level'),
             (
-              pickUiText(
-                i18n,
-                zh: '等级',
-                en: 'Level',
-                ja: 'Level',
-                de: 'Level',
-                fr: 'Niveau',
-                es: 'Nivel',
-                ru: 'Уровень',
-              ),
-              '$_level',
-            ),
-            (
-              pickUiText(
-                i18n,
-                zh: '进度',
-                en: 'Progress',
-                ja: 'Progress',
-                de: 'Progress',
-                fr: 'Progrès accomplis',
-                es: 'Progresos',
-                ru: 'Прогресс',
-              ),
+              i18n.t('progress'),
               _input ? '$_inputIndex/${_sequence.length}' : '-',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '图标',
-                en: 'Icons',
-                ja: 'Icons',
-                de: 'Icons',
-                fr: 'Icônes',
-                es: 'Iconos',
-                ru: 'Иконы',
-              ),
+              i18n.t('inline.ui.pages.toolbox_human_tests_memory.icons_6035f3'),
               '$_itemCount',
             ),
           ],
         ),
         const SizedBox(height: 12),
         _HumanSettingsSection(
-          title: pickUiText(
-            i18n,
-            zh: '序列设置',
-            en: 'Sequence settings',
-            ja: 'Sequence settings',
-            de: 'Sequence settings',
-            fr: 'Paramètres de séquence',
-            es: 'Ajustes de secuencia',
-            ru: 'Параметры последовательности',
+          title: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_memory.sequence_settings_f62cef',
           ),
-          subtitle: pickUiText(
-            i18n,
-            zh: '开始新一轮前可调整图标数量。',
-            en: 'Adjust the icon count before starting a new round.',
-            ja: '新しいラウンドを開始する前に、アイコンの数を調整してください。',
-            de: 'Adjust the icon count before starting a new round.',
-            fr: 'Adjust the icon count before starting a new round.',
-            es: 'Ajuste el icono contar antes de comenzar una nueva ronda.',
-            ru: 'Отрегулируйте количество иконок перед началом нового раунда.',
+          subtitle: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_memory.adjust_the_icon_count_before_starting_a_new_round_25d2fa',
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2102,15 +1498,8 @@ class _SequenceMemoryCardState extends State<_SequenceMemoryCard> {
                 children: <Widget>[
                   Expanded(
                     child: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '图标数量',
-                        en: 'Icon count',
-                        ja: 'Icon count',
-                        de: 'Icon count',
-                        fr: 'Nombre d\'icônes',
-                        es: 'Cuenta Icon',
-                        ru: 'Счет икон',
+                      i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_memory.icon_count_bca327',
                       ),
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.w800,
@@ -2300,28 +1689,14 @@ class _SequenceMemoryCardState extends State<_SequenceMemoryCard> {
               const SizedBox(height: 12),
               if (_failed)
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '顺序错了，重置后再来。',
-                    en: 'Wrong sequence. Reset and try again.',
-                    ja: 'Wrong sequence. Reset and try again.',
-                    de: 'Wrong sequence. Reset and try again.',
-                    fr: 'Mauvaise séquence. Réinitialisez et essayez encore.',
-                    es: 'Secuencia incorrecta. Reiniciar e intentarlo de nuevo.',
-                    ru: 'Ошибочная последовательность. Перезагрузите и попробуйте снова.',
+                  i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_memory.wrong_sequence_reset_and_try_again_d16140',
                   ),
                 )
               else if (_showing)
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '正在播放序列',
-                    en: 'Playing sequence',
-                    ja: 'Playing sequence',
-                    de: 'Playing sequence',
-                    fr: 'Séquence de lecture',
-                    es: 'Secuencia',
-                    ru: 'Игровая последовательность',
+                  i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_memory.playing_sequence_9e231b',
                   ),
                 ),
               const SizedBox(height: 10),
@@ -2330,34 +1705,14 @@ class _SequenceMemoryCardState extends State<_SequenceMemoryCard> {
                 runSpacing: 10,
                 children: <Widget>[
                   _HumanActionButton(
-                    label: pickUiText(
-                      i18n,
-                      zh: '开始',
-                      en: 'Start',
-                      ja: 'Start',
-                      de: 'Start',
-                      fr: 'Démarrer',
-                      es: 'Comienzo',
-                      ru: 'Начинать',
-                    ),
+                    label: i18n.t('toolbox.breathing.start'),
                     icon: Icons.play_arrow_rounded,
                     onPressed: _showing ? null : _startRound,
                   ),
                   OutlinedButton.icon(
                     onPressed: _reset,
                     icon: const Icon(Icons.restart_alt_rounded),
-                    label: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '重置',
-                        en: 'Reset',
-                        ja: 'Reset',
-                        de: 'Reset',
-                        fr: 'Réinitialiser',
-                        es: 'Reset',
-                        ru: 'сброс',
-                      ),
-                    ),
+                    label: Text(i18n.t('appearanceReset')),
                   ),
                 ],
               ),

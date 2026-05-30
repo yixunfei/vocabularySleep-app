@@ -158,7 +158,10 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                         if (_subdivision > 1) ...<Widget>[
                           const SizedBox(height: 2),
                           Text(
-                            i18n.t('toolbox.sound.focus.stageSubbeat', params: {'label': subLabel}),
+                            i18n.t(
+                              'toolbox.sound.focus.stageSubbeat',
+                              params: {'label': subLabel},
+                            ),
                             style: Theme.of(context).textTheme.labelLarge
                                 ?.copyWith(
                                   color: _focusStagePaleMutedInk,
@@ -203,13 +206,20 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                                 ? Icons.graphic_eq_rounded
                                 : Icons.motion_photos_paused_rounded,
                             label: _running
-                                ? i18n.t('toolbox.sound.focus.stagePulseInMotion')
-                                : i18n.t('toolbox.sound.focus.stageWaitingBeatOne'),
+                                ? i18n.t(
+                                    'toolbox.sound.focus.stagePulseInMotion',
+                                  )
+                                : i18n.t(
+                                    'toolbox.sound.focus.stageWaitingBeatOne',
+                                  ),
                           ),
                           const Spacer(),
                           _FocusStageBadge(
                             icon: Icons.repeat_rounded,
-                            label: i18n.t('toolbox.sound.focus.stageCycleLabel', params: {'label': cycleLabel}),
+                            label: i18n.t(
+                              'toolbox.sound.focus.stageCycleLabel',
+                              params: {'label': cycleLabel},
+                            ),
                           ),
                         ],
                       ),
@@ -222,11 +232,17 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                         children: <Widget>[
                           _FocusStageBadge(
                             icon: Icons.timeline_rounded,
-                            label: i18n.t('toolbox.sound.focus.stagePatternLabel', params: {'label': arrangementLabel}),
+                            label: i18n.t(
+                              'toolbox.sound.focus.stagePatternLabel',
+                              params: {'label': arrangementLabel},
+                            ),
                           ),
                           _FocusStageBadge(
                             icon: Icons.layers_rounded,
-                            label: i18n.t('toolbox.sound.focus.stagePhraseLabel', params: {'label': segmentLabel}),
+                            label: i18n.t(
+                              'toolbox.sound.focus.stagePhraseLabel',
+                              params: {'label': segmentLabel},
+                            ),
                           ),
                           _FocusStageBadge(
                             icon: Icons.touch_app_rounded,
@@ -831,14 +847,18 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                               ),
                               const Spacer(),
                               IconButton.filledTonal(
-                                tooltip: immersiveI18n.t('toolbox.sound.focus.immersiveOpenControls'),
+                                tooltip: immersiveI18n.t(
+                                  'toolbox.sound.focus.immersiveOpenControls',
+                                ),
                                 onPressed: _openImmersiveControlsSheet,
                                 icon: const Icon(Icons.tune_rounded),
                               ),
                               if (widget.onExitFullScreen != null) ...<Widget>[
                                 const SizedBox(width: 8),
                                 IconButton.filledTonal(
-                                  tooltip: immersiveI18n.t('toolbox.sound.focus.immersiveExitFull'),
+                                  tooltip: immersiveI18n.t(
+                                    'toolbox.sound.focus.immersiveExitFull',
+                                  ),
                                   onPressed: widget.onExitFullScreen,
                                   icon: const Icon(Icons.close_rounded),
                                 ),
@@ -888,8 +908,15 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                                     children: <Widget>[
                                       Text(
                                         _running
-                                            ? immersiveI18n.t('toolbox.sound.focus.immersiveCurrentBeat', params: {'label': immersiveBeatLabel})
-                                            : immersiveI18n.t('toolbox.sound.focus.immersiveReady'),
+                                            ? immersiveI18n.t(
+                                                'toolbox.sound.focus.immersiveCurrentBeat',
+                                                params: {
+                                                  'label': immersiveBeatLabel,
+                                                },
+                                              )
+                                            : immersiveI18n.t(
+                                                'toolbox.sound.focus.immersiveReady',
+                                              ),
                                         style: Theme.of(context)
                                             .textTheme
                                             .labelLarge
@@ -900,7 +927,9 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        immersiveI18n.t('toolbox.sound.focus.immersiveHint'),
+                                        immersiveI18n.t(
+                                          'toolbox.sound.focus.immersiveHint',
+                                        ),
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodySmall

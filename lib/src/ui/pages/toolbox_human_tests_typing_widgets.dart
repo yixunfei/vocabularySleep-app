@@ -24,16 +24,7 @@ Widget _typingBuildModeChips(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: <Widget>[
       Text(
-        pickUiText(
-          i18n,
-          zh: '趣味模式',
-          en: 'Modes',
-          ja: 'Modes',
-          de: 'Modes',
-          fr: 'Modes',
-          es: 'Modos',
-          ru: 'режимы',
-        ),
+        i18n.t('toolbox.sound.soothing.modes_button_label'),
         style: Theme.of(
           context,
         ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w900),
@@ -69,19 +60,7 @@ Widget _typingBuildLanguageTopicChips(
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: <Widget>[
-      Text(
-        pickUiText(
-          i18n,
-          zh: '语言',
-          en: 'Language',
-          ja: 'Language',
-          de: 'Language',
-          fr: 'Langue',
-          es: 'Idioma',
-          ru: 'Язык языка',
-        ),
-        style: textStyle,
-      ),
+      Text(i18n.t('language'), style: textStyle),
       const SizedBox(height: 8),
       Wrap(
         spacing: 8,
@@ -99,15 +78,8 @@ Widget _typingBuildLanguageTopicChips(
       ),
       const SizedBox(height: 10),
       Text(
-        pickUiText(
-          i18n,
-          zh: '内容题材',
-          en: 'Content topic',
-          ja: 'コンテンツトピック',
-          de: 'Content topic',
-          fr: 'Sujet de contenu',
-          es: 'Tema del contenido',
-          ru: 'Тема контента',
+        i18n.t(
+          'inline.ui.pages.toolbox_human_tests_typing_widgets.content_topic_b49ca4',
         ),
         style: textStyle,
       ),
@@ -128,15 +100,8 @@ Widget _typingBuildLanguageTopicChips(
       ),
       const SizedBox(height: 10),
       Text(
-        pickUiText(
-          i18n,
-          zh: '长度',
-          en: 'Length',
-          ja: 'Length',
-          de: 'Length',
-          fr: 'Longueur',
-          es: 'Duración',
-          ru: 'Длина',
+        i18n.t(
+          'inline.ui.pages.toolbox_human_tests_typing_widgets.length_f37873',
         ),
         style: textStyle,
       ),
@@ -373,15 +338,8 @@ Widget _typingBuildReport(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '结果报告',
-                      en: 'Result report',
-                      ja: 'Result report',
-                      de: 'Result report',
-                      fr: 'Rapport de résultat',
-                      es: 'Informe de resultados',
-                      ru: 'Итоговый доклад',
+                    i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_typing_widgets.result_report_80cc2f',
                     ),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w900,
@@ -401,106 +359,46 @@ Widget _typingBuildReport(
         _HumanMetricWrap(
           metrics: <(String, String)>[
             (
-              pickUiText(
-                i18n,
-                zh: '完成速度',
-                en: 'Final speed',
-                ja: 'Final speed',
-                de: 'Final speed',
-                fr: 'Vitesse finale',
-                es: 'Velocidad final',
-                ru: 'Финальная скорость',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_typing_widgets.final_speed_c20214',
               ),
               '${report.wpm.round()} WPM',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '净速度',
-                en: 'Net speed',
-                ja: 'Net speed',
-                de: 'Net speed',
-                fr: 'Régime net',
-                es: 'Velocidad neta',
-                ru: 'Чистая скорость',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_typing_widgets.net_speed_b03460',
               ),
               '${report.netWpm.round()} WPM',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '峰值速度',
-                en: 'Peak speed',
-                ja: 'Peak speed',
-                de: 'Peak speed',
-                fr: 'Vitesse maximale',
-                es: 'Velocidad de pico',
-                ru: 'Пик скорости',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_typing_widgets.peak_speed_ed5d22',
               ),
               '${report.peakWpm.round()} WPM',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '字符速度',
-                en: 'Final chars',
-                ja: 'Final chars',
-                de: 'Final chars',
-                fr: 'Charnières finales',
-                es: 'Final chars',
-                ru: 'Последние гонщики',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_typing_widgets.final_chars_16dc9c',
               ),
               '${report.cpm.round()} CPM',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '准确率',
-                en: 'Accuracy',
-                ja: '精度',
-                de: 'Accuracy',
-                fr: 'Accuracy',
-                es: 'Precisión',
-                ru: 'точность',
-              ),
+              i18n.t('inline.ui.pages.practice_review_page.accuracy_8cf5a1'),
               '${report.accuracy.round()}%',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '稳定性',
-                en: 'Stability',
-                ja: 'Stability',
-                de: 'Stability',
-                fr: 'Stabilité',
-                es: 'Estabilidad',
-                ru: 'Стабильность',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_auditory_lab.stability_c45fda',
               ),
               '${report.consistencyScore.round()}%',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '完成用时',
-                en: 'Duration',
-                ja: 'Duration',
-                de: 'Duration',
-                fr: 'Durée',
-                es: 'Duración',
-                ru: 'Продолжительность',
-              ),
+              i18n.t('toolbox.breathing.duration'),
               state._formatDuration(report.elapsed),
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '长停顿',
-                en: 'Long pauses',
-                ja: 'Long pauses',
-                de: 'Long pauses',
-                fr: 'Longues pauses',
-                es: 'Pausas largas',
-                ru: 'Длинные паузы',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_typing_widgets.long_pauses_542ac5',
               ),
               '${report.longPauses}',
             ),
@@ -523,15 +421,8 @@ Widget _typingBuildReport(
           runSpacing: 10,
           children: <Widget>[
             _HumanActionButton(
-              label: pickUiText(
-                i18n,
-                zh: '按建议再练',
-                en: 'Practice suggestion',
-                ja: 'Practice suggestion',
-                de: 'Practice suggestion',
-                fr: 'Proposition de pratique',
-                es: 'Propuesta de práctica',
-                ru: 'Практические рекомендации',
+              label: i18n.t(
+                'inline.ui.pages.toolbox_human_tests_typing_widgets.practice_suggestion_520fe8',
               ),
               icon: _typingModeIcon(suggestedMode),
               onPressed: () => state._startSuggestedDrill(report),
@@ -540,15 +431,8 @@ Widget _typingBuildReport(
               onPressed: () => state._reset(pickNew: false),
               icon: const Icon(Icons.replay_rounded),
               label: Text(
-                pickUiText(
-                  i18n,
-                  zh: '同配置重来',
-                  en: 'Retry setup',
-                  ja: 'Retry setup',
-                  de: 'Retry setup',
-                  fr: 'Réessayer la configuration',
-                  es: 'Retry setup',
-                  ru: 'Настройка повторного использования',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_typing_widgets.retry_setup_4058de',
                 ),
               ),
             ),
@@ -556,15 +440,8 @@ Widget _typingBuildReport(
               onPressed: state._reset,
               icon: const Icon(Icons.shuffle_rounded),
               label: Text(
-                pickUiText(
-                  i18n,
-                  zh: '新语料',
-                  en: 'New content',
-                  ja: 'New content',
-                  de: 'New content',
-                  fr: 'Nouveau contenu',
-                  es: 'Nuevo contenido',
-                  ru: 'Новый контент',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_typing_widgets.new_content_c3a691',
                 ),
               ),
             ),
@@ -595,15 +472,8 @@ Widget _typingBuildIssueBars(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: <Widget>[
       Text(
-        pickUiText(
-          i18n,
-          zh: '错误结构',
-          en: 'Error profile',
-          ja: 'Error profile',
-          de: 'Error profile',
-          fr: 'Profil d\'erreur',
-          es: 'Perfil de error',
-          ru: 'Профиль ошибки',
+        i18n.t(
+          'inline.ui.pages.toolbox_human_tests_typing_widgets.error_profile_4c8633',
         ),
         style: theme.textTheme.labelLarge?.copyWith(
           fontWeight: FontWeight.w900,
@@ -638,15 +508,8 @@ Widget _typingBuildHotspots(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: <Widget>[
       Text(
-        pickUiText(
-          i18n,
-          zh: '错误热区',
-          en: 'Error hotspots',
-          ja: 'Error hotspots',
-          de: 'Error hotspots',
-          fr: 'Points chauds d\'erreur',
-          es: 'Puntos calientes de error',
-          ru: 'Горячие точки ошибок',
+        i18n.t(
+          'inline.ui.pages.toolbox_human_tests_typing_widgets.error_hotspots_d5ffa2',
         ),
         style: theme.textTheme.labelLarge?.copyWith(
           fontWeight: FontWeight.w900,
@@ -659,28 +522,12 @@ Widget _typingBuildHotspots(
         children: report.hotspots
             .map((item) {
               final expected = item.expected.isEmpty
-                  ? pickUiText(
-                      i18n,
-                      zh: '多余',
-                      en: 'Extra',
-                      ja: 'Extra',
-                      de: 'Extra',
-                      fr: 'Extra',
-                      es: 'Extra',
-                      ru: 'дополнительный',
+                  ? i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_typing_widgets.extra_148f03',
                     )
                   : item.expected;
               final typed = item.typed.isEmpty
-                  ? pickUiText(
-                      i18n,
-                      zh: '漏输',
-                      en: 'Missing',
-                      ja: 'Missing',
-                      de: 'Missing',
-                      fr: 'Manque',
-                      es: 'Falta',
-                      ru: 'Пропавший',
-                    )
+                  ? i18n.t('inline.plan295.daily_choice.missing.d6912d025db4')
                   : item.typed;
               return _HumanPill(
                 text: '$expected -> $typed x${item.count}',
@@ -704,15 +551,8 @@ Widget _typingBuildRecentReports(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          pickUiText(
-            i18n,
-            zh: '最近结果',
-            en: 'Recent local results',
-            ja: '最近の結果',
-            de: 'Letzte Ergebnisse',
-            fr: 'Résultats récents',
-            es: 'Resultados recientes',
-            ru: 'Недавние результаты',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_typing_widgets.recent_local_results_b5a4f9',
           ),
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w900,
@@ -748,75 +588,26 @@ Widget _typingBuildRecentReports(
 
 String _typingIssueLabel(AppI18n i18n, _TypingIssue issue) {
   return switch (issue) {
-    _TypingIssue.letter => pickUiText(
-      i18n,
-      zh: '字母',
-      en: 'Letters',
-      ja: 'Letters',
-      de: 'Letters',
-      fr: 'Lettres',
-      es: 'Cartas',
-      ru: 'Письма',
+    _TypingIssue.letter => i18n.t(
+      'inline.ui.pages.playback_advanced_page.letters_53e8af',
     ),
-    _TypingIssue.cjk => pickUiText(
-      i18n,
-      zh: '中日韩字符',
-      en: 'CJK chars',
-      ja: 'CJK文字',
-      de: 'CJK chars',
-      fr: 'Charnières CJK',
-      es: 'CJK chars',
-      ru: 'CJK Chars',
+    _TypingIssue.cjk => i18n.t(
+      'inline.ui.pages.toolbox_human_tests_typing_widgets.cjk_chars_86a6a9',
     ),
-    _TypingIssue.space => pickUiText(
-      i18n,
-      zh: '空格',
-      en: 'Spaces',
-      ja: 'Spaces',
-      de: 'Spaces',
-      fr: 'Espaces',
-      es: 'Espacios',
-      ru: 'Космос',
+    _TypingIssue.space => i18n.t(
+      'inline.ui.pages.toolbox_human_tests_typing_widgets.spaces_b40295',
     ),
-    _TypingIssue.punctuation => pickUiText(
-      i18n,
-      zh: '标点符号',
-      en: 'Punctuation',
-      ja: 'Punctuation',
-      de: 'Punctuation',
-      fr: 'Panctuation',
-      es: 'Punctuation',
-      ru: 'пунктуация',
+    _TypingIssue.punctuation => i18n.t(
+      'inline.ui.pages.toolbox_human_tests_typing_widgets.punctuation_4b3fe7',
     ),
-    _TypingIssue.number => pickUiText(
-      i18n,
-      zh: '数字',
-      en: 'Numbers',
-      ja: 'Numbers',
-      de: 'Numbers',
-      fr: 'Nombres',
-      es: 'Números',
-      ru: 'Числа',
+    _TypingIssue.number => i18n.t(
+      'inline.ui.pages.toolbox_human_tests_typing_copy.numbers_7ef41c',
     ),
-    _TypingIssue.extra => pickUiText(
-      i18n,
-      zh: '多余输入',
-      en: 'Extra input',
-      ja: 'Extra input',
-      de: 'Extra input',
-      fr: 'Entrée supplémentaire',
-      es: 'Entrada adicional',
-      ru: 'Дополнительный вклад',
+    _TypingIssue.extra => i18n.t(
+      'inline.ui.pages.toolbox_human_tests_typing_widgets.extra_input_e79c70',
     ),
-    _TypingIssue.missing => pickUiText(
-      i18n,
-      zh: '漏输',
-      en: 'Missing',
-      ja: 'Missing',
-      de: 'Missing',
-      fr: 'Manque',
-      es: 'Falta',
-      ru: 'Пропавший',
+    _TypingIssue.missing => i18n.t(
+      'inline.plan295.daily_choice.missing.d6912d025db4',
     ),
   };
 }

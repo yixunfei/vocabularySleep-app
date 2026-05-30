@@ -55,25 +55,21 @@ class _TextTransformModeDefinition {
   const _TextTransformModeDefinition({
     required this.mode,
     required this.category,
-    required this.labelZh,
-    required this.labelEn,
-    required this.summaryZh,
-    required this.summaryEn,
+    required this.labelKey,
+    required this.summaryKey,
   });
 
   final _TextTransformMode mode;
   final _TextTransformCategory category;
-  final String labelZh;
-  final String labelEn;
-  final String summaryZh;
-  final String summaryEn;
+  final String labelKey;
+  final String summaryKey;
 
   String label(BuildContext context) {
-    return _lifeText(context, zh: labelZh, en: labelEn);
+    return _lifeI18nText(context, labelKey);
   }
 
   String summary(BuildContext context) {
-    return _lifeText(context, zh: summaryZh, en: summaryEn);
+    return _lifeI18nText(context, summaryKey);
   }
 }
 
@@ -82,297 +78,243 @@ _textTransformDefinitions = <_TextTransformModeDefinition>[
   _TextTransformModeDefinition(
     mode: _TextTransformMode.phoneticBundle,
     category: _TextTransformCategory.phonetic,
-    labelZh: '拼音与注音',
-    labelEn: 'Pinyin and zhuyin',
-    summaryZh: '将中文转成拼音、首字母、简拼和注音。',
-    summaryEn:
-        'Convert Chinese into pinyin, initials, short pinyin, and zhuyin in one place.',
+    labelKey: 'inline.plan295.life.pinyin_and_zhuyin.88e3d544cfe1',
+    summaryKey:
+        'inline.plan295.life.convert_chinese_into_pinyin_initials.c7887643cd6f',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.scriptConvert,
     category: _TextTransformCategory.phonetic,
-    labelZh: '简繁转换',
-    labelEn: 'Simplified and traditional',
-    summaryZh: '进行简体与繁体互转，适合搭配拼音和文本清洗使用。',
-    summaryEn:
-        'Convert between simplified and traditional Chinese for cleanup or publishing.',
+    labelKey: 'inline.plan295.life.simplified_and_traditional.384ff540c259',
+    summaryKey:
+        'inline.plan295.life.convert_between_simplified_and_tradi.7e7c3a033251',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.numberBundle,
     category: _TextTransformCategory.number,
-    labelZh: '数字转写',
-    labelEn: 'Number writing',
-    summaryZh: '阿拉伯数字转罗马数字、中文数字与人民币大写。',
-    summaryEn:
-        'Turn Arabic numerals into Roman numerals, Chinese numerals, and RMB uppercase.',
+    labelKey: 'inline.plan295.life.number_writing.2333611f8a6b',
+    summaryKey:
+        'inline.plan295.life.turn_arabic_numerals_into_roman_nume.c296bcc09c65',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.solarToLunar,
     category: _TextTransformCategory.calendar,
-    labelZh: '公历转农历',
-    labelEn: 'Solar to lunar',
-    summaryZh: '把选择的公历日期转换为农历、干支、节气等参考信息。',
-    summaryEn:
-        'Convert a solar date into lunar date, ganzhi, solar term, and related reference info.',
+    labelKey: 'inline.plan295.life.solar_to_lunar.c819bf4094a6',
+    summaryKey:
+        'inline.plan295.life.convert_a_solar_date_into_lunar_date.bb2b584507fa',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.lunarToSolar,
     category: _TextTransformCategory.calendar,
-    labelZh: '农历转公历',
-    labelEn: 'Lunar to solar',
-    summaryZh: '按农历年月日和闰月状态换算公历日期。',
-    summaryEn: 'Convert a lunar date back into the corresponding solar date.',
+    labelKey: 'inline.plan295.life.lunar_to_solar.5aaa3f42067c',
+    summaryKey:
+        'inline.plan295.life.convert_a_lunar_date_back_into_the_c.187b534c0c5d',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.almanac,
     category: _TextTransformCategory.calendar,
-    labelZh: '万年历信息',
-    labelEn: 'Almanac snapshot',
-    summaryZh: '查看公历、农历、节气、月相、日出日落与节日信息。',
-    summaryEn:
-        'Show a daily snapshot with solar, lunar, solar term, moon phase, sunrise, and festivals.',
+    labelKey: 'inline.plan295.life.almanac_snapshot.1740672734e4',
+    summaryKey:
+        'inline.plan295.life.show_a_daily_snapshot_with_solar_lun.73477242d896',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.dateToGanzhi,
     category: _TextTransformCategory.ganzhi,
-    labelZh: '日期转干支八字',
-    labelEn: 'Date to ganzhi and bazi',
-    summaryZh: '根据日期时间换算年柱、月柱、日柱、时柱与六十甲子序号。',
-    summaryEn:
-        'Convert a date and time into ganzhi pillars, bazi, and sixty-jiazi references.',
+    labelKey: 'inline.plan295.life.date_to_ganzhi_and_bazi.982cb8408d5e',
+    summaryKey:
+        'inline.plan295.life.convert_a_date_and_time_into_ganzhi.bdb027425c82',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.baziSearch,
     category: _TextTransformCategory.ganzhi,
-    labelZh: '八字候选日期',
-    labelEn: 'BaZi candidate search',
-    summaryZh: '在受限年份范围内按两小时时辰搜索匹配的八字候选日期。',
-    summaryEn:
-        'Search limited year ranges for candidate dates matching a given BaZi pattern.',
+    labelKey: 'inline.plan295.life.bazi_candidate_search.6764c17c44dd',
+    summaryKey:
+        'inline.plan295.life.search_limited_year_ranges_for_candi.1f36769db9b1',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.sixtyJiaZi,
     category: _TextTransformCategory.ganzhi,
-    labelZh: '六十甲子',
-    labelEn: 'Sixty JiaZi',
-    summaryZh: '查询六十甲子顺序、纳音与对应序号。',
-    summaryEn: 'Look up sixty-jiazi order, na-yin, and index information.',
+    labelKey: 'inline.plan295.life.sixty_jiazi.07153f8697e7',
+    summaryKey:
+        'inline.plan295.life.look_up_sixty_jiazi_order_na_yin_and.4368f064fa6f',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.languageLookup,
     category: _TextTransformCategory.language,
-    labelZh: '语言代码查询',
-    labelEn: 'Language code lookup',
-    summaryZh: '查询常见语言地区代码，并解析 BCP 47 / ISO 风格标签。',
-    summaryEn:
-        'Query common language and region codes and parse BCP 47 style tags.',
+    labelKey: 'inline.plan295.life.language_code_lookup.74089c4fc079',
+    summaryKey:
+        'inline.plan295.life.query_common_language_and_region_cod.b08f8831b4b2',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.base64Encode,
     category: _TextTransformCategory.encode,
-    labelZh: 'Base64 编码',
-    labelEn: 'Base64 encode',
-    summaryZh: '将文本编码为 Base64。',
-    summaryEn: 'Encode text into Base64.',
+    labelKey: 'inline.plan295.life.base64_encode.ff03c2751c21',
+    summaryKey: 'inline.plan295.life.encode_text_into_base64.f81b4f144fce',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.base64Decode,
     category: _TextTransformCategory.encode,
-    labelZh: 'Base64 解码',
-    labelEn: 'Base64 decode',
-    summaryZh: '将 Base64 还原为文本。',
-    summaryEn: 'Decode Base64 back into text.',
+    labelKey: 'inline.plan295.life.base64_decode.34f2a5dfe8af',
+    summaryKey: 'inline.plan295.life.decode_base64_back_into_text.e1ac19b60beb',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.urlEncode,
     category: _TextTransformCategory.encode,
-    labelZh: 'URL 编码',
-    labelEn: 'URL encode',
-    summaryZh: '对文本进行 URL 安全编码。',
-    summaryEn: 'Escape text into a URL-safe representation.',
+    labelKey: 'inline.plan295.life.url_encode.22ba723dbaf8',
+    summaryKey:
+        'inline.plan295.life.escape_text_into_a_url_safe_represen.14029fad8051',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.urlDecode,
     category: _TextTransformCategory.encode,
-    labelZh: 'URL 解码',
-    labelEn: 'URL decode',
-    summaryZh: '将 URL 编码文本还原。',
-    summaryEn: 'Decode URL-escaped text.',
+    labelKey: 'inline.plan295.life.url_decode.2bbaf7686a4d',
+    summaryKey: 'inline.plan295.life.decode_url_escaped_text.4d6c380d339c',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.htmlEscape,
     category: _TextTransformCategory.encode,
-    labelZh: 'HTML 转义',
-    labelEn: 'HTML escape',
-    summaryZh: '转义标签与常见特殊字符。',
-    summaryEn: 'Escape HTML-sensitive characters.',
+    labelKey: 'inline.plan295.life.html_escape.bdd8c9a3566d',
+    summaryKey:
+        'inline.plan295.life.escape_html_sensitive_characters.9eea0c864bab',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.htmlUnescape,
     category: _TextTransformCategory.encode,
-    labelZh: 'HTML 反转义',
-    labelEn: 'HTML unescape',
-    summaryZh: '还原常见 HTML 实体。',
-    summaryEn: 'Restore common HTML entities.',
+    labelKey: 'inline.plan295.life.html_unescape.67ae45cdb20b',
+    summaryKey: 'inline.plan295.life.restore_common_html_entities.5e8244146f83',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.unicodeEscape,
     category: _TextTransformCategory.encode,
-    labelZh: 'Unicode 编码',
-    labelEn: 'Unicode escape',
-    summaryZh: '将文本转为 \\uXXXX 形式。',
-    summaryEn: 'Convert text into \\uXXXX sequences.',
+    labelKey: 'inline.plan295.life.unicode_escape.ff47ff475926',
+    summaryKey:
+        'inline.plan295.life.convert_text_into_uxxxx_sequences.575a407bab52',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.unicodeUnescape,
     category: _TextTransformCategory.encode,
-    labelZh: 'Unicode 解码',
-    labelEn: 'Unicode unescape',
-    summaryZh: '把 \\uXXXX 还原成字符。',
-    summaryEn: 'Decode \\uXXXX sequences back into characters.',
+    labelKey: 'inline.plan295.life.unicode_unescape.c28f726724a7',
+    summaryKey:
+        'inline.plan295.life.decode_uxxxx_sequences_back_into_cha.43ba9e4c6224',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.jsonEscape,
     category: _TextTransformCategory.encode,
-    labelZh: 'JSON 字符串转义',
-    labelEn: 'JSON escape',
-    summaryZh: '把文本转成可直接放入 JSON 的字符串内容。',
-    summaryEn: 'Escape text for safe insertion into JSON strings.',
+    labelKey: 'inline.plan295.life.json_escape.e1ec7f71ffd5',
+    summaryKey:
+        'inline.plan295.life.escape_text_for_safe_insertion_into.0bf7e085ab9b',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.jsonUnescape,
     category: _TextTransformCategory.encode,
-    labelZh: 'JSON 字符串还原',
-    labelEn: 'JSON unescape',
-    summaryZh: '把 JSON 字符串中的常见转义还原。',
-    summaryEn: 'Restore common escape sequences from JSON string content.',
+    labelKey: 'inline.plan295.life.json_unescape.d57584070a8c',
+    summaryKey:
+        'inline.plan295.life.restore_common_escape_sequences_from.21597c889ab0',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.morseEncode,
     category: _TextTransformCategory.encode,
-    labelZh: '摩斯编码',
-    labelEn: 'Morse encode',
-    summaryZh: '将英文与数字转为摩斯电码。',
-    summaryEn: 'Encode letters and digits into Morse code.',
+    labelKey: 'inline.plan295.life.morse_encode.fdb81340184b',
+    summaryKey:
+        'inline.plan295.life.encode_letters_and_digits_into_morse.ddc4500829d7',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.morseDecode,
     category: _TextTransformCategory.encode,
-    labelZh: '摩斯解码',
-    labelEn: 'Morse decode',
-    summaryZh: '把空格分隔的摩斯电码还原。',
-    summaryEn: 'Decode space-separated Morse code.',
+    labelKey: 'inline.plan295.life.morse_decode.c233a2bfc2b0',
+    summaryKey:
+        'inline.plan295.life.decode_space_separated_morse_code.aed4ec495bfd',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.rc4Encode,
     category: _TextTransformCategory.encode,
-    labelZh: 'RC4 legacy 编码',
-    labelEn: 'RC4 legacy encode',
-    summaryZh: '使用旧 RC4 路径生成 Base64 密文，仅适合兼容用途。',
-    summaryEn: 'Generate Base64 RC4 output for legacy compatibility only.',
+    labelKey: 'inline.plan295.life.rc4_legacy_encode.a761c8f15c07',
+    summaryKey:
+        'inline.plan295.life.generate_base64_rc4_output_for_legac.d9a63cf47878',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.rc4Decode,
     category: _TextTransformCategory.encode,
-    labelZh: 'RC4 legacy 解码',
-    labelEn: 'RC4 legacy decode',
-    summaryZh: '按相同密钥解出 RC4 Base64 密文，仅适合兼容用途。',
-    summaryEn:
-        'Decode Base64 RC4 text with the same key for legacy compatibility.',
+    labelKey: 'inline.plan295.life.rc4_legacy_decode.8b0070d3ba3b',
+    summaryKey:
+        'inline.plan295.life.decode_base64_rc4_text_with_the_same.cb8eb2db19f2',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.marsEncode,
     category: _TextTransformCategory.style,
-    labelZh: '火星文转换',
-    labelEn: 'Mars text encode',
-    summaryZh: '把常见中文替换成轻量火星文写法。',
-    summaryEn:
-        'Convert common Chinese text into lightweight Mars-text variants.',
+    labelKey: 'inline.plan295.life.mars_text_encode.0392a3230bd5',
+    summaryKey:
+        'inline.plan295.life.convert_common_chinese_text_into_lig.eb4344d74a32',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.marsDecode,
     category: _TextTransformCategory.style,
-    labelZh: '火星文还原',
-    labelEn: 'Mars text decode',
-    summaryZh: '尽量把常见火星文字形归一化回普通文本。',
-    summaryEn: 'Normalize common Mars-text glyphs back into readable text.',
+    labelKey: 'inline.plan295.life.mars_text_decode.a98f07ab1872',
+    summaryKey:
+        'inline.plan295.life.normalize_common_mars_text_glyphs_ba.7e2f37454041',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.fullwidth,
     category: _TextTransformCategory.style,
-    labelZh: '半角转全角',
-    labelEn: 'Halfwidth to fullwidth',
-    summaryZh: '把英文、数字和符号转成全角排版风格。',
-    summaryEn:
-        'Convert ASCII letters, digits, and symbols into fullwidth style.',
+    labelKey: 'inline.plan295.life.halfwidth_to_fullwidth.f7e184336496',
+    summaryKey:
+        'inline.plan295.life.convert_ascii_letters_digits_and_sym.510c9b203e26',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.halfwidth,
     category: _TextTransformCategory.style,
-    labelZh: '全角转半角',
-    labelEn: 'Fullwidth to halfwidth',
-    summaryZh: '把全角文本归一化为常见半角形式。',
-    summaryEn: 'Normalize fullwidth text back into halfwidth form.',
+    labelKey: 'inline.plan295.life.fullwidth_to_halfwidth.65e130a9970b',
+    summaryKey:
+        'inline.plan295.life.normalize_fullwidth_text_back_into_h.b53401f99bd5',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.verticalLayout,
     category: _TextTransformCategory.style,
-    labelZh: '竖排排版',
-    labelEn: 'Vertical layout',
-    summaryZh: '输出适合复制预览的仿古竖排文本布局。',
-    summaryEn: 'Generate a copyable vertical-text layout with simple borders.',
+    labelKey: 'inline.plan295.life.vertical_layout.2251a31a1583',
+    summaryKey:
+        'inline.plan295.life.generate_a_copyable_vertical_text_la.5dd4b9b6e3d1',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.hiddenEmbed,
     category: _TextTransformCategory.hidden,
-    labelZh: '文字隐藏',
-    labelEn: 'Hide text',
-    summaryZh: '把隐藏内容嵌入明文文本中。',
-    summaryEn: 'Embed hidden content into visible cover text.',
+    labelKey: 'inline.plan295.life.hide_text.a55b7e65bef2',
+    summaryKey:
+        'inline.plan295.life.embed_hidden_content_into_visible_co.033f8dbb01c1',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.hiddenReveal,
     category: _TextTransformCategory.hidden,
-    labelZh: '隐藏提取',
-    labelEn: 'Reveal hidden text',
-    summaryZh: '从零宽字符文本中提取隐藏内容。',
-    summaryEn: 'Extract hidden content from zero-width encoded text.',
+    labelKey: 'inline.plan295.life.reveal_hidden_text.3fa853b6dd4f',
+    summaryKey:
+        'inline.plan295.life.extract_hidden_content_from_zero_wid.42950201e4d6',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.mojibakeCandidates,
     category: _TextTransformCategory.mojibake,
-    labelZh: '乱码候选修复',
-    labelEn: 'Mojibake candidates',
-    summaryZh: '输出常见编码重解释候选，不承诺唯一正确答案。',
-    summaryEn:
-        'Show common mojibake reinterpretation candidates instead of a guaranteed single fix.',
+    labelKey: 'inline.plan295.life.mojibake_candidates.f627a946b616',
+    summaryKey:
+        'inline.plan295.life.show_common_mojibake_reinterpretatio.98dc83c8524f',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.codePointTable,
     category: _TextTransformCategory.codeTable,
-    labelZh: '字符码位',
-    labelEn: 'Code point table',
-    summaryZh: '查看字符的 Unicode、十进制和二进制值。',
-    summaryEn:
-        'Inspect Unicode, decimal, and binary values for each character.',
+    labelKey: 'inline.plan295.life.code_point_table.9637ce86691f',
+    summaryKey:
+        'inline.plan295.life.inspect_unicode_decimal_and_binary_v.ae86f90ae53e',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.asciiTable,
     category: _TextTransformCategory.codeTable,
-    labelZh: 'ASCII 对照表',
-    labelEn: 'ASCII table',
-    summaryZh: '查看 ASCII 0-127 对照表，也可按输入字符过滤。',
-    summaryEn:
-        'View the ASCII 0-127 reference table, optionally filtered by input.',
+    labelKey: 'inline.plan295.life.ascii_table.3a35ec7b3c0c',
+    summaryKey:
+        'inline.plan295.life.view_the_ascii_0_127_reference_table.29af0052f732',
   ),
   _TextTransformModeDefinition(
     mode: _TextTransformMode.commonMapTable,
     category: _TextTransformCategory.codeTable,
-    labelZh: '常用码表快照',
-    labelEn: 'Common map snapshot',
-    summaryZh: '同时查看 UTF-8、Base64、URL、Unicode 等常见表示。',
-    summaryEn:
-        'View UTF-8, Base64, URL, Unicode, and similar common representations together.',
+    labelKey: 'inline.plan295.life.common_map_snapshot.8ccc408fdde8',
+    summaryKey:
+        'inline.plan295.life.view_utf_8_base64_url_unicode_and_si.61684d52a744',
   ),
 ];
 
@@ -506,21 +448,25 @@ class _TextTransformPageState extends State<_TextTransformPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '文本转换', en: 'Text transform'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '整合拼音、简繁转换、数字转写、农历干支、语言代码与常用编码工具。',
-        en: 'Pinyin, script conversion, numerals, calendar tools, language codes, and common encoders in one place.',
+        'inline.plan295.life.text_transform.9571d3b531bd',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.pinyin_script_conversion_numerals_ca.5df8d40c966a',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '当前工具', en: 'Current tool'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '先选分组，再选需要的具体转换。',
-              en: 'Choose a group, then the specific transform you need.',
+              'inline.plan295.life.current_tool.f97ecb5a047b',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.choose_a_group_then_the_specific_tra.748cf79c874c',
             ),
             children: <Widget>[
               Wrap(
@@ -540,65 +486,62 @@ class _TextTransformPageState extends State<_TextTransformPage> {
                   if (_isHeavyMode)
                     _buildInfoPill(
                       context,
-                      _lifeText(context, zh: '手动搜索', en: 'Manual search'),
+                      _lifeI18nText(
+                        context,
+                        'inline.plan295.life.manual_search.dff1d0a48724',
+                      ),
                       icon: Icons.hourglass_top_rounded,
                     ),
                 ],
               ),
               const SizedBox(height: 14),
               _LifeSegmentedField<_TextTransformCategory>(
-                label: _lifeText(context, zh: '分组', en: 'Category'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.category.81d75b9e39e2',
+                ),
                 value: _category,
                 options: const <_LifeOption<_TextTransformCategory>>[
                   _LifeOption(
                     value: _TextTransformCategory.phonetic,
-                    labelZh: '拼音',
-                    labelEn: 'Phonetic',
+                    labelKey: 'inline.plan295.life.phonetic.e7161053d1cc',
                   ),
                   _LifeOption(
                     value: _TextTransformCategory.number,
-                    labelZh: '数字',
-                    labelEn: 'Number',
+                    labelKey: 'inline.plan295.life.number.3d22ab57560e',
                   ),
                   _LifeOption(
                     value: _TextTransformCategory.calendar,
-                    labelZh: '历法',
-                    labelEn: 'Calendar',
+                    labelKey: 'inline.plan295.life.calendar.5a5bd958f4bd',
                   ),
                   _LifeOption(
                     value: _TextTransformCategory.ganzhi,
-                    labelZh: '干支',
-                    labelEn: 'Ganzhi',
+                    labelKey: 'inline.plan295.life.ganzhi.0799141a38b3',
                   ),
                   _LifeOption(
                     value: _TextTransformCategory.language,
-                    labelZh: '语言代码',
-                    labelEn: 'Language',
+                    labelKey: 'inline.plan295.life.language.44f257751ce8',
                   ),
                   _LifeOption(
                     value: _TextTransformCategory.encode,
-                    labelZh: '编码',
-                    labelEn: 'Encoding',
+                    labelKey: 'inline.plan295.life.encoding.1ebce0020d08',
                   ),
                   _LifeOption(
                     value: _TextTransformCategory.style,
-                    labelZh: '风格',
-                    labelEn: 'Style',
+                    labelKey: 'ref.toolbox.sound.piano.style',
                   ),
                   _LifeOption(
                     value: _TextTransformCategory.hidden,
-                    labelZh: '隐藏',
-                    labelEn: 'Hidden',
+                    labelKey:
+                        'inline.ui.pages.toolbox_daily_choice.daily_choice_manager_sheet.hidden_00098e',
                   ),
                   _LifeOption(
                     value: _TextTransformCategory.mojibake,
-                    labelZh: '乱码',
-                    labelEn: 'Mojibake',
+                    labelKey: 'inline.plan295.life.mojibake.02c7cab07424',
                   ),
                   _LifeOption(
                     value: _TextTransformCategory.codeTable,
-                    labelZh: '码表',
-                    labelEn: 'Code table',
+                    labelKey: 'inline.plan295.life.code_table.f23056665b43',
                   ),
                 ],
                 onChanged: (_TextTransformCategory value) {
@@ -614,14 +557,16 @@ class _TextTransformPageState extends State<_TextTransformPage> {
               ),
               const SizedBox(height: 14),
               _LifeSegmentedField<_TextTransformMode>(
-                label: _lifeText(context, zh: '模式', en: 'Mode'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.ui.pages.toolbox_human_tests_aim.mode_35c458',
+                ),
                 value: _mode,
                 options: _categoryModes
                     .map(
                       (definition) => _LifeOption<_TextTransformMode>(
                         value: definition.mode,
-                        labelZh: definition.labelZh,
-                        labelEn: definition.labelEn,
+                        labelKey: definition.labelKey,
                       ),
                     )
                     .toList(growable: false),
@@ -650,10 +595,9 @@ class _TextTransformPageState extends State<_TextTransformPage> {
                   _mode == _TextTransformMode.baziSearch) ...<Widget>[
                 const SizedBox(height: 10),
                 Text(
-                  _lifeText(
+                  _lifeI18nText(
                     context,
-                    zh: '历法与八字结果仅作本地参考，默认以北京时间与北京经纬度真太阳时辅助计算，不作为专业历书或命理结论。',
-                    en: 'Calendar and BaZi results are local reference only. They use Beijing time and Beijing true-solar-time assistance by default, and are not an authoritative almanac or destiny reading.',
+                    'inline.plan295.life.calendar_and_bazi_results_are_local.d6cfb5055e81',
                   ),
                   style: theme.textTheme.bodySmall,
                 ),
@@ -662,11 +606,13 @@ class _TextTransformPageState extends State<_TextTransformPage> {
           ),
           const SizedBox(height: 14),
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '输入区', en: 'Input area'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '首屏只保留当前模式真正需要的字段，减少移动端的混乱感。',
-              en: 'Only the fields truly needed by the active mode are shown on the first screen.',
+              'inline.plan295.life.input_area.e860077e9f2c',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.only_the_fields_truly_needed_by_the.16c3b5753a08',
             ),
             children: <Widget>[
               if (_usesPrimaryTextInput) ...<Widget>[
@@ -697,10 +643,9 @@ class _TextTransformPageState extends State<_TextTransformPage> {
                   onChanged: (_) => _runMaybeAuto(),
                   decoration: InputDecoration(
                     border: const OutlineInputBorder(),
-                    labelText: _lifeText(
+                    labelText: _lifeI18nText(
                       context,
-                      zh: '要隐藏的内容',
-                      en: 'Hidden content',
+                      'inline.plan295.life.hidden_content.9db5f0835845',
                     ),
                     alignLabelWithHint: true,
                   ),
@@ -714,7 +659,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
                   onChanged: (_) => _runMaybeAuto(),
                   decoration: InputDecoration(
                     border: const OutlineInputBorder(),
-                    labelText: _lifeText(context, zh: '密钥', en: 'Key'),
+                    labelText: _lifeI18nText(
+                      context,
+                      'inline.plan295.life.key.ed8c29bbe3cd',
+                    ),
                   ),
                 ),
               ],
@@ -735,7 +683,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
                   onChanged: (_) => _runMaybeAuto(),
                   decoration: InputDecoration(
                     border: const OutlineInputBorder(),
-                    labelText: _lifeText(context, zh: '农历年份', en: 'Lunar year'),
+                    labelText: _lifeI18nText(
+                      context,
+                      'inline.plan295.life.lunar_year.9cc1bac91e7d',
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -743,10 +694,9 @@ class _TextTransformPageState extends State<_TextTransformPage> {
                   initialValue: _selectedLunarMonth,
                   decoration: InputDecoration(
                     border: const OutlineInputBorder(),
-                    labelText: _lifeText(
+                    labelText: _lifeI18nText(
                       context,
-                      zh: '农历月份',
-                      en: 'Lunar month',
+                      'inline.plan295.life.lunar_month.62a3978ba718',
                     ),
                   ),
                   items: _lunarMonthNames
@@ -769,13 +719,21 @@ class _TextTransformPageState extends State<_TextTransformPage> {
                   onChanged: (_) => _runMaybeAuto(),
                   decoration: InputDecoration(
                     border: const OutlineInputBorder(),
-                    labelText: _lifeText(context, zh: '农历日期', en: 'Lunar day'),
+                    labelText: _lifeI18nText(
+                      context,
+                      'inline.plan295.life.lunar_day.cc02f4f8939f',
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: Text(_lifeText(context, zh: '闰月', en: 'Leap month')),
+                  title: Text(
+                    _lifeI18nText(
+                      context,
+                      'inline.plan295.life.leap_month.34b88bb7c62e',
+                    ),
+                  ),
                   value: _selectedLunarLeap,
                   onChanged: (value) {
                     setState(() => _selectedLunarLeap = value);
@@ -797,10 +755,9 @@ class _TextTransformPageState extends State<_TextTransformPage> {
                         onChanged: (_) => _runMaybeAuto(),
                         decoration: InputDecoration(
                           border: const OutlineInputBorder(),
-                          labelText: _lifeText(
+                          labelText: _lifeI18nText(
                             context,
-                            zh: '列数',
-                            en: 'Columns',
+                            'inline.plan295.life.columns.2248b862a9a7',
                           ),
                         ),
                       ),
@@ -816,7 +773,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
                         onChanged: (_) => _runMaybeAuto(),
                         decoration: InputDecoration(
                           border: const OutlineInputBorder(),
-                          labelText: _lifeText(context, zh: '行数', en: 'Rows'),
+                          labelText: _lifeI18nText(
+                            context,
+                            'inline.plan295.life.rows.344a069abe45',
+                          ),
                         ),
                       ),
                     ),
@@ -827,17 +787,20 @@ class _TextTransformPageState extends State<_TextTransformPage> {
                   initialValue: _verticalBorderStyle,
                   decoration: InputDecoration(
                     border: const OutlineInputBorder(),
-                    labelText: _lifeText(context, zh: '边框样式', en: 'Border'),
+                    labelText: _lifeI18nText(
+                      context,
+                      'inline.plan295.life.border.8cf87cd26895',
+                    ),
                   ),
                   items: List<DropdownMenuItem<int>>.generate(
                     _verticalBorderStyles.length,
                     (index) => DropdownMenuItem<int>(
                       value: index,
                       child: Text(
-                        _lifeText(
+                        _lifeI18nText(
                           context,
-                          zh: '样式 ${index + 1}',
-                          en: 'Style ${index + 1}',
+                          'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.text.transform.style.76d78f39ab',
+                          params: <String, Object?>{'p0': index + 1},
                         ),
                       ),
                     ),
@@ -851,10 +814,9 @@ class _TextTransformPageState extends State<_TextTransformPage> {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: Text(
-                    _lifeText(
+                    _lifeI18nText(
                       context,
-                      zh: '先转繁体再排版',
-                      en: 'Use traditional first',
+                      'inline.plan295.life.use_traditional_first.0ac9f530e589',
                     ),
                   ),
                   value: _verticalTraditional,
@@ -875,10 +837,9 @@ class _TextTransformPageState extends State<_TextTransformPage> {
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
                           border: const OutlineInputBorder(),
-                          labelText: _lifeText(
+                          labelText: _lifeI18nText(
                             context,
-                            zh: '起始年份',
-                            en: 'Start year',
+                            'inline.plan295.life.start_year.15eb75b645aa',
                           ),
                         ),
                       ),
@@ -890,10 +851,9 @@ class _TextTransformPageState extends State<_TextTransformPage> {
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(
                           border: const OutlineInputBorder(),
-                          labelText: _lifeText(
+                          labelText: _lifeI18nText(
                             context,
-                            zh: '结束年份',
-                            en: 'End year',
+                            'inline.plan295.life.end_year.437ff22c3343',
                           ),
                         ),
                       ),
@@ -908,11 +868,15 @@ class _TextTransformPageState extends State<_TextTransformPage> {
                     child: FilledButton(
                       onPressed: _runTransform,
                       child: Text(
-                        _lifeText(
-                          context,
-                          zh: _isHeavyMode ? '搜索候选' : '生成结果',
-                          en: _isHeavyMode ? 'Search' : 'Run',
-                        ),
+                        _isHeavyMode
+                            ? _lifeI18nText(
+                                context,
+                                'inline.plan295.life.search.bf8945a2bda5',
+                              )
+                            : _lifeI18nText(
+                                context,
+                                'inline.plan295.life.run.5ebec292bc10',
+                              ),
                       ),
                     ),
                   ),
@@ -920,7 +884,12 @@ class _TextTransformPageState extends State<_TextTransformPage> {
                   Expanded(
                     child: FilledButton.tonal(
                       onPressed: _fillExample,
-                      child: Text(_lifeText(context, zh: '示例', en: 'Example')),
+                      child: Text(
+                        _lifeI18nText(
+                          context,
+                          'inline.plan295.life.example.848c52eede84',
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -929,16 +898,21 @@ class _TextTransformPageState extends State<_TextTransformPage> {
           ),
           const SizedBox(height: 14),
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '结果区', en: 'Results'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '结果会按主结论、补充说明和参考表格分层呈现，便于移动端快速浏览。',
-              en: 'Results are layered into primary output, supporting notes, and reference tables for faster mobile scanning.',
+              'inline.plan295.life.results.d270a6b4ac1d',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.results_are_layered_into_primary_out.1db88e879148',
             ),
             children: _results.isEmpty
                 ? <Widget>[
                     Text(
-                      _lifeText(context, zh: '当前还没有结果。', en: 'No result yet.'),
+                      _lifeI18nText(
+                        context,
+                        'inline.plan295.life.no_result_yet.9be0775ffd8d',
+                      ),
                     ),
                   ]
                 : _results
@@ -990,10 +964,12 @@ class _TextTransformPageState extends State<_TextTransformPage> {
             _runMaybeAuto();
           },
           child: Text(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '日期: ${_formatDate(_selectedSolarDateTime)}',
-              en: 'Date: ${_formatDate(_selectedSolarDateTime)}',
+              'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.text.transform.date.d8491956c9',
+              params: <String, Object?>{
+                'p0': _formatDate(_selectedSolarDateTime),
+              },
             ),
           ),
         ),
@@ -1020,10 +996,12 @@ class _TextTransformPageState extends State<_TextTransformPage> {
               _runMaybeAuto();
             },
             child: Text(
-              _lifeText(
+              _lifeI18nText(
                 context,
-                zh: '时间: ${_formatTime(_selectedSolarDateTime)}',
-                en: 'Time: ${_formatTime(_selectedSolarDateTime)}',
+                'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.text.transform.time.6d0c32848b',
+                params: <String, Object?>{
+                  'p0': _formatTime(_selectedSolarDateTime),
+                },
               ),
             ),
           ),
@@ -1061,7 +1039,7 @@ class _TextTransformPageState extends State<_TextTransformPage> {
   ) {
     final theme = Theme.of(context);
     final String displayContent = block.content.isEmpty
-        ? _lifeText(context, zh: '无结果', en: 'No result')
+        ? _lifeI18nText(context, 'inline.plan295.life.no_result.6bf6a428f240')
         : block.content;
     final String copyContent = block.copyContent ?? block.content;
     return Container(
@@ -1093,7 +1071,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
                 ),
               ),
               IconButton(
-                tooltip: _lifeText(context, zh: '复制结果', en: 'Copy result'),
+                tooltip: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.copy_result.d4f7944c520b',
+                ),
                 onPressed: copyContent.isEmpty
                     ? null
                     : () {
@@ -1101,10 +1082,9 @@ class _TextTransformPageState extends State<_TextTransformPage> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              _lifeText(
+                              _lifeI18nText(
                                 context,
-                                zh: '已复制当前结果',
-                                en: 'Result copied',
+                                'inline.plan295.life.result_copied.52ccf550adbc',
                               ),
                             ),
                           ),
@@ -1129,142 +1109,122 @@ class _TextTransformPageState extends State<_TextTransformPage> {
 
   String _primaryLabel(BuildContext context) {
     return switch (_mode) {
-      _TextTransformMode.phoneticBundle => _lifeText(
+      _TextTransformMode.phoneticBundle => _lifeI18nText(
         context,
-        zh: '输入中文',
-        en: 'Chinese text',
+        'inline.plan295.life.chinese_text.fb55cc7d4b83',
       ),
-      _TextTransformMode.scriptConvert => _lifeText(
+      _TextTransformMode.scriptConvert => _lifeI18nText(
         context,
-        zh: '输入简体或繁体',
-        en: 'Simplified or traditional text',
+        'inline.plan295.life.simplified_or_traditional_text.944151f09a5a',
       ),
-      _TextTransformMode.numberBundle => _lifeText(
+      _TextTransformMode.numberBundle => _lifeI18nText(
         context,
-        zh: '输入数字',
-        en: 'Number input',
+        'inline.plan295.life.number_input.19a80183aebd',
       ),
-      _TextTransformMode.languageLookup => _lifeText(
+      _TextTransformMode.languageLookup => _lifeI18nText(
         context,
-        zh: '输入语言代码或标签',
-        en: 'Language code or locale tag',
+        'inline.plan295.life.language_code_or_locale_tag.529ba964ff1f',
       ),
-      _TextTransformMode.baziSearch => _lifeText(
+      _TextTransformMode.baziSearch => _lifeI18nText(
         context,
-        zh: '输入四柱，例如 甲子 乙丑 丙寅 丁卯',
-        en: 'Four pillars, for example JiaZi YiChou BingYin DingMao',
+        'inline.plan295.life.four_pillars_for_example_jiazi_yicho.d34d2a1be11c',
       ),
-      _TextTransformMode.sixtyJiaZi => _lifeText(
+      _TextTransformMode.sixtyJiaZi => _lifeI18nText(
         context,
-        zh: '输入序号或甲子名',
-        en: 'Index or JiaZi name',
+        'inline.plan295.life.index_or_jiazi_name.88fe728b3276',
       ),
-      _TextTransformMode.hiddenReveal => _lifeText(
+      _TextTransformMode.hiddenReveal => _lifeI18nText(
         context,
-        zh: '输入待提取文本',
-        en: 'Encoded text',
+        'inline.plan295.life.encoded_text.d275427febcf',
       ),
-      _TextTransformMode.mojibakeCandidates => _lifeText(
+      _TextTransformMode.mojibakeCandidates => _lifeI18nText(
         context,
-        zh: '输入乱码文本',
-        en: 'Possibly garbled text',
+        'inline.plan295.life.possibly_garbled_text.ba7c6958b89e',
       ),
-      _TextTransformMode.verticalLayout => _lifeText(
+      _TextTransformMode.verticalLayout => _lifeI18nText(
         context,
-        zh: '输入要竖排的文本',
-        en: 'Text for vertical layout',
+        'inline.plan295.life.text_for_vertical_layout.7dee39fd73d7',
       ),
-      _TextTransformMode.marsDecode => _lifeText(
+      _TextTransformMode.marsDecode => _lifeI18nText(
         context,
-        zh: '输入火星文',
-        en: 'Mars text',
+        'inline.plan295.life.mars_text.b71e84478da7',
       ),
-      _TextTransformMode.marsEncode => _lifeText(
+      _TextTransformMode.marsEncode => _lifeI18nText(
         context,
-        zh: '输入普通文本',
-        en: 'Plain text',
+        'inline.plan295.life.plain_text.8bf20e93b416',
       ),
-      _TextTransformMode.base64Decode => _lifeText(
+      _TextTransformMode.base64Decode => _lifeI18nText(
         context,
-        zh: '输入 Base64',
-        en: 'Base64 input',
+        'inline.plan295.life.base64_input.1eab8c5306aa',
       ),
-      _TextTransformMode.urlDecode => _lifeText(
+      _TextTransformMode.urlDecode => _lifeI18nText(
         context,
-        zh: '输入 URL 编码文本',
-        en: 'URL-encoded input',
+        'inline.plan295.life.url_encoded_input.60a4d59a4518',
       ),
-      _TextTransformMode.unicodeUnescape => _lifeText(
+      _TextTransformMode.unicodeUnescape => _lifeI18nText(
         context,
-        zh: '输入 \\uXXXX 序列',
-        en: '\\uXXXX input',
+        'inline.plan295.life.uxxxx_input.6981190a6b44',
       ),
-      _TextTransformMode.jsonUnescape => _lifeText(
+      _TextTransformMode.jsonUnescape => _lifeI18nText(
         context,
-        zh: '输入 JSON 字符串内容',
-        en: 'JSON string content',
+        'inline.plan295.life.json_string_content.0e4aa6f24816',
       ),
-      _TextTransformMode.morseDecode => _lifeText(
+      _TextTransformMode.morseDecode => _lifeI18nText(
         context,
-        zh: '输入摩斯电码',
-        en: 'Morse code',
+        'inline.plan295.life.morse_code.6179b9a35cf1',
       ),
-      _TextTransformMode.rc4Decode => _lifeText(
+      _TextTransformMode.rc4Decode => _lifeI18nText(
         context,
-        zh: '输入 Base64 密文',
-        en: 'Base64 cipher text',
+        'inline.plan295.life.base64_cipher_text.a25917e77390',
       ),
-      _ => _lifeText(context, zh: '输入文本', en: 'Input text'),
+      _ => _lifeI18nText(
+        context,
+        'inline.plan295.life.input_text.7f94eb5eae24',
+      ),
     };
   }
 
   String _categoryLabel(BuildContext context, _TextTransformCategory category) {
     return switch (category) {
-      _TextTransformCategory.phonetic => _lifeText(
+      _TextTransformCategory.phonetic => _lifeI18nText(
         context,
-        zh: '拼音',
-        en: 'Phonetic',
+        'inline.plan295.life.phonetic.e7161053d1cc',
       ),
-      _TextTransformCategory.number => _lifeText(
+      _TextTransformCategory.number => _lifeI18nText(
         context,
-        zh: '数字',
-        en: 'Number',
+        'inline.plan295.life.number.3d22ab57560e',
       ),
-      _TextTransformCategory.calendar => _lifeText(
+      _TextTransformCategory.calendar => _lifeI18nText(
         context,
-        zh: '历法',
-        en: 'Calendar',
+        'inline.plan295.life.calendar.5a5bd958f4bd',
       ),
-      _TextTransformCategory.ganzhi => _lifeText(
+      _TextTransformCategory.ganzhi => _lifeI18nText(
         context,
-        zh: '干支',
-        en: 'Ganzhi',
+        'inline.plan295.life.ganzhi.0799141a38b3',
       ),
-      _TextTransformCategory.language => _lifeText(
+      _TextTransformCategory.language => _lifeI18nText(
         context,
-        zh: '语言代码',
-        en: 'Language',
+        'inline.plan295.life.language.44f257751ce8',
       ),
-      _TextTransformCategory.encode => _lifeText(
+      _TextTransformCategory.encode => _lifeI18nText(
         context,
-        zh: '编码',
-        en: 'Encoding',
+        'inline.plan295.life.encoding.1ebce0020d08',
       ),
-      _TextTransformCategory.style => _lifeText(context, zh: '风格', en: 'Style'),
-      _TextTransformCategory.hidden => _lifeText(
+      _TextTransformCategory.style => _lifeI18nText(
         context,
-        zh: '隐藏',
-        en: 'Hidden',
+        'ref.toolbox.sound.piano.style',
       ),
-      _TextTransformCategory.mojibake => _lifeText(
+      _TextTransformCategory.hidden => _lifeI18nText(
         context,
-        zh: '乱码',
-        en: 'Mojibake',
+        'inline.ui.pages.toolbox_daily_choice.daily_choice_manager_sheet.hidden_00098e',
       ),
-      _TextTransformCategory.codeTable => _lifeText(
+      _TextTransformCategory.mojibake => _lifeI18nText(
         context,
-        zh: '码表',
-        en: 'Code table',
+        'inline.plan295.life.mojibake.02c7cab07424',
+      ),
+      _TextTransformCategory.codeTable => _lifeI18nText(
+        context,
+        'inline.plan295.life.code_table.f23056665b43',
       ),
     };
   }
@@ -1386,7 +1346,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
         case _TextTransformMode.base64Decode:
           blocks.add(
             _TextTransformResultBlock(
-              title: _lifeText(context, zh: '解码结果', en: 'Decoded'),
+              title: _lifeI18nText(
+                context,
+                'inline.plan295.life.decoded.1d572d3f8e8b',
+              ),
               content: utf8.decode(base64Decode(input.trim())),
               highlight: true,
             ),
@@ -1402,7 +1365,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
         case _TextTransformMode.urlDecode:
           blocks.add(
             _TextTransformResultBlock(
-              title: _lifeText(context, zh: '解码结果', en: 'Decoded'),
+              title: _lifeI18nText(
+                context,
+                'inline.plan295.life.decoded.1d572d3f8e8b',
+              ),
               content: Uri.decodeComponent(input),
               highlight: true,
             ),
@@ -1418,7 +1384,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
         case _TextTransformMode.htmlUnescape:
           blocks.add(
             _TextTransformResultBlock(
-              title: _lifeText(context, zh: '还原结果', en: 'Restored'),
+              title: _lifeI18nText(
+                context,
+                'inline.plan295.life.restored.262bfef74568',
+              ),
               content: _htmlUnescape(input),
               highlight: true,
             ),
@@ -1434,7 +1403,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
         case _TextTransformMode.unicodeUnescape:
           blocks.add(
             _TextTransformResultBlock(
-              title: _lifeText(context, zh: '还原结果', en: 'Restored'),
+              title: _lifeI18nText(
+                context,
+                'inline.plan295.life.restored.262bfef74568',
+              ),
               content: _unicodeUnescape(input),
               highlight: true,
             ),
@@ -1450,7 +1422,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
         case _TextTransformMode.jsonUnescape:
           blocks.add(
             _TextTransformResultBlock(
-              title: _lifeText(context, zh: '还原结果', en: 'Restored'),
+              title: _lifeI18nText(
+                context,
+                'inline.plan295.life.restored.262bfef74568',
+              ),
               content: _jsonUnescape(input),
               highlight: true,
             ),
@@ -1458,7 +1433,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
         case _TextTransformMode.morseEncode:
           blocks.add(
             _TextTransformResultBlock(
-              title: _lifeText(context, zh: '摩斯结果', en: 'Morse'),
+              title: _lifeI18nText(
+                context,
+                'inline.plan295.life.morse.95bd5c0297b1',
+              ),
               content: _toMorse(input),
               highlight: true,
             ),
@@ -1466,7 +1444,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
         case _TextTransformMode.morseDecode:
           blocks.add(
             _TextTransformResultBlock(
-              title: _lifeText(context, zh: '解码结果', en: 'Decoded'),
+              title: _lifeI18nText(
+                context,
+                'inline.plan295.life.decoded.1d572d3f8e8b',
+              ),
               content: _fromMorse(input),
               highlight: true,
             ),
@@ -1482,7 +1463,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
         case _TextTransformMode.rc4Decode:
           blocks.add(
             _TextTransformResultBlock(
-              title: _lifeText(context, zh: '解码结果', en: 'Decoded'),
+              title: _lifeI18nText(
+                context,
+                'inline.plan295.life.decoded.1d572d3f8e8b',
+              ),
               content: _rc4Base64Decode(input, _keyController.text),
               highlight: true,
             ),
@@ -1490,7 +1474,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
         case _TextTransformMode.marsEncode:
           blocks.add(
             _TextTransformResultBlock(
-              title: _lifeText(context, zh: '火星文', en: 'Mars text'),
+              title: _lifeI18nText(
+                context,
+                'inline.plan295.life.mars_text.685bbdd316d7',
+              ),
               content: _toMars(input),
               highlight: true,
             ),
@@ -1498,7 +1485,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
         case _TextTransformMode.marsDecode:
           blocks.add(
             _TextTransformResultBlock(
-              title: _lifeText(context, zh: '还原结果', en: 'Normalized'),
+              title: _lifeI18nText(
+                context,
+                'inline.plan295.life.normalized.5976ce0a3a23',
+              ),
               content: _fromMars(input),
               highlight: true,
             ),
@@ -1506,7 +1496,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
         case _TextTransformMode.fullwidth:
           blocks.add(
             _TextTransformResultBlock(
-              title: _lifeText(context, zh: '全角结果', en: 'Fullwidth'),
+              title: _lifeI18nText(
+                context,
+                'inline.plan295.life.fullwidth.c2d08c9da076',
+              ),
               content: _toFullWidthString(input),
               highlight: true,
             ),
@@ -1514,7 +1507,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
         case _TextTransformMode.halfwidth:
           blocks.add(
             _TextTransformResultBlock(
-              title: _lifeText(context, zh: '半角结果', en: 'Halfwidth'),
+              title: _lifeI18nText(
+                context,
+                'inline.plan295.life.halfwidth.12f64f2b644a',
+              ),
               content: _toHalfWidthString(input),
               highlight: true,
             ),
@@ -1522,7 +1518,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
         case _TextTransformMode.verticalLayout:
           blocks.add(
             _TextTransformResultBlock(
-              title: _lifeText(context, zh: '竖排预览', en: 'Vertical preview'),
+              title: _lifeI18nText(
+                context,
+                'inline.plan295.life.vertical_preview.745b3387b42f',
+              ),
               content: _verticalLayout(
                 input,
                 columns: _safePositiveInt(_verticalColumnsController.text, 6),
@@ -1537,7 +1536,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
         case _TextTransformMode.hiddenEmbed:
           blocks.add(
             _TextTransformResultBlock(
-              title: _lifeText(context, zh: '嵌入结果', en: 'Embedded result'),
+              title: _lifeI18nText(
+                context,
+                'inline.plan295.life.embedded_result.18b6a4893118',
+              ),
               content: _embedHiddenText(input, _secondaryController.text),
               highlight: true,
             ),
@@ -1545,7 +1547,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
         case _TextTransformMode.hiddenReveal:
           blocks.add(
             _TextTransformResultBlock(
-              title: _lifeText(context, zh: '提取结果', en: 'Revealed result'),
+              title: _lifeI18nText(
+                context,
+                'inline.plan295.life.revealed_result.c02aede48d70',
+              ),
               content: _revealHiddenText(input),
               highlight: true,
             ),
@@ -1555,7 +1560,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
         case _TextTransformMode.codePointTable:
           blocks.add(
             _TextTransformResultBlock(
-              title: _lifeText(context, zh: '字符码位', en: 'Code points'),
+              title: _lifeI18nText(
+                context,
+                'inline.plan295.life.code_points.6fcb0fabac0c',
+              ),
               content: _buildCodePointTable(input),
               highlight: true,
               isTable: true,
@@ -1578,7 +1586,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
         ..clear()
         ..add(
           _TextTransformResultBlock(
-            title: _lifeText(context, zh: '转换失败', en: 'Transform failed'),
+            title: _lifeI18nText(
+              context,
+              'inline.plan295.life.transform_failed.b5c319282e30',
+            ),
             content: error.toString(),
             highlight: true,
           ),
@@ -1591,11 +1602,13 @@ class _TextTransformPageState extends State<_TextTransformPage> {
     if (text.trim().isEmpty) {
       return <_TextTransformResultBlock>[
         _TextTransformResultBlock(
-          title: _lifeText(context, zh: '说明', en: 'Note'),
-          content: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '输入中文后可同时查看拼音、注音、简拼和首字母。',
-            en: 'Enter Chinese text to view pinyin, zhuyin, short pinyin, and initials together.',
+            'inline.plan295.life.note.ecb81a92f39e',
+          ),
+          content: _lifeI18nText(
+            context,
+            'inline.plan295.life.enter_chinese_text_to_view_pinyin_zh.ce61b0fb5bba',
           ),
           highlight: true,
         ),
@@ -1603,7 +1616,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
     }
     return <_TextTransformResultBlock>[
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '拼音（无声调）', en: 'Pinyin without tone'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.pinyin_without_tone.014847e9f7d6',
+        ),
         content: PinyinHelper.getPinyin(
           text,
           format: PinyinFormat.WITHOUT_TONE,
@@ -1611,32 +1627,47 @@ class _TextTransformPageState extends State<_TextTransformPage> {
         highlight: true,
       ),
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '拼音（声调符号）', en: 'Pinyin tone marks'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.pinyin_tone_marks.05779b6610aa',
+        ),
         content: PinyinHelper.getPinyin(
           text,
           format: PinyinFormat.WITH_TONE_MARK,
         ),
       ),
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '拼音（声调数字）', en: 'Pinyin tone numbers'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.pinyin_tone_numbers.554d9478baf3',
+        ),
         content: PinyinHelper.getPinyin(
           text,
           format: PinyinFormat.WITH_TONE_NUMBER,
         ),
       ),
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '注音', en: 'Zhuyin'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.zhuyin.1a9abb770953',
+        ),
         content: ZhuyinHelper.getZhuyin(
           text,
           format: PinyinFormat.WITH_TONE_MARK,
         ),
       ),
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '简拼', en: 'Short pinyin'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.short_pinyin.f143847e5b0a',
+        ),
         content: PinyinHelper.getShortPinyin(text),
       ),
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '首字母', en: 'First-letter initials'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.first_letter_initials.8097b98322a6',
+        ),
         content: PinyinHelper.getFirstWordPinyin(text),
       ),
     ];
@@ -1646,11 +1677,13 @@ class _TextTransformPageState extends State<_TextTransformPage> {
     if (text.trim().isEmpty) {
       return <_TextTransformResultBlock>[
         _TextTransformResultBlock(
-          title: _lifeText(context, zh: '说明', en: 'Note'),
-          content: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '输入简体或繁体中文后可查看双向转换结果。',
-            en: 'Enter simplified or traditional Chinese to view both conversion directions.',
+            'inline.plan295.life.note.ecb81a92f39e',
+          ),
+          content: _lifeI18nText(
+            context,
+            'inline.plan295.life.enter_simplified_or_traditional_chin.feef558c0e6f',
           ),
           highlight: true,
         ),
@@ -1658,12 +1691,18 @@ class _TextTransformPageState extends State<_TextTransformPage> {
     }
     return <_TextTransformResultBlock>[
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '转繁体', en: 'To traditional'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.to_traditional.b626a58a6d40',
+        ),
         content: ChineseHelper.convertToTraditionalChinese(text),
         highlight: true,
       ),
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '转简体', en: 'To simplified'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.to_simplified.06bb18e7d821',
+        ),
         content: ChineseHelper.convertToSimplifiedChinese(text),
       ),
     ];
@@ -1674,11 +1713,13 @@ class _TextTransformPageState extends State<_TextTransformPage> {
     if (source.isEmpty) {
       return <_TextTransformResultBlock>[
         _TextTransformResultBlock(
-          title: _lifeText(context, zh: '说明', en: 'Note'),
-          content: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '输入阿拉伯数字，例如 1234567.89。',
-            en: 'Enter an Arabic number such as 1234567.89.',
+            'inline.plan295.life.note.ecb81a92f39e',
+          ),
+          content: _lifeI18nText(
+            context,
+            'inline.plan295.life.enter_an_arabic_number_such_as_12345.73b43f82b153',
           ),
           highlight: true,
         ),
@@ -1687,26 +1728,41 @@ class _TextTransformPageState extends State<_TextTransformPage> {
     final num? parsed = num.tryParse(source.replaceAll(',', ''));
     if (parsed == null) {
       throw FormatException(
-        _lifeText(context, zh: '请输入可解析的数字。', en: 'Enter a parseable number.'),
+        _lifeI18nText(
+          context,
+          'inline.plan295.life.enter_a_parseable_number.3a24d1e0fcff',
+        ),
       );
     }
     final int integer = parsed.truncate();
     return <_TextTransformResultBlock>[
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '中文数字', en: 'Chinese numerals'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.chinese_numerals.c2f777fbad27',
+        ),
         content: _numberToChineseLower(source),
         highlight: true,
       ),
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '人民币大写', en: 'RMB uppercase'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.rmb_uppercase.fa1ce2f20210',
+        ),
         content: _numberToChineseFinancial(source),
       ),
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '英文数字', en: 'English words'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.english_words.808f35094eef',
+        ),
         content: _numberToEnglishWords(source),
       ),
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '罗马数字', en: 'Roman numeral'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.roman_numeral.4b66695af440',
+        ),
         content: _toRoman(integer),
       ),
     ];
@@ -1730,29 +1786,41 @@ class _TextTransformPageState extends State<_TextTransformPage> {
     final JieQiInfo? jieQiInfo = getJieQiInfo(astro);
     return <_TextTransformResultBlock>[
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '农历日期', en: 'Lunar date'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.lunar_date.a6aa38addd8f',
+        ),
         content:
-            '${lunar.historicalYear}年 ${lunar.monthNameStr}月${_lunarDayName(lunar.day)}\n${_lifeText(context, zh: '月大小', en: 'Month size')}: ${lunar.monthSize == 30 ? _lifeText(context, zh: '大月', en: '30-day month') : _lifeText(context, zh: '小月', en: '29-day month')}',
+            '${lunar.historicalYear}年 ${lunar.monthNameStr}月${_lunarDayName(lunar.day)}\n${_lifeI18nText(context, 'inline.plan295.life.month_size.b5eb24fbbf35')}: ${lunar.monthSize == 30 ? _lifeI18nText(context, 'inline.plan295.life.30_day_month.7c803bda3b40') : _lifeI18nText(context, 'inline.plan295.life.29_day_month.0f945854d22b')}',
         highlight: true,
       ),
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '干支与星期', en: 'Ganzhi and weekday'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.ganzhi_and_weekday.edbc217c6c60',
+        ),
         content:
             '${info.ganZhi}  ·  ${info.weekdayName}  ·  ${info.constellation}',
       ),
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '节气与月相', en: 'Solar term and moon phase'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.solar_term_and_moon_phase.b738aa4781a8',
+        ),
         content: [
           if (info.solarTerm != null)
-            '${_lifeText(context, zh: '当前节气', en: 'Current solar term')}: ${info.solarTerm}${info.solarTermTime != null ? ' ${info.solarTermTime!.toTimeString()}' : ''}',
+            '${_lifeI18nText(context, 'inline.plan295.life.current_solar_term.5f7bf56e215e')}: ${info.solarTerm}${info.solarTermTime != null ? ' ${info.solarTermTime!.toTimeString()}' : ''}',
           if (info.moonPhase != null)
-            '${_lifeText(context, zh: '月相', en: 'Moon phase')}: ${info.moonPhase}${info.moonPhaseTime != null ? ' ${info.moonPhaseTime!.toTimeString()}' : ''}',
+            '${_lifeI18nText(context, 'inline.plan295.life.moon_phase.5448f0b8b11e')}: ${info.moonPhase}${info.moonPhaseTime != null ? ' ${info.moonPhaseTime!.toTimeString()}' : ''}',
           if (jieQiInfo != null)
-            '${_lifeText(context, zh: '节气窗口', en: 'Solar-term window')}: ${jieQiInfo.prevJieQi.name} → ${jieQiInfo.nextJieQi.name} (${jieQiInfo.daysUntilNextJieQi.toStringAsFixed(1)}d)',
+            '${_lifeI18nText(context, 'inline.plan295.life.solar_term_window.4ca4581e567b')}: ${jieQiInfo.prevJieQi.name} → ${jieQiInfo.nextJieQi.name} (${jieQiInfo.daysUntilNextJieQi.toStringAsFixed(1)}d)',
         ].join('\n').trim(),
       ),
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '节日与民俗', en: 'Festivals and customs'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.festivals_and_customs.eacc3c512ab5',
+        ),
         content: _festivalSummary(info),
       ),
     ];
@@ -1776,13 +1844,19 @@ class _TextTransformPageState extends State<_TextTransformPage> {
     final AstroDateTime solar = lunar.toSolar;
     return <_TextTransformResultBlock>[
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '公历日期', en: 'Solar date'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.solar_date.eff9166e5fd5',
+        ),
         content:
             '${solar.year}-${solar.month.toString().padLeft(2, '0')}-${solar.day.toString().padLeft(2, '0')}',
         highlight: true,
       ),
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '农历确认', en: 'Lunar input'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.lunar_input.79e6f760c684',
+        ),
         content:
             '${lunar.lunarYear}年 ${lunar.monthNameStr}月${_lunarDayName(lunar.day)}',
       ),
@@ -1807,36 +1881,40 @@ class _TextTransformPageState extends State<_TextTransformPage> {
     final JieQiInfo? jieQiInfo = getJieQiInfo(target);
     return <_TextTransformResultBlock>[
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '当天概览', en: 'Day snapshot'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.day_snapshot.4ecac7eaf399',
+        ),
         content:
-            '${_formatDate(dateTime)} ${_formatTime(dateTime)}\n${info.ganZhi} · ${info.weekdayName} · ${info.constellation}\n农历 ${info.lunarDate.monthNameStr}月${_lunarDayName(info.lunarDate.day)} (${info.lunarMonthSize == 30 ? _lifeText(context, zh: '大月', en: '30-day month') : _lifeText(context, zh: '小月', en: '29-day month')})',
+            '${_formatDate(dateTime)} ${_formatTime(dateTime)}\n${info.ganZhi} · ${info.weekdayName} · ${info.constellation}\n农历 ${info.lunarDate.monthNameStr}月${_lunarDayName(info.lunarDate.day)} (${info.lunarMonthSize == 30 ? _lifeI18nText(context, 'inline.plan295.life.30_day_month.7c803bda3b40') : _lifeI18nText(context, 'inline.plan295.life.29_day_month.0f945854d22b')})',
         highlight: true,
       ),
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '节气与月相', en: 'Solar term and moon phase'),
-        content: [
-          '${_lifeText(context, zh: '节气', en: 'Solar term')}: ${info.solarTerm ?? _lifeText(context, zh: '无', en: 'None')}${info.solarTermTime != null ? ' ${info.solarTermTime!.toTimeString()}' : ''}',
-          '${_lifeText(context, zh: '月相', en: 'Moon phase')}: ${info.moonPhase ?? _lifeText(context, zh: '无', en: 'None')}${info.moonPhaseTime != null ? ' ${info.moonPhaseTime!.toTimeString()}' : ''}',
-          if (jieQiInfo != null)
-            '${_lifeText(context, zh: '节气窗口', en: 'Solar-term window')}: ${jieQiInfo.prevJieQi.name} → ${jieQiInfo.nextJieQi.name}',
-        ].join('\n'),
-      ),
-      _TextTransformResultBlock(
-        title: _lifeText(
+        title: _lifeI18nText(
           context,
-          zh: '日出日落（北京）',
-          en: 'Sunrise and sunset (Beijing)',
+          'inline.plan295.life.solar_term_and_moon_phase.b738aa4781a8',
         ),
         content: [
-          '${_lifeText(context, zh: '日出', en: 'Sunrise')}: ${info.sunrise?.toTimeString() ?? '--'}',
-          '${_lifeText(context, zh: '日落', en: 'Sunset')}: ${info.sunset?.toTimeString() ?? '--'}',
+          '${_lifeI18nText(context, 'inline.plan295.life.solar_term.87f5921058ae')}: ${info.solarTerm ?? _lifeI18nText(context, 'ref.wordTransitionStyleNone')}${info.solarTermTime != null ? ' ${info.solarTermTime!.toTimeString()}' : ''}',
+          '${_lifeI18nText(context, 'inline.plan295.life.moon_phase.5448f0b8b11e')}: ${info.moonPhase ?? _lifeI18nText(context, 'ref.wordTransitionStyleNone')}${info.moonPhaseTime != null ? ' ${info.moonPhaseTime!.toTimeString()}' : ''}',
+          if (jieQiInfo != null)
+            '${_lifeI18nText(context, 'inline.plan295.life.solar_term_window.4ca4581e567b')}: ${jieQiInfo.prevJieQi.name} → ${jieQiInfo.nextJieQi.name}',
         ].join('\n'),
       ),
       _TextTransformResultBlock(
-        title: _lifeText(
+        title: _lifeI18nText(
           context,
-          zh: '节日与当年节气摘录',
-          en: 'Festivals and yearly solar terms',
+          'inline.plan295.life.sunrise_and_sunset_beijing.1d6f50e669d0',
+        ),
+        content: [
+          '${_lifeI18nText(context, 'inline.plan295.life.sunrise.f210fad15103')}: ${info.sunrise?.toTimeString() ?? '--'}',
+          '${_lifeI18nText(context, 'ref.themeSunset')}: ${info.sunset?.toTimeString() ?? '--'}',
+        ].join('\n'),
+      ),
+      _TextTransformResultBlock(
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.festivals_and_yearly_solar_terms.209cb73461fd',
         ),
         content: [
           _festivalSummary(info),
@@ -1871,37 +1949,48 @@ class _TextTransformPageState extends State<_TextTransformPage> {
             .toString();
     return <_TextTransformResultBlock>[
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '四柱八字', en: 'Four pillars'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.four_pillars.428414d86c32',
+        ),
         content: bazi.bazi.toString(),
         highlight: true,
       ),
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '年柱 / 月柱 / 日柱 / 时柱', en: 'Pillars'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.pillars.3b2ecc564b1f',
+        ),
         content:
             '${ganzhi.yearGanZhi} / ${ganzhi.monthGanZhi} / ${ganzhi.dayGanZhi} / ${ganzhi.timeGanZhi}',
       ),
       _TextTransformResultBlock(
-        title: _lifeText(
+        title: _lifeI18nText(
           context,
-          zh: '真太阳时（北京）',
-          en: 'True solar time (Beijing)',
+          'inline.plan295.life.true_solar_time_beijing.014fc0fc6f13',
         ),
         content:
-            '${solar.trueSolarTime.year}-${solar.trueSolarTime.month.toString().padLeft(2, '0')}-${solar.trueSolarTime.day.toString().padLeft(2, '0')} ${solar.trueSolarTime.toTimeString()}\n${_lifeText(context, zh: '当前时支', en: 'Current time branch')}: ${_timeBranchLabel(dateTime.hour)}',
+            '${solar.trueSolarTime.year}-${solar.trueSolarTime.month.toString().padLeft(2, '0')}-${solar.trueSolarTime.day.toString().padLeft(2, '0')} ${solar.trueSolarTime.toTimeString()}\n${_lifeI18nText(context, 'inline.plan295.life.current_time_branch.97f760aad051')}: ${_timeBranchLabel(dateTime.hour)}',
       ),
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '纳音与五行', en: 'NaYin and five elements'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.nayin_and_five_elements.fa9f33bd7533',
+        ),
         content: [
-          '${_lifeText(context, zh: '年柱', en: 'Year')}: ${bazi.bazi.year.naYin} / ${bazi.bazi.year.naYinWuXing}',
-          '${_lifeText(context, zh: '月柱', en: 'Month')}: ${bazi.bazi.month.naYin} / ${bazi.bazi.month.naYinWuXing}',
-          '${_lifeText(context, zh: '日柱', en: 'Day')}: ${bazi.bazi.day.naYin} / ${bazi.bazi.day.naYinWuXing}',
-          '${_lifeText(context, zh: '时柱', en: 'Hour')}: ${bazi.bazi.time.naYin} / ${bazi.bazi.time.naYinWuXing}',
+          '${_lifeI18nText(context, 'inline.plan295.life.year.a9ca9a0e2481')}: ${bazi.bazi.year.naYin} / ${bazi.bazi.year.naYinWuXing}',
+          '${_lifeI18nText(context, 'inline.plan295.life.month.eab5cd6329de')}: ${bazi.bazi.month.naYin} / ${bazi.bazi.month.naYinWuXing}',
+          '${_lifeI18nText(context, 'inline.plan295.life.day.55b88c52240f')}: ${bazi.bazi.day.naYin} / ${bazi.bazi.day.naYinWuXing}',
+          '${_lifeI18nText(context, 'inline.plan295.life.hour.73db88e1fba5')}: ${bazi.bazi.time.naYin} / ${bazi.bazi.time.naYinWuXing}',
         ].join('\n'),
       ),
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '六十甲子参考', en: 'Sixty JiaZi reference'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.sixty_jiazi_reference.33f4dd744ca0',
+        ),
         content:
-            '${_lifeText(context, zh: '日柱序号', en: 'Day pillar index')}: $dayIndex\n${_lifeText(context, zh: '年柱序号', en: 'Year pillar index')}: ${_sixtyJiaZi.indexWhere((item) => item == ganzhi.yearGanZhi) + 1}',
+            '${_lifeI18nText(context, 'inline.plan295.life.day_pillar_index.8e52371808c4')}: $dayIndex\n${_lifeI18nText(context, 'inline.plan295.life.year_pillar_index.2f3459df31de')}: ${_sixtyJiaZi.indexWhere((item) => item == ganzhi.yearGanZhi) + 1}',
       ),
     ];
   }
@@ -1911,11 +2000,13 @@ class _TextTransformPageState extends State<_TextTransformPage> {
     if (pillars.length != 4) {
       return <_TextTransformResultBlock>[
         _TextTransformResultBlock(
-          title: _lifeText(context, zh: '说明', en: 'Note'),
-          content: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '请输入四柱八字，例如“甲子 乙丑 丙寅 丁卯”。该搜索按北京时间和两小时时辰粒度给出候选结果。',
-            en: 'Enter four pillars such as “JiaZi YiChou BingYin DingMao”. The search returns candidate matches using Beijing time and two-hour slots.',
+            'inline.plan295.life.note.ecb81a92f39e',
+          ),
+          content: _lifeI18nText(
+            context,
+            'inline.plan295.life.enter_four_pillars_such_as_jiazi_yic.ab25661c886d',
           ),
           highlight: true,
         ),
@@ -1931,10 +2022,9 @@ class _TextTransformPageState extends State<_TextTransformPage> {
     }
     if (endYear - startYear > 5) {
       throw RangeError(
-        _lifeText(
+        _lifeI18nText(
           context,
-          zh: '为保证移动端可用性，八字候选搜索范围最多 6 个年份。',
-          en: 'To keep this mobile-friendly, BaZi candidate search is limited to 6 years.',
+          'inline.plan295.life.to_keep_this_mobile_friendly_bazi_ca.e5ee52767bc8',
         ),
       );
     }
@@ -1985,17 +2075,22 @@ class _TextTransformPageState extends State<_TextTransformPage> {
     }
     return <_TextTransformResultBlock>[
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '搜索条件', en: 'Search query'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.search_query.c7ff2920ef96',
+        ),
         content: '${pillars.join(' / ')}\n$startYear - $endYear',
         highlight: true,
       ),
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '候选日期', en: 'Candidate dates'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.candidate_dates.eca0bfbc56dc',
+        ),
         content: matches.isEmpty
-            ? _lifeText(
+            ? _lifeI18nText(
                 context,
-                zh: '当前范围内没有找到候选结果。',
-                en: 'No candidate was found in the selected range.',
+                'inline.plan295.life.no_candidate_was_found_in_the_select.e8028c5032b8',
               )
             : matches.join('\n'),
         isTable: true,
@@ -2023,7 +2118,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
     }
     return <_TextTransformResultBlock>[
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '六十甲子表', en: 'Sixty JiaZi table'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.sixty_jiazi_table.0ca612afad15',
+        ),
         content: table.toString().trimRight(),
         copyContent: table.toString().trimRight(),
         highlight: true,
@@ -2040,7 +2138,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
     if (locale != null) {
       blocks.add(
         _TextTransformResultBlock(
-          title: _lifeText(context, zh: '标签解析', en: 'Parsed locale'),
+          title: _lifeI18nText(
+            context,
+            'inline.plan295.life.parsed_locale.e41bd91e490d',
+          ),
           content: [
             'tag: ${_normalizeLocaleTag(locale)}',
             'language: ${locale.languageCode}',
@@ -2073,7 +2174,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
         .toList(growable: false);
     blocks.add(
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '常见语言代码', en: 'Common language codes'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.common_language_codes.789dd3d00fbb',
+        ),
         content: matches
             .map((item) => '${item.code}\t${item.zh}\t${item.en}')
             .join('\n'),
@@ -2086,11 +2190,13 @@ class _TextTransformPageState extends State<_TextTransformPage> {
     if (blocks.isEmpty) {
       blocks.add(
         _TextTransformResultBlock(
-          title: _lifeText(context, zh: '说明', en: 'Note'),
-          content: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '输入类似 en、zh-CN、zh-Hant-TW、fr-CA 的语言标签。',
-            en: 'Enter tags such as en, zh-CN, zh-Hant-TW, or fr-CA.',
+            'inline.plan295.life.note.ecb81a92f39e',
+          ),
+          content: _lifeI18nText(
+            context,
+            'inline.plan295.life.enter_tags_such_as_en_zh_cn_zh_hant.7e89b6e21690',
           ),
           highlight: true,
         ),
@@ -2101,17 +2207,15 @@ class _TextTransformPageState extends State<_TextTransformPage> {
 
   String _toRoman(int value) {
     if (value <= 0) {
-      return _lifeText(
+      return _lifeI18nText(
         context,
-        zh: '罗马数字不支持 0 和负数',
-        en: 'Roman numerals do not support zero or negatives',
+        'inline.plan295.life.roman_numerals_do_not_support_zero_o.a10fff3429ec',
       );
     }
     if (value > 3999) {
-      return _lifeText(
+      return _lifeI18nText(
         context,
-        zh: '当前仅支持 1-3999',
-        en: 'Currently supports 1-3999 only',
+        'inline.plan295.life.currently_supports_1_3999_only.d43aba4df656',
       );
     }
     const List<MapEntry<int, String>> mapping = <MapEntry<int, String>>[
@@ -2622,7 +2726,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
   List<_TextTransformResultBlock> _mojibakeCandidates(String text) {
     final List<_TextTransformResultBlock> blocks = <_TextTransformResultBlock>[
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '原文', en: 'Original'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.original.d4d312c37935',
+        ),
         content: text,
         highlight: true,
       ),
@@ -2639,11 +2746,13 @@ class _TextTransformPageState extends State<_TextTransformPage> {
     if (candidates.isEmpty) {
       blocks.add(
         _TextTransformResultBlock(
-          title: _lifeText(context, zh: '说明', en: 'Note'),
-          content: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '当前输入没有出现更清晰的常见候选，这通常意味着它不是典型乱码，或者仍然缺少原始编码上下文。',
-            en: 'No clearer common candidate was found. The input may not be typical mojibake, or it may still need the original encoding context.',
+            'inline.plan295.life.note.ecb81a92f39e',
+          ),
+          content: _lifeI18nText(
+            context,
+            'inline.plan295.life.no_clearer_common_candidate_was_foun.cdadf175d570',
           ),
         ),
       );
@@ -2673,10 +2782,9 @@ class _TextTransformPageState extends State<_TextTransformPage> {
 
   String _buildCodePointTable(String text) {
     if (text.isEmpty) {
-      return _lifeText(
+      return _lifeI18nText(
         context,
-        zh: '请输入文本后查看码位。',
-        en: 'Enter text to inspect code points.',
+        'inline.plan295.life.enter_text_to_inspect_code_points.a3f32291ad2d',
       );
     }
     final StringBuffer buffer = StringBuffer('char\tU+\tdec\tbin\n');
@@ -2710,10 +2818,9 @@ class _TextTransformPageState extends State<_TextTransformPage> {
 
   String _festivalSummary(DayInfo info) {
     if (info.festivals.isEmpty) {
-      return _lifeText(
+      return _lifeI18nText(
         context,
-        zh: '当天没有收录到高频节日或民俗提示。',
-        en: 'No major festivals or customs were recorded for this day.',
+        'inline.plan295.life.no_major_festivals_or_customs_were_r.a417a5f96174',
       );
     }
     final List<Festival> primary = info.getFestivalsByLevel();
@@ -2728,12 +2835,12 @@ class _TextTransformPageState extends State<_TextTransformPage> {
     );
     return <String>[
       if (primary.isNotEmpty)
-        '${_lifeText(context, zh: '主要节日', en: 'Primary festivals')}: ${primary.join(' / ')}',
+        '${_lifeI18nText(context, 'inline.plan295.life.primary_festivals.e715a97e267e')}: ${primary.join(' / ')}',
       if (commemorative.isNotEmpty)
-        '${_lifeText(context, zh: '纪念与科普', en: 'Commemorative')}: ${commemorative.join(' / ')}',
+        '${_lifeI18nText(context, 'inline.plan295.life.commemorative.c073e6550204')}: ${commemorative.join(' / ')}',
       if (ethnic.isNotEmpty)
-        '${_lifeText(context, zh: '民族与地方', en: 'Ethnic and local')}: ${ethnic.join(' / ')}',
-      '${_lifeText(context, zh: '全量条目', en: 'All entries')}: ${info.festivals.join(' / ')}',
+        '${_lifeI18nText(context, 'inline.plan295.life.ethnic_and_local.15328bea0947')}: ${ethnic.join(' / ')}',
+      '${_lifeI18nText(context, 'inline.plan295.life.all_entries.d2b653435017')}: ${info.festivals.join(' / ')}',
     ].join('\n');
   }
 
@@ -2765,7 +2872,10 @@ class _TextTransformPageState extends State<_TextTransformPage> {
         content: _unicodeEscape(safe),
       ),
       _TextTransformResultBlock(
-        title: _lifeText(context, zh: '字符码位', en: 'Code points'),
+        title: _lifeI18nText(
+          context,
+          'inline.plan295.life.code_points.6fcb0fabac0c',
+        ),
         content: _buildCodePointTable(safe),
         isTable: true,
       ),
@@ -2903,7 +3013,16 @@ class _MojibakeCandidate {
   final String content;
 
   String title(BuildContext context) {
-    return _lifeText(context, zh: '$fromZh -> $toZh', en: '$fromEn -> $toEn');
+    return _lifeI18nText(
+      context,
+      'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.text.transform.text.9144a09d99',
+      params: <String, Object?>{
+        'fromZh': fromZh,
+        'toZh': toZh,
+        'fromEn': fromEn,
+        'toEn': toEn,
+      },
+    );
   }
 }
 

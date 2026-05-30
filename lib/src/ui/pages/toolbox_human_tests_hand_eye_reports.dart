@@ -120,111 +120,45 @@ class _HandEyeCompletionReportDialog extends StatelessWidget {
 
     return _HumanReportDialogFrame(
       title: Text(
-        pickUiText(
-          i18n,
-          zh: '手眼协调结果报告',
-          en: 'Hand-eye report',
-          ja: 'Hand-eye report',
-          de: 'Hand-eye report',
-          fr: 'Rapport sur les yeux des mains',
-          es: 'Informe de mano-ojo',
-          ru: 'Отчет с глаз долой',
+        i18n.t(
+          'inline.ui.pages.toolbox_human_tests_hand_eye_reports.hand_eye_report_f6bee0',
         ),
       ),
       accent: accent,
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
+            (i18n.t('rounds'), '$successes/$roundCount'),
+            (i18n.t('toolbox.sleep.rhythm.missed'), '$missed'),
             (
-              pickUiText(
-                i18n,
-                zh: '完成轮次',
-                en: 'Rounds',
-                ja: 'Rounds',
-                de: 'Rounds',
-                fr: 'Rondes',
-                es: 'Rondas',
-                ru: 'Круги',
-              ),
-              '$successes/$roundCount',
-            ),
-            (
-              pickUiText(
-                i18n,
-                zh: '漏掉',
-                en: 'Missed',
-                ja: 'Missed',
-                de: 'Missed',
-                fr: 'Manque',
-                es: 'Desaparecido',
-                ru: 'Пропавший',
-              ),
-              '$missed',
-            ),
-            (
-              pickUiText(
-                i18n,
-                zh: '点空',
-                en: 'Blanks',
-                ja: 'ブランク',
-                de: 'Blanks',
-                fr: 'Blancs',
-                es: 'Blanks',
-                ru: 'бланки',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_hand_eye_parts.blanks_84a873',
               ),
               '$totalBlankTaps',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '假目标',
-                en: 'False targets',
-                ja: 'False targets',
-                de: 'False targets',
-                fr: 'Faux objectifs',
-                es: 'Objetivos falsos',
-                ru: 'Ложные цели',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_aim.false_targets_c0458f',
               ),
               '$totalDistractorTaps',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '平均反应',
-                en: 'Avg reaction',
-                ja: '平均反応',
-                de: 'Avg reaction',
-                fr: 'Réaction d\' Avg',
-                es: 'Reacción de Avg',
-                ru: 'Авг реакция',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_bimanual.avg_reaction_2a9cf7',
               ),
               averageReaction == null
                   ? '-'
                   : _formatMilliseconds(averageReaction.inMilliseconds),
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '最快反应',
-                en: 'Best reaction',
-                ja: 'ベスト',
-                de: 'Best reaction',
-                fr: 'Meilleure réaction',
-                es: 'La mejor reacción',
-                ru: 'лучшая реакция',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_hand_eye_reports.best_reaction_7f77f1',
               ),
               bestReaction == null ? '-' : _formatMilliseconds(bestReaction),
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '平均完成',
-                en: 'Avg completion',
-                ja: '平均',
-                de: 'Avg completion',
-                fr: 'Achèvement',
-                es: 'Finalización de la Avg',
-                ru: 'Завершение Avg',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_hand_eye_reports.avg_completion_6748fa',
               ),
               averageCompletion == null
                   ? '-'
@@ -234,15 +168,8 @@ class _HandEyeCompletionReportDialog extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         Text(
-          pickUiText(
-            i18n,
-            zh: '逐轮明细',
-            en: 'Round details',
-            ja: 'Round details',
-            de: 'Round details',
-            fr: 'Détails',
-            es: 'Detalles de la ronda',
-            ru: 'Круглые детали',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_hand_eye_reports.round_details_fd1be3',
           ),
           style: Theme.of(
             context,
@@ -315,15 +242,8 @@ class _JoystickCompletionReportDialog extends StatelessWidget {
 
     return _HumanReportDialogFrame(
       title: Text(
-        pickUiText(
-          i18n,
-          zh: '摇杆手眼协调结果报告',
-          en: 'Joystick report',
-          ja: 'Joystick report',
-          de: 'Joystick report',
-          fr: 'Rapport Joystick',
-          es: 'Informe de Joystick',
-          ru: 'Отчет Джойстика',
+        i18n.t(
+          'inline.ui.pages.toolbox_human_tests_hand_eye_reports.joystick_report_194515',
         ),
       ),
       accent: accent,
@@ -331,191 +251,71 @@ class _JoystickCompletionReportDialog extends StatelessWidget {
         _HumanMetricWrap(
           metrics: <(String, String)>[
             (
-              pickUiText(
-                i18n,
-                zh: '模式',
-                en: 'Mode',
-                ja: 'Mode',
-                de: 'Mode',
-                fr: 'Mode',
-                es: 'Modo',
-                ru: 'Режим',
-              ),
+              i18n.t('toolbox.sound.piano.mode'),
               mode == _JoystickTestMode.timed
-                  ? pickUiText(
-                      i18n,
-                      zh: '单位时间',
-                      en: 'Timed',
-                      ja: 'Timed',
-                      de: 'Timed',
-                      fr: 'Délai',
-                      es: 'Timed',
-                      ru: 'Время',
+                  ? i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_cognition.timed_4e65ea',
                     )
-                  : pickUiText(
-                      i18n,
-                      zh: '目标总数',
-                      en: 'Target count',
-                      ja: 'Target count',
-                      de: 'Target count',
-                      fr: 'Nombre cible',
-                      es: 'Conteo de objetivos',
-                      ru: 'Целевой счет',
-                    ),
+                  : i18n.t('inline.plan294.woodfish.target_count_211bec09'),
             ),
+            (i18n.t('progress'), progress),
             (
-              pickUiText(
-                i18n,
-                zh: '进度',
-                en: 'Progress',
-                ja: 'Progress',
-                de: 'Progress',
-                fr: 'Progrès accomplis',
-                es: 'Progresos',
-                ru: 'Прогресс',
-              ),
-              progress,
-            ),
-            (
-              pickUiText(
-                i18n,
-                zh: '命中',
-                en: 'Hits',
-                ja: 'Hits',
-                de: 'Hits',
-                fr: 'Coups',
-                es: 'Golpes',
-                ru: 'Хиты',
-              ),
+              i18n.t('inline.ui.pages.toolbox_human_tests_action.hits_fe10b3'),
               '$hits',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '射空',
-                en: 'Shots off',
-                ja: 'Shots off',
-                de: 'Shots off',
-                fr: 'Coups de feu',
-                es: 'Disparos apagados',
-                ru: 'Выстрелы',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_hand_eye_joystick.shots_off_cac739',
               ),
               '$shotsOff',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '准确率',
-                en: 'Accuracy',
-                ja: '精度',
-                de: 'Accuracy',
-                fr: 'Accuracy',
-                es: 'Precisión',
-                ru: 'точность',
-              ),
+              i18n.t('inline.ui.pages.practice_review_page.accuracy_8cf5a1'),
               accuracy == null ? '-' : '${accuracy.round()}%',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '平均反应',
-                en: 'Avg reaction',
-                ja: '平均反応',
-                de: 'Avg reaction',
-                fr: 'Réaction d\' Avg',
-                es: 'Reacción de Avg',
-                ru: 'Авг реакция',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_bimanual.avg_reaction_2a9cf7',
               ),
               averageReaction == null
                   ? '-'
                   : _formatMilliseconds(averageReaction.inMilliseconds),
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '最快反应',
-                en: 'Best reaction',
-                ja: 'ベスト',
-                de: 'Best reaction',
-                fr: 'Meilleure réaction',
-                es: 'La mejor reacción',
-                ru: 'лучшая реакция',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_hand_eye_reports.best_reaction_7f77f1',
               ),
               bestReaction == null ? '-' : _formatMilliseconds(bestReaction),
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '假目标射击',
-                en: 'False shots',
-                ja: 'False shots',
-                de: 'False shots',
-                fr: 'Faux coups',
-                es: 'Falsos disparos',
-                ru: 'Ложные выстрелы',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_hand_eye_reports.false_shots_787c84',
               ),
               '$falseTargetShots',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '目标大小',
-                en: 'Target size',
-                ja: 'Target size',
-                de: 'Target size',
-                fr: 'Taille cible',
-                es: 'Tamaño del objetivo',
-                ru: 'Целевой размер',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_aim_widgets.target_size_2f3de4',
               ),
               '${targetDiameter.round()} dp',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '目标移动',
-                en: 'Target movement',
-                ja: 'Target movement',
-                de: 'Target movement',
-                fr: 'Cible',
-                es: 'Movimiento objetivo',
-                ru: 'Движение мишеней',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_hand_eye_reports.target_movement_6fc861',
               ),
               targetMovementEnabled
-                  ? pickUiText(
-                      i18n,
-                      zh: '开启',
-                      en: 'On',
-                      ja: 'On',
-                      de: 'On',
-                      fr: 'À',
-                      es: 'On',
-                      ru: 'На',
+                  ? i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_aim_widgets.on_0363b2',
                     )
-                  : pickUiText(
-                      i18n,
-                      zh: '关闭',
-                      en: 'Off',
-                      ja: 'Off',
-                      de: 'Off',
-                      fr: 'Arrêt',
-                      es: 'Fuera.',
-                      ru: 'Оставить',
-                    ),
+                  : i18n.t('toolbox.sound.flute.off'),
             ),
           ],
         ),
         if (reactions.isNotEmpty) ...<Widget>[
           const SizedBox(height: 14),
           Text(
-            pickUiText(
-              i18n,
-              zh: '命中延迟明细',
-              en: 'Hit latency details',
-              ja: 'Hit latency details',
-              de: 'Hit latency details',
-              fr: 'Affichage des détails de latence',
-              es: 'Datos de latencia',
-              ru: 'Детали задержки',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_hand_eye_parts.hit_latency_details_21ebbf',
             ),
             style: Theme.of(
               context,

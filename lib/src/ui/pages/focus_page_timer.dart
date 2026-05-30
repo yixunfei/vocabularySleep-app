@@ -199,36 +199,15 @@ extension _FocusPageTimerExtension on _FocusPageState {
         .toList(growable: false);
     final remainingCount = enabledSources.length - shownNames.length;
     final headline = enabledSources.isEmpty
-        ? pickUiText(
-            i18n,
-            zh: '背景音未开启',
-            en: 'Background audio is off',
-            ja: '環境音はオフです',
-            de: 'Hintergrundaudio ist aus',
-            fr: 'L’audio d’ambiance est coupe',
-            es: 'El audio ambiental esta apagado',
-            ru: 'Фоновый звук выключен',
+        ? i18n.t(
+            'inline.ui.pages.focus_page_timer.background_audio_is_off_b27b06',
           )
-        : pickUiText(
-            i18n,
-            zh: '已启用 ${enabledSources.length} 条背景音',
-            en: '${enabledSources.length} ambient tracks enabled',
-            ja: '${enabledSources.length} 個の環境音を有効化中',
-            de: '${enabledSources.length} Hintergrundspuren aktiv',
-            fr: '${enabledSources.length} pistes d’ambiance actives',
-            es: '${enabledSources.length} pistas ambientales activas',
-            ru: 'Активно ${enabledSources.length} фоновых дорожек',
+        : i18n.t(
+            'inline.ui.pages.focus_page_timer.enabledsources_length_ambient_tracks_enabled_cc57e0',
           );
     final details = enabledSources.isEmpty
-        ? pickUiText(
-            i18n,
-            zh: '进入背景音面板后可以快速切换雨声、白噪音、图书馆等专注声景。',
-            en: 'Open the audio panel to quickly switch between rain, noise, library, and other focus scenes.',
-            ja: 'パネルを開くと、雨音、ノイズ、図書館などの集中サウンドをすばやく切り替えられます。',
-            de: 'Im Audiobereich koennen Regen, Rauschen, Bibliothek und weitere Fokus-Szenen schnell umgeschaltet werden.',
-            fr: 'Ouvrez le panneau audio pour basculer rapidement entre pluie, bruit, bibliotheque et autres ambiances.',
-            es: 'Abre el panel para cambiar rapidamente entre lluvia, ruido, biblioteca y otras escenas de enfoque.',
-            ru: 'Откройте панель аудио, чтобы быстро переключаться между дождём, шумом, библиотекой и другими звуковыми сценами.',
+        ? i18n.t(
+            'inline.ui.pages.focus_page_timer.open_the_audio_panel_to_quickly_switch_between_rain_nois_3c10d1',
           )
         : '${shownNames.join(' · ')}${remainingCount > 0 ? ' +$remainingCount' : ''}';
     final progressColor = enabledSources.isEmpty
@@ -304,25 +283,11 @@ extension _FocusPageTimerExtension on _FocusPageState {
                 avatar: const Icon(Icons.queue_music_rounded, size: 18),
                 label: Text(
                   enabledSources.isEmpty
-                      ? pickUiText(
-                          i18n,
-                          zh: '未启用音轨',
-                          en: 'No active tracks',
-                          ja: '有効な音源なし',
-                          de: 'Keine aktiven Spuren',
-                          fr: 'Aucune piste active',
-                          es: 'Sin pistas activas',
-                          ru: 'Нет активных дорожек',
+                      ? i18n.t(
+                          'inline.ui.pages.focus_page_timer.no_active_tracks_74efb6',
                         )
-                      : pickUiText(
-                          i18n,
-                          zh: '${enabledSources.length} 条音轨',
-                          en: '${enabledSources.length} tracks',
-                          ja: '${enabledSources.length} トラック',
-                          de: '${enabledSources.length} Spuren',
-                          fr: '${enabledSources.length} pistes',
-                          es: '${enabledSources.length} pistas',
-                          ru: '${enabledSources.length} дорожек',
+                      : i18n.t(
+                          'inline.ui.pages.focus_page_timer.enabledsources_length_tracks_c6905b',
                         ),
                 ),
               ),
@@ -347,15 +312,8 @@ extension _FocusPageTimerExtension on _FocusPageState {
               onPressed: () => _openAmbientAudioSheet(context),
               icon: const Icon(Icons.tune_rounded),
               label: Text(
-                pickUiText(
-                  i18n,
-                  zh: '打开背景音设置',
-                  en: 'Open background audio settings',
-                  ja: '環境音設定を開く',
-                  de: 'Hintergrundaudio-Einstellungen oeffnen',
-                  fr: 'Ouvrir les reglages audio',
-                  es: 'Abrir ajustes de audio ambiental',
-                  ru: 'Открыть настройки фонового звука',
+                i18n.t(
+                  'inline.ui.pages.focus_page_timer.open_background_audio_settings_12c90b',
                 ),
               ),
             ),
@@ -409,10 +367,8 @@ extension _FocusPageTimerExtension on _FocusPageState {
           children: <Widget>[
             SectionHeader(
               title: i18n.t('timerConfig'),
-              subtitle: pickUiText(
-                i18n,
-                zh: '专注时长、休息节奏与提醒方式会在这里统一调整。',
-                en: 'Tune session length, break cadence, and reminders in one place.',
+              subtitle: i18n.t(
+                'inline.ui.pages.focus_page_timer.tune_session_length_break_cadence_and_reminders_in_one_p_6ac941',
               ),
             ),
             const SizedBox(height: 16),
@@ -522,15 +478,8 @@ extension _FocusPageTimerExtension on _FocusPageState {
                 ),
                 icon: const Icon(Icons.tune_rounded),
                 label: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '滚轮精调',
-                    en: 'Wheel picker',
-                    ja: 'ホイールで調整',
-                    de: 'Mit Rad anpassen',
-                    fr: 'Ajuster avec la molette',
-                    es: 'Ajustar con rueda',
-                    ru: 'Настроить колесом',
+                  i18n.t(
+                    'inline.ui.pages.focus_page_timer.wheel_picker_15e385',
                   ),
                 ),
               ),
@@ -708,10 +657,8 @@ extension _FocusPageTimerExtension on _FocusPageState {
           children: <Widget>[
             SectionHeader(
               title: i18n.t('todayStats'),
-              subtitle: pickUiText(
-                i18n,
-                zh: '今天的专注投入会按相同宽度的统计卡展示。',
-                en: 'Today’s focus progress is summarized in equal-width cards.',
+              subtitle: i18n.t(
+                'inline.ui.pages.focus_page_timer.today_s_focus_progress_is_summarized_in_equal_width_card_21896e',
               ),
             ),
             const SizedBox(height: 12),

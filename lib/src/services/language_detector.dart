@@ -21,7 +21,8 @@ class LanguageDetector {
       if ((rune >= 0x0041 && rune <= 0x005A) || // A-Z
           (rune >= 0x0061 && rune <= 0x007A) || // a-z
           (rune >= 0x00C0 && rune <= 0x00FF) || // Latin-1 Supplement
-          (rune >= 0x0100 && rune <= 0x017F)) { // Latin Extended-A
+          (rune >= 0x0100 && rune <= 0x017F)) {
+        // Latin Extended-A
         latinCount++;
         totalAlphaCount++;
       }
@@ -33,13 +34,15 @@ class LanguageDetector {
       // CJK 统一表意文字 (中文)
       else if ((rune >= 0x4E00 && rune <= 0x9FFF) || // CJK Unified Ideographs
           (rune >= 0x3400 && rune <= 0x4DBF) || // CJK Extension A
-          (rune >= 0x20000 && rune <= 0x2A6DF)) { // CJK Extension B
+          (rune >= 0x20000 && rune <= 0x2A6DF)) {
+        // CJK Extension B
         cjkCount++;
         totalAlphaCount++;
       }
       // 平假名和片假名 (日语)
       else if ((rune >= 0x3040 && rune <= 0x309F) || // Hiragana
-          (rune >= 0x30A0 && rune <= 0x30FF)) { // Katakana
+          (rune >= 0x30A0 && rune <= 0x30FF)) {
+        // Katakana
         hiraganaKatakanaCount++;
         totalAlphaCount++;
       }
@@ -103,10 +106,34 @@ class LanguageDetector {
 
     // 德语常见词
     final germanWords = [
-      'der', 'die', 'das', 'und', 'ist', 'nicht', 'mit', 'von',
-      'auf', 'für', 'eine', 'einen', 'einem', 'einer', 'eines',
-      'ich', 'du', 'er', 'sie', 'wir', 'ihr', 'werden', 'haben',
-      'sein', 'hallo', 'welt', 'möchte', 'lernen',
+      'der',
+      'die',
+      'das',
+      'und',
+      'ist',
+      'nicht',
+      'mit',
+      'von',
+      'auf',
+      'für',
+      'eine',
+      'einen',
+      'einem',
+      'einer',
+      'eines',
+      'ich',
+      'du',
+      'er',
+      'sie',
+      'wir',
+      'ihr',
+      'werden',
+      'haben',
+      'sein',
+      'hallo',
+      'welt',
+      'möchte',
+      'lernen',
     ];
 
     int matchCount = 0;
@@ -127,11 +154,41 @@ class LanguageDetector {
 
     // 法语常见词
     final frenchWords = [
-      'le', 'la', 'les', 'un', 'une', 'des', 'et', 'est', 'sont',
-      'avec', 'pour', 'dans', 'sur', 'par', 'pas', 'plus', 'comme',
-      'je', 'tu', 'il', 'elle', 'nous', 'vous', 'ils', 'elles',
-      'avoir', 'être', 'faire', 'aller', 'pouvoir', 'vouloir',
-      'bonjour', 'monde', 'suis', 'étudiant',
+      'le',
+      'la',
+      'les',
+      'un',
+      'une',
+      'des',
+      'et',
+      'est',
+      'sont',
+      'avec',
+      'pour',
+      'dans',
+      'sur',
+      'par',
+      'pas',
+      'plus',
+      'comme',
+      'je',
+      'tu',
+      'il',
+      'elle',
+      'nous',
+      'vous',
+      'ils',
+      'elles',
+      'avoir',
+      'être',
+      'faire',
+      'aller',
+      'pouvoir',
+      'vouloir',
+      'bonjour',
+      'monde',
+      'suis',
+      'étudiant',
     ];
 
     int matchCount = 0;
@@ -152,12 +209,51 @@ class LanguageDetector {
 
     // 西班牙语常见词
     final spanishWords = [
-      'el', 'la', 'los', 'las', 'un', 'una', 'unos', 'unas',
-      'y', 'es', 'son', 'está', 'están', 'con', 'para', 'por',
-      'en', 'de', 'del', 'al', 'no', 'más', 'como', 'pero',
-      'yo', 'tú', 'él', 'ella', 'nosotros', 'vosotros', 'ellos',
-      'ser', 'estar', 'tener', 'hacer', 'poder', 'ir', 'ver',
-      'hola', 'mundo', 'esto', 'una', 'prueba', 'cómo', 'estás',
+      'el',
+      'la',
+      'los',
+      'las',
+      'un',
+      'una',
+      'unos',
+      'unas',
+      'y',
+      'es',
+      'son',
+      'está',
+      'están',
+      'con',
+      'para',
+      'por',
+      'en',
+      'de',
+      'del',
+      'al',
+      'no',
+      'más',
+      'como',
+      'pero',
+      'yo',
+      'tú',
+      'él',
+      'ella',
+      'nosotros',
+      'vosotros',
+      'ellos',
+      'ser',
+      'estar',
+      'tener',
+      'hacer',
+      'poder',
+      'ir',
+      'ver',
+      'hola',
+      'mundo',
+      'esto',
+      'una',
+      'prueba',
+      'cómo',
+      'estás',
     ];
 
     int matchCount = 0;

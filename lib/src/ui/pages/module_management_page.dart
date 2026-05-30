@@ -6,7 +6,6 @@ import '../../i18n/app_i18n.dart';
 import '../../state/app_state.dart';
 import '../../state/app_state_provider.dart';
 import '../module/module_access.dart';
-import '../ui_copy.dart';
 
 class ModuleManagementPage extends ConsumerWidget {
   const ModuleManagementPage({super.key});
@@ -28,7 +27,11 @@ class ModuleManagementPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(pickUiText(i18n, zh: '模块管理', en: 'Module management')),
+        title: Text(
+          i18n.t(
+            'inline.ui.pages.module_management_page.module_management_e20d5f',
+          ),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -37,10 +40,8 @@ class ModuleManagementPage extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                pickUiText(
-                  i18n,
-                  zh: '关闭模块会隐藏入口并阻止访问；从工具箱首页移除入口只会隐藏首页卡片，可在这里恢复。“更多”会一直保留，方便你回到设置。',
-                  en: 'Disabling a module hides its entry point and blocks access. Removing a Toolbox home entry only hides the card, and you can restore it here. More always stays available for settings access.',
+                i18n.t(
+                  'inline.ui.pages.module_management_page.disabling_a_module_hides_its_entry_point_and_blocks_acce_d19c29',
                 ),
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
@@ -48,14 +49,18 @@ class ModuleManagementPage extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           _ModuleGroupCard(
-            title: pickUiText(i18n, zh: '主导航模块', en: 'Top-level modules'),
+            title: i18n.t(
+              'inline.ui.pages.module_management_page.top_level_modules_9f4099',
+            ),
             modules: topLevelModules,
             state: state,
             i18n: i18n,
           ),
           const SizedBox(height: 12),
           _ModuleGroupCard(
-            title: pickUiText(i18n, zh: '工具箱工具', en: 'Toolbox tools'),
+            title: i18n.t(
+              'inline.ui.pages.module_management_page.toolbox_tools_6fde48',
+            ),
             modules: toolboxModules,
             state: state,
             i18n: i18n,
@@ -170,38 +175,26 @@ class _ModuleTile extends StatelessWidget {
     required bool hiddenFromToolboxHome,
   }) {
     if (!parentEnabled) {
-      return pickUiText(
-        i18n,
-        zh: '父模块关闭后不可单独启用。',
-        en: 'This module cannot be enabled while its parent module is disabled.',
+      return i18n.t(
+        'inline.ui.pages.module_management_page.this_module_cannot_be_enabled_while_its_parent_module_is_0a91f9',
       );
     }
     if (hiddenFromToolboxHome) {
-      return pickUiText(
-        i18n,
-        zh: '已从工具箱首页隐藏。打开开关即可恢复首页入口。',
-        en: 'Hidden from the Toolbox home. Turn the switch on to restore the home entry.',
+      return i18n.t(
+        'inline.ui.pages.module_management_page.hidden_from_the_toolbox_home_turn_the_switch_on_to_resto_d3e09a',
       );
     }
     return switch (moduleId) {
-      ModuleIds.more => pickUiText(
-        i18n,
-        zh: '系统保底入口，始终启用。',
-        en: 'Safety entry point. Always enabled.',
+      ModuleIds.more => i18n.t(
+        'inline.ui.pages.module_management_page.safety_entry_point_always_enabled_8f59b9',
       ),
-      ModuleIds.toolbox => pickUiText(
-        i18n,
-        zh: '关闭后，工具箱里的工具都会同步停用。',
-        en: 'Disabling this will also disable all Toolbox tools.',
+      ModuleIds.toolbox => i18n.t(
+        'inline.ui.pages.module_management_page.disabling_this_will_also_disable_all_toolbox_tools_65b92b',
       ),
-      _ => pickUiText(
-        i18n,
-        zh: ModuleIds.toolboxModules.contains(moduleId)
-            ? '关闭后只会从工具箱首页隐藏，工具数据不会删除。'
-            : '关闭后隐藏入口并阻断访问。',
-        en: ModuleIds.toolboxModules.contains(moduleId)
-            ? 'Turning this off hides it from the Toolbox home without deleting data.'
-            : 'Disabling hides entry points and blocks access.',
+      _ => i18n.t(
+        ModuleIds.toolboxModules.contains(moduleId)
+            ? 'moduleManagement.subtitle.toolboxModuleHidden'
+            : 'moduleManagement.subtitle.moduleDisabled',
       ),
     };
   }
@@ -240,7 +233,9 @@ class _ModuleTileSubtitle extends StatelessWidget {
             ),
             icon: const Icon(Icons.restore_rounded, size: 16),
             label: Text(
-              pickUiText(i18n, zh: '恢复首页入口', en: 'Restore home entry'),
+              i18n.t(
+                'inline.ui.pages.module_management_page.restore_home_entry_691727',
+              ),
             ),
           ),
         ],

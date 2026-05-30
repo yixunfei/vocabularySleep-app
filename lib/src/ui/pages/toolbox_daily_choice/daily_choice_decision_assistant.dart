@@ -277,10 +277,8 @@ class _DecisionAssistantModuleState extends State<_DecisionAssistantModule> {
       context: context,
       i18n: widget.i18n,
       accent: widget.accent,
-      title: pickUiText(
-        widget.i18n,
-        zh: '理性决策精要指南',
-        en: 'Rational decision guide',
+      title: widget.i18n.t(
+        'inline.plan295.daily_choice.rational_decision_guide.0adbe029be76',
       ),
       modules: decisionGuideModules,
     );
@@ -414,89 +412,65 @@ class _DecisionAssistantModuleState extends State<_DecisionAssistantModule> {
     final decideNow = report.context.urgency == DailyChoiceDecisionUrgency.now;
 
     final nextStep = shouldResearch
-        ? pickUiText(
-            widget.i18n,
-            zh: hasFocus
-                ? '先核实「$focusName」最可能改变结论的一条事实，再回到模型对照。'
-                : '先核实最可能改变结论的一条事实，再回到模型对照。',
-            en: hasFocus
-                ? 'Verify the one fact most likely to change $focusName, then return to the model comparison.'
-                : 'Verify the one fact most likely to change the conclusion, then return to the model comparison.',
-          )
+        ? hasFocus
+              ? widget.i18n.t(
+                  'inline.plan295.daily_choice.verify_the_one_fact_most_likely_to_c.9caedba50e1f',
+                  params: <String, Object?>{'focusName': focusName},
+                )
+              : widget.i18n.t(
+                  'inline.plan295.daily_choice.verify_the_one_fact_most_likely_to_c.4ff730c5da56',
+                )
         : report.consensus.winnerName.isNotEmpty
-        ? pickUiText(
-            widget.i18n,
-            zh: '围绕「${report.consensus.winnerName}」先做一个最小可回退动作，并记录实际结果。',
-            en: 'Take one small reversible action around ${report.consensus.winnerName}, and record what happens.',
+        ? widget.i18n.t(
+            'inline.plan295.daily_choice.take_one_small_reversible_action_aro.91849e446b6d',
           )
-        : pickUiText(
-            widget.i18n,
-            zh: '先补全可选项或重新校准关键评分，再决定是否进入执行。',
-            en: 'Add viable options or recalibrate the key scores before moving into execution.',
+        : widget.i18n.t(
+            'inline.plan295.daily_choice.add_viable_options_or_recalibrate_th.cea239fde266',
           );
 
     final evidenceTask = shouldResearch
-        ? pickUiText(
-            widget.i18n,
-            zh: hasFocus
-                ? '只查一条信息：「$focusName」的成功条件、失败代价或信息差中，哪一项最可能推翻结论。'
-                : '只查一条信息：成功条件、失败代价或信息差中，哪一项最可能推翻结论。',
-            en: hasFocus
-                ? 'Research one fact only: which success condition, downside, or info gap could overturn $focusName?'
-                : 'Research one fact only: which success condition, downside, or info gap could overturn the conclusion?',
-          )
-        : pickUiText(
-            widget.i18n,
-            zh: '把当前概率、风险和收益依据写下来，避免事后只凭记忆复盘。',
-            en: 'Write down the basis for the current odds, risk, and upside so review is not based on memory alone.',
+        ? hasFocus
+              ? widget.i18n.t(
+                  'inline.plan295.daily_choice.research_one_fact_only_which_success.901eeb03cc73',
+                  params: <String, Object?>{'focusName': focusName},
+                )
+              : widget.i18n.t(
+                  'inline.plan295.daily_choice.research_one_fact_only_which_success.6b679f25c528',
+                )
+        : widget.i18n.t(
+            'inline.plan295.daily_choice.write_down_the_basis_for_the_current.b098bd9ca41c',
           );
 
     final stopRule = decideNow
-        ? pickUiText(
-            widget.i18n,
-            zh: '看完本轮守门线后不再新增变量，今天先执行第一步。',
-            en: 'After this guardrail pass, stop adding variables and take the first step today.',
+        ? widget.i18n.t(
+            'inline.plan295.daily_choice.after_this_guardrail_pass_stop_addin.5a8430d0ce9f',
           )
         : shouldResearch
-        ? pickUiText(
-            widget.i18n,
-            zh: '补到 1 条关键事实，或到今晚 22:00 停止查证并重新看报告。',
-            en: 'Stop after one key fact, or at 22:00 tonight, then review the report again.',
+        ? widget.i18n.t(
+            'inline.plan295.daily_choice.stop_after_one_key_fact_or_at_22_00.408d14524862',
           )
-        : pickUiText(
-            widget.i18n,
-            zh: '最多再补 2 条证据；若两种推荐模型仍支持同一方向，就停止分析。',
-            en: 'Add at most two more pieces of evidence; if two recommended lenses still agree, stop analyzing.',
+        : widget.i18n.t(
+            'inline.plan295.daily_choice.add_at_most_two_more_pieces_of_evide.f23c61704ec1',
           );
 
     final reviewTrigger = highStakes
-        ? pickUiText(
-            widget.i18n,
-            zh: '在下一个关键节点复盘：实际风险、信息差和可回退性是否如预期。',
-            en: 'Review at the next key milestone: did risk, info gaps, and reversibility match the forecast?',
+        ? widget.i18n.t(
+            'inline.plan295.daily_choice.review_at_the_next_key_milestone_did.1c9d930bb16b',
           )
-        : pickUiText(
-            widget.i18n,
-            zh: '执行后 24 小时或完成第一步后复盘一次。',
-            en: 'Review once 24 hours after execution or after the first step is complete.',
+        : widget.i18n.t(
+            'inline.plan295.daily_choice.review_once_24_hours_after_execution.c266e71fde47',
           );
 
     final premortem = highStakes
-        ? pickUiText(
-            widget.i18n,
-            zh: '假设三个月后失败，最可能是信息不足、下行风险过大或不可回退环节失控；先写一个预防动作。',
-            en: 'Assume this failed three months from now. The likely cause is missing information, excess downside, or poor reversibility; write one preventive action.',
+        ? widget.i18n.t(
+            'inline.plan295.daily_choice.assume_this_failed_three_months_from.65936a70596a',
           )
         : highUncertainty
-        ? pickUiText(
-            widget.i18n,
-            zh: '假设结果不如预期，最可能是哪条关键假设错了？先准备一个替代动作。',
-            en: 'Assume the result disappoints. Which key assumption was probably wrong? Prepare one fallback action.',
+        ? widget.i18n.t(
+            'inline.plan295.daily_choice.assume_the_result_disappoints_which.f0877e272d1a',
           )
-        : pickUiText(
-            widget.i18n,
-            zh: '假设明天发现不值得做，最可能是哪项成本被低估？',
-            en: 'Assume tomorrow shows this was not worth doing. Which cost was most likely underestimated?',
+        : widget.i18n.t(
+            'inline.plan295.daily_choice.assume_tomorrow_shows_this_was_not_w.752197ac4032',
           );
 
     return _DecisionActionDraft(
@@ -609,17 +583,17 @@ class _DecisionWorkbenchCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickUiText(i18n, zh: '决策助手', en: 'Decision workbench'),
+                      i18n.t(
+                        'inline.plan295.daily_choice.decision_workbench.652abaa832fe',
+                      ),
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '把问题、可选项、风险和信息差拆开，用多模型交叉验证结论。',
-                        en: 'Separate the question, options, risks, and info gaps, then cross-check the conclusion.',
+                      i18n.t(
+                        'inline.plan295.daily_choice.separate_the_question_options_risks.17adcefeb1b1',
                       ),
                       style: theme.textTheme.bodySmall?.copyWith(
                         height: 1.4,
@@ -634,7 +608,9 @@ class _DecisionWorkbenchCard extends StatelessWidget {
                 icon: Icons.menu_book_rounded,
                 active: false,
                 tint: accent,
-                tooltip: pickUiText(i18n, zh: '理性决策精要指南', en: 'Guide'),
+                tooltip: i18n.t(
+                  'inline.plan295.daily_choice.guide.c55f3c837205',
+                ),
                 onTap: onGuide,
               ),
             ],
@@ -645,20 +621,22 @@ class _DecisionWorkbenchCard extends StatelessWidget {
             runSpacing: 8,
             children: <Widget>[
               ToolboxInfoPill(
-                text: pickUiText(i18n, zh: '六要素框架', en: 'Six elements'),
+                text: i18n.t(
+                  'inline.plan295.daily_choice.six_elements.95a7f218e56a',
+                ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
               ),
               ToolboxInfoPill(
-                text: pickUiText(i18n, zh: '偏差 vs 噪声', en: 'Bias vs noise'),
+                text: i18n.t(
+                  'inline.plan295.daily_choice.bias_vs_noise.c8e7b75949aa',
+                ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
               ),
               ToolboxInfoPill(
-                text: pickUiText(
-                  i18n,
-                  zh: '概率与情景',
-                  en: 'Probability and scenarios',
+                text: i18n.t(
+                  'inline.plan295.daily_choice.probability_and_scenarios.2ef8bc2bff29',
                 ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -674,13 +652,19 @@ class _DecisionWorkbenchCard extends StatelessWidget {
                 onPressed: onGuide,
                 icon: const Icon(Icons.menu_book_rounded),
                 label: Text(
-                  pickUiText(i18n, zh: '理性决策精要指南', en: 'Rational guide'),
+                  i18n.t(
+                    'inline.plan295.daily_choice.rational_guide.47476a22c0eb',
+                  ),
                 ),
               ),
               TextButton.icon(
                 onPressed: onReset,
                 icon: const Icon(Icons.restart_alt_rounded),
-                label: Text(pickUiText(i18n, zh: '恢复示例', en: 'Reset sample')),
+                label: Text(
+                  i18n.t(
+                    'inline.plan295.daily_choice.reset_sample.27e2114c44ac',
+                  ),
+                ),
               ),
             ],
           ),
@@ -721,17 +705,17 @@ class _DecisionContextCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(i18n, zh: '先定决策情境', en: 'Set the decision context'),
+            i18n.t(
+              'inline.plan295.daily_choice.set_the_decision_context.d83a5dd79ac2',
+            ),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            pickUiText(
-              i18n,
-              zh: '情境会影响你更该先看随机、加权、情景分析还是安全线优先。',
-              en: 'The context changes which lens should lead: random, weighted, scenario, or guardrails.',
+            i18n.t(
+              'inline.plan295.daily_choice.the_context_changes_which_lens_shoul.32a5147d2743',
             ),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
@@ -742,8 +726,7 @@ class _DecisionContextCard extends StatelessWidget {
           _DecisionContextSection<DailyChoiceDecisionLevel>(
             i18n: i18n,
             accent: accent,
-            titleZh: '风险级别',
-            titleEn: 'Stakes',
+            titleKey: 'inline.plan295.daily_choice.stakes.77a846ddca68',
             values: DailyChoiceDecisionLevel.values,
             selectedValue: contextValue.stakes,
             onSelected: onStakesChanged,
@@ -753,8 +736,7 @@ class _DecisionContextCard extends StatelessWidget {
           _DecisionContextSection<DailyChoiceDecisionLevel>(
             i18n: i18n,
             accent: accent,
-            titleZh: '不确定性',
-            titleEn: 'Uncertainty',
+            titleKey: 'inline.plan295.daily_choice.uncertainty.fa2b24fe9b00',
             values: DailyChoiceDecisionLevel.values,
             selectedValue: contextValue.uncertainty,
             onSelected: onUncertaintyChanged,
@@ -764,8 +746,8 @@ class _DecisionContextCard extends StatelessWidget {
           _DecisionContextSection<DailyChoiceDecisionReversibility>(
             i18n: i18n,
             accent: accent,
-            titleZh: '全局可回头性',
-            titleEn: 'Global reversibility',
+            titleKey:
+                'inline.plan295.daily_choice.global_reversibility.93cfac7a91b5',
             values: DailyChoiceDecisionReversibility.values,
             selectedValue: contextValue.reversibility,
             onSelected: onReversibilityChanged,
@@ -775,8 +757,7 @@ class _DecisionContextCard extends StatelessWidget {
           _DecisionContextSection<DailyChoiceDecisionUrgency>(
             i18n: i18n,
             accent: accent,
-            titleZh: '时间压力',
-            titleEn: 'Urgency',
+            titleKey: 'inline.plan295.daily_choice.urgency.a1654947238a',
             values: DailyChoiceDecisionUrgency.values,
             selectedValue: contextValue.urgency,
             onSelected: onUrgencyChanged,
@@ -792,8 +773,7 @@ class _DecisionContextSection<T> extends StatelessWidget {
   const _DecisionContextSection({
     required this.i18n,
     required this.accent,
-    required this.titleZh,
-    required this.titleEn,
+    required this.titleKey,
     required this.values,
     required this.selectedValue,
     required this.onSelected,
@@ -802,8 +782,7 @@ class _DecisionContextSection<T> extends StatelessWidget {
 
   final AppI18n i18n;
   final Color accent;
-  final String titleZh;
-  final String titleEn;
+  final String titleKey;
   final List<T> values;
   final T selectedValue;
   final ValueChanged<T> onSelected;
@@ -816,7 +795,7 @@ class _DecisionContextSection<T> extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          pickUiText(i18n, zh: titleZh, en: titleEn),
+          i18n.t(titleKey),
           style: theme.textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w800,
             color: theme.colorScheme.onSurfaceVariant,
@@ -884,17 +863,15 @@ class _DecisionMethodCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(i18n, zh: '计算模型', en: 'Decision lens'),
+            i18n.t('inline.plan295.daily_choice.decision_lens.b4dd9ca6456e'),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            pickUiText(
-              i18n,
-              zh: '先用推荐模型收口，再按需切换交叉验证。',
-              en: 'Start with recommended lenses, then cross-check as needed.',
+            i18n.t(
+              'inline.plan295.daily_choice.start_with_recommended_lenses_then_c.de2a6daefe92',
             ),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
@@ -953,22 +930,32 @@ class _DecisionMethodCard extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: onRandomDraw,
                   icon: const Icon(Icons.casino_rounded),
-                  label: Text(pickUiText(i18n, zh: '抽取一次', en: 'Draw once')),
+                  label: Text(
+                    i18n.t(
+                      'inline.plan295.daily_choice.draw_once.3a8ebf65e4ab',
+                    ),
+                  ),
                 ),
               OutlinedButton.icon(
                 onPressed: onAddOption,
                 icon: const Icon(Icons.add_rounded),
-                label: Text(pickUiText(i18n, zh: '新增可选项', en: 'Add option')),
+                label: Text(
+                  i18n.t('inline.plan295.daily_choice.add_option.263616c76e32'),
+                ),
               ),
               TextButton.icon(
                 onPressed: onGuide,
                 icon: const Icon(Icons.menu_book_rounded),
-                label: Text(pickUiText(i18n, zh: '看指南', en: 'Guide')),
+                label: Text(
+                  i18n.t('inline.plan295.daily_choice.guide.e2b8ec17037f'),
+                ),
               ),
               TextButton.icon(
                 onPressed: onReset,
                 icon: const Icon(Icons.restart_alt_rounded),
-                label: Text(pickUiText(i18n, zh: '恢复示例', en: 'Reset')),
+                label: Text(
+                  i18n.t('inline.plan295.daily_choice.reset.b544c0676a8a'),
+                ),
               ),
             ],
           ),
@@ -1007,24 +994,21 @@ class _DecisionOutcomePanel extends StatelessWidget {
       activeMethod,
       report.infoSignal.shouldDelayDecision,
     )) {
-      (_, true) => pickUiText(
-        i18n,
-        zh: '先补信息，再做决定',
-        en: 'Gather more info first',
+      (_, true) => i18n.t(
+        'inline.plan295.daily_choice.gather_more_info_first.65aed8f34e5c',
       ),
-      (DailyChoiceDecisionMethod.random, _) when randomPick == null =>
-        pickUiText(i18n, zh: '抽取一次结束犹豫', en: 'Draw to break the tie'),
-      (DailyChoiceDecisionMethod.random, _) => pickUiText(
-        i18n,
-        zh: '当前抽中',
-        en: 'Current pick',
+      (DailyChoiceDecisionMethod.random, _) when randomPick == null => i18n.t(
+        'inline.plan295.daily_choice.draw_to_break_the_tie.e0e991d37cdc',
       ),
-      _ when activeWinner == null => pickUiText(
-        i18n,
-        zh: '等待输入',
-        en: 'Waiting for inputs',
+      (DailyChoiceDecisionMethod.random, _) => i18n.t(
+        'inline.plan295.daily_choice.current_pick.704a7ff328a2',
       ),
-      _ => pickUiText(i18n, zh: '当前建议', en: 'Current recommendation'),
+      _ when activeWinner == null => i18n.t(
+        'inline.ui.pages.toolbox_daily_choice.daily_choice_decision_assistant.waiting_for_inputs_28f0fe',
+      ),
+      _ => i18n.t(
+        'inline.plan295.daily_choice.current_recommendation.1e08fa450267',
+      ),
     };
     final headline = switch ((
       activeMethod,
@@ -1032,26 +1016,21 @@ class _DecisionOutcomePanel extends StatelessWidget {
     )) {
       (_, true) =>
         activeWinner == null
-            ? pickUiText(
-                i18n,
-                zh: '先补最关键的信息差',
-                en: 'Close the most important info gap',
+            ? i18n.t(
+                'inline.plan295.daily_choice.close_the_most_important_info_gap.ec751b5f7a73',
               )
-            : pickUiText(
-                i18n,
-                zh: '优先补 ${_highlightOptionName(report) ?? activeWinner.option.name} 的关键条件',
-                en: 'Prioritize missing facts for ${_highlightOptionName(report) ?? activeWinner.option.name}',
+            : i18n.t(
+                'inline.plan295.daily_choice.prioritize_missing_facts_for_highlig.4c883ac1e111',
               ),
-      (DailyChoiceDecisionMethod.random, _) when randomPick == null =>
-        pickUiText(
-          i18n,
-          zh: '低风险场景可以交给随机',
-          en: 'Let randomness end a low-stakes tie',
-        ),
+      (DailyChoiceDecisionMethod.random, _) when randomPick == null => i18n.t(
+        'inline.plan295.daily_choice.let_randomness_end_a_low_stakes_tie.c69c72b8f4dd',
+      ),
       (DailyChoiceDecisionMethod.random, _) => randomPick!.name,
       _ when activeWinner != null =>
         '${activeWinner.option.name} · ${activeWinner.score.toStringAsFixed(2)}',
-      _ => pickUiText(i18n, zh: '至少保留两个可选项', en: 'Keep at least two options'),
+      _ => i18n.t(
+        'inline.plan295.daily_choice.keep_at_least_two_options.8089b2309b71',
+      ),
     };
     final supportText = switch ((
       activeMethod,
@@ -1059,15 +1038,11 @@ class _DecisionOutcomePanel extends StatelessWidget {
     )) {
       (_, true) =>
         activeWinner == null
-            ? pickUiText(
-                i18n,
-                zh: '当前信息价值偏高，尤其适合先查一条最可能改变结论的事实。',
-                en: 'The value of information is currently high, so first research the one fact most likely to change the answer.',
+            ? i18n.t(
+                'inline.plan295.daily_choice.the_value_of_information_is_currentl.4d423e0fc2b8',
               )
-            : pickUiText(
-                i18n,
-                zh: '信息价值 ${report.infoSignal.impactScore.toStringAsFixed(2)}。如果现在必须定，先看 ${activeWinner.option.name}；如果还能等等，先补信息更划算。',
-                en: 'Information value is ${report.infoSignal.impactScore.toStringAsFixed(2)}. If you must decide now, start with ${activeWinner.option.name}; if not, more research is worth it.',
+            : i18n.t(
+                'inline.plan295.daily_choice.information_value_is_report_infosign.c47489931003',
               ),
       _ => spec.subtitle(i18n),
     };
@@ -1117,27 +1092,27 @@ class _DecisionOutcomePanel extends StatelessWidget {
             runSpacing: 8,
             children: <Widget>[
               ToolboxInfoPill(
-                text: pickUiText(
-                  i18n,
-                  zh: '共识 ${report.consensus.supportCount}/${report.consensus.methodCount}',
-                  en: 'Consensus ${report.consensus.supportCount}/${report.consensus.methodCount}',
+                text: i18n.t(
+                  'inline.ui.pages.toolbox_daily_choice.daily_choice_decision_assistant.consensus_report_consensus_supportcount_report_consensus_33a5b4',
                 ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surface,
               ),
               ToolboxInfoPill(
-                text: pickUiText(
-                  i18n,
-                  zh: '过线 $thresholdPassCount/${report.options.length}',
-                  en: 'Pass $thresholdPassCount/${report.options.length}',
+                text: i18n.t(
+                  'inline.plan295.daily_choice.pass_thresholdpasscount_report_optio.2d78a1c88f67',
                 ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surface,
               ),
               ToolboxInfoPill(
                 text: report.infoSignal.shouldDelayDecision
-                    ? pickUiText(i18n, zh: '建议先补信息', en: 'Research first')
-                    : pickUiText(i18n, zh: '可先做决定', en: 'Ready to decide'),
+                    ? i18n.t(
+                        'inline.plan295.daily_choice.research_first.c5675290aea6',
+                      )
+                    : i18n.t(
+                        'inline.plan295.daily_choice.ready_to_decide.ed90cc79a0a2',
+                      ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surface,
               ),
@@ -1209,16 +1184,18 @@ class _DecisionInputCard extends StatelessWidget {
       if (method == DailyChoiceDecisionMethod.thresholdGuardrail &&
           score != null)
         score!.passesGuardrails
-            ? pickUiText(i18n, zh: '已过线', en: 'Passes guardrails')
-            : pickUiText(i18n, zh: '未过线', en: 'Fails guardrails')
+            ? i18n.t(
+                'inline.plan295.daily_choice.passes_guardrails.86e4d953d932',
+              )
+            : i18n.t(
+                'inline.plan295.daily_choice.fails_guardrails.caedd7f10587',
+              )
       else if (score != null && method != DailyChoiceDecisionMethod.random)
-        pickUiText(
-          i18n,
-          zh: '当前分数 ${score!.score.toStringAsFixed(2)}',
-          en: 'Score ${score!.score.toStringAsFixed(2)}',
+        i18n.t(
+          'inline.plan295.daily_choice.score_score_score_tostringasfixed_2.591dc0b4157d',
         ),
       if (infoSignal.highlightOptionId == item.id)
-        pickUiText(i18n, zh: '建议补信息', en: 'Research needed'),
+        i18n.t('inline.plan295.daily_choice.research_needed.dc11a2beffe7'),
     ];
 
     return ToolboxSurfaceCard(
@@ -1234,7 +1211,9 @@ class _DecisionInputCard extends StatelessWidget {
                 child: TextFormField(
                   initialValue: item.name,
                   decoration: InputDecoration(
-                    labelText: pickUiText(i18n, zh: '选项', en: 'Option'),
+                    labelText: i18n.t(
+                      'inline.ui.pages.toolbox_daily_choice.daily_choice_decision_assistant.option_9245f7',
+                    ),
                     isDense: true,
                   ),
                   onChanged: (value) {
@@ -1245,7 +1224,7 @@ class _DecisionInputCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               IconButton(
-                tooltip: pickUiText(i18n, zh: '删除', en: 'Delete'),
+                tooltip: i18n.t('delete'),
                 onPressed: canDelete ? onDelete : null,
                 icon: const Icon(Icons.delete_outline_rounded),
               ),
@@ -1269,10 +1248,8 @@ class _DecisionInputCard extends StatelessWidget {
           ],
           const SizedBox(height: 10),
           Text(
-            pickUiText(
-              i18n,
-              zh: '成功/执行/把握填 0-1；收益、风险、投入、可回退、后悔、信息差填 0-10。',
-              en: 'Use 0-1 for success, execution, and confidence. Use 0-10 for the other fields.',
+            i18n.t(
+              'inline.plan295.daily_choice.use_0_1_for_success_execution_and_co.a155fcee013d',
             ),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
@@ -1284,7 +1261,7 @@ class _DecisionInputCard extends StatelessWidget {
             runSpacing: 10,
             children: <Widget>[
               _NumberField(
-                label: pickUiText(i18n, zh: '成功 P', en: 'P'),
+                label: i18n.t('inline.plan295.daily_choice.p.eee4d085f8fc'),
                 value: item.successProbability,
                 onChanged: (value) {
                   item.successProbability = value;
@@ -1292,7 +1269,9 @@ class _DecisionInputCard extends StatelessWidget {
                 },
               ),
               _NumberField(
-                label: pickUiText(i18n, zh: '执行', en: 'Exec'),
+                label: i18n.t(
+                  'inline.ui.pages.toolbox_daily_choice.daily_choice_decision_assistant.exec_69da70',
+                ),
                 value: item.executionProbability,
                 onChanged: (value) {
                   item.executionProbability = value;
@@ -1300,7 +1279,7 @@ class _DecisionInputCard extends StatelessWidget {
                 },
               ),
               _NumberField(
-                label: pickUiText(i18n, zh: '把握', en: 'Conf'),
+                label: i18n.t('inline.plan295.daily_choice.conf.c2ae9d92e0b6'),
                 value: item.confidence,
                 onChanged: (value) {
                   item.confidence = value;
@@ -1308,7 +1287,9 @@ class _DecisionInputCard extends StatelessWidget {
                 },
               ),
               _NumberField(
-                label: pickUiText(i18n, zh: '收益', en: 'Upside'),
+                label: i18n.t(
+                  'inline.plan295.daily_choice.upside.a6007c10d7ff',
+                ),
                 value: item.upside,
                 onChanged: (value) {
                   item.upside = value;
@@ -1316,7 +1297,7 @@ class _DecisionInputCard extends StatelessWidget {
                 },
               ),
               _NumberField(
-                label: pickUiText(i18n, zh: '风险', en: 'Down'),
+                label: i18n.t('inline.plan295.daily_choice.down.eb143dfedb93'),
                 value: item.downside,
                 onChanged: (value) {
                   item.downside = value;
@@ -1324,7 +1305,9 @@ class _DecisionInputCard extends StatelessWidget {
                 },
               ),
               _NumberField(
-                label: pickUiText(i18n, zh: '投入', en: 'Effort'),
+                label: i18n.t(
+                  'inline.plan295.daily_choice.effort.7ad89e9156b7',
+                ),
                 value: item.effort,
                 onChanged: (value) {
                   item.effort = value;
@@ -1332,7 +1315,7 @@ class _DecisionInputCard extends StatelessWidget {
                 },
               ),
               _NumberField(
-                label: pickUiText(i18n, zh: '可回退', en: 'Undo'),
+                label: i18n.t('inline.plan295.daily_choice.undo.6186447eec1d'),
                 value: item.reversibility,
                 onChanged: (value) {
                   item.reversibility = value;
@@ -1340,7 +1323,9 @@ class _DecisionInputCard extends StatelessWidget {
                 },
               ),
               _NumberField(
-                label: pickUiText(i18n, zh: '后悔', en: 'Regret'),
+                label: i18n.t(
+                  'inline.ui.pages.toolbox_daily_choice.daily_choice_decision_assistant.regret_e436ea',
+                ),
                 value: item.regret,
                 onChanged: (value) {
                   item.regret = value;
@@ -1348,7 +1333,7 @@ class _DecisionInputCard extends StatelessWidget {
                 },
               ),
               _NumberField(
-                label: pickUiText(i18n, zh: '信息差', en: 'Info'),
+                label: i18n.t('inline.plan295.daily_choice.info.06ab22dc7ecf'),
                 value: item.infoGap,
                 onChanged: (value) {
                   item.infoGap = value;
@@ -1392,7 +1377,9 @@ class _DecisionRankingCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(i18n, zh: '透明排序', en: 'Transparent ranking'),
+            i18n.t(
+              'inline.plan295.daily_choice.transparent_ranking.7d03f1f00916',
+            ),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w900,
             ),
@@ -1408,15 +1395,16 @@ class _DecisionRankingCard extends StatelessWidget {
           const SizedBox(height: 12),
           if (method == DailyChoiceDecisionMethod.random)
             Text(
-              pickUiText(
-                i18n,
-                zh: consensus.winnerName.isEmpty
-                    ? '随机镜头不做质量排序，只负责帮你结束低风险犹豫。'
-                    : '随机镜头不做质量排序；如果你想看更稳的结论，可以参考跨方法共识：${consensus.winnerName}。',
-                en: consensus.winnerName.isEmpty
-                    ? 'Random mode does not rank quality. It only ends low-stakes dithering.'
-                    : 'Random mode does not rank quality. For a steadier read, check the cross-method consensus: ${consensus.winnerName}.',
-              ),
+              consensus.winnerName.isEmpty
+                  ? i18n.t(
+                      'inline.plan295.daily_choice.random_mode_does_not_rank_quality_it.9de9b506f5c6',
+                    )
+                  : i18n.t(
+                      'inline.plan295.daily_choice.random_mode_does_not_rank_quality_fo.7e9d681a3081',
+                      params: <String, Object?>{
+                        'consensus.winnerName': consensus.winnerName,
+                      },
+                    ),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -1510,17 +1498,17 @@ class _DecisionHygieneCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  pickUiText(i18n, zh: '决策检查', en: 'Decision hygiene'),
+                  i18n.t(
+                    'inline.plan295.daily_choice.decision_hygiene.c56f14a721b9',
+                  ),
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
                 ),
               ),
               ToolboxInfoPill(
-                text: pickUiText(
-                  i18n,
-                  zh: '${entries.length} 项',
-                  en: '${entries.length} checks',
+                text: i18n.t(
+                  'inline.plan295.daily_choice.entries_length_checks.2d24b95c1bc6',
                 ),
                 accent: cautionTint,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -1529,15 +1517,13 @@ class _DecisionHygieneCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            pickUiText(
-              i18n,
-              zh: showHighRiskBoundary
-                  ? '高风险场景先看安全门槛，再谈收益。完整清单已下沉到弹窗。'
-                  : '最终拍板前，快速扫一遍偏差、噪声和复盘条件。',
-              en: showHighRiskBoundary
-                  ? 'For high-stakes calls, check guardrails before upside. Open the full checklist when needed.'
-                  : 'Before committing, scan bias, noise, and review conditions.',
-            ),
+            showHighRiskBoundary
+                ? i18n.t(
+                    'inline.plan295.daily_choice.for_high_stakes_calls_check_guardrai.619c17ed042c',
+                  )
+                : i18n.t(
+                    'inline.plan295.daily_choice.before_committing_scan_bias_noise_an.98543b80bd4a',
+                  ),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
               height: 1.35,
@@ -1548,11 +1534,11 @@ class _DecisionHygieneCard extends StatelessWidget {
             _DecisionInlineNotice(
               accent: cautionTint,
               icon: Icons.warning_amber_rounded,
-              title: pickUiText(i18n, zh: '高风险提醒', en: 'High-stakes reminder'),
-              body: pickUiText(
-                i18n,
-                zh: '医疗、法律、财务等问题请把本模块当作整理思路的辅助，不要作为单一依据。',
-                en: 'For medical, legal, or financial calls, use this only to organize thinking, not as the sole basis.',
+              title: i18n.t(
+                'inline.ui.pages.toolbox_daily_choice.daily_choice_decision_assistant.high_stakes_reminder_e88bac',
+              ),
+              body: i18n.t(
+                'inline.plan295.daily_choice.for_medical_legal_or_financial_calls.498474374f7c',
               ),
             ),
           ],
@@ -1560,7 +1546,9 @@ class _DecisionHygieneCard extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: () => _showChecklist(context),
             icon: const Icon(Icons.checklist_rounded),
-            label: Text(pickUiText(i18n, zh: '查看检查清单', en: 'Open checklist')),
+            label: Text(
+              i18n.t('inline.plan295.daily_choice.open_checklist.345be8b5fb35'),
+            ),
           ),
         ],
       ),
@@ -1586,7 +1574,9 @@ class _DecisionHygieneCard extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(18, 4, 18, 24),
                 children: <Widget>[
                   Text(
-                    pickUiText(i18n, zh: '决策检查清单', en: 'Decision checklist'),
+                    i18n.t(
+                      'inline.plan295.daily_choice.decision_checklist.d51fd37067e5',
+                    ),
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w900,
                     ),
@@ -1651,32 +1641,28 @@ class _NumberField extends StatelessWidget {
 
 String _decisionLevelLabel(AppI18n i18n, DailyChoiceDecisionLevel value) {
   return switch (value) {
-    DailyChoiceDecisionLevel.low => pickUiText(i18n, zh: '低风险', en: 'Low'),
-    DailyChoiceDecisionLevel.medium => pickUiText(
-      i18n,
-      zh: '中风险',
-      en: 'Medium',
+    DailyChoiceDecisionLevel.low => i18n.t(
+      'inline.plan295.daily_choice.low.07a2ed959563',
     ),
-    DailyChoiceDecisionLevel.high => pickUiText(i18n, zh: '高风险', en: 'High'),
+    DailyChoiceDecisionLevel.medium => i18n.t(
+      'inline.plan295.daily_choice.medium.bb65dfe59b4c',
+    ),
+    DailyChoiceDecisionLevel.high => i18n.t(
+      'inline.plan295.daily_choice.high.19f4cbaf6366',
+    ),
   };
 }
 
 String _decisionUncertaintyLabel(AppI18n i18n, DailyChoiceDecisionLevel value) {
   return switch (value) {
-    DailyChoiceDecisionLevel.low => pickUiText(
-      i18n,
-      zh: '较确定',
-      en: 'Low uncertainty',
+    DailyChoiceDecisionLevel.low => i18n.t(
+      'inline.plan295.daily_choice.low_uncertainty.2174704c33e1',
     ),
-    DailyChoiceDecisionLevel.medium => pickUiText(
-      i18n,
-      zh: '一般',
-      en: 'Medium uncertainty',
+    DailyChoiceDecisionLevel.medium => i18n.t(
+      'inline.plan295.daily_choice.medium_uncertainty.06515c9c82f7',
     ),
-    DailyChoiceDecisionLevel.high => pickUiText(
-      i18n,
-      zh: '很不确定',
-      en: 'High uncertainty',
+    DailyChoiceDecisionLevel.high => i18n.t(
+      'inline.plan295.daily_choice.high_uncertainty.95c36a8bdb7f',
     ),
   };
 }
@@ -1686,36 +1672,28 @@ String _decisionReversibilityLabel(
   DailyChoiceDecisionReversibility value,
 ) {
   return switch (value) {
-    DailyChoiceDecisionReversibility.easy => pickUiText(
-      i18n,
-      zh: '容易回头',
-      en: 'Easy to undo',
+    DailyChoiceDecisionReversibility.easy => i18n.t(
+      'inline.plan295.daily_choice.easy_to_undo.b52f9f52e5fb',
     ),
-    DailyChoiceDecisionReversibility.mixed => pickUiText(
-      i18n,
-      zh: '部分可回头',
-      en: 'Partly undoable',
+    DailyChoiceDecisionReversibility.mixed => i18n.t(
+      'inline.plan295.daily_choice.partly_undoable.00e38f894ca9',
     ),
-    DailyChoiceDecisionReversibility.hard => pickUiText(
-      i18n,
-      zh: '很难回头',
-      en: 'Hard to undo',
+    DailyChoiceDecisionReversibility.hard => i18n.t(
+      'inline.plan295.daily_choice.hard_to_undo.6b257ba68877',
     ),
   };
 }
 
 String _decisionUrgencyLabel(AppI18n i18n, DailyChoiceDecisionUrgency value) {
   return switch (value) {
-    DailyChoiceDecisionUrgency.now => pickUiText(
-      i18n,
-      zh: '现在就要定',
-      en: 'Decide now',
+    DailyChoiceDecisionUrgency.now => i18n.t(
+      'inline.plan295.daily_choice.decide_now.6d76b70bfe18',
     ),
-    DailyChoiceDecisionUrgency.soon => pickUiText(i18n, zh: '很快要定', en: 'Soon'),
-    DailyChoiceDecisionUrgency.canWait => pickUiText(
-      i18n,
-      zh: '还能等等',
-      en: 'Can wait',
+    DailyChoiceDecisionUrgency.soon => i18n.t(
+      'inline.plan295.daily_choice.soon.ecf448027cb2',
+    ),
+    DailyChoiceDecisionUrgency.canWait => i18n.t(
+      'inline.plan295.daily_choice.can_wait.c0dae3aae0d9',
     ),
   };
 }
@@ -1727,77 +1705,91 @@ String _scoreSummary(
 ) {
   final metrics = score.metrics;
   return switch (method) {
-    DailyChoiceDecisionMethod.weightedFactors => pickUiText(
-      i18n,
-      zh: '正向拉力 ${metrics['positivePull']?.toStringAsFixed(2) ?? '--'} · 惩罚 ${metrics['negativePull']?.toStringAsFixed(2) ?? '--'}',
-      en: 'Positive pull ${metrics['positivePull']?.toStringAsFixed(2) ?? '--'} · penalties ${metrics['negativePull']?.toStringAsFixed(2) ?? '--'}',
+    DailyChoiceDecisionMethod.weightedFactors => i18n.t(
+      'inline.plan296.ui.pages.toolbox.daily.choice.daily.choice.decision.assistant.positive_pull_penalties.9259c1b658',
+      params: <String, Object?>{
+        'p0': metrics['positivePull']?.toStringAsFixed(2) ?? '--',
+        'p1': metrics['negativePull']?.toStringAsFixed(2) ?? '--',
+      },
     ),
-    DailyChoiceDecisionMethod.expectedValue => pickUiText(
-      i18n,
-      zh: '有效成功率 ${metrics['effectiveSuccess']?.toStringAsFixed(2) ?? '--'} · 期望收益 ${metrics['expectedGain']?.toStringAsFixed(2) ?? '--'} · 期望损失 ${metrics['expectedLoss']?.toStringAsFixed(2) ?? '--'}',
-      en: 'Effective success ${metrics['effectiveSuccess']?.toStringAsFixed(2) ?? '--'} · gain ${metrics['expectedGain']?.toStringAsFixed(2) ?? '--'} · loss ${metrics['expectedLoss']?.toStringAsFixed(2) ?? '--'}',
+    DailyChoiceDecisionMethod.expectedValue => i18n.t(
+      'inline.plan296.ui.pages.toolbox.daily.choice.daily.choice.decision.assistant.effective_success_gain_loss.e0d883d32c',
+      params: <String, Object?>{
+        'p0': metrics['effectiveSuccess']?.toStringAsFixed(2) ?? '--',
+        'p1': metrics['expectedGain']?.toStringAsFixed(2) ?? '--',
+        'p2': metrics['expectedLoss']?.toStringAsFixed(2) ?? '--',
+      },
     ),
-    DailyChoiceDecisionMethod.jointProbability => pickUiText(
-      i18n,
-      zh: '联合成功率 ${metrics['jointProbability']?.toStringAsFixed(2) ?? '--'} · 下行暴露 ${metrics['downsideExposure']?.toStringAsFixed(2) ?? '--'}',
-      en: 'Joint success ${metrics['jointProbability']?.toStringAsFixed(2) ?? '--'} · downside ${metrics['downsideExposure']?.toStringAsFixed(2) ?? '--'}',
+    DailyChoiceDecisionMethod.jointProbability => i18n.t(
+      'inline.plan296.ui.pages.toolbox.daily.choice.daily.choice.decision.assistant.joint_success_downside.923a9e726e',
+      params: <String, Object?>{
+        'p0': metrics['jointProbability']?.toStringAsFixed(2) ?? '--',
+        'p1': metrics['downsideExposure']?.toStringAsFixed(2) ?? '--',
+      },
     ),
-    DailyChoiceDecisionMethod.scenarioBlend => pickUiText(
-      i18n,
-      zh: '乐/基/悲 ${metrics['optimistic']?.toStringAsFixed(1) ?? '--'} / ${metrics['baseline']?.toStringAsFixed(1) ?? '--'} / ${metrics['pessimistic']?.toStringAsFixed(1) ?? '--'}',
-      en: 'Opt/base/pess ${metrics['optimistic']?.toStringAsFixed(1) ?? '--'} / ${metrics['baseline']?.toStringAsFixed(1) ?? '--'} / ${metrics['pessimistic']?.toStringAsFixed(1) ?? '--'}',
+    DailyChoiceDecisionMethod.scenarioBlend => i18n.t(
+      'inline.plan296.ui.pages.toolbox.daily.choice.daily.choice.decision.assistant.opt_base_pess.dde87ae645',
+      params: <String, Object?>{
+        'p0': metrics['optimistic']?.toStringAsFixed(1) ?? '--',
+        'p1': metrics['baseline']?.toStringAsFixed(1) ?? '--',
+        'p2': metrics['pessimistic']?.toStringAsFixed(1) ?? '--',
+      },
     ),
-    DailyChoiceDecisionMethod.regretBalance => pickUiText(
-      i18n,
-      zh: '已实现潜力 ${metrics['realizedPotential']?.toStringAsFixed(2) ?? '--'} · 后悔暴露 ${metrics['missPenalty']?.toStringAsFixed(2) ?? '--'} · 机会成本 ${metrics['opportunityCost']?.toStringAsFixed(2) ?? '--'}',
-      en: 'Realized upside ${metrics['realizedPotential']?.toStringAsFixed(2) ?? '--'} · regret ${metrics['missPenalty']?.toStringAsFixed(2) ?? '--'} · opportunity cost ${metrics['opportunityCost']?.toStringAsFixed(2) ?? '--'}',
+    DailyChoiceDecisionMethod.regretBalance => i18n.t(
+      'inline.plan296.ui.pages.toolbox.daily.choice.daily.choice.decision.assistant.realized_upside_regret_opportunity_cost.f7abb5c8c3',
+      params: <String, Object?>{
+        'p0': metrics['realizedPotential']?.toStringAsFixed(2) ?? '--',
+        'p1': metrics['missPenalty']?.toStringAsFixed(2) ?? '--',
+        'p2': metrics['opportunityCost']?.toStringAsFixed(2) ?? '--',
+      },
     ),
     DailyChoiceDecisionMethod.thresholdGuardrail =>
       score.passesGuardrails
-          ? pickUiText(
-              i18n,
-              zh: '已过 ${metrics['passCount']?.toStringAsFixed(0) ?? '0'}/4 道守门线 · 同档综合 ${metrics['weightedFallback']?.toStringAsFixed(2) ?? '--'}',
-              en: 'Passed ${metrics['passCount']?.toStringAsFixed(0) ?? '0'}/4 guardrails · fallback ${metrics['weightedFallback']?.toStringAsFixed(2) ?? '--'}',
+          ? i18n.t(
+              'inline.plan296.ui.pages.toolbox.daily.choice.daily.choice.decision.assistant.passed_4_guardrails_fallback.4a279bacb6',
+              params: <String, Object?>{
+                'p0': metrics['passCount']?.toStringAsFixed(0) ?? '0',
+                'p1': metrics['weightedFallback']?.toStringAsFixed(2) ?? '--',
+              },
             )
-          : pickUiText(
-              i18n,
-              zh: '未过线：${score.failedGuardrails.map((item) => _guardrailLabel(i18n, item)).join('、')}',
-              en: 'Fails: ${score.failedGuardrails.map((item) => _guardrailLabel(i18n, item)).join(', ')}',
+          : i18n.t(
+              'toolbox.daily_choice.decision.guardrail.fails',
+              params: <String, Object?>{
+                'items': score.failedGuardrails
+                    .map((item) => _guardrailLabel(i18n, item))
+                    .join(
+                      AppI18n.normalizeLanguageCode(i18n.languageCode) == 'zh'
+                          ? '、'
+                          : ', ',
+                    ),
+              },
             ),
-    DailyChoiceDecisionMethod.calibratedForecast => pickUiText(
-      i18n,
-      zh: '原始预期 ${metrics['rawExpected']?.toStringAsFixed(2) ?? '--'} → 校准后 ${score.score.toStringAsFixed(2)}',
-      en: 'Raw expected ${metrics['rawExpected']?.toStringAsFixed(2) ?? '--'} -> calibrated ${score.score.toStringAsFixed(2)}',
+    DailyChoiceDecisionMethod.calibratedForecast => i18n.t(
+      'inline.plan296.ui.pages.toolbox.daily.choice.daily.choice.decision.assistant.raw_expected_calibrated.7e45ff7c23',
+      params: <String, Object?>{
+        'p0': metrics['rawExpected']?.toStringAsFixed(2) ?? '--',
+        'p1': score.score.toStringAsFixed(2),
+      },
     ),
-    DailyChoiceDecisionMethod.random => pickUiText(
-      i18n,
-      zh: '随机镜头不做质量排序。',
-      en: 'Random mode does not rank quality.',
+    DailyChoiceDecisionMethod.random => i18n.t(
+      'inline.plan295.daily_choice.random_mode_does_not_rank_quality.1ce15fffa235',
     ),
   };
 }
 
 String _guardrailLabel(AppI18n i18n, DailyChoiceDecisionGuardrailType value) {
   return switch (value) {
-    DailyChoiceDecisionGuardrailType.confidence => pickUiText(
-      i18n,
-      zh: '把握度',
-      en: 'Confidence',
+    DailyChoiceDecisionGuardrailType.confidence => i18n.t(
+      'inline.plan295.daily_choice.confidence.d84ce8925edc',
     ),
-    DailyChoiceDecisionGuardrailType.downside => pickUiText(
-      i18n,
-      zh: '风险',
-      en: 'Downside',
+    DailyChoiceDecisionGuardrailType.downside => i18n.t(
+      'inline.plan295.daily_choice.downside.d4cc77348c3d',
     ),
-    DailyChoiceDecisionGuardrailType.reversibility => pickUiText(
-      i18n,
-      zh: '可回退性',
-      en: 'Reversibility',
+    DailyChoiceDecisionGuardrailType.reversibility => i18n.t(
+      'inline.plan295.daily_choice.reversibility.d298a67dfcbf',
     ),
-    DailyChoiceDecisionGuardrailType.infoGap => pickUiText(
-      i18n,
-      zh: '信息差',
-      en: 'Info gap',
+    DailyChoiceDecisionGuardrailType.infoGap => i18n.t(
+      'inline.plan295.daily_choice.info_gap.b85a8fb011ca',
     ),
   };
 }

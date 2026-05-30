@@ -299,19 +299,17 @@ class _FollowAlongPageState extends ConsumerState<FollowAlongPage> {
                   SwitchListTile.adaptive(
                     contentPadding: EdgeInsets.zero,
                     title: Text(
-                      pickUiText(i18n, zh: '高级模式', en: 'Advanced mode'),
+                      i18n.t(
+                        'inline.ui.pages.follow_along_page.advanced_mode_f872e9',
+                      ),
                     ),
                     subtitle: Text(
                       _advancedMode
-                          ? pickUiText(
-                              i18n,
-                              zh: '已显示引擎选择',
-                              en: 'Engine selector is visible',
+                          ? i18n.t(
+                              'inline.ui.pages.follow_along_page.engine_selector_is_visible_b7f0eb',
                             )
-                          : pickUiText(
-                              i18n,
-                              zh: '普通模式仅保留核心跟读流程',
-                              en: 'Normal mode keeps the core follow-along flow',
+                          : i18n.t(
+                              'inline.ui.pages.follow_along_page.normal_mode_keeps_the_core_follow_along_flow_dce9ed',
                             ),
                     ),
                     value: _advancedMode,
@@ -327,10 +325,8 @@ class _FollowAlongPageState extends ConsumerState<FollowAlongPage> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        pickUiText(
-                          i18n,
-                          zh: '当前引擎：${asrProviderLabel(i18n, _activeProvider)}',
-                          en: 'Current engine: ${asrProviderLabel(i18n, _activeProvider)}',
+                        i18n.t(
+                          'inline.ui.pages.follow_along_page.current_engine_asrproviderlabel_i18n_activeprovider_48f7a4',
                         ),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
@@ -386,10 +382,8 @@ class _FollowAlongPageState extends ConsumerState<FollowAlongPage> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              pickUiText(
-                                i18n,
-                                zh: 'Windows 下已临时避开 ${asrProviderLabel(i18n, guardedProvider)}，当前页面改用 ${asrProviderLabel(i18n, _activeProvider)}，以避免本地识别链路触发原生闪退。',
-                                en: 'Windows temporarily avoids ${asrProviderLabel(i18n, guardedProvider)} here and uses ${asrProviderLabel(i18n, _activeProvider)} instead to prevent a native crash.',
+                              i18n.t(
+                                'inline.ui.pages.follow_along_page.windows_temporarily_avoids_asrproviderlabel_i18n_guarded_362f2f',
                               ),
                               style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(

@@ -113,7 +113,7 @@ extension _SingingBowlsLayout on _SingingBowlsPracticeCardState {
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     Text(
-                      spec.name(isZh),
+                      spec.name(i18n),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -157,12 +157,16 @@ extension _SingingBowlsLayout on _SingingBowlsPracticeCardState {
   String _summaryLine() {
     final head =
         '${formatFrequency(frequencySpec.frequency)} Hz · '
-        '${voiceSpec.name(isZh)}';
+        '${voiceSpec.name(i18n)}';
     if (!_autoPlayEnabled) {
       return head;
     }
     final interval = _autoPlayIntervalMs ~/ 1000;
-    return head + i18n.t('toolbox.sound.bowls.auto_summary_suffix', params: <String, Object?>{'interval': '$interval'});
+    return head +
+        i18n.t(
+          'toolbox.sound.bowls.auto_summary_suffix',
+          params: <String, Object?>{'interval': '$interval'},
+        );
   }
 
   // ============ 被双端共享的辅助样式方法 ============

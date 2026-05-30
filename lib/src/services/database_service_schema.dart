@@ -299,7 +299,11 @@ extension AppDatabaseServiceSchema on AppDatabaseService {
         'does not match current schema version ($targetVersion).',
       );
     }
-    for (var index = 0; index < _databaseSchemaMigrationTargets.length; index += 1) {
+    for (
+      var index = 0;
+      index < _databaseSchemaMigrationTargets.length;
+      index += 1
+    ) {
       final expected = index + 1;
       if (_databaseSchemaMigrationTargets[index] != expected) {
         throw StateError(
@@ -340,7 +344,9 @@ extension AppDatabaseServiceSchema on AppDatabaseService {
         _migrateSchemaToV9();
         return;
     }
-    throw StateError('Missing schema migration implementation for version $version.');
+    throw StateError(
+      'Missing schema migration implementation for version $version.',
+    );
   }
 
   void _migrateSchemaToV1() {}

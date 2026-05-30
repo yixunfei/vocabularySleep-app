@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../i18n/app_i18n.dart';
-import '../ui/ui_copy.dart';
 
 @immutable
 class BreathingCopy {
-  const BreathingCopy(this.zh, this.en);
+  const BreathingCopy(this.key);
 
-  final String zh;
-  final String en;
+  final String key;
 
-  String resolve(AppI18n i18n) => pickUiText(i18n, zh: zh, en: en);
+  String resolve(AppI18n i18n) => i18n.t(key);
 }
 
 enum BreathingStageKind { inhale, hold, exhale, rest }
@@ -129,10 +127,9 @@ class BreathingExperienceCatalog {
   static const List<BreathingThemeSpec> themes = <BreathingThemeSpec>[
     BreathingThemeSpec(
       id: 'ocean',
-      name: BreathingCopy('潮汐蓝光', 'Ocean glow'),
+      name: BreathingCopy('inline.plan295.breathing.ocean_glow.ddede1e99f58'),
       mood: BreathingCopy(
-        '像潮水一样慢慢把呼气拉长。',
-        'Stretch the exhale like a slow tide.',
+        'inline.plan295.breathing.stretch_the_exhale_like_a_slow_tide.e6707e6642a9',
       ),
       bgStart: Color(0xFF081C34),
       bgEnd: Color(0xFF154D79),
@@ -143,10 +140,9 @@ class BreathingExperienceCatalog {
     ),
     BreathingThemeSpec(
       id: 'forest',
-      name: BreathingCopy('林雾绿意', 'Forest mist'),
+      name: BreathingCopy('inline.plan295.breathing.forest_mist.f46361223bac'),
       mood: BreathingCopy(
-        '让吸气和呼气像走进安静树林那样稳定。',
-        'Steady inhale and exhale like entering a quiet forest.',
+        'inline.plan295.breathing.steady_inhale_and_exhale_like_enteri.034aa47a9195',
       ),
       bgStart: Color(0xFF10261F),
       bgEnd: Color(0xFF2B6747),
@@ -157,10 +153,9 @@ class BreathingExperienceCatalog {
     ),
     BreathingThemeSpec(
       id: 'ember',
-      name: BreathingCopy('余烬安定', 'Ember calm'),
+      name: BreathingCopy('inline.plan295.breathing.ember_calm.3062047f2b08'),
       mood: BreathingCopy(
-        '把身体里的热和急一点点放出去。',
-        'Let emotional heat leave a little at a time.',
+        'inline.plan295.breathing.let_emotional_heat_leave_a_little_at.1bc3cb1f3815',
       ),
       bgStart: Color(0xFF3A1F26),
       bgEnd: Color(0xFF814142),
@@ -171,10 +166,9 @@ class BreathingExperienceCatalog {
     ),
     BreathingThemeSpec(
       id: 'alpine',
-      name: BreathingCopy('高山气流', 'Alpine air'),
+      name: BreathingCopy('inline.plan295.breathing.alpine_air.8f8403d18455'),
       mood: BreathingCopy(
-        '让节拍更克制，把注意力收回到呼吸效率。',
-        'A more disciplined pace focused on efficiency and recovery.',
+        'inline.plan295.breathing.a_more_disciplined_pace_focused_on_e.ba76d6503a79',
       ),
       bgStart: Color(0xFF0D2033),
       bgEnd: Color(0xFF5A7CA7),
@@ -185,10 +179,9 @@ class BreathingExperienceCatalog {
     ),
     BreathingThemeSpec(
       id: 'aurora',
-      name: BreathingCopy('极光专注', 'Aurora focus'),
+      name: BreathingCopy('inline.plan295.breathing.aurora_focus.311dd33ca40b'),
       mood: BreathingCopy(
-        '把注意力带回一进一出的稳定脉冲。',
-        'Pull attention back into the pulse of breathing.',
+        'inline.plan295.breathing.pull_attention_back_into_the_pulse_o.02ed4d214d14',
       ),
       bgStart: Color(0xFF111A3A),
       bgEnd: Color(0xFF2B5B72),
@@ -202,121 +195,147 @@ class BreathingExperienceCatalog {
   static const Map<String, BreathingCueSpec> cues = <String, BreathingCueSpec>{
     'inhale_soft': BreathingCueSpec(
       id: 'inhale_soft',
-      name: BreathingCopy('吸气提示', 'Inhale cue'),
+      name: BreathingCopy('inline.plan295.breathing.inhale_cue.c28aca9ce0dc'),
       remoteFileNames: <String>['吸气.wav'],
       approxDurationMs: 1200,
     ),
     'exhale_soft': BreathingCueSpec(
       id: 'exhale_soft',
-      name: BreathingCopy('呼气提示', 'Exhale cue'),
+      name: BreathingCopy('inline.plan295.breathing.exhale_cue.b610259e51b5'),
       remoteFileNames: <String>['呼气.wav'],
       approxDurationMs: 2400,
     ),
     'hold_soft': BreathingCueSpec(
       id: 'hold_soft',
-      name: BreathingCopy('屏息提示', 'Hold cue'),
+      name: BreathingCopy('inline.plan295.breathing.hold_cue.dee35815d745'),
       remoteFileNames: <String>['屏息.wav'],
       approxDurationMs: 2160,
     ),
     'nose_inhale': BreathingCueSpec(
       id: 'nose_inhale',
-      name: BreathingCopy('鼻吸提示', 'Nasal inhale cue'),
+      name: BreathingCopy(
+        'inline.plan295.breathing.nasal_inhale_cue.05ee5c6750cb',
+      ),
       remoteFileNames: <String>['鼻子吸气.wav'],
       approxDurationMs: 3760,
     ),
     'nose_exhale': BreathingCueSpec(
       id: 'nose_exhale',
-      name: BreathingCopy('鼻呼提示', 'Nasal exhale cue'),
+      name: BreathingCopy(
+        'inline.plan295.breathing.nasal_exhale_cue.47f1174f13fb',
+      ),
       remoteFileNames: <String>['鼻子呼气.wav'],
       approxDurationMs: 3360,
     ),
     'mouth_inhale': BreathingCueSpec(
       id: 'mouth_inhale',
-      name: BreathingCopy('口吸提示', 'Mouth inhale cue'),
+      name: BreathingCopy(
+        'inline.plan295.breathing.mouth_inhale_cue.ea0a8cd0573d',
+      ),
       remoteFileNames: <String>['嘴吸气.wav'],
       approxDurationMs: 2960,
     ),
     'mouth_exhale': BreathingCueSpec(
       id: 'mouth_exhale',
-      name: BreathingCopy('口呼提示', 'Mouth exhale cue'),
+      name: BreathingCopy(
+        'inline.plan295.breathing.mouth_exhale_cue.75644d9b357a',
+      ),
       remoteFileNames: <String>['嘴呼气.wav'],
       approxDurationMs: 3760,
     ),
     'preview_relax': BreathingCueSpec(
       id: 'preview_relax',
-      name: BreathingCopy('放松引导', 'Relax guidance'),
+      name: BreathingCopy(
+        'inline.plan295.breathing.relax_guidance.7b6323e73735',
+      ),
       remoteFileNames: <String>['放松.wav'],
       approxDurationMs: 29040,
     ),
     'preview_intro_1': BreathingCueSpec(
       id: 'preview_intro_1',
-      name: BreathingCopy('呼吸引导 1', 'Breath guide 1'),
+      name: BreathingCopy(
+        'inline.plan295.breathing.breath_guide_1.90e61d8ee32f',
+      ),
       remoteFileNames: <String>['呼吸引导1.wav'],
       approxDurationMs: 24986,
     ),
     'preview_intro_2': BreathingCueSpec(
       id: 'preview_intro_2',
-      name: BreathingCopy('呼吸引导 2', 'Breath guide 2'),
+      name: BreathingCopy(
+        'inline.plan295.breathing.breath_guide_2.7b22c39266f5',
+      ),
       remoteFileNames: <String>['呼吸引导2.wav'],
       approxDurationMs: 33841,
     ),
     'preview_nose_slow': BreathingCueSpec(
       id: 'preview_nose_slow',
-      name: BreathingCopy('鼻吸示范', 'Nasal inhale demo'),
+      name: BreathingCopy(
+        'inline.plan295.breathing.nasal_inhale_demo.888839f7b2d7',
+      ),
       remoteFileNames: <String>['开始用鼻子缓缓吸气.wav'],
       approxDurationMs: 3120,
     ),
     'preview_parasym': BreathingCueSpec(
       id: 'preview_parasym',
-      name: BreathingCopy('副交感切换引导', 'Parasympathetic guide'),
+      name: BreathingCopy(
+        'inline.plan295.breathing.parasympathetic_guide.2aa93ae30623',
+      ),
       remoteFileNames: <String>['副交感交替.wav'],
       approxDurationMs: 13360,
     ),
     'preview_altitude': BreathingCueSpec(
       id: 'preview_altitude',
-      name: BreathingCopy('快速叹息引导', 'Cyclic sigh guide'),
+      name: BreathingCopy(
+        'inline.plan295.breathing.cyclic_sigh_guide.a75408b33e93',
+      ),
       remoteFileNames: <String>['快速嘴吸气屏气.wav'],
       approxDurationMs: 4000,
     ),
     'bolt_prepare': BreathingCueSpec(
       id: 'bolt_prepare',
-      name: BreathingCopy('BOLT 准备', 'BOLT prepare'),
+      name: BreathingCopy('inline.plan295.breathing.bolt_prepare.6b99e55650e2'),
       remoteFileNames: <String>['breathing_bolt_prepare.wav'],
       approxDurationMs: 2320,
     ),
     'bolt_start': BreathingCueSpec(
       id: 'bolt_start',
-      name: BreathingCopy('BOLT 开始', 'BOLT start'),
+      name: BreathingCopy('inline.plan295.breathing.bolt_start.b5c0fa7290ca'),
       remoteFileNames: <String>['breathing_bolt_start.wav'],
       approxDurationMs: 2960,
     ),
     'bolt_stop': BreathingCueSpec(
       id: 'bolt_stop',
-      name: BreathingCopy('BOLT 停止', 'BOLT stop'),
+      name: BreathingCopy('inline.plan295.breathing.bolt_stop.434631a9bbf1'),
       remoteFileNames: <String>['breathing_bolt_stop.wav'],
       approxDurationMs: 2480,
     ),
     'bolt_recover': BreathingCueSpec(
       id: 'bolt_recover',
-      name: BreathingCopy('BOLT 恢复', 'BOLT recover'),
+      name: BreathingCopy('inline.plan295.breathing.bolt_recover.e979fe00f372'),
       remoteFileNames: <String>['breathing_bolt_recover.wav'],
       approxDurationMs: 2560,
     ),
     'session_start': BreathingCueSpec(
       id: 'session_start',
-      name: BreathingCopy('训练开始', 'Session start'),
+      name: BreathingCopy(
+        'inline.plan295.breathing.session_start.d7429407b9c8',
+      ),
       remoteFileNames: <String>['breathing_session_start.wav'],
       approxDurationMs: 1840,
     ),
     'session_complete': BreathingCueSpec(
       id: 'session_complete',
-      name: BreathingCopy('训练完成', 'Session complete'),
+      name: BreathingCopy(
+        'inline.plan295.breathing.session_complete.cbc1ebbbe314',
+      ),
       remoteFileNames: <String>['breathing_session_complete.wav'],
       approxDurationMs: 2480,
     ),
     'altitude_warning_short': BreathingCueSpec(
       id: 'altitude_warning_short',
-      name: BreathingCopy('高海拔提醒', 'Altitude warning'),
+      name: BreathingCopy(
+        'inline.plan295.breathing.altitude_warning.4a49da75a115',
+      ),
       remoteFileNames: <String>['breathing_altitude_warning_short.wav'],
       approxDurationMs: 4160,
     ),
@@ -325,605 +344,640 @@ class BreathingExperienceCatalog {
   static const List<BreathingScenario> scenarios = <BreathingScenario>[
     BreathingScenario(
       id: 'diaphragm_4262',
-      name: BreathingCopy('腹式基础 4-2-6-2', 'Diaphragm 4-2-6-2'),
+      name: BreathingCopy(
+        'inline.plan295.breathing.diaphragm_4_2_6_2.ea51085add91',
+      ),
       scene: BreathingCopy(
-        '建立腹式呼吸手感的默认训练。',
-        'Default mode for learning diaphragmatic breathing.',
+        'inline.plan295.breathing.default_mode_for_learning_diaphragma.133819f527d1',
       ),
       description: BreathingCopy(
-        '用鼻吸鼻呼，吸气时腹部向外，呼气时腹部回落。适合作为日常基础练习。',
-        'Nasal inhale and exhale with a belly expansion on inhale and release on exhale.',
+        'inline.plan295.breathing.nasal_inhale_and_exhale_with_a_belly.1613169fa55b',
       ),
       bodyFocus: BreathingCopy(
-        '肩颈保持放松，胸口不过度抬起，让腹部带动节奏。',
-        'Keep the shoulders soft and let the belly, not the chest, drive the motion.',
+        'inline.plan295.breathing.keep_the_shoulders_soft_and_let_the.2559b200901d',
       ),
       whenToUse: BreathingCopy(
-        '适合早晨开始、久坐后重新调整呼吸，或学习间隙做基础稳态练习。',
-        'Use at the start of the day, after long sitting, or between study blocks.',
+        'inline.plan295.breathing.use_at_the_start_of_the_day_after_lo.140a8ed1eac9',
       ),
       researchBasis: BreathingCopy(
-        '腹式呼吸在健康成年人研究中与压力下降、注意力改善相关，适合作为入门训练。',
-        'Diaphragmatic breathing has been linked to lower stress and better attention in healthy adults.',
+        'inline.plan295.breathing.diaphragmatic_breathing_has_been_lin.98aabccfea88',
       ),
       mechanism: BreathingCopy(
-        '降低辅助呼吸肌紧张，提升膈肌参与度，让呼吸更深、更稳。',
-        'It shifts work toward the diaphragm and away from unnecessary upper-body tension.',
+        'inline.plan295.breathing.it_shifts_work_toward_the_diaphragm.38ad4fe5ea18',
       ),
       themeId: 'ocean',
       previewCueId: 'preview_nose_slow',
       recommendedMinutes: 5,
       tags: <BreathingCopy>[
-        BreathingCopy('入门', 'Starter'),
-        BreathingCopy('腹式', 'Diaphragm'),
-        BreathingCopy('日常', 'Daily'),
+        BreathingCopy('inline.plan295.breathing.starter.deea5fd4a70e'),
+        BreathingCopy('inline.plan295.breathing.diaphragm.d0ad99ceb2e4'),
+        BreathingCopy('inline.plan295.breathing.daily.53975da54192'),
       ],
       stages: <BreathingStagePlan>[
         BreathingStagePlan(
           kind: BreathingStageKind.inhale,
           seconds: 4,
-          label: BreathingCopy('鼻吸', 'Nasal inhale'),
-          prompt: BreathingCopy('让腹部轻轻鼓起', 'Expand the belly'),
+          label: BreathingCopy(
+            'inline.plan295.breathing.nasal_inhale.3d196ba5f8b1',
+          ),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.expand_the_belly.c332cc561d5c',
+          ),
           cueId: 'nose_inhale',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.hold,
           seconds: 2,
-          label: BreathingCopy('停留', 'Hold'),
-          prompt: BreathingCopy('轻停，不要硬憋', 'Pause lightly without straining'),
+          label: BreathingCopy('inline.plan295.breathing.hold.655746dd3985'),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.pause_lightly_without_straining.a5595e84328e',
+          ),
           cueId: 'hold_soft',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.exhale,
           seconds: 6,
-          label: BreathingCopy('鼻呼', 'Nasal exhale'),
-          prompt: BreathingCopy('缓缓把气放长', 'Lengthen the exhale'),
+          label: BreathingCopy(
+            'inline.plan295.breathing.nasal_exhale.cc4ea738e420',
+          ),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.lengthen_the_exhale.1aa01ee7016a',
+          ),
           cueId: 'nose_exhale',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.rest,
           seconds: 2,
-          label: BreathingCopy('回稳', 'Settle'),
-          prompt: BreathingCopy('让身体自然回落', 'Let the body settle'),
+          label: BreathingCopy('inline.plan295.breathing.settle.2d327b6bc666'),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.let_the_body_settle.6212c513cdbc',
+          ),
         ),
       ],
     ),
     BreathingScenario(
       id: 'focus_nasal_44',
-      name: BreathingCopy('鼻吸聚焦 4-4', 'Nasal focus 4-4'),
+      name: BreathingCopy(
+        'inline.plan295.breathing.nasal_focus_4_4.800b5b8132a0',
+      ),
       scene: BreathingCopy(
-        '开工前、阅读前、任务切换时的安静聚焦。',
-        'A quiet focusing rhythm before deep work, reading, or task switching.',
+        'inline.plan295.breathing.a_quiet_focusing_rhythm_before_deep.4a7dbe03e74b',
       ),
       description: BreathingCopy(
-        '全程鼻吸鼻呼，不加屏息，让注意力稳定贴住呼吸。',
-        'Nasal-only breathing without holds keeps attention anchored without overstimulating.',
+        'inline.plan295.breathing.nasal_only_breathing_without_holds_k.f5cdca906793',
       ),
       bodyFocus: BreathingCopy(
-        '吸气和呼气一样长，不追求大口，避免把自己吹得发飘。',
-        'Keep inhale and exhale equal and avoid over-breathing.',
+        'inline.plan295.breathing.keep_inhale_and_exhale_equal_and_avo.cead64d2885d',
       ),
       whenToUse: BreathingCopy(
-        '适合进入深度工作前、阅读前，或想把视线和心绪收回来时。',
-        'Use before focused work or any time you want to gather your attention back in.',
+        'inline.plan295.breathing.use_before_focused_work_or_any_time.002b43087cb9',
       ),
       researchBasis: BreathingCopy(
-        '鼻呼吸与认知网络和情绪线路同步研究有关，适合需要清醒又不想过度调动的人。',
-        'Nasal breathing has been linked to limbic and cognitive timing, making it useful for calm alertness.',
+        'inline.plan295.breathing.nasal_breathing_has_been_linked_to_l.b823b2712b93',
       ),
       mechanism: BreathingCopy(
-        '保留平稳节拍和鼻呼吸的感觉输入，把专注建立在稳定而不是刺激上。',
-        'It combines a steady rhythm with the sensory pattern of nasal breathing to support stable focus.',
+        'inline.plan295.breathing.it_combines_a_steady_rhythm_with_the.e72efac6b16e',
       ),
       themeId: 'aurora',
       previewCueId: 'preview_intro_1',
       recommendedMinutes: 4,
       tags: <BreathingCopy>[
-        BreathingCopy('专注', 'Focus'),
-        BreathingCopy('鼻吸', 'Nasal'),
-        BreathingCopy('清醒', 'Alert'),
+        BreathingCopy('ref.focusPhase'),
+        BreathingCopy('inline.plan295.breathing.nasal.b6c1017fb223'),
+        BreathingCopy('inline.plan295.breathing.alert.d80d0fc4a90b'),
       ],
       stages: <BreathingStagePlan>[
         BreathingStagePlan(
           kind: BreathingStageKind.inhale,
           seconds: 4,
-          label: BreathingCopy('鼻吸', 'Nasal inhale'),
-          prompt: BreathingCopy('平稳吸满四拍', 'Inhale evenly for four'),
+          label: BreathingCopy(
+            'inline.plan295.breathing.nasal_inhale.3d196ba5f8b1',
+          ),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.inhale_evenly_for_four.0992fb55ce57',
+          ),
           cueId: 'nose_inhale',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.exhale,
           seconds: 4,
-          label: BreathingCopy('鼻呼', 'Nasal exhale'),
-          prompt: BreathingCopy('平稳呼出四拍', 'Exhale evenly for four'),
+          label: BreathingCopy(
+            'inline.plan295.breathing.nasal_exhale.cc4ea738e420',
+          ),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.exhale_evenly_for_four.e77d81de5ac7',
+          ),
           cueId: 'nose_exhale',
         ),
       ],
     ),
     BreathingScenario(
       id: 'box_4444',
-      name: BreathingCopy('方块稳定 4-4-4-4', 'Box 4-4-4-4'),
+      name: BreathingCopy('inline.plan295.breathing.box_4_4_4_4.d7d3456fb79b'),
       scene: BreathingCopy(
-        '会前、演讲前、任务开始前的节拍稳定。',
-        'Steady your rhythm before meetings, talks, or demanding tasks.',
+        'inline.plan295.breathing.steady_your_rhythm_before_meetings_t.3ff3db9c50a2',
       ),
       description: BreathingCopy(
-        '四段等长，像在心里画一个正方形，把注意力从外部压力拉回到可控节拍。',
-        'Four equal sides create a square rhythm that pulls attention back from pressure.',
+        'inline.plan295.breathing.four_equal_sides_create_a_square_rhy.b68e5bbbab17',
       ),
       bodyFocus: BreathingCopy(
-        '每一段都保持同样长度，遇到紧张时先守住节拍，不追求更深。',
-        'Keep each side the same length and prioritize consistency over depth.',
+        'inline.plan295.breathing.keep_each_side_the_same_length_and_p.834589b10e21',
       ),
       whenToUse: BreathingCopy(
-        '适合高压任务前做 2-5 分钟的稳定化；如果屏息不舒服，改用共振 5-5。',
-        'Best for a 2-5 minute reset before a demanding task; switch to 5-5 if the holds feel uncomfortable.',
+        'inline.plan295.breathing.best_for_a_2_5_minute_reset_before_a.ba53d1ea21f8',
       ),
       researchBasis: BreathingCopy(
-        '它更偏向节拍控制和注意力锚定，而不是强刺激；适合作为压力前的呼吸校准。',
-        'It works best as a pacing and attention anchor rather than a high-intensity technique.',
+        'inline.plan295.breathing.it_works_best_as_a_pacing_and_attent.7559f0b6b658',
       ),
       mechanism: BreathingCopy(
-        '规则计数降低呼吸漂移，让身体和注意力一起回到可预测节奏。',
-        'The regular counting pattern reduces drift and brings attention back to a predictable cycle.',
+        'inline.plan295.breathing.the_regular_counting_pattern_reduces.c5153d643eeb',
       ),
       themeId: 'aurora',
       previewCueId: 'preview_intro_1',
       recommendedMinutes: 3,
       caution: BreathingCopy(
-        '如果屏息让你更紧张，请改用“共振慢呼 5-5”或“平息长呼 3-6”。',
-        'If breath holding makes you more tense, switch to Coherent 5-5 or Calm 3-6.',
+        'inline.plan295.breathing.if_breath_holding_makes_you_more_ten.e6498eb99e85',
       ),
       tags: <BreathingCopy>[
-        BreathingCopy('会前', 'Pre-task'),
-        BreathingCopy('节拍', 'Pacing'),
-        BreathingCopy('稳定', 'Steady'),
+        BreathingCopy('inline.plan295.breathing.pre_task.7e3cca5f29ce'),
+        BreathingCopy('inline.plan295.breathing.pacing.a0a4d39960b7'),
+        BreathingCopy(
+          'inline.ui.pages.toolbox_human_tests_auditory.steady_73508d',
+        ),
       ],
       stages: <BreathingStagePlan>[
         BreathingStagePlan(
           kind: BreathingStageKind.inhale,
           seconds: 4,
-          label: BreathingCopy('吸气', 'Inhale'),
-          prompt: BreathingCopy('吸满四拍', 'Fill for four beats'),
+          label: BreathingCopy('inline.plan295.breathing.inhale.5dcc34d57e6f'),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.fill_for_four_beats.da920ec2c312',
+          ),
           cueId: 'inhale_soft',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.hold,
           seconds: 4,
-          label: BreathingCopy('停住', 'Hold'),
-          prompt: BreathingCopy('保持稳定', 'Stay steady'),
+          label: BreathingCopy('inline.plan295.breathing.hold.9ecbd299f2b0'),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.stay_steady.7be1b0f1b8f1',
+          ),
           cueId: 'hold_soft',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.exhale,
           seconds: 4,
-          label: BreathingCopy('呼气', 'Exhale'),
-          prompt: BreathingCopy('按同样节拍放掉', 'Release on the same count'),
+          label: BreathingCopy('inline.plan295.breathing.exhale.13ff86dd86ea'),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.release_on_the_same_count.0957f0e82e71',
+          ),
           cueId: 'exhale_soft',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.rest,
           seconds: 4,
-          label: BreathingCopy('停顿', 'Pause'),
-          prompt: BreathingCopy('准备下一次', 'Prepare the next cycle'),
+          label: BreathingCopy('toolbox.sleep.core.pause'),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.prepare_the_next_cycle.3787697019e6',
+          ),
         ),
       ],
     ),
     BreathingScenario(
       id: 'coherent_55',
-      name: BreathingCopy('共振慢呼 5-5', 'Coherent 5-5'),
+      name: BreathingCopy('inline.plan295.breathing.coherent_5_5.fb33eb5bdd99'),
       scene: BreathingCopy(
-        '任务切换、情绪波动后、想回到稳态时的核心模式。',
-        'Balanced breathing for transitions and longer regulation sessions.',
+        'inline.plan295.breathing.balanced_breathing_for_transitions_a.4fa64a24914b',
       ),
       description: BreathingCopy(
-        '均匀吸、均匀呼，适合做 5-10 分钟的稳态练习。',
-        'Equal inhale and exhale are ideal for longer steady-state regulation sessions.',
+        'inline.plan295.breathing.equal_inhale_and_exhale_are_ideal_fo.2997ab55f2fe',
       ),
       bodyFocus: BreathingCopy(
-        '让吸气和呼气都保持圆润，不额外加屏息。',
-        'Keep both directions smooth and rounded without extra holds.',
+        'inline.plan295.breathing.keep_both_directions_smooth_and_roun.9e178faba77f',
       ),
       whenToUse: BreathingCopy(
-        '适合番茄钟之间、情绪恢复期、工作和休息转换时。',
-        'Use between focus blocks or during transitions between work and recovery.',
+        'inline.plan295.breathing.use_between_focus_blocks_or_during_t.7ead68798783',
       ),
       researchBasis: BreathingCopy(
-        '接近每分钟 5-6 次的慢呼吸，是 HRV 和压力调节研究中最常见的训练区间。',
-        'Slow breathing near 5-6 breaths per minute is the most studied range for HRV and regulation.',
+        'inline.plan295.breathing.slow_breathing_near_5_6_breaths_per.ad23f7cfc607',
       ),
       mechanism: BreathingCopy(
-        '更容易进入呼吸和心率同步的节奏，帮助稳定注意力与恢复感。',
-        'It supports a rhythm that more readily synchronizes breathing and heart-rate dynamics.',
+        'inline.plan295.breathing.it_supports_a_rhythm_that_more_readi.5f1bc9c01e11',
       ),
       themeId: 'forest',
       previewCueId: 'preview_intro_1',
       recommendedMinutes: 8,
       tags: <BreathingCopy>[
-        BreathingCopy('稳态', 'Steady state'),
-        BreathingCopy('恢复', 'Recovery'),
-        BreathingCopy('HRV', 'HRV'),
+        BreathingCopy('inline.plan295.breathing.steady_state.a868cc761184'),
+        BreathingCopy('toolbox.sleep.library.tag.recovery'),
+        BreathingCopy('literal.services.toolbox_breathing_catalog.hrv_1d7dd2'),
       ],
       stages: <BreathingStagePlan>[
         BreathingStagePlan(
           kind: BreathingStageKind.inhale,
           seconds: 5,
-          label: BreathingCopy('吸气', 'Inhale'),
-          prompt: BreathingCopy('均匀吸入', 'Inhale evenly'),
+          label: BreathingCopy('inline.plan295.breathing.inhale.5dcc34d57e6f'),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.inhale_evenly.f069220c4d67',
+          ),
           cueId: 'inhale_soft',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.exhale,
           seconds: 5,
-          label: BreathingCopy('呼气', 'Exhale'),
-          prompt: BreathingCopy('均匀呼出', 'Exhale evenly'),
+          label: BreathingCopy('inline.plan295.breathing.exhale.13ff86dd86ea'),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.exhale_evenly.a8d46c2dc3b3',
+          ),
           cueId: 'exhale_soft',
         ),
       ],
     ),
     BreathingScenario(
       id: 'relax_4262',
-      name: BreathingCopy('放松延呼 4-2-6-2', 'Unwind 4-2-6-2'),
+      name: BreathingCopy(
+        'inline.plan295.breathing.unwind_4_2_6_2.f0d9ad700138',
+      ),
       scene: BreathingCopy(
-        '下班、运动后、长时间用脑后的降速模式。',
-        'A downshift rhythm for after work, exercise, or heavy screen time.',
+        'inline.plan295.breathing.a_downshift_rhythm_for_after_work_ex.130ca67b1742',
       ),
       description: BreathingCopy(
-        '延长呼气，让身体从高唤醒慢慢回到恢复区。',
-        'A longer exhale helps the body come down from a high-alert state.',
+        'inline.plan295.breathing.a_longer_exhale_helps_the_body_come.fb4418b312b7',
       ),
       bodyFocus: BreathingCopy(
-        '呼气时下颌放松，肩颈跟着一起往下落。',
-        'Relax the jaw and let the shoulders drop with the exhale.',
+        'inline.plan295.breathing.relax_the_jaw_and_let_the_shoulders.eb546951c8cf',
       ),
       whenToUse: BreathingCopy(
-        '适合连续工作 45 分钟后、通勤结束后，或想慢下来时。',
-        'Use after long work blocks, after commuting, or whenever you need to slow down.',
+        'inline.plan295.breathing.use_after_long_work_blocks_after_com.46c890712eef',
       ),
       researchBasis: BreathingCopy(
-        '长呼气慢呼吸常被用于帮助身体从高唤醒转向恢复和放松。',
-        'Slow breathing with a longer exhale is commonly used to shift from activation toward recovery.',
+        'inline.plan295.breathing.slow_breathing_with_a_longer_exhale.53b858ed47bb',
       ),
       mechanism: BreathingCopy(
-        '把呼气拉长到吸气之上，给副交感占优势留出窗口。',
-        'Extending the exhale relative to the inhale creates more room for down-regulation.',
+        'inline.plan295.breathing.extending_the_exhale_relative_to_the.377190d80c6f',
       ),
       themeId: 'forest',
       previewCueId: 'preview_relax',
       recommendedMinutes: 5,
       tags: <BreathingCopy>[
-        BreathingCopy('放松', 'Relax'),
-        BreathingCopy('长呼气', 'Long exhale'),
-        BreathingCopy('恢复', 'Recovery'),
+        BreathingCopy('ref.breakPhase'),
+        BreathingCopy('inline.plan295.breathing.long_exhale.3917e43be1c7'),
+        BreathingCopy('toolbox.sleep.library.tag.recovery'),
       ],
       stages: <BreathingStagePlan>[
         BreathingStagePlan(
           kind: BreathingStageKind.inhale,
           seconds: 4,
-          label: BreathingCopy('吸气', 'Inhale'),
-          prompt: BreathingCopy('轻柔吸满', 'Inhale softly'),
+          label: BreathingCopy('inline.plan295.breathing.inhale.5dcc34d57e6f'),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.inhale_softly.c49c48306489',
+          ),
           cueId: 'inhale_soft',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.hold,
           seconds: 2,
-          label: BreathingCopy('停留', 'Hold'),
-          prompt: BreathingCopy('只做轻停', 'Keep it light'),
+          label: BreathingCopy('inline.plan295.breathing.hold.655746dd3985'),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.keep_it_light.d1075629439f',
+          ),
           cueId: 'hold_soft',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.exhale,
           seconds: 6,
-          label: BreathingCopy('长呼气', 'Long exhale'),
+          label: BreathingCopy(
+            'inline.plan295.breathing.long_exhale.3917e43be1c7',
+          ),
           prompt: BreathingCopy(
-            '慢慢放掉肩颈紧张',
-            'Release neck and shoulder tension',
+            'inline.plan295.breathing.release_neck_and_shoulder_tension.6bb9a7ef795f',
           ),
           cueId: 'exhale_soft',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.rest,
           seconds: 2,
-          label: BreathingCopy('回稳', 'Rest'),
-          prompt: BreathingCopy('让节拍沉下来', 'Let the pace settle'),
+          label: BreathingCopy('inline.plan295.breathing.rest.f2c7f9979490'),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.let_the_pace_settle.a7017bb263e5',
+          ),
         ),
       ],
     ),
     BreathingScenario(
       id: 'calm_36',
-      name: BreathingCopy('平息长呼 3-6', 'Calm 3-6'),
+      name: BreathingCopy('inline.plan295.breathing.calm_3_6.3abdc007c2c7'),
       scene: BreathingCopy(
-        '焦躁、争执后、心跳偏快时先降强度。',
-        'A simple de-escalation rhythm for agitation or a racing mind.',
+        'inline.plan295.breathing.a_simple_de_escalation_rhythm_for_ag.c93c3f52b61e',
       ),
       description: BreathingCopy(
-        '短吸长呼，不额外屏息，在紧张时更容易执行。',
-        'A short inhale and long exhale are easier to use when you already feel activated.',
+        'inline.plan295.breathing.a_short_inhale_and_long_exhale_are_e.2c6cce5fb86a',
       ),
       bodyFocus: BreathingCopy(
-        '先把呼气做完整，再让下一次吸气自然回来。',
-        'Finish the exhale fully before letting the next inhale arrive.',
+        'inline.plan295.breathing.finish_the_exhale_fully_before_letti.ceccfe74497d',
       ),
       whenToUse: BreathingCopy(
-        '适合临时平息情绪、会议前心跳偏快，或刚从压力消息里出来时。',
-        'Use when emotions are elevated and you need a quick downshift.',
+        'inline.plan295.breathing.use_when_emotions_are_elevated_and_y.5643801e4267',
       ),
       researchBasis: BreathingCopy(
-        '在已经紧张的时候，不带长屏息的长呼气模式通常更容易坚持。',
-        'When you are already activated, long-exhale patterns without long holds are often easier to sustain.',
+        'inline.plan295.breathing.when_you_are_already_activated_long.cd0f386c4646',
       ),
       mechanism: BreathingCopy(
-        '优先做完整呼气，帮助降低呼吸频率和防御性肌肉紧张。',
-        'Prioritizing the exhale can help lower breathing frequency and soften defensive tension.',
+        'inline.plan295.breathing.prioritizing_the_exhale_can_help_low.840adb221547',
       ),
       themeId: 'ember',
       previewCueId: 'preview_intro_2',
       recommendedMinutes: 3,
       tags: <BreathingCopy>[
-        BreathingCopy('急用', 'Rapid reset'),
-        BreathingCopy('低门槛', 'Accessible'),
-        BreathingCopy('长呼气', 'Long exhale'),
+        BreathingCopy('inline.plan295.breathing.rapid_reset.48b2f55186bb'),
+        BreathingCopy('inline.plan295.breathing.accessible.64462732b8c7'),
+        BreathingCopy('inline.plan295.breathing.long_exhale.3917e43be1c7'),
       ],
       stages: <BreathingStagePlan>[
         BreathingStagePlan(
           kind: BreathingStageKind.inhale,
           seconds: 3,
-          label: BreathingCopy('吸气', 'Inhale'),
-          prompt: BreathingCopy('轻轻吸入', 'Inhale lightly'),
+          label: BreathingCopy('inline.plan295.breathing.inhale.5dcc34d57e6f'),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.inhale_lightly.732b8760ed80',
+          ),
           cueId: 'inhale_soft',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.exhale,
           seconds: 6,
-          label: BreathingCopy('长呼气', 'Long exhale'),
-          prompt: BreathingCopy('把气慢慢吐净', 'Empty the breath fully'),
+          label: BreathingCopy(
+            'inline.plan295.breathing.long_exhale.3917e43be1c7',
+          ),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.empty_the_breath_fully.4b75fc989c4f',
+          ),
           cueId: 'exhale_soft',
         ),
       ],
     ),
     BreathingScenario(
       id: 'sleep_46',
-      name: BreathingCopy('睡前轻缓 4-6', 'Bedtime 4-6'),
+      name: BreathingCopy('inline.plan295.breathing.bedtime_4_6.fb48d2bc116a'),
       scene: BreathingCopy(
-        '准备入睡或夜间醒来后的轻柔节奏。',
-        'A gentle bedtime rhythm for settling into sleep or returning to sleep.',
+        'inline.plan295.breathing.a_gentle_bedtime_rhythm_for_settling.4113ed6090ed',
       ),
       description: BreathingCopy(
-        '不加屏息，保持轻吸长呼，避免把自己练得更清醒。',
-        'No breath hold, just a gentle inhale and longer exhale so you do not wake yourself up more.',
+        'inline.plan295.breathing.no_breath_hold_just_a_gentle_inhale.5046ecd8efa0',
       ),
       bodyFocus: BreathingCopy(
-        '吸气不追求深，呼气像慢慢放气，越安静越好。',
-        'Do not chase a deep inhale. Think of the exhale as a slow soft release.',
+        'inline.plan295.breathing.do_not_chase_a_deep_inhale_think_of.c0f77eaca87d',
       ),
       whenToUse: BreathingCopy(
-        '适合关灯后、半夜醒来后，或想把节奏慢慢带向睡眠时。',
-        'Use after lights out, after waking in the night, or whenever you want to drift toward sleep.',
+        'inline.plan295.breathing.use_after_lights_out_after_waking_in.ee93886f3cae',
       ),
       researchBasis: BreathingCopy(
-        '睡前慢呼吸与放松干预常用于缩短入睡前的高唤醒阶段。',
-        'Pre-sleep slow breathing is commonly used to reduce the arousal that blocks sleep onset.',
+        'inline.plan295.breathing.pre_sleep_slow_breathing_is_commonly.31b3902b6dc4',
       ),
       mechanism: BreathingCopy(
-        '减少呼吸用力和认知负担，让身体更容易接受“可以睡了”的信号。',
-        'It lowers effort and cognitive load so the body can accept a quieter bedtime signal.',
+        'inline.plan295.breathing.it_lowers_effort_and_cognitive_load.66dce5ab014d',
       ),
       themeId: 'ember',
       previewCueId: 'preview_relax',
       recommendedMinutes: 8,
       tags: <BreathingCopy>[
-        BreathingCopy('睡前', 'Bedtime'),
-        BreathingCopy('轻柔', 'Gentle'),
-        BreathingCopy('无屏息', 'No hold'),
+        BreathingCopy('inline.plan295.breathing.bedtime.048acdfbeddd'),
+        BreathingCopy('inline.plan295.breathing.gentle.26bb0cd9fc59'),
+        BreathingCopy('inline.plan295.breathing.no_hold.84fe920e5021'),
       ],
       stages: <BreathingStagePlan>[
         BreathingStagePlan(
           kind: BreathingStageKind.inhale,
           seconds: 4,
-          label: BreathingCopy('鼻吸', 'Nasal inhale'),
-          prompt: BreathingCopy('轻轻吸满四拍', 'Inhale gently for four'),
+          label: BreathingCopy(
+            'inline.plan295.breathing.nasal_inhale.3d196ba5f8b1',
+          ),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.inhale_gently_for_four.e64d4aeeb473',
+          ),
           cueId: 'nose_inhale',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.exhale,
           seconds: 6,
-          label: BreathingCopy('鼻呼', 'Nasal exhale'),
-          prompt: BreathingCopy('慢慢放长呼气', 'Exhale slowly for six'),
+          label: BreathingCopy(
+            'inline.plan295.breathing.nasal_exhale.cc4ea738e420',
+          ),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.exhale_slowly_for_six.549a92df44a0',
+          ),
           cueId: 'nose_exhale',
         ),
       ],
     ),
     BreathingScenario(
       id: 'sleep_478',
-      name: BreathingCopy('经典 4-7-8', 'Classic 4-7-8'),
+      name: BreathingCopy(
+        'inline.plan295.breathing.classic_4_7_8.7cd82cf27451',
+      ),
       scene: BreathingCopy(
-        '更慢、更克制的进阶睡前节律。',
-        'A slower, more deliberate bedtime rhythm for people already comfortable with slow breathing.',
+        'inline.plan295.breathing.a_slower_more_deliberate_bedtime_rhy.6d1875483918',
       ),
       description: BreathingCopy(
-        '经典 4-7-8 节律，适合已经能舒适地做慢呼吸的人作为睡前进阶版。',
-        'Classic 4-7-8 pacing for bedtime, best used as an advanced option if you already tolerate slow breathing well.',
+        'inline.plan295.breathing.classic_4_7_8_pacing_for_bedtime_bes.eb47dccaabfb',
       ),
       bodyFocus: BreathingCopy(
-        '吸气不要过深，重点是安静和耐心地把呼气放长。',
-        'Do not overfill the inhale. Quietness and a patient exhale matter more.',
+        'inline.plan295.breathing.do_not_overfill_the_inhale_quietness.82f3e72ce102',
       ),
       whenToUse: BreathingCopy(
-        '适合临睡前 3-5 分钟；如果长屏息让你紧张，立刻改用“睡前轻缓 4-6”。',
-        'Use for a few minutes right before sleep; switch to Bedtime 4-6 if the long hold feels too strong.',
+        'inline.plan295.breathing.use_for_a_few_minutes_right_before_s.715aa34974f8',
       ),
       researchBasis: BreathingCopy(
-        '它属于更慢、更强的节律呼吸变体，适合已经具备舒适慢呼吸基础的人。',
-        'This is a slower and more demanding paced-breathing variant best suited to experienced users.',
+        'inline.plan295.breathing.this_is_a_slower_and_more_demanding.2deb650e39c8',
       ),
       mechanism: BreathingCopy(
-        '较长屏息和长呼气会显著放慢整体节拍，只适合在舒适区内使用。',
-        'The long hold and long exhale slow the whole cycle down substantially, so comfort limits matter.',
+        'inline.plan295.breathing.the_long_hold_and_long_exhale_slow_t.ca659db5b2dc',
       ),
       themeId: 'ember',
       previewCueId: 'preview_intro_2',
       recommendedMinutes: 4,
       advanced: true,
       caution: BreathingCopy(
-        '如果 7 秒屏息让你不舒服，请改用“睡前轻缓 4-6”或“放松延呼 4-2-6-2”。',
-        'If the 7-second hold feels uncomfortable, switch to Bedtime 4-6 or Unwind 4-2-6-2.',
+        'inline.plan295.breathing.if_the_7_second_hold_feels_uncomfort.28d5b37bcaa8',
       ),
       tags: <BreathingCopy>[
-        BreathingCopy('睡前', 'Bedtime'),
-        BreathingCopy('经典', 'Classic'),
-        BreathingCopy('进阶', 'Advanced'),
+        BreathingCopy('inline.plan295.breathing.bedtime.048acdfbeddd'),
+        BreathingCopy('inline.ui.pages.toolbox_sudoku_card.classic_d331fe'),
+        BreathingCopy('inline.plan294.breathing.advanced_5895a1d0'),
       ],
       stages: <BreathingStagePlan>[
         BreathingStagePlan(
           kind: BreathingStageKind.inhale,
           seconds: 4,
-          label: BreathingCopy('鼻吸', 'Nasal inhale'),
-          prompt: BreathingCopy('轻轻吸满四拍', 'Inhale gently for four'),
+          label: BreathingCopy(
+            'inline.plan295.breathing.nasal_inhale.3d196ba5f8b1',
+          ),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.inhale_gently_for_four.e64d4aeeb473',
+          ),
           cueId: 'nose_inhale',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.hold,
           seconds: 7,
-          label: BreathingCopy('屏息', 'Hold'),
-          prompt: BreathingCopy('只停留在舒适范围', 'Stay within comfort'),
+          label: BreathingCopy('inline.plan295.breathing.hold.575df08fdfe6'),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.stay_within_comfort.b54ee80b13bd',
+          ),
           cueId: 'hold_soft',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.exhale,
           seconds: 8,
-          label: BreathingCopy('口呼', 'Mouth exhale'),
-          prompt: BreathingCopy('像轻叹一样慢慢呼出', 'Exhale long like a soft sigh'),
+          label: BreathingCopy(
+            'inline.plan295.breathing.mouth_exhale.14894980b6da',
+          ),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.exhale_long_like_a_soft_sigh.9b9c5aacdafe',
+          ),
           cueId: 'mouth_exhale',
         ),
       ],
     ),
     BreathingScenario(
       id: 'parasym_4462',
-      name: BreathingCopy('副交感切换 4-4-6-2', 'Parasym reset 4-4-6-2'),
+      name: BreathingCopy(
+        'inline.plan295.breathing.parasym_reset_4_4_6_2.89634c4e7dfa',
+      ),
       scene: BreathingCopy(
-        '从工作模式切回恢复模式。',
-        'Shift from task mode into recovery mode.',
+        'inline.plan295.breathing.shift_from_task_mode_into_recovery_m.bea4c7c02f49',
       ),
       description: BreathingCopy(
-        '较长呼气加短恢复停顿，帮助身体从追赶状态切回稳态恢复。',
-        'A longer exhale plus a short recovery pause help shift the body away from urgency and back to recovery.',
+        'inline.plan295.breathing.a_longer_exhale_plus_a_short_recover.dc245ade0d07',
       ),
       bodyFocus: BreathingCopy(
-        '呼气结束后停两拍，感受心率和肩颈一起慢下来。',
-        'After the exhale, notice the quiet rest and the body slowing down with it.',
+        'inline.plan295.breathing.after_the_exhale_notice_the_quiet_re.1a894dab9c94',
       ),
       whenToUse: BreathingCopy(
-        '适合通勤结束后、冥想前、洗漱后，或作为晚间收尾过渡。',
-        'Use after commuting, before meditation, or as an evening transition.',
+        'inline.plan295.breathing.use_after_commuting_before_meditatio.eeb4b400a295',
       ),
       researchBasis: BreathingCopy(
-        '慢速呼吸和较长呼气常用于恢复段、晚间过渡和冥想前的下行切换。',
-        'Slow breathing with a longer exhale is commonly used for evening downshifts and recovery transitions.',
+        'inline.plan295.breathing.slow_breathing_with_a_longer_exhale.bf3d5acc8822',
       ),
       mechanism: BreathingCopy(
-        '把长呼气和短暂停顿放在一起，让节奏从“追赶”切回“回收”。',
-        'The long exhale plus short pause helps the rhythm shift from urgency toward restoration.',
+        'inline.plan295.breathing.the_long_exhale_plus_short_pause_hel.533c39aa7074',
       ),
       themeId: 'ocean',
       previewCueId: 'preview_parasym',
       recommendedMinutes: 8,
       tags: <BreathingCopy>[
-        BreathingCopy('副交感', 'Parasym'),
-        BreathingCopy('晚间', 'Evening'),
-        BreathingCopy('恢复', 'Recovery'),
+        BreathingCopy('inline.plan295.breathing.parasym.4c2c7d34b3a8'),
+        BreathingCopy('inline.plan295.breathing.evening.f84bcb33a6e1'),
+        BreathingCopy('toolbox.sleep.library.tag.recovery'),
       ],
       stages: <BreathingStagePlan>[
         BreathingStagePlan(
           kind: BreathingStageKind.inhale,
           seconds: 4,
-          label: BreathingCopy('鼻吸', 'Nasal inhale'),
-          prompt: BreathingCopy('平稳吸入', 'Inhale steadily'),
+          label: BreathingCopy(
+            'inline.plan295.breathing.nasal_inhale.3d196ba5f8b1',
+          ),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.inhale_steadily.0beab8ca1fe5',
+          ),
           cueId: 'nose_inhale',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.hold,
           seconds: 4,
-          label: BreathingCopy('停留', 'Hold'),
-          prompt: BreathingCopy('只保留轻微张力', 'Keep only a gentle tone'),
+          label: BreathingCopy('inline.plan295.breathing.hold.655746dd3985'),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.keep_only_a_gentle_tone.575739e1a693',
+          ),
           cueId: 'hold_soft',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.exhale,
           seconds: 6,
-          label: BreathingCopy('长呼气', 'Long exhale'),
+          label: BreathingCopy(
+            'inline.plan295.breathing.long_exhale.3917e43be1c7',
+          ),
           prompt: BreathingCopy(
-            '让心跳跟着一起慢下来',
-            'Let the pulse follow the exhale',
+            'inline.plan295.breathing.let_the_pulse_follow_the_exhale.f3c851398657',
           ),
           cueId: 'nose_exhale',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.rest,
           seconds: 2,
-          label: BreathingCopy('恢复', 'Rest'),
-          prompt: BreathingCopy('感受身体回落', 'Feel the settling'),
+          label: BreathingCopy('inline.plan295.breathing.rest.782a5ba7dee8'),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.feel_the_settling.fad5518f0183',
+          ),
         ),
       ],
     ),
     BreathingScenario(
       id: 'physiological_sigh_216',
-      name: BreathingCopy('生理性叹息 2-1-6', 'Physiological sigh 2-1-6'),
+      name: BreathingCopy(
+        'inline.plan295.breathing.physiological_sigh_2_1_6.f0ffad20e78e',
+      ),
       scene: BreathingCopy(
-        '突发紧张、屏幕压迫感、胸口发紧时的短练习。',
-        'A short drill for acute stress, screen-pressure fatigue, or chest tightness before a task.',
+        'inline.plan295.breathing.a_short_drill_for_acute_stress_scree.6f9ccf091437',
       ),
       description: BreathingCopy(
-        '两段吸气后接一段更长的呼气，适合做 1-2 分钟短练，不建议长时间连续做。',
-        'Two inhales followed by a longer exhale work best as a brief 1-2 minute practice rather than a long session.',
+        'inline.plan295.breathing.two_inhales_followed_by_a_longer_exh.88cf253d04b3',
       ),
       bodyFocus: BreathingCopy(
-        '第一次吸气把肺底装满，第二次只补一小口，不要耸肩。',
-        'Let the first inhale fill low into the ribs, then take only a small top-up inhale without shrugging.',
+        'inline.plan295.breathing.let_the_first_inhale_fill_low_into_t.f925bcd1bfd0',
       ),
       whenToUse: BreathingCopy(
-        '适合收到压力消息后、会议前胸口发紧、连续工作后呼吸变浅时。',
-        'Use after stressful messages, before tense meetings, or when long screen time makes your breathing shallow.',
+        'inline.plan295.breathing.use_after_stressful_messages_before.c39cb894b0bd',
       ),
       researchBasis: BreathingCopy(
-        '随机对照研究中，cyclic sighing 在数种短时呼吸练习里对改善情绪和降低呼吸频率表现最好之一。',
-        'In a randomized trial, cyclic sighing was among the strongest brief breath practices for mood and respiratory-rate reduction.',
+        'inline.plan295.breathing.in_a_randomized_trial_cyclic_sighing.7197fd540de9',
       ),
       mechanism: BreathingCopy(
-        '双吸气帮助重新张开部分肺泡，长呼气负责把整体唤醒往下拉。',
-        'The double inhale helps reopen underused air sacs, while the long exhale drives the downshift.',
+        'inline.plan295.breathing.the_double_inhale_helps_reopen_under.3fbc0df60464',
       ),
       themeId: 'ocean',
       previewCueId: 'preview_altitude',
       recommendedMinutes: 2,
       caution: BreathingCopy(
-        '如果出现头晕，立刻停下并恢复自然呼吸；它适合短练，不适合连做很多分钟。',
-        'Stop immediately if you feel dizzy and return to natural breathing. This works best as a short practice.',
+        'inline.plan295.breathing.stop_immediately_if_you_feel_dizzy_a.3a13a9519f35',
       ),
       tags: <BreathingCopy>[
-        BreathingCopy('急性压力', 'Acute stress'),
-        BreathingCopy('短练', 'Brief'),
-        BreathingCopy('研究支持', 'Research-backed'),
+        BreathingCopy('inline.plan295.breathing.acute_stress.f543a1e81e52'),
+        BreathingCopy('inline.plan295.breathing.brief.937a246846ea'),
+        BreathingCopy('inline.plan295.breathing.research_backed.10336756cf09'),
       ],
       stages: <BreathingStagePlan>[
         BreathingStagePlan(
           kind: BreathingStageKind.inhale,
           seconds: 2,
-          label: BreathingCopy('第一口吸气', 'First inhale'),
-          prompt: BreathingCopy('先吸到肋骨两侧', 'Fill low into the ribs'),
+          label: BreathingCopy(
+            'inline.plan295.breathing.first_inhale.b119b0d3d265',
+          ),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.fill_low_into_the_ribs.db11b1617381',
+          ),
           cueId: 'inhale_soft',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.inhale,
           seconds: 1,
-          label: BreathingCopy('补一小口', 'Top-up inhale'),
-          prompt: BreathingCopy('只补一点，不要耸肩', 'Add a small sip of air'),
+          label: BreathingCopy(
+            'inline.plan295.breathing.top_up_inhale.ec713aebe3be',
+          ),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.add_a_small_sip_of_air.94b811a7c84f',
+          ),
           cueId: 'inhale_soft',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.exhale,
           seconds: 6,
-          label: BreathingCopy('长呼气', 'Long exhale'),
-          prompt: BreathingCopy('像叹气一样慢慢放掉', 'Let it out like a long sigh'),
+          label: BreathingCopy(
+            'inline.plan295.breathing.long_exhale.3917e43be1c7',
+          ),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.let_it_out_like_a_long_sigh.880246adf67c',
+          ),
           cueId: 'mouth_exhale',
         ),
       ],
@@ -931,79 +985,79 @@ class BreathingExperienceCatalog {
 
     BreathingScenario(
       id: 'altitude_sim_3663',
-      name: BreathingCopy('高海拔模拟 3-6-6-3', 'Altitude sim 3-6-6-3'),
+      name: BreathingCopy(
+        'inline.plan295.breathing.altitude_sim_3_6_6_3.2569eb5e47ba',
+      ),
       scene: BreathingCopy(
-        '给已经能舒适鼻呼吸的人做的短时低氧耐受练习。',
-        'A short hypoxic-tolerance drill for users who already handle nasal breathing comfortably.',
+        'inline.plan295.breathing.a_short_hypoxic_tolerance_drill_for.a6e10c1442e4',
       ),
       description: BreathingCopy(
-        '先慢慢呼出，再做短时间屏息，模拟“空气更稀薄、呼吸更克制”的节律。只建议短练，不建议长时间连续做。',
-        'A slower exhale followed by a short hold simulates a thinner-air, lower-volume rhythm. Keep it brief rather than turning it into a long session.',
+        'inline.plan295.breathing.a_slower_exhale_followed_by_a_short.216e0decf0f7',
       ),
       bodyFocus: BreathingCopy(
-        '全程保持肩颈松开、嘴唇轻闭，恢复吸气时不要猛吸，只让下一口气安静回来。',
-        'Keep the neck and jaw soft, lips lightly closed, and let the recovery inhale return quietly instead of gasping.',
+        'inline.plan295.breathing.keep_the_neck_and_jaw_soft_lips_ligh.a2a52f410ac1',
       ),
       whenToUse: BreathingCopy(
-        '只适合白天、静坐或安全站立时短练；更适合已经完成过 BOLT 测试且知道自己余量的人。',
-        'Use only as a brief daytime drill while seated or standing safely, ideally after a recent BOLT check so you know your margin.',
+        'inline.plan295.breathing.use_only_as_a_brief_daytime_drill_wh.a52fc7649a54',
       ),
       researchBasis: BreathingCopy(
-        '《学会呼吸》将屏息训练归类为低海拔下模拟高海拔刺激的方法，但强调要按健康状况和 BOLT 余量循序渐进。',
-        'The Oxygen Advantage frames breath-hold work as a way to simulate altitude stress at low altitude, while emphasizing progression by health status and BOLT margin.',
+        'inline.plan295.breathing.the_oxygen_advantage_frames_breath_h.262ebe92f7d3',
       ),
       mechanism: BreathingCopy(
-        '较长呼气加短时间屏息会提高对空气饥饿的耐受度，把注意力拉回到更安静、更节制的呼吸效率上。',
-        'The longer exhale and short hold raise tolerance to air hunger and redirect attention toward quieter, more efficient breathing.',
+        'inline.plan295.breathing.the_longer_exhale_and_short_hold_rai.8ab8713113ee',
       ),
       themeId: 'alpine',
       previewCueId: 'preview_altitude',
       recommendedMinutes: 2,
       advanced: true,
       caution: BreathingCopy(
-        '如果你有头晕、胸闷、孕期、心血管不适，或最近状态不稳，请不要练。出现明显不适时立刻停止并恢复自然呼吸。',
-        'Skip this if you feel dizzy, tight-chested, pregnant, cardiovascularly unwell, or generally unstable. Stop immediately and return to natural breathing if symptoms appear.',
+        'inline.plan295.breathing.skip_this_if_you_feel_dizzy_tight_ch.75e9bce4cdd0',
       ),
       tags: <BreathingCopy>[
-        BreathingCopy('高海拔模拟', 'Altitude sim'),
-        BreathingCopy('空气饥饿', 'Air hunger'),
-        BreathingCopy('进阶', 'Advanced'),
+        BreathingCopy('inline.plan295.breathing.altitude_sim.be9c3032fe4f'),
+        BreathingCopy('inline.plan295.breathing.air_hunger.dcd958bf79ec'),
+        BreathingCopy('inline.plan294.breathing.advanced_5895a1d0'),
       ],
       stages: <BreathingStagePlan>[
         BreathingStagePlan(
           kind: BreathingStageKind.inhale,
           seconds: 3,
-          label: BreathingCopy('鼻吸', 'Nasal inhale'),
+          label: BreathingCopy(
+            'inline.plan295.breathing.nasal_inhale.3d196ba5f8b1',
+          ),
           prompt: BreathingCopy(
-            '只吸到七成满，不追求大口',
-            'Inhale only to about seventy percent',
+            'inline.plan295.breathing.inhale_only_to_about_seventy_percent.edc11e385142',
           ),
           cueId: 'nose_inhale',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.exhale,
           seconds: 6,
-          label: BreathingCopy('长呼', 'Long exhale'),
-          prompt: BreathingCopy('慢慢把气送出去，保持安静', 'Exhale slowly and quietly'),
+          label: BreathingCopy(
+            'inline.plan295.breathing.long_exhale.7c078b45d261',
+          ),
+          prompt: BreathingCopy(
+            'inline.plan295.breathing.exhale_slowly_and_quietly.e8f859f61a6f',
+          ),
           cueId: 'nose_exhale',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.hold,
           seconds: 6,
-          label: BreathingCopy('呼后屏息', 'Exhale hold'),
+          label: BreathingCopy(
+            'inline.plan295.breathing.exhale_hold.d59976af4598',
+          ),
           prompt: BreathingCopy(
-            '停在第一次明确呼吸欲望前后，不要硬扛',
-            'Pause around the first clear urge, not beyond',
+            'inline.plan295.breathing.pause_around_the_first_clear_urge_no.3fdd55bf44da',
           ),
           cueId: 'hold_soft',
         ),
         BreathingStagePlan(
           kind: BreathingStageKind.rest,
           seconds: 3,
-          label: BreathingCopy('恢复', 'Recover'),
+          label: BreathingCopy('inline.plan295.breathing.recover.989c0a69989f'),
           prompt: BreathingCopy(
-            '让下一口气安静回来',
-            'Let the next inhale return quietly',
+            'inline.plan295.breathing.let_the_next_inhale_return_quietly.83b149346f76',
           ),
         ),
       ],

@@ -17,37 +17,16 @@ class ReactionTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(
-        i18n,
-        zh: '反应测试',
-        en: 'Reaction test',
-        ja: 'Reaction test',
-        de: 'Reaction test',
-        fr: 'Essai de réaction',
-        es: 'Prueba de reacción',
-        ru: 'Реакционный тест',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.reaction_test_916776',
       ),
-      subtitle: pickUiText(
-        i18n,
-        zh: '信号出现立刻反应——测测你的手有多快。',
-        en: 'Release, direction-swipe, and color-match modes with speed, accuracy, and streak feedback.',
-        ja: 'Release, direction-swipe, and color-match modes with speed, accuracy, and streak feedback.',
-        de: 'Release, direction-swipe, and color-match modes with speed, accuracy, and streak feedback.',
-        fr: 'Release, direction-swipe, et color-match modes avec vitesse, précision, et retour de stries.',
-        es: 'Modos de liberación, giro de dirección y captura de color con velocidad, precisión y retroalimentación.',
-        ru: 'Режимы выпуска, направления и цветового соответствия со скоростью, точностью и полосовой обратной связью.',
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.release_direction_swipe_and_color_match_modes_with_speed_94c314',
       ),
       accent: _accent,
       icon: Icons.flash_on_rounded,
-      status: pickUiText(
-        i18n,
-        zh: '信号一亮立刻反应，比谁的手速更快',
-        en: 'Next: choose a mode and finish a reaction set',
-        ja: 'Next: choose a mode and finish a reaction set',
-        de: 'Next: choose a mode and finish a reaction set',
-        fr: 'Suivant : choisissez un mode et terminez un jeu de réactions',
-        es: 'Siguiente: elegir un modo y terminar un conjunto de reacción',
-        ru: 'Далее: выберите режим и закончите набор реакций',
+      status: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.next_choose_a_mode_and_finish_a_reaction_set_45543a',
       ),
       child: const _ReactionTestCard(),
     );
@@ -83,36 +62,11 @@ class _ReactionModeSpec {
 }
 
 class _ReactionColorTarget {
-  const _ReactionColorTarget({
-    required this.zhLabel,
-    required this.enLabel,
-    required this.jaLabel,
-    required this.deLabel,
-    required this.frLabel,
-    required this.esLabel,
-    required this.ruLabel,
-    required this.color,
-  });
-
-  final String zhLabel;
-  final String enLabel;
-  final String jaLabel;
-  final String deLabel;
-  final String frLabel;
-  final String esLabel;
-  final String ruLabel;
+  const _ReactionColorTarget({required this.labelKey, required this.color});
+  final String labelKey;
   final Color color;
 
-  String label(AppI18n i18n) => pickUiText(
-    i18n,
-    zh: zhLabel,
-    en: enLabel,
-    ja: jaLabel,
-    de: deLabel,
-    fr: frLabel,
-    es: esLabel,
-    ru: ruLabel,
-  );
+  String label(AppI18n i18n) => i18n.t(labelKey);
 }
 
 class _ReactionTestCard extends StatefulWidget {
@@ -126,59 +80,29 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
   static const Color _accent = ReactionTestPage._accent;
   static const double _directionSwipeThreshold = 34;
 
-  static const List<_ReactionColorTarget> _colorTargets =
-      <_ReactionColorTarget>[
-        _ReactionColorTarget(
-          zhLabel: '红色',
-          enLabel: 'Red',
-          jaLabel: '赤',
-          deLabel: 'Rot',
-          frLabel: 'Rouge',
-          esLabel: 'Rojo',
-          ruLabel: 'Красный',
-          color: Color(0xFFD94B4B),
-        ),
-        _ReactionColorTarget(
-          zhLabel: '蓝色',
-          enLabel: 'Blue',
-          jaLabel: '青',
-          deLabel: 'Blau',
-          frLabel: 'Bleu',
-          esLabel: 'Azul',
-          ruLabel: 'Синий',
-          color: Color(0xFF3D6FD8),
-        ),
-        _ReactionColorTarget(
-          zhLabel: '绿色',
-          enLabel: 'Green',
-          jaLabel: '緑',
-          deLabel: 'Grün',
-          frLabel: 'Vert',
-          esLabel: 'Verde',
-          ruLabel: 'Зеленый',
-          color: Color(0xFF2F9E68),
-        ),
-        _ReactionColorTarget(
-          zhLabel: '黄色',
-          enLabel: 'Yellow',
-          jaLabel: '黄色',
-          deLabel: 'Gelb',
-          frLabel: 'Jaune',
-          esLabel: 'Amarillo',
-          ruLabel: 'Желтый',
-          color: Color(0xFFE0B43A),
-        ),
-        _ReactionColorTarget(
-          zhLabel: '紫色',
-          enLabel: 'Purple',
-          jaLabel: '紫',
-          deLabel: 'Violett',
-          frLabel: 'Violet',
-          esLabel: 'Morado',
-          ruLabel: 'Фиолетовый',
-          color: Color(0xFF8367C7),
-        ),
-      ];
+  static const List<_ReactionColorTarget>
+  _colorTargets = <_ReactionColorTarget>[
+    _ReactionColorTarget(
+      labelKey: 'inline.plan297.human_tests.reaction.color.red.6c9acd0a2b',
+      color: Color(0xFFD94B4B),
+    ),
+    _ReactionColorTarget(
+      labelKey: 'inline.plan297.human_tests.reaction.color.blue.cb292647f4',
+      color: Color(0xFF3D6FD8),
+    ),
+    _ReactionColorTarget(
+      labelKey: 'inline.plan297.human_tests.reaction.color.green.8efb18c875',
+      color: Color(0xFF2F9E68),
+    ),
+    _ReactionColorTarget(
+      labelKey: 'inline.plan297.human_tests.reaction.color.yellow.c260591507',
+      color: Color(0xFFE0B43A),
+    ),
+    _ReactionColorTarget(
+      labelKey: 'inline.plan297.human_tests.reaction.color.purple.16fceeffaa',
+      color: Color(0xFF8367C7),
+    ),
+  ];
 
   final math.Random _random = math.Random();
   final Stopwatch _stopwatch = Stopwatch();
@@ -673,71 +597,25 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
   _ReactionModeSpec _modeSpec(AppI18n i18n, _ReactionMode mode) {
     return switch (mode) {
       _ReactionMode.release => _ReactionModeSpec(
-        label: pickUiText(
-          i18n,
-          zh: '经典松手',
-          en: 'Release',
-          ja: 'Release',
-          de: 'Release',
-          fr: 'Libération',
-          es: 'Liberación',
-          ru: 'Выпуск',
-        ),
-        description: pickUiText(
-          i18n,
-          zh: '按住等待变绿，立刻松手。',
-          en: 'Hold, wait for green, then release.',
-          ja: 'Hold, wait for green, then release.',
-          de: 'Hold, wait for green, then release.',
-          fr: 'Attendez, attendez le vert, puis relâchez.',
-          es: 'Espera, espera a verde, luego suelta.',
-          ru: 'Держись, жди зелени, потом отпусти.',
+        label: i18n.t('platform.linux.cmakelists.txt.release_82546b'),
+        description: i18n.t(
+          'inline.ui.pages.toolbox_human_tests_reaction.hold_wait_for_green_then_release_dfd6b7',
         ),
         icon: Icons.front_hand_rounded,
       ),
       _ReactionMode.direction => _ReactionModeSpec(
-        label: pickUiText(
-          i18n,
-          zh: '方向滑动',
-          en: 'Direction',
-          ja: 'Direction',
-          de: 'Direction',
-          fr: 'Direction',
-          es: 'Dirección',
-          ru: 'направление',
-        ),
-        description: pickUiText(
-          i18n,
-          zh: '按住中心，看到箭头后滑向对应方向；也可点 D-pad 方向键。',
-          en: 'Hold center, then slide toward the arrow; D-pad taps also work.',
-          ja: 'Hold center, then slide toward the arrow; D-pad taps also work.',
-          de: 'Hold center, then slide toward the arrow; D-pad taps also work.',
-          fr: 'Maintenez le centre, puis glissez vers la flèche ; les touches D-pad fonctionnent également.',
-          es: 'Mantener el centro, luego deslizarse hacia la flecha; los grifos D-pad también funcionan.',
-          ru: 'Держите центр, затем скользите к стрелке; краны D-pad также работают.',
+        label: i18n.t('inline.plan295.daily_choice.direction.4a540ce8efd7'),
+        description: i18n.t(
+          'inline.ui.pages.toolbox_human_tests_reaction.hold_center_then_slide_toward_the_arrow_d_pad_taps_also_0eb4ca',
         ),
         icon: Icons.open_with_rounded,
       ),
       _ReactionMode.colorMatch => _ReactionModeSpec(
-        label: pickUiText(
-          i18n,
-          zh: '颜色匹配',
-          en: 'Color match',
-          ja: 'カラーマッチ',
-          de: 'Color match',
-          fr: 'Couleur correspondante',
-          es: 'Color partido',
-          ru: 'Цветовой матч',
+        label: i18n.t(
+          'inline.ui.pages.toolbox_human_tests_reaction.color_match_2fff88',
         ),
-        description: pickUiText(
-          i18n,
-          zh: '舞台变色后，点击下方对应颜色。',
-          en: 'When the stage changes color, tap the matching color below.',
-          ja: 'When the stage changes color, tap the matching color below.',
-          de: 'When the stage changes color, tap the matching color below.',
-          fr: 'Lorsque l\'étape change de couleur, appuyez sur la couleur correspondante ci-dessous.',
-          es: 'Cuando el escenario cambie de color, toque el color que coincide a continuación.',
-          ru: 'Когда сцена меняет цвет, нажмите соответствующий цвет ниже.',
+        description: i18n.t(
+          'inline.ui.pages.toolbox_human_tests_reaction.when_the_stage_changes_color_tap_the_matching_color_belo_bda3dd',
         ),
         icon: Icons.palette_rounded,
       ),
@@ -746,35 +624,14 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
 
   String _paceLabel(AppI18n i18n, _ReactionPace pace) {
     return switch (pace) {
-      _ReactionPace.standard => pickUiText(
-        i18n,
-        zh: '标准',
-        en: 'Standard',
-        ja: 'Standard',
-        de: 'Standard',
-        fr: 'Norme',
-        es: 'Estándar',
-        ru: 'Стандарт',
+      _ReactionPace.standard => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.standard_b9acb5',
       ),
-      _ReactionPace.sprint => pickUiText(
-        i18n,
-        zh: '冲刺',
-        en: 'Sprint',
-        ja: 'Sprint',
-        de: 'Sprint',
-        fr: 'Sprint',
-        es: 'Sprint',
-        ru: 'Спринт',
+      _ReactionPace.sprint => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.sprint_a70236',
       ),
-      _ReactionPace.variable => pickUiText(
-        i18n,
-        zh: '迷惑',
-        en: 'Variable',
-        ja: 'Variable',
-        de: 'Variable',
-        fr: 'Variable',
-        es: 'Variable',
-        ru: 'переменный',
+      _ReactionPace.variable => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.variable_b5cb9c',
       ),
     };
   }
@@ -802,140 +659,54 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
     return switch (_phase) {
       _ReactionPhase.idle =>
         _mode == _ReactionMode.release
-            ? pickUiText(
-                i18n,
-                zh: '按住开始',
-                en: 'Hold to start',
-                ja: 'Hold to start',
-                de: 'Hold to start',
-                fr: 'Attendez pour commencer',
-                es: 'Espera a empezar',
-                ru: 'Держись, чтобы начать',
+            ? i18n.t(
+                'inline.ui.pages.toolbox_human_tests_reaction.hold_to_start_7c0c4c',
               )
             : _mode == _ReactionMode.direction
-            ? pickUiText(
-                i18n,
-                zh: '按中心或点方向开始',
-                en: 'Hold center or tap arrow',
-                ja: 'Hold center or tap arrow',
-                de: 'Hold center or tap arrow',
-                fr: 'Maintenez le centre ou appuyez sur la flèche',
-                es: 'Tener centro o pulsar flecha',
-                ru: 'Держите центр или нажмите стрелку',
+            ? i18n.t(
+                'inline.ui.pages.toolbox_human_tests_reaction.hold_center_or_tap_arrow_8a4be8',
               )
-            : pickUiText(
-                i18n,
-                zh: '点击颜色开始',
-                en: 'Tap a color to start',
-                ja: 'Tap a color to start',
-                de: 'Tap a color to start',
-                fr: 'Appuyez sur une couleur pour démarrer',
-                es: 'Pulsa un color para empezar',
-                ru: 'Нажмите цвет, чтобы начать',
+            : i18n.t(
+                'inline.ui.pages.toolbox_human_tests_reaction.tap_a_color_to_start_d283ab',
               ),
       _ReactionPhase.waiting =>
         _mode == _ReactionMode.release
-            ? pickUiText(
-                i18n,
-                zh: '继续按住',
-                en: 'Keep holding',
-                ja: 'Keep holding',
-                de: 'Keep holding',
-                fr: 'Continuez à tenir',
-                es: 'Manténganse.',
-                ru: 'Держись.',
+            ? i18n.t(
+                'inline.ui.pages.toolbox_human_tests_reaction.keep_holding_0372a4',
               )
             : _mode == _ReactionMode.direction
-            ? pickUiText(
-                i18n,
-                zh: '等待箭头',
-                en: 'Wait for arrow',
-                ja: 'Wait for arrow',
-                de: 'Wait for arrow',
-                fr: 'Attendez la flèche',
-                es: 'Espera una flecha',
-                ru: 'Дождись стрелы',
+            ? i18n.t(
+                'inline.ui.pages.toolbox_human_tests_reaction.wait_for_arrow_f9141c',
               )
-            : pickUiText(
-                i18n,
-                zh: '等待颜色',
-                en: 'Wait for color',
-                ja: 'Wait for color',
-                de: 'Wait for color',
-                fr: 'Attendez la couleur',
-                es: 'Espera a color',
-                ru: 'Ждать цвета',
+            : i18n.t(
+                'inline.ui.pages.toolbox_human_tests_reaction.wait_for_color_615ddd',
               ),
       _ReactionPhase.ready =>
         _mode == _ReactionMode.release
-            ? pickUiText(
-                i18n,
-                zh: '松手',
-                en: 'Release',
-                ja: 'Release',
-                de: 'Release',
-                fr: 'Libération',
-                es: 'Liberación',
-                ru: 'Выпуск',
-              )
+            ? i18n.t('platform.linux.cmakelists.txt.release_82546b')
             : _mode == _ReactionMode.direction
-            ? pickUiText(
-                i18n,
-                zh: '滑动方向',
-                en: 'Slide direction',
-                ja: 'Slide direction',
-                de: 'Slide direction',
-                fr: 'Direction de la diapositive',
-                es: 'Dirección de diapositivas',
-                ru: 'Направление скольжения',
+            ? i18n.t(
+                'inline.ui.pages.toolbox_human_tests_reaction.slide_direction_e5eb80',
               )
-            : pickUiText(
-                i18n,
-                zh: '选颜色',
-                en: 'Pick color',
-                ja: 'Pick color',
-                de: 'Pick color',
-                fr: 'Choisir la couleur',
-                es: 'Elija color',
-                ru: 'Выберите цвет',
+            : i18n.t(
+                'inline.ui.pages.appearance_studio_page.pick_color_dd4439',
               ),
       _ReactionPhase.feedback => _latestFeedbackText(i18n),
-      _ReactionPhase.done => pickUiText(
-        i18n,
-        zh: '本轮完成',
-        en: 'Set complete',
-        ja: 'Set complete',
-        de: 'Set complete',
-        fr: 'Ensemble terminé',
-        es: 'Conjunto completo',
-        ru: 'Полный комплект',
+      _ReactionPhase.done => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.set_complete_082408',
       ),
     };
   }
 
   String _stageHint(AppI18n i18n) {
     if (_phase == _ReactionPhase.feedback) {
-      return pickUiText(
-        i18n,
-        zh: '继续操作进入下一轮',
-        en: 'Repeat the action for the next round',
-        ja: 'Repeat the action for the next round',
-        de: 'Repeat the action for the next round',
-        fr: 'Répéter l\'action pour le prochain tour',
-        es: 'Repita la acción para la próxima ronda',
-        ru: 'Повторите действие для следующего раунда',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.repeat_the_action_for_the_next_round_38ea2f',
       );
     }
     if (_phase == _ReactionPhase.done) {
-      return pickUiText(
-        i18n,
-        zh: '可以重置，也可以换个模式再来一轮',
-        en: 'Reset or switch mode for a fresh challenge',
-        ja: 'Reset or switch mode for a fresh challenge',
-        de: 'Reset or switch mode for a fresh challenge',
-        fr: 'Réinitialisation ou changement de mode pour un nouveau défi',
-        es: 'Reiniciar o cambiar el modo para un nuevo desafío',
-        ru: 'Режим сброса или переключения для нового вызова',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.reset_or_switch_mode_for_a_fresh_challenge_3e9a6e',
       );
     }
     return _modeSpec(i18n, _mode).description;
@@ -943,100 +714,38 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
 
   String _latestFeedbackText(AppI18n i18n) {
     if (_attempts.isEmpty) {
-      return pickUiText(
-        i18n,
-        zh: '准备好',
-        en: 'Ready',
-        ja: 'Ready',
-        de: 'Ready',
-        fr: 'Prêt',
-        es: 'Listo',
-        ru: 'Готовы',
-      );
+      return i18n.t('timerIdle');
     }
     final latest = _attempts.last;
     if (latest.success && latest.milliseconds != null) {
       final ms = latest.milliseconds!;
       final rank = ms <= 180
-          ? pickUiText(
-              i18n,
-              zh: '闪电',
-              en: 'Lightning',
-              ja: 'Lightning',
-              de: 'Lightning',
-              fr: 'Lumière',
-              es: 'Rayos',
-              ru: 'Молния',
+          ? i18n.t(
+              'inline.ui.pages.toolbox_human_tests_reaction.lightning_7ffe36',
             )
           : ms <= 260
-          ? pickUiText(
-              i18n,
-              zh: '很快',
-              en: 'Sharp',
-              ja: 'Sharp',
-              de: 'Sharp',
-              fr: 'Aiguë',
-              es: 'Sharp',
-              ru: 'острый',
-            )
-          : pickUiText(
-              i18n,
-              zh: '已记录',
-              en: 'Saved',
-              ja: 'Saved',
-              de: 'Saved',
-              fr: 'Enregistrer',
-              es: 'Guardado',
-              ru: 'Спасенный',
+          ? i18n.t('inline.ui.pages.toolbox_human_tests_reaction.sharp_d18182')
+          : i18n.t(
+              'inline.ui.pages.toolbox_human_tests_auditory_lab.saved_147d6b',
             );
       return '$rank · ${_formatMilliseconds(ms)}';
     }
     if (latest.falseStart) {
-      return pickUiText(
-        i18n,
-        zh: '抢跑了',
-        en: 'False start',
-        ja: 'False start',
-        de: 'False start',
-        fr: 'Faux départ',
-        es: 'Falso comienzo',
-        ru: 'Ложный старт',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.false_start_5a5bbc',
       );
     }
     if (latest.wrongDirection) {
-      return pickUiText(
-        i18n,
-        zh: '方向错了',
-        en: 'Wrong direction',
-        ja: 'Wrong direction',
-        de: 'Wrong direction',
-        fr: 'Mauvaise direction',
-        es: 'Dirección incorrecta',
-        ru: 'Неправильное направление',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.wrong_direction_e67d8e',
       );
     }
     if (latest.wrongColor) {
-      return pickUiText(
-        i18n,
-        zh: '颜色错了',
-        en: 'Wrong color',
-        ja: 'Wrong color',
-        de: 'Wrong color',
-        fr: 'Mauvaise couleur',
-        es: 'Color equivocado',
-        ru: 'Неправильный цвет',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.wrong_color_2430f5',
       );
     }
-    return pickUiText(
-      i18n,
-      zh: '未命中',
-      en: 'Missed',
-      ja: 'Missed',
-      de: 'Missed',
-      fr: 'Manque',
-      es: 'Desaparecido',
-      ru: 'Пропавший',
-    );
+    return i18n.t('toolbox.sleep.rhythm.missed');
   }
 
   Color _stageColor(BuildContext context) {
@@ -1074,82 +783,29 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
+            (i18n.t('rounds'), '${_attempts.length}/$_roundTarget'),
             (
-              pickUiText(
-                i18n,
-                zh: '轮次',
-                en: 'Rounds',
-                ja: 'Rounds',
-                de: 'Rounds',
-                fr: 'Rondes',
-                es: 'Rondas',
-                ru: 'Круги',
-              ),
-              '${_attempts.length}/$_roundTarget',
-            ),
-            (
-              pickUiText(
-                i18n,
-                zh: '平均',
-                en: 'Average',
-                ja: '平均',
-                de: 'Average',
-                fr: 'Moyenne',
-                es: 'Promedio',
-                ru: 'средний',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_reaction.average_68111e',
               ),
               _averageMs == null ? '-' : _formatMilliseconds(_averageMs!),
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '最快',
-                en: 'Best',
-                ja: 'ベスト',
-                de: 'Best',
-                fr: 'Meilleur',
-                es: 'Mejor',
-                ru: 'Лучший',
-              ),
+              i18n.t('toolbox.breathing.best'),
               _bestMs == null ? '-' : _formatMilliseconds(_bestMs!),
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '准确率',
-                en: 'Accuracy',
-                ja: '精度',
-                de: 'Accuracy',
-                fr: 'Accuracy',
-                es: 'Precisión',
-                ru: 'точность',
-              ),
+              i18n.t('inline.ui.pages.practice_review_page.accuracy_8cf5a1'),
               accuracy == null ? '-' : '$accuracy%',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '连击',
-                en: 'Streak',
-                ja: 'Streak',
-                de: 'Streak',
-                fr: 'Streak',
-                es: 'Streak',
-                ru: 'полоса',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_reaction.streak_78b2bd',
               ),
               '$_streak',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '超越',
-                en: 'Beat',
-                ja: 'を倒す',
-                de: 'Beat',
-                fr: 'Combattre',
-                es: 'Beat',
-                ru: 'бить',
-              ),
+              i18n.t('toolbox.sound.focus.stageBeatLabel'),
               beat == null ? '-' : '$beat%',
             ),
           ],
@@ -1179,16 +835,7 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(
-              i18n,
-              zh: '模式',
-              en: 'Modes',
-              ja: 'Modes',
-              de: 'Modes',
-              fr: 'Modes',
-              es: 'Modos',
-              ru: 'режимы',
-            ),
+            i18n.t('toolbox.sound.soothing.modes_button_label'),
             style: Theme.of(
               context,
             ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
@@ -1325,18 +972,7 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
         OutlinedButton.icon(
           onPressed: _reset,
           icon: const Icon(Icons.restart_alt_rounded),
-          label: Text(
-            pickUiText(
-              i18n,
-              zh: '重置',
-              en: 'Reset',
-              ja: 'Reset',
-              de: 'Reset',
-              fr: 'Réinitialiser',
-              es: 'Reset',
-              ru: 'сброс',
-            ),
-          ),
+          label: Text(i18n.t('appearanceReset')),
           style: OutlinedButton.styleFrom(minimumSize: const Size(104, 48)),
         ),
       ],
@@ -1345,49 +981,21 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
 
   String _primaryActionLabel(AppI18n i18n) {
     if (_mode == _ReactionMode.release) {
-      return pickUiText(
-        i18n,
-        zh: '使用舞台按住',
-        en: 'Hold the stage',
-        ja: 'Hold the stage',
-        de: 'Hold the stage',
-        fr: 'Tenez la scène',
-        es: 'Mantenga el escenario',
-        ru: 'Держите сцену',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.hold_the_stage_b10f50',
       );
     }
     if (_phase == _ReactionPhase.done) {
-      return pickUiText(
-        i18n,
-        zh: '重开一组',
-        en: 'Restart set',
-        ja: 'Restart set',
-        de: 'Restart set',
-        fr: 'Redémarrer',
-        es: 'Set de reinicio',
-        ru: 'Перезагрузить',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.restart_set_e97c28',
       );
     }
     return _phase == _ReactionPhase.waiting
-        ? pickUiText(
-            i18n,
-            zh: '抢跑判定',
-            en: 'False start',
-            ja: 'False start',
-            de: 'False start',
-            fr: 'Faux départ',
-            es: 'Falso comienzo',
-            ru: 'Ложный старт',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_human_tests_reaction.false_start_5a5bbc',
           )
-        : pickUiText(
-            i18n,
-            zh: '开始/下一轮',
-            en: 'Start/next',
-            ja: 'Start/next',
-            de: 'Start/next',
-            fr: 'Début/suivant',
-            es: 'Inicio/next',
-            ru: 'Начало/следующее',
+        : i18n.t(
+            'inline.ui.pages.toolbox_human_tests_reaction.start_next_818f58',
           );
   }
 
@@ -1398,15 +1006,8 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Text(
-            pickUiText(
-              i18n,
-              zh: '方向 D-pad',
-              en: 'Direction D-pad',
-              ja: 'Direction D-pad',
-              de: 'Direction D-pad',
-              fr: 'Ligne D',
-              es: 'Dirección D-pad',
-              ru: 'Направление D-pad',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_reaction.direction_d_pad_41b017',
             ),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w900,
@@ -1414,15 +1015,8 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
           ),
           const SizedBox(height: 6),
           Text(
-            pickUiText(
-              i18n,
-              zh: '中心按住等待，信号出现后滑向上、下、左、右。',
-              en: 'Hold the center, then slide up, down, left, or right after the signal.',
-              ja: 'Hold the center, then slide up, down, left, or right after the signal.',
-              de: 'Hold the center, then slide up, down, left, or right after the signal.',
-              fr: 'Tenez le centre, puis glissez vers le haut, vers le bas, à gauche, ou juste après le signal.',
-              es: 'Mantenga el centro, luego deslice hacia arriba, hacia abajo, izquierda o derecha después de la señal.',
-              ru: 'Держите центр, затем скользите вверх, вниз, влево или вправо после сигнала.',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_reaction.hold_the_center_then_slide_up_down_left_or_right_after_t_e149c7',
             ),
             style: theme.textTheme.bodySmall?.copyWith(height: 1.35),
           ),
@@ -1450,18 +1044,7 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
           OutlinedButton.icon(
             onPressed: _reset,
             icon: const Icon(Icons.restart_alt_rounded),
-            label: Text(
-              pickUiText(
-                i18n,
-                zh: '重置',
-                en: 'Reset',
-                ja: 'Reset',
-                de: 'Reset',
-                fr: 'Réinitialiser',
-                es: 'Reset',
-                ru: 'сброс',
-              ),
-            ),
+            label: Text(i18n.t('appearanceReset')),
             style: OutlinedButton.styleFrom(minimumSize: const Size(104, 48)),
           ),
         ],
@@ -1510,15 +1093,8 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
             ),
             const SizedBox(height: 2),
             Text(
-              pickUiText(
-                i18n,
-                zh: '按住',
-                en: 'Hold center',
-                ja: 'Hold center',
-                de: 'Hold center',
-                fr: 'Centre de retenue',
-                es: 'Centro de retención',
-                ru: 'Центр управления',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_reaction.hold_center_ed9cde',
               ),
               textAlign: TextAlign.center,
               style: theme.textTheme.labelSmall?.copyWith(
@@ -1540,15 +1116,8 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Text(
-            pickUiText(
-              i18n,
-              zh: '颜色按钮',
-              en: 'Color buttons',
-              ja: 'ブーストカラーカラーボタン',
-              de: 'Color buttons',
-              fr: 'Boutons de couleur',
-              es: 'Botones de color',
-              ru: 'Цветные кнопки',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_reaction.color_buttons_f9c0d5',
             ),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w900,
@@ -1556,15 +1125,8 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
           ),
           const SizedBox(height: 6),
           Text(
-            pickUiText(
-              i18n,
-              zh: '先点任意颜色开始，等待舞台变色后再点匹配颜色。',
-              en: 'Tap any color to start, then tap the matching color after the stage changes.',
-              ja: 'Tap any color to start, then tap the matching color after the stage changes.',
-              de: 'Tap any color to start, then tap the matching color after the stage changes.',
-              fr: 'Appuyez sur n\'importe quelle couleur pour démarrer, puis appuyez sur la couleur correspondante après les changements d\'étape.',
-              es: 'Toque cualquier color para empezar, luego toque el color que coincida después de los cambios de escenario.',
-              ru: 'Нажмите любой цвет, чтобы начать, а затем нажмите соответствующий цвет после изменения сцены.',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_reaction.tap_any_color_to_start_then_tap_the_matching_color_after_ae99c4',
             ),
             style: theme.textTheme.bodySmall?.copyWith(height: 1.35),
           ),
@@ -1581,18 +1143,7 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
           OutlinedButton.icon(
             onPressed: _reset,
             icon: const Icon(Icons.restart_alt_rounded),
-            label: Text(
-              pickUiText(
-                i18n,
-                zh: '重置',
-                en: 'Reset',
-                ja: 'Reset',
-                de: 'Reset',
-                fr: 'Réinitialiser',
-                es: 'Reset',
-                ru: 'сброс',
-              ),
-            ),
+            label: Text(i18n.t('appearanceReset')),
             style: OutlinedButton.styleFrom(minimumSize: const Size(104, 48)),
           ),
         ],
@@ -1618,39 +1169,18 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
 
   Widget _buildSettings(BuildContext context, AppI18n i18n) {
     return _HumanSettingsSection(
-      title: pickUiText(
-        i18n,
-        zh: '反应设置',
-        en: 'Reaction settings',
-        ja: 'Reaction settings',
-        de: 'Reaction settings',
-        fr: 'Paramètres de réaction',
-        es: 'Ajustes de reacción',
-        ru: 'Настройки реакции',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.reaction_settings_9b620f',
       ),
-      subtitle: pickUiText(
-        i18n,
-        zh: '改轮次或信号节奏后，会从新一轮开始。',
-        en: 'Changing rounds or signal pace resets the current set.',
-        ja: 'ラウンドまたはシグナルペースを変更すると、現在のセットがリセットされます。',
-        de: 'Changing rounds or signal pace resets the current set.',
-        fr: 'Changer les tours ou le rythme du signal réinitialise l\'ensemble courant.',
-        es: 'Cambiar las rondas o el ritmo de señal reajusta el conjunto actual.',
-        ru: 'Изменение раундов или скорости сигнала сбрасывает текущий набор.',
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.changing_rounds_or_signal_pace_resets_the_current_set_7c863e',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(
-              i18n,
-              zh: '轮次数',
-              en: 'Round count',
-              ja: 'Round count',
-              de: 'Round count',
-              fr: 'Nombre de cycles',
-              es: 'Cuenta redonda',
-              ru: 'Круглый счет',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_cognition.round_count_058a83',
             ),
             style: Theme.of(
               context,
@@ -1672,15 +1202,8 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
           ),
           const SizedBox(height: 14),
           Text(
-            pickUiText(
-              i18n,
-              zh: '信号节奏',
-              en: 'Signal pace',
-              ja: 'Signal pace',
-              de: 'Signal pace',
-              fr: 'Vitesse du signal',
-              es: 'Paso de señalización',
-              ru: 'Скорость сигнала',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_reaction.signal_pace_453959',
             ),
             style: Theme.of(
               context,
@@ -1715,15 +1238,8 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
             children: <Widget>[
               Expanded(
                 child: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '反应轨迹',
-                    en: 'Set trail',
-                    ja: 'Set trail',
-                    de: 'Set trail',
-                    fr: 'Définir la piste',
-                    es: 'Establecer sendero',
-                    ru: 'Проследить',
+                  i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_reaction.set_trail_69ed01',
                   ),
                   style: Theme.of(
                     context,
@@ -1739,15 +1255,8 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
           const SizedBox(height: 10),
           if (_attempts.isEmpty)
             Text(
-              pickUiText(
-                i18n,
-                zh: '完成第一轮后，这里会显示每次反应的结果。',
-                en: 'Results from each reaction will appear here after the first round.',
-                ja: 'Results from each reaction will appear here after the first round.',
-                de: 'Results from each reaction will appear here after the first round.',
-                fr: 'Les résultats de chaque réaction apparaîtront ici après le premier tour.',
-                es: 'Los resultados de cada reacción aparecerán aquí después de la primera ronda.',
-                ru: 'Результаты каждой реакции будут появляться после первого раунда.',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_reaction.results_from_each_reaction_will_appear_here_after_the_fi_f9c990',
               ),
               style: Theme.of(context).textTheme.bodySmall,
             )
@@ -1795,51 +1304,21 @@ class _ReactionTestCardState extends State<_ReactionTestCard> {
       return _formatMilliseconds(attempt.milliseconds!);
     }
     if (attempt.falseStart) {
-      return pickUiText(
-        i18n,
-        zh: '抢跑',
-        en: 'Early',
-        ja: 'Early',
-        de: 'Early',
-        fr: 'Début',
-        es: 'Principios',
-        ru: 'ранний',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.early_0766fc',
       );
     }
     if (attempt.wrongDirection) {
-      return pickUiText(
-        i18n,
-        zh: '错向',
-        en: 'Wrong',
-        ja: 'Wrong',
-        de: 'Wrong',
-        fr: 'Faux',
-        es: 'Wrong',
-        ru: 'неправильно',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.wrong_2a4363',
       );
     }
     if (attempt.wrongColor) {
-      return pickUiText(
-        i18n,
-        zh: '错色',
-        en: 'Wrong color',
-        ja: 'Wrong color',
-        de: 'Wrong color',
-        fr: 'Mauvaise couleur',
-        es: 'Color equivocado',
-        ru: 'Неправильный цвет',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.wrong_color_2430f5',
       );
     }
-    return pickUiText(
-      i18n,
-      zh: '未中',
-      en: 'Miss',
-      ja: 'Miss',
-      de: 'Miss',
-      fr: 'Mlle',
-      es: 'Miss',
-      ru: 'Мисс.',
-    );
+    return i18n.t('inline.ui.pages.toolbox_human_tests_bimanual.miss_7876fa');
   }
 }
 
@@ -1890,174 +1369,61 @@ class _ReactionCompletionReportDialog extends StatelessWidget {
     final analysis = _analysisText(i18n);
     return _HumanReportDialogFrame(
       title: Text(
-        pickUiText(
-          i18n,
-          zh: '反应测试报告',
-          en: 'Reaction test report',
-          ja: 'Reaction test report',
-          de: 'Reaction test report',
-          fr: 'Procès-verbal d\'essai de réaction',
-          es: 'Informe de la prueba de reacción',
-          ru: 'Отчет об испытаниях на реакцию',
+        i18n.t(
+          'inline.ui.pages.toolbox_human_tests_reaction.reaction_test_report_57a5c4',
         ),
       ),
       accent: accent,
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
+            (i18n.t('toolbox.sound.piano.mode'), modeLabel),
             (
-              pickUiText(
-                i18n,
-                zh: '模式',
-                en: 'Mode',
-                ja: 'Mode',
-                de: 'Mode',
-                fr: 'Mode',
-                es: 'Modo',
-                ru: 'Режим',
-              ),
-              modeLabel,
-            ),
-            (
-              pickUiText(
-                i18n,
-                zh: '节奏',
-                en: 'Pace',
-                ja: 'Pace',
-                de: 'Pace',
-                fr: 'Pace',
-                es: 'Pace',
-                ru: 'темп',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_cognition.pace_194760',
               ),
               paceLabel,
             ),
+            (i18n.t('rounds'), '$successCount/$roundTarget'),
             (
-              pickUiText(
-                i18n,
-                zh: '轮次',
-                en: 'Rounds',
-                ja: 'Rounds',
-                de: 'Rounds',
-                fr: 'Rondes',
-                es: 'Rondas',
-                ru: 'Круги',
-              ),
-              '$successCount/$roundTarget',
-            ),
-            (
-              pickUiText(
-                i18n,
-                zh: '成功',
-                en: 'Successes',
-                ja: 'Successes',
-                de: 'Successes',
-                fr: 'Succès',
-                es: 'Éxitos',
-                ru: 'Успехи',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_reaction.successes_93fe69',
               ),
               '$successCount',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '抢跑',
-                en: 'False starts',
-                ja: 'False starts',
-                de: 'False starts',
-                fr: 'Faux départs',
-                es: 'False comienza',
-                ru: 'Ложные старты',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_auditory.false_starts_9a365d',
               ),
               '$falseStarts',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '判向错误',
-                en: 'Wrong direction',
-                ja: 'Wrong direction',
-                de: 'Wrong direction',
-                fr: 'Mauvaise direction',
-                es: 'Dirección incorrecta',
-                ru: 'Неправильное направление',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_reaction.wrong_direction_e67d8e',
               ),
               '$wrongDirections',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '配色错误',
-                en: 'Wrong color',
-                ja: 'Wrong color',
-                de: 'Wrong color',
-                fr: 'Mauvaise couleur',
-                es: 'Color equivocado',
-                ru: 'Неправильный цвет',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_reaction.wrong_color_2430f5',
               ),
               '$wrongColors',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '准确率',
-                en: 'Accuracy',
-                ja: '精度',
-                de: 'Accuracy',
-                fr: 'Accuracy',
-                es: 'Precisión',
-                ru: 'точность',
-              ),
+              i18n.t('inline.ui.pages.practice_review_page.accuracy_8cf5a1'),
               accuracyText,
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '平均',
-                en: 'Average',
-                ja: '平均',
-                de: 'Average',
-                fr: 'Moyenne',
-                es: 'Promedio',
-                ru: 'средний',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_reaction.average_68111e',
               ),
               averageText,
             ),
+            (i18n.t('toolbox.breathing.best'), bestText),
+            (i18n.t('toolbox.sound.focus.stageBeatLabel'), beatText),
             (
-              pickUiText(
-                i18n,
-                zh: '最快',
-                en: 'Best',
-                ja: 'ベスト',
-                de: 'Best',
-                fr: 'Meilleur',
-                es: 'Mejor',
-                ru: 'Лучший',
-              ),
-              bestText,
-            ),
-            (
-              pickUiText(
-                i18n,
-                zh: '超越',
-                en: 'Beat',
-                ja: 'を倒す',
-                de: 'Beat',
-                fr: 'Combattre',
-                es: 'Beat',
-                ru: 'бить',
-              ),
-              beatText,
-            ),
-            (
-              pickUiText(
-                i18n,
-                zh: '连击',
-                en: 'Streak',
-                ja: 'Streak',
-                de: 'Streak',
-                fr: 'Streak',
-                es: 'Streak',
-                ru: 'полоса',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_reaction.streak_78b2bd',
               ),
               '$streak',
             ),
@@ -2069,15 +1435,8 @@ class _ReactionCompletionReportDialog extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '复盘',
-                  en: 'Analysis',
-                  ja: '分析',
-                  de: 'Analysis',
-                  fr: 'Analyse',
-                  es: 'Análisis',
-                  ru: 'Анализ',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_memory.analysis_b0b53c',
                 ),
                 style: Theme.of(
                   context,
@@ -2099,15 +1458,8 @@ class _ReactionCompletionReportDialog extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '本组轨迹',
-                  en: 'Set trail',
-                  ja: 'Set trail',
-                  de: 'Set trail',
-                  fr: 'Définir la piste',
-                  es: 'Establecer sendero',
-                  ru: 'Проследить',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_reaction.set_trail_69ed01',
                 ),
                 style: Theme.of(
                   context,
@@ -2143,62 +1495,27 @@ class _ReactionCompletionReportDialog extends StatelessWidget {
 
   String _analysisText(AppI18n i18n) {
     if (falseStarts > 0 && falseStarts >= wrongDirections + wrongColors) {
-      return pickUiText(
-        i18n,
-        zh: '主要问题是抢跑，先稳住节奏再追速度。',
-        en: 'False starts are the main issue. Stabilize timing before chasing pace.',
-        ja: 'False starts are the main issue. Stabilize timing before chasing pace.',
-        de: 'False starts are the main issue. Stabilize timing before chasing pace.',
-        fr: 'Les faux départs sont le problème principal. Stabiliser le timing avant de poursuivre le rythme.',
-        es: 'Los comienzos falsos son el problema principal. Estabilizar el tiempo antes de perseguir el ritmo.',
-        ru: 'Ложные старты – главная проблема. Стабилизировать время перед погоней за темпом.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.false_starts_are_the_main_issue_stabilize_timing_before_51253a',
       );
     }
     if (accuracy != null && accuracy! < 0.7) {
-      return pickUiText(
-        i18n,
-        zh: '准确率还偏低，先把动作做准，再去缩短反应时间。',
-        en: 'Accuracy is still low. Make the action clean first, then reduce latency.',
-        ja: '精度はまだ低い。最初にアクションをクリーンにしてから、レイテンシを減らします。',
-        de: 'Accuracy is still low. Make the action clean first, then reduce latency.',
-        fr: 'Accuracy is still low. Make the action clean first, then reduce latency.',
-        es: 'La precisión sigue siendo baja. Hacer la acción limpia primero, luego reducir la latencia.',
-        ru: 'Точность остается низкой. Сначала сделайте действие чистым, затем уменьшите задержку.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.accuracy_is_still_low_make_the_action_clean_first_then_r_d55829',
       );
     }
     if ((averageMs ?? 9999) <= 240 && (accuracy ?? 0) >= 0.85) {
-      return pickUiText(
-        i18n,
-        zh: '节奏已经稳定，可以切到更快的节拍继续压缩时间。',
-        en: 'The rhythm is steady. Move to a faster pace to keep trimming latency.',
-        ja: 'The rhythm is steady. Move to a faster pace to keep trimming latency.',
-        de: 'The rhythm is steady. Move to a faster pace to keep trimming latency.',
-        fr: 'Le rythme est stable. Déplacez-vous à un rythme plus rapide pour réduire la latence.',
-        es: 'El ritmo es estable. Muévete a un ritmo más rápido para seguir recortando latencia.',
-        ru: 'Ритм стабилен. Перейдите к более быстрому темпу, чтобы сохранить задержку обрезки.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.the_rhythm_is_steady_move_to_a_faster_pace_to_keep_trimm_8e6ccc',
       );
     }
     if (wrongDirections > 0 || wrongColors > 0) {
-      return pickUiText(
-        i18n,
-        zh: '错误多半来自判向或配色。可以先固定单一模式，练稳后再提速。',
-        en: 'Most misses come from direction or color choice. Practice one mode cleanly before speeding up.',
-        ja: 'Most misses come from direction or color choice. Practice one mode cleanly before speeding up.',
-        de: 'Most misses come from direction or color choice. Practice one mode cleanly before speeding up.',
-        fr: 'La plupart des erreurs proviennent de la direction ou du choix de couleur. Pratiquez un mode proprement avant d\'accélérer.',
-        es: 'La mayoría de las faltas provienen de la dirección o elección de color. Practica un modo limpiamente antes de acelerar.',
-        ru: 'Большинство промахов приходят из направления или выбора цвета. Практикуйте один режим чисто перед ускорением.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.most_misses_come_from_direction_or_color_choice_practice_b14c70',
       );
     }
-    return pickUiText(
-      i18n,
-      zh: '整体表现平稳，继续保持当前模式即可。',
-      en: 'Overall performance is steady. Keep the current mode and build consistency.',
-      ja: 'Overall performance is steady. Keep the current mode and build consistency.',
-      de: 'Overall performance is steady. Keep the current mode and build consistency.',
-      fr: 'La performance globale est stable. Gardez le mode actuel et créez la cohérence.',
-      es: 'El rendimiento general es constante. Mantenga el modo actual y construya la coherencia.',
-      ru: 'Общая производительность стабильна. Сохраните текущий режим и создайте последовательность.',
+    return i18n.t(
+      'inline.ui.pages.toolbox_human_tests_reaction.overall_performance_is_steady_keep_the_current_mode_and_c9f13c',
     );
   }
 
@@ -2207,50 +1524,20 @@ class _ReactionCompletionReportDialog extends StatelessWidget {
       return _formatMilliseconds(attempt.milliseconds!);
     }
     if (attempt.falseStart) {
-      return pickUiText(
-        i18n,
-        zh: '抢跑',
-        en: 'Early',
-        ja: 'Early',
-        de: 'Early',
-        fr: 'Début',
-        es: 'Principios',
-        ru: 'ранний',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.early_0766fc',
       );
     }
     if (attempt.wrongDirection) {
-      return pickUiText(
-        i18n,
-        zh: '错向',
-        en: 'Wrong',
-        ja: 'Wrong',
-        de: 'Wrong',
-        fr: 'Faux',
-        es: 'Wrong',
-        ru: 'неправильно',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.wrong_2a4363',
       );
     }
     if (attempt.wrongColor) {
-      return pickUiText(
-        i18n,
-        zh: '错色',
-        en: 'Wrong color',
-        ja: 'Wrong color',
-        de: 'Wrong color',
-        fr: 'Mauvaise couleur',
-        es: 'Color equivocado',
-        ru: 'Неправильный цвет',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_reaction.wrong_color_2430f5',
       );
     }
-    return pickUiText(
-      i18n,
-      zh: '未中',
-      en: 'Miss',
-      ja: 'Miss',
-      de: 'Miss',
-      fr: 'Mlle',
-      es: 'Miss',
-      ru: 'Мисс.',
-    );
+    return i18n.t('inline.ui.pages.toolbox_human_tests_bimanual.miss_7876fa');
   }
 }

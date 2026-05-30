@@ -443,10 +443,8 @@ class _DiceRandomStage extends StatelessWidget {
     if (!layout.valid) {
       return Center(
         child: Text(
-          pickUiText(
-            i18n,
-            zh: '至少 3 个选项才能生成骰子。',
-            en: 'Need at least 3 options for dice.',
+          i18n.t(
+            'inline.plan295.daily_choice.need_at_least_3_options_for_dice.dfd19434c5cb',
           ),
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(
@@ -513,10 +511,8 @@ class _DiceRandomStage extends StatelessWidget {
                           layout.facesPerDie[index],
                         ),
                         sides: layout.facesPerDie[index],
-                        faceText: pickUiText(
-                          i18n,
-                          zh: '${layout.facesPerDie[index]} 面',
-                          en: '${layout.facesPerDie[index]} sides',
+                        faceText: i18n.t(
+                          'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_visuals.layout_facesperdie_index_sides_efb13a',
                         ),
                         size: dieSize,
                       ),
@@ -543,15 +539,11 @@ class _DiceRandomStage extends StatelessWidget {
                       const TextStyle(),
                   child: Text(
                     result == null
-                        ? pickUiText(
-                            i18n,
-                            zh: '每颗骰子 3 到 12 面，按选项数量自动分配。',
-                            en: 'Each die gets 3 to 12 faces based on option count.',
+                        ? i18n.t(
+                            'inline.plan295.daily_choice.each_die_gets_3_to_12_faces_based_on.ad9c4307a2fe',
                           )
-                        : pickUiText(
-                            i18n,
-                            zh: '落在 D${(result!.diceIndex ?? 0) + 1} 第 ${(result!.diceFaceIndex ?? 0) + 1} 面',
-                            en: 'Landed on D${(result!.diceIndex ?? 0) + 1}, face ${(result!.diceFaceIndex ?? 0) + 1}',
+                        : i18n.t(
+                            'inline.plan295.daily_choice.landed_on_d_result_diceindex_0_1_fac.093330f4da90',
                           ),
                   ),
                 ),
@@ -1472,10 +1464,8 @@ class _CoinRandomStage extends StatelessWidget {
     if (options.length != 2) {
       return Center(
         child: Text(
-          pickUiText(
-            i18n,
-            zh: '硬币需要正好 2 个选项。',
-            en: 'Coin needs exactly 2 options.',
+          i18n.t(
+            'inline.plan295.daily_choice.coin_needs_exactly_2_options.ccc5a5c7b010',
           ),
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(
@@ -1532,8 +1522,8 @@ class _CoinRandomStage extends StatelessWidget {
                     accent: accent,
                     label: visibleOption.label,
                     sideLabel: showingBack
-                        ? pickUiText(i18n, zh: '反', en: 'B')
-                        : pickUiText(i18n, zh: '正', en: 'A'),
+                        ? i18n.t('inline.plan295.daily_choice.b.9d3019371ae0')
+                        : i18n.t('inline.plan295.daily_choice.a.607c56d5c4bc'),
                     compressed: (math.cos(angle)).abs() < 0.20,
                     winner: result != null && progress >= 0.96,
                   ),

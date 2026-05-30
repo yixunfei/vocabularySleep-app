@@ -15,42 +15,43 @@ class _ImageTransformPageState extends State<_ImageTransformPage> {
   @override
   Widget build(BuildContext context) {
     return ToolboxToolPage(
-      title: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '图片压缩/扩大',
-        en: 'Image compression / upscale',
+        'inline.plan295.life.image_compression_upscale.6a89f70da7a2',
       ),
-      subtitle: _lifeText(
+      subtitle: _lifeI18nText(
         context,
-        zh: '在同一页面内快速切换压缩和扩大；扩大侧补充更轻量的插值路径与自定义倍率。',
-        en: 'Switch quickly between compression and upscale with lighter interpolation paths and a custom scale input.',
+        'inline.plan295.life.switch_quickly_between_compression_a.3a839a4a3c45',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '工具页签', en: 'Tool tabs'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '两个工作区相互独立，可快速来回切换。',
-              en: 'The two workspaces stay independent and switch quickly.',
+              'inline.plan295.life.tool_tabs.04c8cbf8182c',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.the_two_workspaces_stay_independent.1e184dc0fe00',
             ),
             children: <Widget>[
               KeyedSubtree(
                 key: const ValueKey<String>('life_image_transform_tab_field'),
                 child: _LifeSegmentedField<_ImageTransformTab>(
-                  label: _lifeText(context, zh: '当前操作', en: 'Current action'),
+                  label: _lifeI18nText(
+                    context,
+                    'inline.plan295.life.current_action.53c9cbce00f8',
+                  ),
                   value: _activeTab,
                   options: const <_LifeOption<_ImageTransformTab>>[
                     _LifeOption<_ImageTransformTab>(
                       value: _ImageTransformTab.compress,
-                      labelZh: '压缩',
-                      labelEn: 'Compress',
+                      labelKey: 'inline.plan295.life.compress.32907d88de52',
                     ),
                     _LifeOption<_ImageTransformTab>(
                       value: _ImageTransformTab.upscale,
-                      labelZh: '扩大',
-                      labelEn: 'Upscale',
+                      labelKey: 'inline.plan295.life.upscale.51e9b469f111',
                     ),
                   ],
                   onChanged: (value) => setState(() => _activeTab = value),

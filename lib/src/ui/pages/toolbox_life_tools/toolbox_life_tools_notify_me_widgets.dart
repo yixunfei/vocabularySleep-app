@@ -113,15 +113,27 @@ class _NotifyHeroPanel extends StatelessWidget {
               _NotifyStatusChip(
                 icon: Icons.push_pin_rounded,
                 label: sticky
-                    ? _lifeText(context, zh: '常驻', en: 'Sticky')
-                    : _lifeText(context, zh: '一次性', en: 'One-shot'),
+                    ? _lifeI18nText(
+                        context,
+                        'inline.plan295.life.sticky.01f3ee2c9531',
+                      )
+                    : _lifeI18nText(
+                        context,
+                        'inline.plan295.life.one_shot.584983fa0399',
+                      ),
                 active: sticky,
               ),
               _NotifyStatusChip(
                 icon: Icons.open_in_new_rounded,
                 label: cancelOnOpen
-                    ? _lifeText(context, zh: '打开后取消', en: 'Open cancels')
-                    : _lifeText(context, zh: '打开后保留', en: 'Open keeps'),
+                    ? _lifeI18nText(
+                        context,
+                        'inline.plan295.life.open_cancels.1876b4f885f8',
+                      )
+                    : _lifeI18nText(
+                        context,
+                        'inline.plan295.life.open_keeps.88c2491be9fa',
+                      ),
                 active: cancelOnOpen,
               ),
             ],
@@ -133,17 +145,26 @@ class _NotifyHeroPanel extends StatelessWidget {
               final tiles = <Widget>[
                 _NotifyInfoTile(
                   icon: Icons.event_available_rounded,
-                  label: _lifeText(context, zh: '提醒时间', en: 'Due'),
+                  label: _lifeI18nText(
+                    context,
+                    'inline.plan295.life.due.aab6e2a8a56a',
+                  ),
                   value: dueLabel,
                 ),
                 _NotifyInfoTile(
                   icon: Icons.alarm_rounded,
-                  label: _lifeText(context, zh: '触发时间', en: 'Alert'),
+                  label: _lifeI18nText(
+                    context,
+                    'inline.plan295.life.alert.d2f16c35ecc2',
+                  ),
                   value: alertLabel,
                 ),
                 _NotifyInfoTile(
                   icon: Icons.upcoming_rounded,
-                  label: _lifeText(context, zh: '下一条', en: 'Next'),
+                  label: _lifeI18nText(
+                    context,
+                    'inline.plan295.life.next.c784eb851cd8',
+                  ),
                   value: nextLabel,
                 ),
               ];
@@ -177,11 +198,23 @@ class _NotifyHeroPanel extends StatelessWidget {
           _NotifySummaryStrip(
             items: <String>[
               nativeReady
-                  ? _lifeText(context, zh: '原生提醒可用', en: 'Native ready')
-                  : _lifeText(context, zh: '原生提醒受限', en: 'Native limited'),
+                  ? _lifeI18nText(
+                      context,
+                      'inline.plan295.life.native_ready.de685c2105eb',
+                    )
+                  : _lifeI18nText(
+                      context,
+                      'inline.plan295.life.native_limited.12a5d404f3f0',
+                    ),
               calendarEnabled
-                  ? _lifeText(context, zh: '日历镜像开启', en: 'Calendar on')
-                  : _lifeText(context, zh: '日历镜像关闭', en: 'Calendar off'),
+                  ? _lifeI18nText(
+                      context,
+                      'inline.plan295.life.calendar_on.a667539bdad6',
+                    )
+                  : _lifeI18nText(
+                      context,
+                      'inline.plan295.life.calendar_off.9dba348bd396',
+                    ),
             ],
           ),
         ],
@@ -293,7 +326,10 @@ class _NotifyMinuteInput extends StatelessWidget {
       decoration: InputDecoration(
         border: const OutlineInputBorder(),
         labelText: label,
-        suffixText: _lifeText(context, zh: '分钟', en: 'min'),
+        suffixText: _lifeI18nText(
+          context,
+          'inline.ui.pages.toolbox_human_tests_time_perception.min_c2030c',
+        ),
         prefixIcon: const Icon(Icons.tune_rounded),
       ),
       onChanged: (value) {
@@ -420,11 +456,21 @@ class _NotifyReminderCard extends StatelessWidget {
                 Chip(label: Text(presentationLabel)),
                 if (sticky)
                   Chip(
-                    label: Text(_lifeText(context, zh: '常驻', en: 'Sticky')),
+                    label: Text(
+                      _lifeI18nText(
+                        context,
+                        'inline.plan295.life.sticky.01f3ee2c9531',
+                      ),
+                    ),
                   ),
                 if (calendarEnabled)
                   Chip(
-                    label: Text(_lifeText(context, zh: '日历镜像', en: 'Calendar')),
+                    label: Text(
+                      _lifeI18nText(
+                        context,
+                        'inline.plan295.life.calendar.8e0b93db582b',
+                      ),
+                    ),
                   ),
               ],
             ),
@@ -435,27 +481,47 @@ class _NotifyReminderCard extends StatelessWidget {
                 OutlinedButton.icon(
                   onPressed: onComplete,
                   icon: const Icon(Icons.check_rounded),
-                  label: Text(_lifeText(context, zh: '完成', en: 'Complete')),
+                  label: Text(
+                    _lifeI18nText(
+                      context,
+                      'inline.plan295.life.complete.1605db7a1c66',
+                    ),
+                  ),
                 ),
                 OutlinedButton.icon(
                   onPressed: onSnooze10,
                   icon: const Icon(Icons.snooze_rounded),
-                  label: Text(_lifeText(context, zh: '10 分钟后', en: '10 min')),
+                  label: Text(
+                    _lifeI18nText(
+                      context,
+                      'inline.plan295.life.10_min.1c41b7823085',
+                    ),
+                  ),
                 ),
                 OutlinedButton.icon(
                   onPressed: onSnooze60,
                   icon: const Icon(Icons.more_time_rounded),
-                  label: Text(_lifeText(context, zh: '1 小时后', en: '1 hour')),
+                  label: Text(
+                    _lifeI18nText(
+                      context,
+                      'inline.plan295.life.1_hour.0aed8f3a33d1',
+                    ),
+                  ),
                 ),
                 TextButton.icon(
                   onPressed: onReuse,
                   icon: const Icon(Icons.content_copy_rounded),
-                  label: Text(_lifeText(context, zh: '套用', en: 'Reuse')),
+                  label: Text(
+                    _lifeI18nText(
+                      context,
+                      'inline.plan295.life.reuse.5661f1111095',
+                    ),
+                  ),
                 ),
                 TextButton.icon(
                   onPressed: onDelete,
                   icon: const Icon(Icons.delete_outline_rounded),
-                  label: Text(_lifeText(context, zh: '删除', en: 'Delete')),
+                  label: Text(_lifeI18nText(context, 'delete')),
                 ),
               ],
             ),

@@ -104,59 +104,94 @@ extension _SoothingMusicV2LabelHelpers on _SoothingMusicV2PageState {
   String _copyVolumeToggleLabel(AppI18n i18n) =>
       SoothingMusicCopy.text(i18n, 'audio.toggle_mute');
 
-  String _pageTitle(AppI18n i18n) => i18n.t('toolbox.sound.soothing.page_title');
+  String _pageTitle(AppI18n i18n) =>
+      i18n.t('toolbox.sound.soothing.page_title');
 
-  String _pageSubtitle(AppI18n i18n) => i18n.t('toolbox.sound.soothing.page_subtitle');
+  String _pageSubtitle(AppI18n i18n) =>
+      i18n.t('toolbox.sound.soothing.page_subtitle');
 
-  String _browseModesTitle(AppI18n i18n) => i18n.t('toolbox.sound.soothing.browse_modes_title');
+  String _browseModesTitle(AppI18n i18n) =>
+      i18n.t('toolbox.sound.soothing.browse_modes_title');
 
-  String _browseModesSubtitle(AppI18n i18n) => i18n.t('toolbox.sound.soothing.browse_modes_subtitle');
+  String _browseModesSubtitle(AppI18n i18n) =>
+      i18n.t('toolbox.sound.soothing.browse_modes_subtitle');
 
-  String _modesButtonLabel(AppI18n i18n) => i18n.t('toolbox.sound.soothing.modes_button_label');
+  String _modesButtonLabel(AppI18n i18n) =>
+      i18n.t('toolbox.sound.soothing.modes_button_label');
 
   String _modeFilterLabel(AppI18n i18n, _ModeLibraryFilter filter) {
     return switch (filter) {
-      _ModeLibraryFilter.all => i18n.t('toolbox.sound.soothing.mode_filter_all'),
-      _ModeLibraryFilter.favorites => i18n.t('toolbox.sound.soothing.mode_filter_favorites'),
-      _ModeLibraryFilter.recent => i18n.t('toolbox.sound.soothing.mode_filter_recent'),
+      _ModeLibraryFilter.all => i18n.t(
+        'toolbox.sound.soothing.mode_filter_all',
+      ),
+      _ModeLibraryFilter.favorites => i18n.t(
+        'toolbox.sound.soothing.mode_filter_favorites',
+      ),
+      _ModeLibraryFilter.recent => i18n.t(
+        'toolbox.sound.soothing.mode_filter_recent',
+      ),
     };
   }
 
   String _emptyModeTitle(AppI18n i18n, _ModeLibraryFilter filter) {
     return switch (filter) {
-      _ModeLibraryFilter.favorites => i18n.t('toolbox.sound.soothing.empty_mode_title_favorites'),
-      _ModeLibraryFilter.recent => i18n.t('toolbox.sound.soothing.empty_mode_title_recent'),
+      _ModeLibraryFilter.favorites => i18n.t(
+        'toolbox.sound.soothing.empty_mode_title_favorites',
+      ),
+      _ModeLibraryFilter.recent => i18n.t(
+        'toolbox.sound.soothing.empty_mode_title_recent',
+      ),
       _ModeLibraryFilter.all => '',
     };
   }
 
   String _emptyModeSubtitle(AppI18n i18n, _ModeLibraryFilter filter) {
     return switch (filter) {
-      _ModeLibraryFilter.favorites => i18n.t('toolbox.sound.soothing.empty_mode_subtitle_favorites'),
-      _ModeLibraryFilter.recent => i18n.t('toolbox.sound.soothing.empty_mode_subtitle_recent'),
+      _ModeLibraryFilter.favorites => i18n.t(
+        'toolbox.sound.soothing.empty_mode_subtitle_favorites',
+      ),
+      _ModeLibraryFilter.recent => i18n.t(
+        'toolbox.sound.soothing.empty_mode_subtitle_recent',
+      ),
       _ModeLibraryFilter.all => '',
     };
   }
 
-  String _showAllModesLabel(AppI18n i18n) => i18n.t('toolbox.sound.soothing.show_all_modes_label');
+  String _showAllModesLabel(AppI18n i18n) =>
+      i18n.t('toolbox.sound.soothing.show_all_modes_label');
 
-  String _sleepTimerButtonLabel(AppI18n i18n) => i18n.t('toolbox.sound.soothing.sleep_timer_button_label');
+  String _sleepTimerButtonLabel(AppI18n i18n) =>
+      i18n.t('toolbox.sound.soothing.sleep_timer_button_label');
 
   String _sleepTimerOptionLabel(AppI18n i18n, Duration? value) {
     if (value == null) {
       return i18n.t('toolbox.sound.soothing.timer_off');
     }
-    return i18n.t('toolbox.sound.soothing.timer_minutes', params: <String, Object?>{'count': value.inMinutes});
+    return i18n.t(
+      'toolbox.sound.soothing.timer_minutes',
+      params: <String, Object?>{'count': value.inMinutes},
+    );
   }
 
-  String _activeSleepTimerLabel(AppI18n i18n, Duration value) => i18n.t('toolbox.sound.soothing.active_sleep_timer', params: <String, Object?>{'duration': _format(value)});
+  String _activeSleepTimerLabel(AppI18n i18n, Duration value) => i18n.t(
+    'toolbox.sound.soothing.active_sleep_timer',
+    params: <String, Object?>{'duration': _format(value)},
+  );
 
-  String _trackCountLabel(AppI18n i18n, int count) => i18n.t('toolbox.sound.soothing.track_count_label', params: <String, Object?>{'count': count});
+  String _trackCountLabel(AppI18n i18n, int count) => i18n.t(
+    'toolbox.sound.soothing.track_count_label',
+    params: <String, Object?>{'count': count},
+  );
 
-  String _activeModeLabel(AppI18n i18n) => i18n.t('toolbox.sound.soothing.active_mode_label');
+  String _activeModeLabel(AppI18n i18n) =>
+      i18n.t('toolbox.sound.soothing.active_mode_label');
 
-  String _favoriteToggleLabel(AppI18n i18n) => i18n.t('toolbox.sound.soothing.favorite_toggle_label');
-  String _previousTrackLabel(AppI18n i18n) => i18n.t('toolbox.sound.soothing.previous_track_label');
-  String _nextTrackLabel(AppI18n i18n) => i18n.t('toolbox.sound.soothing.next_track_label');
-  String _volumeToggleLabel(AppI18n i18n) => i18n.t('toolbox.sound.soothing.volume_toggle_label');
+  String _favoriteToggleLabel(AppI18n i18n) =>
+      i18n.t('toolbox.sound.soothing.favorite_toggle_label');
+  String _previousTrackLabel(AppI18n i18n) =>
+      i18n.t('toolbox.sound.soothing.previous_track_label');
+  String _nextTrackLabel(AppI18n i18n) =>
+      i18n.t('toolbox.sound.soothing.next_track_label');
+  String _volumeToggleLabel(AppI18n i18n) =>
+      i18n.t('toolbox.sound.soothing.volume_toggle_label');
 }

@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'toolbox_i18n_text_ref.dart';
 import 'toolbox_work_worth_service.dart';
 
 enum OfferSelectFlagLevel { info, warning, danger }
@@ -321,31 +322,20 @@ class OfferSelectCandidate {
 class OfferSelectFlag {
   const OfferSelectFlag({
     required this.level,
-    required this.titleZh,
-    required this.titleEn,
-    required this.bodyZh,
-    required this.bodyEn,
+    required this.titleKey,
+    required this.body,
   });
 
   final OfferSelectFlagLevel level;
-  final String titleZh;
-  final String titleEn;
-  final String bodyZh;
-  final String bodyEn;
+  final String titleKey;
+  final ToolboxI18nTextRef body;
 }
 
 class OfferSelectStrength {
-  const OfferSelectStrength({
-    required this.titleZh,
-    required this.titleEn,
-    required this.bodyZh,
-    required this.bodyEn,
-  });
+  const OfferSelectStrength({required this.titleKey, required this.body});
 
-  final String titleZh;
-  final String titleEn;
-  final String bodyZh;
-  final String bodyEn;
+  final String titleKey;
+  final ToolboxI18nTextRef body;
 }
 
 class OfferSelectEvaluation {
@@ -407,16 +397,14 @@ class OfferSelectResult {
     required this.evaluations,
     required this.activeEvaluations,
     required this.rejectedEvaluations,
-    required this.summaryZh,
-    required this.summaryEn,
+    required this.summary,
   });
 
   final OfferSelectProfile profile;
   final List<OfferSelectEvaluation> evaluations;
   final List<OfferSelectEvaluation> activeEvaluations;
   final List<OfferSelectEvaluation> rejectedEvaluations;
-  final String summaryZh;
-  final String summaryEn;
+  final ToolboxI18nTextRef summary;
 
   OfferSelectEvaluation? get leader =>
       activeEvaluations.isEmpty ? null : activeEvaluations.first;
@@ -598,8 +586,7 @@ class ToolboxOfferSelectService {
       evaluations: allWithRaises,
       activeEvaluations: activeWithRaises,
       rejectedEvaluations: rejected,
-      summaryZh: _summaryZh(activeWithRaises),
-      summaryEn: _summaryEn(activeWithRaises),
+      summary: _summary(activeWithRaises),
     );
   }
 
@@ -745,10 +732,8 @@ class ToolboxOfferSelectService {
       flags.add(
         const OfferSelectFlag(
           level: OfferSelectFlagLevel.info,
-          titleZh: '已婉拒',
-          titleEn: 'Rejected',
-          bodyZh: '该机会当前不参与首选排序，只保留作对照。',
-          bodyEn: 'This offer is excluded from the top ranking.',
+          titleKey: 'life.offer_select.flag.rejected.title',
+          body: ToolboxI18nTextRef('life.offer_select.flag.rejected.body'),
         ),
       );
     }
@@ -756,22 +741,20 @@ class ToolboxOfferSelectService {
       flags.add(
         const OfferSelectFlag(
           level: OfferSelectFlagLevel.danger,
-          titleZh: '现金流为负',
-          titleEn: 'Negative cashflow',
-          bodyZh: '扣除税费、五险一金、住房、生活和健康损耗后，每月可支配金额为负。',
-          bodyEn:
-              'After deductions, housing, living cost, and health reserve, monthly disposable cash is negative.',
+          titleKey: 'life.offer_select.flag.negative_cashflow.title',
+          body: ToolboxI18nTextRef(
+            'life.offer_select.flag.negative_cashflow.body',
+          ),
         ),
       );
     } else if (workWorth.monthlyDisposableIncome < 3000) {
       flags.add(
         const OfferSelectFlag(
           level: OfferSelectFlagLevel.warning,
-          titleZh: '现金缓冲偏薄',
-          titleEn: 'Thin cash buffer',
-          bodyZh: '可支配金额较低，搬家、押金、设备和突发开销会放大压力。',
-          bodyEn:
-              'Disposable cash is thin, so relocation, deposit, equipment, or surprises can hurt.',
+          titleKey: 'life.offer_select.flag.thin_cash_buffer.title',
+          body: ToolboxI18nTextRef(
+            'life.offer_select.flag.thin_cash_buffer.body',
+          ),
         ),
       );
     }
@@ -779,11 +762,10 @@ class ToolboxOfferSelectService {
       flags.add(
         const OfferSelectFlag(
           level: OfferSelectFlagLevel.warning,
-          titleZh: '时间成本偏高',
-          titleEn: 'High time cost',
-          bodyZh: '工作、通勤和无偿加班折算后的日时间成本偏高。',
-          bodyEn:
-              'Daily time cost is high after work hours, commute, and unpaid overtime.',
+          titleKey: 'life.offer_select.flag.high_time_cost.title',
+          body: ToolboxI18nTextRef(
+            'life.offer_select.flag.high_time_cost.body',
+          ),
         ),
       );
     }
@@ -792,11 +774,8 @@ class ToolboxOfferSelectService {
       flags.add(
         const OfferSelectFlag(
           level: OfferSelectFlagLevel.warning,
-          titleZh: '通勤风险',
-          titleEn: 'Commute risk',
-          bodyZh: '通勤时间较长且居家办公较少，长期会吞掉恢复时间。',
-          bodyEn:
-              'Long commute with little WFH can eat into long-term recovery time.',
+          titleKey: 'life.offer_select.flag.commute_risk.title',
+          body: ToolboxI18nTextRef('life.offer_select.flag.commute_risk.body'),
         ),
       );
     }
@@ -805,11 +784,10 @@ class ToolboxOfferSelectService {
       flags.add(
         const OfferSelectFlag(
           level: OfferSelectFlagLevel.danger,
-          titleZh: '健康消耗高',
-          titleEn: 'High health load',
-          bodyZh: '环境层级已落入明显损耗区，建议把恢复成本和退出成本写入决策。',
-          bodyEn:
-              'The environment tier indicates obvious health load; include recovery and exit costs.',
+          titleKey: 'life.offer_select.flag.high_health_load.title',
+          body: ToolboxI18nTextRef(
+            'life.offer_select.flag.high_health_load.body',
+          ),
         ),
       );
     }
@@ -817,11 +795,8 @@ class ToolboxOfferSelectService {
       flags.add(
         const OfferSelectFlag(
           level: OfferSelectFlagLevel.warning,
-          titleZh: '浮动收入不稳',
-          titleEn: 'Variable pay risk',
-          bodyZh: '奖金、期权或绩效兑现概率较低，不宜按满额当作稳定现金。',
-          bodyEn:
-              'Bonus, equity, or performance pay is uncertain and should not be treated as stable cash.',
+          titleKey: 'life.offer_select.flag.variable_pay.title',
+          body: ToolboxI18nTextRef('life.offer_select.flag.variable_pay.body'),
         ),
       );
     }
@@ -829,11 +804,10 @@ class ToolboxOfferSelectService {
       flags.add(
         const OfferSelectFlag(
           level: OfferSelectFlagLevel.warning,
-          titleZh: 'Offer 确定性不足',
-          titleEn: 'Offer certainty risk',
-          bodyZh: '审批、HC、背调或试用期条件仍有不确定性。',
-          bodyEn:
-              'Approval, headcount, background checks, or probation terms are still uncertain.',
+          titleKey: 'life.offer_select.flag.offer_certainty.title',
+          body: ToolboxI18nTextRef(
+            'life.offer_select.flag.offer_certainty.body',
+          ),
         ),
       );
     }
@@ -842,11 +816,10 @@ class ToolboxOfferSelectService {
       flags.add(
         const OfferSelectFlag(
           level: OfferSelectFlagLevel.warning,
-          titleZh: '稳定性需核对',
-          titleEn: 'Stability needs checking',
-          bodyZh: '合同主体、社保缴纳、裁撤补偿和续约条款需要额外核实。',
-          bodyEn:
-              'Contract entity, social insurance, severance, and renewal terms need extra checks.',
+          titleKey: 'life.offer_select.flag.stability_check.title',
+          body: ToolboxI18nTextRef(
+            'life.offer_select.flag.stability_check.body',
+          ),
         ),
       );
     }
@@ -867,76 +840,74 @@ class ToolboxOfferSelectService {
     if (cashScore >= 72) {
       strengths.add(
         OfferSelectStrength(
-          titleZh: '现金表现强',
-          titleEn: 'Strong cashflow',
-          bodyZh:
-              '月可支配约 ${workWorth.monthlyDisposableIncome.toStringAsFixed(0)}，现金安全垫相对更好。',
-          bodyEn:
-              'Monthly disposable cash is about ${workWorth.monthlyDisposableIncome.toStringAsFixed(0)}, giving a stronger buffer.',
+          titleKey: 'life.offer_select.strength.strong_cashflow.title',
+          body: ToolboxI18nTextRef(
+            'life.offer_select.strength.strong_cashflow.body',
+            params: <String, Object?>{
+              'amount': workWorth.monthlyDisposableIncome.toStringAsFixed(0),
+            },
+          ),
         ),
       );
     }
     if (timeScore >= 76) {
       strengths.add(
         const OfferSelectStrength(
-          titleZh: '时间成本友好',
-          titleEn: 'Time friendly',
-          bodyZh: '工时、通勤或居家安排对恢复时间更友好。',
-          bodyEn:
-              'Work hours, commute, or WFH setup are friendlier to recovery.',
+          titleKey: 'life.offer_select.strength.time_friendly.title',
+          body: ToolboxI18nTextRef(
+            'life.offer_select.strength.time_friendly.body',
+          ),
         ),
       );
     }
     if (healthScore >= 76) {
       strengths.add(
         const OfferSelectStrength(
-          titleZh: '健康边界较好',
-          titleEn: 'Healthy boundaries',
-          bodyZh: 'WLB、环境和心理安全感组合表现较好。',
-          bodyEn:
-              'WLB, environment, and psychological-safety signals look healthy.',
+          titleKey: 'life.offer_select.strength.healthy_boundaries.title',
+          body: ToolboxI18nTextRef(
+            'life.offer_select.strength.healthy_boundaries.body',
+          ),
         ),
       );
     }
     if (growthScore >= 74) {
       strengths.add(
         const OfferSelectStrength(
-          titleZh: '成长贴合',
-          titleEn: 'Good growth fit',
-          bodyZh: '岗位方向、技能复利或角色匹配度较高。',
-          bodyEn: 'Role direction, skill compounding, or role fit is strong.',
+          titleKey: 'life.offer_select.strength.growth_fit.title',
+          body: ToolboxI18nTextRef(
+            'life.offer_select.strength.growth_fit.body',
+          ),
         ),
       );
     }
     if (stabilityScore >= 80) {
       strengths.add(
         const OfferSelectStrength(
-          titleZh: '稳定性较强',
-          titleEn: 'Stable option',
-          bodyZh: '合同、组织形态或 Offer 确定性更稳。',
-          bodyEn:
-              'Contract, organization type, or offer certainty is steadier.',
+          titleKey: 'life.offer_select.strength.stable_option.title',
+          body: ToolboxI18nTextRef(
+            'life.offer_select.strength.stable_option.body',
+          ),
         ),
       );
     }
     if (cityFitScore >= 74) {
       strengths.add(
         OfferSelectStrength(
-          titleZh: '城市适配较好',
-          titleEn: 'Good city fit',
-          bodyZh: '${candidate.city} 对生活偏好或发展阶段更友好。',
-          bodyEn: '${candidate.city} fits lifestyle or career stage better.',
+          titleKey: 'life.offer_select.strength.city_fit.title',
+          body: ToolboxI18nTextRef(
+            'life.offer_select.strength.city_fit.body',
+            params: <String, Object?>{'city': candidate.city},
+          ),
         ),
       );
     }
     if (strengths.isEmpty) {
       strengths.add(
         const OfferSelectStrength(
-          titleZh: '整体均衡',
-          titleEn: 'Balanced baseline',
-          bodyZh: '暂无突出亮点，也没有明显单项拉满，可继续补充信息校准。',
-          bodyEn:
-              'No standout dimension yet; add more details to calibrate the baseline.',
+          titleKey: 'life.offer_select.strength.balanced_baseline.title',
+          body: ToolboxI18nTextRef(
+            'life.offer_select.strength.balanced_baseline.body',
+          ),
         ),
       );
     }
@@ -991,42 +962,38 @@ class ToolboxOfferSelectService {
     return math.max(0.0, high - candidate.monthlyBase);
   }
 
-  String _summaryZh(List<OfferSelectEvaluation> active) {
+  ToolboxI18nTextRef _summary(List<OfferSelectEvaluation> active) {
     if (active.isEmpty) {
-      return '暂无可比较 Offer，请添加或取消婉拒至少一个机会。';
+      return const ToolboxI18nTextRef('life.offer_select.summary.empty');
     }
     if (active.length == 1) {
-      return '${active.first.candidate.company} 是当前唯一未婉拒的机会，建议继续补齐风险项。';
+      return ToolboxI18nTextRef(
+        'life.offer_select.summary.single',
+        params: <String, Object?>{'company': active.first.candidate.company},
+      );
     }
     final leader = active[0];
     final runner = active[1];
     final gap = leader.weightedScore - runner.weightedScore;
     if (gap < 4) {
-      return '${leader.candidate.company} 暂时领先，但与 ${runner.candidate.company} 差距很小，优先谈薪和核对试用期条件。';
+      return ToolboxI18nTextRef(
+        'life.offer_select.summary.small_gap',
+        params: <String, Object?>{
+          'leader': leader.candidate.company,
+          'runner': runner.candidate.company,
+        },
+      );
     }
     if (leader.flags.any((flag) => flag.level == OfferSelectFlagLevel.danger)) {
-      return '${leader.candidate.company} 分数领先，但存在高风险项，建议先确认边界和退出成本。';
+      return ToolboxI18nTextRef(
+        'life.offer_select.summary.high_risk_leader',
+        params: <String, Object?>{'company': leader.candidate.company},
+      );
     }
-    return '${leader.candidate.company} 当前综合更优，优势主要来自现金、时间、成长和稳定性加权后的平衡。';
-  }
-
-  String _summaryEn(List<OfferSelectEvaluation> active) {
-    if (active.isEmpty) {
-      return 'No active offers yet. Add or un-reject at least one option.';
-    }
-    if (active.length == 1) {
-      return '${active.first.candidate.company} is the only active offer; fill in risks before deciding.';
-    }
-    final leader = active[0];
-    final runner = active[1];
-    final gap = leader.weightedScore - runner.weightedScore;
-    if (gap < 4) {
-      return '${leader.candidate.company} leads, but the gap to ${runner.candidate.company} is small. Negotiate and verify probation terms first.';
-    }
-    if (leader.flags.any((flag) => flag.level == OfferSelectFlagLevel.danger)) {
-      return '${leader.candidate.company} leads, but it has high-risk flags. Confirm boundaries and exit costs first.';
-    }
-    return '${leader.candidate.company} is currently stronger after weighting cash, time, growth, and stability.';
+    return ToolboxI18nTextRef(
+      'life.offer_select.summary.leader',
+      params: <String, Object?>{'company': leader.candidate.company},
+    );
   }
 
   double _score(num value) => value.clamp(0.0, 100.0).toDouble();

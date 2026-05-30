@@ -80,11 +80,11 @@ class PlaybackAdvancedPage extends ConsumerWidget {
     final spellingRepeat = (repeats['spelling'] ?? 0).clamp(0, 5).toInt();
     final repeatGroups = <PlaybackRepeatFieldGroup>[
       PlaybackRepeatFieldGroup(
-        title: pickUiText(i18n, zh: '核心字段重复', en: 'Core repeat'),
-        subtitle: pickUiText(
-          i18n,
-          zh: '控制单词、释义、中文义项、发音、词性与例句的重复次数。',
-          en: 'Set repeat times for word, meaning, Chinese meanings, pronunciations, parts of speech, and examples.',
+        title: i18n.t(
+          'inline.ui.pages.playback_advanced_page.core_repeat_9d9655',
+        ),
+        subtitle: i18n.t(
+          'inline.ui.pages.playback_advanced_page.set_repeat_times_for_word_meaning_chinese_meanings_pronu_56a1aa',
         ),
         keys: const <String>[
           'word',
@@ -96,42 +96,42 @@ class PlaybackAdvancedPage extends ConsumerWidget {
         ],
       ),
       PlaybackRepeatFieldGroup(
-        title: pickUiText(i18n, zh: '用法字段重复', en: 'Usage field repeat'),
-        subtitle: pickUiText(
-          i18n,
-          zh: '控制搭配、短语、用法说明、近反义与易混辨析的播放次数。',
-          en: 'Control repeats for collocations, phrases, usage notes, synonyms, antonyms, and confusions.',
+        title: i18n.t(
+          'inline.ui.pages.playback_advanced_page.usage_field_repeat_7be69f',
+        ),
+        subtitle: i18n.t(
+          'inline.ui.pages.playback_advanced_page.control_repeats_for_collocations_phrases_usage_notes_syn_76e763',
         ),
         keys: _usageKeys,
         quickValues: const <int>[0, 1, 2],
       ),
       PlaybackRepeatFieldGroup(
-        title: pickUiText(i18n, zh: '语言学字段重复', en: 'Linguistics field repeat'),
-        subtitle: pickUiText(
-          i18n,
-          zh: '控制词源、词根、词缀、变形、相关词和词频等结构化补充信息的播放次数。',
-          en: 'Control repeats for etymology, roots, affixes, variations, related words, and frequency information.',
+        title: i18n.t(
+          'inline.ui.pages.playback_advanced_page.linguistics_field_repeat_12550e',
+        ),
+        subtitle: i18n.t(
+          'inline.ui.pages.playback_advanced_page.control_repeats_for_etymology_roots_affixes_variations_r_04bcf5',
         ),
         keys: _linguisticsKeys,
         quickValues: const <int>[0, 1],
       ),
       PlaybackRepeatFieldGroup(
-        title: pickUiText(i18n, zh: '记忆字段重复', en: 'Memory field repeat'),
-        subtitle: pickUiText(
-          i18n,
-          zh: '控制记忆法、文化背景和故事型补充内容的播放次数。',
-          en: 'Control repeats for memory aids, culture notes, and story-style context.',
+        title: i18n.t(
+          'inline.ui.pages.playback_advanced_page.memory_field_repeat_d6a1e1',
+        ),
+        subtitle: i18n.t(
+          'inline.ui.pages.playback_advanced_page.control_repeats_for_memory_aids_culture_notes_and_story_232f81',
         ),
         keys: _memoryKeys,
         quickValues: const <int>[0, 1],
       ),
       if (dynamicKeys.isNotEmpty)
         PlaybackRepeatFieldGroup(
-          title: pickUiText(i18n, zh: '动态字段重复', en: 'Dynamic field repeat'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '这些字段来自当前已加载词本的真实扩展内容，可按需单独设置播放次数。',
-            en: 'These fields come from the currently loaded wordbook and can be configured individually.',
+          title: i18n.t(
+            'inline.ui.pages.playback_advanced_page.dynamic_field_repeat_a41df7',
+          ),
+          subtitle: i18n.t(
+            'inline.ui.pages.playback_advanced_page.these_fields_come_from_the_currently_loaded_wordbook_and_5d5f61',
           ),
           keys: dynamicKeys,
           quickValues: const <int>[0, 1],
@@ -140,7 +140,11 @@ class PlaybackAdvancedPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(pickUiText(i18n, zh: '播放高级设置', en: 'Playback advanced')),
+        title: Text(
+          i18n.t(
+            'inline.ui.pages.playback_advanced_page.playback_advanced_9d4699',
+          ),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -152,11 +156,11 @@ class PlaybackAdvancedPage extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   SectionHeader(
-                    title: pickUiText(i18n, zh: '场景策略', en: 'Usage presets'),
-                    subtitle: pickUiText(
-                      i18n,
-                      zh: '按场景快速应用推荐参数。',
-                      en: 'Apply a recommended parameter set by scenario.',
+                    title: i18n.t(
+                      'inline.ui.pages.playback_advanced_page.usage_presets_8b73b8',
+                    ),
+                    subtitle: i18n.t(
+                      'inline.ui.pages.playback_advanced_page.apply_a_recommended_parameter_set_by_scenario_5bf195',
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -168,21 +172,27 @@ class PlaybackAdvancedPage extends ConsumerWidget {
                         onPressed: () =>
                             _applyPreset(state, config, _Preset.sleep),
                         child: Text(
-                          pickUiText(i18n, zh: '助眠推荐', en: 'Sleep preset'),
+                          i18n.t(
+                            'inline.ui.pages.playback_advanced_page.sleep_preset_d6fcd7',
+                          ),
                         ),
                       ),
                       FilledButton.tonal(
                         onPressed: () =>
                             _applyPreset(state, config, _Preset.focus),
                         child: Text(
-                          pickUiText(i18n, zh: '专注推荐', en: 'Focus preset'),
+                          i18n.t(
+                            'inline.ui.pages.playback_advanced_page.focus_preset_57619a',
+                          ),
                         ),
                       ),
                       FilledButton.tonal(
                         onPressed: () =>
                             _applyPreset(state, config, _Preset.review),
                         child: Text(
-                          pickUiText(i18n, zh: '复习推荐', en: 'Review preset'),
+                          i18n.t(
+                            'inline.ui.pages.playback_advanced_page.review_preset_6c70e4',
+                          ),
                         ),
                       ),
                     ],
@@ -199,26 +209,28 @@ class PlaybackAdvancedPage extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   SectionHeader(
-                    title: pickUiText(
-                      i18n,
-                      zh: '拼读与翻页',
-                      en: 'Spelling and transitions',
+                    title: i18n.t(
+                      'inline.ui.pages.playback_advanced_page.spelling_and_transitions_c621df',
                     ),
-                    subtitle: pickUiText(
-                      i18n,
-                      zh: '控制拼读播放方式，以及单词卡的左右切换动效。',
-                      en: 'Control spelling playback and left-right word card transitions.',
+                    subtitle: i18n.t(
+                      'inline.ui.pages.playback_advanced_page.control_spelling_playback_and_left_right_word_card_trans_47a527',
                     ),
                   ),
                   const SizedBox(height: 14),
                   RepeatSlider(
-                    label: pickUiText(i18n, zh: '拼读重复', en: 'Spelling repeat'),
+                    label: i18n.t(
+                      'inline.ui.pages.playback_advanced_page.spelling_repeat_8afb58',
+                    ),
                     value: spellingRepeat,
                     onChanged: (value) =>
                         _updateRepeat(state, config, 'spelling', value),
                   ),
                   const SizedBox(height: 12),
-                  Text(pickUiText(i18n, zh: '拼读模式', en: 'Spelling mode')),
+                  Text(
+                    i18n.t(
+                      'inline.ui.pages.playback_advanced_page.spelling_mode_ba945a',
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -238,7 +250,11 @@ class PlaybackAdvancedPage extends ConsumerWidget {
                         .toList(growable: false),
                   ),
                   const SizedBox(height: 14),
-                  Text(pickUiText(i18n, zh: '翻页效果', en: 'Page transition')),
+                  Text(
+                    i18n.t(
+                      'inline.ui.pages.playback_advanced_page.page_transition_9a9a9d',
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -269,15 +285,11 @@ class PlaybackAdvancedPage extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   SectionHeader(
-                    title: pickUiText(
-                      i18n,
-                      zh: '播放策略',
-                      en: 'Playback strategy',
+                    title: i18n.t(
+                      'inline.ui.pages.playback_advanced_page.playback_strategy_1fa1fb',
                     ),
-                    subtitle: pickUiText(
-                      i18n,
-                      zh: '控制顺序、文本可见性和节奏。',
-                      en: 'Control order, text visibility, and pacing.',
+                    subtitle: i18n.t(
+                      'inline.ui.pages.playback_advanced_page.control_order_text_visibility_and_pacing_1fa0eb',
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -302,10 +314,8 @@ class PlaybackAdvancedPage extends ConsumerWidget {
                     contentPadding: EdgeInsets.zero,
                     title: Text(i18n.t('showText')),
                     subtitle: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '关闭后将减少可见文字，保留听词流程。',
-                        en: 'Hide on-screen text for a lower-visual listening flow.',
+                      i18n.t(
+                        'inline.ui.pages.playback_advanced_page.hide_on_screen_text_for_a_lower_visual_listening_flow_5ec0c7',
                       ),
                     ),
                     value: config.showText,
@@ -315,10 +325,8 @@ class PlaybackAdvancedPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '片段间隔：$delay ms',
-                      en: 'Delay between units: $delay ms',
+                    i18n.t(
+                      'inline.ui.pages.playback_advanced_page.delay_between_units_delay_ms_3d39b7',
                     ),
                   ),
                   Slider(
@@ -333,10 +341,8 @@ class PlaybackAdvancedPage extends ConsumerWidget {
                     },
                   ),
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '总循环：$overallRepeat',
-                      en: 'Overall loop: $overallRepeat',
+                    i18n.t(
+                      'inline.ui.pages.playback_advanced_page.overall_loop_overallrepeat_e237ea',
                     ),
                   ),
                   Slider(
@@ -384,27 +390,55 @@ class PlaybackAdvancedPage extends ConsumerWidget {
     return switch (key) {
       'word' => i18n.t('fieldWord'),
       'meaning' => i18n.t('fieldMeaning'),
-      'meanings_zh' => pickUiText(i18n, zh: '中文义项', en: 'Chinese meanings'),
-      'pronunciations' => pickUiText(i18n, zh: '发音', en: 'Pronunciations'),
-      'parts_of_speech' => pickUiText(i18n, zh: '词性', en: 'Parts of speech'),
+      'meanings_zh' => i18n.t(
+        'inline.ui.pages.playback_advanced_page.chinese_meanings_6029e0',
+      ),
+      'pronunciations' => i18n.t(
+        'inline.ui.pages.playback_advanced_page.pronunciations_de7c4f',
+      ),
+      'parts_of_speech' => i18n.t(
+        'inline.ui.pages.playback_advanced_page.parts_of_speech_b53f33',
+      ),
       'example' => i18n.t('fieldExamples'),
-      'collocations' => pickUiText(i18n, zh: '搭配', en: 'Collocations'),
-      'phrases' => pickUiText(i18n, zh: '短语', en: 'Phrases'),
-      'usage' => pickUiText(i18n, zh: '用法说明', en: 'Usage'),
-      'confusions' => pickUiText(i18n, zh: '易混辨析', en: 'Confusions'),
-      'synonyms' => pickUiText(i18n, zh: '近义词', en: 'Synonyms'),
-      'antonyms' => pickUiText(i18n, zh: '反义词', en: 'Antonyms'),
+      'collocations' => i18n.t(
+        'inline.ui.pages.playback_advanced_page.collocations_d8364a',
+      ),
+      'phrases' => i18n.t(
+        'inline.ui.pages.playback_advanced_page.phrases_56e468',
+      ),
+      'usage' => i18n.t('inline.ui.pages.playback_advanced_page.usage_71f840'),
+      'confusions' => i18n.t(
+        'inline.ui.pages.playback_advanced_page.confusions_75dad4',
+      ),
+      'synonyms' => i18n.t(
+        'inline.ui.pages.playback_advanced_page.synonyms_caefd1',
+      ),
+      'antonyms' => i18n.t(
+        'inline.ui.pages.playback_advanced_page.antonyms_8ee53c',
+      ),
       'etymology' => i18n.t('fieldEtymology'),
       'roots' => i18n.t('fieldRoots'),
       'affixes' => i18n.t('fieldAffixes'),
-      'morphology' => pickUiText(i18n, zh: '形态信息', en: 'Morphology'),
+      'morphology' => i18n.t(
+        'inline.ui.pages.playback_advanced_page.morphology_fda537',
+      ),
       'variations' => i18n.t('fieldVariations'),
-      'related' => pickUiText(i18n, zh: '相关词', en: 'Related words'),
-      'derived' => pickUiText(i18n, zh: '派生词', en: 'Derived words'),
-      'similar_words' => pickUiText(i18n, zh: '相近词', en: 'Similar words'),
-      'frequency_rank' => pickUiText(i18n, zh: '词频排名', en: 'Frequency rank'),
+      'related' => i18n.t(
+        'inline.ui.pages.playback_advanced_page.related_words_44c6cc',
+      ),
+      'derived' => i18n.t(
+        'inline.ui.pages.playback_advanced_page.derived_words_a74249',
+      ),
+      'similar_words' => i18n.t(
+        'inline.ui.pages.playback_advanced_page.similar_words_b1def5',
+      ),
+      'frequency_rank' => i18n.t(
+        'inline.ui.pages.playback_advanced_page.frequency_rank_c1fa82',
+      ),
       'memory' => i18n.t('fieldMemory'),
-      'culture' => pickUiText(i18n, zh: '文化背景', en: 'Culture'),
+      'culture' => i18n.t(
+        'inline.ui.pages.playback_advanced_page.culture_faa85e',
+      ),
       'story' => i18n.t('fieldStory'),
       _ => legacyFieldLabels[normalizeFieldKey(key)] ?? key,
     };
@@ -433,33 +467,23 @@ class PlaybackAdvancedPage extends ConsumerWidget {
 
   String _spellingModeLabel(AppI18n i18n, SpellingPlaybackMode mode) {
     return switch (mode) {
-      SpellingPlaybackMode.letters => pickUiText(
-        i18n,
-        zh: '逐字母',
-        en: 'Letters',
+      SpellingPlaybackMode.letters => i18n.t(
+        'inline.ui.pages.playback_advanced_page.letters_53e8af',
       ),
-      SpellingPlaybackMode.pairs => pickUiText(i18n, zh: '字母对', en: 'Pairs'),
+      SpellingPlaybackMode.pairs => i18n.t(
+        'inline.ui.pages.playback_advanced_page.pairs_65a1c7',
+      ),
     };
   }
 
   String _transitionStyleLabel(AppI18n i18n, WordPageTransitionStyle style) {
     return switch (style) {
-      WordPageTransitionStyle.defaultStyle => pickUiText(
-        i18n,
-        zh: '默认',
-        en: 'Default',
+      WordPageTransitionStyle.defaultStyle => i18n.t('todoNoColor'),
+      WordPageTransitionStyle.smooth => i18n.t(
+        'inline.plan294.zen_sand.smooth_a6a61c2c',
       ),
-      WordPageTransitionStyle.smooth => pickUiText(
-        i18n,
-        zh: '平滑',
-        en: 'Smooth',
-      ),
-      WordPageTransitionStyle.fade => pickUiText(i18n, zh: '淡入', en: 'Fade'),
-      WordPageTransitionStyle.pageFlip => pickUiText(
-        i18n,
-        zh: '仿真翻页',
-        en: 'Page flip',
-      ),
+      WordPageTransitionStyle.fade => i18n.t('wordTransitionStyleFade'),
+      WordPageTransitionStyle.pageFlip => i18n.t('wordTransitionStylePageFlip'),
     };
   }
 

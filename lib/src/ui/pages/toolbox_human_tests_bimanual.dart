@@ -106,37 +106,16 @@ class BimanualCoordinationTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(
-        i18n,
-        zh: '双手协调',
-        en: 'Bimanual coordination',
-        ja: 'バイマニュアルコーディネート',
-        de: 'Bimanual coordination',
-        fr: 'Coordination bimanuelle',
-        es: 'Coordinación bimanual',
-        ru: 'Двухсторонняя координация',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.bimanual_coordination_a59f9d',
       ),
-      subtitle: pickUiText(
-        i18n,
-        zh: '左右脑各管一摊，同时应对不同任务——像周伯通双手互搏。',
-        en: 'Run different mini-games on both sides at once for split-brain coordination and rhythm shifts.',
-        ja: 'Run different mini-games on both sides at once. Phones default to landscape fullscreen for split-brain separation, sync bonuses, and rhythm shifts.',
-        de: 'Run different mini-games on both sides at once. Phones default to landscape fullscreen for split-brain separation, sync bonuses, and rhythm shifts.',
-        fr: 'Exécutez différents mini-jeux des deux côtés à la fois. Les téléphones par défaut pour le paysage plein écran pour la séparation du cerveau divisé, les bonus de synchronisation et les changements de rythme.',
-        es: 'Ejecute diferentes minijuegos en ambos lados a la vez. Teléfonos predeterminados para el paisaje de pantalla completa para separación de cerebros, bonos de sincronización y cambios de ritmo.',
-        ru: 'Выполняйте различные мини-игры с обеих сторон одновременно. Телефоны по умолчанию выходят на полный экран для разделения разделенного мозга, синхронизации бонусов и сдвига ритма.',
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.run_different_mini_games_on_both_sides_at_once_for_split_829e83',
       ),
       accent: _accent,
       icon: Icons.pan_tool_alt_rounded,
-      status: pickUiText(
-        i18n,
-        zh: '横屏全屏，左右手各管一边，独立分工',
-        en: 'Next: enter landscape fullscreen and push both sides forward together.',
-        ja: 'Next: enter landscape fullscreen and push both sides forward together.',
-        de: 'Next: enter landscape fullscreen and push both sides forward together.',
-        fr: 'Suivant: entrer dans le paysage plein écran et pousser les deux côtés ensemble.',
-        es: 'Siguiente: introducir pantalla completa de paisaje y empujar ambos lados hacia adelante juntos.',
-        ru: 'Далее: введите ландшафтный полноэкранный экран и сдвиньте обе стороны вперед вместе.',
+      status: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.next_enter_landscape_fullscreen_and_push_both_sides_forw_f2d249',
       ),
       child: const _BimanualBrainSplitGame(),
     );
@@ -706,115 +685,39 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
 
   String _modeLabel(AppI18n i18n, _BimanualMode mode) {
     return switch (mode) {
-      _BimanualMode.arcade => pickUiText(
-        i18n,
-        zh: '街机混合',
-        en: 'Arcade mix',
-        ja: 'アーケードミックス',
-        de: 'Arcade mix',
-        fr: 'Mélange d\'arcade',
-        es: 'Arcade mix',
-        ru: 'Аркадная смесь',
+      _BimanualMode.arcade => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.arcade_mix_6926c9',
       ),
-      _BimanualMode.splitBrain => pickUiText(
-        i18n,
-        zh: '脑裂风暴',
-        en: 'Split-brain storm',
-        ja: 'Split-brain storm',
-        de: 'Split-brain storm',
-        fr: 'Tempête de cervelle',
-        es: 'Tormenta de cerebro-dividido',
-        ru: 'Сплит-мозг шторм',
+      _BimanualMode.splitBrain => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.split_brain_storm_384da2',
       ),
-      _BimanualMode.conductor => pickUiText(
-        i18n,
-        zh: '节奏指挥',
-        en: 'Rhythm conductor',
-        ja: 'Rhythm conductor',
-        de: 'Rhythm conductor',
-        fr: 'Conducteur de rythme',
-        es: 'Conductor de Rhythm',
-        ru: 'Ритм-проводник',
+      _BimanualMode.conductor => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.rhythm_conductor_ef4a31',
       ),
     };
   }
 
   String _ruleLabel(AppI18n i18n, _BimanualRule rule) {
     return switch (rule) {
-      _BimanualRule.tap => pickUiText(
-        i18n,
-        zh: '点按',
-        en: 'Tap',
-        ja: 'Tap',
-        de: 'Tap',
-        fr: 'Appuyez sur',
-        es: 'Tap',
-        ru: 'нажатие',
+      _BimanualRule.tap => i18n.t('inline.plan294.woodfish.tap_04839a81'),
+      _BimanualRule.hold => i18n.t(
+        'inline.plan295.breathing.hold.655746dd3985',
       ),
-      _BimanualRule.hold => pickUiText(
-        i18n,
-        zh: '长按',
-        en: 'Hold',
-        ja: 'Hold',
-        de: 'Hold',
-        fr: 'Attendez',
-        es: 'Espera.',
-        ru: 'Держать',
+      _BimanualRule.mirror => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.sync_16bba2',
       ),
-      _BimanualRule.mirror => pickUiText(
-        i18n,
-        zh: '同步',
-        en: 'Sync',
-        ja: 'Sync',
-        de: 'Sync',
-        fr: 'Synchronisation',
-        es: 'Sync',
-        ru: 'синхронизация',
-      ),
-      _BimanualRule.decoy => pickUiText(
-        i18n,
-        zh: '陷阱',
-        en: 'Trap',
-        ja: 'Trap',
-        de: 'Trap',
-        fr: 'Trap',
-        es: 'Trampa',
-        ru: 'Ловушка',
+      _BimanualRule.decoy => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.trap_9ad260',
       ),
     };
   }
 
   String _laneLabel(AppI18n i18n, _BimanualLane lane) {
     return switch (lane) {
-      _BimanualLane.left => pickUiText(
-        i18n,
-        zh: '左手',
-        en: 'Left',
-        ja: 'Left',
-        de: 'Left',
-        fr: 'Gauche',
-        es: 'Izquierda',
-        ru: 'Левый',
-      ),
-      _BimanualLane.right => pickUiText(
-        i18n,
-        zh: '右手',
-        en: 'Right',
-        ja: 'Right',
-        de: 'Right',
-        fr: 'Droite',
-        es: 'Bien.',
-        ru: 'Правильно.',
-      ),
-      _BimanualLane.both => pickUiText(
-        i18n,
-        zh: '双手',
-        en: 'Both',
-        ja: '両方',
-        de: 'Both',
-        fr: 'Les deux',
-        es: 'Ambos',
-        ru: 'Оба',
+      _BimanualLane.left => i18n.t('toolbox.breathing.left'),
+      _BimanualLane.right => i18n.t('toolbox.sound.locator.cue_label_right'),
+      _BimanualLane.both => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.both_897ba3',
       ),
     };
   }
@@ -822,81 +725,32 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
   String _cueInstruction(AppI18n i18n) {
     final cue = _cue;
     if (!_running || cue == null) {
-      return pickUiText(
-        i18n,
-        zh: '选择玩法后开始，双手分别守住左右触区。',
-        en: 'Pick a mode and start. Keep both hands on the left and right pads.',
-        ja: 'Pick a mode and start. Keep both hands on the left and right pads.',
-        de: 'Pick a mode and start. Keep both hands on the left and right pads.',
-        fr: 'Choisissez un mode et démarrez. Gardez les deux mains sur les coussinets gauche et droit.',
-        es: 'Elige un modo y comienza. Mantén ambas manos en las almohadillas izquierda y derecha.',
-        ru: 'Выберите режим и начинайте. Держите обе руки на левой и правой подушках.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.pick_a_mode_and_start_keep_both_hands_on_the_left_and_ri_23b62b',
       );
     }
     return switch (cue.rule) {
       _BimanualRule.tap =>
         cue.lane == _BimanualLane.both
-            ? pickUiText(
-                i18n,
-                zh: '双手几乎同时点下',
-                en: 'Tap both pads nearly together',
-                ja: 'Tap both pads nearly together',
-                de: 'Tap both pads nearly together',
-                fr: 'Tapez les deux tampons presque ensemble',
-                es: 'Toca ambas almohadillas casi juntas',
-                ru: 'Нажмите обе прокладки почти вместе',
+            ? i18n.t(
+                'inline.ui.pages.toolbox_human_tests_bimanual.tap_both_pads_nearly_together_2c1a5c',
               )
-            : pickUiText(
-                i18n,
-                zh: '点按${_laneLabel(i18n, cue.lane)}触区',
-                en: 'Tap the ${_laneLabel(i18n, cue.lane)} pad',
-                ja: 'Tap the ${_laneLabel(i18n, cue.lane)} pad',
-                de: 'Tap the ${_laneLabel(i18n, cue.lane)} pad',
-                fr: 'Appuyez sur le tampon ${_laneLabel(i18n, cue.lane)}',
-                es: 'Toca el almohadilla de <v0/',
-                ru: 'Нажмите ${_laneLabel(i18n, cue.lane)} pad',
+            : i18n.t(
+                'inline.ui.pages.toolbox_human_tests_bimanual.tap_the_lanelabel_i18n_cue_lane_pad_ab65df',
               ),
       _BimanualRule.hold =>
         cue.lane == _BimanualLane.both
-            ? pickUiText(
-                i18n,
-                zh: '双手同时按住直到充能完成',
-                en: 'Hold both pads until charge completes',
-                ja: 'Hold both pads until charge completes',
-                de: 'Hold both pads until charge completes',
-                fr: 'Maintenez les deux tampons jusqu\'à la fin de la charge',
-                es: 'Sostenga ambas almohadillas hasta completar el cargo',
-                ru: 'Держите обе прокладки до завершения зарядки',
+            ? i18n.t(
+                'inline.ui.pages.toolbox_human_tests_bimanual.hold_both_pads_until_charge_completes_902b4b',
               )
-            : pickUiText(
-                i18n,
-                zh: '按住${_laneLabel(i18n, cue.lane)}触区',
-                en: 'Hold the ${_laneLabel(i18n, cue.lane)} pad',
-                ja: 'Hold the ${_laneLabel(i18n, cue.lane)} pad',
-                de: 'Hold the ${_laneLabel(i18n, cue.lane)} pad',
-                fr: 'Maintenez le tampon ${_laneLabel(i18n, cue.lane)}',
-                es: 'Sostenga la almohadilla de <v0/',
-                ru: 'Держите колодку ${_laneLabel(i18n, cue.lane)}',
+            : i18n.t(
+                'inline.ui.pages.toolbox_human_tests_bimanual.hold_the_lanelabel_i18n_cue_lane_pad_4a8932',
               ),
-      _BimanualRule.mirror => pickUiText(
-        i18n,
-        zh: '镜像指令：左右手在窗口内连击',
-        en: 'Mirror cue: strike left and right within the sync window',
-        ja: 'Mirror cue: strike left and right within the sync window',
-        de: 'Mirror cue: strike left and right within the sync window',
-        fr: 'Marque miroir: frappez à gauche et à droite dans la fenêtre de synchronisation',
-        es: 'Espejo cue: huelga izquierda y derecha dentro de la ventana de sincronización',
-        ru: 'Зеркальный сигнал: удар влево и вправо в окне синхронизации',
+      _BimanualRule.mirror => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.mirror_cue_strike_left_and_right_within_the_sync_window_98fa82',
       ),
-      _BimanualRule.decoy => pickUiText(
-        i18n,
-        zh: '陷阱指令：什么都别按',
-        en: 'Trap cue: press nothing',
-        ja: 'Trap cue: press nothing',
-        de: 'Trap cue: press nothing',
-        fr: 'Trap cue: ne pressez rien',
-        es: 'Trap cue: nada de prensa',
-        ru: 'Оригинальное название: Press Nothing',
+      _BimanualRule.decoy => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.trap_cue_press_nothing_6be59f',
       ),
     };
   }
@@ -918,68 +772,19 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
+            (i18n.t('progress'), '$_roundIndex/$_roundCount'),
+            (i18n.t('inline.plan295.life.score.e58eff17f23d'), '$_score'),
             (
-              pickUiText(
-                i18n,
-                zh: '进度',
-                en: 'Progress',
-                ja: 'Progress',
-                de: 'Progress',
-                fr: 'Progrès accomplis',
-                es: 'Progresos',
-                ru: 'Прогресс',
-              ),
-              '$_roundIndex/$_roundCount',
-            ),
-            (
-              pickUiText(
-                i18n,
-                zh: '分数',
-                en: 'Score',
-                ja: 'Score',
-                de: 'Score',
-                fr: 'Score',
-                es: 'Puntuación',
-                ru: 'счет',
-              ),
-              '$_score',
-            ),
-            (
-              pickUiText(
-                i18n,
-                zh: '连击',
-                en: 'Combo',
-                ja: 'コンボ',
-                de: 'Combo',
-                fr: 'Combo',
-                es: 'Combo',
-                ru: 'Комбинация',
-              ),
+              i18n.t('inline.ui.pages.toolbox_human_tests_action.combo_e9df71'),
               '$_combo',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '准确率',
-                en: 'Accuracy',
-                ja: '精度',
-                de: 'Accuracy',
-                fr: 'Accuracy',
-                es: 'Precisión',
-                ru: 'точность',
-              ),
+              i18n.t('inline.ui.pages.practice_review_page.accuracy_8cf5a1'),
               _records.isEmpty ? '-' : '${(_accuracy * 100).round()}%',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '平均反应',
-                en: 'Avg reaction',
-                ja: '平均反応',
-                de: 'Avg reaction',
-                fr: 'Réaction d\' Avg',
-                es: 'Reacción de Avg',
-                ru: 'Авг реакция',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_bimanual.avg_reaction_2a9cf7',
               ),
               _averageMs == 0 ? '-' : _formatMilliseconds(_averageMs),
             ),
@@ -987,25 +792,11 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
         ),
         const SizedBox(height: 12),
         _HumanSettingsSection(
-          title: pickUiText(
-            i18n,
-            zh: '双手挑战设置',
-            en: 'Bimanual game settings',
-            ja: 'バイマニュアルゲーム設定',
-            de: 'Bimanual game settings',
-            fr: 'Paramètres du jeu bimanuel',
-            es: 'Ajustes de juego duales',
-            ru: 'Бирумные игровые настройки',
+          title: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.bimanual_game_settings_484e71',
           ),
-          subtitle: pickUiText(
-            i18n,
-            zh: '切换玩法、轮数、节奏强度、同步窗口和长按时长。运行中设置会锁定。',
-            en: 'Choose mode, rounds, pace, sync window, and hold duration. Settings lock while running.',
-            ja: 'モード、ラウンド、ペース、同期ウィンドウ、ホールド時間を選択します。実行中は設定がロックされます。',
-            de: 'Choose mode, rounds, pace, sync window, and hold duration. Settings lock while running.',
-            fr: 'Choisissez le mode, les tours, le rythme, la fenêtre de synchronisation et la durée de maintien. Réglages verrouillés pendant l\'exécution.',
-            es: 'Elija modo, rondas, ritmo, ventana de sincronización y mantener la duración. Los ajustes se bloquean mientras corren.',
-            ru: 'Выберите режим, раунды, темп, окно синхронизации и продолжительность удержания. Настройка замка во время бега.',
+          subtitle: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.choose_mode_rounds_pace_sync_window_and_hold_duration_se_7dbb49',
           ),
           initiallyExpanded: true,
           child: _buildSettings(context, i18n),
@@ -1041,25 +832,11 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
           children: <Widget>[
             _HumanActionButton(
               label: _running
-                  ? pickUiText(
-                      i18n,
-                      zh: '重新开始',
-                      en: 'Restart',
-                      ja: 'Restart',
-                      de: 'Restart',
-                      fr: 'Redémarrer',
-                      es: 'Restart',
-                      ru: 'Перезапустить',
+                  ? i18n.t(
+                      'inline.ui.pages.practice_session_page.restart_8b7fcc',
                     )
-                  : pickUiText(
-                      i18n,
-                      zh: '开始挑战',
-                      en: 'Start challenge',
-                      ja: 'Start challenge',
-                      de: 'Start challenge',
-                      fr: 'Démarrage',
-                      es: 'Inicio desafío',
-                      ru: 'Начинать вызов',
+                  : i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_action.start_challenge_9e0ecb',
                     ),
               icon: _running ? Icons.replay_rounded : Icons.play_arrow_rounded,
               onPressed: _start,
@@ -1067,36 +844,14 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
             OutlinedButton.icon(
               onPressed: _reset,
               icon: const Icon(Icons.refresh_rounded),
-              label: Text(
-                pickUiText(
-                  i18n,
-                  zh: '重置',
-                  en: 'Reset',
-                  ja: 'Reset',
-                  de: 'Reset',
-                  fr: 'Réinitialiser',
-                  es: 'Reset',
-                  ru: 'сброс',
-                ),
-              ),
+              label: Text(i18n.t('appearanceReset')),
             ),
             OutlinedButton.icon(
               onPressed: _records.isEmpty
                   ? null
                   : () => unawaited(_showReport()),
               icon: const Icon(Icons.analytics_rounded),
-              label: Text(
-                pickUiText(
-                  i18n,
-                  zh: '报告',
-                  en: 'Report',
-                  ja: 'Report',
-                  de: 'Report',
-                  fr: 'Rapport annuel',
-                  es: 'Informe',
-                  ru: 'Доклад',
-                ),
-              ),
+              label: Text(i18n.t('toolbox.sleep.assist.reportCard')),
             ),
           ],
         ),
@@ -1114,16 +869,7 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          pickUiText(
-            i18n,
-            zh: '玩法模式',
-            en: 'Game mode',
-            ja: 'Game mode',
-            de: 'Game mode',
-            fr: 'Mode jeu',
-            es: 'Modo de juego',
-            ru: 'Режим игры',
-          ),
+          i18n.t('inline.ui.pages.toolbox_human_tests_action.game_mode_e4d1de'),
           style: theme.textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w800,
           ),
@@ -1143,18 +889,7 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
               .toList(growable: false),
         ),
         const SizedBox(height: 12),
-        Text(
-          pickUiText(
-            i18n,
-            zh: '轮数',
-            en: 'Rounds',
-            ja: 'Rounds',
-            de: 'Rounds',
-            fr: 'Rondes',
-            es: 'Rondas',
-            ru: 'Круги',
-          ),
-        ),
+        Text(i18n.t('inline.plan294.breathing.rounds_06b0afec')),
         Slider(
           value: _roundCount.toDouble(),
           min: 8,
@@ -1166,15 +901,8 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
               : (value) => setState(() => _roundCount = value.round()),
         ),
         Text(
-          pickUiText(
-            i18n,
-            zh: '节奏强度',
-            en: 'Pace level',
-            ja: 'Pace level',
-            de: 'Pace level',
-            fr: 'Niveau de Pace',
-            es: 'Nivel de rotación',
-            ru: 'Уровень темпа',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.pace_level_029663',
           ),
         ),
         Slider(
@@ -1188,15 +916,8 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
               : (value) => setState(() => _paceLevel = value.round()),
         ),
         Text(
-          pickUiText(
-            i18n,
-            zh: '同步窗口',
-            en: 'Sync window',
-            ja: 'Sync window',
-            de: 'Sync window',
-            fr: 'Synchroniser la fenêtre',
-            es: 'Ventana sincronizada',
-            ru: 'Синхронное окно',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.sync_window_d62f6b',
           ),
         ),
         Slider(
@@ -1210,15 +931,8 @@ class _BimanualCoordinationGameState extends State<_BimanualCoordinationGame> {
               : (value) => setState(() => _syncWindowMs = value.round()),
         ),
         Text(
-          pickUiText(
-            i18n,
-            zh: '长按充能',
-            en: 'Hold charge',
-            ja: 'Hold charge',
-            de: 'Hold charge',
-            fr: 'Maintenance',
-            es: 'Carga de mano',
-            ru: 'Держите заряд.',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.hold_charge_48b575',
           ),
         ),
         Slider(
@@ -1310,37 +1024,12 @@ class _BimanualStage extends StatelessWidget {
         ? _BimanualCoordinationGameState._accent
         : laneAccent(cue!.lane);
     final feedbackText = lastCorrect == null
-        ? pickUiText(
-            i18n,
-            zh: '等待输入',
-            en: 'Awaiting input',
-            ja: '入力待ち',
-            de: 'Awaiting input',
-            fr: 'En attente d\'une contribution',
-            es: 'Awaiting input',
-            ru: 'Ожидающий вклад',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.awaiting_input_75ae4b',
           )
         : lastCorrect!
-        ? pickUiText(
-            i18n,
-            zh: '命中',
-            en: 'Hit',
-            ja: 'Hit',
-            de: 'Hit',
-            fr: 'Affichage',
-            es: 'Hit',
-            ru: 'удар',
-          )
-        : pickUiText(
-            i18n,
-            zh: '失误',
-            en: 'Miss',
-            ja: 'Miss',
-            de: 'Miss',
-            fr: 'Mlle',
-            es: 'Miss',
-            ru: 'Мисс.',
-          );
+        ? i18n.t('inline.ui.pages.toolbox_human_tests_aim.hit_bb8a95')
+        : i18n.t('inline.ui.pages.toolbox_human_tests_bimanual.miss_7876fa');
     final feedbackColor = lastCorrect == false
         ? _BimanualCoordinationGameState._dangerAccent
         : accent;
@@ -1415,36 +1104,13 @@ class _BimanualStage extends StatelessWidget {
           children: <Widget>[
             Expanded(
               child: _BimanualPad(
-                label: pickUiText(
-                  i18n,
-                  zh: '左手',
-                  en: 'Left',
-                  ja: 'Left',
-                  de: 'Left',
-                  fr: 'Gauche',
-                  es: 'Izquierda',
-                  ru: 'Левый',
-                ),
+                label: i18n.t('toolbox.breathing.left'),
                 subtitle: firstSyncLane == _BimanualLane.left
-                    ? pickUiText(
-                        i18n,
-                        zh: '已先击',
-                        en: 'First strike',
-                        ja: 'First strike',
-                        de: 'First strike',
-                        fr: 'Première grève',
-                        es: 'Primera huelga',
-                        ru: 'Первый удар',
+                    ? i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_bimanual.first_strike_2ce009',
                       )
-                    : pickUiText(
-                        i18n,
-                        zh: '蓝色触区',
-                        en: 'Blue pad',
-                        ja: '青パッド',
-                        de: 'Blue pad',
-                        fr: 'Tapis bleu',
-                        es: 'Almohadilla azul',
-                        ru: 'Голубая колодка',
+                    : i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_bimanual.blue_pad_d54971',
                       ),
                 icon: Icons.arrow_back_rounded,
                 accent: _BimanualCoordinationGameState._leftAccent,
@@ -1465,36 +1131,13 @@ class _BimanualStage extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _BimanualPad(
-                label: pickUiText(
-                  i18n,
-                  zh: '右手',
-                  en: 'Right',
-                  ja: 'Right',
-                  de: 'Right',
-                  fr: 'Droite',
-                  es: 'Bien.',
-                  ru: 'Правильно.',
-                ),
+                label: i18n.t('toolbox.sound.locator.cue_label_right'),
                 subtitle: firstSyncLane == _BimanualLane.right
-                    ? pickUiText(
-                        i18n,
-                        zh: '已先击',
-                        en: 'First strike',
-                        ja: 'First strike',
-                        de: 'First strike',
-                        fr: 'Première grève',
-                        es: 'Primera huelga',
-                        ru: 'Первый удар',
+                    ? i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_bimanual.first_strike_2ce009',
                       )
-                    : pickUiText(
-                        i18n,
-                        zh: '金色触区',
-                        en: 'Gold pad',
-                        ja: 'Gold pad',
-                        de: 'Gold pad',
-                        fr: 'Pad doré',
-                        es: 'Almohadilla de oro',
-                        ru: 'Золотая колодка',
+                    : i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_bimanual.gold_pad_b5ebea',
                       ),
                 icon: Icons.arrow_forward_rounded,
                 accent: _BimanualCoordinationGameState._rightAccent,
@@ -1707,15 +1350,8 @@ class _BimanualRecentPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(
-              i18n,
-              zh: '最近节奏',
-              en: 'Recent rhythm',
-              ja: 'Recent rhythm',
-              de: 'Recent rhythm',
-              fr: 'Rythme récent',
-              es: 'ritmo reciente',
-              ru: 'Недавний ритм',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_bimanual.recent_rhythm_48e25b',
             ),
             style: theme.textTheme.labelLarge?.copyWith(
               fontWeight: FontWeight.w800,
@@ -1774,48 +1410,20 @@ class _BimanualReportDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final title = score >= records.length * 14 && accuracy >= 0.9
-        ? pickUiText(
-            i18n,
-            zh: '左右脑合拍',
-            en: 'Two-hand flow',
-            ja: 'Two-hand flow',
-            de: 'Two-hand flow',
-            fr: 'Débit à deux mains',
-            es: 'Flujo de dos manos',
-            ru: 'Двусторонний поток',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.two_hand_flow_c88ca9',
           )
         : accuracy < 0.7
-        ? pickUiText(
-            i18n,
-            zh: '需要降速稳住',
-            en: 'Slow down first',
-            ja: 'Slow down first',
-            de: 'Slow down first',
-            fr: 'Ralentissez d\'abord',
-            es: 'Despacio primero',
-            ru: 'Сначала помедленнее',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.slow_down_first_b362f4',
           )
-        : pickUiText(
-            i18n,
-            zh: '节奏正在成形',
-            en: 'Rhythm forming',
-            ja: 'Rhythm forming',
-            de: 'Rhythm forming',
-            fr: 'Rythme formant',
-            es: 'Rhythm formando',
-            ru: 'Формирование ритма',
+        : i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.rhythm_forming_076f9c',
           );
     return AlertDialog(
       title: Text(
-        pickUiText(
-          i18n,
-          zh: '双手协调报告',
-          en: 'Bimanual report',
-          ja: 'バイマニュアルレポート',
-          de: 'Bimanual report',
-          fr: 'Rapport bimanuel',
-          es: 'Informe bimanual',
-          ru: 'Двухсторонний доклад',
+        i18n.t(
+          'inline.ui.pages.toolbox_human_tests_bimanual.bimanual_report_0b0588',
         ),
       ),
       content: SizedBox(
@@ -1827,107 +1435,36 @@ class _BimanualReportDialog extends StatelessWidget {
             children: <Widget>[
               _HumanMetricWrap(
                 metrics: <(String, String)>[
+                  (i18n.t('noteTitle'), title),
+                  (i18n.t('toolbox.sound.piano.mode'), mode),
+                  (i18n.t('inline.plan295.life.score.e58eff17f23d'), '$score'),
                   (
-                    pickUiText(
-                      i18n,
-                      zh: '称号',
-                      en: 'Title',
-                      ja: 'Title',
-                      de: 'Title',
-                      fr: 'Titre',
-                      es: 'Título',
-                      ru: 'Название',
-                    ),
-                    title,
-                  ),
-                  (
-                    pickUiText(
-                      i18n,
-                      zh: '模式',
-                      en: 'Mode',
-                      ja: 'Mode',
-                      de: 'Mode',
-                      fr: 'Mode',
-                      es: 'Modo',
-                      ru: 'Режим',
-                    ),
-                    mode,
-                  ),
-                  (
-                    pickUiText(
-                      i18n,
-                      zh: '分数',
-                      en: 'Score',
-                      ja: 'Score',
-                      de: 'Score',
-                      fr: 'Score',
-                      es: 'Puntuación',
-                      ru: 'счет',
-                    ),
-                    '$score',
-                  ),
-                  (
-                    pickUiText(
-                      i18n,
-                      zh: '准确率',
-                      en: 'Accuracy',
-                      ja: '精度',
-                      de: 'Accuracy',
-                      fr: 'Accuracy',
-                      es: 'Precisión',
-                      ru: 'точность',
+                    i18n.t(
+                      'inline.ui.pages.practice_review_page.accuracy_8cf5a1',
                     ),
                     '${(accuracy * 100).round()}%',
                   ),
                   (
-                    pickUiText(
-                      i18n,
-                      zh: '最佳连击',
-                      en: 'Best combo',
-                      ja: 'ベストコンボ',
-                      de: 'Best combo',
-                      fr: 'Meilleur combo',
-                      es: 'Mejor combo',
-                      ru: 'Лучшее сочетание',
+                    i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_action.best_combo_65a7d7',
                     ),
                     '$bestCombo',
                   ),
                   (
-                    pickUiText(
-                      i18n,
-                      zh: '失误',
-                      en: 'Mistakes',
-                      ja: 'Mistakes',
-                      de: 'Mistakes',
-                      fr: 'Erreurs',
-                      es: 'Errores',
-                      ru: 'Ошибки',
+                    i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_bimanual.mistakes_ea8156',
                     ),
                     '$mistakes',
                   ),
                   (
-                    pickUiText(
-                      i18n,
-                      zh: '平均反应',
-                      en: 'Avg reaction',
-                      ja: '平均反応',
-                      de: 'Avg reaction',
-                      fr: 'Réaction d\' Avg',
-                      es: 'Reacción de Avg',
-                      ru: 'Авг реакция',
+                    i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_bimanual.avg_reaction_2a9cf7',
                     ),
                     averageMs == 0 ? '-' : _formatMilliseconds(averageMs),
                   ),
                   (
-                    pickUiText(
-                      i18n,
-                      zh: '同步差',
-                      en: 'Sync gap',
-                      ja: 'Sync gap',
-                      de: 'Sync gap',
-                      fr: 'Écart de synchronisation',
-                      es: 'Sincronización',
-                      ru: 'Синхронный разрыв',
+                    i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_bimanual.sync_gap_27741d',
                     ),
                     averageSyncGap == 0
                         ? '-'
@@ -1941,15 +1478,8 @@ class _BimanualReportDialog extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '左右手负载',
-                        en: 'Hand load',
-                        ja: 'Hand load',
-                        de: 'Hand load',
-                        fr: 'Charge manuelle',
-                        es: 'Carga de mano',
-                        ru: 'Ручная нагрузка',
+                      i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_bimanual.hand_load_78901d',
                       ),
                       style: theme.textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.w800,
@@ -1968,25 +1498,11 @@ class _BimanualReportDialog extends StatelessWidget {
               _HumanPanel(
                 child: Text(
                   mistakes > records.length * 0.25
-                      ? pickUiText(
-                          i18n,
-                          zh: '建议先降低节奏强度，重点练习陷阱不按和同步窗口内的双击。',
-                          en: 'Lower the pace first. Practice ignoring trap cues and landing two-pad strikes inside the sync window.',
-                          ja: 'Lower the pace first. Practice ignoring trap cues and landing two-pad strikes inside the sync window.',
-                          de: 'Lower the pace first. Practice ignoring trap cues and landing two-pad strikes inside the sync window.',
-                          fr: 'Baissez d\'abord le rythme. Pratiquez l\'ignorance des repères de piège et atterrissez deux-pad frappes dans la fenêtre de synchronisation.',
-                          es: 'Baja el ritmo primero. Practica ignorando las trampas y aterrizando huelgas de dos patas dentro de la ventana de sincronización.',
-                          ru: 'Сначала понизить темп. Практикуйте игнорирование сигналов ловушки и посадку двухпадных ударов внутри синхронного окна.',
+                      ? i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_bimanual.lower_the_pace_first_practice_ignoring_trap_cues_and_lan_c9a7ac',
                         )
-                      : pickUiText(
-                          i18n,
-                          zh: '表现稳定，可以提高节奏强度或切换到脑裂风暴，增加陷阱和长按压力。',
-                          en: 'Performance is stable. Raise the pace or switch to Split-brain storm for more traps and hold pressure.',
-                          ja: 'Performance is stable. Raise the pace or switch to Split-brain storm for more traps and hold pressure.',
-                          de: 'Performance is stable. Raise the pace or switch to Split-brain storm for more traps and hold pressure.',
-                          fr: 'La performance est stable. Augmenter le rythme ou passer à la tempête de Split-cerveau pour plus de pièges et maintenir la pression.',
-                          es: 'El rendimiento es estable. Aumente el ritmo o cambie a la tormenta Split-brain para más trampas y mantenga presión.',
-                          ru: 'Производительность стабильна. Поднимите темп или переключитесь на шторм с разделенным мозгом для большего количества ловушек и удерживайте давление.',
+                      : i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_bimanual.performance_is_stable_raise_the_pace_or_switch_to_split_be849a',
                         ),
                   style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
                 ),
@@ -1998,18 +1514,7 @@ class _BimanualReportDialog extends StatelessWidget {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(
-            pickUiText(
-              i18n,
-              zh: '关闭',
-              en: 'Close',
-              ja: '閉じる',
-              de: 'Close',
-              fr: 'Fermer',
-              es: 'Cerca',
-              ru: 'Закрыть',
-            ),
-          ),
+          child: Text(i18n.t('inline.plan295.life.close.370fb8697deb')),
         ),
       ],
     );
@@ -2062,12 +1567,12 @@ class _BimanualLoadBar extends StatelessWidget {
           children: <Widget>[
             Expanded(
               child: Text(
-                '${pickUiText(i18n, zh: '左手', en: 'Left', ja: 'Left', de: 'Left', fr: 'Gauche', es: 'Izquierda', ru: 'Левый')} $leftHits',
+                '${i18n.t('toolbox.breathing.left')} $leftHits',
                 style: theme.textTheme.labelMedium,
               ),
             ),
             Text(
-              '${pickUiText(i18n, zh: '右手', en: 'Right', ja: 'Right', de: 'Right', fr: 'Droite', es: 'Bien.', ru: 'Правильно.')} $rightHits',
+              '${i18n.t('toolbox.sound.locator.cue_label_right')} $rightHits',
               style: theme.textTheme.labelMedium,
             ),
           ],
@@ -2284,15 +1789,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
       success: true,
       milliseconds: 0,
       scoreDelta: 0,
-      detail: pickUiText(
-        i18n,
-        zh: '单侧练习休息',
-        en: 'Single-side rest',
-        ja: 'Single-side rest',
-        de: 'Single-side rest',
-        fr: 'Repos latéral',
-        es: 'Descanso unilateral',
-        ru: 'односторонний отдых',
+      detail: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.single_side_rest_ad9f60',
       ),
     );
   }
@@ -2524,15 +2022,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
     final leftActive = _isSideActive(_BimanualSide.left);
     final rightActive = _isSideActive(_BimanualSide.right);
     final label = _singleSidePractice
-        ? pickUiText(
-            i18n,
-            zh: '${_sideLabel(i18n, _practiceSide)}单侧 ${_taskLabel(i18n, _practiceSide == _BimanualSide.left ? _leftTaskType : _rightTaskType)}',
-            en: '${_sideLabel(i18n, _practiceSide)} only ${_taskLabel(i18n, _practiceSide == _BimanualSide.left ? _leftTaskType : _rightTaskType)}',
-            ja: '${_sideLabel(i18n, _practiceSide)} のみ ${_taskLabel(i18n, _practiceSide == _BimanualSide.left ? _leftTaskType : _rightTaskType)}',
-            de: '${_sideLabel(i18n, _practiceSide)} only ${_taskLabel(i18n, _practiceSide == _BimanualSide.left ? _leftTaskType : _rightTaskType)}',
-            fr: '${_sideLabel(i18n, _practiceSide)} only ${_taskLabel(i18n, _practiceSide == _BimanualSide.left ? _leftTaskType : _rightTaskType)}',
-            es: 'No.',
-            ru: '${_sideLabel(i18n, _practiceSide)} только ${_taskLabel(i18n, _practiceSide == _BimanualSide.left ? _leftTaskType : _rightTaskType)}',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.sidelabel_i18n_practiceside_only_tasklabel_i18n_practice_4f3967',
           )
         : _pairLabel(i18n, left.type, right.type);
 
@@ -2581,35 +2072,14 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
     final threshold = (0.145 - _difficultyIndex * 0.014).clamp(0.085, 0.16);
     return _BrainSplitTaskSpec(
       type: _BimanualTaskType.trace,
-      title: pickUiText(
-        i18n,
-        zh: '$sideLabel 画图 $patternLabel',
-        en: '$sideLabel Trace $patternLabel',
-        ja: '$sideLabelバウンスハイジャンプトレース $patternLabel',
-        de: '$sideLabel Trace $patternLabel',
-        fr: '$sideLabel Trace $patternLabel',
-        es: '■v0/ título Trace',
-        ru: '$sideLabel След $patternLabel',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.sidelabel_trace_patternlabel_882d11',
       ),
-      subtitle: pickUiText(
-        i18n,
-        zh: '随机生成 $nodes 个几何节点，沿 $lineStyleLabel 一笔连完，偏离过远会扣分。',
-        en: 'Trace $nodes seeded geometry nodes as one $lineStyleLabel stroke; drifting too far costs points.',
-        ja: 'Trace $nodes seeded geometry nodes as one $lineStyleLabel stroke; drifting too far costs points.',
-        de: 'Trace $nodes seeded geometry nodes as one $lineStyleLabel stroke; drifting too far costs points.',
-        fr: 'Tracez les nœuds géométriques ensemencés comme une course $lineStyleLabel; dériver trop loin coûte des points.',
-        es: 'Rastreo de nodos geométricos seededed como uno de ellos; derivando demasiados costos puntos.',
-        ru: 'След $nodes засеянные геометрические узлы как один $lineStyleLabel ход; дрейф слишком далеко стоит точек.',
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.trace_nodes_seeded_geometry_nodes_as_one_linestylelabel_397e8d',
       ),
-      goalText: pickUiText(
-        i18n,
-        zh: '画完随机$patternLabel',
-        en: 'Finish random $patternLabel',
-        ja: 'Finish random $patternLabel',
-        de: 'Finish random $patternLabel',
-        fr: 'Terminer au hasard $patternLabel',
-        es: 'Finalizar al azar',
-        ru: 'Завершить случайный $patternLabel',
+      goalText: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.finish_random_patternlabel_419d0e',
       ),
       accent: _traceAccent,
       seed: seed,
@@ -2643,35 +2113,14 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
     final bounceObstacles = _buildBounceObstacles(seed);
     return _BrainSplitTaskSpec(
       type: _BimanualTaskType.bounce,
-      title: pickUiText(
-        i18n,
-        zh: '$sideLabel 弹球',
-        en: '$sideLabel Bounce',
-        ja: '$sideLabel',
-        de: '$sideLabel Bounce',
-        fr: '$sideLabel Bounce',
-        es: '&quot; Rebonce &quot;',
-        ru: '$sideLabel Отскок',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.sidelabel_bounce_17baa0',
       ),
-      subtitle: pickUiText(
-        i18n,
-        zh: '在底部控制区拖动挡板，小球会撞随机障碍，速度 ${speedScale.toStringAsFixed(1)}x，稳住 $rallies 次。',
-        en: 'Drag from the lower control strip; the ball rebounds off random bumpers at ${speedScale.toStringAsFixed(1)}x for $rallies rallies.',
-        ja: 'Drag from the lower control strip; the ball rebounds off random bumpers at ${speedScale.toStringAsFixed(1)}x for $rallies rallies.',
-        de: 'Drag from the lower control strip; the ball rebounds off random bumpers at ${speedScale.toStringAsFixed(1)}x for $rallies rallies.',
-        fr: 'Faites glisser de la bande de contrôle inférieure; la balle rebondit des pare-chocs aléatoires à ${speedScale.toStringAsFixed(1)}x pour les rassemblements $rallies.',
-        es: 'Arrastre de la tira de control inferior; la bola rebota a los parachoques aleatorios en rallies de <v0/юx.',
-        ru: 'Перетащите с нижней контрольной полосы; мяч отскакивает от случайных бамперов на ${speedScale.toStringAsFixed(1)}x для митингов $rallies.',
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.drag_from_the_lower_control_strip_the_ball_rebounds_off_e183b8',
       ),
-      goalText: pickUiText(
-        i18n,
-        zh: '稳住 $rallies 次回弹',
-        en: 'Keep $rallies rallies',
-        ja: 'Keep $rallies rallies',
-        de: 'Keep $rallies rallies',
-        fr: 'Conserver les rassemblements $rallies',
-        es: 'Mantener los rallyes',
-        ru: 'Сохранить $rallies митинги',
+      goalText: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.keep_rallies_rallies_98e103',
       ),
       accent: _bounceAccent,
       seed: seed,
@@ -2699,35 +2148,14 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
     final platforms = _buildClimbPlatforms(steps, seed, platformSpeed);
     return _BrainSplitTaskSpec(
       type: _BimanualTaskType.climb,
-      title: pickUiText(
-        i18n,
-        zh: '$sideLabel 跳高',
-        en: '$sideLabel High jump',
-        ja: '$sideLabel',
-        de: '$sideLabel High jump',
-        fr: '$sideLabel High jump',
-        es: 'salto alto',
-        ru: '<v0/Высокий прыжок',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.sidelabel_high_jump_8dea68',
       ),
-      subtitle: pickUiText(
-        i18n,
-        zh: '看准横向移动平台，点击或按住蓄力逐层跳上去，冲到第 $steps 层。',
-        en: 'Time the moving platforms, tap or charge based on difficulty, and climb $steps levels.',
-        ja: 'Time the moving platforms, tap or charge based on difficulty, and climb $steps levels.',
-        de: 'Time the moving platforms, tap or charge based on difficulty, and climb $steps levels.',
-        fr: 'Temps de déplacement des plates-formes, tapoter ou charger en fonction de la difficulté, et monter $steps niveaux.',
-        es: 'Tiempo de las plataformas móviles, pulsar o cargar sobre la base de la dificultad, y escalar los niveles de garantía real.',
-        ru: 'Время перемещения платформ, нажатие или зарядка в зависимости от сложности и подъем уровня $steps.',
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.time_the_moving_platforms_tap_or_charge_based_on_difficu_e0c9c2',
       ),
-      goalText: pickUiText(
-        i18n,
-        zh: '登顶 $steps 层',
-        en: 'Reach level $steps',
-        ja: 'Reach level $steps',
-        de: 'Reach level $steps',
-        fr: 'Niveau $steps',
-        es: 'Nivel de acceso',
-        ru: 'Достижение уровня $steps',
+      goalText: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.reach_level_steps_12849e',
       ),
       accent: _climbAccent,
       seed: seed,
@@ -2833,294 +2261,103 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
   ) {
     final leftLabel = _taskLabel(i18n, left);
     final rightLabel = _taskLabel(i18n, right);
-    return pickUiText(
-      i18n,
-      zh: '$leftLabel / $rightLabel',
-      en: '$leftLabel / $rightLabel',
-      ja: '$leftLabel /$rightLabel',
-      de: '$leftLabel / $rightLabel',
-      fr: '$leftLabel / $rightLabel',
-      es: '- No.',
-      ru: '$leftLabel $rightLabel',
+    return i18n.t(
+      'inline.ui.pages.toolbox_human_tests_bimanual.leftlabel_rightlabel_d183a2',
     );
   }
 
   String _taskLabel(AppI18n i18n, _BimanualTaskType type) {
     return switch (type) {
-      _BimanualTaskType.trace => pickUiText(
-        i18n,
-        zh: '画图',
-        en: 'Trace',
-        ja: 'Trace',
-        de: 'Trace',
-        fr: 'Trace',
-        es: 'Trace',
-        ru: 'след',
+      _BimanualTaskType.trace => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.trace_44a484',
       ),
-      _BimanualTaskType.bounce => pickUiText(
-        i18n,
-        zh: '弹球',
-        en: 'Bounce',
-        ja: 'バウンスバウンス',
-        de: 'Bounce',
-        fr: 'Bounce',
-        es: 'Bounce',
-        ru: 'отскакивать',
+      _BimanualTaskType.bounce => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.bounce_16ab0f',
       ),
-      _BimanualTaskType.climb => pickUiText(
-        i18n,
-        zh: '跳高',
-        en: 'High jump',
-        ja: 'High jump',
-        de: 'High jump',
-        fr: 'Saut en hauteur',
-        es: 'Alto salto',
-        ru: 'Высокий прыжок',
+      _BimanualTaskType.climb => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.high_jump_f935f8',
       ),
     };
   }
 
   String _difficultyLabel(AppI18n i18n, _BimanualDifficulty difficulty) {
     return switch (difficulty) {
-      _BimanualDifficulty.relaxed => pickUiText(
-        i18n,
-        zh: '舒缓',
-        en: 'Relaxed',
-        ja: 'Relaxed',
-        de: 'Relaxed',
-        fr: 'Détends-toi',
-        es: 'Relajado',
-        ru: 'Расслабленный',
+      _BimanualDifficulty.relaxed => i18n.t(
+        'inline.plan295.daily_choice.relaxed.556d216b95e0',
       ),
-      _BimanualDifficulty.standard => pickUiText(
-        i18n,
-        zh: '标准',
-        en: 'Standard',
-        ja: 'Standard',
-        de: 'Standard',
-        fr: 'Norme',
-        es: 'Estándar',
-        ru: 'Стандарт',
+      _BimanualDifficulty.standard => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.standard_b9acb5',
       ),
-      _BimanualDifficulty.hard => pickUiText(
-        i18n,
-        zh: '困难',
-        en: 'Hard',
-        ja: 'Hard',
-        de: 'Hard',
-        fr: 'Dur',
-        es: 'Duro',
-        ru: 'Жесткий',
+      _BimanualDifficulty.hard => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.hard_8e809b',
       ),
-      _BimanualDifficulty.expert => pickUiText(
-        i18n,
-        zh: '专家',
-        en: 'Expert',
-        ja: 'Expert',
-        de: 'Expert',
-        fr: 'Expert',
-        es: 'Expert',
-        ru: 'эксперт',
+      _BimanualDifficulty.expert => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.expert_35af53',
       ),
     };
   }
 
   String _tracePatternLabel(AppI18n i18n, _BrainSplitTracePattern pattern) {
     return switch (pattern) {
-      _BrainSplitTracePattern.mixed => pickUiText(
-        i18n,
-        zh: '混合',
-        en: 'Mixed',
-        ja: 'Mixed',
-        de: 'Mixed',
-        fr: 'Mélange',
-        es: 'Mezcla',
-        ru: 'смешанный',
+      _BrainSplitTracePattern.mixed => i18n.t(
+        'inline.ui.pages.practice_support.mixed_fba1b6',
       ),
-      _BrainSplitTracePattern.zigzag => pickUiText(
-        i18n,
-        zh: '折线',
-        en: 'Zigzag',
-        ja: 'Zigzag',
-        de: 'Zigzag',
-        fr: 'Zigzag',
-        es: 'Zigzag',
-        ru: 'Зигзаг',
+      _BrainSplitTracePattern.zigzag => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.zigzag_6781df',
       ),
-      _BrainSplitTracePattern.wave => pickUiText(
-        i18n,
-        zh: '波浪',
-        en: 'Wave',
-        ja: 'Wave',
-        de: 'Wave',
-        fr: 'Vague',
-        es: 'Wave',
-        ru: 'волна',
+      _BrainSplitTracePattern.wave => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.wave_825f43',
       ),
-      _BrainSplitTracePattern.star => pickUiText(
-        i18n,
-        zh: '星形',
-        en: 'Star',
-        ja: 'Star',
-        de: 'Star',
-        fr: 'Étoile',
-        es: 'Star',
-        ru: 'Звезда',
+      _BrainSplitTracePattern.star => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.star_aa7e91',
       ),
-      _BrainSplitTracePattern.spiral => pickUiText(
-        i18n,
-        zh: '螺旋',
-        en: 'Spiral',
-        ja: 'Spiral',
-        de: 'Spiral',
-        fr: 'Spirale',
-        es: 'Spiral',
-        ru: 'спиральный',
+      _BrainSplitTracePattern.spiral => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.spiral_dfef2d',
       ),
-      _BrainSplitTracePattern.box => pickUiText(
-        i18n,
-        zh: '方框',
-        en: 'Box',
-        ja: 'ボックス',
-        de: 'Box',
-        fr: 'Boîte',
-        es: 'Recuadro',
-        ru: 'Коробка',
+      _BrainSplitTracePattern.box => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.box_fa69cf',
       ),
-      _BrainSplitTracePattern.steps => pickUiText(
-        i18n,
-        zh: '阶梯',
-        en: 'Steps',
-        ja: 'Steps',
-        de: 'Steps',
-        fr: 'Étapes',
-        es: 'Pasos',
-        ru: 'Шаги',
+      _BrainSplitTracePattern.steps => i18n.t(
+        'inline.plan295.daily_choice.steps.87e885ec3a89',
       ),
-      _BrainSplitTracePattern.loop => pickUiText(
-        i18n,
-        zh: '回环',
-        en: 'Loop',
-        ja: 'Loop',
-        de: 'Loop',
-        fr: 'Boucle',
-        es: 'Loop',
-        ru: 'Луп',
+      _BrainSplitTracePattern.loop => i18n.t(
+        'toolbox.sound.focus.stageLoopLabel',
       ),
-      _BrainSplitTracePattern.triangle => pickUiText(
-        i18n,
-        zh: '三角形',
-        en: 'Triangle',
-        ja: 'Triangle',
-        de: 'Triangle',
-        fr: 'Triangle',
-        es: 'Triángulo',
-        ru: 'Треугольник',
+      _BrainSplitTracePattern.triangle => i18n.t('toolbox.sound.deck.triangle'),
+      _BrainSplitTracePattern.square => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.square_ea65c3',
       ),
-      _BrainSplitTracePattern.square => pickUiText(
-        i18n,
-        zh: '正方形',
-        en: 'Square',
-        ja: 'Square',
-        de: 'Square',
-        fr: 'Carré',
-        es: 'Plaza',
-        ru: 'Площадь',
+      _BrainSplitTracePattern.rectangle => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.rectangle_9fe55e',
       ),
-      _BrainSplitTracePattern.rectangle => pickUiText(
-        i18n,
-        zh: '长方形',
-        en: 'Rectangle',
-        ja: 'Rectangle',
-        de: 'Rectangle',
-        fr: 'Rectangle',
-        es: 'Rectángulo',
-        ru: 'прямоугольник',
+      _BrainSplitTracePattern.circle => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.circle_234e4e',
       ),
-      _BrainSplitTracePattern.circle => pickUiText(
-        i18n,
-        zh: '圆形',
-        en: 'Circle',
-        ja: '円',
-        de: 'Circle',
-        fr: 'Cercle',
-        es: 'Circle',
-        ru: 'Круг',
+      _BrainSplitTracePattern.trapezoid => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.trapezoid_7629bf',
       ),
-      _BrainSplitTracePattern.trapezoid => pickUiText(
-        i18n,
-        zh: '梯形',
-        en: 'Trapezoid',
-        ja: 'Trapezoid',
-        de: 'Trapezoid',
-        fr: 'Trapézoïde',
-        es: 'Trapezoide',
-        ru: 'Трапезоид',
+      _BrainSplitTracePattern.diamond => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.diamond_f4c0aa',
       ),
-      _BrainSplitTracePattern.diamond => pickUiText(
-        i18n,
-        zh: '菱形',
-        en: 'Diamond',
-        ja: 'Diamond',
-        de: 'Diamond',
-        fr: 'Diamant',
-        es: 'Diamante',
-        ru: 'алмаз',
-      ),
-      _BrainSplitTracePattern.polyhedron => pickUiText(
-        i18n,
-        zh: '多面体',
-        en: 'Polyhedron',
-        ja: 'Polyhedron',
-        de: 'Polyhedron',
-        fr: 'Polyèdre',
-        es: 'Polyhedron',
-        ru: 'многогранник',
+      _BrainSplitTracePattern.polyhedron => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.polyhedron_793458',
       ),
     };
   }
 
   String _traceLineStyleLabel(AppI18n i18n, _BrainSplitTraceLineStyle style) {
     return switch (style) {
-      _BrainSplitTraceLineStyle.solid => pickUiText(
-        i18n,
-        zh: '实线',
-        en: 'Solid',
-        ja: 'Solid',
-        de: 'Solid',
-        fr: 'Solide',
-        es: 'Sólido',
-        ru: 'твердый',
+      _BrainSplitTraceLineStyle.solid => i18n.t(
+        'inline.plan295.life.solid.ab6af9a81131',
       ),
-      _BrainSplitTraceLineStyle.dashed => pickUiText(
-        i18n,
-        zh: '虚线',
-        en: 'Dashed',
-        ja: 'Dashed',
-        de: 'Dashed',
-        fr: 'Déchiqueté',
-        es: 'Dashed',
-        ru: 'разбитый',
+      _BrainSplitTraceLineStyle.dashed => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.dashed_c9bd7b',
       ),
-      _BrainSplitTraceLineStyle.dotted => pickUiText(
-        i18n,
-        zh: '点线',
-        en: 'Dotted',
-        ja: 'Dotted',
-        de: 'Dotted',
-        fr: 'Pointillé',
-        es: 'Dotted',
-        ru: 'точечный',
+      _BrainSplitTraceLineStyle.dotted => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.dotted_b3d903',
       ),
-      _BrainSplitTraceLineStyle.ribbon => pickUiText(
-        i18n,
-        zh: '宽带',
-        en: 'Ribbon',
-        ja: 'Ribbon',
-        de: 'Ribbon',
-        fr: 'Ruban',
-        es: 'Ribbon',
-        ru: 'Лента',
+      _BrainSplitTraceLineStyle.ribbon => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.ribbon_dab563',
       ),
     };
   }
@@ -3130,61 +2367,22 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
     _BrainSplitTraceSegmentMode mode,
   ) {
     return switch (mode) {
-      _BrainSplitTraceSegmentMode.straight => pickUiText(
-        i18n,
-        zh: '直线',
-        en: 'Straight',
-        ja: 'Straight',
-        de: 'Straight',
-        fr: 'Tout droit',
-        es: 'Derecho',
-        ru: 'Прямой',
+      _BrainSplitTraceSegmentMode.straight => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.straight_c4e316',
       ),
-      _BrainSplitTraceSegmentMode.curved => pickUiText(
-        i18n,
-        zh: '曲线',
-        en: 'Curved',
-        ja: 'Curved',
-        de: 'Curved',
-        fr: 'Courbé',
-        es: 'Curva',
-        ru: 'искривленный',
+      _BrainSplitTraceSegmentMode.curved => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.curved_9d3e6e',
       ),
-      _BrainSplitTraceSegmentMode.random => pickUiText(
-        i18n,
-        zh: '随机',
-        en: 'Random',
-        ja: 'Random',
-        de: 'Random',
-        fr: 'Aléatoire',
-        es: 'Aleatorio',
-        ru: 'Случайность',
+      _BrainSplitTraceSegmentMode.random => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.random_722d44',
       ),
     };
   }
 
   String _sideLabel(AppI18n i18n, _BimanualSide side) {
     return switch (side) {
-      _BimanualSide.left => pickUiText(
-        i18n,
-        zh: '左侧',
-        en: 'Left',
-        ja: 'Left',
-        de: 'Left',
-        fr: 'Gauche',
-        es: 'Izquierda',
-        ru: 'Левый',
-      ),
-      _BimanualSide.right => pickUiText(
-        i18n,
-        zh: '右侧',
-        en: 'Right',
-        ja: 'Right',
-        de: 'Right',
-        fr: 'Droite',
-        es: 'Bien.',
-        ru: 'Правильно.',
-      ),
+      _BimanualSide.left => i18n.t('toolbox.breathing.left'),
+      _BimanualSide.right => i18n.t('toolbox.sound.locator.cue_label_right'),
     };
   }
 
@@ -3241,15 +2439,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
           milliseconds: elapsed,
           detail: timeout
               ? 'timeout'
-              : pickUiText(
-                  _i18n,
-                  zh: '未完成',
-                  en: 'Incomplete',
-                  ja: 'Incomplete',
-                  de: 'Incomplete',
-                  fr: 'Incomplète',
-                  es: 'Incompleto',
-                  ru: 'неполный',
+              : _i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_bimanual.incomplete_a6a8ef',
                 ),
         );
     final right =
@@ -3259,15 +2450,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
           milliseconds: elapsed,
           detail: timeout
               ? 'timeout'
-              : pickUiText(
-                  _i18n,
-                  zh: '未完成',
-                  en: 'Incomplete',
-                  ja: 'Incomplete',
-                  de: 'Incomplete',
-                  fr: 'Incomplète',
-                  es: 'Incompleto',
-                  ru: 'неполный',
+              : _i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_bimanual.incomplete_a6a8ef',
                 ),
         );
     final leftSuccess = !plan.leftActive || left.success;
@@ -3365,15 +2549,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
       final taskType = _practiceSide == _BimanualSide.left
           ? _leftTaskType
           : _rightTaskType;
-      return pickUiText(
-        i18n,
-        zh: '${_sideLabel(i18n, _practiceSide)}单侧 ${_taskLabel(i18n, taskType)}',
-        en: '${_sideLabel(i18n, _practiceSide)} only ${_taskLabel(i18n, taskType)}',
-        ja: '${_sideLabel(i18n, _practiceSide)} のみ ${_taskLabel(i18n, taskType)}',
-        de: '${_sideLabel(i18n, _practiceSide)} only ${_taskLabel(i18n, taskType)}',
-        fr: '${_sideLabel(i18n, _practiceSide)} only ${_taskLabel(i18n, taskType)}',
-        es: 'No.',
-        ru: '${_sideLabel(i18n, _practiceSide)} только ${_taskLabel(i18n, taskType)}',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.sidelabel_i18n_practiceside_only_tasklabel_i18n_tasktype_cd496e',
       );
     }
     return _pairLabel(i18n, _leftTaskType, _rightTaskType);
@@ -3381,55 +2558,20 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
 
   String _timeLimitLabel(AppI18n i18n, int limitMs) {
     return switch (limitMs) {
-      0 => pickUiText(
-        i18n,
-        zh: '无限',
-        en: 'Unlimited',
-        ja: 'Unlimited',
-        de: 'Unlimited',
-        fr: 'Illimité',
-        es: 'Ilimitados',
-        ru: 'неограниченный',
+      0 => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.unlimited_13e814',
       ),
-      180000 => pickUiText(
-        i18n,
-        zh: '3 分钟',
-        en: '3 min',
-        ja: '3分',
-        de: '3 min',
-        fr: '3 min',
-        es: '3 min',
-        ru: '3 мин.',
+      180000 => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.3_min_d57ae5',
       ),
-      300000 => pickUiText(
-        i18n,
-        zh: '5 分钟',
-        en: '5 min',
-        ja: '5分',
-        de: '5 min',
-        fr: '5 min',
-        es: '5 minutos',
-        ru: '5 мин.',
+      300000 => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.5_min_8cce26',
       ),
-      600000 => pickUiText(
-        i18n,
-        zh: '10 分钟',
-        en: '10 min',
-        ja: '10分',
-        de: '10 min',
-        fr: '10 min',
-        es: '10 min',
-        ru: '10 мин.',
+      600000 => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.10_min_ce9808',
       ),
-      900000 => pickUiText(
-        i18n,
-        zh: '15 分钟',
-        en: '15 min',
-        ja: '15分',
-        de: '15 min',
-        fr: '15 min',
-        es: '15 minutos',
-        ru: '15 мин.',
+      900000 => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.15_min_be83cd',
       ),
       _ => _formatMilliseconds(limitMs),
     };
@@ -3437,15 +2579,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
 
   String _progressLabel(AppI18n i18n) {
     return _infiniteMode
-        ? pickUiText(
-            i18n,
-            zh: '无限 $_roundIndex',
-            en: 'Endless $_roundIndex',
-            ja: 'Endless $_roundIndex',
-            de: 'Endless $_roundIndex',
-            fr: 'Sans fin $_roundIndex',
-            es: 'Endless',
-            ru: 'Бесконечный $_roundIndex',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.endless_roundindex_1667b0',
           )
         : '$_roundIndex/$_roundCount';
   }
@@ -3459,81 +2594,25 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
+            (i18n.t('progress'), '$_roundIndex/$_roundCount'),
             (
-              pickUiText(
-                i18n,
-                zh: '进度',
-                en: 'Progress',
-                ja: 'Progress',
-                de: 'Progress',
-                fr: 'Progrès accomplis',
-                es: 'Progresos',
-                ru: 'Прогресс',
-              ),
-              '$_roundIndex/$_roundCount',
-            ),
-            (
-              pickUiText(
-                i18n,
-                zh: '时长',
-                en: 'Time limit',
-                ja: 'Time limit',
-                de: 'Time limit',
-                fr: 'Délai',
-                es: 'Plazo límite',
-                ru: 'предельный срок',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_bimanual.time_limit_441287',
               ),
               _timeLimitLabel(i18n, _timeLimitMs),
             ),
+            (i18n.t('inline.plan295.life.score.e58eff17f23d'), '$_score'),
             (
-              pickUiText(
-                i18n,
-                zh: '分数',
-                en: 'Score',
-                ja: 'Score',
-                de: 'Score',
-                fr: 'Score',
-                es: 'Puntuación',
-                ru: 'счет',
-              ),
-              '$_score',
-            ),
-            (
-              pickUiText(
-                i18n,
-                zh: '连击',
-                en: 'Combo',
-                ja: 'コンボ',
-                de: 'Combo',
-                fr: 'Combo',
-                es: 'Combo',
-                ru: 'Комбинация',
-              ),
+              i18n.t('inline.ui.pages.toolbox_human_tests_action.combo_e9df71'),
               '$_combo',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '准确率',
-                en: 'Accuracy',
-                ja: '精度',
-                de: 'Accuracy',
-                fr: 'Accuracy',
-                es: 'Precisión',
-                ru: 'точность',
-              ),
+              i18n.t('inline.ui.pages.practice_review_page.accuracy_8cf5a1'),
               _records.isEmpty ? '-' : '${(_accuracy * 100).round()}%',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '平均用时',
-                en: 'Avg lane time',
-                ja: 'レーン時間',
-                de: 'Avg lane time',
-                fr: 'Heure de la voie d\'Avg',
-                es: 'Tiempo de carril de Avg',
-                ru: 'Время в пути',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_bimanual.avg_lane_time_b43435',
               ),
               _averageMs == 0 ? '-' : _formatMilliseconds(_averageMs),
             ),
@@ -3556,15 +2635,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
                   ),
                   if (_singleSidePractice)
                     _HumanPill(
-                      text: pickUiText(
-                        i18n,
-                        zh: '${_sideLabel(i18n, _practiceSide)}单侧练习',
-                        en: '${_sideLabel(i18n, _practiceSide)} practice',
-                        ja: '${_sideLabel(i18n, _practiceSide)}練習',
-                        de: '${_sideLabel(i18n, _practiceSide)} practice',
-                        fr: '${_sideLabel(i18n, _practiceSide)} practice',
-                        es: '■v0/ Práctica',
-                        ru: '${_sideLabel(i18n, _practiceSide)} Практика',
+                      text: i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_bimanual.sidelabel_i18n_practiceside_practice_c556b5',
                       ),
                       accent: _rightAccent,
                     ),
@@ -3578,12 +2650,12 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
                   ),
                   _HumanPill(
                     text:
-                        '${pickUiText(i18n, zh: '同步窗', en: 'Sync', ja: 'Sync', de: 'Sync', fr: 'Synchronisation', es: 'Sync', ru: 'синхронизация')} $_syncWindowMs ms',
+                        '${i18n.t('inline.ui.pages.toolbox_human_tests_bimanual.sync_16bba2')} $_syncWindowMs ms',
                     accent: _rightAccent,
                   ),
                   _HumanPill(
                     text:
-                        '${pickUiText(i18n, zh: '充能', en: 'Charge', ja: 'チャージ', de: 'Charge', fr: 'Frais', es: 'Carga', ru: 'Зарядка')} $_holdTargetMs ms',
+                        '${i18n.t('inline.ui.pages.toolbox_human_tests_bimanual.charge_041900')} $_holdTargetMs ms',
                     accent: _climbAccent,
                   ),
                   _HumanPill(
@@ -3595,25 +2667,11 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
               const SizedBox(height: 12),
               Text(
                 plan == null
-                    ? pickUiText(
-                        i18n,
-                        zh: '左右默认弹球，可在设置里自由组合画图、弹球和跳高，也可开启单侧练习。',
-                        en: 'Both hands default to Bounce. Freely combine Trace, Bounce, and High jump in settings, or enable single-side practice.',
-                        ja: '手はデフォルトでバウンスします。 設定でトレース、バウンス、ハイジャンプを自由に組み合わせるか、片側練習を有効にします。',
-                        de: 'Both hands default to Bounce. Freely combine Trace, Bounce, and High jump in settings, or enable single-side practice.',
-                        fr: 'Les deux mains par défaut à Bounce. Combinez librement Trace, Bounce et High bond dans les réglages, ou activez la pratique à un seul côté.',
-                        es: 'Ambas manos predeterminan a Bounce. Combina libremente Trace, Bounce y Alto salto en la configuración, o habilitar la práctica de un solo lado.',
-                        ru: 'Обе руки по умолчанию отскакивают. Свободно комбинируйте Trace, Bounce и High jump в настройках или включите одностороннюю практику.',
+                    ? i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_bimanual.both_hands_default_to_bounce_freely_combine_trace_bounce_9a8099',
                       )
-                    : pickUiText(
-                        i18n,
-                        zh: '${plan.left.goalText}，${plan.right.goalText}。两侧都完成后可获得同步奖励，全屏里操作更顺手。',
-                        en: '${plan.left.goalText}. ${plan.right.goalText}. Finish both sides to earn the sync bonus; fullscreen keeps the controls usable.',
-                        ja: '${plan.left.goalText} ${plan.right.goalText}。両サイドを完了して同期ボーナスを獲得します。フルスクリーンはコントロールを使用可能にします。',
-                        de: '${plan.left.goalText}. ${plan.right.goalText}. Finish both sides to earn the sync bonus; fullscreen keeps the controls usable.',
-                        fr: '${plan.left.goalText}. ${plan.right.goalText}. Finish both sides to earn the sync bonus; fullscreen keeps the controls usable.',
-                        es: '- No. Termina ambos lados para ganar el bono de sincronización; pantalla completa mantiene los controles utilizables.',
-                        ru: '${plan.left.goalText} ${plan.right.goalText}. Заканчивайте обе стороны, чтобы заработать бонус синхронизации; полноэкранный режим поддерживает управление.',
+                    : i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_bimanual.plan_left_goaltext_plan_right_goaltext_finish_both_sides_d37668',
                       ),
                 style: Theme.of(
                   context,
@@ -3630,36 +2688,15 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
           children: <Widget>[
             _HumanActionButton(
               label: _fullscreenOpening
-                  ? pickUiText(
-                      i18n,
-                      zh: '正在打开',
-                      en: 'Opening',
-                      ja: 'Opening',
-                      de: 'Opening',
-                      fr: 'Ouverture',
-                      es: 'Apertura',
-                      ru: 'Открытие',
+                  ? i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_bimanual.opening_5e686d',
                     )
                   : _running
-                  ? pickUiText(
-                      i18n,
-                      zh: '返回全屏',
-                      en: 'Return fullscreen',
-                      ja: 'Return fullscreen',
-                      de: 'Return fullscreen',
-                      fr: 'Retour en plein écran',
-                      es: 'Regrese pantalla completa',
-                      ru: 'Возврат полноэкранного',
+                  ? i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_bimanual.return_fullscreen_ef99d0',
                     )
-                  : pickUiText(
-                      i18n,
-                      zh: '全屏开始',
-                      en: 'Fullscreen start',
-                      ja: 'Fullscreen start',
-                      de: 'Fullscreen start',
-                      fr: 'Début en plein écran',
-                      es: 'Inicio de pantalla completa',
-                      ru: 'Полноэкранный старт',
+                  : i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_bimanual.fullscreen_start_8cf42f',
                     ),
               icon: Icons.fullscreen_rounded,
               onPressed: _fullscreenOpening
@@ -3696,15 +2733,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          pickUiText(
-            i18n,
-            zh: '左右自由组合',
-            en: 'Free hand pairing',
-            ja: 'Free hand pairing',
-            de: 'Free hand pairing',
-            fr: 'Jumelage à main libre',
-            es: 'Pareja de mano libre',
-            ru: 'Свободная пара рук',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.free_hand_pairing_7e761e',
           ),
           style: theme.textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w800,
@@ -3712,15 +2742,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
         ),
         const SizedBox(height: 8),
         _BrainSplitTaskPicker(
-          title: pickUiText(
-            i18n,
-            zh: '左手模式',
-            en: 'Left hand',
-            ja: 'Left hand',
-            de: 'Left hand',
-            fr: 'Main gauche',
-            es: 'Mano izquierda',
-            ru: 'Левая рука',
+          title: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.left_hand_34e2e2',
           ),
           value: _leftTaskType,
           enabled: !_running,
@@ -3733,15 +2756,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
         ),
         const SizedBox(height: 12),
         _BrainSplitTaskPicker(
-          title: pickUiText(
-            i18n,
-            zh: '右手模式',
-            en: 'Right hand',
-            ja: 'Right hand',
-            de: 'Right hand',
-            fr: 'Main droite',
-            es: 'Mano derecha',
-            ru: 'Правая рука',
+          title: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.right_hand_b18dc8',
           ),
           value: _rightTaskType,
           enabled: !_running,
@@ -3754,15 +2770,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
         ),
         const SizedBox(height: 12),
         Text(
-          pickUiText(
-            i18n,
-            zh: '难度设置',
-            en: 'Difficulty',
-            ja: 'Difficulty',
-            de: 'Difficulty',
-            fr: 'Difficulté',
-            es: 'Dificultad',
-            ru: 'трудность',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.difficulty_0f6c2f',
           ),
         ),
         const SizedBox(height: 8),
@@ -3791,27 +2800,13 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
               ? null
               : (value) => applySetting(() => _infiniteMode = value ?? false),
           title: Text(
-            pickUiText(
-              i18n,
-              zh: '无限模式',
-              en: 'Endless mode',
-              ja: 'Endless mode',
-              de: 'Endless mode',
-              fr: 'Mode sans fin',
-              es: 'Modo sin fin',
-              ru: 'Бесконечный режим',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_bimanual.endless_mode_d6f516',
             ),
           ),
           subtitle: Text(
-            pickUiText(
-              i18n,
-              zh: '成功持续得分，失败自动重开下一组；手动暂停或时间耗尽后再结算。',
-              en: 'Success keeps scoring, failure restarts the stream; stop manually or let the time limit end it.',
-              ja: 'Success keeps scoring, failure restarts the stream; stop manually or let the time limit end it.',
-              de: 'Success keeps scoring, failure restarts the stream; stop manually or let the time limit end it.',
-              fr: 'La réussite continue de marquer, l\'échec redémarre le flux; s\'arrêter manuellement ou laisser la limite de temps finir.',
-              es: 'El éxito sigue marcando, el fracaso reinicia el flujo; deténgase manualmente o deje que el límite de tiempo termine.',
-              ru: 'Успех продолжает забивать, неудача перезапускает поток; остановитесь вручную или дайте временному пределу закончить его.',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_bimanual.success_keeps_scoring_failure_restarts_the_stream_stop_m_c37baf',
             ),
           ),
           controlAffinity: ListTileControlAffinity.leading,
@@ -3824,27 +2819,13 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
               : (value) =>
                     applySetting(() => _singleSidePractice = value ?? false),
           title: Text(
-            pickUiText(
-              i18n,
-              zh: '单侧练习',
-              en: 'Single-side practice',
-              ja: 'Single-side practice',
-              de: 'Single-side practice',
-              fr: 'Pratique individuelle',
-              es: 'Práctica unilateral',
-              ru: 'Односторонняя практика',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_bimanual.single_side_practice_5eb870',
             ),
           ),
           subtitle: Text(
-            pickUiText(
-              i18n,
-              zh: '开启后只训练选中一侧，另一侧休息且不参与同步分。',
-              en: 'Off by default; train one selected side while the other rests and does not count toward sync scoring.',
-              ja: 'Off by default; train one selected side while the other rests and does not count toward sync scoring.',
-              de: 'Off by default; train one selected side while the other rests and does not count toward sync scoring.',
-              fr: 'Désactivez par défaut; entraînez un côté sélectionné tandis que l\'autre repose et ne compte pas vers la synchronisation.',
-              es: 'De forma predeterminada; entrena un lado seleccionado mientras el otro descansa y no cuenta hacia la sincronización.',
-              ru: 'По умолчанию; тренируйте одну выбранную сторону, в то время как другая отдыхает и не рассчитывает на синхронизацию.',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_bimanual.off_by_default_train_one_selected_side_while_the_other_r_5bf776',
             ),
           ),
           controlAffinity: ListTileControlAffinity.leading,
@@ -3855,15 +2836,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '练习侧',
-                  en: 'Practice side',
-                  ja: 'Practice side',
-                  de: 'Practice side',
-                  fr: 'Côté pratique',
-                  es: 'Practicar el lado',
-                  ru: 'Практическая сторона',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_bimanual.practice_side_941976',
                 ),
               ),
               const SizedBox(height: 8),
@@ -3875,25 +2849,11 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
                       (side) => ChoiceChip(
                         label: Text(
                           side == _BimanualSide.left
-                              ? pickUiText(
-                                  i18n,
-                                  zh: '只练左侧',
-                                  en: 'Left only',
-                                  ja: 'Left only',
-                                  de: 'Left only',
-                                  fr: 'A gauche seulement',
-                                  es: 'Izquierda',
-                                  ru: 'Осталось только',
+                              ? i18n.t(
+                                  'inline.ui.pages.toolbox_human_tests_bimanual.left_only_4535e8',
                                 )
-                              : pickUiText(
-                                  i18n,
-                                  zh: '只练右侧',
-                                  en: 'Right only',
-                                  ja: 'Right only',
-                                  de: 'Right only',
-                                  fr: 'Droit seulement',
-                                  es: 'Sólo derecho',
-                                  ru: 'Правильно только',
+                              : i18n.t(
+                                  'inline.ui.pages.toolbox_human_tests_bimanual.right_only_5749cd',
                                 ),
                         ),
                         selected: _practiceSide == side,
@@ -3909,39 +2869,18 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
         ),
         const SizedBox(height: 12),
         _HumanSettingsSection(
-          title: pickUiText(
-            i18n,
-            zh: '画图设置',
-            en: 'Trace settings',
-            ja: 'Trace settings',
-            de: 'Trace settings',
-            fr: 'Paramètres des traces',
-            es: 'Ajustes de trace',
-            ru: 'Настройки трассы',
+          title: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.trace_settings_c4ac2e',
           ),
-          subtitle: pickUiText(
-            i18n,
-            zh: '每回合按风格随机生成几何一笔画节点，线段样式和节点数同时作用于左右画图赛道。',
-            en: 'Each round generates seeded geometric one-stroke nodes; style and checkpoint count apply to every Trace lane.',
-            ja: 'Each round generates seeded geometric one-stroke nodes; style and checkpoint count apply to every Trace lane.',
-            de: 'Each round generates seeded geometric one-stroke nodes; style and checkpoint count apply to every Trace lane.',
-            fr: 'Chaque tour génère des nœuds géométriques à un temps; le style et le nombre de points de contrôle s\'appliquent à chaque voie Trace.',
-            es: 'Cada ronda genera nodos geométricos de un solo golpe de semilla; el estilo y la cuenta de control se aplican a cada carril Trace.',
-            ru: 'Каждый раунд генерирует семенные геометрические однотактные узлы; стиль и количество контрольных точек применяются к каждой полосе трассы.',
+          subtitle: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.each_round_generates_seeded_geometric_one_stroke_nodes_s_91a018',
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '图案模式',
-                  en: 'Pattern mode',
-                  ja: 'Pattern mode',
-                  de: 'Pattern mode',
-                  fr: 'Mode modèle',
-                  es: 'Modo de patrón',
-                  ru: 'Режим шаблона',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_bimanual.pattern_mode_d49ce9',
                 ),
               ),
               const SizedBox(height: 8),
@@ -3966,15 +2905,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
               ),
               const SizedBox(height: 12),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '线段样式',
-                  en: 'Line style',
-                  ja: 'Line style',
-                  de: 'Line style',
-                  fr: 'Style de ligne',
-                  es: 'Estilo de línea',
-                  ru: 'Стиль линии',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_bimanual.line_style_b76ab3',
                 ),
               ),
               const SizedBox(height: 8),
@@ -3996,15 +2928,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
               ),
               const SizedBox(height: 12),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '线段几何',
-                  en: 'Segment geometry',
-                  ja: 'Segment geometry',
-                  de: 'Segment geometry',
-                  fr: 'Géométrie du segment',
-                  es: 'Geometría de segmentos',
-                  ru: 'Геометрия сегмента',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_bimanual.segment_geometry_39fa24',
                 ),
               ),
               const SizedBox(height: 8),
@@ -4026,15 +2951,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
               ),
               const SizedBox(height: 12),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '节点数量',
-                  en: 'Checkpoints',
-                  ja: 'チェックポイント',
-                  de: 'Checkpoints',
-                  fr: 'Points de contrôle',
-                  es: 'Puntos de control',
-                  ru: 'Контрольные точки',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_bimanual.checkpoints_1727ee',
                 ),
               ),
               Slider(
@@ -4049,15 +2967,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
                           applySetting(() => _traceNodeCount = value.round()),
               ),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '最小角度',
-                  en: 'Minimum angle',
-                  ja: 'Minimum angle',
-                  de: 'Minimum angle',
-                  fr: 'Angle minimal',
-                  es: 'Ángulo mínimo',
-                  ru: 'Минимальный угол',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_bimanual.minimum_angle_a8819f',
                 ),
               ),
               Slider(
@@ -4080,27 +2991,13 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
                         () => _traceColorSegments = value ?? false,
                       ),
                 title: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '分段彩色提示',
-                    en: 'Color each segment',
-                    ja: '各セグメントのカラー',
-                    de: 'Color each segment',
-                    fr: 'Couleur de chaque segment',
-                    es: 'Color cada segmento',
-                    ru: 'Цвет каждого сегмента',
+                  i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_bimanual.color_each_segment_8b8a8f',
                   ),
                 ),
                 subtitle: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '复杂交叉图形中用颜色和方向箭头凸显下一段。',
-                    en: 'Use colors and arrows to clarify the next segment in complex paths.',
-                    ja: 'Use colors and arrows to clarify the next segment in complex paths.',
-                    de: 'Use colors and arrows to clarify the next segment in complex paths.',
-                    fr: 'Utilisez les couleurs et les flèches pour clarifier le segment suivant dans les chemins complexes.',
-                    es: 'Utilice colores y flechas para aclarar el siguiente segmento en caminos complejos.',
-                    ru: 'Используйте цвета и стрелки для уточнения следующего сегмента сложными путями.',
+                  i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_bimanual.use_colors_and_arrows_to_clarify_the_next_segment_in_com_32efb2',
                   ),
                 ),
                 controlAffinity: ListTileControlAffinity.leading,
@@ -4110,39 +3007,18 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
         ),
         const SizedBox(height: 12),
         _HumanSettingsSection(
-          title: pickUiText(
-            i18n,
-            zh: '弹球设置',
-            en: 'Bounce settings',
-            ja: '設定',
-            de: 'Bounce settings',
-            fr: 'Réglages des rebonds',
-            es: 'Ajustes de recompensa',
-            ru: 'Настройка отказов',
+          title: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.bounce_settings_6089d7',
           ),
-          subtitle: pickUiText(
-            i18n,
-            zh: '小球更小并加入随机障碍碰撞；挡板上移，底部控制条避免手指遮挡。',
-            en: 'The smaller ball now hits random bumpers; the paddle sits above a lower control strip so fingers do not cover it.',
-            ja: 'The smaller ball now hits random bumpers; the paddle sits above a lower control strip so fingers do not cover it.',
-            de: 'The smaller ball now hits random bumpers; the paddle sits above a lower control strip so fingers do not cover it.',
-            fr: 'La petite balle frappe maintenant des pare-chocs aléatoires; la pagaie est assise au-dessus d\'une bande de contrôle inférieure afin que les doigts ne la couvrent pas.',
-            es: 'La bola más pequeña ahora golpea los parachoques aleatorios; la paleta se sienta por encima de una tira de control inferior por lo que los dedos no lo cubren.',
-            ru: 'Меньший шар теперь попадает в случайные бамперы; весло находится над нижней контрольной полосой, поэтому пальцы не покрывают его.',
+          subtitle: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.the_smaller_ball_now_hits_random_bumpers_the_paddle_sits_f92c94',
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '小球速率',
-                  en: 'Ball speed',
-                  ja: 'ボール速度',
-                  de: 'Ball speed',
-                  fr: 'Vitesse de la bille',
-                  es: 'Velocidad de bolas',
-                  ru: 'Скорость мяча',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_bimanual.ball_speed_a2718f',
                 ),
               ),
               Slider(
@@ -4156,15 +3032,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
                     : (value) => applySetting(() => _bounceSpeedScale = value),
               ),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '球的大小',
-                  en: 'Ball size',
-                  ja: 'ボールサイズ',
-                  de: 'Ball size',
-                  fr: 'Taille de la boule',
-                  es: 'Tamaño de la bola',
-                  ru: 'Размер мяча',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_bimanual.ball_size_c0183a',
                 ),
               ),
               Slider(
@@ -4178,15 +3047,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
                     : (value) => applySetting(() => _bounceBallRadius = value),
               ),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '小球个数',
-                  en: 'Ball count',
-                  ja: 'ボールカウント',
-                  de: 'Ball count',
-                  fr: 'Nombre de balles',
-                  es: 'Conteo de bolas',
-                  ru: 'Количество мячей',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_bimanual.ball_count_6464c6',
                 ),
               ),
               Slider(
@@ -4209,41 +3071,20 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
                         () => _bounceCollisionAcceleration = value ?? false,
                       ),
                 title: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '碰撞加速',
-                    en: 'Collision boost',
-                    ja: '衝突',
-                    de: 'Collision boost',
-                    fr: 'Augmentation de la collision',
-                    es: 'Aumento de la colisión',
-                    ru: 'Усиление столкновения',
+                  i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_bimanual.collision_boost_0bec36',
                   ),
                 ),
                 subtitle: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '关闭时每次碰撞只反弹；开启后挡板和障碍碰撞会逐步提速。',
-                    en: 'Off means rebound only; on makes paddle and bumper hits gradually faster.',
-                    ja: 'Off means rebound only; on makes paddle and bumper hits gradually faster.',
-                    de: 'Off means rebound only; on makes paddle and bumper hits gradually faster.',
-                    fr: 'Off signifie rebondissement seulement; sur fait paddle et pare-chocs frappe progressivement plus rapidement.',
-                    es: 'Fuera significa rebotar solamente; en hace que el remo y el parachoques golpea gradualmente más rápido.',
-                    ru: 'Выключение означает только отскок; на делает весло и бампер удары постепенно быстрее.',
+                  i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_bimanual.off_means_rebound_only_on_makes_paddle_and_bumper_hits_g_9fc83d',
                   ),
                 ),
                 controlAffinity: ListTileControlAffinity.leading,
               ),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '回弹目标',
-                  en: 'Rally target',
-                  ja: 'Rally target',
-                  de: 'Rally target',
-                  fr: 'Cible du rallye',
-                  es: 'Objetivo del Rally',
-                  ru: 'Цель ралли',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_bimanual.rally_target_239f76',
                 ),
               ),
               Slider(
@@ -4259,15 +3100,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
                       ),
               ),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '挡板宽度',
-                  en: 'Paddle width',
-                  ja: 'Paddle width',
-                  de: 'Paddle width',
-                  fr: 'Largeur des pagaies',
-                  es: 'Ancho de paleta',
-                  ru: 'Ширина седла',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_bimanual.paddle_width_428df9',
                 ),
               ),
               Slider(
@@ -4281,15 +3115,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
                     : (value) => applySetting(() => _bouncePaddleWidth = value),
               ),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '挡板厚度',
-                  en: 'Paddle thickness',
-                  ja: 'Paddle thickness',
-                  de: 'Paddle thickness',
-                  fr: 'Épaisseur de la pagaie',
-                  es: 'Espesor de palanca',
-                  ru: 'толщина седла',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_bimanual.paddle_thickness_139446',
                 ),
               ),
               Slider(
@@ -4308,39 +3135,18 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
         ),
         const SizedBox(height: 12),
         _HumanSettingsSection(
-          title: pickUiText(
-            i18n,
-            zh: '跳高设置',
-            en: 'High jump settings',
-            ja: 'High jump settings',
-            de: 'High jump settings',
-            fr: 'Paramètres de saut élevé',
-            es: 'Ajustes de salto alto',
-            ru: 'Высокие прыжки',
+          title: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.high_jump_settings_976df2',
           ),
-          subtitle: pickUiText(
-            i18n,
-            zh: '跳高改为横向移动平台，点击或按住蓄力逐层跳上平台直到登顶。',
-            en: 'High jump now uses horizontally moving platforms; tap or hold to charge and climb to the summit one level at a time.',
-            ja: 'High jump now uses horizontally moving platforms; tap or hold to charge and climb to the summit one level at a time.',
-            de: 'High jump now uses horizontally moving platforms; tap or hold to charge and climb to the summit one level at a time.',
-            fr: 'Le saut en hauteur utilise maintenant des plates-formes en mouvement horizontal; touchez ou maintenez pour charger et monter au sommet un niveau à la fois.',
-            es: 'Alto salto ahora utiliza plataformas horizontalmente móviles; pulsar o mantener la carga y subir a la cumbre un nivel a la vez.',
-            ru: 'Высокий прыжок теперь использует горизонтально движущиеся платформы; нажмите или удерживайте заряд и поднимайтесь на вершину по одному уровню за раз.',
+          subtitle: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.high_jump_now_uses_horizontally_moving_platforms_tap_or_54e660',
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '平台层数',
-                  en: 'Platform levels',
-                  ja: 'Platform levels',
-                  de: 'Platform levels',
-                  fr: 'Niveaux de la plate-forme',
-                  es: 'Niveles de la plataforma',
-                  ru: 'Уровень платформы',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_bimanual.platform_levels_1a3038',
                 ),
               ),
               Slider(
@@ -4355,15 +3161,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
                           applySetting(() => _climbStepCount = value.round()),
               ),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '平台宽度',
-                  en: 'Platform width',
-                  ja: 'Platform width',
-                  de: 'Platform width',
-                  fr: 'Largeur de la plateforme',
-                  es: 'Ancho de plataforma',
-                  ru: 'Ширина платформы',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_bimanual.platform_width_75703e',
                 ),
               ),
               Slider(
@@ -4378,15 +3177,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
                           applySetting(() => _climbPlatformWidth = value),
               ),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '宽度随机区间',
-                  en: 'Width randomness',
-                  ja: 'Width randomness',
-                  de: 'Width randomness',
-                  fr: 'Largeur aléatoire',
-                  es: 'Aleatoriedad',
-                  ru: 'Случайность',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_bimanual.width_randomness_974a66',
                 ),
               ),
               Slider(
@@ -4395,15 +3187,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
                 max: 0.16,
                 divisions: 8,
                 label: _climbPlatformWidthRandomness == 0
-                    ? pickUiText(
-                        i18n,
-                        zh: '不随机',
-                        en: 'Fixed',
-                        ja: 'Fixed',
-                        de: 'Fixed',
-                        fr: 'Correction',
-                        es: 'Fijación',
-                        ru: 'фиксированный',
+                    ? i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_bimanual.fixed_d6d145',
                       )
                     : '±${(_climbPlatformWidthRandomness * 100).round()}%',
                 onChanged: _running
@@ -4413,15 +3198,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
                       ),
               ),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '平台速率',
-                  en: 'Platform speed',
-                  ja: 'Platform speed',
-                  de: 'Platform speed',
-                  fr: 'Vitesse de la plate-forme',
-                  es: 'Velocidad de la plataforma',
-                  ru: 'Скорость платформы',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_bimanual.platform_speed_fc47e9',
                 ),
               ),
               Slider(
@@ -4440,18 +3218,7 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
           ),
         ),
         const SizedBox(height: 12),
-        Text(
-          pickUiText(
-            i18n,
-            zh: '轮数',
-            en: 'Rounds',
-            ja: 'Rounds',
-            de: 'Rounds',
-            fr: 'Rondes',
-            es: 'Rondas',
-            ru: 'Круги',
-          ),
-        ),
+        Text(i18n.t('inline.plan294.breathing.rounds_06b0afec')),
         Slider(
           value: _roundCount.toDouble(),
           min: 8,
@@ -4464,15 +3231,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
         ),
         const SizedBox(height: 12),
         Text(
-          pickUiText(
-            i18n,
-            zh: '计时时长',
-            en: 'Time limit',
-            ja: 'Time limit',
-            de: 'Time limit',
-            fr: 'Délai',
-            es: 'Plazo límite',
-            ru: 'предельный срок',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.time_limit_441287',
           ),
         ),
         const SizedBox(height: 8),
@@ -4492,15 +3252,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
               .toList(growable: false),
         ),
         Text(
-          pickUiText(
-            i18n,
-            zh: '节奏强度',
-            en: 'Pace level',
-            ja: 'Pace level',
-            de: 'Pace level',
-            fr: 'Niveau de Pace',
-            es: 'Nivel de rotación',
-            ru: 'Уровень темпа',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.pace_level_029663',
           ),
         ),
         Slider(
@@ -4514,15 +3267,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
               : (value) => applySetting(() => _paceLevel = value.round()),
         ),
         Text(
-          pickUiText(
-            i18n,
-            zh: '同步窗',
-            en: 'Sync window',
-            ja: 'Sync window',
-            de: 'Sync window',
-            fr: 'Synchroniser la fenêtre',
-            es: 'Ventana sincronizada',
-            ru: 'Синхронное окно',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.sync_window_d62f6b',
           ),
         ),
         Slider(
@@ -4536,15 +3282,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
               : (value) => applySetting(() => _syncWindowMs = value.round()),
         ),
         Text(
-          pickUiText(
-            i18n,
-            zh: '充能时长',
-            en: 'Charge window',
-            ja: 'チャージウィンドウ',
-            de: 'Charge window',
-            fr: 'Fenêtre de chargement',
-            es: 'Ventana de carga',
-            ru: 'Окно зарядки',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.charge_window_e9bbc1',
           ),
         ),
         Slider(
@@ -4593,15 +3332,8 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
         final colorScheme = Theme.of(dialogContext).colorScheme;
         return AlertDialog(
           title: Text(
-            pickUiText(
-              i18n,
-              zh: '双手脑裂设置',
-              en: 'Split-brain settings',
-              ja: 'Split-brain settings',
-              de: 'Split-brain settings',
-              fr: 'Réglages des cerveaux fractionnés',
-              es: 'Ajustes de doble cerebro',
-              ru: 'Сплит-мозг настройки',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_bimanual.split_brain_settings_d28311',
             ),
           ),
           content: ConstrainedBox(
@@ -4622,16 +3354,7 @@ class _BimanualBrainSplitGameState extends State<_BimanualBrainSplitGame> {
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
               child: Text(
-                pickUiText(
-                  i18n,
-                  zh: '关闭',
-                  en: 'Close',
-                  ja: '閉じる',
-                  de: 'Close',
-                  fr: 'Fermer',
-                  es: 'Cerca',
-                  ru: 'Закрыть',
-                ),
+                i18n.t('inline.plan295.life.close.370fb8697deb'),
                 style: TextStyle(color: colorScheme.primary),
               ),
             ),
@@ -4663,16 +3386,7 @@ class _BrainSplitActionMenuButton extends StatelessWidget {
         : const ValueKey<String>('brain_split_menu_button');
     return PopupMenuButton<_BrainSplitFullscreenAction>(
       key: actionKey,
-      tooltip: pickUiText(
-        i18n,
-        zh: '更多',
-        en: 'More',
-        ja: 'More',
-        de: 'More',
-        fr: 'Plus',
-        es: 'Más',
-        ru: 'Больше',
-      ),
+      tooltip: i18n.t('inline.ui.module.module_access.more_25e68b'),
       icon: const Icon(Icons.more_vert_rounded),
       onSelected: (action) {
         switch (action) {
@@ -4698,49 +3412,16 @@ class _BrainSplitActionMenuButton extends StatelessWidget {
       itemBuilder: (context) => <PopupMenuEntry<_BrainSplitFullscreenAction>>[
         PopupMenuItem<_BrainSplitFullscreenAction>(
           value: _BrainSplitFullscreenAction.settings,
-          child: Text(
-            pickUiText(
-              i18n,
-              zh: '设置',
-              en: 'Settings',
-              ja: 'Settings',
-              de: 'Settings',
-              fr: 'Paramètres',
-              es: 'Ajustes',
-              ru: 'Настройки',
-            ),
-          ),
+          child: Text(i18n.t('settings')),
         ),
         PopupMenuItem<_BrainSplitFullscreenAction>(
           value: _BrainSplitFullscreenAction.reset,
-          child: Text(
-            pickUiText(
-              i18n,
-              zh: '重置',
-              en: 'Reset',
-              ja: 'Reset',
-              de: 'Reset',
-              fr: 'Réinitialiser',
-              es: 'Reset',
-              ru: 'сброс',
-            ),
-          ),
+          child: Text(i18n.t('appearanceReset')),
         ),
         if (reportEnabled)
           PopupMenuItem<_BrainSplitFullscreenAction>(
             value: _BrainSplitFullscreenAction.report,
-            child: Text(
-              pickUiText(
-                i18n,
-                zh: '报告',
-                en: 'Report',
-                ja: 'Report',
-                de: 'Report',
-                fr: 'Rapport annuel',
-                es: 'Informe',
-                ru: 'Доклад',
-              ),
-            ),
+            child: Text(i18n.t('toolbox.sleep.assist.reportCard')),
           ),
         if (state._running || fullscreen) const PopupMenuDivider(),
         if (state._running)
@@ -4748,15 +3429,8 @@ class _BrainSplitActionMenuButton extends StatelessWidget {
             value: _BrainSplitFullscreenAction.stop,
             enabled: state._running,
             child: Text(
-              pickUiText(
-                i18n,
-                zh: '结束挑战',
-                en: 'Stop challenge',
-                ja: 'Stop challenge',
-                de: 'Stop challenge',
-                fr: 'Arrêter le défi',
-                es: 'Parar el desafío',
-                ru: 'Прекратить вызов',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_bimanual.stop_challenge_887d44',
               ),
             ),
           ),
@@ -4764,16 +3438,7 @@ class _BrainSplitActionMenuButton extends StatelessWidget {
           PopupMenuItem<_BrainSplitFullscreenAction>(
             value: _BrainSplitFullscreenAction.exit,
             child: Text(
-              pickUiText(
-                i18n,
-                zh: '退出全屏',
-                en: 'Exit fullscreen',
-                ja: 'Exit fullscreen',
-                de: 'Exit fullscreen',
-                fr: 'Sortie en plein écran',
-                es: 'Exit fullscreen',
-                ru: 'Выход Fullscreen',
-              ),
+              i18n.t('inline.plan295.life.exit_fullscreen.9afc176b038f'),
             ),
           ),
       ],
@@ -5053,17 +3718,7 @@ class _BrainSplitFullscreenStatusPeek extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final planLabel =
-        state._plan?.label ??
-        pickUiText(
-          i18n,
-          zh: '准备中',
-          en: 'Preparing',
-          ja: 'Preparing',
-          de: 'Preparing',
-          fr: 'Préparation',
-          es: 'Preparación',
-          ru: 'Подготовка',
-        );
+        state._plan?.label ?? i18n.t('toolbox.breathing.preparing');
     final summary = compact
         ? '${state._progressLabel(i18n)} · ${state._score}'
         : '${state._progressLabel(i18n)} · $planLabel · ${state._score}';
@@ -5133,72 +3788,31 @@ class _BrainSplitFullscreenStatusPanel extends StatelessWidget {
           runSpacing: 8,
           children: <Widget>[
             _HumanTestFullscreenMetric(
-              label: pickUiText(
-                i18n,
-                zh: '模式',
-                en: 'Mode',
-                ja: 'Mode',
-                de: 'Mode',
-                fr: 'Mode',
-                es: 'Modo',
-                ru: 'Режим',
-              ),
+              label: i18n.t('toolbox.sound.piano.mode'),
               value: state._modeLabel(i18n, _BimanualMode.arcade),
               accent: _BimanualBrainSplitGameState._accent,
             ),
             _HumanTestFullscreenMetric(
-              label: pickUiText(
-                i18n,
-                zh: '进度',
-                en: 'Progress',
-                ja: 'Progress',
-                de: 'Progress',
-                fr: 'Progrès accomplis',
-                es: 'Progresos',
-                ru: 'Прогресс',
-              ),
+              label: i18n.t('progress'),
               value: state._progressLabel(i18n),
               accent: _BimanualBrainSplitGameState._traceAccent,
             ),
             _HumanTestFullscreenMetric(
-              label: pickUiText(
-                i18n,
-                zh: '分数',
-                en: 'Score',
-                ja: 'Score',
-                de: 'Score',
-                fr: 'Score',
-                es: 'Puntuación',
-                ru: 'счет',
-              ),
+              label: i18n.t('inline.plan295.life.score.e58eff17f23d'),
               value: '${state._score}',
               accent: _BimanualBrainSplitGameState._rightAccent,
             ),
             _HumanTestFullscreenMetric(
-              label: pickUiText(
-                i18n,
-                zh: '连击',
-                en: 'Combo',
-                ja: 'コンボ',
-                de: 'Combo',
-                fr: 'Combo',
-                es: 'Combo',
-                ru: 'Комбинация',
+              label: i18n.t(
+                'inline.ui.pages.toolbox_human_tests_action.combo_e9df71',
               ),
               value: '${state._combo}',
               accent: _BimanualBrainSplitGameState._climbAccent,
             ),
             if (!compact)
               _HumanTestFullscreenMetric(
-                label: pickUiText(
-                  i18n,
-                  zh: '准确率',
-                  en: 'Accuracy',
-                  ja: '精度',
-                  de: 'Accuracy',
-                  fr: 'Accuracy',
-                  es: 'Precisión',
-                  ru: 'точность',
+                label: i18n.t(
+                  'inline.ui.pages.practice_review_page.accuracy_8cf5a1',
                 ),
                 value: state._records.isEmpty
                     ? '-'
@@ -5246,26 +3860,8 @@ class _BrainSplitFullscreenSessionActions extends StatelessWidget {
           IconButton(
             key: const ValueKey<String>('brain_split_fullscreen_start_button'),
             tooltip: state._running
-                ? pickUiText(
-                    i18n,
-                    zh: '结束',
-                    en: 'Finish',
-                    ja: 'Finish',
-                    de: 'Finish',
-                    fr: 'Finition',
-                    es: 'Acabado',
-                    ru: 'Закончить',
-                  )
-                : pickUiText(
-                    i18n,
-                    zh: '开始',
-                    en: 'Start',
-                    ja: 'Start',
-                    de: 'Start',
-                    fr: 'Démarrer',
-                    es: 'Comienzo',
-                    ru: 'Начинать',
-                  ),
+                ? i18n.t('inline.ui.pages.practice_session_page.finish_10bd36')
+                : i18n.t('toolbox.breathing.start'),
             onPressed: state._running ? state._stopChallenge : state._start,
             icon: Icon(
               state._running ? Icons.stop_rounded : Icons.play_arrow_rounded,
@@ -5273,16 +3869,7 @@ class _BrainSplitFullscreenSessionActions extends StatelessWidget {
           ),
           IconButton(
             key: const ValueKey<String>('brain_split_fullscreen_reset_button'),
-            tooltip: pickUiText(
-              i18n,
-              zh: '重置',
-              en: 'Reset',
-              ja: 'Reset',
-              de: 'Reset',
-              fr: 'Réinitialiser',
-              es: 'Reset',
-              ru: 'сброс',
-            ),
+            tooltip: i18n.t('appearanceReset'),
             onPressed: () {
               state._reset();
               state._start();
@@ -5293,16 +3880,7 @@ class _BrainSplitFullscreenSessionActions extends StatelessWidget {
             key: const ValueKey<String>(
               'brain_split_fullscreen_settings_button',
             ),
-            tooltip: pickUiText(
-              i18n,
-              zh: '设置',
-              en: 'Settings',
-              ja: 'Settings',
-              de: 'Settings',
-              fr: 'Paramètres',
-              es: 'Ajustes',
-              ru: 'Настройки',
-            ),
+            tooltip: i18n.t('settings'),
             onPressed: () => _showSettings(context),
             icon: const Icon(Icons.tune_rounded),
           ),
@@ -5311,16 +3889,7 @@ class _BrainSplitFullscreenSessionActions extends StatelessWidget {
               key: const ValueKey<String>(
                 'brain_split_fullscreen_report_button',
               ),
-              tooltip: pickUiText(
-                i18n,
-                zh: '报告',
-                en: 'Report',
-                ja: 'Report',
-                de: 'Report',
-                fr: 'Rapport annuel',
-                es: 'Informe',
-                ru: 'Доклад',
-              ),
+              tooltip: i18n.t('toolbox.sleep.assist.reportCard'),
               onPressed: reportEnabled
                   ? () => state._showReport(context)
                   : null,
@@ -5351,15 +3920,8 @@ class _BrainSplitFullscreenSettingsDialog extends StatelessWidget {
     return AlertDialog(
       key: const ValueKey<String>('brain_split_fullscreen_settings_dialog'),
       title: Text(
-        pickUiText(
-          i18n,
-          zh: '双手协调设置',
-          en: 'Bimanual settings',
-          ja: 'バイマニュアル設定',
-          de: 'Bimanual settings',
-          fr: 'Paramètres bimanuels',
-          es: 'Ajustes bimanuales',
-          ru: 'Бирумные настройки',
+        i18n.t(
+          'inline.ui.pages.toolbox_human_tests_bimanual.bimanual_settings_573e63',
         ),
       ),
       contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
@@ -5367,25 +3929,11 @@ class _BrainSplitFullscreenSettingsDialog extends StatelessWidget {
         width: dialogWidth,
         child: SingleChildScrollView(
           child: _HumanSettingsSection(
-            title: pickUiText(
-              i18n,
-              zh: '脑裂挑战设置',
-              en: 'Split-brain settings',
-              ja: 'Split-brain settings',
-              de: 'Split-brain settings',
-              fr: 'Réglages des cerveaux fractionnés',
-              es: 'Ajustes de doble cerebro',
-              ru: 'Сплит-мозг настройки',
+            title: i18n.t(
+              'inline.ui.pages.toolbox_human_tests_bimanual.split_brain_settings_d28311',
             ),
-            subtitle: pickUiText(
-              i18n,
-              zh: '进行中参数会锁定；重置后立即按新设置开局。',
-              en: 'Running sessions lock settings; reset to restart with new values.',
-              ja: 'Running sessions lock settings; reset to restart with new values.',
-              de: 'Running sessions lock settings; reset to restart with new values.',
-              fr: 'Lancer des sessions verrouiller les paramètres; réinitialiser pour redémarrer avec de nouvelles valeurs.',
-              es: 'Realizar sesiones de configuración de bloqueo; reiniciar para reiniciar con nuevos valores.',
-              ru: 'Запуск сеансов блокировки настроек; сброс для перезапуска с новыми значениями.',
+            subtitle: i18n.t(
+              'inline.ui.pages.toolbox_human_tests_bimanual.running_sessions_lock_settings_reset_to_restart_with_new_e4ef6f',
             ),
             initiallyExpanded: true,
             child: StatefulBuilder(
@@ -5446,26 +3994,12 @@ class _BrainSplitStage extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final currentPlan = plan;
     final goalText = currentPlan == null
-        ? pickUiText(
-            i18n,
-            zh: '正在准备左右两侧任务。',
-            en: 'Preparing left and right tasks.',
-            ja: 'Preparing left and right tasks.',
-            de: 'Preparing left and right tasks.',
-            fr: 'Préparation des tâches gauche et droite.',
-            es: 'Preparando tareas izquierda y derecha.',
-            ru: 'Подготовка левых и правых задач.',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.preparing_left_and_right_tasks_dc1327',
           )
         : currentPlan.leftActive && currentPlan.rightActive
-        ? pickUiText(
-            i18n,
-            zh: '${currentPlan.left.goalText}，${currentPlan.right.goalText}。',
-            en: '${currentPlan.left.goalText}. ${currentPlan.right.goalText}.',
-            ja: '${currentPlan.left.goalText}ます${currentPlan.right.goalText}。',
-            de: '${currentPlan.left.goalText}. ${currentPlan.right.goalText}.',
-            fr: '${currentPlan.left.goalText}. ${currentPlan.right.goalText}.',
-            es: '- No.',
-            ru: '${currentPlan.left.goalText} ${currentPlan.right.goalText}.',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.currentplan_left_goaltext_currentplan_right_goaltext_ea34a6',
           )
         : currentPlan.leftActive
         ? currentPlan.left.goalText
@@ -5486,15 +4020,8 @@ class _BrainSplitStage extends StatelessWidget {
               _HumanPill(
                 text:
                     plan?.label ??
-                    pickUiText(
-                      i18n,
-                      zh: '等待配对',
-                      en: 'Waiting for pair',
-                      ja: 'Waiting for pair',
-                      de: 'Waiting for pair',
-                      fr: 'Attendre la paire',
-                      es: 'Esperando pareja',
-                      ru: 'В ожидании пары',
+                    i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_bimanual.waiting_for_pair_08b5c8',
                     ),
                 accent: plan == null
                     ? _BimanualBrainSplitGameState._accent
@@ -5576,15 +4103,8 @@ class _BrainSplitStage extends StatelessWidget {
         if (done) ...<Widget>[
           const SizedBox(height: 10),
           _HumanPill(
-            text: pickUiText(
-              i18n,
-              zh: '本轮已结束',
-              en: 'Round complete',
-              ja: 'Round complete',
-              de: 'Round complete',
-              fr: 'Cycle terminé',
-              es: 'Ronda completa',
-              ru: 'Полный раунд',
+            text: i18n.t(
+              'inline.plan295.prayer_beads.round_complete.40e46fc4aabb',
             ),
             accent: BimanualCoordinationTestPage._dangerAccent,
           ),
@@ -5659,55 +4179,21 @@ class _BrainSplitLaneView extends StatelessWidget {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     final accent = spec?.accent ?? _BimanualBrainSplitGameState._accent;
     final sideLabel = switch (side) {
-      _BimanualSide.left => pickUiText(
-        i18n,
-        zh: '左侧',
-        en: 'Left',
-        ja: 'Left',
-        de: 'Left',
-        fr: 'Gauche',
-        es: 'Izquierda',
-        ru: 'Левый',
-      ),
-      _BimanualSide.right => pickUiText(
-        i18n,
-        zh: '右侧',
-        en: 'Right',
-        ja: 'Right',
-        de: 'Right',
-        fr: 'Droite',
-        es: 'Bien.',
-        ru: 'Правильно.',
-      ),
+      _BimanualSide.left => i18n.t('toolbox.breathing.left'),
+      _BimanualSide.right => i18n.t('toolbox.sound.locator.cue_label_right'),
     };
 
     if (spec == null) {
       return _BrainSplitLaneFrame(
         accent: accent,
         title: sideLabel,
-        subtitle: pickUiText(
-          i18n,
-          zh: '等待配对',
-          en: 'Waiting for pair',
-          ja: 'Waiting for pair',
-          de: 'Waiting for pair',
-          fr: 'Attendre la paire',
-          es: 'Esperando pareja',
-          ru: 'В ожидании пары',
+        subtitle: i18n.t(
+          'inline.ui.pages.toolbox_human_tests_bimanual.waiting_for_pair_08b5c8',
         ),
         goalText: '-',
         progressText: '0/0',
         progressValue: 0,
-        statusText: pickUiText(
-          i18n,
-          zh: '未开始',
-          en: 'Idle',
-          ja: 'Idle',
-          de: 'Idle',
-          fr: 'Idée',
-          es: 'Idle',
-          ru: 'безделье',
-        ),
+        statusText: i18n.t('toolbox.sound.locator.status_idle'),
         fullscreen: fullscreen,
         denseFullscreen: denseFullscreen,
         child: const SizedBox.shrink(),
@@ -5718,37 +4204,16 @@ class _BrainSplitLaneView extends StatelessWidget {
       return _BrainSplitLaneFrame(
         accent: accent,
         title: sideLabel,
-        subtitle: pickUiText(
-          i18n,
-          zh: '单侧练习中，此侧休息',
-          en: 'Resting during single-side practice',
-          ja: 'Resting during single-side practice',
-          de: 'Resting during single-side practice',
-          fr: 'Le repos pendant la pratique à un seul côté',
-          es: 'Descansar durante la práctica unilateral',
-          ru: 'Отдых во время односторонней практики',
+        subtitle: i18n.t(
+          'inline.ui.pages.toolbox_human_tests_bimanual.resting_during_single_side_practice_5ae4e2',
         ),
-        goalText: pickUiText(
-          i18n,
-          zh: '休息侧',
-          en: 'Rest side',
-          ja: 'Rest side',
-          de: 'Rest side',
-          fr: 'Côté repos',
-          es: 'Descanso lado',
-          ru: 'Отдых в стороне',
+        goalText: i18n.t(
+          'inline.ui.pages.toolbox_human_tests_bimanual.rest_side_2430f3',
         ),
         progressText: '-',
         progressValue: 0,
-        statusText: pickUiText(
-          i18n,
-          zh: '未计入本轮',
-          en: 'Not counted',
-          ja: 'Not counted',
-          de: 'Not counted',
-          fr: 'Non compté',
-          es: 'No cuenta',
-          ru: 'Не считается',
+        statusText: i18n.t(
+          'inline.ui.pages.toolbox_human_tests_bimanual.not_counted_9b2fbc',
         ),
         fullscreen: fullscreen,
         denseFullscreen: denseFullscreen,
@@ -6612,25 +5077,11 @@ class _BrainSplitTraceLaneState extends State<_BrainSplitTraceLane> {
       progressText: progressText,
       progressValue: progressValue,
       statusText: _completed
-          ? pickUiText(
-              AppI18n(Localizations.localeOf(context).languageCode),
-              zh: '已完成',
-              en: 'Completed',
-              ja: 'しました。完了しました',
-              de: 'Completed',
-              fr: 'Achevé',
-              es: 'Completado',
-              ru: 'завершенный',
-            )
-          : pickUiText(
-              AppI18n(Localizations.localeOf(context).languageCode),
-              zh: '沿线描摹',
-              en: 'Trace along the line',
-              ja: 'Trace along the line',
-              de: 'Trace along the line',
-              fr: 'Tracer le long de la ligne',
-              es: 'Trace en la línea',
-              ru: 'След вдоль линии',
+          ? AppI18n(
+              Localizations.localeOf(context).languageCode,
+            ).t('toolbox.sleep.rhythm.completed')
+          : AppI18n(Localizations.localeOf(context).languageCode).t(
+              'inline.ui.pages.toolbox_human_tests_bimanual.trace_along_the_line_5a3aa7',
             ),
       fullscreen: widget.fullscreen,
       denseFullscreen: widget.denseFullscreen,
@@ -6695,15 +5146,8 @@ class _BrainSplitTraceLaneState extends State<_BrainSplitTraceLane> {
                     left: 8,
                     bottom: 8,
                     child: Text(
-                      pickUiText(
-                        AppI18n(Localizations.localeOf(context).languageCode),
-                        zh: '沿当前线段描到下一个节点',
-                        en: 'Trace the segment into the next node',
-                        ja: 'Trace the segment into the next node',
-                        de: 'Trace the segment into the next node',
-                        fr: 'Tracez le segment dans le prochain nœud',
-                        es: 'Trace el segmento en el próximo nodo',
-                        ru: 'Отследить сегмент до следующего узла',
+                      AppI18n(Localizations.localeOf(context).languageCode).t(
+                        'inline.ui.pages.toolbox_human_tests_bimanual.trace_the_segment_into_the_next_node_cfe6d4',
                       ),
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -7303,48 +5747,14 @@ class _BrainSplitBounceLaneState extends State<_BrainSplitBounceLane> {
       progressText: progressText,
       progressValue: progressValue,
       statusText: _completed
-          ? pickUiText(
-              i18n,
-              zh: '已完成',
-              en: 'Completed',
-              ja: 'しました。完了しました',
-              de: 'Completed',
-              fr: 'Achevé',
-              es: 'Completado',
-              ru: 'завершенный',
-            )
+          ? i18n.t('toolbox.sleep.rhythm.completed')
           : _missed
-          ? pickUiText(
-              i18n,
-              zh: '漏球',
-              en: 'Missed',
-              ja: 'Missed',
-              de: 'Missed',
-              fr: 'Manque',
-              es: 'Desaparecido',
-              ru: 'Пропавший',
-            )
+          ? i18n.t('toolbox.sleep.rhythm.missed')
           : widget.running
-          ? pickUiText(
-              i18n,
-              zh: '拖动挡板',
-              en: 'Drag the paddle',
-              ja: 'Drag the paddle',
-              de: 'Drag the paddle',
-              fr: 'Faites glisser la palette',
-              es: 'Arrastre la paleta',
-              ru: 'Перетащите весло',
+          ? i18n.t(
+              'inline.ui.pages.toolbox_human_tests_bimanual.drag_the_paddle_1ee28c',
             )
-          : pickUiText(
-              i18n,
-              zh: '待发球',
-              en: 'Ready',
-              ja: 'Ready',
-              de: 'Ready',
-              fr: 'Prêt',
-              es: 'Listo',
-              ru: 'Готовы',
-            ),
+          : i18n.t('timerIdle'),
       fullscreen: widget.fullscreen,
       denseFullscreen: widget.denseFullscreen,
       child: LayoutBuilder(
@@ -7398,25 +5808,11 @@ class _BrainSplitBounceLaneState extends State<_BrainSplitBounceLane> {
                     top: 12,
                     child: Text(
                       widget.running
-                          ? pickUiText(
-                              i18n,
-                              zh: '把球稳住',
-                              en: 'Keep the ball alive',
-                              ja: 'Keep the ball alive',
-                              de: 'Keep the ball alive',
-                              fr: 'Garde la balle en vie',
-                              es: 'Mantenga la pelota viva',
-                              ru: 'Держите мяч живым',
+                          ? i18n.t(
+                              'inline.ui.pages.toolbox_human_tests_bimanual.keep_the_ball_alive_a9006f',
                             )
-                          : pickUiText(
-                              i18n,
-                              zh: '先开始再接球',
-                              en: 'Start before the serve',
-                              ja: 'Start before the serve',
-                              de: 'Start before the serve',
-                              fr: 'Commencez avant le service',
-                              es: 'Comience antes del servicio',
-                              ru: 'Начните перед подачей',
+                          : i18n.t(
+                              'inline.ui.pages.toolbox_human_tests_bimanual.start_before_the_serve_5cd72e',
                             ),
                       style: theme.textTheme.labelMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -7933,69 +6329,27 @@ class _BrainSplitClimbLaneState extends State<_BrainSplitClimbLane> {
       progressText: progressText,
       progressValue: progressValue,
       statusText: _completed
-          ? pickUiText(
-              i18n,
-              zh: '已登顶',
-              en: 'Summit reached',
-              ja: 'Summit reached',
-              de: 'Summit reached',
-              fr: 'Sommet atteint',
-              es: 'Cumbre alcanzada',
-              ru: 'Встреча на высшем уровне',
+          ? i18n.t(
+              'inline.ui.pages.toolbox_human_tests_bimanual.summit_reached_db4044',
             )
           : _failed
-          ? pickUiText(
-              i18n,
-              zh: '没踩到平台',
-              en: 'Missed platform',
-              ja: 'Missed platform',
-              de: 'Missed platform',
-              fr: 'Plateforme manquante',
-              es: 'Plataforma perdida',
-              ru: 'Пропущенная платформа',
+          ? i18n.t(
+              'inline.ui.pages.toolbox_human_tests_bimanual.missed_platform_f12979',
             )
           : _jumping
-          ? pickUiText(
-              i18n,
-              zh: '空中',
-              en: 'Airborne',
-              ja: 'Airborne',
-              de: 'Airborne',
-              fr: 'Airborne',
-              es: 'Airborne',
-              ru: 'воздушно-десантный',
+          ? i18n.t(
+              'inline.ui.pages.toolbox_human_tests_bimanual.airborne_d5dadd',
             )
           : _charging
-          ? pickUiText(
-              i18n,
-              zh: '蓄力 ${(_chargeProgress * 100).round()}%',
-              en: '${(_chargeProgress * 100).round()}% charge',
-              ja: '${(_chargeProgress * 100).round()}%チャージ',
-              de: '${(_chargeProgress * 100).round()}% charge',
-              fr: '${(_chargeProgress * 100).round()}% charge',
-              es: 'Cargo correspondiente',
-              ru: '<v0/% заряд',
+          ? i18n.t(
+              'inline.ui.pages.toolbox_human_tests_bimanual.chargeprogress_100_round_charge_f005e6',
             )
           : needCharge
-          ? pickUiText(
-              i18n,
-              zh: '长按蓄力等平台对齐',
-              en: 'Hold and time the platform',
-              ja: 'Hold and time the platform',
-              de: 'Hold and time the platform',
-              fr: 'Maintenez et maintenez la plate-forme',
-              es: 'Mantener y tiempo la plataforma',
-              ru: 'Время и время работы платформы',
+          ? i18n.t(
+              'inline.ui.pages.toolbox_human_tests_bimanual.hold_and_time_the_platform_852efa',
             )
-          : pickUiText(
-              i18n,
-              zh: '点击跳到下一层',
-              en: 'Tap to jump',
-              ja: 'Tap to jump',
-              de: 'Tap to jump',
-              fr: 'Appuyez sur pour sauter',
-              es: 'Pulsa para saltar',
-              ru: 'Прыжок прыжком',
+          : i18n.t(
+              'inline.ui.pages.toolbox_human_tests_bimanual.tap_to_jump_908c79',
             ),
       fullscreen: widget.fullscreen,
       denseFullscreen: widget.denseFullscreen,
@@ -8077,25 +6431,11 @@ class _BrainSplitClimbLaneState extends State<_BrainSplitClimbLane> {
                     top: 12,
                     child: Text(
                       widget.running
-                          ? pickUiText(
-                              i18n,
-                              zh: '看准平台横向对齐，再点击或蓄力跳。',
-                              en: 'Time the moving platform, then tap or charge.',
-                              ja: 'Time the moving platform, then tap or charge.',
-                              de: 'Time the moving platform, then tap or charge.',
-                              fr: 'Temps de la plate-forme mobile, puis touchez ou chargez.',
-                              es: 'Hora de la plataforma móvil, luego pulsar o cargar.',
-                              ru: 'Время движущейся платформы, затем нажмите или зарядите.',
+                          ? i18n.t(
+                              'inline.ui.pages.toolbox_human_tests_bimanual.time_the_moving_platform_then_tap_or_charge_d73f00',
                             )
-                          : pickUiText(
-                              i18n,
-                              zh: '先开始再跳高',
-                              en: 'Start before jumping',
-                              ja: 'Start before jumping',
-                              de: 'Start before jumping',
-                              fr: 'Commencez avant de sauter',
-                              es: 'Empieza antes de saltar',
-                              ru: 'Начните перед прыжком',
+                          : i18n.t(
+                              'inline.ui.pages.toolbox_human_tests_bimanual.start_before_jumping_da4574',
                             ),
                       style: theme.textTheme.labelMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -8246,25 +6586,11 @@ class _BrainSplitClimbLaneState extends State<_BrainSplitClimbLane> {
                     children: <Widget>[
                       _HumanPill(
                         text: needCharge
-                            ? pickUiText(
-                                i18n,
-                                zh: '蓄力层',
-                                en: 'Charge',
-                                ja: 'チャージ',
-                                de: 'Charge',
-                                fr: 'Frais',
-                                es: 'Carga',
-                                ru: 'Зарядка',
+                            ? i18n.t(
+                                'inline.ui.pages.toolbox_human_tests_bimanual.charge_041900',
                               )
-                            : pickUiText(
-                                i18n,
-                                zh: '平台',
-                                en: 'Platform',
-                                ja: 'Platform',
-                                de: 'Platform',
-                                fr: 'Plateforme',
-                                es: 'Plataforma',
-                                ru: 'Платформа',
+                            : i18n.t(
+                                'inline.ui.pages.toolbox_human_tests_auditory_lab.platform_913e74',
                               ),
                         accent: widget.spec.accent,
                       ),
@@ -8356,15 +6682,8 @@ class _BrainSplitRecentPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(
-              i18n,
-              zh: '最近回合',
-              en: 'Recent rounds',
-              ja: 'Recent rounds',
-              de: 'Recent rounds',
-              fr: 'Cycles récents',
-              es: 'rondas recientes',
-              ru: 'Последние раунды',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_bimanual.recent_rounds_520a3c',
             ),
             style: theme.textTheme.labelLarge?.copyWith(
               fontWeight: FontWeight.w800,
@@ -8426,48 +6745,20 @@ class _BrainSplitReportDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final title = score >= records.length * 18 && accuracy >= 0.9
-        ? pickUiText(
-            i18n,
-            zh: '左右脑合拍',
-            en: 'Two-hand flow',
-            ja: 'Two-hand flow',
-            de: 'Two-hand flow',
-            fr: 'Débit à deux mains',
-            es: 'Flujo de dos manos',
-            ru: 'Двусторонний поток',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.two_hand_flow_c88ca9',
           )
         : accuracy < 0.7
-        ? pickUiText(
-            i18n,
-            zh: '先稳住节奏',
-            en: 'Slow down first',
-            ja: 'Slow down first',
-            de: 'Slow down first',
-            fr: 'Ralentissez d\'abord',
-            es: 'Despacio primero',
-            ru: 'Сначала помедленнее',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.slow_down_first_b362f4',
           )
-        : pickUiText(
-            i18n,
-            zh: '节奏正在成形',
-            en: 'Rhythm forming',
-            ja: 'Rhythm forming',
-            de: 'Rhythm forming',
-            fr: 'Rythme formant',
-            es: 'Rhythm formando',
-            ru: 'Формирование ритма',
+        : i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.rhythm_forming_076f9c',
           );
     return AlertDialog(
       title: Text(
-        pickUiText(
-          i18n,
-          zh: '双手协调报告',
-          en: 'Bimanual report',
-          ja: 'バイマニュアルレポート',
-          de: 'Bimanual report',
-          fr: 'Rapport bimanuel',
-          es: 'Informe bimanual',
-          ru: 'Двухсторонний доклад',
+        i18n.t(
+          'inline.ui.pages.toolbox_human_tests_bimanual.bimanual_report_0b0588',
         ),
       ),
       content: SizedBox(
@@ -8479,107 +6770,36 @@ class _BrainSplitReportDialog extends StatelessWidget {
             children: <Widget>[
               _HumanMetricWrap(
                 metrics: <(String, String)>[
+                  (i18n.t('noteTitle'), title),
+                  (i18n.t('toolbox.sound.piano.mode'), mode),
+                  (i18n.t('inline.plan295.life.score.e58eff17f23d'), '$score'),
                   (
-                    pickUiText(
-                      i18n,
-                      zh: '称号',
-                      en: 'Title',
-                      ja: 'Title',
-                      de: 'Title',
-                      fr: 'Titre',
-                      es: 'Título',
-                      ru: 'Название',
-                    ),
-                    title,
-                  ),
-                  (
-                    pickUiText(
-                      i18n,
-                      zh: '模式',
-                      en: 'Mode',
-                      ja: 'Mode',
-                      de: 'Mode',
-                      fr: 'Mode',
-                      es: 'Modo',
-                      ru: 'Режим',
-                    ),
-                    mode,
-                  ),
-                  (
-                    pickUiText(
-                      i18n,
-                      zh: '分数',
-                      en: 'Score',
-                      ja: 'Score',
-                      de: 'Score',
-                      fr: 'Score',
-                      es: 'Puntuación',
-                      ru: 'счет',
-                    ),
-                    '$score',
-                  ),
-                  (
-                    pickUiText(
-                      i18n,
-                      zh: '准确率',
-                      en: 'Accuracy',
-                      ja: '精度',
-                      de: 'Accuracy',
-                      fr: 'Accuracy',
-                      es: 'Precisión',
-                      ru: 'точность',
+                    i18n.t(
+                      'inline.ui.pages.practice_review_page.accuracy_8cf5a1',
                     ),
                     '${(accuracy * 100).round()}%',
                   ),
                   (
-                    pickUiText(
-                      i18n,
-                      zh: '最佳连击',
-                      en: 'Best combo',
-                      ja: 'ベストコンボ',
-                      de: 'Best combo',
-                      fr: 'Meilleur combo',
-                      es: 'Mejor combo',
-                      ru: 'Лучшее сочетание',
+                    i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_action.best_combo_65a7d7',
                     ),
                     '$bestCombo',
                   ),
                   (
-                    pickUiText(
-                      i18n,
-                      zh: '失误',
-                      en: 'Mistakes',
-                      ja: 'Mistakes',
-                      de: 'Mistakes',
-                      fr: 'Erreurs',
-                      es: 'Errores',
-                      ru: 'Ошибки',
+                    i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_bimanual.mistakes_ea8156',
                     ),
                     '$mistakes',
                   ),
                   (
-                    pickUiText(
-                      i18n,
-                      zh: '平均用时',
-                      en: 'Avg lane time',
-                      ja: 'レーン時間',
-                      de: 'Avg lane time',
-                      fr: 'Heure de la voie d\'Avg',
-                      es: 'Tiempo de carril de Avg',
-                      ru: 'Время в пути',
+                    i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_bimanual.avg_lane_time_b43435',
                     ),
                     averageMs == 0 ? '-' : _formatMilliseconds(averageMs),
                   ),
                   (
-                    pickUiText(
-                      i18n,
-                      zh: '同步差',
-                      en: 'Sync gap',
-                      ja: 'Sync gap',
-                      de: 'Sync gap',
-                      fr: 'Écart de synchronisation',
-                      es: 'Sincronización',
-                      ru: 'Синхронный разрыв',
+                    i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_bimanual.sync_gap_27741d',
                     ),
                     averageSyncGap == 0
                         ? '-'
@@ -8593,15 +6813,8 @@ class _BrainSplitReportDialog extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '左右手负载',
-                        en: 'Hand load',
-                        ja: 'Hand load',
-                        de: 'Hand load',
-                        fr: 'Charge manuelle',
-                        es: 'Carga de mano',
-                        ru: 'Ручная нагрузка',
+                      i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_bimanual.hand_load_78901d',
                       ),
                       style: theme.textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.w800,
@@ -8622,25 +6835,11 @@ class _BrainSplitReportDialog extends StatelessWidget {
               _HumanPanel(
                 child: Text(
                   mistakes > records.length * 0.25
-                      ? pickUiText(
-                          i18n,
-                          zh: '建议先降低节奏，重点练习左/右独立完成与同步窗口内的合拍收尾。',
-                          en: 'Lower the pace first. Practice isolated left/right finishes and sync-window endings.',
-                          ja: 'Lower the pace first. Practice isolated left/right finishes and sync-window endings.',
-                          de: 'Lower the pace first. Practice isolated left/right finishes and sync-window endings.',
-                          fr: 'Baissez d\'abord le rythme. Pratiquez des finitions de gauche/droite isolées et des terminaisons de fenêtre de synchronisation.',
-                          es: 'Baja el ritmo primero. Practica acabados aislados izquierda/derecha y terminaciones de sincronización.',
-                          ru: 'Сначала понизить темп. Практикуйте изолированные лево-правые отделки и окончания синхронного окна.',
+                      ? i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_bimanual.lower_the_pace_first_practice_isolated_left_right_finish_1f5dbe',
                         )
-                      : pickUiText(
-                          i18n,
-                          zh: '表现稳定，可以提高节奏强度或切换到更强的脑裂配对。',
-                          en: 'Performance is stable. Raise the pace or switch to a tougher split-brain pairing.',
-                          ja: 'Performance is stable. Raise the pace or switch to a tougher split-brain pairing.',
-                          de: 'Performance is stable. Raise the pace or switch to a tougher split-brain pairing.',
-                          fr: 'La performance est stable. Augmenter le rythme ou passer à un couplage plus dur entre les cerveaux.',
-                          es: 'El rendimiento es estable. Aumente el ritmo o cambie a un emparejamiento de cerebros de separación más duro.',
-                          ru: 'Производительность стабильна. Поднимите темп или переключитесь на более жесткое спаривание с разделенным мозгом.',
+                      : i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_bimanual.performance_is_stable_raise_the_pace_or_switch_to_a_toug_b0ff11',
                         ),
                   style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
                 ),
@@ -8652,18 +6851,7 @@ class _BrainSplitReportDialog extends StatelessWidget {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(
-            pickUiText(
-              i18n,
-              zh: '关闭',
-              en: 'Close',
-              ja: '閉じる',
-              de: 'Close',
-              fr: 'Fermer',
-              es: 'Cerca',
-              ru: 'Закрыть',
-            ),
-          ),
+          child: Text(i18n.t('inline.plan295.life.close.370fb8697deb')),
         ),
       ],
     );

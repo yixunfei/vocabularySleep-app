@@ -31,8 +31,7 @@ enum _ReverseImagePagingKind { sogouSim, googleSearchPage }
 class _ReverseImageEngine {
   const _ReverseImageEngine({
     required this.id,
-    required this.nameZh,
-    required this.nameEn,
+    required this.nameKey,
     required this.host,
     required this.path,
     required this.queryKey,
@@ -41,8 +40,7 @@ class _ReverseImageEngine {
   });
 
   final String id;
-  final String nameZh;
-  final String nameEn;
+  final String nameKey;
   final String host;
   final String path;
   final String queryKey;
@@ -50,7 +48,7 @@ class _ReverseImageEngine {
   final Map<String, String> fixedQuery;
 
   String label(BuildContext context) {
-    return _lifeText(context, zh: nameZh, en: nameEn);
+    return _lifeI18nText(context, nameKey);
   }
 
   Uri buildSearchUri(Uri imageUri) {
@@ -201,8 +199,7 @@ class _GoogleStructuredPayload {
 final List<_ReverseImageEngine> _reverseImageEngines = <_ReverseImageEngine>[
   const _ReverseImageEngine(
     id: 'baidu',
-    nameZh: 'Baidu image',
-    nameEn: 'Baidu image',
+    nameKey: 'literal.ui.pages.toolbox_life_tools.baidu_image_10eb00',
     host: 'graph.baidu.com',
     path: '/s',
     queryKey: 'image',
@@ -211,24 +208,22 @@ final List<_ReverseImageEngine> _reverseImageEngines = <_ReverseImageEngine>[
   ),
   const _ReverseImageEngine(
     id: 'sogou',
-    nameZh: 'Sogou image',
-    nameEn: 'Sogou image',
+    nameKey: 'literal.ui.pages.toolbox_life_tools.sogou_image_9cffb2',
     host: 'image.sogou.com',
     path: '/ris',
     queryKey: 'query',
   ),
   const _ReverseImageEngine(
     id: 'google_lens',
-    nameZh: 'Google Lens',
-    nameEn: 'Google Lens',
+    nameKey: 'literal.ui.pages.toolbox_life_tools.google_lens_5f5770',
     host: 'lens.google.com',
     path: '/uploadbyurl',
     queryKey: 'url',
   ),
   const _ReverseImageEngine(
     id: 'yandex',
-    nameZh: 'Yandex Images',
-    nameEn: 'Yandex Images',
+    nameKey:
+        'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_reverse_image.yandex_images_2f8e1c',
     host: 'yandex.com',
     path: '/images/search',
     queryKey: 'url',
@@ -466,11 +461,13 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
   Widget build(BuildContext context) {
     final stageText = _stageLabel(context);
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '以图搜图', en: 'Reverse image'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '聚合多个识图来源，统一展示图片信息、来源站点和来源链接。',
-        en: 'Aggregate linked engines and show unified image info, source site, and source URL entries.',
+        'inline.plan295.life.reverse_image.c5edca6a6947',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.aggregate_linked_engines_and_show_un.64d754de340f',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -495,18 +492,23 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
                       : const Icon(Icons.image_search_rounded),
                   label: Text(
                     _busy
-                        ? _lifeText(context, zh: '搜索中...', en: 'Searching...')
-                        : _lifeText(context, zh: '开始搜索', en: 'Run search'),
+                        ? _lifeI18nText(
+                            context,
+                            'inline.plan295.life.searching.5424fa75a5ab',
+                          )
+                        : _lifeI18nText(
+                            context,
+                            'inline.plan295.life.run_search.c6c7ff41669c',
+                          ),
                   ),
                 ),
               ),
               if (_resolvedImageUri != null) ...<Widget>[
                 const SizedBox(width: 10),
                 IconButton.filledTonal(
-                  tooltip: _lifeText(
+                  tooltip: _lifeI18nText(
                     context,
-                    zh: '打开已解析图片地址',
-                    en: 'Open resolved image URL',
+                    'inline.plan295.life.open_resolved_image_url.0523ec13db41',
                   ),
                   onPressed: () =>
                       _openExternal(context, _resolvedImageUri!.toString()),
@@ -533,11 +535,13 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
   Widget _buildInputPanel(BuildContext context) {
     final theme = Theme.of(context);
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '图片来源', en: 'Image source'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '本地图片优先走百度直传解析，只有在需要公开图片地址时才使用临时上传兜底。',
-        en: 'Local images prefer direct Baidu upload and parsing. Temporary public upload is used only as fallback.',
+        'inline.plan295.life.image_source.fed984e77bad',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.local_images_prefer_direct_baidu_upl.b2c505497b15',
       ),
       children: <Widget>[
         TextField(
@@ -545,10 +549,9 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
           controller: _imageUrlController,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
-            labelText: _lifeText(
+            labelText: _lifeI18nText(
               context,
-              zh: '公开图片地址（可选）',
-              en: 'Public image URL (optional)',
+              'inline.plan295.life.public_image_url_optional.ebcc7c9d8fcb',
             ),
           ),
         ),
@@ -559,10 +562,12 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  _lifeText(
+                  _lifeI18nText(
                     context,
-                    zh: '已选择：${_selectedImageName ?? _selectedImagePath!}',
-                    en: 'Selected: ${_selectedImageName ?? _selectedImagePath!}',
+                    'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.reverse.image.selected.5f7dbaecc6',
+                    params: <String, Object?>{
+                      'p0': _selectedImageName ?? _selectedImagePath!,
+                    },
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -576,10 +581,9 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
                     errorBuilder: (context, error, stackTrace) {
                       return Center(
                         child: Text(
-                          _lifeText(
+                          _lifeI18nText(
                             context,
-                            zh: '预览失败，请重新选择图片。',
-                            en: 'Preview failed. Pick the image again.',
+                            'inline.plan295.life.preview_failed_pick_the_image_again.2b738c001158',
                           ),
                           style: theme.textTheme.bodySmall,
                         ),
@@ -598,12 +602,20 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
                 key: const ValueKey<String>('life_reverse_image_pick_button'),
                 onPressed: _busy ? null : _pickImage,
                 icon: const Icon(Icons.photo_library_rounded),
-                label: Text(_lifeText(context, zh: '选择图片', en: 'Pick image')),
+                label: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.pick_image.9ce43eb388b3',
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 10),
             IconButton.filledTonal(
-              tooltip: _lifeText(context, zh: '清空图片', en: 'Clear image'),
+              tooltip: _lifeI18nText(
+                context,
+                'inline.plan295.life.clear_image.ffa3b6e8a706',
+              ),
               onPressed: _busy
                   ? null
                   : () {
@@ -629,11 +641,13 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
 
   Widget _buildEnginePanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '聚合搜索源', en: 'Aggregated engines'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '当前聚合百度识图、搜狗识图、Google Lens 和 Yandex Images。',
-        en: 'Baidu, Sogou, Google Lens, and Yandex are aggregated.',
+        'inline.plan295.life.aggregated_engines.4c2d8cb3bfe5',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.baidu_sogou_google_lens_and_yandex_a.b6ec02824730',
       ),
       children: <Widget>[
         Wrap(
@@ -661,10 +675,10 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        _lifeText(
+        _lifeI18nText(
           context,
-          zh: '聚合失败：$_lastError',
-          en: 'Aggregation failed: $_lastError',
+          'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.reverse.image.aggregation_failed.59ef2d5565',
+          params: <String, Object?>{'_lastError': _lastError},
         ),
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: Theme.of(context).colorScheme.onErrorContainer,
@@ -676,22 +690,35 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
   Widget _buildResultsPanel(BuildContext context) {
     if (_results.isEmpty) {
       return _LifeSettingsPanel(
-        title: _lifeText(context, zh: '聚合结果', en: 'Aggregated results'),
-        subtitle: _lifeText(
+        title: _lifeI18nText(
           context,
-          zh: '搜索后会用统一结构展示各搜索源返回的结果。',
-          en: 'Engine results will be shown in a unified structure after search.',
+          'inline.plan295.life.aggregated_results.1e856ca9e54b',
+        ),
+        subtitle: _lifeI18nText(
+          context,
+          'inline.plan295.life.engine_results_will_be_shown_in_a_un.6c44bb5e49f2',
         ),
         children: const <Widget>[],
       );
     }
 
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '聚合结果', en: 'Aggregated results'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: "$_successCount/${_results.length} 个搜索源成功，合计 $_totalEntries 条结果${_usedLegacyUploadFallback ? '（已使用临时上传兜底）' : ''}。",
-        en: "$_successCount/${_results.length} engines succeeded with $_totalEntries entries${_usedLegacyUploadFallback ? ' (temporary upload fallback used)' : ''}.",
+        'inline.plan295.life.aggregated_results.1e856ca9e54b',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.reverse.image.engines_succeeded_with_entries.d49d89aaaf',
+        params: <String, Object?>{
+          '_successCount': _successCount,
+          'length': _results.length,
+          '_totalEntries': _totalEntries,
+          'p3': _usedLegacyUploadFallback ? '（已使用临时上传兜底）' : '',
+          'p4': _usedLegacyUploadFallback
+              ? ' (temporary upload fallback used)'
+              : '',
+        },
       ),
       children: <Widget>[
         for (final result in _results) _buildEngineResultCard(context, result),
@@ -755,16 +782,19 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
             Row(
               children: <Widget>[
                 Text(
-                  _lifeText(
+                  _lifeI18nText(
                     context,
-                    zh: '耗时 $elapsedText',
-                    en: 'Elapsed $elapsedText',
+                    'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.reverse.image.elapsed.8cdbd72443',
+                    params: <String, Object?>{'elapsedText': elapsedText},
                   ),
                   style: Theme.of(context).textTheme.labelSmall,
                 ),
                 const Spacer(),
                 IconButton(
-                  tooltip: _lifeText(context, zh: '打开结果页', en: 'Open result'),
+                  tooltip: _lifeI18nText(
+                    context,
+                    'inline.plan295.life.open_result.00ed4e986374',
+                  ),
                   onPressed: () =>
                       _openExternal(context, result.resultUri.toString()),
                   icon: const Icon(Icons.open_in_new_rounded),
@@ -774,10 +804,9 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
             const SizedBox(height: 4),
             if (result.items.isEmpty)
               Text(
-                _lifeText(
+                _lifeI18nText(
                   context,
-                  zh: '未解析到结构化结果，可打开结果页手动查看。',
-                  en: 'No structured entries parsed. Open the result page for manual review.',
+                  'inline.plan295.life.no_structured_entries_parsed_open_th.5fa2dc22d5a5',
                 ),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
@@ -802,19 +831,21 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
                           )
                         : const Icon(Icons.expand_more_rounded),
                     label: Text(
-                      _lifeText(
-                        context,
-                        zh: loadingMore
-                            ? '加载中...'
-                            : hasHiddenLocal
-                            ? '加载更多（${result.items.length - visibleCount}）'
-                            : '从搜索源继续加载',
-                        en: loadingMore
-                            ? 'Loading...'
-                            : hasHiddenLocal
-                            ? 'Load more (${result.items.length - visibleCount})'
-                            : 'Load more from source site',
-                      ),
+                      loadingMore
+                          ? _lifeI18nText(context, 'toolbox.sleep.core.loading')
+                          : hasHiddenLocal
+                          ? _lifeI18nText(
+                              context,
+                              'inline.plan295.life.load_more_result_items_length_visibl.bcb782963be0',
+                              params: <String, Object?>{
+                                'result.items.length - visibleCount':
+                                    result.items.length - visibleCount,
+                              },
+                            )
+                          : _lifeI18nText(
+                              context,
+                              'inline.plan295.life.load_more_from_source_site.e744df7fdb3c',
+                            ),
                     ),
                   ),
                 ),
@@ -878,7 +909,10 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
               children: <Widget>[
                 Text(
                   item.title.trim().isEmpty
-                      ? _lifeText(context, zh: '未命名结果', en: 'Untitled result')
+                      ? _lifeI18nText(
+                          context,
+                          'inline.plan295.life.untitled_result.1b602e512c60',
+                        )
                       : item.title,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w700,
@@ -887,10 +921,9 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
                 const SizedBox(height: 4),
                 Text(
                   item.sourceSite.trim().isEmpty
-                      ? _lifeText(
+                      ? _lifeI18nText(
                           context,
-                          zh: '未知来源站点',
-                          en: 'Unknown source site',
+                          'inline.plan295.life.unknown_source_site.68eec2884254',
                         )
                       : item.sourceSite,
                   style: theme.textTheme.labelMedium,
@@ -904,10 +937,9 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
                   children: <Widget>[
                     if (sourceUri != null)
                       IconButton(
-                        tooltip: _lifeText(
+                        tooltip: _lifeI18nText(
                           context,
-                          zh: '打开来源链接',
-                          en: 'Open source URL',
+                          'inline.plan295.life.open_source_url.0ccf29cc9e2e',
                         ),
                         onPressed: () =>
                             _openExternal(context, sourceUri.toString()),
@@ -915,10 +947,9 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
                       ),
                     if (imageUri != null)
                       IconButton(
-                        tooltip: _lifeText(
+                        tooltip: _lifeI18nText(
                           context,
-                          zh: '打开图片链接',
-                          en: 'Open image URL',
+                          'inline.plan295.life.open_image_url.7f732f74c611',
                         ),
                         onPressed: () =>
                             _openExternal(context, imageUri.toString()),
@@ -939,10 +970,8 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
       (tool) => tool.id == 'reverse_image',
       orElse: () => const _LifeTool(
         id: 'reverse_image',
-        titleZh: '以图搜图',
-        titleEn: 'Reverse image',
-        summaryZh: '',
-        summaryEn: '',
+        titleKey: 'inline.plan295.life.reverse_image.c5edca6a6947',
+        summaryKey: 'arb.all',
         category: 'web',
         icon: Icons.image_search_rounded,
       ),
@@ -953,11 +982,13 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
     }
 
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '来源链接', en: 'Source links'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '如果搜索源策略变化，可直接打开来源页面手动识图。',
-        en: 'If an engine changes its strategy, open the source page directly for manual search.',
+        'inline.plan295.life.source_links.31a99f45d66b',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.if_an_engine_changes_its_strategy_op.4b5ef29295e4',
       ),
       children: <Widget>[
         for (final source in sourceTool.sources)
@@ -990,10 +1021,9 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '读取文件路径失败，请重试。',
-              en: 'Failed to read file path. Please retry.',
+              'inline.plan295.life.failed_to_read_file_path_please_retr.79be80c28b68',
             ),
           ),
         ),
@@ -1024,10 +1054,9 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '请先选择图片，或填写一个公开图片地址。',
-              en: 'Pick an image first, or provide a public image URL.',
+              'inline.plan295.life.pick_an_image_first_or_provide_a_pub.62baaede8c59',
             ),
           ),
         ),
@@ -1487,6 +1516,7 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
         ? _toSogouQueryImageUri(imageUri)
         : imageUri;
     final requestUri = engine.buildSearchUri(queryImageUri);
+    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
 
     try {
       Uri effectiveRequestUri = requestUri;
@@ -1582,8 +1612,10 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
           imageUri: imageUri,
           elapsed: watch.elapsed,
           statusCode: response.statusCode,
-          message:
-              'Google returned HTTP ${response.statusCode}. Open the result page manually.',
+          message: i18n.t(
+            'toolbox.life.reverse_image.google_http_manual',
+            params: <String, Object?>{'statusCode': response.statusCode},
+          ),
         );
       }
 
@@ -1614,8 +1646,7 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
           imageUri: imageUri,
           elapsed: watch.elapsed,
           statusCode: null,
-          message:
-              'Google request timed out or failed. Open Google Lens manually.',
+          message: i18n.t('toolbox.life.reverse_image.google_timeout_manual'),
         );
       }
       return _ReverseImageEngineResult(
@@ -1652,7 +1683,7 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
       items: <_ReverseImageResultItem>[
         _ReverseImageResultItem(
           kind: _ReverseImageResultKind.page,
-          title: engine.nameEn,
+          title: engine.label(context),
           sourceSite: resultUri.host,
           sourceUrl: resultUri.toString(),
           imageUrl: imageUri.toString(),
@@ -2304,45 +2335,37 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
 
   String _stageLabel(BuildContext context) {
     return switch (_stage) {
-      _ReverseImageStage.idle => _lifeText(
+      _ReverseImageStage.idle => _lifeI18nText(
         context,
-        zh: 'Ready: pick an image or provide a URL.',
-        en: 'Ready: pick an image or provide a URL.',
+        'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_reverse_image.ready_pick_an_image_or_provide_a_url_65ca52',
       ),
-      _ReverseImageStage.preparing => _lifeText(
+      _ReverseImageStage.preparing => _lifeI18nText(
         context,
-        zh: 'Preparing aggregated requests...',
-        en: 'Preparing aggregated requests...',
+        'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_reverse_image.preparing_aggregated_requests_7f0a45',
       ),
-      _ReverseImageStage.directUploading => _lifeText(
+      _ReverseImageStage.directUploading => _lifeI18nText(
         context,
-        zh: 'Uploading local image directly to Baidu...',
-        en: 'Uploading local image directly to Baidu...',
+        'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_reverse_image.uploading_local_image_directly_to_baidu_084463',
       ),
-      _ReverseImageStage.parsingDirectResult => _lifeText(
+      _ReverseImageStage.parsingDirectResult => _lifeI18nText(
         context,
-        zh: 'Parsing structured Baidu results...',
-        en: 'Parsing structured Baidu results...',
+        'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_reverse_image.parsing_structured_baidu_results_a15d87',
       ),
-      _ReverseImageStage.resolvingPublicUrl => _lifeText(
+      _ReverseImageStage.resolvingPublicUrl => _lifeI18nText(
         context,
-        zh: 'Direct path did not return a shareable URL. Falling back to temporary upload...',
-        en: 'Direct path did not return a shareable URL. Falling back to temporary upload...',
+        'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_reverse_image.direct_path_did_not_return_a_shareable_url_falling_back_0509a0',
       ),
-      _ReverseImageStage.searching => _lifeText(
+      _ReverseImageStage.searching => _lifeI18nText(
         context,
-        zh: 'Querying engines in parallel and aggregating structured entries...',
-        en: 'Querying engines in parallel and aggregating structured entries...',
+        'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_reverse_image.querying_engines_in_parallel_and_aggregating_structured_2c9af3',
       ),
-      _ReverseImageStage.done => _lifeText(
+      _ReverseImageStage.done => _lifeI18nText(
         context,
-        zh: 'Aggregation complete. Review image info, source site, and source URL.',
-        en: 'Aggregation complete. Review image info, source site, and source URL.',
+        'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_reverse_image.aggregation_complete_review_image_info_source_site_and_s_58f01a',
       ),
-      _ReverseImageStage.failed => _lifeText(
+      _ReverseImageStage.failed => _lifeI18nText(
         context,
-        zh: 'Aggregation failed. Check the network and retry.',
-        en: 'Aggregation failed. Check the network and retry.',
+        'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_reverse_image.aggregation_failed_check_the_network_and_retry_603622',
       ),
     };
   }
@@ -2355,30 +2378,45 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
     if (result.manualOnly) {
       return (
         theme.colorScheme.tertiary,
-        _lifeText(context, zh: 'Manual', en: 'Manual'),
+        _lifeI18nText(
+          context,
+          'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_reverse_image.manual_f955f2',
+        ),
       );
     }
     if (!result.success) {
       return (
         theme.colorScheme.error,
-        _lifeText(context, zh: 'Failed', en: 'Failed'),
+        _lifeI18nText(
+          context,
+          'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_reverse_image.failed_d94142',
+        ),
       );
     }
     if (result.noResultHint) {
       return (
         const Color(0xFFE09200),
-        _lifeText(context, zh: 'No clear match', en: 'No clear match'),
+        _lifeI18nText(
+          context,
+          'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_reverse_image.no_clear_match_4fdec7',
+        ),
       );
     }
     if (result.usedDirectUpload) {
       return (
         theme.colorScheme.primary,
-        _lifeText(context, zh: 'Direct', en: 'Direct'),
+        _lifeI18nText(
+          context,
+          'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_reverse_image.direct_1b13b3',
+        ),
       );
     }
     return (
       theme.colorScheme.primary,
-      _lifeText(context, zh: 'Loaded', en: 'Loaded'),
+      _lifeI18nText(
+        context,
+        'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_reverse_image.loaded_6f388d',
+      ),
     );
   }
 
@@ -2387,30 +2425,28 @@ class _ReverseImageToolPageState extends State<_ReverseImageToolPage> {
     _ReverseImageEngineResult result,
   ) {
     if (result.manualOnly) {
-      return _lifeText(
+      return _lifeI18nText(
         context,
-        zh: 'This is a utility page. Open it and upload your image manually.',
-        en: 'This is a utility page. Open it and upload your image manually.',
+        'toolbox.life.reverse_image.manual_summary',
       );
     }
     if (!result.success) {
-      return _lifeText(
+      return _lifeI18nText(
         context,
-        zh: 'Request failed: ${result.error}',
-        en: 'Request failed: ${result.error}',
+        'toolbox.life.reverse_image.request_failed',
+        params: <String, Object?>{'error': result.error},
       );
     }
     if (result.noResultHint && result.items.isEmpty) {
-      return _lifeText(
+      return _lifeI18nText(
         context,
-        zh: 'No clear match found. Try a clearer image.',
-        en: 'No clear match found. Try a clearer image.',
+        'toolbox.life.reverse_image.no_clear_match',
       );
     }
-    return _lifeText(
+    return _lifeI18nText(
       context,
-      zh: 'Structured entries: ${result.items.length}',
-      en: 'Structured entries: ${result.items.length}',
+      'toolbox.life.reverse_image.structured_entries',
+      params: <String, Object?>{'count': result.items.length},
     );
   }
 }

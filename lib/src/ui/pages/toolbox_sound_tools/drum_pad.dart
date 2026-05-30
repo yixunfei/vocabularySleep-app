@@ -268,64 +268,88 @@ class _DrumPadToolState extends State<_DrumPadTool>
 
   String _presetLabel(AppI18n i18n, _DrumKitPreset preset) {
     return switch (preset.id) {
-      'electro_kit' => pickUiText(i18n, zh: '电子套件', en: 'Electro kit'),
-      'lofi_kit' => pickUiText(i18n, zh: 'Lo-fi 套件', en: 'Lo-fi kit'),
-      _ => pickUiText(i18n, zh: '原声套件', en: 'Acoustic kit'),
+      'electro_kit' => i18n.t(
+        'inline.ui.pages.toolbox_sound_tools.drum_pad.electro_kit_53058e',
+      ),
+      'lofi_kit' => i18n.t(
+        'inline.ui.pages.toolbox_sound_tools.drum_pad.lo_fi_kit_e85a60',
+      ),
+      _ => i18n.t(
+        'inline.ui.pages.toolbox_sound_tools.drum_pad.acoustic_kit_2987f0',
+      ),
     };
   }
 
   String _presetSubtitle(AppI18n i18n, _DrumKitPreset preset) {
     return switch (preset.id) {
-      'electro_kit' => pickUiText(
-        i18n,
-        zh: '瞬态更利落、尾音更短，适合电子和节奏驱动型编排。',
-        en: 'Sharper transients and tighter tails for electronic grooves.',
+      'electro_kit' => i18n.t(
+        'inline.ui.pages.toolbox_sound_tools.drum_pad.sharper_transients_and_tighter_tails_for_electronic_groo_bfdffb',
       ),
-      'lofi_kit' => pickUiText(
-        i18n,
-        zh: '鼓皮更松、灰尘感更重，适合慢速 Lo-fi 与低速 loop。',
-        en: 'Looser impact with dusty tails for slower lo-fi loops.',
+      'lofi_kit' => i18n.t(
+        'inline.ui.pages.toolbox_sound_tools.drum_pad.looser_impact_with_dusty_tails_for_slower_lo_fi_loops_7cc066',
       ),
-      _ => pickUiText(
-        i18n,
-        zh: '更接近原声鼓组的自然起音、壳体共振和鼓腔空气感。',
-        en: 'Natural attack and shell resonance closer to an acoustic kit.',
+      _ => i18n.t(
+        'inline.ui.pages.toolbox_sound_tools.drum_pad.natural_attack_and_shell_resonance_closer_to_an_acoustic_b75f5f',
       ),
     };
   }
 
   String _patternLabel(AppI18n i18n, _DrumPatternTemplate template) {
     return switch (template.id) {
-      'four_floor' => pickUiText(i18n, zh: '四踩地板', en: 'Four on floor'),
-      'dusty_break' => pickUiText(i18n, zh: '灰尘 break', en: 'Dusty break'),
-      _ => pickUiText(i18n, zh: '经典 backbeat', en: 'Classic backbeat'),
+      'four_floor' => i18n.t(
+        'inline.ui.pages.toolbox_sound_tools.drum_pad.four_on_floor_d786b6',
+      ),
+      'dusty_break' => i18n.t(
+        'inline.ui.pages.toolbox_sound_tools.drum_pad.dusty_break_e82dc4',
+      ),
+      _ => i18n.t(
+        'inline.ui.pages.toolbox_sound_tools.drum_pad.classic_backbeat_217b9a',
+      ),
     };
   }
 
   String _kitLabel(AppI18n i18n, String value) {
     return switch (value) {
-      'electro' => pickUiText(i18n, zh: '电子', en: 'Electro'),
-      'lofi' => pickUiText(i18n, zh: 'Lo-fi', en: 'Lo-fi'),
-      _ => pickUiText(i18n, zh: '原声', en: 'Acoustic'),
+      'electro' => i18n.t(
+        'inline.ui.pages.toolbox_sound_tools.drum_pad.electro_e79d08',
+      ),
+      'lofi' => i18n.t(
+        'inline.ui.pages.toolbox_sound_tools.drum_pad.lo_fi_5d3e53',
+      ),
+      _ => i18n.t('inline.ui.pages.toolbox_human_tests.acoustic_295bc5'),
     };
   }
 
   String _padLabel(AppI18n i18n, String id) {
     return switch (id) {
-      'kick' => pickUiText(i18n, zh: '底鼓', en: 'Kick'),
-      'snare' => pickUiText(i18n, zh: '军鼓', en: 'Snare'),
-      'hihat' => pickUiText(i18n, zh: '闭镲', en: 'Hi-hat'),
-      'openhat' => pickUiText(i18n, zh: '开镲', en: 'Open hat'),
-      'clap' => pickUiText(i18n, zh: '拍手', en: 'Clap'),
-      _ => pickUiText(i18n, zh: '通鼓', en: 'Tom'),
+      'kick' => i18n.t(
+        'inline.ui.pages.toolbox_sound_tools.drum_pad.kick_37abf1',
+      ),
+      'snare' => i18n.t(
+        'inline.ui.pages.toolbox_sound_tools.drum_pad.snare_628c2e',
+      ),
+      'hihat' => i18n.t(
+        'inline.ui.pages.toolbox_sound_tools.drum_pad.hi_hat_8a54d3',
+      ),
+      'openhat' => i18n.t(
+        'inline.ui.pages.toolbox_sound_tools.drum_pad.open_hat_62d10b',
+      ),
+      'clap' => i18n.t(
+        'inline.ui.pages.toolbox_sound_tools.drum_pad.clap_d52cd6',
+      ),
+      _ => i18n.t('inline.ui.pages.toolbox_sound_tools.drum_pad.tom_3afa62'),
     };
   }
 
   String _materialLabel(AppI18n i18n, String value) {
     return switch (value) {
-      'metal' => pickUiText(i18n, zh: '金属', en: 'Metal'),
-      'hybrid' => pickUiText(i18n, zh: '混合', en: 'Hybrid'),
-      _ => pickUiText(i18n, zh: '木腔', en: 'Wood'),
+      'metal' => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_cognition.metal_e06672',
+      ),
+      'hybrid' => i18n.t(
+        'inline.ui.pages.toolbox_sound_tools.drum_pad.hybrid_a64944',
+      ),
+      _ => i18n.t('inline.ui.pages.toolbox_sound_tools.drum_pad.wood_7e2289'),
     };
   }
 
@@ -432,11 +456,9 @@ class _DrumPadToolState extends State<_DrumPadTool>
   Widget _buildFullScreenTransportPanel(BuildContext context, AppI18n i18n) {
     return _buildFullScreenSectionCard(
       context,
-      title: pickUiText(i18n, zh: '传输控制', en: 'Transport'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '播放、节拍器与速度',
-        en: 'Play, metronome and tempo',
+      title: i18n.t('ambientCategoryTransport'),
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_sound_tools.drum_pad.play_metronome_and_tempo_c46659',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -454,9 +476,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
                         : Icons.play_arrow_rounded,
                   ),
                   label: Text(
-                    _transportRunning
-                        ? pickUiText(i18n, zh: '停止', en: 'Stop')
-                        : pickUiText(i18n, zh: '播放', en: 'Play'),
+                    _transportRunning ? i18n.t('stop') : i18n.t('play'),
                   ),
                 ),
               ),
@@ -475,8 +495,12 @@ class _DrumPadToolState extends State<_DrumPadTool>
                   ),
                   label: Text(
                     _metronomeEnabled
-                        ? pickUiText(i18n, zh: '节拍开', en: 'Metro on')
-                        : pickUiText(i18n, zh: '节拍关', en: 'Metro off'),
+                        ? i18n.t(
+                            'inline.ui.pages.toolbox_sound_tools.drum_pad.metro_on_907b01',
+                          )
+                        : i18n.t(
+                            'inline.ui.pages.toolbox_sound_tools.drum_pad.metro_off_d334d2',
+                          ),
                   ),
                 ),
               ),
@@ -484,7 +508,9 @@ class _DrumPadToolState extends State<_DrumPadTool>
           ),
           const SizedBox(height: 10),
           Text(
-            pickUiText(i18n, zh: '速度 $_bpm BPM', en: 'Tempo $_bpm BPM'),
+            i18n.t(
+              'inline.ui.pages.toolbox_sound_tools.drum_pad.tempo_bpm_bpm_0cbf79',
+            ),
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w700,
@@ -637,13 +663,15 @@ class _DrumPadToolState extends State<_DrumPadTool>
                       SizedBox(height: ultraCompact ? 2 : (compact ? 4 : 6)),
                       Text(
                         held
-                            ? pickUiText(i18n, zh: '按住中', en: 'Held')
+                            ? i18n.t(
+                                'inline.ui.pages.toolbox_sound_tools.drum_pad.held_9d84fb',
+                              )
                             : isLast
-                            ? pickUiText(i18n, zh: '刚刚击中', en: 'Just hit')
-                            : pickUiText(
-                                i18n,
-                                zh: '点击触发鼓件',
-                                en: 'Tap to trigger voice',
+                            ? i18n.t(
+                                'inline.ui.pages.toolbox_sound_tools.drum_pad.just_hit_27564b',
+                              )
+                            : i18n.t(
+                                'inline.ui.pages.toolbox_sound_tools.drum_pad.tap_to_trigger_voice_b36916',
                               ),
                         maxLines: ultraCompact ? 1 : (compact ? 1 : 2),
                         overflow: TextOverflow.ellipsis,
@@ -854,9 +882,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
                       : Icons.play_arrow_rounded,
                 ),
                 label: Text(
-                  _transportRunning
-                      ? pickUiText(i18n, zh: '停止', en: 'Stop')
-                      : pickUiText(i18n, zh: '播放', en: 'Play'),
+                  _transportRunning ? i18n.t('stop') : i18n.t('play'),
                 ),
               ),
               FilledButton.tonalIcon(
@@ -872,27 +898,33 @@ class _DrumPadToolState extends State<_DrumPadTool>
                 ),
                 label: Text(
                   _metronomeEnabled
-                      ? pickUiText(i18n, zh: '节拍器开', en: 'Metronome on')
-                      : pickUiText(i18n, zh: '节拍器关', en: 'Metronome off'),
+                      ? i18n.t(
+                          'inline.ui.pages.toolbox_sound_tools.drum_pad.metronome_on_005642',
+                        )
+                      : i18n.t(
+                          'inline.ui.pages.toolbox_sound_tools.drum_pad.metronome_off_2cf7bc',
+                        ),
                 ),
               ),
               if (!widget.fullScreen)
                 FilledButton.tonalIcon(
                   onPressed: () => _openDrumSettingsSheet(context, i18n),
                   icon: const Icon(Icons.tune_rounded),
-                  label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
+                  label: Text(i18n.t('settings')),
                 ),
               if (!widget.fullScreen)
                 OutlinedButton.icon(
                   onPressed: () => unawaited(_openFullScreen(context)),
                   icon: const Icon(Icons.open_in_full_rounded),
-                  label: Text(pickUiText(i18n, zh: '全屏', en: 'Full screen')),
+                  label: Text(i18n.t('toolbox.sound.flute.full_screen')),
                 ),
             ],
           ),
           const SizedBox(height: 14),
           Text(
-            pickUiText(i18n, zh: '速度 $_bpm BPM', en: 'Tempo $_bpm BPM'),
+            i18n.t(
+              'inline.ui.pages.toolbox_sound_tools.drum_pad.tempo_bpm_bpm_0cbf79',
+            ),
             style: theme.textTheme.labelLarge?.copyWith(
               color: widget.fullScreen ? Colors.white : null,
               fontWeight: FontWeight.w700,
@@ -971,8 +1003,12 @@ class _DrumPadToolState extends State<_DrumPadTool>
               Expanded(
                 child: Text(
                   _metronomeEnabled
-                      ? pickUiText(i18n, zh: '节拍矩阵', en: 'Beat matrix')
-                      : pickUiText(i18n, zh: '节拍关闭', en: 'Metro off'),
+                      ? i18n.t(
+                          'inline.ui.pages.toolbox_sound_tools.drum_pad.beat_matrix_3745d4',
+                        )
+                      : i18n.t(
+                          'inline.ui.pages.toolbox_sound_tools.drum_pad.metro_off_d334d2',
+                        ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelLarge?.copyWith(
@@ -996,10 +1032,8 @@ class _DrumPadToolState extends State<_DrumPadTool>
                   child: Column(
                     children: <Widget>[
                       Text(
-                        pickUiText(
-                          i18n,
-                          zh: '类型${headers[columnIndex]}',
-                          en: 'Beat ${headers[columnIndex]}',
+                        i18n.t(
+                          'inline.ui.pages.toolbox_sound_tools.drum_pad.beat_headers_columnindex_9e1610',
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1123,31 +1157,39 @@ class _DrumPadToolState extends State<_DrumPadTool>
                     runSpacing: 10,
                     children: <Widget>[
                       ToolboxMetricCard(
-                        label: pickUiText(i18n, zh: '预设', en: 'Preset'),
+                        label: i18n.t('toolbox.sound.harp.preset'),
                         value: _presetId.isEmpty
-                            ? pickUiText(i18n, zh: '自定义', en: 'Custom')
+                            ? i18n.t('toolbox.sound.harp.custom')
                             : _presetLabel(i18n, _activePreset),
                       ),
                       ToolboxMetricCard(
-                        label: pickUiText(i18n, zh: '音色', en: 'Kit'),
+                        label: i18n.t(
+                          'inline.ui.pages.toolbox_sound_tools.drum_pad.kit_0ffc13',
+                        ),
                         value: _kitLabel(i18n, _kit),
                       ),
                       ToolboxMetricCard(
-                        label: pickUiText(i18n, zh: '模板', en: 'Pattern'),
+                        label: i18n.t(
+                          'inline.ui.pages.toolbox_sound_tools.drum_pad.pattern_5f43ca',
+                        ),
                         value: _patternId.isEmpty
-                            ? pickUiText(i18n, zh: '自编步进', en: 'Custom steps')
+                            ? i18n.t(
+                                'inline.ui.pages.toolbox_sound_tools.drum_pad.custom_steps_0aef71',
+                              )
                             : _patternLabel(i18n, _activePattern),
                       ),
                       ToolboxMetricCard(
-                        label: pickUiText(i18n, zh: '材质', en: 'Material'),
+                        label: i18n.t('toolbox.sound.flute.material'),
                         value: _materialLabel(i18n, _material),
                       ),
                       ToolboxMetricCard(
-                        label: pickUiText(i18n, zh: '命中', en: 'Hits'),
+                        label: i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_action.hits_fe10b3',
+                        ),
                         value: '$_hits',
                       ),
                       ToolboxMetricCard(
-                        label: pickUiText(i18n, zh: '当前步', en: 'Step'),
+                        label: i18n.t('toolbox.sleep.routine.step'),
                         value: _currentStep < 0 ? '--' : '${_currentStep + 1}',
                       ),
                     ],
@@ -1158,7 +1200,9 @@ class _DrumPadToolState extends State<_DrumPadTool>
                 SizedBox(height: immersiveMinimal ? 12 : 16),
                 if (!immersiveMinimal)
                   Text(
-                    pickUiText(i18n, zh: '鼓件面板', en: 'Pad bank'),
+                    i18n.t(
+                      'inline.ui.pages.toolbox_sound_tools.drum_pad.pad_bank_8e79d0',
+                    ),
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: widget.fullScreen ? Colors.white : null,
                       fontWeight: FontWeight.w800,
@@ -1169,7 +1213,9 @@ class _DrumPadToolState extends State<_DrumPadTool>
                 SizedBox(height: immersiveMinimal ? 14 : 20),
                 if (!immersiveMinimal)
                   Text(
-                    pickUiText(i18n, zh: '16 步进器', en: '16-step sequencer'),
+                    i18n.t(
+                      'inline.ui.pages.toolbox_sound_tools.drum_pad.16_step_sequencer_45fd52',
+                    ),
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: widget.fullScreen ? Colors.white : null,
                       fontWeight: FontWeight.w800,
@@ -1178,10 +1224,8 @@ class _DrumPadToolState extends State<_DrumPadTool>
                 if (!immersiveMinimal) const SizedBox(height: 8),
                 if (!immersiveMinimal)
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '点击格子可编辑节奏；每 4 步为一拍，适合快速编排 loop。',
-                      en: 'Tap cells to edit steps. Every 4 steps form a beat for fast groove building.',
+                    i18n.t(
+                      'inline.ui.pages.toolbox_sound_tools.drum_pad.tap_cells_to_edit_steps_every_4_steps_form_a_beat_for_fa_d887c5',
                     ),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: statusColor,
@@ -1197,28 +1241,22 @@ class _DrumPadToolState extends State<_DrumPadTool>
                     children: <Widget>[
                       Chip(
                         label: Text(
-                          pickUiText(
-                            i18n,
-                            zh: '已播小节 $_barsPlayed',
-                            en: 'Bars played $_barsPlayed',
+                          i18n.t(
+                            'inline.ui.pages.toolbox_sound_tools.drum_pad.bars_played_barsplayed_195774',
                           ),
                         ),
                       ),
                       Chip(
                         label: Text(
-                          pickUiText(
-                            i18n,
-                            zh: '激活步数 $_activeStepCount',
-                            en: 'Active steps $_activeStepCount',
+                          i18n.t(
+                            'inline.ui.pages.toolbox_sound_tools.drum_pad.active_steps_activestepcount_6b5ee7',
                           ),
                         ),
                       ),
                       Chip(
                         label: Text(
-                          pickUiText(
-                            i18n,
-                            zh: '主混音 ${(_masterVolume * 100).round()}%',
-                            en: 'Master mix ${(_masterVolume * 100).round()}%',
+                          i18n.t(
+                            'inline.ui.pages.toolbox_sound_tools.drum_pad.master_mix_mastervolume_100_round_6a552f',
                           ),
                         ),
                       ),
@@ -1231,7 +1269,9 @@ class _DrumPadToolState extends State<_DrumPadTool>
                           size: 16,
                         ),
                         label: Text(
-                          pickUiText(i18n, zh: '清空步进', en: 'Clear steps'),
+                          i18n.t(
+                            'inline.ui.pages.toolbox_sound_tools.drum_pad.clear_steps_8b01c6',
+                          ),
                         ),
                       ),
                       if (_lastHitId != null)
@@ -1267,10 +1307,8 @@ class _DrumPadToolState extends State<_DrumPadTool>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          pickUiText(
-            i18n,
-            zh: '主混音 ${(_masterVolume * 100).round()}%',
-            en: 'Master mix ${(_masterVolume * 100).round()}%',
+          i18n.t(
+            'inline.ui.pages.toolbox_sound_tools.drum_pad.master_mix_mastervolume_100_round_6a552f',
           ),
           style: theme.textTheme.labelLarge,
         ),
@@ -1326,11 +1364,13 @@ class _DrumPadToolState extends State<_DrumPadTool>
             children: <Widget>[
               ToolboxMetricCard(label: 'BPM', value: '$_bpm'),
               ToolboxMetricCard(
-                label: pickUiText(i18n, zh: '音色', en: 'Kit'),
+                label: i18n.t(
+                  'inline.ui.pages.toolbox_sound_tools.drum_pad.kit_0ffc13',
+                ),
                 value: _kitLabel(i18n, _kit),
               ),
               ToolboxMetricCard(
-                label: pickUiText(i18n, zh: '材质', en: 'Material'),
+                label: i18n.t('toolbox.sound.flute.material'),
                 value: _materialLabel(i18n, _material),
               ),
             ],
@@ -1338,7 +1378,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
           const SizedBox(height: 20),
           _buildSettingsSectionTitle(
             context,
-            pickUiText(i18n, zh: '套件预设', en: 'Preset pack'),
+            i18n.t('toolbox.sound.flute.preset_pack'),
           ),
           Wrap(
             spacing: 8,
@@ -1359,10 +1399,8 @@ class _DrumPadToolState extends State<_DrumPadTool>
           const SizedBox(height: 10),
           Text(
             _presetId.isEmpty
-                ? pickUiText(
-                    i18n,
-                    zh: '当前参数已偏离预设，鼓组处于自定义状态。',
-                    en: 'Current parameters differ from presets, so the kit is now custom.',
+                ? i18n.t(
+                    'inline.ui.pages.toolbox_sound_tools.drum_pad.current_parameters_differ_from_presets_so_the_kit_is_now_60ba41',
                   )
                 : _presetSubtitle(i18n, _activePreset),
             style: theme.textTheme.bodySmall,
@@ -1386,8 +1424,12 @@ class _DrumPadToolState extends State<_DrumPadTool>
                 ),
                 label: Text(
                   _metronomeEnabled
-                      ? pickUiText(i18n, zh: '节拍器已开', en: 'Metronome on')
-                      : pickUiText(i18n, zh: '节拍器已关', en: 'Metronome off'),
+                      ? i18n.t(
+                          'inline.ui.pages.toolbox_sound_tools.drum_pad.metronome_on_005642',
+                        )
+                      : i18n.t(
+                          'inline.ui.pages.toolbox_sound_tools.drum_pad.metronome_off_2cf7bc',
+                        ),
                 ),
               ),
             ],
@@ -1395,7 +1437,9 @@ class _DrumPadToolState extends State<_DrumPadTool>
           const SizedBox(height: 20),
           _buildSettingsSectionTitle(
             context,
-            pickUiText(i18n, zh: '鼓腔与材质', en: 'Kit body and material'),
+            i18n.t(
+              'inline.ui.pages.toolbox_sound_tools.drum_pad.kit_body_and_material_48ce8e',
+            ),
           ),
           Wrap(
             spacing: 8,
@@ -1433,13 +1477,13 @@ class _DrumPadToolState extends State<_DrumPadTool>
           const SizedBox(height: 20),
           _buildSettingsSectionTitle(
             context,
-            pickUiText(i18n, zh: '动态与尾音', en: 'Drive and tail'),
+            i18n.t(
+              'inline.ui.pages.toolbox_sound_tools.drum_pad.drive_and_tail_e5a5a9',
+            ),
           ),
           Text(
-            pickUiText(
-              i18n,
-              zh: '驱动 ${(_drive * 100).round()}%',
-              en: 'Drive ${(_drive * 100).round()}%',
+            i18n.t(
+              'inline.ui.pages.toolbox_sound_tools.drum_pad.drive_drive_100_round_59698e',
             ),
             style: theme.textTheme.labelLarge,
           ),
@@ -1454,10 +1498,8 @@ class _DrumPadToolState extends State<_DrumPadTool>
             }),
           ),
           Text(
-            pickUiText(
-              i18n,
-              zh: '音色 ${(_tone * 100).round()}%',
-              en: 'Tone ${(_tone * 100).round()}%',
+            i18n.t(
+              'inline.ui.pages.toolbox_sound_tools.drum_pad.tone_tone_100_round_da4602',
             ),
             style: theme.textTheme.labelLarge,
           ),
@@ -1474,10 +1516,8 @@ class _DrumPadToolState extends State<_DrumPadTool>
             }),
           ),
           Text(
-            pickUiText(
-              i18n,
-              zh: '尾音 ${(_tail * 100).round()}%',
-              en: 'Tail ${(_tail * 100).round()}%',
+            i18n.t(
+              'inline.ui.pages.toolbox_sound_tools.drum_pad.tail_tail_100_round_e574e4',
             ),
             style: theme.textTheme.labelLarge,
           ),
@@ -1496,7 +1536,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
           const SizedBox(height: 20),
           _buildSettingsSectionTitle(
             context,
-            pickUiText(i18n, zh: '节奏速度', en: 'Tempo'),
+            i18n.t('toolbox.sound.focus.controlTempo'),
           ),
           Text('$_bpm BPM', style: theme.textTheme.labelLarge),
           Slider(
@@ -1513,7 +1553,9 @@ class _DrumPadToolState extends State<_DrumPadTool>
           const SizedBox(height: 20),
           _buildSettingsSectionTitle(
             context,
-            pickUiText(i18n, zh: '舞台灯效', en: 'Stage lights'),
+            i18n.t(
+              'inline.ui.pages.toolbox_sound_tools.drum_pad.stage_lights_6e4b99',
+            ),
           ),
           SwitchListTile.adaptive(
             contentPadding: EdgeInsets.zero,
@@ -1521,19 +1563,21 @@ class _DrumPadToolState extends State<_DrumPadTool>
             onChanged: (value) => applySettings(() {
               _setStageLightsEnabled(value, notify: false);
             }),
-            title: Text(pickUiText(i18n, zh: '启用探照灯', en: 'Enable spotlights')),
+            title: Text(
+              i18n.t(
+                'inline.ui.pages.toolbox_sound_tools.drum_pad.enable_spotlights_4dc393',
+              ),
+            ),
             subtitle: Text(
-              pickUiText(
-                i18n,
-                zh: '按鼓件类型分层强度，并在触发鼓点与节拍时进行随机迂回扫灯。',
-                en: 'Layer intensity by drum voice and trigger random roaming spotlights on hits and metronome beats.',
+              i18n.t(
+                'inline.ui.pages.toolbox_sound_tools.drum_pad.layer_intensity_by_drum_voice_and_trigger_random_roaming_a6a179',
               ),
             ),
           ),
           const SizedBox(height: 20),
           _buildSettingsSectionTitle(
             context,
-            pickUiText(i18n, zh: '混音', en: 'Mixer'),
+            i18n.t('inline.ui.pages.toolbox_sound_tools.drum_pad.mixer_9272f7'),
           ),
           _buildMixerSection(context, i18n, applySettings: applySettings),
         ],
@@ -1559,7 +1603,9 @@ class _DrumPadToolState extends State<_DrumPadTool>
           Row(
             children: <Widget>[
               Text(
-                pickUiText(i18n, zh: '16 步进器', en: '16-step sequencer'),
+                i18n.t(
+                  'inline.ui.pages.toolbox_sound_tools.drum_pad.16_step_sequencer_45fd52',
+                ),
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
@@ -1567,10 +1613,8 @@ class _DrumPadToolState extends State<_DrumPadTool>
               const Spacer(),
               Chip(
                 label: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '激活步数 $_activeStepCount',
-                    en: 'Active steps $_activeStepCount',
+                  i18n.t(
+                    'inline.ui.pages.toolbox_sound_tools.drum_pad.active_steps_activestepcount_6b5ee7',
                   ),
                 ),
               ),
@@ -1578,10 +1622,8 @@ class _DrumPadToolState extends State<_DrumPadTool>
           ),
           const SizedBox(height: 8),
           Text(
-            pickUiText(
-              i18n,
-              zh: '点击格子可编辑节奏。每 4 步为一拍，适合移动端快速排鼓。',
-              en: 'Tap cells to edit rhythm. Every 4 steps form a beat for quick mobile groove editing.',
+            i18n.t(
+              'inline.ui.pages.toolbox_sound_tools.drum_pad.tap_cells_to_edit_rhythm_every_4_steps_form_a_beat_for_q_7652ab',
             ),
             style: theme.textTheme.bodySmall,
           ),
@@ -1589,7 +1631,9 @@ class _DrumPadToolState extends State<_DrumPadTool>
           _buildSequencerGrid(context, i18n, onToggleStep: onToggleStep),
           const SizedBox(height: 12),
           Text(
-            pickUiText(i18n, zh: '模板', en: 'Patterns'),
+            i18n.t(
+              'inline.ui.pages.toolbox_sound_tools.drum_pad.patterns_0512d3',
+            ),
             style: theme.textTheme.labelLarge?.copyWith(
               fontWeight: FontWeight.w700,
             ),
@@ -1615,19 +1659,18 @@ class _DrumPadToolState extends State<_DrumPadTool>
             children: <Widget>[
               Chip(
                 label: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '已播小节 $_barsPlayed',
-                    en: 'Bars played $_barsPlayed',
+                  i18n.t(
+                    'inline.ui.pages.toolbox_sound_tools.drum_pad.bars_played_barsplayed_195774',
                   ),
                 ),
               ),
               Chip(
                 label: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '当前步 ${_currentStep < 0 ? '--' : _currentStep + 1}',
-                    en: 'Current step ${_currentStep < 0 ? '--' : _currentStep + 1}',
+                  i18n.t(
+                    'inline.plan296.ui.pages.toolbox.sound.tools.drum.pad.current_step.7960ac9bf2',
+                    params: <String, Object?>{
+                      'p0': _currentStep < 0 ? '--' : _currentStep + 1,
+                    },
                   ),
                 ),
               ),
@@ -1642,7 +1685,11 @@ class _DrumPadToolState extends State<_DrumPadTool>
                 child: FilledButton.tonalIcon(
                   onPressed: _activeStepCount == 0 ? null : onClear,
                   icon: const Icon(Icons.cleaning_services_rounded),
-                  label: Text(pickUiText(i18n, zh: '清空步进', en: 'Clear steps')),
+                  label: Text(
+                    i18n.t(
+                      'inline.ui.pages.toolbox_sound_tools.drum_pad.clear_steps_8b01c6',
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -1650,7 +1697,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
                 child: FilledButton.icon(
                   onPressed: onClose,
                   icon: const Icon(Icons.check_rounded),
-                  label: Text(pickUiText(i18n, zh: '完成', en: 'Done')),
+                  label: Text(i18n.t('toolbox.breathing.done')),
                 ),
               ),
             ],
@@ -1757,14 +1804,14 @@ class _DrumPadToolState extends State<_DrumPadTool>
                 onPressed: () => Navigator.of(context).maybePop(),
                 style: overlayButtonStyle,
                 icon: const Icon(Icons.arrow_back_rounded),
-                label: Text(pickUiText(i18n, zh: '返回', en: 'Back')),
+                label: Text(i18n.t('toolbox.sound.locator.cue_label_back')),
               ),
               const Spacer(),
               FilledButton.tonalIcon(
                 onPressed: () => _openDrumSettingsSheet(context, i18n),
                 style: overlayButtonStyle,
                 icon: const Icon(Icons.tune_rounded),
-                label: Text(pickUiText(i18n, zh: '设置', en: 'Settings')),
+                label: Text(i18n.t('settings')),
               ),
             ],
           ),
@@ -1780,8 +1827,12 @@ class _DrumPadToolState extends State<_DrumPadTool>
               ),
               _buildImmersiveStatusPill(
                 _metronomeEnabled
-                    ? pickUiText(i18n, zh: '节拍器开启', en: 'Metronome on')
-                    : pickUiText(i18n, zh: '节拍器关闭', en: 'Metronome off'),
+                    ? i18n.t(
+                        'inline.ui.pages.toolbox_sound_tools.drum_pad.metronome_on_005642',
+                      )
+                    : i18n.t(
+                        'inline.ui.pages.toolbox_sound_tools.drum_pad.metronome_off_2cf7bc',
+                      ),
                 icon: _metronomeEnabled
                     ? Icons.music_note_rounded
                     : Icons.music_off_rounded,
@@ -1790,13 +1841,17 @@ class _DrumPadToolState extends State<_DrumPadTool>
                     : Colors.white54,
               ),
               _buildImmersiveStatusPill(
-                pickUiText(i18n, zh: '命中 $_hits', en: 'Hits $_hits'),
+                i18n.t(
+                  'inline.ui.pages.toolbox_sound_tools.drum_pad.hits_hits_6dd70f',
+                ),
                 icon: Icons.flash_on_rounded,
                 iconColor: const Color(0xFFFDE68A),
               ),
               _buildImmersiveStatusPill(
                 _patternId.isEmpty
-                    ? pickUiText(i18n, zh: '自定义步进', en: 'Custom steps')
+                    ? i18n.t(
+                        'inline.ui.pages.toolbox_sound_tools.drum_pad.custom_steps_0aef71',
+                      )
                     : _patternLabel(i18n, _activePattern),
               ),
             ],
@@ -1811,13 +1866,13 @@ class _DrumPadToolState extends State<_DrumPadTool>
   Widget _buildDrumLiveOverviewCard(BuildContext context, AppI18n i18n) {
     final theme = Theme.of(context);
     final presetLabel = _presetId.isEmpty
-        ? pickUiText(i18n, zh: '自定义混音', en: 'Custom mix')
+        ? i18n.t(
+            'inline.ui.pages.toolbox_sound_tools.drum_pad.custom_mix_099e76',
+          )
         : _presetLabel(i18n, _activePreset);
     final presetSubtitle = _presetId.isEmpty
-        ? pickUiText(
-            i18n,
-            zh: '当前参数已经偏离预设，更适合继续细修鼓组动态与层次。',
-            en: 'The current parameters have drifted away from the preset, so the kit is now tuned for custom shaping.',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_sound_tools.drum_pad.the_current_parameters_have_drifted_away_from_the_preset_7ee60f',
           )
         : _presetSubtitle(i18n, _activePreset);
     final lastPad = _lastHitId == null
@@ -1828,11 +1883,11 @@ class _DrumPadToolState extends State<_DrumPadTool>
           );
     return _buildFullScreenSectionCard(
       context,
-      title: pickUiText(i18n, zh: '现场总览', en: 'Live overview'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '当前套件、编排与演奏状态一目了然。',
-        en: 'Current kit, arrangement, and performance status at a glance.',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_sound_tools.drum_pad.live_overview_3d2149',
+      ),
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_sound_tools.drum_pad.current_kit_arrangement_and_performance_status_at_a_glan_a9a901',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1865,19 +1920,15 @@ class _DrumPadToolState extends State<_DrumPadTool>
                 iconColor: const Color(0xFFFDA4AF),
               ),
               _buildImmersiveStatusPill(
-                pickUiText(
-                  i18n,
-                  zh: '已播 $_barsPlayed 小节',
-                  en: '$_barsPlayed bars',
+                i18n.t(
+                  'inline.ui.pages.toolbox_sound_tools.drum_pad.barsplayed_bars_699b76',
                 ),
                 icon: Icons.repeat_rounded,
                 iconColor: const Color(0xFF86EFAC),
               ),
               _buildImmersiveStatusPill(
-                pickUiText(
-                  i18n,
-                  zh: '主混音 ${(_masterVolume * 100).round()}%',
-                  en: 'Mix ${(_masterVolume * 100).round()}%',
+                i18n.t(
+                  'inline.ui.pages.toolbox_sound_tools.drum_pad.mix_mastervolume_100_round_8d5f68',
                 ),
                 icon: Icons.tune_rounded,
                 iconColor: const Color(0xFFC4B5FD),
@@ -1904,15 +1955,17 @@ class _DrumPadToolState extends State<_DrumPadTool>
           );
     return _buildFullScreenSectionCard(
       context,
-      title: pickUiText(i18n, zh: '演奏区', en: 'Performance deck'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '落点会直接改变力度层次，激光舞台只保留在鼓垫区域。',
-        en: 'Strike position directly shapes accents, and the laser stage stays focused on the pads.',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_sound_tools.drum_pad.performance_deck_ae48e3',
+      ),
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_sound_tools.drum_pad.strike_position_directly_shapes_accents_and_the_laser_st_9360c4',
       ),
       trailing: _buildImmersiveStatusPill(
         lastPad == null
-            ? pickUiText(i18n, zh: '等待演奏', en: 'Ready to play')
+            ? i18n.t(
+                'inline.ui.pages.toolbox_sound_tools.drum_pad.ready_to_play_6f27fa',
+              )
             : _padLabel(i18n, lastPad.id),
         icon: lastPad?.icon ?? Icons.touch_app_rounded,
         iconColor: lastPad?.color ?? const Color(0xFF7DD3FC),
@@ -2080,9 +2133,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
                     size: 18,
                   ),
                   label: Text(
-                    _transportRunning
-                        ? pickUiText(i18n, zh: '停止', en: 'Stop')
-                        : pickUiText(i18n, zh: '播放', en: 'Play'),
+                    _transportRunning ? i18n.t('stop') : i18n.t('play'),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -2281,14 +2332,18 @@ class _DrumPadToolState extends State<_DrumPadTool>
                 ? Icons.music_note_rounded
                 : Icons.music_off_rounded,
             label: _metronomeEnabled
-                ? pickUiText(i18n, zh: '节拍', en: 'Metro')
-                : pickUiText(i18n, zh: '静音', en: 'Off'),
+                ? i18n.t(
+                    'inline.ui.pages.toolbox_sound_tools.drum_pad.metro_f8bca5',
+                  )
+                : i18n.t('toolbox.sound.flute.off'),
             color: _metronomeEnabled ? const Color(0xFF7DD3FC) : Colors.white54,
           ),
           const SizedBox(width: 8),
           _buildLandscapeStatusChip(
             icon: Icons.flash_on_rounded,
-            label: pickUiText(i18n, zh: '命中 $_hits', en: 'Hits $_hits'),
+            label: i18n.t(
+              'inline.ui.pages.toolbox_sound_tools.drum_pad.hits_hits_6dd70f',
+            ),
             color: const Color(0xFFFDE68A),
           ),
         ],
@@ -2483,9 +2538,7 @@ class _DrumPadToolState extends State<_DrumPadTool>
                     size: 20,
                   ),
                   label: Text(
-                    _transportRunning
-                        ? pickUiText(i18n, zh: '停止', en: 'Stop')
-                        : pickUiText(i18n, zh: '播放', en: 'Play'),
+                    _transportRunning ? i18n.t('stop') : i18n.t('play'),
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -2595,7 +2648,9 @@ class _DrumPadToolState extends State<_DrumPadTool>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               Text(
-                pickUiText(i18n, zh: '节拍监看', en: 'Beat monitor'),
+                i18n.t(
+                  'inline.ui.pages.toolbox_sound_tools.drum_pad.beat_monitor_76dbc0',
+                ),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 13,
@@ -2604,8 +2659,10 @@ class _DrumPadToolState extends State<_DrumPadTool>
               ),
               Text(
                 _transportRunning
-                    ? pickUiText(i18n, zh: '运行中', en: 'Running')
-                    : pickUiText(i18n, zh: '待机', en: 'Ready'),
+                    ? i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_action.running_6a424b',
+                      )
+                    : i18n.t('timerIdle'),
                 style: const TextStyle(
                   color: Color(0xFF7DD3FC),
                   fontSize: 12,
@@ -2621,19 +2678,15 @@ class _DrumPadToolState extends State<_DrumPadTool>
             children: <Widget>[
               _buildLandscapeStatusChip(
                 icon: Icons.repeat_rounded,
-                label: pickUiText(
-                  i18n,
-                  zh: '小节 $_barsPlayed',
-                  en: 'Bars $_barsPlayed',
+                label: i18n.t(
+                  'inline.ui.pages.toolbox_sound_tools.drum_pad.bars_barsplayed_c1618d',
                 ),
                 color: const Color(0xFF86EFAC),
               ),
               _buildLandscapeStatusChip(
                 icon: Icons.tune_rounded,
-                label: pickUiText(
-                  i18n,
-                  zh: '混音 ${(_masterVolume * 100).round()}%',
-                  en: 'Mix ${(_masterVolume * 100).round()}%',
+                label: i18n.t(
+                  'inline.ui.pages.toolbox_sound_tools.drum_pad.mix_mastervolume_100_round_8d5f68',
                 ),
                 color: const Color(0xFFC4B5FD),
               ),

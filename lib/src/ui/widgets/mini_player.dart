@@ -89,15 +89,13 @@ class _MiniPlayerState extends State<MiniPlayer> {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           children: <Widget>[
             Text(
-              pickUiText(i18n, zh: '播放工具', en: 'Playback tools'),
+              i18n.t('inline.ui.widgets.mini_player.playback_tools_e9bb36'),
               style: Theme.of(sheetContext).textTheme.titleLarge,
             ),
             const SizedBox(height: 6),
             Text(
-              pickUiText(
-                i18n,
-                zh: '在不离开当前页面的情况下查看队列和常用工具。',
-                en: 'Review queue and quick tools without leaving the current page.',
+              i18n.t(
+                'inline.ui.widgets.mini_player.review_queue_and_quick_tools_without_leaving_the_current_c9f182',
               ),
               style: Theme.of(sheetContext).textTheme.bodySmall,
             ),
@@ -110,10 +108,8 @@ class _MiniPlayerState extends State<MiniPlayer> {
                 subtitle: Text(
                   state.isPlaying
                       ? '${state.playingWordbookName ?? state.selectedWordbook?.name ?? ''} · ${state.currentUnit}/${state.totalUnits}'
-                      : pickUiText(
-                          i18n,
-                          zh: '当前播放已暂停。',
-                          en: 'Playback is currently paused.',
+                      : i18n.t(
+                          'inline.ui.widgets.mini_player.playback_is_currently_paused_b208ae',
                         ),
                 ),
                 trailing: Icon(
@@ -162,7 +158,9 @@ class _MiniPlayerState extends State<MiniPlayer> {
                     );
                   },
                   icon: const Icon(Icons.surround_sound_rounded),
-                  label: Text(pickUiText(i18n, zh: '背景音', en: 'Ambient')),
+                  label: Text(
+                    i18n.t('inline.ui.pages.play_page.ambient_6e3e01'),
+                  ),
                 ),
                 OutlinedButton.icon(
                   onPressed: () {
@@ -170,7 +168,7 @@ class _MiniPlayerState extends State<MiniPlayer> {
                     _openSleepTimerSheet();
                   },
                   icon: const Icon(Icons.bedtime_outlined),
-                  label: Text(pickUiText(i18n, zh: '睡眠定时', en: 'Sleep timer')),
+                  label: Text(i18n.t('toolbox.sound.soothing.v2.timer.button')),
                 ),
               ],
             ),
@@ -182,16 +180,16 @@ class _MiniPlayerState extends State<MiniPlayer> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickUiText(i18n, zh: '队列预览', en: 'Queue preview'),
+                      i18n.t(
+                        'inline.ui.widgets.mini_player.queue_preview_90de94',
+                      ),
                       style: Theme.of(sheetContext).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
                     if (queue.isEmpty)
                       Text(
-                        pickUiText(
-                          i18n,
-                          zh: '当前范围内没有可播放的词条。',
-                          en: 'No queue items available in the current scope.',
+                        i18n.t(
+                          'inline.ui.widgets.mini_player.no_queue_items_available_in_the_current_scope_af3de2',
                         ),
                       )
                     else
@@ -213,25 +211,19 @@ class _MiniPlayerState extends State<MiniPlayer> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        pickUiText(
-                          i18n,
-                          zh: '建议下一步',
-                          en: 'Suggested next step',
+                        i18n.t(
+                          'inline.ui.widgets.mini_player.suggested_next_step_7aeb16',
                         ),
                         style: Theme.of(sheetContext).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 8),
                       Text(
                         weakCount > 0
-                            ? pickUiText(
-                                i18n,
-                                zh: '你有 $weakCount 个近期薄弱词，建议先去练习中心巩固。',
-                                en: 'You have $weakCount recent weak words. Practice is recommended next.',
+                            ? i18n.t(
+                                'inline.ui.widgets.mini_player.you_have_weakcount_recent_weak_words_practice_is_recomme_ab5015',
                               )
-                            : pickUiText(
-                                i18n,
-                                zh: '可以继续前往练习中心或词库做后续整理。',
-                                en: 'You can continue in Practice or return to the Library.',
+                            : i18n.t(
+                                'inline.ui.widgets.mini_player.you_can_continue_in_practice_or_return_to_the_library_b92564',
                               ),
                       ),
                       const SizedBox(height: 10),
@@ -247,10 +239,8 @@ class _MiniPlayerState extends State<MiniPlayer> {
                               },
                               icon: const Icon(Icons.fitness_center_rounded),
                               label: Text(
-                                pickUiText(
-                                  i18n,
-                                  zh: '打开练习中心',
-                                  en: 'Open practice',
+                                i18n.t(
+                                  'inline.ui.pages.play_page.open_practice_846215',
                                 ),
                               ),
                             ),
@@ -262,10 +252,8 @@ class _MiniPlayerState extends State<MiniPlayer> {
                               },
                               icon: const Icon(Icons.menu_book_rounded),
                               label: Text(
-                                pickUiText(
-                                  i18n,
-                                  zh: '打开词库',
-                                  en: 'Open library',
+                                i18n.t(
+                                  'inline.ui.widgets.mini_player.open_library_75c639',
                                 ),
                               ),
                             ),
@@ -306,12 +294,10 @@ class _MiniPlayerState extends State<MiniPlayer> {
     final remaining = endsAt.difference(DateTime.now());
     final minutes = remaining.inMinutes;
     if (minutes <= 0) {
-      return pickUiText(i18n, zh: '即将停止播放', en: 'Stopping soon');
+      return i18n.t('inline.ui.widgets.mini_player.stopping_soon_6958ed');
     }
-    return pickUiText(
-      i18n,
-      zh: '睡眠定时已开启：约 $minutes 分钟后停止',
-      en: 'Sleep timer enabled: stop in about $minutes min',
+    return i18n.t(
+      'inline.ui.widgets.mini_player.sleep_timer_enabled_stop_in_about_minutes_min_8b3e99',
     );
   }
 
@@ -328,10 +314,8 @@ class _MiniPlayerState extends State<MiniPlayer> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            pickUiText(
-              _i18n,
-              zh: '已按定时器自动停止播放',
-              en: 'Playback stopped by sleep timer',
+            _i18n.t(
+              'inline.ui.widgets.mini_player.playback_stopped_by_sleep_timer_b8b542',
             ),
           ),
         ),
@@ -343,10 +327,8 @@ class _MiniPlayerState extends State<MiniPlayer> {
     ScaffoldMessenger.of(feedbackContext).showSnackBar(
       SnackBar(
         content: Text(
-          pickUiText(
-            _i18n,
-            zh: '${duration.inMinutes} 分钟后将自动停止播放',
-            en: 'Playback will stop in ${duration.inMinutes} minutes',
+          _i18n.t(
+            'inline.ui.widgets.mini_player.playback_will_stop_in_duration_inminutes_minutes_ab0716',
           ),
         ),
       ),
@@ -362,7 +344,7 @@ class _MiniPlayerState extends State<MiniPlayer> {
     ScaffoldMessenger.of(feedbackContext).showSnackBar(
       SnackBar(
         content: Text(
-          pickUiText(_i18n, zh: '已取消睡眠定时', en: 'Sleep timer cancelled'),
+          _i18n.t('inline.ui.widgets.mini_player.sleep_timer_cancelled_bb75e9'),
         ),
       ),
     );
@@ -381,15 +363,13 @@ class _MiniPlayerState extends State<MiniPlayer> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                pickUiText(i18n, zh: '睡眠定时', en: 'Sleep timer'),
+                i18n.t('toolbox.sound.soothing.v2.timer.button'),
                 style: Theme.of(sheetContext).textTheme.titleLarge,
               ),
               const SizedBox(height: 8),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '单词本可能较大，播放过程中请耐心等待。',
-                  en: 'Playback may continue for a while on large wordbooks.',
+                i18n.t(
+                  'inline.ui.widgets.mini_player.playback_may_continue_for_a_while_on_large_wordbooks_bc770e',
                 ),
                 style: Theme.of(sheetContext).textTheme.bodySmall,
               ),
@@ -426,7 +406,9 @@ class _MiniPlayerState extends State<MiniPlayer> {
                         _cancelSleepTimer(sheetContext);
                       },
                       child: Text(
-                        pickUiText(i18n, zh: '取消定时', en: 'Cancel timer'),
+                        i18n.t(
+                          'inline.ui.widgets.mini_player.cancel_timer_e129ec',
+                        ),
                       ),
                     ),
                 ],
@@ -469,7 +451,7 @@ class _MiniPlayerState extends State<MiniPlayer> {
         state.playingWordbookName ?? state.selectedWordbook?.name ?? '';
     final subtitle = state.isPlaying
         ? '$wordbookName · ${state.currentUnit}/${state.totalUnits}'
-        : pickUiText(i18n, zh: '播放已暂停', en: 'Playback paused');
+        : i18n.t('inline.ui.widgets.mini_player.playback_paused_f432d2');
     final progress = state.totalUnits <= 0
         ? 0.0
         : (state.currentUnit / state.totalUnits).clamp(0.0, 1.0);
@@ -672,7 +654,9 @@ class _ExpandedMiniPlayer extends StatelessWidget {
                   ),
                   IconButton(
                     onPressed: onCollapse,
-                    tooltip: pickUiText(i18n, zh: '收起', en: 'Collapse'),
+                    tooltip: i18n.t(
+                      'inline.plan295.daily_choice.collapse.ad0db950964e',
+                    ),
                     icon: const Icon(Icons.keyboard_arrow_down_rounded),
                   ),
                 ],
@@ -728,7 +712,9 @@ class _ExpandedMiniPlayer extends StatelessWidget {
                   OutlinedButton.icon(
                     onPressed: onAmbient,
                     icon: const Icon(Icons.surround_sound_rounded),
-                    label: Text(pickUiText(i18n, zh: '背景音', en: 'Ambient')),
+                    label: Text(
+                      i18n.t('inline.ui.pages.play_page.ambient_6e3e01'),
+                    ),
                   ),
                   OutlinedButton.icon(
                     onPressed: onSleepTimer,
@@ -738,13 +724,15 @@ class _ExpandedMiniPlayer extends StatelessWidget {
                           : Icons.bedtime_outlined,
                     ),
                     label: Text(
-                      pickUiText(i18n, zh: '睡眠定时', en: 'Sleep timer'),
+                      i18n.t('toolbox.sound.soothing.v2.timer.button'),
                     ),
                   ),
                   OutlinedButton.icon(
                     onPressed: onTools,
                     icon: const Icon(Icons.tune_rounded),
-                    label: Text(pickUiText(i18n, zh: '更多工具', en: 'More tools')),
+                    label: Text(
+                      i18n.t('inline.ui.widgets.mini_player.more_tools_3768f4'),
+                    ),
                   ),
                 ],
               ),

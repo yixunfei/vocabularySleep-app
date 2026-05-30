@@ -60,37 +60,16 @@ class HandEyeCoordinationTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(
-        i18n,
-        zh: '手眼协调测试',
-        en: 'Hand-eye coordination',
-        ja: 'Hand-eye coordination',
-        de: 'Hand-eye coordination',
-        fr: 'Coordination des yeux de la main',
-        es: 'Coordinación de la mano-ojo',
-        ru: 'Координация рук и глаз',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_hand_eye.hand_eye_coordination_b6b32b',
       ),
-      subtitle: pickUiText(
-        i18n,
-        zh: '目标闪现、乱窜、消失——考验你手比眼快的极限反应。',
-        en: 'Targets appear at random times and positions, move quickly, then vanish. Tap enough times before they disappear.',
-        ja: 'Targets appear at random times and positions, move quickly, then vanish. Tap enough times before they disappear.',
-        de: 'Targets appear at random times and positions, move quickly, then vanish. Tap enough times before they disappear.',
-        fr: 'Les cibles apparaissent au hasard, se déplacent rapidement, puis disparaissent. Tapez assez de fois avant qu\'ils disparaissent.',
-        es: 'Los objetivos aparecen en tiempos y posiciones al azar, moverse rápidamente, luego desaparecer. Toca bastantes veces antes de desaparecer.',
-        ru: 'Цели появляются в случайное время и позиции, двигаются быстро, а затем исчезают. Нажмите достаточно раз, прежде чем они исчезнут.',
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_hand_eye.targets_appear_at_random_times_and_positions_move_quickl_a1eebc',
       ),
       accent: const Color(0xFFB55D42),
       icon: Icons.center_focus_strong_rounded,
-      status: pickUiText(
-        i18n,
-        zh: '盯紧屏幕，目标一出现就快速点击',
-        en: 'Next: start and wait for the target',
-        ja: 'Next: start and wait for the target',
-        de: 'Next: start and wait for the target',
-        fr: 'Suivant: démarrer et attendre la cible',
-        es: 'Siguiente: comenzar y esperar el objetivo',
-        ru: 'Следующий: Начать и ждать цели',
+      status: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_hand_eye.next_start_and_wait_for_the_target_74af45',
       ),
       child: const _HandEyeCoordinationCard(),
     );
@@ -834,25 +813,11 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
 
   String _visibleModeLabel(AppI18n i18n, _HandEyeVisibleMode mode) {
     return switch (mode) {
-      _HandEyeVisibleMode.timed => pickUiText(
-        i18n,
-        zh: '按时消失',
-        en: 'Timed vanish',
-        ja: 'Timed vanish',
-        de: 'Timed vanish',
-        fr: 'Disparition dans le temps',
-        es: 'Hora de desaparecer',
-        ru: 'Исчезновение по времени',
+      _HandEyeVisibleMode.timed => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_hand_eye.timed_vanish_9dfd09',
       ),
-      _HandEyeVisibleMode.untilTaps => pickUiText(
-        i18n,
-        zh: '点满才消失',
-        en: 'Until taps complete',
-        ja: 'Until taps complete',
-        de: 'Until taps complete',
-        fr: 'Jusqu\'à ce que les robinets soient terminés',
-        es: 'Hasta que terminen los tapones',
-        ru: 'Пока краны не закончатся',
+      _HandEyeVisibleMode.untilTaps => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_hand_eye.until_taps_complete_caec59',
       ),
     };
   }
@@ -901,104 +866,37 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
 
   String _phaseText(AppI18n i18n) {
     if (_paused) {
-      return pickUiText(
-        i18n,
-        zh: '已暂停，点击继续恢复本轮测试。',
-        en: 'Paused. Press Continue to resume this round.',
-        ja: 'Paused. Press Continue to resume this round.',
-        de: 'Paused. Press Continue to resume this round.',
-        fr: 'En pause. Appuyez sur Continuer pour reprendre ce tour.',
-        es: 'Pausado. Pulsa Continuar para reanudar esta ronda.',
-        ru: 'Пауза. Нажмите «Продолжить», чтобы возобновить раунд.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_hand_eye.paused_press_continue_to_resume_this_round_393b80',
       );
     }
     return switch (_phase) {
-      _HandEyePhase.idle => pickUiText(
-        i18n,
-        zh: '点击开始后，目标会在随机时间出现，出现后快速点击。',
-        en: 'Press Start. Targets will appear after random delays.',
-        ja: 'Press Start. Targets will appear after random delays.',
-        de: 'Press Start. Targets will appear after random delays.',
-        fr: 'Appuyez sur Démarrer. Des cibles apparaîtront après des retards aléatoires.',
-        es: 'Press Start. Los objetivos aparecerán después de demoras aleatorias.',
-        ru: 'Нажмите Старт. Цели появятся после случайных задержек.',
+      _HandEyePhase.idle => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_hand_eye.press_start_targets_will_appear_after_random_delays_251957',
       ),
-      _HandEyePhase.waiting => pickUiText(
-        i18n,
-        zh: '等待目标出现',
-        en: 'Waiting for target',
-        ja: 'Waiting for target',
-        de: 'Waiting for target',
-        fr: 'Attendre la cible',
-        es: 'Esperando el objetivo',
-        ru: 'В ожидании цели',
+      _HandEyePhase.waiting => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_hand_eye_joystick.waiting_for_target_3d26af',
       ),
-      _HandEyePhase.visible => pickUiText(
-        i18n,
-        zh: '命中目标：$_targetTaps/$_requiredTaps',
-        en: 'Hit target: $_targetTaps/$_requiredTaps',
-        ja: 'Hit target: $_targetTaps/$_requiredTaps',
-        de: 'Hit target: $_targetTaps/$_requiredTaps',
-        fr: 'Affichage de la cible : $_targetTaps/$_requiredTaps',
-        es: 'Meta de éxito:',
-        ru: 'Ударная цель: $_targetTaps/$_requiredTaps',
+      _HandEyePhase.visible => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_hand_eye.hit_target_targettaps_requiredtaps_28a288',
       ),
-      _HandEyePhase.done => pickUiText(
-        i18n,
-        zh: '测试完成，可重置或再次开始。',
-        en: 'Test complete. Reset or start again.',
-        ja: 'Test complete. Reset or start again.',
-        de: 'Test complete. Reset or start again.',
-        fr: 'Essai terminé. Réinitialisez ou recommencez.',
-        es: 'Prueba completa. Reiniciar o empezar de nuevo.',
-        ru: 'Тест завершен. Перезагрузить или начать заново.',
+      _HandEyePhase.done => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_hand_eye.test_complete_reset_or_start_again_655d25',
       ),
     };
   }
 
   String _primaryActionLabel(AppI18n i18n) {
     if (_paused) {
-      return pickUiText(
-        i18n,
-        zh: '继续',
-        en: 'Continue',
-        ja: 'Continue',
-        de: 'Continue',
-        fr: 'Continuer',
-        es: 'Continuar',
-        ru: 'Продолжить',
-      );
+      return i18n.t('toolbox.breathing.continue_select');
     }
     return switch (_phase) {
-      _HandEyePhase.idle => pickUiText(
-        i18n,
-        zh: '开始',
-        en: 'Start',
-        ja: 'Start',
-        de: 'Start',
-        fr: 'Démarrer',
-        es: 'Comienzo',
-        ru: 'Начинать',
+      _HandEyePhase.idle => i18n.t('toolbox.breathing.start'),
+      _HandEyePhase.waiting || _HandEyePhase.visible => i18n.t(
+        'inline.plan294.breathing.pause_b6fe36b8',
       ),
-      _HandEyePhase.waiting || _HandEyePhase.visible => pickUiText(
-        i18n,
-        zh: '暂停',
-        en: 'Pause',
-        ja: 'Pause',
-        de: 'Pause',
-        fr: 'Pause',
-        es: 'Pausa',
-        ru: 'Пауза',
-      ),
-      _HandEyePhase.done => pickUiText(
-        i18n,
-        zh: '重新开始',
-        en: 'Restart',
-        ja: 'Restart',
-        de: 'Restart',
-        fr: 'Redémarrer',
-        es: 'Restart',
-        ru: 'Перезапустить',
+      _HandEyePhase.done => i18n.t(
+        'inline.ui.pages.practice_session_page.restart_8b7fcc',
       ),
     };
   }
@@ -1024,81 +922,29 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
+            (i18n.t('rounds'), '$attempted/$_roundCount'),
             (
-              pickUiText(
-                i18n,
-                zh: '轮次',
-                en: 'Rounds',
-                ja: 'Rounds',
-                de: 'Rounds',
-                fr: 'Rondes',
-                es: 'Rondas',
-                ru: 'Круги',
-              ),
-              '$attempted/$_roundCount',
-            ),
-            (
-              pickUiText(
-                i18n,
-                zh: '成功',
-                en: 'Success',
-                ja: 'Success',
-                de: 'Success',
-                fr: 'Succès',
-                es: 'Éxito',
-                ru: 'Успех',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_hand_eye.success_45293f',
               ),
               '$_successes',
             ),
+            (i18n.t('toolbox.sleep.rhythm.missed'), '$_missed'),
             (
-              pickUiText(
-                i18n,
-                zh: '漏掉',
-                en: 'Missed',
-                ja: 'Missed',
-                de: 'Missed',
-                fr: 'Manque',
-                es: 'Desaparecido',
-                ru: 'Пропавший',
-              ),
-              '$_missed',
-            ),
-            (
-              pickUiText(
-                i18n,
-                zh: '点空',
-                en: 'Blanks',
-                ja: 'ブランク',
-                de: 'Blanks',
-                fr: 'Blancs',
-                es: 'Blanks',
-                ru: 'бланки',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_hand_eye_parts.blanks_84a873',
               ),
               '$_totalBlankTaps',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '假目标',
-                en: 'False targets',
-                ja: 'False targets',
-                de: 'False targets',
-                fr: 'Faux objectifs',
-                es: 'Objetivos falsos',
-                ru: 'Ложные цели',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_aim.false_targets_c0458f',
               ),
               '$_totalDistractorTaps',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '平均反应',
-                en: 'Avg reaction',
-                ja: '平均反応',
-                de: 'Avg reaction',
-                fr: 'Réaction d\' Avg',
-                es: 'Reacción de Avg',
-                ru: 'Авг реакция',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_bimanual.avg_reaction_2a9cf7',
               ),
               averageReaction == null
                   ? '-'
@@ -1108,49 +954,21 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
         ),
         const SizedBox(height: 12),
         _HumanSettingsSection(
-          title: pickUiText(
-            i18n,
-            zh: '目标设置',
-            en: 'Target settings',
-            ja: 'Target settings',
-            de: 'Target settings',
-            fr: 'Paramètres de la cible',
-            es: 'Ajustes de objetivos',
-            ru: 'Целевые настройки',
+          title: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_hand_eye_parts.target_settings_7eb6ea',
           ),
-          subtitle: pickUiText(
-            i18n,
-            zh: '轮数、显示时长、移动强度、目标大小和命中点击数',
-            en: 'Rounds, visible time, movement strength, target size, and required taps',
-            ja: 'Rounds, visible time, movement strength, target size, and required taps',
-            de: 'Rounds, visible time, movement strength, target size, and required taps',
-            fr: 'Ronds, temps visible, force du mouvement, taille de la cible et robinets requis',
-            es: 'Rondas, tiempo visible, fuerza de movimiento, tamaño de objetivo y grifos requeridos',
-            ru: 'Круги, видимое время, сила движения, размер цели и необходимые краны',
+          subtitle: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_hand_eye.rounds_visible_time_movement_strength_target_size_and_re_6edeb3',
           ),
           child: _buildTargetSettings(i18n),
         ),
         const SizedBox(height: 12),
         _HumanSettingsSection(
-          title: pickUiText(
-            i18n,
-            zh: '高阶干扰设置',
-            en: 'Advanced interference',
-            ja: '高度な干渉',
-            de: 'Advanced interference',
-            fr: 'Advanced interference',
-            es: 'Interferencia avanzada',
-            ru: 'Расширенное вмешательство',
+          title: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_hand_eye_fullscreen.advanced_interference_7d48f7',
           ),
-          subtitle: pickUiText(
-            i18n,
-            zh: '随机等待后可同时出现一个或多个假目标，颜色与真目标区分。',
-            en: 'Off by default: one or more color-coded false targets may appear with the real target.',
-            ja: 'Off by default: one or more color-coded false targets may appear with the real target.',
-            de: 'Off by default: one or more color-coded false targets may appear with the real target.',
-            fr: 'Off par défaut : une ou plusieurs cibles fausses codées en couleur peuvent apparaître avec la cible réelle.',
-            es: 'De forma predeterminada: uno o más blancos falsos codificados por colores pueden aparecer con el objetivo real.',
-            ru: 'Выключено по умолчанию: одна или несколько цветных ложных целей могут появиться с реальной целью.',
+          subtitle: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_hand_eye.off_by_default_one_or_more_color_coded_false_targets_may_269442',
           ),
           child: _buildDistractorSettings(i18n),
         ),
@@ -1175,18 +993,7 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
             OutlinedButton.icon(
               onPressed: _reset,
               icon: const Icon(Icons.restart_alt_rounded),
-              label: Text(
-                pickUiText(
-                  i18n,
-                  zh: '重置',
-                  en: 'Reset',
-                  ja: 'Reset',
-                  de: 'Reset',
-                  fr: 'Réinitialiser',
-                  es: 'Reset',
-                  ru: 'сброс',
-                ),
-              ),
+              label: Text(i18n.t('appearanceReset')),
             ),
             if (_showHandEyeFullscreenEntry)
               OutlinedButton.icon(
@@ -1194,15 +1001,8 @@ class _HandEyeCoordinationCardState extends State<_HandEyeCoordinationCard>
                 onPressed: _openFullscreen,
                 icon: const Icon(Icons.fullscreen_rounded),
                 label: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '全屏',
-                    en: 'Fullscreen',
-                    ja: 'Fullscreen',
-                    de: 'Fullscreen',
-                    fr: 'Plein écran',
-                    es: 'Pantalla completa',
-                    ru: 'Полный экран',
+                  i18n.t(
+                    'inline.ui.pages.toolbox_daily_choice.daily_choice_place_map_panel.fullscreen_02daa7',
                   ),
                 ),
               ),

@@ -49,37 +49,16 @@ class DynamicVisionTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(
-        i18n,
-        zh: '动态视力测试',
-        en: 'Dynamic vision',
-        ja: 'Dynamic vision',
-        de: 'Dynamic vision',
-        fr: 'Vision dynamique',
-        es: 'Visión dinámica',
-        ru: 'Динамическое зрение',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_dynamic_vision.dynamic_vision_4255de',
       ),
-      subtitle: pickUiText(
-        i18n,
-        zh: '挑战动态视力的极限——一闪而过的字和球，你能看清几个？',
-        en: 'Switch between moving-symbol recognition and moving-ball counting for fast tracking practice.',
-        ja: 'Switch between moving-symbol recognition and moving-ball counting for fast tracking practice.',
-        de: 'Switch between moving-symbol recognition and moving-ball counting for fast tracking practice.',
-        fr: 'Interrupteur entre la reconnaissance mobile-symbole et le comptage mobile-ball pour une pratique de suivi rapide.',
-        es: 'Interruptor entre el reconocimiento del simbolo móvil y el conteo de bolas móviles para la práctica de seguimiento rápido.',
-        ru: 'Переключение между распознаванием движущихся символов и подсчетом движущихся шаров для быстрой практики отслеживания.',
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_dynamic_vision.switch_between_moving_symbol_recognition_and_moving_ball_f639f6',
       ),
       accent: const Color(0xFF407E92),
       icon: Icons.remove_red_eye_rounded,
-      status: pickUiText(
-        i18n,
-        zh: '快速闪过的文字或数量，看清再答',
-        en: 'Next: choose a mode and start observing',
-        ja: 'Next: choose a mode and start observing',
-        de: 'Next: choose a mode and start observing',
-        fr: 'Suivant : choisissez un mode et commencez à observer',
-        es: 'Siguiente: elegir un modo y comenzar a observar',
-        ru: 'Далее: выберите режим и начните наблюдение',
+      status: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_dynamic_vision.next_choose_a_mode_and_start_observing_edd654',
       ),
       child: const _DynamicVisionCard(),
     );
@@ -138,13 +117,8 @@ class _DynamicVisionCardState extends State<_DynamicVisionCard>
   bool _symbolChoosing = false;
   bool _symbolDone = false;
   bool? _symbolLastCorrect;
-  String? _symbolFeedbackZh;
-  String? _symbolFeedbackEn;
-  String? _symbolFeedbackJa;
-  String? _symbolFeedbackDe;
-  String? _symbolFeedbackFr;
-  String? _symbolFeedbackEs;
-  String? _symbolFeedbackRu;
+  String? _symbolFeedbackKey;
+  Map<String, Object?> _symbolFeedbackParams = const <String, Object?>{};
   int _symbolToken = 0;
   bool _symbolReportDialogOpen = false;
 
@@ -165,13 +139,8 @@ class _DynamicVisionCardState extends State<_DynamicVisionCard>
   bool _ballAnswering = false;
   bool _ballDone = false;
   bool? _ballLastCorrect;
-  String? _ballFeedbackZh;
-  String? _ballFeedbackEn;
-  String? _ballFeedbackJa;
-  String? _ballFeedbackDe;
-  String? _ballFeedbackFr;
-  String? _ballFeedbackEs;
-  String? _ballFeedbackRu;
+  String? _ballFeedbackKey;
+  Map<String, Object?> _ballFeedbackParams = const <String, Object?>{};
   Size _lastBallStageSize = const Size(320, 220);
   Duration? _lastBallTick;
   int _ballToken = 0;
@@ -201,13 +170,8 @@ class _DynamicVisionCardState extends State<_DynamicVisionCard>
   int get symbolCorrect => _symbolCorrect;
   List<String> get symbolOptions => _symbolOptions;
   bool? get symbolLastCorrect => _symbolLastCorrect;
-  String? get symbolFeedbackZh => _symbolFeedbackZh;
-  String? get symbolFeedbackEn => _symbolFeedbackEn;
-  String? get symbolFeedbackJa => _symbolFeedbackJa;
-  String? get symbolFeedbackDe => _symbolFeedbackDe;
-  String? get symbolFeedbackFr => _symbolFeedbackFr;
-  String? get symbolFeedbackEs => _symbolFeedbackEs;
-  String? get symbolFeedbackRu => _symbolFeedbackRu;
+  String? get symbolFeedbackKey => _symbolFeedbackKey;
+  Map<String, Object?> get symbolFeedbackParams => _symbolFeedbackParams;
   List<_DynamicSymbolDistractor> get symbolDistractors => _symbolDistractors;
   List<_DynamicSymbolRecord> get symbolRecords => _symbolRecords;
   bool get symbolChoosing => _symbolChoosing;
@@ -228,13 +192,8 @@ class _DynamicVisionCardState extends State<_DynamicVisionCard>
   bool get ballAnswering => _ballAnswering;
   bool get ballDone => _ballDone;
   bool? get ballLastCorrect => _ballLastCorrect;
-  String? get ballFeedbackZh => _ballFeedbackZh;
-  String? get ballFeedbackEn => _ballFeedbackEn;
-  String? get ballFeedbackJa => _ballFeedbackJa;
-  String? get ballFeedbackDe => _ballFeedbackDe;
-  String? get ballFeedbackFr => _ballFeedbackFr;
-  String? get ballFeedbackEs => _ballFeedbackEs;
-  String? get ballFeedbackRu => _ballFeedbackRu;
+  String? get ballFeedbackKey => _ballFeedbackKey;
+  Map<String, Object?> get ballFeedbackParams => _ballFeedbackParams;
   String get ballCountRangeLabel => _ballCountRangeLabel;
   String get ballSpeedRangeLabel => _ballSpeedRangeLabel;
 
@@ -302,13 +261,8 @@ class _DynamicVisionCardState extends State<_DynamicVisionCard>
       return;
     }
     final confirmed = await _confirmSettingRestart(
-      zh: '切换模式会结束当前观察并重置新模式。确认后需要手动点击开始。',
-      en: 'Switching modes will stop the current observation and reset the new mode. Press Start manually after confirming.',
-      ja: 'モードを切り替えると現在の観察を終了し、新しいモードをリセットします。確認後は手動で開始してください。',
-      de: 'Beim Moduswechsel wird die aktuelle Beobachtung beendet und der neue Modus zurückgesetzt. Starte danach manuell.',
-      fr: 'Changer de mode arrête l’observation en cours et réinitialise le nouveau mode. Relancez ensuite manuellement.',
-      es: 'Cambiar de modo detendrá la observación actual y reiniciará el nuevo modo. Después inicia manualmente.',
-      ru: 'Смена режима остановит текущее наблюдение и сбросит новый режим. После подтверждения начните вручную.',
+      messageKey:
+          'inline.plan297.human_tests.dynamic_vision.restart.change_mode',
     );
     if (!confirmed || !mounted) {
       return;
@@ -347,13 +301,8 @@ class _DynamicVisionCardState extends State<_DynamicVisionCard>
       _symbolShowing = true;
       _symbolChoosing = false;
       _symbolDone = false;
-      _symbolFeedbackZh = null;
-      _symbolFeedbackEn = null;
-      _symbolFeedbackJa = null;
-      _symbolFeedbackDe = null;
-      _symbolFeedbackFr = null;
-      _symbolFeedbackEs = null;
-      _symbolFeedbackRu = null;
+      _symbolFeedbackKey = null;
+      _symbolFeedbackParams = const <String, Object?>{};
     });
     _symbolController
       ..reset()
@@ -390,25 +339,12 @@ class _DynamicVisionCardState extends State<_DynamicVisionCard>
         ),
       );
       _symbolLastCorrect = correct;
-      _symbolFeedbackZh = correct ? '正确，准备下一轮。' : '答案是 $_symbolTarget。';
-      _symbolFeedbackEn = correct
-          ? 'Correct. Preparing the next round.'
-          : 'The answer was $_symbolTarget.';
-      _symbolFeedbackJa = correct
-          ? '正解です。次のラウンドへ進みます。'
-          : '答えは $_symbolTarget でした。';
-      _symbolFeedbackDe = correct
-          ? 'Richtig. Die nächste Runde ist bereit.'
-          : 'Die Antwort war $_symbolTarget.';
-      _symbolFeedbackFr = correct
-          ? 'Correct. Préparez la manche suivante.'
-          : 'La réponse était $_symbolTarget.';
-      _symbolFeedbackEs = correct
-          ? 'Correcto. Prepara la siguiente ronda.'
-          : 'La respuesta era $_symbolTarget.';
-      _symbolFeedbackRu = correct
-          ? 'Верно. Готовим следующий раунд.'
-          : 'Ответ: $_symbolTarget.';
+      _symbolFeedbackKey = correct
+          ? 'inline.plan297.human_tests.dynamic_vision.symbol_correct'
+          : 'inline.plan297.human_tests.dynamic_vision.symbol_answer_was';
+      _symbolFeedbackParams = correct
+          ? const <String, Object?>{}
+          : <String, Object?>{'answer': _symbolTarget};
       _symbolChoosing = false;
       if (_symbolRound >= _symbolRoundCount) {
         _symbolDone = true;
@@ -435,13 +371,8 @@ class _DynamicVisionCardState extends State<_DynamicVisionCard>
       _symbolChoosing = false;
       _symbolDone = false;
       _symbolLastCorrect = null;
-      _symbolFeedbackZh = null;
-      _symbolFeedbackEn = null;
-      _symbolFeedbackJa = null;
-      _symbolFeedbackDe = null;
-      _symbolFeedbackFr = null;
-      _symbolFeedbackEs = null;
-      _symbolFeedbackRu = null;
+      _symbolFeedbackKey = null;
+      _symbolFeedbackParams = const <String, Object?>{};
     });
   }
 
@@ -461,13 +392,8 @@ class _DynamicVisionCardState extends State<_DynamicVisionCard>
       _ballShowing = true;
       _ballAnswering = false;
       _ballLastCorrect = null;
-      _ballFeedbackZh = null;
-      _ballFeedbackEn = null;
-      _ballFeedbackJa = null;
-      _ballFeedbackDe = null;
-      _ballFeedbackFr = null;
-      _ballFeedbackEs = null;
-      _ballFeedbackRu = null;
+      _ballFeedbackKey = null;
+      _ballFeedbackParams = const <String, Object?>{};
     });
     _lastBallTick = null;
     _ballController
@@ -497,37 +423,16 @@ class _DynamicVisionCardState extends State<_DynamicVisionCard>
         _ballCorrect += 1;
         _ballLevel += 1;
         _ballBestLevel = math.max(_ballBestLevel, _ballLevel);
-        _ballFeedbackZh = '正确，准备下一轮。';
-        _ballFeedbackEn = 'Correct. Ready for the next round.';
-        _ballFeedbackJa = '正解です。次のラウンドへ進みます。';
-        _ballFeedbackDe = 'Richtig. Bereit für die nächste Runde.';
-        _ballFeedbackFr = 'Correct. Prêt pour la manche suivante.';
-        _ballFeedbackEs = 'Correcto. Listo para la siguiente ronda.';
-        _ballFeedbackRu = 'Верно. Готово к следующему раунду.';
+        _ballFeedbackKey =
+            'inline.plan297.human_tests.dynamic_vision.ball_correct';
+        _ballFeedbackParams = const <String, Object?>{};
       } else {
         _ballMisses += 1;
         _ballDone = _ballMisses >= 3;
-        _ballFeedbackZh = _ballDone
-            ? '测试结束。正确数量是 $_ballAnswer。'
-            : '正确数量是 $_ballAnswer，保持当前等级再试一次。';
-        _ballFeedbackEn = _ballDone
-            ? 'Test over. The correct count was $_ballAnswer.'
-            : 'The correct count was $_ballAnswer. Try this level again.';
-        _ballFeedbackJa = _ballDone
-            ? '終了です。正しい数は $_ballAnswer でした。'
-            : '正しい数は $_ballAnswer です。同じレベルでもう一度。';
-        _ballFeedbackDe = _ballDone
-            ? 'Test beendet. Die richtige Anzahl war $_ballAnswer.'
-            : 'Die richtige Anzahl war $_ballAnswer. Versuche dieses Level noch einmal.';
-        _ballFeedbackFr = _ballDone
-            ? 'Test terminé. Le bon nombre était $_ballAnswer.'
-            : 'Le bon nombre était $_ballAnswer. Réessayez ce niveau.';
-        _ballFeedbackEs = _ballDone
-            ? 'Prueba terminada. La cantidad correcta era $_ballAnswer.'
-            : 'La cantidad correcta era $_ballAnswer. Repite este nivel.';
-        _ballFeedbackRu = _ballDone
-            ? 'Тест завершен. Правильное число: $_ballAnswer.'
-            : 'Правильное число: $_ballAnswer. Попробуйте этот уровень еще раз.';
+        _ballFeedbackKey = _ballDone
+            ? 'inline.plan297.human_tests.dynamic_vision.ball_test_over'
+            : 'inline.plan297.human_tests.dynamic_vision.ball_try_level_again';
+        _ballFeedbackParams = <String, Object?>{'answer': _ballAnswer};
       }
     });
   }
@@ -547,13 +452,8 @@ class _DynamicVisionCardState extends State<_DynamicVisionCard>
       _ballAnswering = false;
       _ballDone = false;
       _ballLastCorrect = null;
-      _ballFeedbackZh = null;
-      _ballFeedbackEn = null;
-      _ballFeedbackJa = null;
-      _ballFeedbackDe = null;
-      _ballFeedbackFr = null;
-      _ballFeedbackEs = null;
-      _ballFeedbackRu = null;
+      _ballFeedbackKey = null;
+      _ballFeedbackParams = const <String, Object?>{};
     });
   }
 
@@ -908,13 +808,8 @@ class _DynamicVisionCardState extends State<_DynamicVisionCard>
       return;
     }
     final confirmed = await _confirmSettingRestart(
-      zh: '修改小球数量设置会重置当前测试。确认后需要手动点击开始。',
-      en: 'Changing ball-count settings will reset the current test. Press Start manually after confirming.',
-      ja: '小球の数の設定を変えると現在のテストがリセットされます。確認後は手動で開始してください。',
-      de: 'Änderungen an der Kugelanzahl setzen den aktuellen Test zurück. Starte danach manuell.',
-      fr: 'Modifier le nombre de balles réinitialise le test en cours. Relancez ensuite manuellement.',
-      es: 'Cambiar la cantidad de bolas reiniciará la prueba actual. Después inicia manualmente.',
-      ru: 'Изменение количества шаров сбросит текущий тест. После подтверждения начните вручную.',
+      messageKey:
+          'inline.plan297.human_tests.dynamic_vision.restart.ball_count',
     );
     if (!confirmed || !mounted) {
       return;
@@ -931,13 +826,8 @@ class _DynamicVisionCardState extends State<_DynamicVisionCard>
       return;
     }
     final confirmed = await _confirmSettingRestart(
-      zh: '修改字符识别设置会重置当前测试。确认后需要手动点击开始。',
-      en: 'Changing symbol settings will reset the current test. Press Start manually after confirming.',
-      ja: '文字識別の設定を変えると現在のテストがリセットされます。確認後は手動で開始してください。',
-      de: 'Änderungen an den Symbol-Einstellungen setzen den aktuellen Test zurück. Starte danach manuell.',
-      fr: 'Modifier les réglages des symboles réinitialise le test en cours. Relancez ensuite manuellement.',
-      es: 'Cambiar los ajustes de símbolos reiniciará la prueba actual. Después inicia manualmente.',
-      ru: 'Изменение настроек символов сбросит текущий тест. После подтверждения начните вручную.',
+      messageKey:
+          'inline.plan297.human_tests.dynamic_vision.restart.symbol_settings',
     );
     if (!confirmed || !mounted) {
       return;
@@ -946,15 +836,7 @@ class _DynamicVisionCardState extends State<_DynamicVisionCard>
     resetSymbol();
   }
 
-  Future<bool> _confirmSettingRestart({
-    required String zh,
-    required String en,
-    required String ja,
-    required String de,
-    required String fr,
-    required String es,
-    required String ru,
-  }) async {
+  Future<bool> _confirmSettingRestart({required String messageKey}) async {
     if (_settingConfirmOpen) {
       return false;
     }
@@ -966,57 +848,21 @@ class _DynamicVisionCardState extends State<_DynamicVisionCard>
         builder: (context) {
           return AlertDialog(
             title: Text(
-              pickUiText(
-                i18n,
-                zh: '确认修改设置？',
-                en: 'Change settings?',
-                ja: '設定を変更',
-                de: 'Change settings?',
-                fr: 'Changer les paramètres ?',
-                es: '¿Cambio de configuración?',
-                ru: 'Изменить настройки?',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_dynamic_vision.change_settings_597f9a',
               ),
             ),
-            content: Text(
-              pickUiText(
-                i18n,
-                zh: zh,
-                en: en,
-                ja: ja,
-                de: de,
-                fr: fr,
-                es: es,
-                ru: ru,
-              ),
-            ),
+            content: Text(i18n.t(messageKey)),
             actions: <Widget>[
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '取消',
-                    en: 'Cancel',
-                    ja: '取り消す',
-                    de: 'Cancel',
-                    fr: 'Annuler',
-                    es: 'Cancelar',
-                    ru: 'отменить',
-                  ),
-                ),
+                child: Text(i18n.t('cancel')),
               ),
               FilledButton(
                 onPressed: () => Navigator.of(context).pop(true),
                 child: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '确认并重置',
-                    en: 'Confirm and reset',
-                    ja: 'を確認してリセット',
-                    de: 'Confirm and reset',
-                    fr: 'Confirmer et réinitialiser',
-                    es: 'Confirmación y restablecimiento',
-                    ru: 'Подтвердить и сбросить',
+                  i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_dynamic_vision.confirm_and_reset_dc1feb',
                   ),
                 ),
               ),
@@ -1112,135 +958,47 @@ class _DynamicVisionCardState extends State<_DynamicVisionCard>
 
   String curveLabel(AppI18n i18n, _DynamicVisionGrowthCurve curve) {
     return switch (curve) {
-      _DynamicVisionGrowthCurve.gentle => pickUiText(
-        i18n,
-        zh: '平缓',
-        en: 'Gentle',
-        ja: 'Gentle',
-        de: 'Gentle',
-        fr: 'Doucement',
-        es: 'Gentle',
-        ru: 'нежный',
+      _DynamicVisionGrowthCurve.gentle => i18n.t(
+        'inline.plan295.breathing.gentle.26bb0cd9fc59',
       ),
-      _DynamicVisionGrowthCurve.linear => pickUiText(
-        i18n,
-        zh: '线性',
-        en: 'Linear',
-        ja: 'Linear',
-        de: 'Linear',
-        fr: 'Linéaire',
-        es: 'Linear',
-        ru: 'линейный',
+      _DynamicVisionGrowthCurve.linear => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_aim.linear_4e4feb',
       ),
-      _DynamicVisionGrowthCurve.accelerated => pickUiText(
-        i18n,
-        zh: '加速',
-        en: 'Accelerated',
-        ja: '加速化された',
-        de: 'Accelerated',
-        fr: 'Accelerated',
-        es: 'Acelerada',
-        ru: 'ускоренный',
+      _DynamicVisionGrowthCurve.accelerated => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_dynamic_vision.accelerated_982033',
       ),
     };
   }
 
   String symbolSetLabel(AppI18n i18n, _DynamicSymbolSet set) {
     return switch (set) {
-      _DynamicSymbolSet.mixed => pickUiText(
-        i18n,
-        zh: '混合',
-        en: 'Mixed',
-        ja: 'Mixed',
-        de: 'Mixed',
-        fr: 'Mélange',
-        es: 'Mezcla',
-        ru: 'смешанный',
+      _DynamicSymbolSet.mixed => i18n.t(
+        'inline.ui.pages.practice_support.mixed_fba1b6',
       ),
-      _DynamicSymbolSet.digits => pickUiText(
-        i18n,
-        zh: '数字',
-        en: 'Digits',
-        ja: 'Digits',
-        de: 'Digits',
-        fr: 'Chiffres',
-        es: 'Digits',
-        ru: 'Цифры',
+      _DynamicSymbolSet.digits => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_dynamic_vision.digits_f3a6b5',
       ),
-      _DynamicSymbolSet.letters => pickUiText(
-        i18n,
-        zh: '字母',
-        en: 'Letters',
-        ja: 'Letters',
-        de: 'Letters',
-        fr: 'Lettres',
-        es: 'Cartas',
-        ru: 'Письма',
+      _DynamicSymbolSet.letters => i18n.t(
+        'inline.ui.pages.playback_advanced_page.letters_53e8af',
       ),
-      _DynamicSymbolSet.confusable => pickUiText(
-        i18n,
-        zh: '易混淆',
-        en: 'Confusable',
-        ja: 'にくい',
-        de: 'Confusable',
-        fr: 'Confisable',
-        es: 'Confusable',
-        ru: 'путаный',
+      _DynamicSymbolSet.confusable => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_dynamic_vision.confusable_1ac46a',
       ),
-      _DynamicSymbolSet.custom => pickUiText(
-        i18n,
-        zh: '自定义',
-        en: 'Custom',
-        ja: 'Custom',
-        de: 'Custom',
-        fr: 'Personnalisé',
-        es: 'Aduanas',
-        ru: 'обычай',
-      ),
+      _DynamicSymbolSet.custom => i18n.t('toolbox.sound.harp.custom'),
     };
   }
 
   String symbolPathLabel(AppI18n i18n, _DynamicSymbolPath path) {
     return switch (path) {
-      _DynamicSymbolPath.wave => pickUiText(
-        i18n,
-        zh: '波浪',
-        en: 'Wave',
-        ja: 'Wave',
-        de: 'Wave',
-        fr: 'Vague',
-        es: 'Wave',
-        ru: 'волна',
+      _DynamicSymbolPath.wave => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.wave_825f43',
       ),
-      _DynamicSymbolPath.horizontal => pickUiText(
-        i18n,
-        zh: '水平',
-        en: 'Horizontal',
-        ja: 'Horizontal',
-        de: 'Horizontal',
-        fr: 'Horizontale',
-        es: 'Horizontal',
-        ru: 'горизонтальный',
+      _DynamicSymbolPath.horizontal => i18n.t('toolbox.sound.harp.horizontal'),
+      _DynamicSymbolPath.diagonal => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_dynamic_vision.diagonal_c5a023',
       ),
-      _DynamicSymbolPath.diagonal => pickUiText(
-        i18n,
-        zh: '斜线',
-        en: 'Diagonal',
-        ja: 'Diagonal',
-        de: 'Diagonal',
-        fr: 'Diagonal',
-        es: 'Diagonal',
-        ru: 'диагональ',
-      ),
-      _DynamicSymbolPath.bounce => pickUiText(
-        i18n,
-        zh: '弹跳',
-        en: 'Bounce',
-        ja: 'バウンスバウンス',
-        de: 'Bounce',
-        fr: 'Bounce',
-        es: 'Bounce',
-        ru: 'отскакивать',
+      _DynamicSymbolPath.bounce => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.bounce_16ab0f',
       ),
     };
   }

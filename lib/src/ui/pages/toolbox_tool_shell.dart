@@ -84,11 +84,9 @@ class ToolboxToolPage extends StatelessWidget {
                 children: <Widget>[
                   if (showPageHeader) ...<Widget>[
                     PageHeader(
-                      eyebrow: pickUiText(
-                        AppI18n(Localizations.localeOf(context).languageCode),
-                        zh: '工具箱',
-                        en: 'Toolbox',
-                      ),
+                      eyebrow: AppI18n(
+                        Localizations.localeOf(context).languageCode,
+                      ).t('toolbox.hub.page.title'),
                       title: title,
                       subtitle: subtitle,
                     ),

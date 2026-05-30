@@ -41,9 +41,7 @@ class _CaffeineCutoffSheetState extends ConsumerState<_CaffeineCutoffSheet> {
             const SizedBox(height: 12),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(
-                i18n.t('toolbox.sleep.sheets.plannedBedtime'),
-              ),
+              title: Text(i18n.t('toolbox.sleep.sheets.plannedBedtime')),
               subtitle: Text(sleepTimeOfDayLabel(_bedtime)),
               trailing: const Icon(Icons.schedule_rounded),
               onTap: () async {
@@ -58,9 +56,7 @@ class _CaffeineCutoffSheetState extends ConsumerState<_CaffeineCutoffSheet> {
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(
-                i18n.t('toolbox.sleep.sheets.caffeineSensitive'),
-              ),
+              title: Text(i18n.t('toolbox.sleep.sheets.caffeineSensitive')),
               value: _sensitive,
               onChanged: (value) => setState(() => _sensitive = value),
             ),
@@ -126,9 +122,7 @@ class _MorningLightTimerSheetState
               ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
-            Text(
-              i18n.t('toolbox.sleep.sheets.lightTimerHint'),
-            ),
+            Text(i18n.t('toolbox.sleep.sheets.lightTimerHint')),
             const SizedBox(height: 16),
             Wrap(
               spacing: 10,
@@ -279,15 +273,11 @@ class _SleepCyclePlannerSheetState
             ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
-          Text(
-            i18n.t('toolbox.sleep.sheets.cyclePlanHint'),
-          ),
+          Text(i18n.t('toolbox.sleep.sheets.cyclePlanHint')),
           const SizedBox(height: 16),
           ListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text(
-              i18n.t('toolbox.sleep.sheets.targetWake'),
-            ),
+            title: Text(i18n.t('toolbox.sleep.sheets.targetWake')),
             subtitle: Text(sleepTimeOfDayLabel(_targetWakeTime)),
             trailing: const Icon(Icons.alarm_rounded),
             onTap: () async {
@@ -478,33 +468,25 @@ class _SleepinessDecisionSheetState
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
               value: _awakeLong,
-              title: Text(
-                i18n.t('toolbox.sleep.sheets.awakeAWhile'),
-              ),
+              title: Text(i18n.t('toolbox.sleep.sheets.awakeAWhile')),
               onChanged: (value) => setState(() => _awakeLong = value ?? false),
             ),
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
               value: _sleepy,
-              title: Text(
-                i18n.t('toolbox.sleep.sheets.stillSleepy'),
-              ),
+              title: Text(i18n.t('toolbox.sleep.sheets.stillSleepy')),
               onChanged: (value) => setState(() => _sleepy = value ?? false),
             ),
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
               value: _mindBusy,
-              title: Text(
-                i18n.t('toolbox.sleep.sheets.busyMind'),
-              ),
+              title: Text(i18n.t('toolbox.sleep.sheets.busyMind')),
               onChanged: (value) => setState(() => _mindBusy = value ?? false),
             ),
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
               value: _bodyUncomfortable,
-              title: Text(
-                i18n.t('toolbox.sleep.sheets.bodyUncomfortable'),
-              ),
+              title: Text(i18n.t('toolbox.sleep.sheets.bodyUncomfortable')),
               onChanged: (value) =>
                   setState(() => _bodyUncomfortable = value ?? false),
             ),

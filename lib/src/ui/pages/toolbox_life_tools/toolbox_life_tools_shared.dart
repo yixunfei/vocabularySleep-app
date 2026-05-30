@@ -1,34 +1,30 @@
 part of '../toolbox_life_tools.dart';
 
 class _LifeOption<T> {
-  const _LifeOption({
-    required this.value,
-    required this.labelZh,
-    required this.labelEn,
-  });
+  const _LifeOption({required this.value, this.labelKey, this.labelText})
+    : assert(labelKey != null || labelText != null);
 
   final T value;
-  final String labelZh;
-  final String labelEn;
+  final String? labelKey;
+  final String? labelText;
 
   String label(BuildContext context) {
-    return _lifeText(context, zh: labelZh, en: labelEn);
+    final key = labelKey;
+    if (key != null) {
+      return _lifeI18nText(context, key);
+    }
+    return labelText ?? '';
   }
 }
 
 class _LifeColorOption {
-  const _LifeColorOption({
-    required this.color,
-    required this.labelZh,
-    required this.labelEn,
-  });
+  const _LifeColorOption({required this.color, required this.labelKey});
 
   final Color color;
-  final String labelZh;
-  final String labelEn;
+  final String labelKey;
 
   String label(BuildContext context) {
-    return _lifeText(context, zh: labelZh, en: labelEn);
+    return _lifeI18nText(context, labelKey);
   }
 }
 

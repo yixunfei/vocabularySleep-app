@@ -199,8 +199,7 @@ class SleepProfile {
       shiftWorkOrJetLag: map['shift_work_or_jet_lag'] == true,
       refluxOrDigestiveDiscomfort:
           map['reflux_or_digestive_discomfort'] == true,
-      nightmaresOrDreamDistress:
-          map['nightmares_or_dream_distress'] == true,
+      nightmaresOrDreamDistress: map['nightmares_or_dream_distress'] == true,
       goal: '${map['goal'] ?? ''}'.trim(),
       createdAt: createdAt ?? DateTime.now(),
       updatedAt: updatedAt ?? createdAt ?? DateTime.now(),

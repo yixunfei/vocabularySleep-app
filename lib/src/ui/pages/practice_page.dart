@@ -38,7 +38,9 @@ class PracticePage extends ConsumerWidget {
     if (state.selectedWordbook == null || current == null) {
       return EmptyStateView(
         icon: Icons.fitness_center_rounded,
-        title: pickUiText(i18n, zh: '还没有练习材料', en: 'No practice material yet'),
+        title: i18n.t(
+          'inline.ui.pages.practice_page.no_practice_material_yet_e3df10',
+        ),
         message: i18n.t('noWordbookYet'),
       );
     }
@@ -84,21 +86,12 @@ class PracticePage extends ConsumerWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: <Widget>[
         PageHeader(
-          eyebrow: pickUiText(
-            i18n,
-            zh: '练习',
-            en: 'Practice',
-            ja: '練習',
-            de: 'Übung',
-            fr: 'Pratique',
-            es: 'Práctica',
-            ru: 'Практика',
+          eyebrow: i18n.t('inline.ui.module.module_access.practice_edc3b5'),
+          title: i18n.t(
+            'inline.ui.pages.practice_notebook_page.practice_hub_68dce9',
           ),
-          title: pickUiText(i18n, zh: '练习中心', en: 'Practice hub'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '从单词面板升级为会话式练习：范围选择、连续作答、结果反馈。',
-            en: 'Move from single-word tools to session-based practice with progress and feedback.',
+          subtitle: i18n.t(
+            'inline.ui.pages.practice_page.move_from_single_word_tools_to_session_based_practice_wi_10cf4e',
           ),
         ),
         const SizedBox(height: 16),
@@ -143,60 +136,46 @@ class PracticePage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '当前练习快照',
-                    en: 'Current practice snapshot',
+                  i18n.t(
+                    'inline.ui.pages.practice_page.current_practice_snapshot_283461',
                   ),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '当前词：${current.word}',
-                    en: 'Current word: ${current.word}',
+                  i18n.t(
+                    'inline.ui.pages.practice_page.current_word_current_word_bab62a',
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '当前词本：${localizedWordbookName(i18n, state.selectedWordbook)}',
-                    en: 'Wordbook: ${localizedWordbookName(i18n, state.selectedWordbook)}',
+                  i18n.t(
+                    'inline.ui.pages.practice_page.wordbook_localizedwordbookname_i18n_state_selectedwordbo_6292f6',
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '可练习范围：${scopedWords.length}（任务 ${taskWords.length} / 收藏 ${favoriteWords.length}）',
-                    en: 'Scope: ${scopedWords.length} (Task ${taskWords.length} / Favorite ${favoriteWords.length})',
+                  i18n.t(
+                    'inline.ui.pages.practice_page.scope_scopedwords_length_task_taskwords_length_favorite_7e91f1',
                   ),
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '今日会话：${state.practiceTodaySessions} 次，练习 ${state.practiceTodayReviewed} 词，正确率 $todayAccuracy%',
-                    en: 'Today: ${state.practiceTodaySessions} sessions, ${state.practiceTodayReviewed} reviewed, $todayAccuracy% accuracy',
+                  i18n.t(
+                    'inline.ui.pages.practice_page.today_state_practicetodaysessions_sessions_state_practic_0b1062',
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '累计会话：${state.practiceTotalSessions} 次，累计正确率 $totalAccuracy%',
-                    en: 'All time: ${state.practiceTotalSessions} sessions, $totalAccuracy% accuracy',
+                  i18n.t(
+                    'inline.ui.pages.practice_page.all_time_state_practicetotalsessions_sessions_totalaccur_e9fd7e',
                   ),
                 ),
                 if (state.practiceLastSessionTitle.trim().isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '上次会话：${state.practiceLastSessionTitle}',
-                      en: 'Last session: ${state.practiceLastSessionTitle}',
+                    i18n.t(
+                      'inline.ui.pages.practice_page.last_session_state_practicelastsessiontitle_0cbec4',
                     ),
                   ),
                 ],
@@ -209,56 +188,32 @@ class PracticePage extends ConsumerWidget {
                       context,
                       icon: Icons.local_fire_department_rounded,
                       value: '${state.practiceTodayReviewed}',
-                      label: pickUiText(
-                        i18n,
-                        zh: '今日练习词',
-                        en: 'Reviewed today',
-                        ja: '今日の練習語',
-                        de: 'Heute geuebt',
-                        fr: 'Revise aujourd’hui',
-                        es: 'Repasadas hoy',
+                      label: i18n.t(
+                        'inline.ui.pages.practice_page.reviewed_today_c8598e',
                       ),
                     ),
                     _buildStatBadge(
                       context,
                       icon: Icons.psychology_alt_outlined,
                       value: '${weakWords.length}',
-                      label: pickUiText(
-                        i18n,
-                        zh: '薄弱词',
-                        en: 'Weak words',
-                        ja: '苦手単語',
-                        de: 'Schwaechen',
-                        fr: 'Mots faibles',
-                        es: 'Palabras debiles',
+                      label: i18n.t(
+                        'inline.ui.pages.practice_page.weak_words_f19247',
                       ),
                     ),
                     _buildStatBadge(
                       context,
                       icon: Icons.task_alt_rounded,
                       value: '${taskWords.length}',
-                      label: pickUiText(
-                        i18n,
-                        zh: '任务词',
-                        en: 'Task words',
-                        ja: 'タスク単語',
-                        de: 'Aufgabenwoerter',
-                        fr: 'Mots de tache',
-                        es: 'Palabras de tarea',
+                      label: i18n.t(
+                        'inline.ui.pages.practice_page_helpers.task_words_75fdf1',
                       ),
                     ),
                     _buildStatBadge(
                       context,
                       icon: Icons.favorite_rounded,
                       value: '${favoriteWords.length}',
-                      label: pickUiText(
-                        i18n,
-                        zh: '收藏词',
-                        en: 'Favorites',
-                        ja: 'お気に入り',
-                        de: 'Favoriten',
-                        fr: 'Favoris',
-                        es: 'Favoritos',
+                      label: i18n.t(
+                        'toolbox.sound.soothing.mode_filter_favorites',
                       ),
                     ),
                   ],
@@ -275,33 +230,27 @@ class PracticePage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  pickUiText(i18n, zh: '今日建议', en: 'Today suggestion'),
+                  i18n.t(
+                    'inline.ui.pages.practice_page.today_suggestion_868259',
+                  ),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 10),
                 Text(
                   hasWeakWords
-                      ? pickUiText(
-                          i18n,
-                          zh: '建议优先复习最近薄弱词，再进入整本会话做二次巩固。',
-                          en: 'Review recent weak words first, then do a full wordbook session.',
+                      ? i18n.t(
+                          'inline.ui.pages.practice_page.review_recent_weak_words_first_then_do_a_full_wordbook_s_42b4a4',
                         )
                       : noPracticeToday
-                      ? pickUiText(
-                          i18n,
-                          zh: '你今天还未开始练习，建议先从“当前范围会话”启动。',
-                          en: 'No practice yet today. Start with current scope session.',
+                      ? i18n.t(
+                          'inline.ui.pages.practice_page.no_practice_yet_today_start_with_current_scope_session_38aa01',
                         )
                       : needsReinforce
-                      ? pickUiText(
-                          i18n,
-                          zh: '今天正确率偏低，建议开启整本词本会话进行强化。',
-                          en: 'Today accuracy is lower than expected. Try full wordbook session.',
+                      ? i18n.t(
+                          'inline.ui.pages.practice_page.today_accuracy_is_lower_than_expected_try_full_wordbook_4d82e3',
                         )
-                      : pickUiText(
-                          i18n,
-                          zh: '今天状态不错，可继续跟读练习提升发音稳定性。',
-                          en: 'You are doing well today. Continue with follow-along for pronunciation.',
+                      : i18n.t(
+                          'inline.ui.pages.practice_page.you_are_doing_well_today_continue_with_follow_along_for_edd637',
                         ),
                 ),
                 const SizedBox(height: 10),
@@ -314,24 +263,18 @@ class PracticePage extends ConsumerWidget {
                         onPressed: () => _openReviewSession(
                           context,
                           i18n,
-                          title: pickUiText(
-                            i18n,
-                            zh: '最近薄弱词复习',
-                            en: 'Recent weak words',
+                          title: i18n.t(
+                            'inline.ui.pages.practice_page_helpers.recent_weak_words_9759a1',
                           ),
-                          subtitle: pickUiText(
-                            i18n,
-                            zh: '共 ${weakWords.length} 个薄弱词',
-                            en: '${weakWords.length} weak words',
+                          subtitle: i18n.t(
+                            'inline.ui.pages.practice_page.weakwords_length_weak_words_26454f',
                           ),
                           words: weakWords,
                         ),
                         icon: const Icon(Icons.psychology_alt_outlined),
                         label: Text(
-                          pickUiText(
-                            i18n,
-                            zh: '开始薄弱词复习',
-                            en: 'Start weak-word review',
+                          i18n.t(
+                            'inline.ui.pages.practice_page.start_weak_word_review_23a89b',
                           ),
                         ),
                       )
@@ -339,15 +282,11 @@ class PracticePage extends ConsumerWidget {
                       FilledButton.icon(
                         onPressed: () => _openPracticeSession(
                           context,
-                          title: pickUiText(
-                            i18n,
-                            zh: '当前范围会话',
-                            en: 'Current scope session',
+                          title: i18n.t(
+                            'inline.ui.pages.practice_page_sections.current_scope_session_a26a55',
                           ),
-                          subtitle: pickUiText(
-                            i18n,
-                            zh: '共 ${scopedWords.length} 个词',
-                            en: '${scopedWords.length} words',
+                          subtitle: i18n.t(
+                            'inline.ui.pages.practice_page.scopedwords_length_words_33fa4f',
                           ),
                           words: scopedWords,
                           shuffle: false,
@@ -361,32 +300,28 @@ class PracticePage extends ConsumerWidget {
                         ),
                         icon: const Icon(Icons.play_arrow_rounded),
                         label: Text(
-                          pickUiText(i18n, zh: '开始当前范围会话', en: 'Start now'),
+                          i18n.t(
+                            'inline.ui.pages.practice_page_sections.start_now_c4829b',
+                          ),
                         ),
                       )
                     else if (needsReinforce)
                       FilledButton.icon(
                         onPressed: () => _openPracticeSession(
                           context,
-                          title: pickUiText(
-                            i18n,
-                            zh: '整本词本会话',
-                            en: 'Whole wordbook session',
+                          title: i18n.t(
+                            'inline.ui.pages.practice_page.whole_wordbook_session_43154c',
                           ),
-                          subtitle: pickUiText(
-                            i18n,
-                            zh: '共 ${wordbookWords.length} 个词',
-                            en: '${wordbookWords.length} words',
+                          subtitle: i18n.t(
+                            'inline.ui.pages.practice_page.wordbookwords_length_words_320caa',
                           ),
                           words: wordbookWords,
                           shuffle: true,
                         ),
                         icon: const Icon(Icons.library_books_rounded),
                         label: Text(
-                          pickUiText(
-                            i18n,
-                            zh: '开启整本强化',
-                            en: 'Start reinforcement',
+                          i18n.t(
+                            'inline.ui.pages.practice_page.start_reinforcement_1b31b4',
                           ),
                         ),
                       )
@@ -401,7 +336,9 @@ class PracticePage extends ConsumerWidget {
                         },
                         icon: const Icon(Icons.mic_external_on_rounded),
                         label: Text(
-                          pickUiText(i18n, zh: '去跟读练习', en: 'Go follow along'),
+                          i18n.t(
+                            'inline.ui.pages.practice_page.go_follow_along_3af418',
+                          ),
                         ),
                       ),
                   ],
@@ -418,27 +355,13 @@ class PracticePage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '快速开始',
-                    en: 'Quick start',
-                    ja: 'クイック開始',
-                    de: 'Schnellstart',
-                    fr: 'Demarrage rapide',
-                    es: 'Inicio rapido',
-                  ),
+                  i18n.t('inline.ui.pages.practice_page.quick_start_c5b829'),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '把常用热身、乱序冲刺与发音训练集中到一个区域，减少来回切换。',
-                    en: 'Keep warmups, shuffled sprints, and pronunciation drills together so you can start faster.',
-                    ja: 'ウォームアップ、シャッフル練習、発音トレーニングをひとまとめにして、すばやく始められます。',
-                    de: 'Warm-up, Shuffle-Sprints und Aussprachetraining sind hier gebuendelt, damit Sie schneller starten koennen.',
-                    fr: 'Regroupez echauffement, sessions melangees et prononciation pour demarrer plus vite.',
-                    es: 'Reune calentamiento, sprints aleatorios y pronunciacion para empezar mas rapido.',
+                  i18n.t(
+                    'inline.ui.pages.practice_page.keep_warmups_shuffled_sprints_and_pronunciation_drills_t_54bd03',
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -449,31 +372,19 @@ class PracticePage extends ConsumerWidget {
                     _buildQuickLaunchCard(
                       context,
                       icon: Icons.flash_on_rounded,
-                      title: pickUiText(
-                        i18n,
-                        zh: '当前词速练',
-                        en: 'Current word sprint',
+                      title: i18n.t(
+                        'inline.ui.pages.practice_page.current_word_sprint_5c2877',
                       ),
-                      subtitle: pickUiText(
-                        i18n,
-                        zh: '1 题热身',
-                        en: '1-card warmup',
-                        ja: '1枚で準備運動',
-                        de: 'Warm-up mit 1 Karte',
-                        fr: 'Echauffement en 1 carte',
-                        es: 'Calentamiento de 1 tarjeta',
+                      subtitle: i18n.t(
+                        'inline.ui.pages.practice_page.1_card_warmup_f2bf20',
                       ),
                       onTap: () => _openPracticeSession(
                         context,
-                        title: pickUiText(
-                          i18n,
-                          zh: '当前词速练',
-                          en: 'Current word sprint',
+                        title: i18n.t(
+                          'inline.ui.pages.practice_page.current_word_sprint_5c2877',
                         ),
-                        subtitle: pickUiText(
-                          i18n,
-                          zh: '1 题短会话',
-                          en: 'Single-item mini session',
+                        subtitle: i18n.t(
+                          'inline.ui.pages.practice_page.single_item_mini_session_424690',
                         ),
                         words: <WordEntry>[current],
                         shuffle: false,
@@ -489,37 +400,21 @@ class PracticePage extends ConsumerWidget {
                     _buildQuickLaunchCard(
                       context,
                       icon: Icons.local_fire_department_rounded,
-                      title: pickUiText(
-                        i18n,
-                        zh: '7 词热身',
-                        en: '7-word warmup',
-                        ja: '7語ウォームアップ',
-                        de: '7-Woerter-Warm-up',
-                        fr: 'Echauffement 7 mots',
-                        es: 'Calentamiento de 7 palabras',
+                      title: i18n.t(
+                        'inline.ui.pages.practice_page.7_word_warmup_5e2367',
                       ),
-                      subtitle: pickUiText(
-                        i18n,
-                        zh: '从当前范围快速起步',
-                        en: 'Start fast from current scope',
-                        ja: '現在の範囲から素早く開始',
-                        de: 'Schnell aus dem aktuellen Bereich starten',
-                        fr: 'Demarrer vite depuis la portee actuelle',
-                        es: 'Empezar rapido desde el alcance actual',
+                      subtitle: i18n.t(
+                        'inline.ui.pages.practice_page.start_fast_from_current_scope_662ffa',
                       ),
                       onTap: warmupWords.isEmpty
                           ? () => _showNoWordsSnack(context, i18n)
                           : () => _openPracticeSession(
                               context,
-                              title: pickUiText(
-                                i18n,
-                                zh: '7 词热身',
-                                en: '7-word warmup',
+                              title: i18n.t(
+                                'inline.ui.pages.practice_page.7_word_warmup_5e2367',
                               ),
-                              subtitle: pickUiText(
-                                i18n,
-                                zh: '共 ${warmupWords.length} 个词',
-                                en: '${warmupWords.length} words',
+                              subtitle: i18n.t(
+                                'inline.ui.pages.practice_page.warmupwords_length_words_494b66',
                               ),
                               words: scopedWords,
                               shuffle: false,
@@ -534,37 +429,21 @@ class PracticePage extends ConsumerWidget {
                     _buildQuickLaunchCard(
                       context,
                       icon: Icons.shuffle_rounded,
-                      title: pickUiText(
-                        i18n,
-                        zh: '乱序冲刺',
-                        en: 'Shuffle sprint',
-                        ja: 'シャッフル練習',
-                        de: 'Shuffle-Sprint',
-                        fr: 'Sprint melange',
-                        es: 'Sprint aleatorio',
+                      title: i18n.t(
+                        'inline.ui.pages.practice_page.shuffle_sprint_3f3cb5',
                       ),
-                      subtitle: pickUiText(
-                        i18n,
-                        zh: '随机打散当前范围',
-                        en: 'Shuffle the current scope',
-                        ja: '現在の範囲をシャッフル',
-                        de: 'Aktuellen Bereich mischen',
-                        fr: 'Melanger la portee actuelle',
-                        es: 'Mezclar el alcance actual',
+                      subtitle: i18n.t(
+                        'inline.ui.pages.practice_page.shuffle_the_current_scope_11281f',
                       ),
                       onTap: scopedWords.isEmpty
                           ? () => _showNoWordsSnack(context, i18n)
                           : () => _openPracticeSession(
                               context,
-                              title: pickUiText(
-                                i18n,
-                                zh: '乱序冲刺',
-                                en: 'Shuffle sprint',
+                              title: i18n.t(
+                                'inline.ui.pages.practice_page.shuffle_sprint_3f3cb5',
                               ),
-                              subtitle: pickUiText(
-                                i18n,
-                                zh: '共 ${scopedWords.length} 个词',
-                                en: '${scopedWords.length} words',
+                              subtitle: i18n.t(
+                                'inline.ui.pages.practice_page.scopedwords_length_words_33fa4f',
                               ),
                               words: scopedWords,
                               shuffle: true,
@@ -573,23 +452,11 @@ class PracticePage extends ConsumerWidget {
                     _buildQuickLaunchCard(
                       context,
                       icon: Icons.mic_external_on_rounded,
-                      title: pickUiText(
-                        i18n,
-                        zh: '发音跟读',
-                        en: 'Pronunciation drill',
-                        ja: '発音トレーニング',
-                        de: 'Aussprachetraining',
-                        fr: 'Exercice de prononciation',
-                        es: 'Practica de pronunciacion',
+                      title: i18n.t(
+                        'inline.ui.pages.practice_page.pronunciation_drill_cb58bf',
                       ),
-                      subtitle: pickUiText(
-                        i18n,
-                        zh: '当前词即时跟读',
-                        en: 'Follow along with current word',
-                        ja: '現在の単語ですぐ練習',
-                        de: 'Mit dem aktuellen Wort direkt ueben',
-                        fr: 'Suivre immediatement avec le mot courant',
-                        es: 'Practicar de inmediato con la palabra actual',
+                      subtitle: i18n.t(
+                        'inline.ui.pages.practice_page.follow_along_with_current_word_3b5d8d',
                       ),
                       onTap: () {
                         Navigator.of(context).push(
@@ -609,19 +476,19 @@ class PracticePage extends ConsumerWidget {
           const SizedBox(height: 12),
           SettingTile(
             icon: Icons.flash_on_rounded,
-            title: pickUiText(i18n, zh: '当前词速练', en: 'Current word sprint'),
-            subtitle: pickUiText(
-              i18n,
-              zh: '仅针对当前词做一题一反馈，快速热身。',
-              en: 'Quick one-item session for the current word.',
+            title: i18n.t(
+              'inline.ui.pages.practice_page.current_word_sprint_5c2877',
+            ),
+            subtitle: i18n.t(
+              'inline.ui.pages.practice_page.quick_one_item_session_for_the_current_word_936277',
             ),
             onTap: () => _openPracticeSession(
               context,
-              title: pickUiText(i18n, zh: '当前词速练', en: 'Current word sprint'),
-              subtitle: pickUiText(
-                i18n,
-                zh: '1 题短会话',
-                en: 'Single-item mini session',
+              title: i18n.t(
+                'inline.ui.pages.practice_page.current_word_sprint_5c2877',
+              ),
+              subtitle: i18n.t(
+                'inline.ui.pages.practice_page.single_item_mini_session_424690',
               ),
               words: <WordEntry>[current],
               shuffle: false,
@@ -637,11 +504,11 @@ class PracticePage extends ConsumerWidget {
           const SizedBox(height: 12),
           SettingTile(
             icon: Icons.view_list_rounded,
-            title: pickUiText(i18n, zh: '当前范围会话', en: 'Current scope session'),
-            subtitle: pickUiText(
-              i18n,
-              zh: '基于当前筛选范围连续练习。',
-              en: 'Practice continuously within current filtered scope.',
+            title: i18n.t(
+              'inline.ui.pages.practice_page_sections.current_scope_session_a26a55',
+            ),
+            subtitle: i18n.t(
+              'inline.ui.pages.practice_page.practice_continuously_within_current_filtered_scope_07ce51',
             ),
             onTap: () {
               if (scopedWords.isEmpty) {
@@ -650,15 +517,11 @@ class PracticePage extends ConsumerWidget {
               }
               _openPracticeSession(
                 context,
-                title: pickUiText(
-                  i18n,
-                  zh: '当前范围会话',
-                  en: 'Current scope session',
+                title: i18n.t(
+                  'inline.ui.pages.practice_page_sections.current_scope_session_a26a55',
                 ),
-                subtitle: pickUiText(
-                  i18n,
-                  zh: '共 ${scopedWords.length} 个词',
-                  en: '${scopedWords.length} words',
+                subtitle: i18n.t(
+                  'inline.ui.pages.practice_page.scopedwords_length_words_33fa4f',
                 ),
                 words: scopedWords,
                 shuffle: false,
@@ -675,23 +538,19 @@ class PracticePage extends ConsumerWidget {
           const SizedBox(height: 12),
           SettingTile(
             icon: Icons.library_books_rounded,
-            title: pickUiText(i18n, zh: '整本词本会话', en: 'Whole wordbook session'),
-            subtitle: pickUiText(
-              i18n,
-              zh: '覆盖当前词本全部词条，可随机顺序。',
-              en: 'Cover the whole wordbook with optional shuffle.',
+            title: i18n.t(
+              'inline.ui.pages.practice_page.whole_wordbook_session_43154c',
+            ),
+            subtitle: i18n.t(
+              'inline.ui.pages.practice_page.cover_the_whole_wordbook_with_optional_shuffle_b62837',
             ),
             onTap: () => _openPracticeSession(
               context,
-              title: pickUiText(
-                i18n,
-                zh: '整本词本会话',
-                en: 'Whole wordbook session',
+              title: i18n.t(
+                'inline.ui.pages.practice_page.whole_wordbook_session_43154c',
               ),
-              subtitle: pickUiText(
-                i18n,
-                zh: '共 ${wordbookWords.length} 个词',
-                en: '${wordbookWords.length} words',
+              subtitle: i18n.t(
+                'inline.ui.pages.practice_page.wordbookwords_length_words_320caa',
               ),
               words: wordbookWords,
               shuffle: true,
@@ -700,20 +559,20 @@ class PracticePage extends ConsumerWidget {
           const SizedBox(height: 12),
           SettingTile(
             icon: Icons.task_alt_rounded,
-            title: pickUiText(i18n, zh: '任务词复习', en: 'Task word review'),
-            subtitle: pickUiText(
-              i18n,
-              zh: '针对任务词开启复习会话。',
-              en: 'Review session focused on task words.',
+            title: i18n.t(
+              'inline.ui.pages.practice_page.task_word_review_b855a4',
+            ),
+            subtitle: i18n.t(
+              'inline.ui.pages.practice_page.review_session_focused_on_task_words_3a77a3',
             ),
             onTap: () => _openReviewSession(
               context,
               i18n,
-              title: pickUiText(i18n, zh: '任务词复习', en: 'Task word review'),
-              subtitle: pickUiText(
-                i18n,
-                zh: '共 ${taskWords.length} 个任务词',
-                en: '${taskWords.length} task words',
+              title: i18n.t(
+                'inline.ui.pages.practice_page.task_word_review_b855a4',
+              ),
+              subtitle: i18n.t(
+                'inline.ui.pages.practice_page.taskwords_length_task_words_7d8908',
               ),
               words: taskWords,
             ),
@@ -721,20 +580,20 @@ class PracticePage extends ConsumerWidget {
           const SizedBox(height: 12),
           SettingTile(
             icon: Icons.favorite_rounded,
-            title: pickUiText(i18n, zh: '收藏词复习', en: 'Favorite word review'),
-            subtitle: pickUiText(
-              i18n,
-              zh: '复习收藏列表并快速进入会话。',
-              en: 'Review favorite words and start a session quickly.',
+            title: i18n.t(
+              'inline.ui.pages.practice_page.favorite_word_review_23c057',
+            ),
+            subtitle: i18n.t(
+              'inline.ui.pages.practice_page.review_favorite_words_and_start_a_session_quickly_d4b44c',
             ),
             onTap: () => _openReviewSession(
               context,
               i18n,
-              title: pickUiText(i18n, zh: '收藏词复习', en: 'Favorite word review'),
-              subtitle: pickUiText(
-                i18n,
-                zh: '共 ${favoriteWords.length} 个收藏词',
-                en: '${favoriteWords.length} favorite words',
+              title: i18n.t(
+                'inline.ui.pages.practice_page.favorite_word_review_23c057',
+              ),
+              subtitle: i18n.t(
+                'inline.ui.pages.practice_page.favoritewords_length_favorite_words_474f92',
               ),
               words: favoriteWords,
             ),
@@ -743,20 +602,20 @@ class PracticePage extends ConsumerWidget {
             const SizedBox(height: 12),
             SettingTile(
               icon: Icons.psychology_alt_outlined,
-              title: pickUiText(i18n, zh: '最近薄弱词复习', en: 'Recent weak words'),
-              subtitle: pickUiText(
-                i18n,
-                zh: '根据历史会话自动沉淀，建议优先复习。',
-                en: 'Auto-collected from session history. Recommended next step.',
+              title: i18n.t(
+                'inline.ui.pages.practice_page_helpers.recent_weak_words_9759a1',
+              ),
+              subtitle: i18n.t(
+                'inline.ui.pages.practice_page.auto_collected_from_session_history_recommended_next_ste_f52de3',
               ),
               onTap: () => _openReviewSession(
                 context,
                 i18n,
-                title: pickUiText(i18n, zh: '最近薄弱词复习', en: 'Recent weak words'),
-                subtitle: pickUiText(
-                  i18n,
-                  zh: '共 ${weakWords.length} 个薄弱词',
-                  en: '${weakWords.length} weak words',
+                title: i18n.t(
+                  'inline.ui.pages.practice_page_helpers.recent_weak_words_9759a1',
+                ),
+                subtitle: i18n.t(
+                  'inline.ui.pages.practice_page.weakwords_length_weak_words_26454f',
                 ),
                 words: weakWords,
               ),
@@ -765,11 +624,9 @@ class PracticePage extends ConsumerWidget {
           const SizedBox(height: 12),
           SettingTile(
             icon: Icons.mic_external_on_rounded,
-            title: pickUiText(i18n, zh: '跟读练习', en: 'Follow along'),
-            subtitle: pickUiText(
-              i18n,
-              zh: '使用当前词进行录音、识别与发音评分。',
-              en: 'Record, transcribe, and score pronunciation for current word.',
+            title: i18n.t('inline.ui.pages.practice_page.follow_along_16958e'),
+            subtitle: i18n.t(
+              'inline.ui.pages.practice_page.record_transcribe_and_score_pronunciation_for_current_wo_1c37a7',
             ),
             onTap: () {
               Navigator.of(context).push(

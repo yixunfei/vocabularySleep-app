@@ -33,8 +33,7 @@ extension _QrCorrectionOptionInfo on _QrCorrectionOption {
 class _QrStyleSpec {
   const _QrStyleSpec({
     required this.id,
-    required this.labelZh,
-    required this.labelEn,
+    required this.labelKey,
     required this.foreground,
     required this.background,
     required this.eyeShape,
@@ -43,8 +42,7 @@ class _QrStyleSpec {
   });
 
   final String id;
-  final String labelZh;
-  final String labelEn;
+  final String labelKey;
   final Color foreground;
   final Color background;
   final QrEyeShape eyeShape;
@@ -52,15 +50,14 @@ class _QrStyleSpec {
   final Color? panelColor;
 
   String label(BuildContext context) {
-    return _lifeText(context, zh: labelZh, en: labelEn);
+    return _lifeI18nText(context, labelKey);
   }
 }
 
 const List<_QrStyleSpec> _qrStyleSpecs = <_QrStyleSpec>[
   _QrStyleSpec(
     id: 'classic',
-    labelZh: '经典黑白',
-    labelEn: 'Classic',
+    labelKey: 'inline.plan295.life.classic.184f87f1be60',
     foreground: Color(0xFF111827),
     background: Colors.white,
     eyeShape: QrEyeShape.square,
@@ -68,8 +65,7 @@ const List<_QrStyleSpec> _qrStyleSpecs = <_QrStyleSpec>[
   ),
   _QrStyleSpec(
     id: 'rounded',
-    labelZh: '圆点柔和',
-    labelEn: 'Rounded',
+    labelKey: 'inline.plan295.life.rounded.388a7d410e60',
     foreground: Color(0xFF0F766E),
     background: Color(0xFFF0FDFA),
     eyeShape: QrEyeShape.circle,
@@ -78,8 +74,7 @@ const List<_QrStyleSpec> _qrStyleSpecs = <_QrStyleSpec>[
   ),
   _QrStyleSpec(
     id: 'midnight',
-    labelZh: '夜色高对比',
-    labelEn: 'Midnight',
+    labelKey: 'inline.plan295.life.midnight.ebdeff846030',
     foreground: Color(0xFFF8FAFC),
     background: Color(0xFF111827),
     eyeShape: QrEyeShape.square,
@@ -88,8 +83,7 @@ const List<_QrStyleSpec> _qrStyleSpecs = <_QrStyleSpec>[
   ),
   _QrStyleSpec(
     id: 'blueprint',
-    labelZh: '蓝图',
-    labelEn: 'Blueprint',
+    labelKey: 'inline.plan295.life.blueprint.021d9c7c504e',
     foreground: Color(0xFF1D4ED8),
     background: Color(0xFFEFF6FF),
     eyeShape: QrEyeShape.square,
@@ -98,8 +92,7 @@ const List<_QrStyleSpec> _qrStyleSpecs = <_QrStyleSpec>[
   ),
   _QrStyleSpec(
     id: 'rose',
-    labelZh: '柔玫瑰',
-    labelEn: 'Rose',
+    labelKey: 'inline.plan295.life.rose.72b1400f3efa',
     foreground: Color(0xFF9F1239),
     background: Color(0xFFFFF1F2),
     eyeShape: QrEyeShape.circle,
@@ -339,10 +332,10 @@ class _QrPageState extends State<_QrPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '导入中心图片失败: $error',
-          en: 'Failed to import center image: $error',
+          'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.failed_to_import_center_image.1b274a0daa',
+          params: <String, Object?>{'error': error},
         );
       });
     }
@@ -391,10 +384,10 @@ class _QrPageState extends State<_QrPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '导入艺术图片失败: $error',
-          en: 'Failed to import visual image: $error',
+          'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.failed_to_import_visual_image.7a2ee65c23',
+          params: <String, Object?>{'error': error},
         );
       });
     } finally {
@@ -439,20 +432,19 @@ class _QrPageState extends State<_QrPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '导入图片二维码内容失败: $error',
-          en: 'Failed to import image payload: $error',
+          'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.failed_to_import_image_payload.4069bafebf',
+          params: <String, Object?>{'error': error},
         );
       });
     }
   }
 
   Future<Uint8List?> _readPickedBytes(PlatformFile file) async {
-    final tooLargeMessage = _lifeText(
+    final tooLargeMessage = _lifeI18nText(
       context,
-      zh: '图片超过 32MB，二维码化会占用过多内存，请先裁切或用图片压缩页压小后再导入。',
-      en: 'The image is larger than 32 MB. Crop it or compress it first to avoid high memory use.',
+      'inline.plan295.life.the_image_is_larger_than_32_mb_crop.5974aabf06b5',
     );
     if (file.size > _qrImageSourceReadMaxBytes) {
       throw StateError(tooLargeMessage);
@@ -522,10 +514,10 @@ class _QrPageState extends State<_QrPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '图片二维码化失败: $error',
-          en: 'Failed to QR-encode image: $error',
+          'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.failed_to_qr_encode_image.d24ed38c7b',
+          params: <String, Object?>{'error': error},
         );
       });
     } finally {
@@ -644,7 +636,12 @@ class _QrPageState extends State<_QrPage> {
     }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(_lifeText(context, zh: '内容已复制', en: 'Payload copied')),
+        content: Text(
+          _lifeI18nText(
+            context,
+            'inline.plan295.life.payload_copied.6b08edc5fd88',
+          ),
+        ),
       ),
     );
   }
@@ -661,15 +658,13 @@ class _QrPageState extends State<_QrPage> {
       _savedPath = null;
       _error = null;
     });
-    final saveDialogTitle = _lifeText(
+    final saveDialogTitle = _lifeI18nText(
       context,
-      zh: '保存二维码',
-      en: 'Save code image',
+      'inline.plan295.life.save_code_image.32d2a85d2f7c',
     );
-    final browserDownloadText = _lifeText(
+    final browserDownloadText = _lifeI18nText(
       context,
-      zh: '浏览器下载已触发，请查看下载列表。',
-      en: 'Browser download started. Check your downloads.',
+      'inline.plan295.crypto.browser_download_started_check_your.b28d392515b4',
     );
     try {
       await Future<void>.delayed(const Duration(milliseconds: 30));
@@ -728,10 +723,10 @@ class _QrPageState extends State<_QrPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '导出失败: $error',
-          en: 'Export failed: $error',
+          'errorExportFailed',
+          params: <String, Object?>{'error': error},
         );
       });
     } finally {
@@ -746,11 +741,13 @@ class _QrPageState extends State<_QrPage> {
     final payload = _payloadResult;
     final qrValidation = _safeQrValidation(payload);
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '二维码生成', en: 'QR generator'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '本地生成 QR / Data Matrix / Aztec / PDF417，支持模板、样式、中心图和图片二维码化。',
-        en: 'Generate QR, Data Matrix, Aztec, and PDF417 locally with templates, styles, center images, and image Data URL payloads.',
+        'inline.plan295.life.qr_generator.5f240db63805',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.generate_qr_data_matrix_aztec_and_pd.c47292d79509',
       ),
       child: Column(
         key: const ValueKey<String>('life-qr-page'),
@@ -769,10 +766,10 @@ class _QrPageState extends State<_QrPage> {
             const SizedBox(height: 12),
             _buildQrMessage(
               context,
-              _lifeText(
+              _lifeI18nText(
                 context,
-                zh: '已保存: $_savedPath',
-                en: 'Saved: $_savedPath',
+                'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.saved.7b5e2b53bc',
+                params: <String, Object?>{'_savedPath': _savedPath},
               ),
             ),
           ],
@@ -785,11 +782,13 @@ class _QrPageState extends State<_QrPage> {
 
   Widget _buildPayloadPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '内容模板', en: 'Content template'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '选择内容类型后只显示相关输入，减少移动端滚动负担。',
-        en: 'Only relevant fields are shown for the selected payload type.',
+        'inline.plan295.life.content_template.c38caa475ad8',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.only_relevant_fields_are_shown_for_t.5e114a6f631d',
       ),
       children: <Widget>[
         Wrap(
@@ -826,7 +825,10 @@ class _QrPageState extends State<_QrPage> {
         maxLines: 8,
         decoration: InputDecoration(
           border: const OutlineInputBorder(),
-          labelText: _lifeText(context, zh: '文本内容', en: 'Text content'),
+          labelText: _lifeI18nText(
+            context,
+            'inline.plan295.life.text_content.ba11a1a91c3c',
+          ),
         ),
       ),
       ToolboxQrPayloadType.url => TextField(
@@ -836,7 +838,10 @@ class _QrPageState extends State<_QrPage> {
         decoration: InputDecoration(
           border: const OutlineInputBorder(),
           prefixIcon: const Icon(Icons.link_rounded),
-          labelText: _lifeText(context, zh: '网址', en: 'URL'),
+          labelText: _lifeI18nText(
+            context,
+            'inline.plan295.life.url.01589732415a',
+          ),
         ),
       ),
       ToolboxQrPayloadType.wifi => _buildWifiFields(context),
@@ -849,7 +854,10 @@ class _QrPageState extends State<_QrPage> {
         decoration: InputDecoration(
           border: const OutlineInputBorder(),
           prefixIcon: const Icon(Icons.phone_rounded),
-          labelText: _lifeText(context, zh: '电话号码', en: 'Phone number'),
+          labelText: _lifeI18nText(
+            context,
+            'inline.plan295.life.phone_number.97a1212d8f7f',
+          ),
         ),
       ),
       ToolboxQrPayloadType.geo => _buildGeoFields(context),
@@ -865,7 +873,10 @@ class _QrPageState extends State<_QrPage> {
           controller: _wifiSsidController,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
-            labelText: _lifeText(context, zh: 'Wi-Fi 名称', en: 'Wi-Fi SSID'),
+            labelText: _lifeI18nText(
+              context,
+              'inline.plan295.life.wi_fi_ssid.7cb7a4dba133',
+            ),
           ),
         ),
         const SizedBox(height: 10),
@@ -874,19 +885,24 @@ class _QrPageState extends State<_QrPage> {
           obscureText: true,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
-            labelText: _lifeText(context, zh: '密码', en: 'Password'),
+            labelText: _lifeI18nText(
+              context,
+              'inline.plan295.life.password.fc52ab5fc437',
+            ),
           ),
         ),
         const SizedBox(height: 10),
         _LifeSegmentedField<ToolboxQrWifiEncryption>(
-          label: _lifeText(context, zh: '加密方式', en: 'Encryption'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.encryption.525716332155',
+          ),
           value: _wifiEncryption,
           options: ToolboxQrWifiEncryption.values
               .map(
                 (item) => _LifeOption<ToolboxQrWifiEncryption>(
                   value: item,
-                  labelZh: item.label,
-                  labelEn: item.label,
+                  labelText: item.label,
                 ),
               )
               .toList(growable: false),
@@ -895,7 +911,12 @@ class _QrPageState extends State<_QrPage> {
         SwitchListTile(
           value: _wifiHidden,
           contentPadding: EdgeInsets.zero,
-          title: Text(_lifeText(context, zh: '隐藏网络', en: 'Hidden network')),
+          title: Text(
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.hidden_network.ee1d88567f1e',
+            ),
+          ),
           onChanged: (value) => setState(() => _wifiHidden = value),
         ),
       ],
@@ -907,24 +928,24 @@ class _QrPageState extends State<_QrPage> {
       children: <Widget>[
         _textInput(
           _contactNameController,
-          _lifeText(context, zh: '姓名', en: 'Name'),
+          _lifeI18nText(context, 'inline.plan295.life.name.d391dcbbc154'),
         ),
         const SizedBox(height: 10),
         _textInput(
           _contactPhoneController,
-          _lifeText(context, zh: '电话', en: 'Phone'),
+          _lifeI18nText(context, 'inline.plan295.life.phone.7c7063863a3f'),
           keyboardType: TextInputType.phone,
         ),
         const SizedBox(height: 10),
         _textInput(
           _contactEmailController,
-          _lifeText(context, zh: '邮箱', en: 'Email'),
+          _lifeI18nText(context, 'inline.plan295.life.email.6e9ea463273d'),
           keyboardType: TextInputType.emailAddress,
         ),
         const SizedBox(height: 10),
         _textInput(
           _contactOrgController,
-          _lifeText(context, zh: '组织', en: 'Org'),
+          _lifeI18nText(context, 'inline.plan295.life.org.882a1dbe0e50'),
         ),
       ],
     );
@@ -935,13 +956,13 @@ class _QrPageState extends State<_QrPage> {
       children: <Widget>[
         _textInput(
           _emailToController,
-          _lifeText(context, zh: '收件人', en: 'To'),
+          _lifeI18nText(context, 'inline.plan295.life.to.ec9c7a1c70dd'),
           keyboardType: TextInputType.emailAddress,
         ),
         const SizedBox(height: 10),
         _textInput(
           _emailSubjectController,
-          _lifeText(context, zh: '主题', en: 'Subject'),
+          _lifeI18nText(context, 'inline.plan295.life.subject.778544095ae6'),
         ),
         const SizedBox(height: 10),
         TextField(
@@ -950,7 +971,10 @@ class _QrPageState extends State<_QrPage> {
           maxLines: 5,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
-            labelText: _lifeText(context, zh: '正文', en: 'Body'),
+            labelText: _lifeI18nText(
+              context,
+              'inline.plan295.life.body.2cca4b50c3cd',
+            ),
           ),
         ),
       ],
@@ -962,7 +986,7 @@ class _QrPageState extends State<_QrPage> {
       children: <Widget>[
         _textInput(
           _smsPhoneController,
-          _lifeText(context, zh: '手机号', en: 'Phone'),
+          _lifeI18nText(context, 'inline.plan295.life.phone.c2e3bd132050'),
           keyboardType: TextInputType.phone,
         ),
         const SizedBox(height: 10),
@@ -972,7 +996,10 @@ class _QrPageState extends State<_QrPage> {
           maxLines: 4,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
-            labelText: _lifeText(context, zh: '短信内容', en: 'Message'),
+            labelText: _lifeI18nText(
+              context,
+              'inline.plan295.life.message.aacda711d934',
+            ),
           ),
         ),
       ],
@@ -987,7 +1014,10 @@ class _QrPageState extends State<_QrPage> {
             Expanded(
               child: _textInput(
                 _latitudeController,
-                _lifeText(context, zh: '纬度', en: 'Latitude'),
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.latitude.56838ea3e0ab',
+                ),
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                   signed: true,
@@ -998,7 +1028,10 @@ class _QrPageState extends State<_QrPage> {
             Expanded(
               child: _textInput(
                 _longitudeController,
-                _lifeText(context, zh: '经度', en: 'Longitude'),
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.longitude.e4d71d6b9069',
+                ),
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                   signed: true,
@@ -1010,7 +1043,7 @@ class _QrPageState extends State<_QrPage> {
         const SizedBox(height: 10),
         _textInput(
           _geoLabelController,
-          _lifeText(context, zh: '地点名', en: 'Label'),
+          _lifeI18nText(context, 'inline.plan295.life.label.6c47cbee39b0'),
         ),
       ],
     );
@@ -1022,12 +1055,12 @@ class _QrPageState extends State<_QrPage> {
       children: <Widget>[
         _textInput(
           _eventTitleController,
-          _lifeText(context, zh: '事件标题', en: 'Title'),
+          _lifeI18nText(context, 'inline.plan295.life.title.e3f995be86c3'),
         ),
         const SizedBox(height: 10),
         _textInput(
           _eventLocationController,
-          _lifeText(context, zh: '地点', en: 'Location'),
+          _lifeI18nText(context, 'inline.plan295.life.location.5bc6fe9354ec'),
         ),
         const SizedBox(height: 10),
         Wrap(
@@ -1038,10 +1071,12 @@ class _QrPageState extends State<_QrPage> {
               onPressed: () => _pickEventDateTime(start: true),
               icon: const Icon(Icons.event_rounded),
               label: Text(
-                _lifeText(
+                _lifeI18nText(
                   context,
-                  zh: '开始 ${_formatShortDateTime(_eventStart)}',
-                  en: 'Start ${_formatShortDateTime(_eventStart)}',
+                  'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.start.50af5bb2b9',
+                  params: <String, Object?>{
+                    'p0': _formatShortDateTime(_eventStart),
+                  },
                 ),
               ),
             ),
@@ -1049,10 +1084,12 @@ class _QrPageState extends State<_QrPage> {
               onPressed: () => _pickEventDateTime(start: false),
               icon: const Icon(Icons.event_available_rounded),
               label: Text(
-                _lifeText(
+                _lifeI18nText(
                   context,
-                  zh: '结束 ${_formatShortDateTime(_eventEnd)}',
-                  en: 'End ${_formatShortDateTime(_eventEnd)}',
+                  'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.end.74a94b5373',
+                  params: <String, Object?>{
+                    'p0': _formatShortDateTime(_eventEnd),
+                  },
                 ),
               ),
             ),
@@ -1074,7 +1111,12 @@ class _QrPageState extends State<_QrPage> {
                 key: const ValueKey<String>('life-qr-image-pick-button'),
                 onPressed: _processingImage ? null : _pickQrImagePayload,
                 icon: const Icon(Icons.add_photo_alternate_rounded),
-                label: Text(_lifeText(context, zh: '导入图片', en: 'Import image')),
+                label: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.import_image.040a2e597dc0',
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 10),
@@ -1091,8 +1133,14 @@ class _QrPageState extends State<_QrPage> {
                     : const Icon(Icons.qr_code_2_rounded),
                 label: Text(
                   _processingImage
-                      ? _lifeText(context, zh: '处理中...', en: 'Working...')
-                      : _lifeText(context, zh: '二维码化', en: 'Encode'),
+                      ? _lifeI18nText(
+                          context,
+                          'inline.plan295.crypto.working.c85bfe260dff',
+                        )
+                      : _lifeI18nText(
+                          context,
+                          'inline.plan295.life.encode.6e7a20a8b181',
+                        ),
                 ),
               ),
             ),
@@ -1100,25 +1148,29 @@ class _QrPageState extends State<_QrPage> {
         ),
         const SizedBox(height: 12),
         _LifeSegmentedField<ToolboxQrImageCodec>(
-          label: _lifeText(context, zh: '压缩格式', en: 'Payload image format'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.payload_image_format.0a99eddc7c03',
+          ),
           value: _imageCodec,
           options: const <_LifeOption<ToolboxQrImageCodec>>[
             _LifeOption<ToolboxQrImageCodec>(
               value: ToolboxQrImageCodec.jpeg,
-              labelZh: 'JPEG 小体积',
-              labelEn: 'JPEG small',
+              labelKey: 'inline.plan295.life.jpeg_small.1997f9b28b53',
             ),
             _LifeOption<ToolboxQrImageCodec>(
               value: ToolboxQrImageCodec.png,
-              labelZh: 'PNG 透明',
-              labelEn: 'PNG transparent',
+              labelKey: 'inline.plan295.life.png_transparent.3410600b4215',
             ),
           ],
           onChanged: (value) => setState(() => _imageCodec = value),
         ),
         const SizedBox(height: 12),
         _LifeSliderField(
-          label: _lifeText(context, zh: '图片最长边', en: 'Image max side'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.image_max_side.c730e8f20f0b',
+          ),
           valueText: '${_imageMaxSide.round()} px',
           value: _imageMaxSide,
           min: 24,
@@ -1128,7 +1180,10 @@ class _QrPageState extends State<_QrPage> {
         ),
         if (_imageCodec == ToolboxQrImageCodec.jpeg)
           _LifeSliderField(
-            label: _lifeText(context, zh: 'JPEG 质量', en: 'JPEG quality'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.jpeg_quality.6f509fde325f',
+            ),
             valueText: _imageJpegQuality.round().toString(),
             value: _imageJpegQuality,
             min: 24,
@@ -1138,19 +1193,21 @@ class _QrPageState extends State<_QrPage> {
           ),
         const SizedBox(height: 8),
         Text(
-          _lifeText(
+          _lifeI18nText(
             context,
-            zh: '图片二维码化会把缩略图压成 Data URL 写入码内，只适合很小的头像、图标或签名图。',
-            en: 'Image QR payload embeds a compressed thumbnail as a Data URL. Use it only for tiny avatars, icons, or signatures.',
+            'inline.plan295.life.image_qr_payload_embeds_a_compressed.80ed867294b8',
           ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 6),
         Text(
-          _lifeText(
+          _lifeI18nText(
             context,
-            zh: '导入后会自动压缩到约 ${_formatBytes(_qrImagePayloadTargetBytes)} 的二维码友好体积；超过 ${_formatBytes(_qrImageSourceReadMaxBytes)} 的超大源图仍需先裁切或压缩。',
-            en: 'Imported images are auto-compressed toward a QR-friendly ${_formatBytes(_qrImagePayloadTargetBytes)} payload. Sources above ${_formatBytes(_qrImageSourceReadMaxBytes)} still need cropping or compression first.',
+            'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.imported_images_are_auto_compressed_toward.8134915aa8',
+            params: <String, Object?>{
+              'p0': _formatBytes(_qrImagePayloadTargetBytes),
+              'p1': _formatBytes(_qrImageSourceReadMaxBytes),
+            },
           ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
@@ -1158,20 +1215,30 @@ class _QrPageState extends State<_QrPage> {
           const SizedBox(height: 10),
           _buildQrMessage(
             context,
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '${_imageSourceName ?? 'image'}：源图 ${imageData.sourceWidth}x${imageData.sourceHeight} / ${_formatBytes(imageData.sourceBytesLength)}，已压缩为 ${imageData.width}x${imageData.height} / ${_formatBytes(imageData.bytes.length)}，Data URL ${_formatBytes(imageData.dataUrlBytes)}，${imageData.compressionNote}，SHA ${imageData.sha256Short}',
-              en: '${_imageSourceName ?? 'image'}: source ${imageData.sourceWidth}x${imageData.sourceHeight} / ${_formatBytes(imageData.sourceBytesLength)}, compressed to ${imageData.width}x${imageData.height} / ${_formatBytes(imageData.bytes.length)}, Data URL ${_formatBytes(imageData.dataUrlBytes)}, ${imageData.compressionNote}, SHA ${imageData.sha256Short}',
+              'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.source_x_compressed_to_x_data.7b9ab906df',
+              params: <String, Object?>{
+                'p0': _imageSourceName ?? 'image',
+                'sourceWidth': imageData.sourceWidth,
+                'sourceHeight': imageData.sourceHeight,
+                'p3': _formatBytes(imageData.sourceBytesLength),
+                'width': imageData.width,
+                'height': imageData.height,
+                'p6': _formatBytes(imageData.bytes.length),
+                'p7': _formatBytes(imageData.dataUrlBytes),
+                'compressionNote': imageData.compressionNote,
+                'sha256Short': imageData.sha256Short,
+              },
             ),
           ),
           if (imageData.dataUrlBytes > _qrImagePayloadTargetBytes) ...<Widget>[
             const SizedBox(height: 8),
             _buildQrMessage(
               context,
-              _lifeText(
+              _lifeI18nText(
                 context,
-                zh: '已使用最小候选压缩，但仍超过建议体积。若扫码不稳定，请改用中心图模式或继续降低最长边。',
-                en: 'The smallest candidate still exceeds the target payload. If scanning is unstable, use center-image mode or lower the max side.',
+                'inline.plan295.life.the_smallest_candidate_still_exceeds.64b236e1af15',
               ),
               isWarning: true,
             ),
@@ -1183,22 +1250,26 @@ class _QrPageState extends State<_QrPage> {
 
   Widget _buildStylePanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '编码与样式', en: 'Encoding and style'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: 'QR Code 支持完整样式、容错和中心图；其他二维标准保留高对比预览。',
-        en: 'QR Code supports full style, error correction, and center images; other 2D standards use high-contrast previews.',
+        'inline.plan295.life.encoding_and_style.2ce1b1a5bb9c',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.qr_code_supports_full_style_error_co.aa0018f7aa4c',
       ),
       children: <Widget>[
         _LifeSegmentedField<ToolboxQrEncodingStandard>(
-          label: _lifeText(context, zh: '二维码编码标准', en: '2D code standard'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.2d_code_standard.21d7ab5ec718',
+          ),
           value: _standard,
           options: ToolboxQrEncodingStandard.values
               .map(
                 (standard) => _LifeOption<ToolboxQrEncodingStandard>(
                   value: standard,
-                  labelZh: standard.label,
-                  labelEn: standard.label,
+                  labelText: standard.label,
                 ),
               )
               .toList(growable: false),
@@ -1206,14 +1277,16 @@ class _QrPageState extends State<_QrPage> {
         ),
         const SizedBox(height: 12),
         _LifeSegmentedField<_QrCorrectionOption>(
-          label: _lifeText(context, zh: 'QR 容错等级', en: 'QR error correction'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.qr_error_correction.5c483d698bc4',
+          ),
           value: _correction,
           options: _QrCorrectionOption.values
               .map(
                 (option) => _LifeOption<_QrCorrectionOption>(
                   value: option,
-                  labelZh: option.label,
-                  labelEn: option.label,
+                  labelText: option.label,
                 ),
               )
               .toList(growable: false),
@@ -1221,19 +1294,41 @@ class _QrPageState extends State<_QrPage> {
         ),
         const SizedBox(height: 12),
         _LifeSegmentedField<int>(
-          label: _lifeText(context, zh: 'QR 版本快捷档', en: 'QR version quick'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.qr_version_quick.561f4820c2d6',
+          ),
           value: _version,
           options: const <_LifeOption<int>>[
             _LifeOption<int>(
               value: QrVersions.auto,
-              labelZh: '自动',
-              labelEn: 'Auto',
+              labelKey: 'asrLanguageAuto',
             ),
-            _LifeOption<int>(value: 10, labelZh: 'V10', labelEn: 'V10'),
-            _LifeOption<int>(value: 20, labelZh: 'V20', labelEn: 'V20'),
-            _LifeOption<int>(value: 25, labelZh: 'V25', labelEn: 'V25'),
-            _LifeOption<int>(value: 30, labelZh: 'V30', labelEn: 'V30'),
-            _LifeOption<int>(value: 40, labelZh: 'V40', labelEn: 'V40'),
+            _LifeOption<int>(
+              value: 10,
+              labelKey:
+                  'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_qr.v10_ac571d',
+            ),
+            _LifeOption<int>(
+              value: 20,
+              labelKey:
+                  'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_qr.v20_fab5ff',
+            ),
+            _LifeOption<int>(
+              value: 25,
+              labelKey:
+                  'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_qr.v25_0480ae',
+            ),
+            _LifeOption<int>(
+              value: 30,
+              labelKey:
+                  'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_qr.v30_e4282e',
+            ),
+            _LifeOption<int>(
+              value: 40,
+              labelKey:
+                  'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_qr.v40_6da9af',
+            ),
           ],
           onChanged: (value) => setState(() => _version = value),
         ),
@@ -1243,10 +1338,9 @@ class _QrPageState extends State<_QrPage> {
           initialValue: _version,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
-            labelText: _lifeText(
+            labelText: _lifeI18nText(
               context,
-              zh: '精确 QR 版本',
-              en: 'Exact QR version',
+              'inline.plan295.life.exact_qr_version.3830e439df7e',
             ),
           ),
           items: _qrVersionOptions
@@ -1270,12 +1364,16 @@ class _QrPageState extends State<_QrPage> {
         SwitchListTile(
           value: _gapless,
           contentPadding: EdgeInsets.zero,
-          title: Text(_lifeText(context, zh: '无缝模块', en: 'Gapless modules')),
-          subtitle: Text(
-            _lifeText(
+          title: Text(
+            _lifeI18nText(
               context,
-              zh: '关闭后模块之间有轻微间隔，更柔和但可能降低小尺寸可扫性。',
-              en: 'Disable for softer gaps between modules; small codes may scan less reliably.',
+              'inline.plan295.life.gapless_modules.2fc7d940fa65',
+            ),
+          ),
+          subtitle: Text(
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.disable_for_softer_gaps_between_modu.110f5ffde6a6',
             ),
           ),
           onChanged: (value) => setState(() => _gapless = value),
@@ -1283,13 +1381,17 @@ class _QrPageState extends State<_QrPage> {
         SwitchListTile(
           value: _useCenterImage,
           contentPadding: EdgeInsets.zero,
-          title: Text(_lifeText(context, zh: '使用中心图', en: 'Use center image')),
+          title: Text(
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.use_center_image.2362e3c5fee0',
+            ),
+          ),
           subtitle: Text(
             _logoName == null
-                ? _lifeText(
+                ? _lifeI18nText(
                     context,
-                    zh: '适合 Logo/头像叠加，不会把图片内容写入二维码。',
-                    en: 'Best for logos or avatars; the image content is not encoded.',
+                    'inline.plan295.life.best_for_logos_or_avatars_the_image.80817efa7469',
                   )
                 : _logoName!,
           ),
@@ -1305,7 +1407,12 @@ class _QrPageState extends State<_QrPage> {
                     ? _pickLogoImage
                     : null,
                 icon: const Icon(Icons.image_rounded),
-                label: Text(_lifeText(context, zh: '导入中心图', en: 'Import logo')),
+                label: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.import_logo.b86dc571dcf1',
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 10),
@@ -1314,7 +1421,10 @@ class _QrPageState extends State<_QrPage> {
                 onPressed: _pickQrImagePayload,
                 icon: const Icon(Icons.image_search_rounded),
                 label: Text(
-                  _lifeText(context, zh: '图片二维码化', en: 'Image to QR'),
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.image_to_qr.7120aa2909a9',
+                  ),
                 ),
               ),
             ),
@@ -1323,7 +1433,10 @@ class _QrPageState extends State<_QrPage> {
         if (_useCenterImage && _logoBytes != null) ...<Widget>[
           const SizedBox(height: 12),
           _LifeSliderField(
-            label: _lifeText(context, zh: '中心图尺寸', en: 'Logo size'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.logo_size.9f4473ac4c1a',
+            ),
             valueText: '${_logoSize.round()} px',
             value: _logoSize,
             min: 32,
@@ -1353,15 +1466,17 @@ class _QrPageState extends State<_QrPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            _lifeText(context, zh: '艺术二维码预设', en: 'Art QR preset'),
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.art_qr_preset.fd8ff2780384',
+            ),
             style: Theme.of(context).textTheme.labelLarge,
           ),
           const SizedBox(height: 6),
           Text(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '弱纠错 + 大版本 + 强定位保护会给半调画像更多模块密度；抗污损能力更弱，发布前务必实机扫码。',
-              en: 'Low correction + a larger version + stronger finder protection gives halftone art more module density; scan-test before publishing.',
+              'inline.plan295.life.low_correction_a_larger_version_stro.dbff1b4c862d',
             ),
             style: Theme.of(context).textTheme.bodySmall,
           ),
@@ -1371,10 +1486,9 @@ class _QrPageState extends State<_QrPage> {
             onPressed: _applyArtScanPreset,
             icon: const Icon(Icons.auto_fix_high_rounded),
             label: Text(
-              _lifeText(
+              _lifeI18nText(
                 context,
-                zh: '应用弱纠错定位码 V25',
-                en: 'Apply low-correction V25',
+                'inline.plan295.life.apply_low_correction_v25.e8382512f071',
               ),
             ),
           ),
@@ -1391,23 +1505,24 @@ class _QrPageState extends State<_QrPage> {
         KeyedSubtree(
           key: const ValueKey<String>('life-qr-visual-image-mode'),
           child: _LifeSegmentedField<_QrVisualImageMode>(
-            label: _lifeText(context, zh: 'QArt 艺术化', en: 'QArt style'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.qart_style.7f3ff909a4d2',
+            ),
             value: _visualImageMode,
             options: const <_LifeOption<_QrVisualImageMode>>[
               _LifeOption<_QrVisualImageMode>(
                 value: _QrVisualImageMode.none,
-                labelZh: '关闭',
-                labelEn: 'Off',
+                labelKey:
+                    'inline.ui.pages.toolbox_human_tests_aim_widgets.off_065d02',
               ),
               _LifeOption<_QrVisualImageMode>(
                 value: _QrVisualImageMode.artBlend,
-                labelZh: '半调画像',
-                labelEn: 'Halftone art',
+                labelKey: 'inline.plan295.life.halftone_art.c11b177c7c8e',
               ),
               _LifeOption<_QrVisualImageMode>(
                 value: _QrVisualImageMode.transparentArt,
-                labelZh: '透图融合',
-                labelEn: 'Transparent art',
+                labelKey: 'inline.plan295.life.transparent_art.8cb752a1fc52',
               ),
             ],
             onChanged: (value) => setState(() => _visualImageMode = value),
@@ -1416,10 +1531,9 @@ class _QrPageState extends State<_QrPage> {
         const SizedBox(height: 10),
         Text(
           _visualImageName == null
-              ? _lifeText(
+              ? _lifeI18nText(
                   context,
-                  zh: '导入图片后会自动压缩为渲染友好的艺术图，再按图片明暗重绘半调轮廓；定位角、时序线和校验信息保持高对比。',
-                  en: 'Imported images are auto-compressed for rendering, then redrawn as halftone QR contours while finder patterns, timing lines, and format areas stay high contrast.',
+                  'inline.plan295.life.imported_images_are_auto_compressed.61dde7fd9d94',
                 )
               : _visualImageName!,
           style: Theme.of(context).textTheme.bodySmall,
@@ -1439,8 +1553,14 @@ class _QrPageState extends State<_QrPage> {
                     : const Icon(Icons.auto_awesome_rounded),
                 label: Text(
                   _processingVisualImage
-                      ? _lifeText(context, zh: '压缩中...', en: 'Compressing...')
-                      : _lifeText(context, zh: '导入艺术图', en: 'Import art image'),
+                      ? _lifeI18nText(
+                          context,
+                          'inline.plan295.life.compressing.106856574f74',
+                        )
+                      : _lifeI18nText(
+                          context,
+                          'inline.plan295.life.import_art_image.f44cc074701d',
+                        ),
                 ),
               ),
             ),
@@ -1456,7 +1576,12 @@ class _QrPageState extends State<_QrPage> {
                         _visualImageMode = _QrVisualImageMode.none;
                       }),
                 icon: const Icon(Icons.clear_rounded),
-                label: Text(_lifeText(context, zh: '清除图片', en: 'Clear image')),
+                label: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.clear_image.b5894e6bfedb',
+                  ),
+                ),
               ),
             ),
           ],
@@ -1465,20 +1590,29 @@ class _QrPageState extends State<_QrPage> {
           const SizedBox(height: 10),
           _buildQrMessage(
             context,
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '${_visualImageName ?? 'art'}：源图 ${artImage.sourceWidth}x${artImage.sourceHeight} / ${_formatBytes(artImage.sourceBytesLength)}，艺术图 ${artImage.width}x${artImage.height} / ${_formatBytes(artImage.bytes.length)}，${artImage.compressionNote}，SHA ${artImage.sha256Short}',
-              en: '${_visualImageName ?? 'art'}: source ${artImage.sourceWidth}x${artImage.sourceHeight} / ${_formatBytes(artImage.sourceBytesLength)}, art image ${artImage.width}x${artImage.height} / ${_formatBytes(artImage.bytes.length)}, ${artImage.compressionNote}, SHA ${artImage.sha256Short}',
+              'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.source_x_art_image_x_sha.d3229ff047',
+              params: <String, Object?>{
+                'p0': _visualImageName ?? 'art',
+                'sourceWidth': artImage.sourceWidth,
+                'sourceHeight': artImage.sourceHeight,
+                'p3': _formatBytes(artImage.sourceBytesLength),
+                'width': artImage.width,
+                'height': artImage.height,
+                'p6': _formatBytes(artImage.bytes.length),
+                'compressionNote': artImage.compressionNote,
+                'sha256Short': artImage.sha256Short,
+              },
             ),
           ),
           if (artImage.bytes.length > _qrArtImageTargetBytes) ...<Widget>[
             const SizedBox(height: 8),
             _buildQrMessage(
               context,
-              _lifeText(
+              _lifeI18nText(
                 context,
-                zh: '已自动压缩艺术图，但仍超过建议渲染体积；若预览卡顿，请先裁切源图或换更简单的图片。',
-                en: 'The art image was compressed but still exceeds the rendering target; crop it or use a simpler image if preview feels slow.',
+                'inline.plan295.life.the_art_image_was_compressed_but_sti.341258029114',
               ),
               isWarning: true,
             ),
@@ -1488,7 +1622,10 @@ class _QrPageState extends State<_QrPage> {
             _visualImageMode != _QrVisualImageMode.none) ...<Widget>[
           const SizedBox(height: 12),
           _LifeSliderField(
-            label: _lifeText(context, zh: '可扫性保护层', en: 'Scan protection'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.scan_protection.d461fa0602e1',
+            ),
             valueText: '${(_visualImageVeil * 100).round()}%',
             value: _visualImageVeil,
             min: 0.18,
@@ -1498,7 +1635,10 @@ class _QrPageState extends State<_QrPage> {
           ),
           const SizedBox(height: 12),
           _LifeSliderField(
-            label: _lifeText(context, zh: '图像对比强度', en: 'Image contrast'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.image_contrast.d9ed4fa1b591',
+            ),
             valueText: '${(_artDarkness * 100).round()}%',
             value: _artDarkness,
             min: 0.30,
@@ -1508,7 +1648,10 @@ class _QrPageState extends State<_QrPage> {
           ),
           const SizedBox(height: 12),
           _LifeSliderField(
-            label: _lifeText(context, zh: '模块留白', en: 'Module spacing'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.module_spacing.26a247d972f5',
+            ),
             valueText: '${((1 - _artModuleScale) * 100).round()}%',
             value: _artModuleScale,
             min: 0.58,
@@ -1527,7 +1670,10 @@ class _QrPageState extends State<_QrPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          _lifeText(context, zh: '视觉样式', en: 'Visual style'),
+          _lifeI18nText(
+            context,
+            'inline.plan295.life.visual_style.247f862eec63',
+          ),
           style: theme.textTheme.labelLarge,
         ),
         const SizedBox(height: 8),
@@ -1565,24 +1711,33 @@ class _QrPageState extends State<_QrPage> {
     final theme = Theme.of(context);
     final valid = qrValidation?.isValid ?? true;
     final statusText = qrValidation == null
-        ? _lifeText(
+        ? _lifeI18nText(
             context,
-            zh: '${_standard.label} · ${_formatBytes(payload.byteLength)}',
-            en: '${_standard.label} · ${_formatBytes(payload.byteLength)}',
+            'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.text.1d74c2fc23',
+            params: <String, Object?>{
+              'label': _standard.label,
+              'p1': _formatBytes(payload.byteLength),
+            },
           )
         : valid
-        ? _lifeText(
+        ? _lifeI18nText(
             context,
-            zh: 'QR V${qrValidation.qrCode?.typeNumber ?? '-'} · ${_correction.label} · ${_formatBytes(payload.byteLength)}',
-            en: 'QR V${qrValidation.qrCode?.typeNumber ?? '-'} · ${_correction.label} · ${_formatBytes(payload.byteLength)}',
+            'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.qr_v.33a7886cc0',
+            params: <String, Object?>{
+              'p0': qrValidation.qrCode?.typeNumber ?? '-',
+              'label': _correction.label,
+              'p2': _formatBytes(payload.byteLength),
+            },
           )
-        : _lifeText(
+        : _lifeI18nText(
             context,
-            zh: '当前内容超过所选版本/容错可承载范围。',
-            en: 'Payload is too large for the selected version/correction.',
+            'inline.plan295.life.payload_is_too_large_for_the_selecte.2b9a95d059d1',
           );
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '预览与导出', en: 'Preview and export'),
+      title: _lifeI18nText(
+        context,
+        'inline.plan295.life.preview_and_export.bdecb876580e',
+      ),
       subtitle: statusText,
       children: <Widget>[
         Center(
@@ -1622,14 +1777,25 @@ class _QrPageState extends State<_QrPage> {
                   : const Icon(Icons.save_alt_rounded),
               label: Text(
                 _exporting
-                    ? _lifeText(context, zh: '导出中...', en: 'Exporting...')
-                    : _lifeText(context, zh: '导出 PNG', en: 'Export PNG'),
+                    ? _lifeI18nText(
+                        context,
+                        'inline.plan295.life.exporting.4a7bae70c078',
+                      )
+                    : _lifeI18nText(
+                        context,
+                        'inline.plan295.life.export_png.ed4ae20882a0',
+                      ),
               ),
             ),
             OutlinedButton.icon(
               onPressed: _copyPayload,
               icon: const Icon(Icons.copy_rounded),
-              label: Text(_lifeText(context, zh: '复制内容', en: 'Copy payload')),
+              label: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.copy_payload.269afe8b7ae5',
+                ),
+              ),
             ),
           ],
         ),
@@ -1792,7 +1958,11 @@ class _QrPageState extends State<_QrPage> {
       alignment: Alignment.center,
       color: theme.colorScheme.errorContainer,
       child: Text(
-        _lifeText(context, zh: '无法生成: $error', en: 'Cannot render: $error'),
+        _lifeI18nText(
+          context,
+          'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.cannot_render.9cf9b9f55e',
+          params: <String, Object?>{'error': error},
+        ),
         textAlign: TextAlign.center,
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.colorScheme.onErrorContainer,
@@ -1813,18 +1983,19 @@ class _QrPageState extends State<_QrPage> {
 
   Widget _buildBoundaryPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '扫码兼容提示', en: 'Scan compatibility'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '不同扫码器对 Wi-Fi、日历、联系人和非 QR 标准支持不同。',
-        en: 'Scanner support varies for Wi-Fi, calendar, contact, and non-QR standards.',
+        'inline.plan295.life.scan_compatibility.c0ba5a46f467',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.scanner_support_varies_for_wi_fi_cal.f992c44071c0',
       ),
       children: <Widget>[
         Text(
-          _lifeText(
+          _lifeI18nText(
             context,
-            zh: '图片二维码化并不适合大图传输。若只是想带品牌头像，请用中心图；若要把图片内容写入码内，请控制在小尺寸并实测可扫性。',
-            en: 'Image Data URL QR is not for large image transfer. Use center image for branding; if you embed image content, keep it tiny and test scanning.',
+            'inline.plan295.life.image_data_url_qr_is_not_for_large_i.d797a644d99f',
           ),
         ),
       ],
@@ -1872,27 +2043,39 @@ class _QrPageState extends State<_QrPage> {
 
   String _payloadLabel(ToolboxQrPayloadType type) {
     return switch (type) {
-      ToolboxQrPayloadType.text => _lifeText(context, zh: '文本', en: 'Text'),
+      ToolboxQrPayloadType.text => _lifeI18nText(
+        context,
+        'inline.plan295.life.text.1c9a2f580c63',
+      ),
       ToolboxQrPayloadType.url => 'URL',
       ToolboxQrPayloadType.wifi => 'Wi-Fi',
-      ToolboxQrPayloadType.contact => _lifeText(
+      ToolboxQrPayloadType.contact => _lifeI18nText(
         context,
-        zh: '联系人',
-        en: 'Contact',
+        'inline.plan295.life.contact.cc6e042a53c5',
       ),
-      ToolboxQrPayloadType.email => _lifeText(context, zh: '邮件', en: 'Email'),
-      ToolboxQrPayloadType.sms => _lifeText(context, zh: '短信', en: 'SMS'),
-      ToolboxQrPayloadType.phone => _lifeText(context, zh: '电话', en: 'Phone'),
-      ToolboxQrPayloadType.geo => _lifeText(context, zh: '地理位置', en: 'Geo'),
-      ToolboxQrPayloadType.calendar => _lifeText(
+      ToolboxQrPayloadType.email => _lifeI18nText(
         context,
-        zh: '日历',
-        en: 'Calendar',
+        'inline.plan295.life.email.2e64936b637c',
       ),
-      ToolboxQrPayloadType.imageDataUrl => _lifeText(
+      ToolboxQrPayloadType.sms => _lifeI18nText(
         context,
-        zh: '图片内容',
-        en: 'Image payload',
+        'inline.plan295.life.sms.f411838cab20',
+      ),
+      ToolboxQrPayloadType.phone => _lifeI18nText(
+        context,
+        'inline.plan295.life.phone.7c7063863a3f',
+      ),
+      ToolboxQrPayloadType.geo => _lifeI18nText(
+        context,
+        'inline.plan295.life.geo.719acfcbd2a3',
+      ),
+      ToolboxQrPayloadType.calendar => _lifeI18nText(
+        context,
+        'inline.plan295.life.calendar.8544aad665d9',
+      ),
+      ToolboxQrPayloadType.imageDataUrl => _lifeI18nText(
+        context,
+        'inline.plan295.life.image_payload.57b9b18b768d',
       ),
     };
   }

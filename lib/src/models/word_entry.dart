@@ -428,9 +428,9 @@ class WordEntry {
       if (cleaned.length == values.length) {
         output.add(field);
       } else {
-        output.add(field.copyWith(
-          value: cleaned.length == 1 ? cleaned.first : cleaned,
-        ));
+        output.add(
+          field.copyWith(value: cleaned.length == 1 ? cleaned.first : cleaned),
+        );
       }
     }
     return output;

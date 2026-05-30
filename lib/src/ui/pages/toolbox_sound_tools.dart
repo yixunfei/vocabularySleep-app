@@ -14,7 +14,6 @@ import '../../services/toolbox_audio_service.dart';
 import '../../services/toolbox_focus_beats_prefs_service.dart';
 import '../../services/toolbox_woodfish_prefs_service.dart';
 import '../../state/app_state_provider.dart';
-import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 import 'toolbox_tool_shell.dart';
 

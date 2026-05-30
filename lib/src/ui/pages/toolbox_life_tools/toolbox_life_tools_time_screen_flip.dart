@@ -4,43 +4,38 @@ enum _ClockFlipStyle { classic, smooth, quick }
 
 class _ClockFlipStyleSpec {
   const _ClockFlipStyleSpec({
-    required this.labelZh,
-    required this.labelEn,
+    required this.labelKey,
     required this.duration,
     required this.curve,
     required this.perspective,
   });
 
-  final String labelZh;
-  final String labelEn;
+  final String labelKey;
   final Duration duration;
   final Curve curve;
   final double perspective;
 
   String label(BuildContext context) {
-    return _lifeText(context, zh: labelZh, en: labelEn);
+    return _lifeI18nText(context, labelKey);
   }
 }
 
 const Map<_ClockFlipStyle, _ClockFlipStyleSpec> _clockFlipSpecs =
     <_ClockFlipStyle, _ClockFlipStyleSpec>{
       _ClockFlipStyle.classic: _ClockFlipStyleSpec(
-        labelZh: '经典翻页',
-        labelEn: 'Classic flip',
+        labelKey: 'inline.plan295.life.classic_flip.892bc25f0550',
         duration: Duration(milliseconds: 640),
         curve: Curves.easeInOutCubic,
         perspective: 0.0019,
       ),
       _ClockFlipStyle.smooth: _ClockFlipStyleSpec(
-        labelZh: '顺滑翻页',
-        labelEn: 'Smooth page',
+        labelKey: 'inline.plan295.life.smooth_page.abec263a6f41',
         duration: Duration(milliseconds: 780),
         curve: Curves.easeInOutSine,
         perspective: 0.0016,
       ),
       _ClockFlipStyle.quick: _ClockFlipStyleSpec(
-        labelZh: '快速翻页',
-        labelEn: 'Quick flip',
+        labelKey: 'inline.plan295.life.quick_flip.cbf4c283cd37',
         duration: Duration(milliseconds: 480),
         curve: Curves.fastOutSlowIn,
         perspective: 0.0022,
@@ -51,18 +46,15 @@ const List<_LifeOption<_ClockFlipStyle>> _clockFlipOptions =
     <_LifeOption<_ClockFlipStyle>>[
       _LifeOption(
         value: _ClockFlipStyle.classic,
-        labelZh: '经典翻页',
-        labelEn: 'Classic flip',
+        labelKey: 'inline.plan295.life.classic_flip.892bc25f0550',
       ),
       _LifeOption(
         value: _ClockFlipStyle.smooth,
-        labelZh: '顺滑翻页',
-        labelEn: 'Smooth page',
+        labelKey: 'inline.plan295.life.smooth_page.abec263a6f41',
       ),
       _LifeOption(
         value: _ClockFlipStyle.quick,
-        labelZh: '快速翻页',
-        labelEn: 'Quick flip',
+        labelKey: 'inline.plan295.life.quick_flip.cbf4c283cd37',
       ),
     ];
 

@@ -51,10 +51,8 @@ class _WordEditorPageState extends ConsumerState<WordEditorPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            pickUiText(
-              AppI18n(state.uiLanguage),
-              zh: '请先输入单词',
-              en: 'Please enter a word first.',
+            AppI18n(state.uiLanguage).t(
+              'inline.ui.pages.word_editor_page.please_enter_a_word_first_be1137',
             ),
           ),
         ),
@@ -108,11 +106,9 @@ class _WordEditorPageState extends ConsumerState<WordEditorPage> {
   Future<void> _addField(AppI18n i18n) async {
     final label = await showTextPromptDialog(
       context: context,
-      title: pickUiText(i18n, zh: '新增字段', en: 'Add field'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '输入展示名称，系统会自动生成字段 key',
-        en: 'Enter a display label and a field key will be generated.',
+      title: i18n.t('inline.ui.pages.word_editor_page.add_field_698af3'),
+      subtitle: i18n.t(
+        'inline.ui.pages.word_editor_page.enter_a_display_label_and_a_field_key_will_be_generated_a5f5af',
       ),
     );
     if (!mounted || label == null || label.trim().isEmpty) return;
@@ -149,8 +145,8 @@ class _WordEditorPageState extends ConsumerState<WordEditorPage> {
       appBar: AppBar(
         title: Text(
           widget.original == null
-              ? pickUiText(i18n, zh: '添加单词', en: 'Add word')
-              : pickUiText(i18n, zh: '编辑单词', en: 'Edit word'),
+              ? i18n.t('addWordTitle')
+              : i18n.t('editWordTitle'),
         ),
         actions: <Widget>[
           PopupMenuButton<String>(
@@ -199,20 +195,32 @@ class _WordEditorPageState extends ConsumerState<WordEditorPage> {
             itemBuilder: (context) => <PopupMenuEntry<String>>[
               PopupMenuItem(
                 value: 'examples',
-                child: Text(pickUiText(i18n, zh: '添加例句', en: 'Add examples')),
+                child: Text(
+                  i18n.t(
+                    'inline.ui.pages.word_editor_page.add_examples_426596',
+                  ),
+                ),
               ),
               PopupMenuItem(
                 value: 'etymology',
-                child: Text(pickUiText(i18n, zh: '添加词源', en: 'Add etymology')),
+                child: Text(
+                  i18n.t(
+                    'inline.ui.pages.word_editor_page.add_etymology_1403cc',
+                  ),
+                ),
               ),
               PopupMenuItem(
                 value: 'memory',
-                child: Text(pickUiText(i18n, zh: '添加记忆法', en: 'Add memory')),
+                child: Text(
+                  i18n.t('inline.ui.pages.word_editor_page.add_memory_101a3d'),
+                ),
               ),
               PopupMenuItem(
                 value: 'custom',
                 child: Text(
-                  pickUiText(i18n, zh: '添加自定义字段', en: 'Add custom field'),
+                  i18n.t(
+                    'inline.ui.pages.word_editor_page.add_custom_field_5855af',
+                  ),
                 ),
               ),
             ],
@@ -220,7 +228,7 @@ class _WordEditorPageState extends ConsumerState<WordEditorPage> {
           IconButton(
             onPressed: _save,
             icon: const Icon(Icons.check_rounded),
-            tooltip: pickUiText(i18n, zh: '保存', en: 'Save'),
+            tooltip: i18n.t('save'),
           ),
         ],
       ),
@@ -230,11 +238,9 @@ class _WordEditorPageState extends ConsumerState<WordEditorPage> {
           TextField(
             controller: _wordController,
             decoration: InputDecoration(
-              labelText: pickUiText(i18n, zh: '单词', en: 'Word'),
-              hintText: pickUiText(
-                i18n,
-                zh: '例如：serendipity',
-                en: 'For example: serendipity',
+              labelText: i18n.t('fieldWord'),
+              hintText: i18n.t(
+                'inline.ui.pages.word_editor_page.for_example_serendipity_cbba60',
               ),
             ),
           ),
@@ -257,13 +263,17 @@ class _WordEditorPageState extends ConsumerState<WordEditorPage> {
           OutlinedButton.icon(
             onPressed: () => _addField(i18n),
             icon: const Icon(Icons.add_rounded),
-            label: Text(pickUiText(i18n, zh: '新增字段', en: 'Add field')),
+            label: Text(
+              i18n.t('inline.ui.pages.word_editor_page.add_field_698af3'),
+            ),
           ),
           const SizedBox(height: 20),
           FilledButton.icon(
             onPressed: _save,
             icon: const Icon(Icons.save_rounded),
-            label: Text(pickUiText(i18n, zh: '保存修改', en: 'Save changes')),
+            label: Text(
+              i18n.t('inline.ui.pages.word_editor_page.save_changes_a21d29'),
+            ),
           ),
         ],
       ),

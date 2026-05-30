@@ -107,11 +107,13 @@ class _DateCalculatorPageState extends State<_DateCalculatorPage> {
     final targetProgress = _targetProgress;
     final lifeProgress = _lifeProgress;
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '日期计算器', en: 'Date calculator'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '秒级时间差、多单位加减、周期倒计时、目标进度和生命烛光。',
-        en: 'Second-level diff, multi-unit math, period countdowns, target progress, and life candle.',
+        'inline.plan295.life.date_calculator.20630c7c40d6',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.second_level_diff_multi_unit_math_pe.4ac23781e172',
       ),
       child: Column(
         key: const ValueKey<String>('life-date-calculator-page'),
@@ -122,7 +124,10 @@ class _DateCalculatorPageState extends State<_DateCalculatorPage> {
             difference: difference,
             offsetResult: offsetResult,
             targetLabel: _targetLabel.text.trim().isEmpty
-                ? _lifeText(context, zh: '目标日期', en: 'Target date')
+                ? _lifeI18nText(
+                    context,
+                    'inline.plan295.life.target_date.b5c47edc1dbd',
+                  )
                 : _targetLabel.text.trim(),
             targetProgress: targetProgress,
             lifeProgress: lifeProgress,
@@ -150,31 +155,30 @@ class _DateCalculatorPageState extends State<_DateCalculatorPage> {
     final options = <_LifeOption<_DateCalculatorTab>>[
       const _LifeOption(
         value: _DateCalculatorTab.difference,
-        labelZh: '时间差',
-        labelEn: 'Diff',
+        labelKey: 'inline.plan295.life.diff.270701e692f0',
       ),
       const _LifeOption(
         value: _DateCalculatorTab.offset,
-        labelZh: '加减',
-        labelEn: 'Add',
+        labelKey: 'inline.plan295.life.add.39b10e367972',
       ),
       const _LifeOption(
         value: _DateCalculatorTab.progress,
-        labelZh: '进度',
-        labelEn: 'Progress',
+        labelKey:
+            'inline.ui.pages.toolbox_human_tests_auditory.progress_444768',
       ),
       const _LifeOption(
         value: _DateCalculatorTab.life,
-        labelZh: '烛光',
-        labelEn: 'Candle',
+        labelKey: 'inline.plan295.life.candle.f1484f322547',
       ),
     ];
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '模式', en: 'Mode'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '同一个开始时间可在不同页签中复用，所有展示都精确到秒。',
-        en: 'The same start time can be reused across tabs; all outputs are second-level.',
+        'inline.ui.pages.toolbox_human_tests_aim.mode_35c458',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.the_same_start_time_can_be_reused_ac.9d43f66d8e66',
       ),
       children: <Widget>[
         Wrap(
@@ -197,21 +201,29 @@ class _DateCalculatorPageState extends State<_DateCalculatorPage> {
   Widget _differencePanel(ToolboxDateDifference difference) {
     return _LifeSettingsPanel(
       key: const ValueKey<String>('date-diff-panel'),
-      title: _lifeText(context, zh: '秒级时间差', en: 'Second-level difference'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '选择开始与结束时间，结果同时展示日历拆分和总量换算。',
-        en: 'Pick start and end time; see both calendar breakdown and total units.',
+        'inline.plan295.life.second_level_difference.b2cf02c928b2',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.pick_start_and_end_time_see_both_cal.c88e61ae8e4d',
       ),
       children: <Widget>[
         _DateTimePickerTile(
-          label: _lifeText(context, zh: '开始时间', en: 'Start time'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.start_time.434d6ffe05f0',
+          ),
           value: _start,
           onChanged: (value) => setState(() => _start = value),
         ),
         const SizedBox(height: 10),
         _DateTimePickerTile(
-          label: _lifeText(context, zh: '结束时间', en: 'End time'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.end_time.9f449c073148',
+          ),
           value: _end,
           onChanged: (value) => setState(() => _end = value),
         ),
@@ -219,22 +231,34 @@ class _DateCalculatorPageState extends State<_DateCalculatorPage> {
         _DateMetricGrid(
           children: <Widget>[
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '日历拆分', en: 'Calendar split'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.calendar_split.8adc56c6cf2d',
+              ),
               value: _formatDifferenceParts(difference),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '总秒数', en: 'Total seconds'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.total_seconds.4c2ed13c57e3',
+              ),
               value: _signed(difference, '${difference.totalSeconds} s'),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '总天数', en: 'Total days'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.total_days.7cc9b8d7254a',
+              ),
               value: _signed(
                 difference,
                 '${difference.totalDays.toStringAsFixed(4)} d',
               ),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '约合年', en: 'Approx years'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.approx_years.fc837ba37a46',
+              ),
               value: _signed(
                 difference,
                 '${difference.approxYears.toStringAsFixed(6)} y',
@@ -250,32 +274,38 @@ class _DateCalculatorPageState extends State<_DateCalculatorPage> {
     final resultDiff = _service.difference(_start, result.end);
     return _LifeSettingsPanel(
       key: const ValueKey<String>('date-offset-panel'),
-      title: _lifeText(context, zh: '多单位加减', en: 'Multi-unit date math'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '年可输入 0.5、1.25 或 50%。整数年/月按日历推进，小数部分折算为秒。',
-        en: 'Years accept 0.5, 1.25, or 50%. Whole years/months are calendar-aware; fractional parts become seconds.',
+        'inline.plan295.life.multi_unit_date_math.922f0aaf7217',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.years_accept_0_5_1_25_or_50_whole_ye.71634a244240',
       ),
       children: <Widget>[
         _DateTimePickerTile(
-          label: _lifeText(context, zh: '基准时间', en: 'Base time'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.base_time.77be4f01251a',
+          ),
           value: _start,
           onChanged: (value) => setState(() => _start = value),
         ),
         const SizedBox(height: 12),
         _LifeSegmentedField<ToolboxDateMathDirection>(
-          label: _lifeText(context, zh: '方向', en: 'Direction'),
+          label: _lifeI18nText(
+            context,
+            'inline.ui.pages.toolbox_daily_choice.daily_choice_modules.direction_d4bbf8',
+          ),
           value: _direction,
           options: const <_LifeOption<ToolboxDateMathDirection>>[
             _LifeOption(
               value: ToolboxDateMathDirection.add,
-              labelZh: '向后加',
-              labelEn: 'Add',
+              labelKey: 'inline.plan295.life.add.fabcfd81e721',
             ),
             _LifeOption(
               value: ToolboxDateMathDirection.subtract,
-              labelZh: '向前减',
-              labelEn: 'Subtract',
+              labelKey: 'inline.plan295.life.subtract.b3155762fcf5',
             ),
           ],
           onChanged: (value) => setState(() => _direction = value),
@@ -283,22 +313,29 @@ class _DateCalculatorPageState extends State<_DateCalculatorPage> {
         const SizedBox(height: 12),
         _DateFieldGrid(
           children: <Widget>[
-            _numberField(_years, '年', 'Years', '0.5 / 50%'),
-            _numberField(_months, '月', 'Months', '2'),
-            _numberField(_days, '天', 'Days', '7'),
-            _numberField(_hours, '小时', 'Hours', '3'),
-            _numberField(_minutes, '分钟', 'Minutes', '15'),
-            _numberField(_seconds, '秒', 'Seconds', '30'),
+            _numberField(
+              _years,
+              'life.date_calculator.field.years',
+              '0.5 / 50%',
+            ),
+            _numberField(_months, 'life.date_calculator.field.months', '2'),
+            _numberField(_days, 'life.date_calculator.field.days', '7'),
+            _numberField(_hours, 'life.date_calculator.field.hours', '3'),
+            _numberField(_minutes, 'life.date_calculator.field.minutes', '15'),
+            _numberField(_seconds, 'life.date_calculator.field.seconds', '30'),
           ],
         ),
         const SizedBox(height: 14),
         _DateResultPanel(
-          title: _lifeText(context, zh: '计算结果', en: 'Result'),
-          value: _formatDateTime(result.end),
-          subtitle: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '实际偏移 ${_formatDurationCompact(resultDiff)}',
-            en: 'Actual offset ${_formatDurationCompact(resultDiff)}',
+            'inline.plan295.life.result.e1843313cacb',
+          ),
+          value: _formatDateTime(result.end),
+          subtitle: _lifeI18nText(
+            context,
+            'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.date.calculator.actual_offset.19216c7ed2',
+            params: <String, Object?>{'p0': _formatDurationCompact(resultDiff)},
           ),
         ),
       ],
@@ -311,37 +348,51 @@ class _DateCalculatorPageState extends State<_DateCalculatorPage> {
       key: const ValueKey<String>('date-progress-panel'),
       children: <Widget>[
         _LifeSettingsPanel(
-          title: _lifeText(context, zh: '目标日期进度', en: 'Target progress'),
-          subtitle: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '适合入学、毕业、高考、期末、放假、周末或节日倒计时。',
-            en: 'Useful for school entry, graduation, exams, breaks, weekends, or holidays.',
+            'inline.plan295.life.target_progress.94e804115d3a',
+          ),
+          subtitle: _lifeI18nText(
+            context,
+            'inline.plan295.life.useful_for_school_entry_graduation_e.d4c14204e313',
           ),
           children: <Widget>[
             TextField(
               controller: _targetLabel,
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
-                labelText: _lifeText(context, zh: '目标名称', en: 'Target label'),
+                labelText: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.target_label.8c6e4236e07b',
+                ),
                 border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 10),
             _DateTimePickerTile(
-              label: _lifeText(context, zh: '开始时间', en: 'Start time'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.start_time.434d6ffe05f0',
+              ),
               value: _targetStart,
               onChanged: (value) => setState(() => _targetStart = value),
             ),
             const SizedBox(height: 10),
             _DateTimePickerTile(
-              label: _lifeText(context, zh: '目标时间', en: 'Target time'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.target_time.fb199602506d',
+              ),
               value: _target,
               onChanged: (value) => setState(() => _target = value),
             ),
             const SizedBox(height: 14),
             _TimeProgressTile(
               title: _targetLabel.text.trim().isEmpty
-                  ? _lifeText(context, zh: '目标日期', en: 'Target date')
+                  ? _lifeI18nText(
+                      context,
+                      'inline.plan295.life.target_date.b5c47edc1dbd',
+                    )
                   : _targetLabel.text.trim(),
               subtitle: _targetStatus(targetProgress),
               progress: targetProgress.progress,
@@ -353,11 +404,13 @@ class _DateCalculatorPageState extends State<_DateCalculatorPage> {
         ),
         const SizedBox(height: 12),
         _LifeSettingsPanel(
-          title: _lifeText(context, zh: '当前周期剩余', en: 'Current period left'),
-          subtitle: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '今年、本月、本周、本日、本小时会每秒动态变化，低层级可折叠查看。',
-            en: 'Year, month, week, day, and hour update every second; smaller units can stay collapsed.',
+            'inline.plan295.life.current_period_left.dbb487a745db',
+          ),
+          subtitle: _lifeI18nText(
+            context,
+            'inline.plan295.life.year_month_week_day_and_hour_update.9617ff997f2e',
           ),
           children: <Widget>[
             for (final item in periodItems.reversed)
@@ -365,10 +418,12 @@ class _DateCalculatorPageState extends State<_DateCalculatorPage> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: _TimeProgressTile(
                   title: _periodLabel(item.key),
-                  subtitle: _lifeText(
+                  subtitle: _lifeI18nText(
                     context,
-                    zh: '剩余 ${_formatDuration(item.remaining)}',
-                    en: '${_formatDuration(item.remaining)} left',
+                    'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.date.calculator.left.e9e7ca90ca',
+                    params: <String, Object?>{
+                      'p0': _formatDuration(item.remaining),
+                    },
                   ),
                   progress: item.progress,
                   remaining: item.remaining,
@@ -385,15 +440,20 @@ class _DateCalculatorPageState extends State<_DateCalculatorPage> {
   Widget _lifePanel(ToolboxLifeCandleProgress progress) {
     return _LifeSettingsPanel(
       key: const ValueKey<String>('date-life-panel'),
-      title: _lifeText(context, zh: '生命烛光', en: 'Life candle'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '默认预期生命使用 79 年，可按个人假设调整；这只是时间感知工具，不是医学预测。',
-        en: 'Default life expectancy is 79 years and can be adjusted; this is a time-awareness tool, not medical prediction.',
+        'inline.plan295.life.life_candle.f910cc75cdfb',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.default_life_expectancy_is_79_years.8a0902435c7a',
       ),
       children: <Widget>[
         _DateTimePickerTile(
-          label: _lifeText(context, zh: '出生时间', en: 'Birth time'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.birth_time.b4755bb9debb',
+          ),
           value: _birth,
           onChanged: (value) => setState(() => _birth = value),
         ),
@@ -404,15 +464,13 @@ class _DateCalculatorPageState extends State<_DateCalculatorPage> {
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           onChanged: (_) => setState(() {}),
           decoration: InputDecoration(
-            labelText: _lifeText(
+            labelText: _lifeI18nText(
               context,
-              zh: '预期生命（年）',
-              en: 'Expected life years',
+              'inline.plan295.life.expected_life_years.611818c77016',
             ),
-            helperText: _lifeText(
+            helperText: _lifeI18nText(
               context,
-              zh: '可填 79 或 80.5，默认使用 79 年。',
-              en: 'Try 79 or 80.5; default is 79 years.',
+              'inline.plan295.life.try_79_or_80_5_default_is_79_years.212c31d77546',
             ),
             border: const OutlineInputBorder(),
           ),
@@ -423,19 +481,31 @@ class _DateCalculatorPageState extends State<_DateCalculatorPage> {
         _DateMetricGrid(
           children: <Widget>[
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '已经燃烧', en: 'Burned'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.burned.67ea6dd11f0a',
+              ),
               value: _percent(progress.burnedRatio),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '预计终点', en: 'Expected end'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.expected_end.f0d5506c3954',
+              ),
               value: _formatDate(progress.expectedEnd),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '已过', en: 'Elapsed'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.elapsed.ecf0061dfbf0',
+              ),
               value: _formatDuration(progress.elapsed),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '剩余', en: 'Remaining'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.remaining.4d5c7bf5ae9e',
+              ),
               value: _formatDuration(progress.remaining),
             ),
           ],
@@ -446,8 +516,7 @@ class _DateCalculatorPageState extends State<_DateCalculatorPage> {
 
   Widget _numberField(
     TextEditingController controller,
-    String zh,
-    String en,
+    String labelKey,
     String hint,
   ) {
     return TextField(
@@ -455,7 +524,7 @@ class _DateCalculatorPageState extends State<_DateCalculatorPage> {
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       onChanged: (_) => setState(() {}),
       decoration: InputDecoration(
-        labelText: _lifeText(context, zh: zh, en: en),
+        labelText: _lifeI18nText(context, labelKey),
         hintText: hint,
         border: const OutlineInputBorder(),
       ),
@@ -464,11 +533,26 @@ class _DateCalculatorPageState extends State<_DateCalculatorPage> {
 
   String _periodLabel(String key) {
     return switch (key) {
-      'year' => _lifeText(context, zh: '今年剩余', en: 'This year left'),
-      'month' => _lifeText(context, zh: '本月剩余', en: 'This month left'),
-      'week' => _lifeText(context, zh: '本周剩余', en: 'This week left'),
-      'day' => _lifeText(context, zh: '本日剩余', en: 'Today left'),
-      'hour' => _lifeText(context, zh: '本小时剩余', en: 'This hour left'),
+      'year' => _lifeI18nText(
+        context,
+        'inline.plan295.life.this_year_left.e6f2d74d9d66',
+      ),
+      'month' => _lifeI18nText(
+        context,
+        'inline.plan295.life.this_month_left.00d520a15e56',
+      ),
+      'week' => _lifeI18nText(
+        context,
+        'inline.plan295.life.this_week_left.78d6668eec67',
+      ),
+      'day' => _lifeI18nText(
+        context,
+        'inline.plan295.life.today_left.758e1d7a7533',
+      ),
+      'hour' => _lifeI18nText(
+        context,
+        'inline.plan295.life.this_hour_left.4a5131becc91',
+      ),
       _ => key,
     };
   }
@@ -486,15 +570,21 @@ class _DateCalculatorPageState extends State<_DateCalculatorPage> {
 
   String _targetStatus(ToolboxTargetProgress progress) {
     if (progress.isComplete) {
-      return _lifeText(context, zh: '目标已到达', en: 'Target reached');
+      return _lifeI18nText(
+        context,
+        'inline.plan295.life.target_reached.5a1afb6862c8',
+      );
     }
     if (progress.isBeforeStart) {
-      return _lifeText(context, zh: '尚未开始', en: 'Not started');
+      return _lifeI18nText(
+        context,
+        'inline.plan295.life.not_started.b41198fd9a56',
+      );
     }
-    return _lifeText(
+    return _lifeI18nText(
       context,
-      zh: '剩余 ${_formatDuration(progress.remaining)}',
-      en: '${_formatDuration(progress.remaining)} left',
+      'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.date.calculator.left.e9e7ca90ca',
+      params: <String, Object?>{'p0': _formatDuration(progress.remaining)},
     );
   }
 
@@ -568,21 +658,18 @@ class _DateCalculatorStage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final title = switch (tab) {
-      _DateCalculatorTab.difference => _lifeText(
+      _DateCalculatorTab.difference => _lifeI18nText(
         context,
-        zh: '精确到秒的时间距离',
-        en: 'Second-level time distance',
+        'inline.plan295.life.second_level_time_distance.3214ccd8af98',
       ),
-      _DateCalculatorTab.offset => _lifeText(
+      _DateCalculatorTab.offset => _lifeI18nText(
         context,
-        zh: '从基准时间推导结果',
-        en: 'Derive from a base time',
+        'inline.plan295.life.derive_from_a_base_time.8dee3f2bf0ef',
       ),
       _DateCalculatorTab.progress => targetLabel,
-      _DateCalculatorTab.life => _lifeText(
+      _DateCalculatorTab.life => _lifeI18nText(
         context,
-        zh: '生命烛光正在燃烧',
-        en: 'Life candle is burning',
+        'inline.plan295.life.life_candle_is_burning.e3d861014e9c',
       ),
     };
     final headline = switch (tab) {
@@ -645,7 +732,10 @@ class _DateCalculatorStage extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  _lifeText(context, zh: '日期计算器', en: 'Date calculator'),
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.date_calculator.20630c7c40d6',
+                  ),
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
@@ -804,7 +894,10 @@ class _DateTimePickerTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    _lifeText(context, zh: '选择秒', en: 'Second'),
+                    _lifeI18nText(
+                      context,
+                      'inline.plan295.life.second.77129f7d5400',
+                    ),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w900,
                     ),
@@ -839,7 +932,12 @@ class _DateTimePickerTile extends StatelessWidget {
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: () => Navigator.of(context).pop(selected),
-                      child: Text(_lifeText(context, zh: '确定', en: 'Done')),
+                      child: Text(
+                        _lifeI18nText(
+                          context,
+                          'inline.plan295.life.done.38144b570df2',
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -1066,7 +1164,10 @@ class _LifeCandleVisual extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Text(
-                  _lifeText(context, zh: '剩余蜡身', en: 'Wax left'),
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.wax_left.a509a4d08edf',
+                  ),
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: Colors.white.withValues(alpha: 0.72),
                   ),
@@ -1081,20 +1182,24 @@ class _LifeCandleVisual extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  _lifeText(
+                  _lifeI18nText(
                     context,
-                    zh: '已燃 ${_formatDurationStatic(progress.elapsed)}',
-                    en: 'Burned ${_formatDurationStatic(progress.elapsed)}',
+                    'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.date.calculator.burned.5707697670',
+                    params: <String, Object?>{
+                      'p0': _formatDurationStatic(progress.elapsed),
+                    },
                   ),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: Colors.white.withValues(alpha: 0.72),
                   ),
                 ),
                 Text(
-                  _lifeText(
+                  _lifeI18nText(
                     context,
-                    zh: '预计还剩 ${_formatDurationStatic(progress.remaining)}',
-                    en: '${_formatDurationStatic(progress.remaining)} estimated left',
+                    'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.date.calculator.estimated_left.c791d75a00',
+                    params: <String, Object?>{
+                      'p0': _formatDurationStatic(progress.remaining),
+                    },
                   ),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: Colors.white.withValues(alpha: 0.72),

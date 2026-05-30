@@ -31,84 +31,41 @@ enum _VerbalMemoryArrowDirection {
 class _VerbalMemoryDomainSpec {
   const _VerbalMemoryDomainSpec({
     required this.domain,
-    required this.zh,
-    required this.en,
-    required this.ja,
-    required this.de,
-    required this.fr,
-    required this.es,
-    required this.ru,
+    required this.labelKey,
     required this.accent,
   });
 
   final _VerbalMemoryDomain domain;
-  final String zh;
-  final String en;
-  final String ja;
-  final String de;
-  final String fr;
-  final String es;
-  final String ru;
+  final String labelKey;
   final Color accent;
 
-  String label(AppI18n i18n) =>
-      pickUiText(i18n, zh: zh, en: en, ja: ja, de: de, fr: fr, es: es, ru: ru);
+  String label(AppI18n i18n) => i18n.t(labelKey);
 }
 
 class _VerbalMemoryWordSpec {
-  const _VerbalMemoryWordSpec({
-    required this.zh,
-    required this.en,
-    required this.ja,
-    required this.de,
-    required this.fr,
-    required this.es,
-    required this.ru,
-    required this.domain,
-  });
-
-  final String zh;
-  final String en;
-  final String ja;
-  final String de;
-  final String fr;
-  final String es;
-  final String ru;
+  const _VerbalMemoryWordSpec({required this.labelKey, required this.domain});
+  final String labelKey;
   final _VerbalMemoryDomain domain;
 
-  String get key => '${domain.name}:$en';
+  String get key => '${domain.name}:$labelKey';
 
-  String label(AppI18n i18n) =>
-      pickUiText(i18n, zh: zh, en: en, ja: ja, de: de, fr: fr, es: es, ru: ru);
+  String label(AppI18n i18n) => i18n.t(labelKey);
 }
 
 class _VerbalMemoryArrowSpec {
   const _VerbalMemoryArrowSpec({
     required this.direction,
     required this.icon,
-    required this.zh,
-    required this.en,
-    required this.ja,
-    required this.de,
-    required this.fr,
-    required this.es,
-    required this.ru,
+    required this.labelKey,
     required this.symbol,
   });
 
   final _VerbalMemoryArrowDirection direction;
   final IconData icon;
-  final String zh;
-  final String en;
-  final String ja;
-  final String de;
-  final String fr;
-  final String es;
-  final String ru;
+  final String labelKey;
   final String symbol;
 
-  String label(AppI18n i18n) =>
-      pickUiText(i18n, zh: zh, en: en, ja: ja, de: de, fr: fr, es: es, ru: ru);
+  String label(AppI18n i18n) => i18n.t(labelKey);
 }
 
 class _VerbalMemoryRoundResult {

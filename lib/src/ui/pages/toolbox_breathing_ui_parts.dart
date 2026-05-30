@@ -317,7 +317,7 @@ class BreathingStageTimeline extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${stage.seconds}${pickUiText(i18n, zh: '秒', en: 's')}',
+            '${stage.seconds}${i18n.t('toolbox.breathing.seconds_unit')}',
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: Colors.white70),

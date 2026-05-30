@@ -140,10 +140,9 @@ class _BmiToolPageState extends State<_BmiToolPage> {
         ageYears <= 0) {
       setState(() {
         _assessment = null;
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '请输入有效的身高、体重和年龄数值。',
-          en: 'Enter valid height, weight, and age values.',
+          'inline.plan295.life.enter_valid_height_weight_and_age_va.ab4da8a8a07b',
         );
       });
       return;
@@ -201,139 +200,148 @@ class _BmiToolPageState extends State<_BmiToolPage> {
 
   String _formatKcal(double? value) {
     return value == null
-        ? _lifeText(context, zh: '15 岁以上估算', en: '15+ only')
+        ? _lifeI18nText(context, 'inline.plan295.life.15_only.312e80b5b643')
         : '${value.round()} kcal';
   }
 
   String _categoryLabel(ToolboxBmiAssessment assessment) {
     if (assessment.adultCategory != null) {
       return switch (assessment.adultCategory!) {
-        ToolboxAdultBmiCategory.underweight => _lifeText(
+        ToolboxAdultBmiCategory.underweight => _lifeI18nText(
           context,
-          zh: '偏瘦',
-          en: 'Underweight',
+          'inline.plan295.life.underweight.61b7bf870a16',
         ),
-        ToolboxAdultBmiCategory.healthy => _lifeText(
+        ToolboxAdultBmiCategory.healthy => _lifeI18nText(
           context,
-          zh: '正常',
-          en: 'Healthy',
+          'inline.plan295.life.healthy.209c9c817b4d',
         ),
-        ToolboxAdultBmiCategory.overweight => _lifeText(
+        ToolboxAdultBmiCategory.overweight => _lifeI18nText(
           context,
-          zh: '超重',
-          en: 'Overweight',
+          'inline.plan295.life.overweight.ec2760428635',
         ),
-        ToolboxAdultBmiCategory.obesityClass1 => _lifeText(
+        ToolboxAdultBmiCategory.obesityClass1 =>
+          assessment.adultStandard == ToolboxAdultBmiStandard.china
+              ? _lifeI18nText(
+                  context,
+                  'inline.plan295.life.obesity.4f357b4ba36c',
+                )
+              : _lifeI18nText(
+                  context,
+                  'inline.plan295.life.obesity_class_i.501708346ad8',
+                ),
+        ToolboxAdultBmiCategory.obesityClass2 => _lifeI18nText(
           context,
-          zh: assessment.adultStandard == ToolboxAdultBmiStandard.china
-              ? '肥胖'
-              : '肥胖 I 级',
-          en: assessment.adultStandard == ToolboxAdultBmiStandard.china
-              ? 'Obesity'
-              : 'Obesity class I',
+          'inline.plan295.life.obesity_class_ii.9d364fef85fa',
         ),
-        ToolboxAdultBmiCategory.obesityClass2 => _lifeText(
+        ToolboxAdultBmiCategory.obesityClass3 => _lifeI18nText(
           context,
-          zh: '肥胖 II 级',
-          en: 'Obesity class II',
-        ),
-        ToolboxAdultBmiCategory.obesityClass3 => _lifeText(
-          context,
-          zh: '肥胖 III 级',
-          en: 'Obesity class III',
+          'inline.plan295.life.obesity_class_iii.35ebadf0b91f',
         ),
       };
     }
 
     if (assessment.youthCategory != null) {
       return switch (assessment.youthCategory!) {
-        ToolboxYouthBmiCategory.underweight => _lifeText(
+        ToolboxYouthBmiCategory.underweight => _lifeI18nText(
           context,
-          zh: '偏瘦',
-          en: 'Underweight',
+          'inline.plan295.life.underweight.61b7bf870a16',
         ),
-        ToolboxYouthBmiCategory.healthy => _lifeText(
+        ToolboxYouthBmiCategory.healthy => _lifeI18nText(
           context,
-          zh: '健康体重',
-          en: 'Healthy',
+          'inline.plan295.life.healthy.03063e5eb73e',
         ),
-        ToolboxYouthBmiCategory.overweight => _lifeText(
+        ToolboxYouthBmiCategory.overweight => _lifeI18nText(
           context,
-          zh: '超重',
-          en: 'Overweight',
+          'inline.plan295.life.overweight.ec2760428635',
         ),
-        ToolboxYouthBmiCategory.obesity => _lifeText(
+        ToolboxYouthBmiCategory.obesity => _lifeI18nText(
           context,
-          zh: '肥胖',
-          en: 'Obesity',
+          'inline.plan295.life.obesity.4f357b4ba36c',
         ),
-        ToolboxYouthBmiCategory.severeObesity => _lifeText(
+        ToolboxYouthBmiCategory.severeObesity => _lifeI18nText(
           context,
-          zh: '严重肥胖参考',
-          en: 'Severe obesity ref.',
+          'inline.plan295.life.severe_obesity_ref.db5b167245e9',
         ),
       };
     }
 
-    return _lifeText(context, zh: '不适用 BMI-for-age', en: 'BMI-for-age N/A');
+    return _lifeI18nText(
+      context,
+      'inline.plan295.life.bmi_for_age_n_a.dcb8f5769a39',
+    );
   }
 
   String _ageBandLabel(ToolboxBmiAssessment assessment) {
     return switch (assessment.ageBand) {
-      'infant' => _lifeText(context, zh: '2 岁以下', en: 'Under 2'),
-      'child' => _lifeText(context, zh: '儿童', en: 'Child'),
-      'teen' => _lifeText(context, zh: '青少年', en: 'Teen'),
-      _ => _lifeText(context, zh: '成人', en: 'Adult'),
+      'infant' => _lifeI18nText(
+        context,
+        'inline.plan295.life.under_2.51142f91ff98',
+      ),
+      'child' => _lifeI18nText(
+        context,
+        'inline.plan295.life.child.129a643afd19',
+      ),
+      'teen' => _lifeI18nText(context, 'inline.plan295.life.teen.61d5a345cad9'),
+      _ => _lifeI18nText(context, 'inline.plan295.life.adult.f7d107f73731'),
     };
   }
 
   String _adultStandardLabel(ToolboxAdultBmiStandard standard) {
     return switch (standard) {
-      ToolboxAdultBmiStandard.china => _lifeText(
+      ToolboxAdultBmiStandard.china => _lifeI18nText(
         context,
-        zh: '中国成人',
-        en: 'China adult',
+        'inline.plan295.life.china_adult.a5fdbdf5331f',
       ),
-      ToolboxAdultBmiStandard.who => _lifeText(
+      ToolboxAdultBmiStandard.who => _lifeI18nText(
         context,
-        zh: 'WHO 国际',
-        en: 'WHO global',
+        'inline.plan295.life.who_global.7eb593cba4bf',
       ),
     };
   }
 
   String _waistHeightLabel(ToolboxWaistHeightCategory? category) {
     return switch (category) {
-      ToolboxWaistHeightCategory.low => _lifeText(context, zh: '偏低', en: 'Low'),
-      ToolboxWaistHeightCategory.healthy => _lifeText(
+      ToolboxWaistHeightCategory.low => _lifeI18nText(
         context,
-        zh: '较理想',
-        en: 'Favorable',
+        'inline.plan295.life.low.d7b3d5ef736d',
       ),
-      ToolboxWaistHeightCategory.increased => _lifeText(
+      ToolboxWaistHeightCategory.healthy => _lifeI18nText(
         context,
-        zh: '偏高',
-        en: 'Increased',
+        'inline.plan295.life.favorable.4ccfe4403736',
       ),
-      ToolboxWaistHeightCategory.high => _lifeText(
+      ToolboxWaistHeightCategory.increased => _lifeI18nText(
         context,
-        zh: '较高',
-        en: 'High',
+        'inline.plan295.life.increased.cca70a79e6b8',
       ),
-      null => _lifeText(context, zh: '未填写', en: 'Not set'),
+      ToolboxWaistHeightCategory.high => _lifeI18nText(
+        context,
+        'inline.plan295.life.high.af6cdf59a984',
+      ),
+      null => _lifeI18nText(
+        context,
+        'inline.plan295.life.not_set.e56ed29d26e6',
+      ),
     };
   }
 
   String _waistHipLabel(ToolboxWaistHipCategory? category) {
     return switch (category) {
-      ToolboxWaistHipCategory.low => _lifeText(context, zh: '较低', en: 'Lower'),
-      ToolboxWaistHipCategory.increased => _lifeText(
+      ToolboxWaistHipCategory.low => _lifeI18nText(
         context,
-        zh: '偏高',
-        en: 'Increased',
+        'inline.plan295.life.lower.d3009191d0e1',
       ),
-      ToolboxWaistHipCategory.high => _lifeText(context, zh: '较高', en: 'High'),
-      null => _lifeText(context, zh: '未填写', en: 'Not set'),
+      ToolboxWaistHipCategory.increased => _lifeI18nText(
+        context,
+        'inline.plan295.life.increased.cca70a79e6b8',
+      ),
+      ToolboxWaistHipCategory.high => _lifeI18nText(
+        context,
+        'inline.plan295.life.high.af6cdf59a984',
+      ),
+      null => _lifeI18nText(
+        context,
+        'inline.plan295.life.not_set.e56ed29d26e6',
+      ),
     };
   }
 
@@ -356,46 +364,46 @@ class _BmiToolPageState extends State<_BmiToolPage> {
 
   String _summaryText(ToolboxBmiAssessment assessment) {
     if (assessment.isTooYoungForBmiForAge) {
-      return _lifeText(
+      return _lifeI18nText(
         context,
-        zh: '2 岁以下通常不使用 BMI-for-age 分类，请优先参考儿保生长曲线和医生评估。',
-        en: 'BMI-for-age categories are not used under age 2; use pediatric growth charts and clinician assessment.',
+        'inline.plan295.life.bmi_for_age_categories_are_not_used.fbcb75fc887d',
       );
     }
     if (assessment.isYouth) {
-      return _lifeText(
+      return _lifeI18nText(
         context,
-        zh: '当前按 CDC 2-19 岁 BMI-for-age 口径估算，百分位会同时考虑年龄和性别。',
-        en: 'This uses CDC BMI-for-age for ages 2-19, so age and sex both affect the percentile.',
+        'inline.plan295.life.this_uses_cdc_bmi_for_age_for_ages_2.b0411a1b2f20',
       );
     }
 
     final delta = assessment.weightKg - (assessment.targetMidKg ?? 0);
     if (delta.abs() < 0.25) {
-      return _lifeText(
+      return _lifeI18nText(
         context,
-        zh: '当前已经很接近所选成人健康区间的中位参考值。',
-        en: 'You are already very close to the midpoint of the selected adult healthy range.',
+        'inline.plan295.life.you_are_already_very_close_to_the_mi.361a6ad82522',
       );
     }
     if (delta > 0) {
-      return _lifeText(
+      return _lifeI18nText(
         context,
-        zh: '若以所选成人健康区间中位为目标，约需减重 ${_formatNumber(delta)} kg。',
-        en: 'To return near the midpoint of the selected adult healthy range, lose about ${_formatNumber(delta)} kg.',
+        'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.bmi.to_return_near_the_midpoint_of.e730e0c4b6',
+        params: <String, Object?>{'p0': _formatNumber(delta)},
       );
     }
-    return _lifeText(
+    return _lifeI18nText(
       context,
-      zh: '若以所选成人健康区间中位为目标，约需增重 ${_formatNumber(delta.abs())} kg。',
-      en: 'To return near the midpoint of the selected adult healthy range, gain about ${_formatNumber(delta.abs())} kg.',
+      'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.bmi.to_return_near_the_midpoint_of.8adb82e824',
+      params: <String, Object?>{'p0': _formatNumber(delta.abs())},
     );
   }
 
   String _percentileText(ToolboxBmiAssessment assessment) {
     final percentile = assessment.percentile;
     if (percentile == null) {
-      return _lifeText(context, zh: '成人口径', en: 'Adult bands');
+      return _lifeI18nText(
+        context,
+        'inline.plan295.life.adult_bands.4f970de24fcf',
+      );
     }
     return 'P${percentile.clamp(0, 99.9).toStringAsFixed(1)}';
   }
@@ -409,30 +417,33 @@ class _BmiToolPageState extends State<_BmiToolPage> {
     final assessment = _assessment;
 
     return ToolboxToolPage(
-      title: _lifeText(context, zh: 'BMI 计算器', en: 'BMI calculator'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '按年龄、性别和成人/儿童青少年不同口径判断，并补充围度、健康体重和日常能量估算。',
-        en: 'Uses age, sex, and adult/youth-specific standards, with waist metrics, healthy weight range, and energy estimates.',
+        'inline.plan295.life.bmi_calculator.9086420041e2',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.uses_age_sex_and_adult_youth_specifi.2f4ca28c0358',
       ),
       child: Column(
         key: const ValueKey<String>('life-bmi-page'),
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '结果摘要', en: 'Summary'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '先看当前 BMI、分类口径和最关键的下一步参考。',
-              en: 'Start with BMI, classification method, and the next reference point.',
+              'inline.plan295.life.summary.12c5faf8adff',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.start_with_bmi_classification_method.582267f61797',
             ),
             children: <Widget>[
               Text(
                 assessment == null
-                    ? _lifeText(
+                    ? _lifeI18nText(
                         context,
-                        zh: '输入身高、体重和年龄后即可计算。',
-                        en: 'Enter height, weight, and age to calculate.',
+                        'inline.plan295.life.enter_height_weight_and_age_to_calcu.a78ad2e57bb4',
                       )
                     : 'BMI ${assessment.bmi.toStringAsFixed(2)}',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -446,26 +457,37 @@ class _BmiToolPageState extends State<_BmiToolPage> {
                   runSpacing: 8,
                   children: <Widget>[
                     ToolboxMetricCard(
-                      label: _lifeText(context, zh: '当前分类', en: 'Category'),
+                      label: _lifeI18nText(
+                        context,
+                        'inline.plan295.life.category.90f3927c2616',
+                      ),
                       value: _categoryLabel(assessment),
                     ),
                     ToolboxMetricCard(
-                      label: _lifeText(context, zh: '年龄口径', en: 'Age band'),
+                      label: _lifeI18nText(
+                        context,
+                        'inline.plan295.life.age_band.8009bbc01eb7',
+                      ),
                       value: _ageBandLabel(assessment),
                     ),
                     ToolboxMetricCard(
                       label: assessment.isYouth
-                          ? _lifeText(context, zh: '百分位', en: 'Percentile')
-                          : _lifeText(context, zh: '参考体系', en: 'Standard'),
+                          ? _lifeI18nText(
+                              context,
+                              'inline.plan295.life.percentile.55f78aa1157d',
+                            )
+                          : _lifeI18nText(
+                              context,
+                              'inline.plan295.life.standard.813df13bd85b',
+                            ),
                       value: assessment.isYouth
                           ? _percentileText(assessment)
                           : _adultStandardLabel(assessment.adultStandard),
                     ),
                     ToolboxMetricCard(
-                      label: _lifeText(
+                      label: _lifeI18nText(
                         context,
-                        zh: '健康体重',
-                        en: 'Healthy weight',
+                        'inline.plan295.life.healthy_weight.71a351a65a0c',
                       ),
                       value:
                           '${_formatKg(assessment.healthyMinKg)} - ${_formatKg(assessment.healthyMaxKg)}',
@@ -522,44 +544,42 @@ class _BmiToolPageState extends State<_BmiToolPage> {
 
   Widget _buildInputsPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '输入参数', en: 'Inputs'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(context, 'inline.plan295.life.inputs.d92817b25e8b'),
+      subtitle: _lifeI18nText(
         context,
-        zh: '年龄会决定成人固定阈值或儿童青少年 BMI-for-age 百分位；腰围和臀围可留空。',
-        en: 'Age selects adult fixed bands or youth BMI-for-age percentiles; waist and hip are optional.',
+        'inline.plan295.life.age_selects_adult_fixed_bands_or_you.bd448fe03227',
       ),
       children: <Widget>[
         _LifeSegmentedField<_BmiUnitSystem>(
-          label: _lifeText(context, zh: '单位体系', en: 'Unit system'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.unit_system.e0e95207980a',
+          ),
           value: _unitSystem,
           options: const <_LifeOption<_BmiUnitSystem>>[
             _LifeOption<_BmiUnitSystem>(
               value: _BmiUnitSystem.metric,
-              labelZh: '公制',
-              labelEn: 'Metric',
+              labelKey: 'inline.plan295.life.metric.0dd4d104cba9',
             ),
             _LifeOption<_BmiUnitSystem>(
               value: _BmiUnitSystem.imperial,
-              labelZh: '英制',
-              labelEn: 'Imperial',
+              labelKey: 'inline.plan295.life.imperial.19af27a190e0',
             ),
           ],
           onChanged: _switchUnitSystem,
         ),
         const SizedBox(height: 14),
         _LifeSegmentedField<ToolboxBmiSex>(
-          label: _lifeText(context, zh: '性别', en: 'Sex'),
+          label: _lifeI18nText(context, 'inline.plan295.life.sex.86ed0776d413'),
           value: _sex,
           options: const <_LifeOption<ToolboxBmiSex>>[
             _LifeOption<ToolboxBmiSex>(
               value: ToolboxBmiSex.female,
-              labelZh: '女性',
-              labelEn: 'Female',
+              labelKey: 'inline.plan295.life.female.1b99cf49303d',
             ),
             _LifeOption<ToolboxBmiSex>(
               value: ToolboxBmiSex.male,
-              labelZh: '男性',
-              labelEn: 'Male',
+              labelKey: 'inline.plan295.life.male.37c4fe0fd6d1',
             ),
           ],
           onChanged: (value) {
@@ -569,18 +589,19 @@ class _BmiToolPageState extends State<_BmiToolPage> {
         ),
         const SizedBox(height: 14),
         _LifeSegmentedField<ToolboxAdultBmiStandard>(
-          label: _lifeText(context, zh: '成人分类口径', en: 'Adult standard'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.adult_standard.5362c0ae21ab',
+          ),
           value: _adultStandard,
           options: const <_LifeOption<ToolboxAdultBmiStandard>>[
             _LifeOption<ToolboxAdultBmiStandard>(
               value: ToolboxAdultBmiStandard.china,
-              labelZh: '中国成人',
-              labelEn: 'China adult',
+              labelKey: 'inline.plan295.life.china_adult.a5fdbdf5331f',
             ),
             _LifeOption<ToolboxAdultBmiStandard>(
               value: ToolboxAdultBmiStandard.who,
-              labelZh: 'WHO 国际',
-              labelEn: 'WHO global',
+              labelKey: 'inline.plan295.life.who_global.7eb593cba4bf',
             ),
           ],
           onChanged: (value) {
@@ -596,7 +617,10 @@ class _BmiToolPageState extends State<_BmiToolPage> {
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
-            labelText: _lifeText(context, zh: '年龄（岁）', en: 'Age (years)'),
+            labelText: _lifeI18nText(
+              context,
+              'inline.plan295.life.age_years.c137ad5977f7',
+            ),
           ),
         ),
         const SizedBox(height: 10),
@@ -612,10 +636,9 @@ class _BmiToolPageState extends State<_BmiToolPage> {
                 ),
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
-                  labelText: _lifeText(
+                  labelText: _lifeI18nText(
                     context,
-                    zh: '身高（cm）',
-                    en: 'Height (cm)',
+                    'inline.plan295.life.height_cm.0c8357e5f04b',
                   ),
                 ),
               ),
@@ -629,10 +652,9 @@ class _BmiToolPageState extends State<_BmiToolPage> {
                 ),
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
-                  labelText: _lifeText(
+                  labelText: _lifeI18nText(
                     context,
-                    zh: '体重（kg）',
-                    en: 'Weight (kg)',
+                    'inline.plan295.life.weight_kg.ef646ae6445b',
                   ),
                 ),
               ),
@@ -653,10 +675,9 @@ class _BmiToolPageState extends State<_BmiToolPage> {
                       ),
                       decoration: InputDecoration(
                         border: const OutlineInputBorder(),
-                        labelText: _lifeText(
+                        labelText: _lifeI18nText(
                           context,
-                          zh: '身高（ft）',
-                          en: 'Height (ft)',
+                          'inline.plan295.life.height_ft.e01f2d5a54d7',
                         ),
                       ),
                     ),
@@ -672,10 +693,9 @@ class _BmiToolPageState extends State<_BmiToolPage> {
                       ),
                       decoration: InputDecoration(
                         border: const OutlineInputBorder(),
-                        labelText: _lifeText(
+                        labelText: _lifeI18nText(
                           context,
-                          zh: '身高（in）',
-                          en: 'Height (in)',
+                          'inline.plan295.life.height_in.86ac2a496b8e',
                         ),
                       ),
                     ),
@@ -692,10 +712,9 @@ class _BmiToolPageState extends State<_BmiToolPage> {
                 ),
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
-                  labelText: _lifeText(
+                  labelText: _lifeI18nText(
                     context,
-                    zh: '体重（lb）',
-                    en: 'Weight (lb)',
+                    'inline.plan295.life.weight_lb.dd03c3439475',
                   ),
                 ),
               ),
@@ -714,7 +733,10 @@ class _BmiToolPageState extends State<_BmiToolPage> {
                 ),
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
-                  labelText: _lifeText(context, zh: '腰围（cm）', en: 'Waist (cm)'),
+                  labelText: _lifeI18nText(
+                    context,
+                    'inline.plan295.life.waist_cm.c9b8761c8bac',
+                  ),
                 ),
               ),
             ),
@@ -729,7 +751,10 @@ class _BmiToolPageState extends State<_BmiToolPage> {
                 ),
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
-                  labelText: _lifeText(context, zh: '臀围（cm）', en: 'Hip (cm)'),
+                  labelText: _lifeI18nText(
+                    context,
+                    'inline.plan295.life.hip_cm.45f1df799bae',
+                  ),
                 ),
               ),
             ),
@@ -737,33 +762,33 @@ class _BmiToolPageState extends State<_BmiToolPage> {
         ),
         const SizedBox(height: 14),
         _LifeSegmentedField<ToolboxBmiActivityLevel>(
-          label: _lifeText(context, zh: '活动水平', en: 'Activity level'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.activity_level.e733be40f988',
+          ),
           value: _activityLevel,
           options: const <_LifeOption<ToolboxBmiActivityLevel>>[
             _LifeOption<ToolboxBmiActivityLevel>(
               value: ToolboxBmiActivityLevel.sedentary,
-              labelZh: '久坐',
-              labelEn: 'Sedentary',
+              labelKey: 'inline.plan295.life.sedentary.a20627eff9a5',
             ),
             _LifeOption<ToolboxBmiActivityLevel>(
               value: ToolboxBmiActivityLevel.light,
-              labelZh: '轻活动',
-              labelEn: 'Light',
+              labelKey: 'inline.plan295.life.light.c69f32f5a55d',
             ),
             _LifeOption<ToolboxBmiActivityLevel>(
               value: ToolboxBmiActivityLevel.moderate,
-              labelZh: '中等',
-              labelEn: 'Moderate',
+              labelKey:
+                  'inline.ui.pages.toolbox_human_tests_auditory_lab.moderate_9b29aa',
             ),
             _LifeOption<ToolboxBmiActivityLevel>(
               value: ToolboxBmiActivityLevel.active,
-              labelZh: '活跃',
-              labelEn: 'Active',
+              labelKey:
+                  'inline.ui.pages.focus_page_workspace_editor.active_e1209c',
             ),
             _LifeOption<ToolboxBmiActivityLevel>(
               value: ToolboxBmiActivityLevel.veryActive,
-              labelZh: '高活跃',
-              labelEn: 'Very active',
+              labelKey: 'inline.plan295.life.very_active.f18038e67f21',
             ),
           ],
           onChanged: (value) {
@@ -780,12 +805,22 @@ class _BmiToolPageState extends State<_BmiToolPage> {
               key: const ValueKey<String>('life-bmi-calculate'),
               onPressed: _compute,
               icon: const Icon(Icons.monitor_weight_rounded),
-              label: Text(_lifeText(context, zh: '重新计算', en: 'Recalculate')),
+              label: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.recalculate.a8068b0023c7',
+                ),
+              ),
             ),
             OutlinedButton.icon(
               onPressed: _resetSample,
               icon: const Icon(Icons.refresh_rounded),
-              label: Text(_lifeText(context, zh: '恢复示例', en: 'Reset sample')),
+              label: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.daily_choice.reset_sample.27e2114c44ac',
+                ),
+              ),
             ),
           ],
         ),
@@ -801,11 +836,13 @@ class _BmiToolPageState extends State<_BmiToolPage> {
         ? null
         : assessment.weightKg - assessment.targetMidKg!;
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '专业辅助工具', en: 'Practical tools'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '围度和能量估算用于日常管理，不作为诊断结论。',
-        en: 'Waist and energy estimates are for day-to-day tracking, not diagnosis.',
+        'inline.plan295.life.practical_tools.91c92c97e4da',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.waist_and_energy_estimates_are_for_d.d8ad9a7d07ae',
       ),
       children: <Widget>[
         Wrap(
@@ -813,41 +850,58 @@ class _BmiToolPageState extends State<_BmiToolPage> {
           runSpacing: 8,
           children: <Widget>[
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '腰高比', en: 'Waist/height'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.waist_height.c8f51b9d9723',
+              ),
               value:
                   '${_ratioText(assessment.waistToHeightRatio)} · ${_waistHeightLabel(assessment.waistHeightCategory)}',
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '腰臀比', en: 'Waist/hip'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.waist_hip.1f95ac51355c',
+              ),
               value:
                   '${_ratioText(assessment.waistToHipRatio)} · ${_waistHipLabel(assessment.waistHipCategory)}',
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '基础代谢', en: 'BMR'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.bmr.658c9f7f778f',
+              ),
               value: _formatKcal(assessment.bmrKcal),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '日常总消耗', en: 'TDEE'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.tdee.ffebc7ef297d',
+              ),
               value: _formatKcal(assessment.tdeeKcal),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '目标差量', en: 'Target gap'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.target_gap.cbb5c0058552',
+              ),
               value: targetDelta == null
                   ? '-'
                   : '${targetDelta >= 0 ? '-' : '+'}${_formatNumber(targetDelta.abs())} kg',
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '当前体重', en: 'Current weight'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.current_weight.127b51ee9c29',
+              ),
               value: _formatKg(assessment.weightKg),
             ),
           ],
         ),
         const SizedBox(height: 12),
         Text(
-          _lifeText(
+          _lifeI18nText(
             context,
-            zh: 'Mifflin-St Jeor 公式更适合成年人和较大青少年静息代谢估算；儿童、孕期、运动员、疾病恢复期或饮食控制前应使用专业评估。',
-            en: 'Mifflin-St Jeor is an estimate for adults and older teens. Children, pregnancy, athletes, recovery, or dieting plans need professional assessment.',
+            'inline.plan295.life.mifflin_st_jeor_is_an_estimate_for_a.2d0a88057b5c',
           ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
@@ -857,18 +911,19 @@ class _BmiToolPageState extends State<_BmiToolPage> {
 
   Widget _buildReferencePanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '参考说明', en: 'Reference'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '本页用于日常自查和趋势管理，不替代医生、营养师或儿保评估。',
-        en: 'This page is for daily self-checks and trend tracking, not a substitute for clinical or pediatric assessment.',
+        'inline.plan295.life.reference.3f6ba13500cd',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.this_page_is_for_daily_self_checks_a.1ade456429e2',
       ),
       children: <Widget>[
         Text(
-          _lifeText(
+          _lifeI18nText(
             context,
-            zh: '成人：中国参考使用 BMI < 18.5 偏瘦，18.5-23.9 正常，24-27.9 超重，28 及以上肥胖；WHO 国际参考使用 18.5、25、30、35、40 分界。儿童青少年：2-19 岁按 CDC BMI-for-age 百分位，低于 P5 偏瘦，P5-P85 健康，P85-P95 超重，P95 及以上肥胖。',
-            en: 'Adults: China bands use <18.5 underweight, 18.5-23.9 healthy, 24-27.9 overweight, and >=28 obesity; WHO bands use 18.5, 25, 30, 35, and 40 cut points. Youth: ages 2-19 use CDC BMI-for-age percentiles: <P5 underweight, P5-P85 healthy, P85-P95 overweight, and >=P95 obesity.',
+            'inline.plan295.life.adults_china_bands_use_18_5_underwei.10be25df0eb5',
           ),
         ),
       ],

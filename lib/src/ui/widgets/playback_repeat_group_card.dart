@@ -81,10 +81,18 @@ class PlaybackRepeatGroupCard extends StatelessWidget {
 
   String _quickValueLabel(AppI18n i18n, int value) {
     return switch (value) {
-      0 => pickUiText(i18n, zh: '全部设为 0', en: 'Set all to 0'),
-      1 => pickUiText(i18n, zh: '全部设为 1', en: 'Set all to 1'),
-      2 => pickUiText(i18n, zh: '全部设为 2', en: 'Set all to 2'),
-      _ => pickUiText(i18n, zh: '全部设为 $value', en: 'Set all to $value'),
+      0 => i18n.t(
+        'inline.ui.widgets.playback_repeat_group_card.set_all_to_0_7181f1',
+      ),
+      1 => i18n.t(
+        'inline.ui.widgets.playback_repeat_group_card.set_all_to_1_1bb9a7',
+      ),
+      2 => i18n.t(
+        'inline.ui.widgets.playback_repeat_group_card.set_all_to_2_bfd4bd',
+      ),
+      _ => i18n.t(
+        'inline.ui.widgets.playback_repeat_group_card.set_all_to_value_774c60',
+      ),
     };
   }
 }

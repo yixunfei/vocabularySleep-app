@@ -64,17 +64,20 @@ void main() {
     );
   });
 
-  test('falls back to console-only logging when path provider is unavailable', () async {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(pathProviderChannel, null);
-    AppLogService.instance.resetForTest();
+  test(
+    'falls back to console-only logging when path provider is unavailable',
+    () async {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(pathProviderChannel, null);
+      AppLogService.instance.resetForTest();
 
-    final service = AppLogService.instance;
-    service.i('test', 'plugin unavailable');
-    await service.flushForTest();
+      final service = AppLogService.instance;
+      service.i('test', 'plugin unavailable');
+      await service.flushForTest();
 
-    expect(await service.getLogFilePath(), isNull);
-    expect(service.isFileLoggingDisabled, isTrue);
-    expect(service.fileLoggingDisableReason, isNotNull);
-  });
+      expect(await service.getLogFilePath(), isNull);
+      expect(service.isFileLoggingDisabled, isTrue);
+      expect(service.fileLoggingDisableReason, isNotNull);
+    },
+  );
 }

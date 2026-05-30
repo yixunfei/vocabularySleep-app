@@ -133,12 +133,23 @@ void main() {
         profile: ToolboxOfferSelectService.defaultProfile,
         candidates: <OfferSelectCandidate>[harsh],
       );
-      final titles = result.leader!.flags.map((flag) => flag.titleEn).toList();
+      final titleKeys = result.leader!.flags
+          .map((flag) => flag.titleKey)
+          .toList();
 
-      expect(titles, contains('Negative cashflow'));
-      expect(titles, contains('High time cost'));
-      expect(titles, contains('High health load'));
-      expect(titles, contains('Variable pay risk'));
+      expect(
+        titleKeys,
+        contains('life.offer_select.flag.negative_cashflow.title'),
+      );
+      expect(
+        titleKeys,
+        contains('life.offer_select.flag.high_time_cost.title'),
+      );
+      expect(
+        titleKeys,
+        contains('life.offer_select.flag.high_health_load.title'),
+      );
+      expect(titleKeys, contains('life.offer_select.flag.variable_pay.title'));
     });
   });
 }

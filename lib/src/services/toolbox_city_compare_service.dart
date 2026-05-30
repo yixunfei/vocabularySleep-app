@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 
+import 'toolbox_i18n_text_ref.dart';
+
 enum CityCompareHousingType {
   centerOneBedroom,
   suburbOneBedroom,
@@ -182,21 +184,17 @@ class CityCompareSalarySnapshot {
 class CityCompareReferenceItem {
   const CityCompareReferenceItem({
     required this.category,
-    required this.labelZh,
-    required this.labelEn,
+    required this.labelKey,
     required this.currentValue,
     required this.targetValue,
-    required this.unitZh,
-    required this.unitEn,
+    required this.unitKey,
   });
 
   final String category;
-  final String labelZh;
-  final String labelEn;
+  final String labelKey;
   final double currentValue;
   final double targetValue;
-  final String unitZh;
-  final String unitEn;
+  final String unitKey;
 
   double get delta => targetValue - currentValue;
   double get ratio => currentValue == 0 ? 0 : targetValue / currentValue;
@@ -205,17 +203,13 @@ class CityCompareReferenceItem {
 class CityCompareInsight {
   const CityCompareInsight({
     required this.level,
-    required this.titleZh,
-    required this.titleEn,
-    required this.bodyZh,
-    required this.bodyEn,
+    required this.titleKey,
+    required this.body,
   });
 
   final String level;
-  final String titleZh;
-  final String titleEn;
-  final String bodyZh;
-  final String bodyEn;
+  final String titleKey;
+  final ToolboxI18nTextRef body;
 }
 
 class CityCompareResult {
@@ -768,219 +762,171 @@ class ToolboxCityCompareService {
     return <CityCompareReferenceItem>[
       CityCompareReferenceItem(
         category: 'salary',
-        labelZh: '社保基数下限',
-        labelEn: 'Social security base min',
+        labelKey: 'life.city_compare.reference.social_security_base_min',
         currentValue: currentCity.socialSecurityBaseMin,
         targetValue: targetCity.socialSecurityBaseMin,
-        unitZh: '元/月',
-        unitEn: 'CNY / month',
+        unitKey: 'life.city_compare.unit.cny_month',
       ),
       CityCompareReferenceItem(
         category: 'salary',
-        labelZh: '社保基数上限',
-        labelEn: 'Social security base max',
+        labelKey: 'life.city_compare.reference.social_security_base_max',
         currentValue: currentCity.socialSecurityBaseMax,
         targetValue: targetCity.socialSecurityBaseMax,
-        unitZh: '元/月',
-        unitEn: 'CNY / month',
+        unitKey: 'life.city_compare.unit.cny_month',
       ),
       CityCompareReferenceItem(
         category: 'housing',
-        labelZh: '市中心一居租金',
-        labelEn: 'Center 1BR rent',
+        labelKey: 'life.city_compare.reference.center_1br_rent',
         currentValue: currentCity.rentCenterOneBedroom,
         targetValue: targetCity.rentCenterOneBedroom,
-        unitZh: '元/月',
-        unitEn: 'CNY / month',
+        unitKey: 'life.city_compare.unit.cny_month',
       ),
       CityCompareReferenceItem(
         category: 'housing',
-        labelZh: '郊区一居租金',
-        labelEn: 'Suburb 1BR rent',
+        labelKey: 'life.city_compare.reference.suburb_1br_rent',
         currentValue: currentCity.rentSuburbOneBedroom,
         targetValue: targetCity.rentSuburbOneBedroom,
-        unitZh: '元/月',
-        unitEn: 'CNY / month',
+        unitKey: 'life.city_compare.unit.cny_month',
       ),
       CityCompareReferenceItem(
         category: 'housing',
-        labelZh: '市中心三居租金',
-        labelEn: 'Center 3BR rent',
+        labelKey: 'life.city_compare.reference.center_3br_rent',
         currentValue: currentCity.rentCenterThreeBedroom,
         targetValue: targetCity.rentCenterThreeBedroom,
-        unitZh: '元/月',
-        unitEn: 'CNY / month',
+        unitKey: 'life.city_compare.unit.cny_month',
       ),
       CityCompareReferenceItem(
         category: 'housing',
-        labelZh: '郊区三居租金',
-        labelEn: 'Suburb 3BR rent',
+        labelKey: 'life.city_compare.reference.suburb_3br_rent',
         currentValue: currentCity.rentSuburbThreeBedroom,
         targetValue: targetCity.rentSuburbThreeBedroom,
-        unitZh: '元/月',
-        unitEn: 'CNY / month',
+        unitKey: 'life.city_compare.unit.cny_month',
       ),
       CityCompareReferenceItem(
         category: 'housing',
-        labelZh: '市中心房价',
-        labelEn: 'Center house price',
+        labelKey: 'life.city_compare.reference.center_house_price',
         currentValue: currentCity.housePriceCenter,
         targetValue: targetCity.housePriceCenter,
-        unitZh: '元/平方米',
-        unitEn: 'CNY / m²',
+        unitKey: 'life.city_compare.unit.cny_square_meter',
       ),
       CityCompareReferenceItem(
         category: 'housing',
-        labelZh: '郊区房价',
-        labelEn: 'Suburb house price',
+        labelKey: 'life.city_compare.reference.suburb_house_price',
         currentValue: currentCity.housePriceSuburb,
         targetValue: targetCity.housePriceSuburb,
-        unitZh: '元/平方米',
-        unitEn: 'CNY / m²',
+        unitKey: 'life.city_compare.unit.cny_square_meter',
       ),
       CityCompareReferenceItem(
         category: 'daily',
-        labelZh: '在家做饭月均',
-        labelEn: 'Home dining budget',
+        labelKey: 'life.city_compare.reference.home_dining_budget',
         currentValue: currentCity.diningHome,
         targetValue: targetCity.diningHome,
-        unitZh: '元/月',
-        unitEn: 'CNY / month',
+        unitKey: 'life.city_compare.unit.cny_month',
       ),
       CityCompareReferenceItem(
         category: 'daily',
-        labelZh: '外食月均',
-        labelEn: 'Dining out budget',
+        labelKey: 'life.city_compare.reference.dining_out_budget',
         currentValue: currentCity.diningOut,
         targetValue: targetCity.diningOut,
-        unitZh: '元/月',
-        unitEn: 'CNY / month',
+        unitKey: 'life.city_compare.unit.cny_month',
       ),
       CityCompareReferenceItem(
         category: 'daily',
-        labelZh: '便宜餐厅人均',
-        labelEn: 'Cheap meal',
+        labelKey: 'life.city_compare.reference.cheap_meal',
         currentValue: currentCity.mealCheap,
         targetValue: targetCity.mealCheap,
-        unitZh: '元/次',
-        unitEn: 'CNY / meal',
+        unitKey: 'life.city_compare.unit.cny_meal',
       ),
       CityCompareReferenceItem(
         category: 'daily',
-        labelZh: '中档餐厅双人餐',
-        labelEn: 'Mid meal',
+        labelKey: 'life.city_compare.reference.mid_meal',
         currentValue: currentCity.mealMid,
         targetValue: targetCity.mealMid,
-        unitZh: '元/次',
-        unitEn: 'CNY / meal',
+        unitKey: 'life.city_compare.unit.cny_meal',
       ),
       CityCompareReferenceItem(
         category: 'daily',
-        labelZh: '水电气',
-        labelEn: 'Utilities',
+        labelKey: 'life.city_compare.reference.utilities',
         currentValue: currentCity.utilities,
         targetValue: targetCity.utilities,
-        unitZh: '元/月',
-        unitEn: 'CNY / month',
+        unitKey: 'life.city_compare.unit.cny_month',
       ),
       CityCompareReferenceItem(
         category: 'daily',
-        labelZh: '手机套餐',
-        labelEn: 'Mobile plan',
+        labelKey: 'life.city_compare.reference.mobile_plan',
         currentValue: currentCity.mobilePlan,
         targetValue: targetCity.mobilePlan,
-        unitZh: '元/月',
-        unitEn: 'CNY / month',
+        unitKey: 'life.city_compare.unit.cny_month',
       ),
       CityCompareReferenceItem(
         category: 'daily',
-        labelZh: '宽带',
-        labelEn: 'Internet',
+        labelKey: 'life.city_compare.reference.internet',
         currentValue: currentCity.internet,
         targetValue: targetCity.internet,
-        unitZh: '元/月',
-        unitEn: 'CNY / month',
+        unitKey: 'life.city_compare.unit.cny_month',
       ),
       CityCompareReferenceItem(
         category: 'transport',
-        labelZh: '公共交通',
-        labelEn: 'Public transit',
+        labelKey: 'life.city_compare.reference.public_transit',
         currentValue: currentCity.transportPublic,
         targetValue: targetCity.transportPublic,
-        unitZh: '元/月',
-        unitEn: 'CNY / month',
+        unitKey: 'life.city_compare.unit.cny_month',
       ),
       CityCompareReferenceItem(
         category: 'transport',
-        labelZh: '私家车',
-        labelEn: 'Car commuting',
+        labelKey: 'life.city_compare.reference.car_commuting',
         currentValue: currentCity.transportCar,
         targetValue: targetCity.transportCar,
-        unitZh: '元/月',
-        unitEn: 'CNY / month',
+        unitKey: 'life.city_compare.unit.cny_month',
       ),
       CityCompareReferenceItem(
         category: 'family',
-        labelZh: '幼儿园',
-        labelEn: 'Kindergarten',
+        labelKey: 'life.city_compare.reference.kindergarten',
         currentValue: currentCity.kindergarten,
         targetValue: targetCity.kindergarten,
-        unitZh: '元/月',
-        unitEn: 'CNY / month',
+        unitKey: 'life.city_compare.unit.cny_month',
       ),
       CityCompareReferenceItem(
         category: 'family',
-        labelZh: '小学',
-        labelEn: 'Primary school',
+        labelKey: 'life.city_compare.reference.primary_school',
         currentValue: currentCity.primary,
         targetValue: targetCity.primary,
-        unitZh: '元/月',
-        unitEn: 'CNY / month',
+        unitKey: 'life.city_compare.unit.cny_month',
       ),
       CityCompareReferenceItem(
         category: 'family',
-        labelZh: '初中',
-        labelEn: 'Middle school',
+        labelKey: 'life.city_compare.reference.middle_school',
         currentValue: currentCity.middle,
         targetValue: targetCity.middle,
-        unitZh: '元/月',
-        unitEn: 'CNY / month',
+        unitKey: 'life.city_compare.unit.cny_month',
       ),
       CityCompareReferenceItem(
         category: 'family',
-        labelZh: '高中',
-        labelEn: 'High school',
+        labelKey: 'life.city_compare.reference.high_school',
         currentValue: currentCity.high,
         targetValue: targetCity.high,
-        unitZh: '元/月',
-        unitEn: 'CNY / month',
+        unitKey: 'life.city_compare.unit.cny_month',
       ),
       CityCompareReferenceItem(
         category: 'family',
-        labelZh: '国际学校',
-        labelEn: 'International school',
+        labelKey: 'life.city_compare.reference.international_school',
         currentValue: currentCity.international,
         targetValue: targetCity.international,
-        unitZh: '元/月',
-        unitEn: 'CNY / month',
+        unitKey: 'life.city_compare.unit.cny_month',
       ),
       CityCompareReferenceItem(
         category: 'leisure',
-        labelZh: '健身',
-        labelEn: 'Fitness',
+        labelKey: 'life.city_compare.reference.fitness',
         currentValue: currentCity.fitness,
         targetValue: targetCity.fitness,
-        unitZh: '元/月',
-        unitEn: 'CNY / month',
+        unitKey: 'life.city_compare.unit.cny_month',
       ),
       CityCompareReferenceItem(
         category: 'leisure',
-        labelZh: '电影票',
-        labelEn: 'Cinema',
+        labelKey: 'life.city_compare.reference.cinema',
         currentValue: currentCity.cinema,
         targetValue: targetCity.cinema,
-        unitZh: '元/张',
-        unitEn: 'CNY / ticket',
+        unitKey: 'life.city_compare.unit.cny_ticket',
       ),
     ];
   }
@@ -994,30 +940,30 @@ class ToolboxCityCompareService {
     required CityCompareSalarySnapshot sameSalaryTargetSnapshot,
     required CityCompareSalarySnapshot requiredTargetSnapshot,
   }) {
-    final costDiffs = <MapEntry<String, double>>[
-      MapEntry<String, double>(
-        '住房',
+    final costDiffs = <MapEntry<ToolboxI18nTextRef, double>>[
+      MapEntry<ToolboxI18nTextRef, double>(
+        const ToolboxI18nTextRef('life.city_compare.diff_category.housing'),
         targetBreakdown.housing - currentBreakdown.housing,
       ),
-      MapEntry<String, double>(
-        '餐饮',
+      MapEntry<ToolboxI18nTextRef, double>(
+        const ToolboxI18nTextRef('life.city_compare.diff_category.dining'),
         targetBreakdown.dining - currentBreakdown.dining,
       ),
-      MapEntry<String, double>(
-        '交通',
+      MapEntry<ToolboxI18nTextRef, double>(
+        const ToolboxI18nTextRef('life.city_compare.diff_category.transport'),
         targetBreakdown.transport - currentBreakdown.transport,
       ),
-      MapEntry<String, double>(
-        '教育',
+      MapEntry<ToolboxI18nTextRef, double>(
+        const ToolboxI18nTextRef('life.city_compare.diff_category.education'),
         targetBreakdown.education - currentBreakdown.education,
       ),
-      MapEntry<String, double>(
-        '水电网话',
+      MapEntry<ToolboxI18nTextRef, double>(
+        const ToolboxI18nTextRef('life.city_compare.diff_category.utilities'),
         (targetBreakdown.utilities + targetBreakdown.digital) -
             (currentBreakdown.utilities + currentBreakdown.digital),
       ),
-      MapEntry<String, double>(
-        '健身娱乐',
+      MapEntry<ToolboxI18nTextRef, double>(
+        const ToolboxI18nTextRef('life.city_compare.diff_category.leisure'),
         (targetBreakdown.fitness + targetBreakdown.leisure) -
             (currentBreakdown.fitness + currentBreakdown.leisure),
       ),
@@ -1034,39 +980,60 @@ class ToolboxCityCompareService {
     return <CityCompareInsight>[
       CityCompareInsight(
         level: 'primary',
-        titleZh: '最大差异项',
-        titleEn: 'Biggest delta',
-        bodyZh:
-            '${targetCity.city} 相比 ${currentCity.city}，你当前生活方式下变化最大的月度成本是${biggest.key}，差额约 ${biggest.value >= 0 ? '+' : ''}${biggest.value.toStringAsFixed(0)} 元；第二位是${second.key}。',
-        bodyEn:
-            'Under the current lifestyle, the biggest monthly delta from ${currentCity.city} to ${targetCity.city} is ${biggest.key} at about ${biggest.value >= 0 ? '+' : ''}${biggest.value.toStringAsFixed(0)} CNY, followed by ${second.key}.',
+        titleKey: 'life.city_compare.insight.biggest_delta.title',
+        body: ToolboxI18nTextRef(
+          'life.city_compare.insight.biggest_delta.body',
+          params: <String, Object?>{
+            'targetCity': targetCity.city,
+            'currentCity': currentCity.city,
+            'biggest': biggest.key,
+            'biggestValue':
+                '${biggest.value >= 0 ? '+' : ''}${biggest.value.toStringAsFixed(0)}',
+            'second': second.key,
+          },
+        ),
       ),
       CityCompareInsight(
         level: sameSalaryDelta >= 0 ? 'positive' : 'warning',
-        titleZh: '同薪资迁移结果',
-        titleEn: 'Same-salary move',
-        bodyZh:
-            '如果税前月薪不变直接搬去 ${targetCity.city}，你的月结余会从 ${currentSnapshot.monthlyBuffer.toStringAsFixed(0)} 元变成 ${sameSalaryTargetSnapshot.monthlyBuffer.toStringAsFixed(0)} 元，变化约 ${sameSalaryDelta >= 0 ? '+' : ''}${sameSalaryDelta.toStringAsFixed(0)} 元。',
-        bodyEn:
-            'If your gross salary stays the same after moving to ${targetCity.city}, your monthly buffer changes from ${currentSnapshot.monthlyBuffer.toStringAsFixed(0)} to ${sameSalaryTargetSnapshot.monthlyBuffer.toStringAsFixed(0)} CNY, a delta of ${sameSalaryDelta >= 0 ? '+' : ''}${sameSalaryDelta.toStringAsFixed(0)} CNY.',
+        titleKey: 'life.city_compare.insight.same_salary.title',
+        body: ToolboxI18nTextRef(
+          'life.city_compare.insight.same_salary.body',
+          params: <String, Object?>{
+            'targetCity': targetCity.city,
+            'currentBuffer': currentSnapshot.monthlyBuffer.toStringAsFixed(0),
+            'targetBuffer': sameSalaryTargetSnapshot.monthlyBuffer
+                .toStringAsFixed(0),
+            'delta':
+                '${sameSalaryDelta >= 0 ? '+' : ''}${sameSalaryDelta.toStringAsFixed(0)}',
+          },
+        ),
       ),
       CityCompareInsight(
         level: 'neutral',
-        titleZh: '原始参考条目提示',
-        titleEn: 'Reference item note',
-        bodyZh:
-            '参考页里最能解释生活差异的原始条目，通常是租房、外食、通勤和教育。当前两城中，${targetCity.city} 的市中心一居租金是 ${currentCity.city} 的 ${centerRentRatio.toStringAsFixed(2)} 倍，国际学校月费差额约 ${educationGap >= 0 ? '+' : ''}${educationGap.toStringAsFixed(0)} 元。',
-        bodyEn:
-            'The raw reference items that usually explain lifestyle gaps best are rent, eating out, commuting, and education. Here, center 1BR rent in ${targetCity.city} is ${centerRentRatio.toStringAsFixed(2)}x of ${currentCity.city}, and the international-school monthly gap is about ${educationGap >= 0 ? '+' : ''}${educationGap.toStringAsFixed(0)} CNY.',
+        titleKey: 'life.city_compare.insight.reference_note.title',
+        body: ToolboxI18nTextRef(
+          'life.city_compare.insight.reference_note.body',
+          params: <String, Object?>{
+            'targetCity': targetCity.city,
+            'currentCity': currentCity.city,
+            'centerRentRatio': centerRentRatio.toStringAsFixed(2),
+            'educationGap':
+                '${educationGap >= 0 ? '+' : ''}${educationGap.toStringAsFixed(0)}',
+          },
+        ),
       ),
       CityCompareInsight(
         level: 'primary',
-        titleZh: '维持当前结余所需月薪',
-        titleEn: 'Salary needed to match',
-        bodyZh:
-            '若你希望在 ${targetCity.city} 继续维持现在的月度结余，需要把税前月薪大致调整到 ${requiredTargetSnapshot.grossMonthlySalary.toStringAsFixed(0)} 元。这是基于参考页静态样本和统一税费模型给出的估算值。',
-        bodyEn:
-            'To keep your current monthly buffer in ${targetCity.city}, the rough gross monthly salary target is ${requiredTargetSnapshot.grossMonthlySalary.toStringAsFixed(0)} CNY. This remains an estimate based on static source data and a simplified tax model.',
+        titleKey: 'life.city_compare.insight.salary_needed.title',
+        body: ToolboxI18nTextRef(
+          'life.city_compare.insight.salary_needed.body',
+          params: <String, Object?>{
+            'targetCity': targetCity.city,
+            'salary': requiredTargetSnapshot.grossMonthlySalary.toStringAsFixed(
+              0,
+            ),
+          },
+        ),
       ),
     ];
   }

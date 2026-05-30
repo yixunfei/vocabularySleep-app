@@ -10,11 +10,13 @@ class CryptoSecurityHubPage extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '加密安全', en: 'Crypto security'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '面向隐写、加密、解密、密钥与校验的安全工具中心；当前先迁入媒体隐写子模块。',
-        en: 'A security hub for steganography, encryption, decryption, keys, and verification; media steganography is the first migrated module.',
+        'inline.ui.module.module_access.crypto_security_edbc46',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.crypto.a_security_hub_for_steganography_enc.96312ff54543',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,10 +53,9 @@ class CryptoSecurityHubPage extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            _lifeText(
+                            _lifeI18nText(
                               context,
-                              zh: '安全工具工作台',
-                              en: 'Security workspace',
+                              'inline.plan295.crypto.security_workspace.75c2c69f6097',
                             ),
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w800,
@@ -62,10 +63,9 @@ class CryptoSecurityHubPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            _lifeText(
+                            _lifeI18nText(
                               context,
-                              zh: '子模块以独立卡片进入，便于后续扩展大量加密解密工具。',
-                              en: 'Submodules open from standalone cards, leaving room for many future crypto tools.',
+                              'inline.plan295.crypto.submodules_open_from_standalone_card.b8f6715362dd',
                             ),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurfaceVariant,
@@ -83,24 +83,25 @@ class CryptoSecurityHubPage extends StatelessWidget {
                   runSpacing: 8,
                   children: <Widget>[
                     ToolboxInfoPill(
-                      text: _lifeText(context, zh: '本地处理', en: 'Local-first'),
-                      accent: _accent,
-                      backgroundColor: _accent.withValues(alpha: 0.08),
-                    ),
-                    ToolboxInfoPill(
-                      text: _lifeText(
+                      text: _lifeI18nText(
                         context,
-                        zh: '独立子模块',
-                        en: 'Standalone modules',
+                        'inline.plan295.crypto.local_first.112fb08c91e5',
                       ),
                       accent: _accent,
                       backgroundColor: _accent.withValues(alpha: 0.08),
                     ),
                     ToolboxInfoPill(
-                      text: _lifeText(
+                      text: _lifeI18nText(
                         context,
-                        zh: '预留扩展',
-                        en: 'Expansion-ready',
+                        'inline.plan295.crypto.standalone_modules.bb91f39ee6b9',
+                      ),
+                      accent: _accent,
+                      backgroundColor: _accent.withValues(alpha: 0.08),
+                    ),
+                    ToolboxInfoPill(
+                      text: _lifeI18nText(
+                        context,
+                        'inline.plan295.crypto.expansion_ready.dd905eb8f2d1',
                       ),
                       accent: _accent,
                       backgroundColor: _accent.withValues(alpha: 0.08),
@@ -112,7 +113,10 @@ class CryptoSecurityHubPage extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            _lifeText(context, zh: '已接入子模块', en: 'Available modules'),
+            _lifeI18nText(
+              context,
+              'inline.plan295.crypto.available_modules.f92f97f00fd0',
+            ),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w800,
             ),
@@ -121,20 +125,27 @@ class CryptoSecurityHubPage extends StatelessWidget {
           _CryptoSecurityModuleCard(
             icon: Icons.hide_image_rounded,
             accent: _accent,
-            title: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '图片/音频/视频隐写',
-              en: 'Media steganography',
+              'inline.plan295.crypto.media_steganography.ae000f7887ea',
             ),
-            subtitle: _lifeText(
+            subtitle: _lifeI18nText(
               context,
-              zh: '将加密文本或文件写入媒体载体，并支持还原、文件加密与哈希校验。',
-              en: 'Hide encrypted text or files in media carriers, with reveal, file crypto, and hash verification.',
+              'inline.plan295.crypto.hide_encrypted_text_or_files_in_medi.7167c242d3c8',
             ),
             chips: <String>[
-              _lifeText(context, zh: '图片', en: 'Image'),
-              _lifeText(context, zh: '音频', en: 'Audio'),
-              _lifeText(context, zh: '视频', en: 'Video'),
+              _lifeI18nText(
+                context,
+                'inline.plan295.crypto.image.baebdc30e7e4',
+              ),
+              _lifeI18nText(
+                context,
+                'inline.plan295.crypto.audio.253158c06f3c',
+              ),
+              _lifeI18nText(
+                context,
+                'inline.plan295.crypto.video.2074eae3b2ea',
+              ),
             ],
             onTap: () {
               Navigator.of(context).push(
@@ -157,10 +168,9 @@ class CryptoSecurityHubPage extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    _lifeText(
+                    _lifeI18nText(
                       context,
-                      zh: '后续加密、解密、密钥、证书、校验、签名等能力会继续以独立子模块接入这里。',
-                      en: 'Future encryption, decryption, key, certificate, verification, and signature tools will join this hub as separate modules.',
+                      'inline.plan295.crypto.future_encryption_decryption_key_cer.dfb97acfd04e',
                     ),
                     style: theme.textTheme.bodySmall?.copyWith(height: 1.35),
                   ),

@@ -356,16 +356,8 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   Future<void> _openPrefixJump(AppState state, AppI18n i18n) async {
     final prefix = await showTextPromptDialog(
       context: context,
-      title: pickUiText(
-        i18n,
-        zh: '\u524d\u7f00\u8df3\u8f6c',
-        en: 'Jump by prefix',
-      ),
-      hintText: pickUiText(
-        i18n,
-        zh: '\u8f93\u5165\u524d\u7f00',
-        en: 'Type a prefix',
-      ),
+      title: i18n.t('jumpByPrefix'),
+      hintText: i18n.t('inline.ui.pages.library_page.type_a_prefix_39793f'),
     );
     if (!mounted || prefix == null || prefix.trim().isEmpty) return;
     final normalizedPrefix = prefix.trim();
@@ -380,10 +372,8 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          pickUiText(
-            i18n,
-            zh: '\u5f53\u524d\u8303\u56f4\u5185\u6ca1\u6709\u5339\u914d\u7684\u8bcd',
-            en: 'No matching word found in the current scope.',
+          i18n.t(
+            'inline.ui.pages.library_page.no_matching_word_found_in_the_current_scope_2a85d6',
           ),
         ),
       ),
@@ -396,34 +386,22 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         book.path.startsWith('builtin:dict:') &&
         book.wordCount <= 0;
     if (isLazyBuiltIn) {
-      return pickUiText(
-        i18n,
-        zh: '\u5185\u7f6e\u8bcd\u672c\uff0c\u9996\u6b21\u6253\u5f00\u65f6\u8f7d\u5165',
-        en: 'Built-in wordbook, loads on first open',
+      return i18n.t(
+        'inline.ui.pages.library_page.built_in_wordbook_loads_on_first_open_9967f7',
       );
     }
-    return pickUiText(
-      i18n,
-      zh: '$visibleCount \u4e2a\u7ed3\u679c',
-      en: '$visibleCount results',
-    );
+    return i18n.t('inline.ui.pages.library_page.visiblecount_results_fcc200');
   }
 
   String _wordbookSheetSubtitle(AppI18n i18n, Wordbook book) {
     final isLazyBuiltIn =
         book.path.startsWith('builtin:dict:') && book.wordCount <= 0;
     if (isLazyBuiltIn) {
-      return pickUiText(
-        i18n,
-        zh: '\u5185\u7f6e\u8bcd\u672c\uff0c\u70b9\u51fb\u540e\u9996\u6b21\u8f7d\u5165',
-        en: 'Built-in wordbook, loads on first tap',
+      return i18n.t(
+        'inline.ui.pages.library_page.built_in_wordbook_loads_on_first_tap_93bdfc',
       );
     }
-    return pickUiText(
-      i18n,
-      zh: '${book.wordCount} \u4e2a\u8bcd',
-      en: '${book.wordCount} words',
-    );
+    return i18n.t('inline.ui.pages.library_page.book_wordcount_words_d7e63b');
   }
 
   @override
@@ -435,10 +413,8 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     if (state.selectedWordbook == null) {
       return EmptyStateView(
         icon: Icons.menu_book_rounded,
-        title: pickUiText(
-          i18n,
-          zh: '\u8bcd\u5e93\u4e3a\u7a7a',
-          en: 'Your library is empty',
+        title: i18n.t(
+          'inline.ui.pages.library_page.your_library_is_empty_93fc87',
         ),
         message: i18n.t('noWordbookYet'),
       );
@@ -483,15 +459,11 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                   children: <Widget>[
                     PageHeader(
                       eyebrow: pageLabelLibrary(i18n),
-                      title: pickUiText(
-                        i18n,
-                        zh: '\u641c\u7d22\u4e0e\u6d4f\u89c8',
-                        en: 'Search and browse',
+                      title: i18n.t(
+                        'inline.ui.pages.library_page.search_and_browse_05b156',
                       ),
-                      subtitle: pickUiText(
-                        i18n,
-                        zh: '\u628a\u67e5\u8be2\u3001\u5207\u6362\u548c\u8df3\u8f6c\u653e\u5230\u79fb\u52a8\u7aef\u7684\u4e00\u7b49\u5165\u53e3',
-                        en: 'Make search, switching, and jumping first-class mobile actions.',
+                      subtitle: i18n.t(
+                        'inline.ui.pages.library_page.make_search_switching_and_jumping_first_class_mobile_act_ea67b6',
                       ),
                       action: IconButton(
                         onPressed: () {
@@ -533,10 +505,8 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                       onSubmitted: (value) => _commitSearchQuery(state, value),
                       decoration: InputDecoration(
                         prefixIcon: const Icon(Icons.search_rounded),
-                        hintText: pickUiText(
-                          i18n,
-                          zh: '\u641c\u7d22\u5355\u8bcd\u3001\u91ca\u4e49\u6216\u6a21\u7cca\u5339\u914d',
-                          en: 'Search words, meanings, or fuzzy matches',
+                        hintText: i18n.t(
+                          'inline.ui.pages.library_page.search_words_meanings_or_fuzzy_matches_7093f1',
                         ),
                         suffixIcon: _searchController.text.trim().isEmpty
                             ? null
@@ -578,27 +548,13 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
                               Text(
-                                pickUiText(
-                                  i18n,
-                                  zh: '\u5feb\u901f\u8df3\u8f6c',
-                                  en: 'Quick jump',
-                                  ja: '\u30af\u30a4\u30c3\u30af\u30b8\u30e3\u30f3\u30d7',
-                                  de: 'Schnellsprung',
-                                  fr: 'Saut rapide',
-                                  es: 'Salto rapido',
-                                ),
+                                i18n.t('toolbox.sound.piano.quickJump'),
                                 style: Theme.of(context).textTheme.titleMedium,
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                pickUiText(
-                                  i18n,
-                                  zh: '\u8f93\u5165\u5355\u8bcd\u524d\u7f00\uff0c\u53ef\u76f4\u63a5\u8df3\u5230\u5f53\u524d\u8303\u56f4\u5185\u7b2c\u4e00\u4e2a\u5339\u914d\u9879\u3002',
-                                  en: 'Type a prefix to jump directly to the first matching word in the current scope.',
-                                  ja: '\u63a5\u982d\u8f9e\u3092\u5165\u529b\u3059\u308b\u3068\u3001\u73fe\u5728\u306e\u7bc4\u56f2\u5185\u3067\u6700\u521d\u306b\u4e00\u81f4\u3059\u308b\u5358\u8a9e\u3078\u79fb\u52d5\u3067\u304d\u307e\u3059\u3002',
-                                  de: 'Geben Sie ein Praefix ein, um direkt zum ersten passenden Wort im aktuellen Bereich zu springen.',
-                                  fr: 'Saisissez un prefixe pour aller directement au premier mot correspondant dans la portee actuelle.',
-                                  es: 'Escribe un prefijo para saltar directamente a la primera palabra coincidente del alcance actual.',
+                                i18n.t(
+                                  'inline.ui.pages.library_page.type_a_prefix_to_jump_directly_to_the_first_matching_wor_fe6295',
                                 ),
                                 style: Theme.of(context).textTheme.bodySmall,
                               ),
@@ -613,14 +569,8 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                                       size: 18,
                                     ),
                                     label: Text(
-                                      pickUiText(
-                                        i18n,
-                                        zh: '\u524d\u7f00\u8df3\u8f6c',
-                                        en: 'Prefix jump',
-                                        ja: '\u63a5\u982d\u8f9e\u30b8\u30e3\u30f3\u30d7',
-                                        de: 'Praefixsprung',
-                                        fr: 'Saut par prefixe',
-                                        es: 'Salto por prefijo',
+                                      i18n.t(
+                                        'inline.ui.pages.library_page.prefix_jump_7ac67e',
                                       ),
                                     ),
                                     onPressed: () =>
@@ -633,14 +583,8 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                                         size: 18,
                                       ),
                                       label: Text(
-                                        pickUiText(
-                                          i18n,
-                                          zh: '\u6e05\u9664\u641c\u7d22',
-                                          en: 'Clear search',
-                                          ja: '\u691c\u7d22\u3092\u30af\u30ea\u30a2',
-                                          de: 'Suche loeschen',
-                                          fr: 'Effacer la recherche',
-                                          es: 'Limpiar busqueda',
+                                        i18n.t(
+                                          'inline.ui.pages.library_page.clear_search_028a7e',
                                         ),
                                       ),
                                       onPressed: () {
@@ -665,15 +609,11 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                 sliver: SliverToBoxAdapter(
                   child: EmptyStateView(
                     icon: Icons.search_off_rounded,
-                    title: pickUiText(
-                      i18n,
-                      zh: '\u6ca1\u6709\u5339\u914d\u7ed3\u679c',
-                      en: 'No matching words',
+                    title: i18n.t(
+                      'inline.ui.pages.library_page.no_matching_words_1e85c1',
                     ),
-                    message: pickUiText(
-                      i18n,
-                      zh: '\u8bd5\u8bd5\u5207\u6362\u641c\u7d22\u6a21\u5f0f\uff0c\u6216\u56de\u5230\u66f4\u591a\u9875\u5bfc\u5165\u65b0\u7684\u8bcd\u672c\u3002',
-                      en: 'Try another search mode or import a new wordbook from More.',
+                    message: i18n.t(
+                      'inline.ui.pages.library_page.try_another_search_mode_or_import_a_new_wordbook_from_mo_a6fb6c',
                     ),
                   ),
                 ),
@@ -722,10 +662,8 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                 padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
                 sliver: SliverToBoxAdapter(
                   child: Text(
-                    pickUiText(
-                      i18n,
-                      zh: '已加载 ${displayedWords.length}/${words.length}，继续下滑将自动加载后续内容。',
-                      en: 'Loaded ${displayedWords.length}/$totalWords. Keep scrolling to load more.',
+                    i18n.t(
+                      'inline.ui.pages.library_page.loaded_displayedwords_length_totalwords_keep_scrolling_t_22d8a6',
                     ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
@@ -752,7 +690,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
               if (showCompactAddWord)
                 FloatingActionButton.small(
                   heroTag: 'library_add_word',
-                  tooltip: pickUiText(i18n, zh: '\u52a0\u8bcd', en: 'Add word'),
+                  tooltip: i18n.t('addWordTitle'),
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
@@ -773,9 +711,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                     );
                   },
                   icon: const Icon(Icons.add_rounded),
-                  label: Text(
-                    pickUiText(i18n, zh: '\u52a0\u8bcd', en: 'Add word'),
-                  ),
+                  label: Text(i18n.t('addWordTitle')),
                 ),
             ],
           ),
@@ -794,11 +730,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
             children: <Widget>[
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '\u5207\u6362\u8bcd\u672c',
-                  en: 'Switch wordbook',
-                ),
+                i18n.t('inline.ui.pages.library_page.switch_wordbook_40ff3b'),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 12),
@@ -852,13 +784,11 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     }
     return showConfirmDialog(
       context: context,
-      title: pickUiText(i18n, zh: '初始化单词本', en: 'Initialize wordbook'),
-      message: pickUiText(
-        i18n,
-        zh: '${localizedWordbookName(i18n, book)} 可能较大，首次加载会初始化内容并需要一些时间。确认后继续，请耐心等待。',
-        en: '${localizedWordbookName(i18n, book)} may be large. The first load will initialize its contents and may take a while. Continue and please wait patiently.',
+      title: i18n.t('inline.ui.pages.library_page.initialize_wordbook_c30e1d'),
+      message: i18n.t(
+        'inline.ui.pages.library_page.localizedwordbookname_i18n_book_may_be_large_the_first_l_3b46f5',
       ),
-      confirmText: pickUiText(i18n, zh: '继续', en: 'Continue'),
+      confirmText: i18n.t('toolbox.breathing.continue_select'),
     );
   }
 

@@ -43,19 +43,15 @@ class _CustomRandomHeaderCard extends StatelessWidget {
                   runSpacing: 8,
                   children: <Widget>[
                     ToolboxInfoPill(
-                      text: pickUiText(
-                        i18n,
-                        zh: '随机助手',
-                        en: 'Random assistant',
+                      text: i18n.t(
+                        'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_widgets.random_assistant_a5a3a1',
                       ),
                       accent: accent,
                       backgroundColor: Colors.white.withValues(alpha: 0.64),
                     ),
                     ToolboxInfoPill(
-                      text: pickUiText(
-                        i18n,
-                        zh: '$optionCount 个选项',
-                        en: '$optionCount options',
+                      text: i18n.t(
+                        'inline.plan295.daily_choice.optioncount_options.35f063facbc7',
                       ),
                       accent: accent,
                       backgroundColor: Colors.white.withValues(alpha: 0.64),
@@ -67,17 +63,15 @@ class _CustomRandomHeaderCard extends StatelessWidget {
                 icon: Icons.help_outline_rounded,
                 active: false,
                 tint: accent,
-                tooltip: pickUiText(i18n, zh: '指南', en: 'Guide'),
+                tooltip: i18n.t('toolbox.daily_choice.guide'),
                 onTap: onGuide,
               ),
             ],
           ),
           const SizedBox(height: 12),
           Text(
-            pickUiText(
-              i18n,
-              zh: '把随机变成一个可调助手',
-              en: 'Make randomness adjustable',
+            i18n.t(
+              'inline.plan295.daily_choice.make_randomness_adjustable.59be01268cbc',
             ),
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w900,
@@ -85,10 +79,8 @@ class _CustomRandomHeaderCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            pickUiText(
-              i18n,
-              zh: '先选随机方式，再就地调整选项、权重、轮次或骰子硬币数量，最后用转盘、骰子或硬币完成低风险选择。',
-              en: 'Choose the method, adjust options and parameters in place, then draw with a wheel, dice, or coins for low-stakes choices.',
+            i18n.t(
+              'inline.plan295.daily_choice.choose_the_method_adjust_options_and.3b986ea80dd2',
             ),
             style: theme.textTheme.bodyMedium?.copyWith(height: 1.45),
           ),
@@ -125,7 +117,10 @@ class _CustomRandomPickerCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          _SelectorTitle(i18n: i18n, titleZh: '随机方式', titleEn: 'Random method'),
+          _SelectorTitle(
+            i18n: i18n,
+            titleKey: 'inline.plan295.daily_choice.random_method.3866c2125b0d',
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -144,7 +139,10 @@ class _CustomRandomPickerCard extends StatelessWidget {
                 .toList(growable: false),
           ),
           const SizedBox(height: 14),
-          _SelectorTitle(i18n: i18n, titleZh: '动画效果', titleEn: 'Animation'),
+          _SelectorTitle(
+            i18n: i18n,
+            titleKey: 'inline.plan295.daily_choice.animation.2b0623764f4e',
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -190,8 +188,10 @@ class _CustomRandomStageHeader extends StatelessWidget {
       children: <Widget>[
         Text(
           winner == null
-              ? pickUiText(i18n, zh: '等待抽取', en: 'Ready to draw')
-              : pickUiText(i18n, zh: '抽中：$winner', en: 'Picked: $winner'),
+              ? i18n.t('inline.plan295.daily_choice.ready_to_draw.52bfde9e6b05')
+              : i18n.t(
+                  'inline.plan295.daily_choice.picked_winner.c2edd09aaca4',
+                ),
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w900,
           ),
@@ -203,17 +203,17 @@ class _CustomRandomStageHeader extends StatelessWidget {
           children: <Widget>[
             ToolboxInfoPill(
               text: result == null
-                  ? pickUiText(i18n, zh: '低风险选择', en: 'Low-stakes choice')
+                  ? i18n.t(
+                      'inline.plan295.daily_choice.low_stakes_choice.161a004aef8e',
+                    )
                   : _resultModeText(i18n, result!),
               accent: accent,
               backgroundColor: theme.colorScheme.surfaceContainerLow,
             ),
             if (probability != null)
               ToolboxInfoPill(
-                text: pickUiText(
-                  i18n,
-                  zh: '本轮概率 ${(probability! * 100).toStringAsFixed(1)}%',
-                  en: 'Chance ${(probability! * 100).toStringAsFixed(1)}%',
+                text: i18n.t(
+                  'inline.plan295.daily_choice.chance_probability_100_tostringasfix.e6be7d710fa0',
                 ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -298,10 +298,8 @@ class _CustomRandomParameterCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          pickUiText(
-                            i18n,
-                            zh: '可选项与参数',
-                            en: 'Options & parameters',
+                          i18n.t(
+                            'inline.plan295.daily_choice.options_parameters.b274ec6b0ca1',
                           ),
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w900,
@@ -309,10 +307,8 @@ class _CustomRandomParameterCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          pickUiText(
-                            i18n,
-                            zh: '先调好候选池，再开始随机。',
-                            en: 'Tune the pool before drawing.',
+                          i18n.t(
+                            'inline.plan295.daily_choice.tune_the_pool_before_drawing.201655bcfef2',
                           ),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
@@ -336,10 +332,8 @@ class _CustomRandomParameterCard extends StatelessWidget {
             runSpacing: 8,
             children: <Widget>[
               ToolboxInfoPill(
-                text: pickUiText(
-                  i18n,
-                  zh: '有效 $optionCount / 总计 $totalCount',
-                  en: '$optionCount active / $totalCount total',
+                text: i18n.t(
+                  'inline.plan295.daily_choice.optioncount_active_totalcount_total.1f956fa63ee7',
                 ),
                 accent: accent,
                 backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -449,10 +443,8 @@ class _CustomRandomSettingsCard extends StatelessWidget {
 
     if (!showRounds && !showDice && !showCoin) {
       return Text(
-        pickUiText(
-          i18n,
-          zh: '当前转盘会直接按所选随机方式计算概率；如果切到加权，扇区面积会跟随权重变化。',
-          en: 'The wheel uses the current probability model. In weighted mode, segment size follows weight.',
+        i18n.t(
+          'inline.plan295.daily_choice.the_wheel_uses_the_current_probabili.9556b7c21337',
         ),
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
@@ -464,11 +456,16 @@ class _CustomRandomSettingsCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _SelectorTitle(i18n: i18n, titleZh: '参数设置', titleEn: 'Settings'),
+        _SelectorTitle(
+          i18n: i18n,
+          titleKey: 'inline.plan295.daily_choice.settings.a971368c41f3',
+        ),
         if (showRounds)
           _LabeledSlider(
             accent: accent,
-            label: pickUiText(i18n, zh: '联合分布轮次', en: 'Joint rounds'),
+            label: i18n.t(
+              'inline.plan295.daily_choice.joint_rounds.e6fcfdd1549f',
+            ),
             value: rounds.toDouble(),
             min: 2,
             max: 8,
@@ -479,15 +476,13 @@ class _CustomRandomSettingsCard extends StatelessWidget {
         if (showDice)
           _LabeledSlider(
             accent: accent,
-            label: pickUiText(i18n, zh: '骰子数量', en: 'Dice count'),
+            label: i18n.t('toolbox.daily_choice.dice_count'),
             value: normalizedDiceCount.toDouble(),
             min: diceMin.toDouble(),
             max: diceMax.toDouble(),
             divisions: math.max(1, diceMax - diceMin),
-            displayValue: pickUiText(
-              i18n,
-              zh: '$normalizedDiceCount 颗',
-              en: '$normalizedDiceCount dice',
+            displayValue: i18n.t(
+              'inline.plan295.daily_choice.normalizeddicecount_dice.01bcc648c3ef',
             ),
             onChanged: diceMin == diceMax
                 ? null
@@ -495,10 +490,8 @@ class _CustomRandomSettingsCard extends StatelessWidget {
           ),
         if (showDice)
           Text(
-            pickUiText(
-              i18n,
-              zh: '选项会均匀分配到骰子上，每颗 3 到 12 面；结果仍在全部选项中均匀抽取。',
-              en: 'Options are split across dice with 3 to 12 faces each; the final draw remains uniform across all options.',
+            i18n.t(
+              'inline.plan295.daily_choice.options_are_split_across_dice_with_3.bf350de55295',
             ),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
@@ -508,15 +501,15 @@ class _CustomRandomSettingsCard extends StatelessWidget {
         if (showCoin)
           _LabeledSlider(
             accent: accent,
-            label: pickUiText(i18n, zh: '硬币数量', en: 'Coin count'),
+            label: i18n.t(
+              'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_widgets.coin_count_a089b2',
+            ),
             value: coinCount.toDouble(),
             min: 1,
             max: 9,
             divisions: 8,
-            displayValue: pickUiText(
-              i18n,
-              zh: '$coinCount 枚',
-              en: '$coinCount coins',
+            displayValue: i18n.t(
+              'inline.plan295.daily_choice.coincount_coins.a049170d5974',
             ),
             onChanged: (value) {
               var next = value.round();
@@ -528,10 +521,8 @@ class _CustomRandomSettingsCard extends StatelessWidget {
           ),
         if (showCoin)
           Text(
-            pickUiText(
-              i18n,
-              zh: '硬币只支持两面均匀；多枚硬币按多数面收口，数量保持奇数以避免平局。',
-              en: 'Coins support exactly two uniform sides. Multiple coins use majority, kept odd to avoid ties.',
+            i18n.t(
+              'inline.plan295.daily_choice.coins_support_exactly_two_uniform_si.23de76602e89',
             ),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
@@ -582,10 +573,8 @@ class _CustomRandomOptionEditorCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '选项与概率参数',
-                      en: 'Options and probability inputs',
+                    i18n.t(
+                      'inline.plan295.daily_choice.options_and_probability_inputs.50256b3881dd',
                     ),
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w900,
@@ -593,10 +582,8 @@ class _CustomRandomOptionEditorCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '权重用于加权随机；联合分布会使用“权重 × 条件概率”。空名称不会进入候选池。',
-                      en: 'Weights power weighted random. Joint mode uses weight × condition probability. Empty names are ignored.',
+                    i18n.t(
+                      'inline.plan295.daily_choice.weights_power_weighted_random_joint.069aaee184fb',
                     ),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
@@ -611,10 +598,8 @@ class _CustomRandomOptionEditorCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: <Widget>[
                 ToolboxInfoPill(
-                  text: pickUiText(
-                    i18n,
-                    zh: '$optionCount/$totalCount',
-                    en: '$optionCount/$totalCount',
+                  text: i18n.t(
+                    'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_widgets.optioncount_totalcount_7b7994',
                   ),
                   accent: accent,
                   backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -623,7 +608,11 @@ class _CustomRandomOptionEditorCard extends StatelessWidget {
                 OutlinedButton.icon(
                   onPressed: items.length >= 36 ? null : onAddOption,
                   icon: const Icon(Icons.add_rounded),
-                  label: Text(pickUiText(i18n, zh: '新增', en: 'Add')),
+                  label: Text(
+                    i18n.t(
+                      'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_widgets.add_d63aeb',
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -706,7 +695,9 @@ class _CustomRandomOptionRow extends StatelessWidget {
                 child: TextFormField(
                   initialValue: item.label,
                   decoration: InputDecoration(
-                    labelText: pickUiText(i18n, zh: '选项名称', en: 'Option name'),
+                    labelText: i18n.t(
+                      'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_widgets.option_name_e28e73',
+                    ),
                     isDense: true,
                   ),
                   onChanged: (value) {
@@ -716,7 +707,9 @@ class _CustomRandomOptionRow extends StatelessWidget {
                 ),
               ),
               IconButton(
-                tooltip: pickUiText(i18n, zh: '删除选项', en: 'Delete option'),
+                tooltip: i18n.t(
+                  'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_widgets.delete_option_da6945',
+                ),
                 onPressed: canDelete ? onDelete : null,
                 icon: const Icon(Icons.delete_outline_rounded),
               ),
@@ -730,7 +723,9 @@ class _CustomRandomOptionRow extends StatelessWidget {
               children: <Widget>[
                 if (showWeight)
                   _CompactNumberField(
-                    label: pickUiText(i18n, zh: '权重', en: 'Weight'),
+                    label: i18n.t(
+                      'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_widgets.weight_0c7d9e',
+                    ),
                     value: item.weight,
                     max: 999,
                     onChanged: (value) {
@@ -740,7 +735,9 @@ class _CustomRandomOptionRow extends StatelessWidget {
                   ),
                 if (showProbability)
                   _CompactNumberField(
-                    label: pickUiText(i18n, zh: '条件概率', en: 'Condition P'),
+                    label: i18n.t(
+                      'inline.plan295.daily_choice.condition_p.216fb52f99d1',
+                    ),
                     value: item.conditionProbability,
                     max: 1,
                     fractionDigits: 2,
@@ -854,18 +851,16 @@ class _LabeledSlider extends StatelessWidget {
 class _SelectorTitle extends StatelessWidget {
   const _SelectorTitle({
     required this.i18n,
-    required this.titleZh,
-    required this.titleEn,
+    required this.titleKey,
   });
 
   final AppI18n i18n;
-  final String titleZh;
-  final String titleEn;
+  final String titleKey;
 
   @override
   Widget build(BuildContext context) {
     return Text(
-      pickUiText(i18n, zh: titleZh, en: titleEn),
+      i18n.t(titleKey),
       style: Theme.of(context).textTheme.labelLarge?.copyWith(
         fontWeight: FontWeight.w900,
         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -884,40 +879,28 @@ IconData _modeIcon(DailyChoiceCustomRandomMode mode) {
 
 String _modeLabel(AppI18n i18n, DailyChoiceCustomRandomMode mode) {
   return switch (mode) {
-    DailyChoiceCustomRandomMode.uniform => pickUiText(
-      i18n,
-      zh: '均匀',
-      en: 'Uniform',
+    DailyChoiceCustomRandomMode.uniform => i18n.t(
+      'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_widgets.uniform_4f21a2',
     ),
-    DailyChoiceCustomRandomMode.weighted => pickUiText(
-      i18n,
-      zh: '加权',
-      en: 'Weighted',
+    DailyChoiceCustomRandomMode.weighted => i18n.t(
+      'inline.plan295.daily_choice.weighted.c6764d5354d0',
     ),
-    DailyChoiceCustomRandomMode.jointDistribution => pickUiText(
-      i18n,
-      zh: '联合多轮',
-      en: 'Joint rounds',
+    DailyChoiceCustomRandomMode.jointDistribution => i18n.t(
+      'inline.plan295.daily_choice.joint_rounds.b02f67c26c9e',
     ),
   };
 }
 
 String _modeTooltip(AppI18n i18n, DailyChoiceCustomRandomMode mode) {
   return switch (mode) {
-    DailyChoiceCustomRandomMode.uniform => pickUiText(
-      i18n,
-      zh: '每个选项概率相同',
-      en: 'Every option has equal chance',
+    DailyChoiceCustomRandomMode.uniform => i18n.t(
+      'inline.plan295.daily_choice.every_option_has_equal_chance.7e1dc2e1f5cc',
     ),
-    DailyChoiceCustomRandomMode.weighted => pickUiText(
-      i18n,
-      zh: '按权重分配概率',
-      en: 'Chance follows weights',
+    DailyChoiceCustomRandomMode.weighted => i18n.t(
+      'inline.plan295.daily_choice.chance_follows_weights.9225f9e37b0c',
     ),
-    DailyChoiceCustomRandomMode.jointDistribution => pickUiText(
-      i18n,
-      zh: '按权重 × 条件概率多轮抽取',
-      en: 'Draw multiple rounds by weight × condition probability',
+    DailyChoiceCustomRandomMode.jointDistribution => i18n.t(
+      'inline.plan295.daily_choice.draw_multiple_rounds_by_weight_condi.89c1413f1b32',
     ),
   };
 }
@@ -935,20 +918,14 @@ String _animationLabel(
   DailyChoiceCustomRandomAnimation animation,
 ) {
   return switch (animation) {
-    DailyChoiceCustomRandomAnimation.wheel => pickUiText(
-      i18n,
-      zh: '大转盘',
-      en: 'Wheel',
+    DailyChoiceCustomRandomAnimation.wheel => i18n.t(
+      'inline.plan295.daily_choice.wheel.14a2333632de',
     ),
-    DailyChoiceCustomRandomAnimation.dice => pickUiText(
-      i18n,
-      zh: '骰子',
-      en: 'Dice',
+    DailyChoiceCustomRandomAnimation.dice => i18n.t(
+      'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_widgets.dice_d3eb5d',
     ),
-    DailyChoiceCustomRandomAnimation.coin => pickUiText(
-      i18n,
-      zh: '硬币',
-      en: 'Coin',
+    DailyChoiceCustomRandomAnimation.coin => i18n.t(
+      'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_widgets.coin_93fd28',
     ),
   };
 }
@@ -958,40 +935,28 @@ String _animationTooltip(
   DailyChoiceCustomRandomAnimation animation,
 ) {
   return switch (animation) {
-    DailyChoiceCustomRandomAnimation.wheel => pickUiText(
-      i18n,
-      zh: '支持均匀、加权和联合分布',
-      en: 'Supports uniform, weighted, and joint modes',
+    DailyChoiceCustomRandomAnimation.wheel => i18n.t(
+      'inline.plan295.daily_choice.supports_uniform_weighted_and_joint.ebc6b50d5ebf',
     ),
-    DailyChoiceCustomRandomAnimation.dice => pickUiText(
-      i18n,
-      zh: '均匀随机；每颗 3 到 12 面',
-      en: 'Uniform random; each die has 3 to 12 faces',
+    DailyChoiceCustomRandomAnimation.dice => i18n.t(
+      'inline.plan295.daily_choice.uniform_random_each_die_has_3_to_12.9deef4845d1a',
     ),
-    DailyChoiceCustomRandomAnimation.coin => pickUiText(
-      i18n,
-      zh: '两面均匀，可以抛多枚',
-      en: 'Two uniform sides, with multiple coins',
+    DailyChoiceCustomRandomAnimation.coin => i18n.t(
+      'inline.plan295.daily_choice.two_uniform_sides_with_multiple_coin.cf7bdd7d129e',
     ),
   };
 }
 
 String _resultModeText(AppI18n i18n, DailyChoiceCustomRandomResult result) {
   return switch (result.mode) {
-    DailyChoiceCustomRandomMode.uniform => pickUiText(
-      i18n,
-      zh: '均匀随机',
-      en: 'Uniform random',
+    DailyChoiceCustomRandomMode.uniform => i18n.t(
+      'toolbox.daily_choice.uniform_random',
     ),
-    DailyChoiceCustomRandomMode.weighted => pickUiText(
-      i18n,
-      zh: '加权随机',
-      en: 'Weighted random',
+    DailyChoiceCustomRandomMode.weighted => i18n.t(
+      'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_widgets.weighted_random_28af44',
     ),
-    DailyChoiceCustomRandomMode.jointDistribution => pickUiText(
-      i18n,
-      zh: '${result.roundPicks.length} 轮联合分布',
-      en: '${result.roundPicks.length} joint rounds',
+    DailyChoiceCustomRandomMode.jointDistribution => i18n.t(
+      'inline.plan295.daily_choice.result_roundpicks_length_joint_round.7bdfffffafc9',
     ),
   };
 }

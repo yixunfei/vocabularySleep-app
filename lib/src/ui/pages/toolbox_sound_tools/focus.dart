@@ -193,11 +193,15 @@ int _focusGreatestCommonDivisor(int a, int b) {
 class _FocusArrangementPreset {
   const _FocusArrangementPreset({
     required this.name,
+    required this.i18nKey,
     required this.segmentsInBars,
   });
 
   final String name;
+  final String i18nKey;
   final List<double> segmentsInBars;
+
+  String label(AppI18n i18n) => i18n.t(i18nKey);
 }
 
 class _FocusVisualPalette {
@@ -266,17 +270,24 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
   static const List<int> _focusBeatVariants = <int>[0, 11, 23];
   static const List<_FocusArrangementPreset> _patternPresets =
       <_FocusArrangementPreset>[
-        _FocusArrangementPreset(name: '单段 1bar', segmentsInBars: <double>[1]),
+        _FocusArrangementPreset(
+          name: '单段 1bar',
+          i18nKey: 'toolbox.sound.focus.editor.preset_single',
+          segmentsInBars: <double>[1],
+        ),
         _FocusArrangementPreset(
           name: '双段 2+2bar',
+          i18nKey: 'toolbox.sound.focus.editor.preset_double',
           segmentsInBars: <double>[2, 2],
         ),
         _FocusArrangementPreset(
           name: '均衡 3+3+2bar',
+          i18nKey: 'toolbox.sound.focus.editor.preset_balanced',
           segmentsInBars: <double>[3, 3, 2],
         ),
         _FocusArrangementPreset(
           name: '冲刺 2+3+1/2bar',
+          i18nKey: 'toolbox.sound.focus.editor.preset_sprint',
           segmentsInBars: <double>[2, 3, 0.5],
         ),
       ];

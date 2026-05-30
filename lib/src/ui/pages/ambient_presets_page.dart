@@ -18,22 +18,26 @@ class AmbientPresetsPage extends ConsumerWidget {
     final presets = state.ambientPresets;
     return Scaffold(
       appBar: AppBar(
-        title: Text(pickUiText(i18n, zh: '环境音预设', en: 'Ambient presets')),
+        title: Text(
+          i18n.t('inline.ui.pages.ambient_presets_page.ambient_presets_df4f07'),
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _createPreset(context, state, i18n),
         icon: const Icon(Icons.add_rounded),
-        label: Text(pickUiText(i18n, zh: '保存当前组合', en: 'Save current mix')),
+        label: Text(
+          i18n.t(
+            'inline.ui.pages.ambient_presets_page.save_current_mix_7bf35c',
+          ),
+        ),
       ),
       body: presets.isEmpty
           ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '先在环境音面板里打开想要的声音并调整音量，再来保存为预设。',
-                    en: 'Turn on the sounds you want in the ambient panel, adjust their volumes, then save them as a preset here.',
+                  i18n.t(
+                    'inline.ui.pages.ambient_presets_page.turn_on_the_sounds_you_want_in_the_ambient_panel_adjust_ed52e9',
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -58,10 +62,8 @@ class AmbientPresetsPage extends ConsumerWidget {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            pickUiText(
-                              i18n,
-                              zh: '已应用预设：${preset.name}',
-                              en: 'Applied preset: ${preset.name}',
+                            i18n.t(
+                              'inline.ui.pages.ambient_presets_page.applied_preset_preset_name_044da2',
                             ),
                           ),
                         ),
@@ -83,10 +85,8 @@ class AmbientPresetsPage extends ConsumerWidget {
   }
 
   String _subtitle(AppI18n i18n, AmbientPreset preset) {
-    return pickUiText(
-      i18n,
-      zh: '${preset.entries.length} 个环境音 · 总音量 ${(preset.masterVolume * 100).round()}%',
-      en: '${preset.entries.length} sounds · master ${(preset.masterVolume * 100).round()}%',
+    return i18n.t(
+      'inline.ui.pages.ambient_presets_page.preset_entries_length_sounds_master_preset_mastervolume_2f5f31',
     );
   }
 
@@ -102,10 +102,8 @@ class AmbientPresetsPage extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            pickUiText(
-              i18n,
-              zh: '请先至少启用一个环境音，再保存为预设。',
-              en: 'Turn on at least one ambient sound before saving a preset.',
+            i18n.t(
+              'inline.ui.pages.ambient_presets_page.turn_on_at_least_one_ambient_sound_before_saving_a_prese_cdb9e4',
             ),
           ),
         ),
@@ -114,14 +112,14 @@ class AmbientPresetsPage extends ConsumerWidget {
     }
     final name = await showTextPromptDialog(
       context: context,
-      title: pickUiText(i18n, zh: '新建预设', en: 'New preset'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '保存当前启用的环境音和音量组合。',
-        en: 'Save the currently enabled ambient sounds and their volumes.',
+      title: i18n.t('inline.ui.pages.ambient_presets_page.new_preset_620c29'),
+      subtitle: i18n.t(
+        'inline.ui.pages.ambient_presets_page.save_the_currently_enabled_ambient_sounds_and_their_volu_0804dd',
       ),
-      hintText: pickUiText(i18n, zh: '例如：午后咖啡馆', en: 'For example: Cafe Focus'),
-      confirmText: pickUiText(i18n, zh: '保存', en: 'Save'),
+      hintText: i18n.t(
+        'inline.ui.pages.ambient_presets_page.for_example_cafe_focus_3c296b',
+      ),
+      confirmText: i18n.t('save'),
     );
     if (name == null || name.trim().isEmpty) {
       return;
@@ -131,10 +129,8 @@ class AmbientPresetsPage extends ConsumerWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          pickUiText(
-            i18n,
-            zh: '已保存预设：${name.trim()}',
-            en: 'Saved preset: ${name.trim()}',
+          i18n.t(
+            'inline.ui.pages.ambient_presets_page.saved_preset_name_trim_f76b76',
           ),
         ),
       ),
@@ -149,13 +145,13 @@ class AmbientPresetsPage extends ConsumerWidget {
   ) async {
     final confirmed = await showConfirmDialog(
       context: context,
-      title: pickUiText(i18n, zh: '删除预设', en: 'Delete preset'),
-      message: pickUiText(
-        i18n,
-        zh: '确定删除预设“${preset.name}”？',
-        en: 'Delete preset "${preset.name}"?',
+      title: i18n.t(
+        'inline.ui.pages.ambient_presets_page.delete_preset_8cfec5',
       ),
-      confirmText: pickUiText(i18n, zh: '删除', en: 'Delete'),
+      message: i18n.t(
+        'inline.ui.pages.ambient_presets_page.delete_preset_preset_name_6329ee',
+      ),
+      confirmText: i18n.t('delete'),
       danger: true,
     );
     if (!confirmed) {

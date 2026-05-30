@@ -19,10 +19,10 @@ Future<void> showDailyChoiceGuideSheet({
           : <DailyChoiceGuideModule>[
               DailyChoiceGuideModule(
                 id: 'default',
-                titleZh: title,
-                titleEn: title,
-                subtitleZh: '按顺序看就能快速上手',
-                subtitleEn: 'A quick practical guide',
+                titleKey:
+                    'inline.plan295.daily_choice.a_quick_practical_guide.d64e2d395bb0',
+                subtitleKey:
+                    'inline.plan295.daily_choice.pick_one_guide_module_first_and_then.e2206d2e8165',
                 entries: entries,
               ),
             ];
@@ -52,10 +52,8 @@ Future<void> showDailyChoiceGuideSheet({
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '先选一个模块看，再往下读对应说明，会比一口气塞满全部信息更好消化。',
-                        en: 'Pick one guide module first and then read the matching notes below.',
+                      i18n.t(
+                        'inline.plan295.daily_choice.pick_one_guide_module_first_and_then.e2206d2e8165',
                       ),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
@@ -140,8 +138,8 @@ Future<void> showDailyChoiceDetailSheet({
           ? wearTraitLines(i18n, option)
           : const <String>[];
       final notesTitle = option.moduleId == DailyChoiceModuleId.eat.storageValue
-          ? pickUiText(i18n, zh: '关键提示', en: 'Kitchen notes')
-          : pickUiText(i18n, zh: '关键提示', en: 'Notes');
+          ? i18n.t('inline.plan295.daily_choice.kitchen_notes.81b7e27dad96')
+          : i18n.t('inline.plan295.daily_choice.notes.c304ba3d7ca0');
       final goMapQuery = option.moduleId == DailyChoiceModuleId.go.storageValue
           ? _dailyChoiceGoMapQuery(option, i18n)
           : null;
@@ -188,7 +186,9 @@ Future<void> showDailyChoiceDetailSheet({
                 const SizedBox(height: 18),
                 if (eatTraitDetails.isNotEmpty) ...<Widget>[
                   _DetailBlock(
-                    title: pickUiText(i18n, zh: '菜品画像', en: 'Dish profile'),
+                    title: i18n.t(
+                      'inline.plan295.daily_choice.dish_profile.f291c6e80535',
+                    ),
                     children: eatTraitDetails,
                     accent: accent,
                   ),
@@ -196,7 +196,9 @@ Future<void> showDailyChoiceDetailSheet({
                 ],
                 if (wearTraitDetails.isNotEmpty) ...<Widget>[
                   _DetailBlock(
-                    title: pickUiText(i18n, zh: '风格画像', en: 'Outfit profile'),
+                    title: i18n.t(
+                      'inline.plan295.daily_choice.outfit_profile.c5ee85ccbb15',
+                    ),
                     children: wearTraitDetails,
                     accent: accent,
                   ),
@@ -204,14 +206,18 @@ Future<void> showDailyChoiceDetailSheet({
                 ],
                 if (materials.isNotEmpty)
                   _DetailBlock(
-                    title: pickUiText(i18n, zh: '材料 / 条件', en: 'Materials'),
+                    title: i18n.t(
+                      'inline.plan295.daily_choice.materials.1d71d7e94733',
+                    ),
                     children: materials,
                     accent: accent,
                   ),
                 if (steps.isNotEmpty) ...<Widget>[
                   const SizedBox(height: 12),
                   _DetailBlock(
-                    title: pickUiText(i18n, zh: '制作 / 执行方法', en: 'Steps'),
+                    title: i18n.t(
+                      'inline.plan295.daily_choice.steps.87e885ec3a89',
+                    ),
                     children: steps,
                     numbered: true,
                     accent: accent,
@@ -237,10 +243,8 @@ Future<void> showDailyChoiceDetailSheet({
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              pickUiText(
-                                i18n,
-                                zh: '已复制地图搜索词',
-                                en: 'Map search query copied',
+                              i18n.t(
+                                'inline.plan295.daily_choice.map_search_query_copied.ddec148c697d',
                               ),
                             ),
                           ),
@@ -249,7 +253,9 @@ Future<void> showDailyChoiceDetailSheet({
                     },
                     icon: const Icon(Icons.content_copy_rounded),
                     label: Text(
-                      pickUiText(i18n, zh: '复制地图搜索词', en: 'Copy map query'),
+                      i18n.t(
+                        'inline.plan295.daily_choice.copy_map_query.bc8dfdccdad2',
+                      ),
                     ),
                   ),
                 ],

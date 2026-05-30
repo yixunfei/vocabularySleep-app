@@ -67,16 +67,16 @@ class WordCard extends StatelessWidget {
 
   String _favoriteLabel() {
     if (isFavorite) {
-      return pickUiText(i18n, zh: '取消收藏', en: 'Unfavorite');
+      return i18n.t('toolbox.sound.focus.editor.unfavorite');
     }
-    return pickUiText(i18n, zh: '收藏', en: 'Favorite');
+    return i18n.t('toolbox.sound.focus.editor.favorite');
   }
 
   String _taskLabel() {
     if (isTaskWord) {
-      return pickUiText(i18n, zh: '移出任务', en: 'Remove task');
+      return i18n.t('inline.ui.widgets.word_card.remove_task_81c5ab');
     }
-    return pickUiText(i18n, zh: '加入任务', en: 'Add to task');
+    return i18n.t('inline.ui.pages.practice_notebook_page.add_to_task_935808');
   }
 
   List<WordFieldItem> _displayFields(WordEntry entry) {
@@ -172,13 +172,13 @@ class WordCard extends StatelessWidget {
                 children: <Widget>[
                   if (isFavorite)
                     StatusBadge(
-                      label: pickUiText(i18n, zh: '已收藏', en: 'Favorite'),
+                      label: i18n.t('toolbox.sound.focus.editor.favorite'),
                       icon: Icons.favorite_rounded,
                       color: const Color(0xFFE25A7A),
                     ),
                   if (isTaskWord)
                     StatusBadge(
-                      label: pickUiText(i18n, zh: '任务词', en: 'Task'),
+                      label: i18n.t('inline.ui.widgets.word_card.task_df1f06'),
                       icon: Icons.task_alt_rounded,
                       color: tokens.success,
                     ),
@@ -387,13 +387,15 @@ class _WordHeaderBlock extends StatelessWidget {
         IconButton.filledTonal(
           onPressed: onPreviousWord,
           icon: const Icon(Icons.chevron_left_rounded),
-          tooltip: pickUiText(i18n, zh: '上一个', en: 'Previous word'),
+          tooltip: i18n.t('inline.ui.widgets.word_card.previous_word_a5eff1'),
         ),
       if (onNextWord != null)
         IconButton.filledTonal(
           onPressed: onNextWord,
           icon: const Icon(Icons.chevron_right_rounded),
-          tooltip: pickUiText(i18n, zh: '下一个', en: 'Next word'),
+          tooltip: i18n.t(
+            'inline.ui.pages.practice_session_page.next_word_21fddc',
+          ),
         ),
       if (onPlayPronunciation != null)
         FilledButton.tonalIcon(
@@ -405,7 +407,7 @@ class _WordHeaderBlock extends StatelessWidget {
         OutlinedButton.icon(
           onPressed: onFollowAlong,
           icon: const Icon(Icons.mic_external_on_rounded),
-          label: Text(pickUiText(i18n, zh: '跟读', en: 'Follow')),
+          label: Text(i18n.t('inline.ui.widgets.word_card.follow_9108bd')),
         ),
     ];
 
@@ -437,10 +439,8 @@ class _WordHeaderBlock extends StatelessWidget {
         if (!canReveal) ...<Widget>[
           const SizedBox(height: 10),
           Text(
-            pickUiText(
-              i18n,
-              zh: '先回忆，再点击显示答案',
-              en: 'Recall first, then reveal the answer.',
+            i18n.t(
+              'inline.ui.widgets.word_card.recall_first_then_reveal_the_answer_8bc4cc',
             ),
             style: theme.textTheme.bodyMedium?.copyWith(color: textSecondary),
           ),
@@ -477,10 +477,8 @@ class _WordHeaderBlock extends StatelessWidget {
         if (enableWordSwipe) ...<Widget>[
           const SizedBox(height: 10),
           Text(
-            pickUiText(
-              i18n,
-              zh: '在整张单词卡片上左右滑动可切词',
-              en: 'Swipe anywhere on this card to switch.',
+            i18n.t(
+              'inline.ui.widgets.word_card.swipe_anywhere_on_this_card_to_switch_9297c2',
             ),
             style: theme.textTheme.bodySmall?.copyWith(color: textSecondary),
           ),

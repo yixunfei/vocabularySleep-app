@@ -102,18 +102,30 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
   String _animationName(BuildContext context, _FocusBeatAnimationKind kind) {
     final i18n = _i18nOf(context);
     return switch (kind) {
-      _FocusBeatAnimationKind.pendulum => i18n.t('toolbox.sound.focus.animNameWarm'),
-      _FocusBeatAnimationKind.hypno => i18n.t('toolbox.sound.focus.animNameStill'),
-      _FocusBeatAnimationKind.dew => i18n.t('toolbox.sound.focus.animNameClear'),
-      _FocusBeatAnimationKind.gear => i18n.t('toolbox.sound.focus.animNamePrecision'),
-      _FocusBeatAnimationKind.steps => i18n.t('toolbox.sound.focus.animNameStep'),
+      _FocusBeatAnimationKind.pendulum => i18n.t(
+        'toolbox.sound.focus.animNameWarm',
+      ),
+      _FocusBeatAnimationKind.hypno => i18n.t(
+        'toolbox.sound.focus.animNameStill',
+      ),
+      _FocusBeatAnimationKind.dew => i18n.t(
+        'toolbox.sound.focus.animNameClear',
+      ),
+      _FocusBeatAnimationKind.gear => i18n.t(
+        'toolbox.sound.focus.animNamePrecision',
+      ),
+      _FocusBeatAnimationKind.steps => i18n.t(
+        'toolbox.sound.focus.animNameStep',
+      ),
     };
   }
 
   String _soundName(BuildContext context, _FocusBeatSoundKind kind) {
     final i18n = _i18nOf(context);
     return switch (kind) {
-      _FocusBeatSoundKind.pendulum => i18n.t('toolbox.sound.focus.soundNamePendulum'),
+      _FocusBeatSoundKind.pendulum => i18n.t(
+        'toolbox.sound.focus.soundNamePendulum',
+      ),
       _FocusBeatSoundKind.hypno => i18n.t('toolbox.sound.focus.soundNamePulse'),
       _FocusBeatSoundKind.dew => i18n.t('toolbox.sound.focus.soundNameDrop'),
       _FocusBeatSoundKind.gear => i18n.t('toolbox.sound.focus.soundNameTick'),
@@ -792,7 +804,9 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
                       _FocusControlSection(
                         icon: Icons.speed_rounded,
                         title: i18n.t('toolbox.sound.focus.controlTempo'),
-                        subtitle: i18n.t('toolbox.sound.focus.controlTempoDesc'),
+                        subtitle: i18n.t(
+                          'toolbox.sound.focus.controlTempoDesc',
+                        ),
                         summary: '$_bpm BPM',
                         expanded: _tempoExpanded,
                         onToggle: () {
@@ -806,7 +820,9 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
                       _FocusControlSection(
                         icon: Icons.tune_rounded,
                         title: i18n.t('toolbox.sound.focus.controlMeter'),
-                        subtitle: i18n.t('toolbox.sound.focus.controlMeterDesc'),
+                        subtitle: i18n.t(
+                          'toolbox.sound.focus.controlMeterDesc',
+                        ),
                         summary: '$_beatsPerBar/4 × $_subdivision',
                         expanded: _meterExpanded,
                         onToggle: () {
@@ -820,7 +836,9 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
                       _FocusControlSection(
                         icon: Icons.graphic_eq_rounded,
                         title: i18n.t('toolbox.sound.focus.controlTimbre'),
-                        subtitle: i18n.t('toolbox.sound.focus.controlTimbreDesc'),
+                        subtitle: i18n.t(
+                          'toolbox.sound.focus.controlTimbreDesc',
+                        ),
                         summary: _soundName(sheetContext, _soundKind),
                         expanded: _styleExpanded,
                         onToggle: () {
@@ -834,7 +852,9 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
                       _FocusControlSection(
                         icon: Icons.view_timeline_rounded,
                         title: i18n.t('toolbox.sound.focus.controlArrangement'),
-                        subtitle: i18n.t('toolbox.sound.focus.controlArrangementDesc'),
+                        subtitle: i18n.t(
+                          'toolbox.sound.focus.controlArrangementDesc',
+                        ),
                         summary: _patternEnabled
                             ? arrangementLabel
                             : i18n.t('toolbox.sound.focus.singleBarLoop'),
@@ -870,7 +890,9 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
                         child: OutlinedButton.icon(
                           onPressed: widget.onExitFullScreen,
                           icon: const Icon(Icons.close_rounded),
-                          label: Text(i18n.t('toolbox.sound.focus.immersiveExitSheet')),
+                          label: Text(
+                            i18n.t('toolbox.sound.focus.immersiveExitSheet'),
+                          ),
                         ),
                       ),
                     ],

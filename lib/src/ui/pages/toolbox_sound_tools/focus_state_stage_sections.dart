@@ -312,7 +312,10 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          tempoI18n.t('toolbox.sound.focus.tempoLabel', params: {'bpm': '$_bpm', 'sec': (60 / _bpm).toStringAsFixed(2)}),
+          tempoI18n.t(
+            'toolbox.sound.focus.tempoLabel',
+            params: {'bpm': '$_bpm', 'sec': (60 / _bpm).toStringAsFixed(2)},
+          ),
         ),
         Slider(
           value: _bpm.toDouble(),
@@ -426,7 +429,10 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
               .map(
                 (division) => ChoiceChip(
                   label: Text(
-                    meterI18n.t('toolbox.sound.focus.meterSubDiv', params: {'div': '$division'}),
+                    meterI18n.t(
+                      'toolbox.sound.focus.meterSubDiv',
+                      params: {'div': '$division'},
+                    ),
                   ),
                   selected: _subdivision == division,
                   onSelected: (_) => _setSubdivision(division),
@@ -543,7 +549,14 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
             ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
           subtitle: Text(
-            arrangementI18n.t('toolbox.sound.focus.arrangementLabel', params: {'label': arrangementLabel, 'total': '${_arrangementBeats.fold<int>(0, (sum, item) => sum + item)}'}),
+            arrangementI18n.t(
+              'toolbox.sound.focus.arrangementLabel',
+              params: {
+                'label': arrangementLabel,
+                'total':
+                    '${_arrangementBeats.fold<int>(0, (sum, item) => sum + item)}',
+              },
+            ),
           ),
           trailing: FilledButton.tonalIcon(
             onPressed: _openArrangementEditor,
@@ -862,7 +875,9 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
               FilledButton.tonalIcon(
                 onPressed: _previewCurrentSound,
                 icon: const Icon(Icons.graphic_eq_rounded),
-                label: Text(controlI18n.t('toolbox.sound.focus.controlPreviewSound')),
+                label: Text(
+                  controlI18n.t('toolbox.sound.focus.controlPreviewSound'),
+                ),
               ),
               if (!widget.fullScreen && widget.onOpenFullScreen != null)
                 FilledButton.tonalIcon(
@@ -873,25 +888,33 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
                     );
                   },
                   icon: const Icon(Icons.open_in_full_rounded),
-                  label: Text(controlI18n.t('toolbox.sound.focus.controlFullStage')),
+                  label: Text(
+                    controlI18n.t('toolbox.sound.focus.controlFullStage'),
+                  ),
                 ),
               if (widget.fullScreen && !immersiveSheet)
                 FilledButton.tonalIcon(
                   onPressed: _openImmersiveControlsSheet,
                   icon: const Icon(Icons.tune_rounded),
-                  label: Text(controlI18n.t('toolbox.sound.focus.controlOpenControls')),
+                  label: Text(
+                    controlI18n.t('toolbox.sound.focus.controlOpenControls'),
+                  ),
                 ),
               if (widget.fullScreen && immersiveSheet)
                 FilledButton.tonalIcon(
                   onPressed: widget.onExitFullScreen,
                   icon: const Icon(Icons.close_rounded),
-                  label: Text(controlI18n.t('toolbox.sound.focus.controlExitFull')),
+                  label: Text(
+                    controlI18n.t('toolbox.sound.focus.controlExitFull'),
+                  ),
                 )
               else if (!widget.fullScreen)
                 OutlinedButton.icon(
                   onPressed: _toggleImmersiveMode,
                   icon: const Icon(Icons.fullscreen_rounded),
-                  label: Text(controlI18n.t('toolbox.sound.focus.controlImmersive')),
+                  label: Text(
+                    controlI18n.t('toolbox.sound.focus.controlImmersive'),
+                  ),
                 ),
               _FocusInfoPill(
                 icon: Icons.vibration_rounded,

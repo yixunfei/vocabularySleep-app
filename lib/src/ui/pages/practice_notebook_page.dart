@@ -56,7 +56,11 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
     if (!state.isModuleEnabled(ModuleIds.practice)) {
       return Scaffold(
         appBar: AppBar(
-          title: Text(pickUiText(i18n, zh: '错题本', en: 'Wrong notebook')),
+          title: Text(
+            i18n.t(
+              'inline.ui.pages.practice_notebook_page.wrong_notebook_6c7ca5',
+            ),
+          ),
         ),
         body: ModuleDisabledView(i18n: i18n, moduleId: ModuleIds.practice),
       );
@@ -87,13 +91,19 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(pickUiText(i18n, zh: '错题本', en: 'Wrong notebook')),
+        title: Text(
+          i18n.t(
+            'inline.ui.pages.practice_notebook_page.wrong_notebook_6c7ca5',
+          ),
+        ),
         actions: notebookWords.isEmpty
             ? null
             : <Widget>[
                 if (_selectionMode)
                   IconButton(
-                    tooltip: pickUiText(i18n, zh: '全选当前结果', en: 'Select all'),
+                    tooltip: i18n.t(
+                      'inline.ui.pages.practice_notebook_page.select_all_93a881',
+                    ),
                     onPressed: orderedWords.isEmpty
                         ? null
                         : () {
@@ -107,8 +117,12 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                   ),
                 IconButton(
                   tooltip: _selectionMode
-                      ? pickUiText(i18n, zh: '退出多选', en: 'Exit multi-select')
-                      : pickUiText(i18n, zh: '批量操作', en: 'Batch actions'),
+                      ? i18n.t(
+                          'inline.ui.pages.practice_notebook_page.exit_multi_select_b97450',
+                        )
+                      : i18n.t(
+                          'inline.ui.pages.practice_notebook_page.batch_actions_1bae02',
+                        ),
                   onPressed: () {
                     setState(() {
                       _selectionMode = !_selectionMode;
@@ -128,27 +142,25 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
       body: notebookWords.isEmpty
           ? EmptyStateView(
               icon: Icons.bookmark_remove_outlined,
-              title: pickUiText(
-                i18n,
-                zh: '错题本还是空的',
-                en: 'Wrong notebook is empty',
+              title: i18n.t(
+                'inline.ui.pages.practice_notebook_page.wrong_notebook_is_empty_6289ab',
               ),
-              message: pickUiText(
-                i18n,
-                zh: '在练习会话里点击“没记住”后，单词会自动进入这里，方便后续集中复习。',
-                en: 'Words you mark as "Not yet" during practice will collect here for focused review.',
+              message: i18n.t(
+                'inline.ui.pages.practice_notebook_page.words_you_mark_as_not_yet_during_practice_will_collect_h_3e96c6',
               ),
             )
           : ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
               children: <Widget>[
                 PageHeader(
-                  eyebrow: pickUiText(i18n, zh: '练习中心', en: 'Practice hub'),
-                  title: pickUiText(i18n, zh: '错题本', en: 'Wrong notebook'),
-                  subtitle: pickUiText(
-                    i18n,
-                    zh: '集中管理近期没记住的单词，支持错题顺序、到期优先、薄弱优先和随机练习。',
-                    en: 'Manage missed words in one place with notebook order, due-first, weak-first, and shuffle review.',
+                  eyebrow: i18n.t(
+                    'inline.ui.pages.practice_notebook_page.practice_hub_68dce9',
+                  ),
+                  title: i18n.t(
+                    'inline.ui.pages.practice_notebook_page.wrong_notebook_6c7ca5',
+                  ),
+                  subtitle: i18n.t(
+                    'inline.ui.pages.practice_notebook_page.manage_missed_words_in_one_place_with_notebook_order_due_d1af3a',
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -159,7 +171,9 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          pickUiText(i18n, zh: '筛选与检索', en: 'Search & filter'),
+                          i18n.t(
+                            'inline.ui.pages.practice_notebook_page.search_filter_d85f23',
+                          ),
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         const SizedBox(height: 12),
@@ -173,10 +187,8 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.search_rounded),
                             border: const OutlineInputBorder(),
-                            labelText: pickUiText(
-                              i18n,
-                              zh: '搜索单词或词义',
-                              en: 'Search word or meaning',
+                            labelText: i18n.t(
+                              'inline.ui.pages.practice_notebook_page.search_word_or_meaning_3cf7c6',
                             ),
                           ),
                         ),
@@ -187,7 +199,9 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                           children: <Widget>[
                             ChoiceChip(
                               label: Text(
-                                pickUiText(i18n, zh: '全部状态', en: 'All status'),
+                                i18n.t(
+                                  'inline.ui.pages.practice_notebook_page.all_status_5509b6',
+                                ),
                               ),
                               selected:
                                   _statusFilter ==
@@ -201,7 +215,9 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                             ),
                             ChoiceChip(
                               label: Text(
-                                pickUiText(i18n, zh: '待复习', en: 'Due now'),
+                                i18n.t(
+                                  'inline.ui.pages.practice_notebook_page.due_now_30a228',
+                                ),
                               ),
                               selected:
                                   _statusFilter ==
@@ -215,7 +231,9 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                             ),
                             ChoiceChip(
                               label: Text(
-                                pickUiText(i18n, zh: '已掌握', en: 'Mastered'),
+                                i18n.t(
+                                  'inline.ui.pages.practice_notebook_page.mastered_4419ab',
+                                ),
                               ),
                               selected:
                                   _statusFilter ==
@@ -236,7 +254,9 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                           children: <Widget>[
                             ChoiceChip(
                               label: Text(
-                                pickUiText(i18n, zh: '全部原因', en: 'All reasons'),
+                                i18n.t(
+                                  'inline.ui.pages.practice_notebook_page.all_reasons_12a4ba',
+                                ),
                               ),
                               selected: _reasonFilter.isEmpty,
                               onSelected: (_) {
@@ -266,20 +286,16 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                             initialValue: _wordbookFilterId,
                             decoration: InputDecoration(
                               border: const OutlineInputBorder(),
-                              labelText: pickUiText(
-                                i18n,
-                                zh: '词库筛选',
-                                en: 'Wordbook filter',
+                              labelText: i18n.t(
+                                'inline.ui.pages.practice_notebook_page.wordbook_filter_9a4e1a',
                               ),
                             ),
                             items: <DropdownMenuItem<int?>>[
                               DropdownMenuItem<int?>(
                                 value: null,
                                 child: Text(
-                                  pickUiText(
-                                    i18n,
-                                    zh: '全部词库',
-                                    en: 'All wordbooks',
+                                  i18n.t(
+                                    'inline.ui.pages.practice_notebook_page.all_wordbooks_00e652',
                                   ),
                                 ),
                               ),
@@ -311,7 +327,9 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          pickUiText(i18n, zh: '错题本概览', en: 'Notebook summary'),
+                          i18n.t(
+                            'inline.ui.pages.practice_notebook_page.notebook_summary_0dc2da',
+                          ),
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         const SizedBox(height: 12),
@@ -323,37 +341,31 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                               context,
                               icon: Icons.bookmarks_rounded,
                               value: '${orderedWords.length}',
-                              label: pickUiText(
-                                i18n,
-                                zh: '错题数',
-                                en: 'Notebook words',
+                              label: i18n.t(
+                                'inline.ui.pages.practice_notebook_page.notebook_words_9adfda',
                               ),
                             ),
                             _buildStatChip(
                               context,
                               icon: Icons.schedule_rounded,
                               value: '$dueCount',
-                              label: pickUiText(i18n, zh: '待复习', en: 'Due now'),
+                              label: i18n.t(
+                                'inline.ui.pages.practice_notebook_page.due_now_30a228',
+                              ),
                             ),
                             _buildStatChip(
                               context,
                               icon: Icons.task_alt_rounded,
                               value: '$masteredCount',
-                              label: pickUiText(
-                                i18n,
-                                zh: '可清理',
-                                en: 'Ready to clear',
+                              label: i18n.t(
+                                'inline.ui.pages.practice_notebook_page.ready_to_clear_cda958',
                               ),
                             ),
                             _buildStatChip(
                               context,
                               icon: Icons.layers_rounded,
                               value: '$wordbookCount',
-                              label: pickUiText(
-                                i18n,
-                                zh: '涉及词库',
-                                en: 'Wordbooks',
-                              ),
+                              label: i18n.t('wordbooks'),
                             ),
                           ],
                         ),
@@ -369,7 +381,9 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          pickUiText(i18n, zh: '练习顺序', en: 'Review order'),
+                          i18n.t(
+                            'inline.ui.pages.practice_notebook_page.review_order_334a92',
+                          ),
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         const SizedBox(height: 12),
@@ -405,10 +419,8 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                               ),
                               icon: const Icon(Icons.play_arrow_rounded),
                               label: Text(
-                                pickUiText(
-                                  i18n,
-                                  zh: '按当前顺序开始',
-                                  en: 'Start review',
+                                i18n.t(
+                                  'inline.ui.pages.practice_notebook_page.start_review_36dd6d',
                                 ),
                               ),
                             ),
@@ -421,10 +433,8 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                               ),
                               icon: const Icon(Icons.shuffle_rounded),
                               label: Text(
-                                pickUiText(
-                                  i18n,
-                                  zh: '随机练习',
-                                  en: 'Shuffle review',
+                                i18n.t(
+                                  'inline.ui.pages.practice_notebook_page.shuffle_review_0ec189',
                                 ),
                               ),
                             ),
@@ -439,10 +449,8 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                                   Icons.cleaning_services_rounded,
                                 ),
                                 label: Text(
-                                  pickUiText(
-                                    i18n,
-                                    zh: '清理已掌握',
-                                    en: 'Clear mastered',
+                                  i18n.t(
+                                    'inline.ui.pages.practice_notebook_page.clear_mastered_f0399c',
                                   ),
                                 ),
                               ),
@@ -454,10 +462,8 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                               ),
                               icon: const Icon(Icons.delete_sweep_rounded),
                               label: Text(
-                                pickUiText(
-                                  i18n,
-                                  zh: '清空错题本',
-                                  en: 'Clear notebook',
+                                i18n.t(
+                                  'inline.ui.pages.practice_notebook_page_actions.clear_notebook_3e08fc',
                                 ),
                               ),
                             ),
@@ -472,10 +478,8 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                                     ),
                               icon: const Icon(Icons.data_object_rounded),
                               label: Text(
-                                pickUiText(
-                                  i18n,
-                                  zh: '导出当前筛选(JSON)',
-                                  en: 'Export filtered (JSON)',
+                                i18n.t(
+                                  'inline.ui.pages.practice_notebook_page.export_filtered_json_9aca5b',
                                 ),
                               ),
                             ),
@@ -490,10 +494,8 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                                     ),
                               icon: const Icon(Icons.table_view_rounded),
                               label: Text(
-                                pickUiText(
-                                  i18n,
-                                  zh: '导出当前筛选(CSV)',
-                                  en: 'Export filtered (CSV)',
+                                i18n.t(
+                                  'inline.ui.pages.practice_notebook_page.export_filtered_csv_57b898',
                                 ),
                               ),
                             ),
@@ -512,15 +514,15 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            pickUiText(i18n, zh: '批量操作', en: 'Batch actions'),
+                            i18n.t(
+                              'inline.ui.pages.practice_notebook_page.batch_actions_1bae02',
+                            ),
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            pickUiText(
-                              i18n,
-                              zh: '已选择 ${selectedEntries.length} 项，可批量加入任务本、加入收藏或移出错题本。',
-                              en: '${selectedEntries.length} selected. Add to task, favorite, or remove from the notebook in one step.',
+                            i18n.t(
+                              'inline.ui.pages.practice_notebook_page.selectedentries_length_selected_add_to_task_favorite_or_4a63f1',
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -538,10 +540,8 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                                       ),
                                 icon: const Icon(Icons.task_alt_rounded),
                                 label: Text(
-                                  pickUiText(
-                                    i18n,
-                                    zh: '加入任务本',
-                                    en: 'Add to task',
+                                  i18n.t(
+                                    'inline.ui.pages.practice_notebook_page.add_to_task_935808',
                                   ),
                                 ),
                               ),
@@ -555,10 +555,8 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                                       ),
                                 icon: const Icon(Icons.favorite_rounded),
                                 label: Text(
-                                  pickUiText(
-                                    i18n,
-                                    zh: '加入收藏',
-                                    en: 'Add favorite',
+                                  i18n.t(
+                                    'inline.ui.pages.practice_notebook_page.add_favorite_278d4a',
                                   ),
                                 ),
                               ),
@@ -574,10 +572,8 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                                   Icons.remove_circle_outline_rounded,
                                 ),
                                 label: Text(
-                                  pickUiText(
-                                    i18n,
-                                    zh: '移出错题本',
-                                    en: 'Remove from notebook',
+                                  i18n.t(
+                                    'inline.ui.pages.practice_notebook_page.remove_from_notebook_373cd3',
                                   ),
                                 ),
                               ),
@@ -589,10 +585,8 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                                 },
                                 icon: const Icon(Icons.clear_all_rounded),
                                 label: Text(
-                                  pickUiText(
-                                    i18n,
-                                    zh: '清空选择',
-                                    en: 'Clear selection',
+                                  i18n.t(
+                                    'inline.ui.pages.practice_notebook_page.clear_selection_b9a937',
                                   ),
                                 ),
                               ),
@@ -608,15 +602,11 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Text(
                     orderedWords.isEmpty
-                        ? pickUiText(
-                            i18n,
-                            zh: '当前筛选条件下没有匹配项，试试清空搜索或切换筛选。',
-                            en: 'No entries match the current filters. Try clearing search or changing the filters.',
+                        ? i18n.t(
+                            'inline.ui.pages.practice_notebook_page.no_entries_match_the_current_filters_try_clearing_search_6b83a1',
                           )
-                        : pickUiText(
-                            i18n,
-                            zh: '向左滑动单条错题可直接移出错题本。',
-                            en: 'Swipe a word left to remove it from the notebook.',
+                        : i18n.t(
+                            'inline.ui.pages.practice_notebook_page.swipe_a_word_left_to_remove_it_from_the_notebook_a36014',
                           ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
@@ -647,15 +637,11 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
                                 word,
                               );
                               final message = removed
-                                  ? pickUiText(
-                                      i18n,
-                                      zh: '${word.word} 已移出错题本',
-                                      en: '${word.word} removed from notebook',
+                                  ? i18n.t(
+                                      'inline.ui.pages.practice_notebook_page.word_word_removed_from_notebook_c57eb1',
                                     )
-                                  : pickUiText(
-                                      i18n,
-                                      zh: '错题本未发生变化',
-                                      en: 'Notebook was not changed',
+                                  : i18n.t(
+                                      'inline.ui.pages.practice_notebook_page.notebook_was_not_changed_d68576',
                                     );
                               if (!mounted) return;
                               ScaffoldMessenger.of(
@@ -850,10 +836,8 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
       metadata.add(
         _buildMetaChip(
           context,
-          label: pickUiText(
-            i18n,
-            zh: '正确率 ${(_accuracy(progress) * 100).round()}%',
-            en: 'Accuracy ${(_accuracy(progress) * 100).round()}%',
+          label: i18n.t(
+            'inline.ui.pages.practice_notebook_page.accuracy_accuracy_progress_100_round_160c10',
           ),
           icon: Icons.query_stats_rounded,
         ),
@@ -865,10 +849,8 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
       metadata.add(
         _buildMetaChip(
           context,
-          label: pickUiText(
-            i18n,
-            zh: '上次 ${_formatMonthDay(lastPlayed)}',
-            en: 'Last ${_formatMonthDay(lastPlayed)}',
+          label: i18n.t(
+            'inline.ui.pages.practice_notebook_page.last_formatmonthday_lastplayed_d82f1f',
           ),
           icon: Icons.history_rounded,
         ),
@@ -965,7 +947,7 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
           Icon(Icons.delete_outline_rounded, color: theme.colorScheme.error),
           const SizedBox(width: 8),
           Text(
-            pickUiText(i18n, zh: '移出错题本', en: 'Remove'),
+            i18n.t('inline.plan295.life.remove.756734973755'),
             style: theme.textTheme.titleSmall?.copyWith(
               color: theme.colorScheme.error,
               fontWeight: FontWeight.w700,
@@ -1062,15 +1044,11 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
       SnackBar(
         content: Text(
           removed <= 0
-              ? pickUiText(
-                  i18n,
-                  zh: '所选条目未发生变化',
-                  en: 'Selected entries were not changed.',
+              ? i18n.t(
+                  'inline.ui.pages.practice_notebook_page.selected_entries_were_not_changed_ca22e1',
                 )
-              : pickUiText(
-                  i18n,
-                  zh: '已移出错题本：$removed 项',
-                  en: 'Removed from notebook: $removed',
+              : i18n.t(
+                  'inline.ui.pages.practice_notebook_page.removed_from_notebook_removed_a43dfc',
                 ),
         ),
       ),
@@ -1079,41 +1057,33 @@ class _PracticeNotebookPageState extends ConsumerState<PracticeNotebookPage> {
 
   String _orderLabel(AppI18n i18n, _PracticeNotebookOrder order) {
     return switch (order) {
-      _PracticeNotebookOrder.notebook => pickUiText(
-        i18n,
-        zh: '错题顺序',
-        en: 'Notebook order',
+      _PracticeNotebookOrder.notebook => i18n.t(
+        'inline.ui.pages.practice_notebook_page.notebook_order_f1b302',
       ),
-      _PracticeNotebookOrder.dueFirst => pickUiText(
-        i18n,
-        zh: '到期优先',
-        en: 'Due first',
+      _PracticeNotebookOrder.dueFirst => i18n.t(
+        'inline.ui.pages.practice_notebook_page.due_first_f4f1fa',
       ),
-      _PracticeNotebookOrder.weakFirst => pickUiText(
-        i18n,
-        zh: '薄弱优先',
-        en: 'Weak first',
+      _PracticeNotebookOrder.weakFirst => i18n.t(
+        'inline.ui.pages.practice_notebook_page.weak_first_220485',
       ),
-      _PracticeNotebookOrder.alphabetical => pickUiText(
-        i18n,
-        zh: '字母顺序',
-        en: 'A-Z',
+      _PracticeNotebookOrder.alphabetical => i18n.t(
+        'inline.ui.pages.practice_notebook_page.a_z_db02f0',
       ),
     };
   }
 
   String _dueLabel(AppI18n i18n, WordMemoryProgress? progress, DateTime now) {
     if (_isDue(progress, now)) {
-      return pickUiText(i18n, zh: '待复习', en: 'Due now');
+      return i18n.t('inline.ui.pages.practice_notebook_page.due_now_30a228');
     }
     final nextReview = progress?.nextReview;
     if (nextReview == null) {
-      return pickUiText(i18n, zh: '待安排', en: 'Need schedule');
+      return i18n.t(
+        'inline.ui.pages.practice_notebook_page.need_schedule_366d6a',
+      );
     }
-    return pickUiText(
-      i18n,
-      zh: '下次 ${_formatMonthDay(nextReview)}',
-      en: 'Next ${_formatMonthDay(nextReview)}',
+    return i18n.t(
+      'inline.ui.pages.practice_notebook_page.next_formatmonthday_nextreview_e74448',
     );
   }
 

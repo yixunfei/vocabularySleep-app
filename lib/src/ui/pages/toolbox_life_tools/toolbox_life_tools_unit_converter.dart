@@ -5,42 +5,38 @@ enum _UnitCategoryKind { scalar, photo }
 class _UnitCategoryDefinition {
   const _UnitCategoryDefinition({
     required this.id,
-    required this.labelZh,
-    required this.labelEn,
+    required this.labelKey,
     required this.units,
     this.kind = _UnitCategoryKind.scalar,
   });
 
   final String id;
-  final String labelZh;
-  final String labelEn;
+  final String labelKey;
   final List<_UnitDefinition> units;
   final _UnitCategoryKind kind;
 
   String label(BuildContext context) {
-    return _lifeText(context, zh: labelZh, en: labelEn);
+    return _lifeI18nText(context, labelKey);
   }
 }
 
 class _UnitDefinition {
   const _UnitDefinition({
     required this.id,
-    required this.labelZh,
-    required this.labelEn,
+    required this.labelKey,
     required this.symbol,
     required this.factorToAnchor,
     this.offsetToAnchor = 0,
   });
 
   final String id;
-  final String labelZh;
-  final String labelEn;
+  final String labelKey;
   final String symbol;
   final double factorToAnchor;
   final double offsetToAnchor;
 
   String label(BuildContext context) {
-    return _lifeText(context, zh: labelZh, en: labelEn);
+    return _lifeI18nText(context, labelKey);
   }
 
   double toAnchor(double value) => value * factorToAnchor + offsetToAnchor;
@@ -51,8 +47,7 @@ class _UnitDefinition {
 class _IdPhotoPreset {
   const _IdPhotoPreset({
     required this.id,
-    required this.labelZh,
-    required this.labelEn,
+    required this.labelKey,
     required this.aliasInchWidth,
     required this.aliasInchHeight,
     required this.mmWidth,
@@ -60,771 +55,666 @@ class _IdPhotoPreset {
   });
 
   final String id;
-  final String labelZh;
-  final String labelEn;
+  final String labelKey;
   final double aliasInchWidth;
   final double aliasInchHeight;
   final double mmWidth;
   final double mmHeight;
 
   String label(BuildContext context) {
-    return _lifeText(context, zh: labelZh, en: labelEn);
+    return _lifeI18nText(context, labelKey);
   }
 }
 
-const List<_UnitCategoryDefinition> _unitConverterCategories =
-    <_UnitCategoryDefinition>[
-      _UnitCategoryDefinition(
-        id: 'length',
-        labelZh: '长度',
-        labelEn: 'Length',
-        units: <_UnitDefinition>[
-          _UnitDefinition(
-            id: 'nm',
-            labelZh: '纳米',
-            labelEn: 'Nanometer',
-            symbol: 'nm',
-            factorToAnchor: 0.000000001,
-          ),
-          _UnitDefinition(
-            id: 'um',
-            labelZh: '微米',
-            labelEn: 'Micrometer',
-            symbol: 'um',
-            factorToAnchor: 0.000001,
-          ),
-          _UnitDefinition(
-            id: 'mm',
-            labelZh: '毫米',
-            labelEn: 'Millimeter',
-            symbol: 'mm',
-            factorToAnchor: 0.001,
-          ),
-          _UnitDefinition(
-            id: 'cm',
-            labelZh: '厘米',
-            labelEn: 'Centimeter',
-            symbol: 'cm',
-            factorToAnchor: 0.01,
-          ),
-          _UnitDefinition(
-            id: 'm',
-            labelZh: '米',
-            labelEn: 'Meter',
-            symbol: 'm',
-            factorToAnchor: 1,
-          ),
-          _UnitDefinition(
-            id: 'km',
-            labelZh: '千米',
-            labelEn: 'Kilometer',
-            symbol: 'km',
-            factorToAnchor: 1000,
-          ),
-          _UnitDefinition(
-            id: 'li',
-            labelZh: '里',
-            labelEn: 'Li',
-            symbol: '里',
-            factorToAnchor: 500,
-          ),
-          _UnitDefinition(
-            id: 'inch',
-            labelZh: '英寸',
-            labelEn: 'Inch',
-            symbol: 'in',
-            factorToAnchor: 0.0254,
-          ),
-          _UnitDefinition(
-            id: 'ft',
-            labelZh: '英尺',
-            labelEn: 'Foot',
-            symbol: 'ft',
-            factorToAnchor: 0.3048,
-          ),
-          _UnitDefinition(
-            id: 'yd',
-            labelZh: '码',
-            labelEn: 'Yard',
-            symbol: 'yd',
-            factorToAnchor: 0.9144,
-          ),
-          _UnitDefinition(
-            id: 'mile',
-            labelZh: '英里',
-            labelEn: 'Mile',
-            symbol: 'mi',
-            factorToAnchor: 1609.344,
-          ),
-          _UnitDefinition(
-            id: 'nmi',
-            labelZh: '海里',
-            labelEn: 'Nautical mile',
-            symbol: 'nmi',
-            factorToAnchor: 1852,
-          ),
-          _UnitDefinition(
-            id: 'au',
-            labelZh: '天文单位',
-            labelEn: 'Astronomical unit',
-            symbol: 'AU',
-            factorToAnchor: 149597870700,
-          ),
-          _UnitDefinition(
-            id: 'ly',
-            labelZh: '光年',
-            labelEn: 'Light-year',
-            symbol: 'ly',
-            factorToAnchor: 9460730472580800,
-          ),
-        ],
+const List<_UnitCategoryDefinition>
+_unitConverterCategories = <_UnitCategoryDefinition>[
+  _UnitCategoryDefinition(
+    id: 'length',
+    labelKey:
+        'inline.ui.pages.toolbox_human_tests_typing_widgets.length_f37873',
+    units: <_UnitDefinition>[
+      _UnitDefinition(
+        id: 'nm',
+        labelKey: 'inline.plan295.life.nanometer.ecc4ab3fbc93',
+        symbol: 'nm',
+        factorToAnchor: 0.000000001,
       ),
-      _UnitCategoryDefinition(
-        id: 'weight',
-        labelZh: '重量',
-        labelEn: 'Weight',
-        units: <_UnitDefinition>[
-          _UnitDefinition(
-            id: 'ug',
-            labelZh: '微克',
-            labelEn: 'Microgram',
-            symbol: 'ug',
-            factorToAnchor: 0.000000001,
-          ),
-          _UnitDefinition(
-            id: 'mg',
-            labelZh: '毫克',
-            labelEn: 'Milligram',
-            symbol: 'mg',
-            factorToAnchor: 0.000001,
-          ),
-          _UnitDefinition(
-            id: 'g',
-            labelZh: '克',
-            labelEn: 'Gram',
-            symbol: 'g',
-            factorToAnchor: 0.001,
-          ),
-          _UnitDefinition(
-            id: 'jin',
-            labelZh: '市斤',
-            labelEn: 'Jin',
-            symbol: '斤',
-            factorToAnchor: 0.5,
-          ),
-          _UnitDefinition(
-            id: 'kg',
-            labelZh: '千克',
-            labelEn: 'Kilogram',
-            symbol: 'kg',
-            factorToAnchor: 1,
-          ),
-          _UnitDefinition(
-            id: 'ton',
-            labelZh: '吨',
-            labelEn: 'Metric ton',
-            symbol: 't',
-            factorToAnchor: 1000,
-          ),
-          _UnitDefinition(
-            id: 'lb',
-            labelZh: '磅',
-            labelEn: 'Pound',
-            symbol: 'lb',
-            factorToAnchor: 0.45359237,
-          ),
-          _UnitDefinition(
-            id: 'oz',
-            labelZh: '盎司',
-            labelEn: 'Ounce',
-            symbol: 'oz',
-            factorToAnchor: 0.028349523125,
-          ),
-          _UnitDefinition(
-            id: 'stone',
-            labelZh: '英石',
-            labelEn: 'Stone',
-            symbol: 'st',
-            factorToAnchor: 6.35029318,
-          ),
-        ],
+      _UnitDefinition(
+        id: 'um',
+        labelKey: 'inline.plan295.life.micrometer.db208f28e0f4',
+        symbol: 'um',
+        factorToAnchor: 0.000001,
       ),
-      _UnitCategoryDefinition(
-        id: 'temperature',
-        labelZh: '温度',
-        labelEn: 'Temperature',
-        units: <_UnitDefinition>[
-          _UnitDefinition(
-            id: 'c',
-            labelZh: '摄氏度',
-            labelEn: 'Celsius',
-            symbol: '°C',
-            factorToAnchor: 1,
-            offsetToAnchor: 273.15,
-          ),
-          _UnitDefinition(
-            id: 'f',
-            labelZh: '华氏度',
-            labelEn: 'Fahrenheit',
-            symbol: '°F',
-            factorToAnchor: 5 / 9,
-            offsetToAnchor: 255.3722222222,
-          ),
-          _UnitDefinition(
-            id: 'k',
-            labelZh: '开尔文',
-            labelEn: 'Kelvin',
-            symbol: 'K',
-            factorToAnchor: 1,
-          ),
-        ],
+      _UnitDefinition(
+        id: 'mm',
+        labelKey: 'inline.plan295.life.millimeter.0e992d10bbbf',
+        symbol: 'mm',
+        factorToAnchor: 0.001,
       ),
-      _UnitCategoryDefinition(
-        id: 'area',
-        labelZh: '面积',
-        labelEn: 'Area',
-        units: <_UnitDefinition>[
-          _UnitDefinition(
-            id: 'sqm',
-            labelZh: '平方米',
-            labelEn: 'Square meter',
-            symbol: 'm²',
-            factorToAnchor: 1,
-          ),
-          _UnitDefinition(
-            id: 'sqcm',
-            labelZh: '平方厘米',
-            labelEn: 'Square centimeter',
-            symbol: 'cm²',
-            factorToAnchor: 0.0001,
-          ),
-          _UnitDefinition(
-            id: 'sqmm',
-            labelZh: '平方毫米',
-            labelEn: 'Square millimeter',
-            symbol: 'mm²',
-            factorToAnchor: 0.000001,
-          ),
-          _UnitDefinition(
-            id: 'mu',
-            labelZh: '亩',
-            labelEn: 'Mu',
-            symbol: '亩',
-            factorToAnchor: 666.6666667,
-          ),
-          _UnitDefinition(
-            id: 'sqft',
-            labelZh: '平方英尺',
-            labelEn: 'Square foot',
-            symbol: 'ft²',
-            factorToAnchor: 0.09290304,
-          ),
-          _UnitDefinition(
-            id: 'acre',
-            labelZh: '英亩',
-            labelEn: 'Acre',
-            symbol: 'ac',
-            factorToAnchor: 4046.8564224,
-          ),
-          _UnitDefinition(
-            id: 'hectare',
-            labelZh: '公顷',
-            labelEn: 'Hectare',
-            symbol: 'ha',
-            factorToAnchor: 10000,
-          ),
-        ],
+      _UnitDefinition(
+        id: 'cm',
+        labelKey: 'inline.plan295.life.centimeter.16520bb8d303',
+        symbol: 'cm',
+        factorToAnchor: 0.01,
       ),
-      _UnitCategoryDefinition(
-        id: 'volume',
-        labelZh: '体积',
-        labelEn: 'Volume',
-        units: <_UnitDefinition>[
-          _UnitDefinition(
-            id: 'ml',
-            labelZh: '毫升',
-            labelEn: 'Milliliter',
-            symbol: 'mL',
-            factorToAnchor: 0.001,
-          ),
-          _UnitDefinition(
-            id: 'l',
-            labelZh: '升',
-            labelEn: 'Liter',
-            symbol: 'L',
-            factorToAnchor: 1,
-          ),
-          _UnitDefinition(
-            id: 'm3',
-            labelZh: '立方米',
-            labelEn: 'Cubic meter',
-            symbol: 'm³',
-            factorToAnchor: 1000,
-          ),
-          _UnitDefinition(
-            id: 'cc',
-            labelZh: '立方厘米',
-            labelEn: 'Cubic centimeter',
-            symbol: 'cm³',
-            factorToAnchor: 0.001,
-          ),
-          _UnitDefinition(
-            id: 'cup',
-            labelZh: '杯',
-            labelEn: 'Cup',
-            symbol: 'cup',
-            factorToAnchor: 0.2365882365,
-          ),
-          _UnitDefinition(
-            id: 'pt',
-            labelZh: '品脱',
-            labelEn: 'Pint',
-            symbol: 'pt',
-            factorToAnchor: 0.473176473,
-          ),
-          _UnitDefinition(
-            id: 'gal',
-            labelZh: '加仑',
-            labelEn: 'Gallon',
-            symbol: 'gal',
-            factorToAnchor: 3.785411784,
-          ),
-        ],
+      _UnitDefinition(
+        id: 'm',
+        labelKey: 'inline.plan295.life.meter.3c62f9728481',
+        symbol: 'm',
+        factorToAnchor: 1,
       ),
-      _UnitCategoryDefinition(
-        id: 'speed',
-        labelZh: '速度',
-        labelEn: 'Speed',
-        units: <_UnitDefinition>[
-          _UnitDefinition(
-            id: 'mps',
-            labelZh: '米/秒',
-            labelEn: 'Meter per second',
-            symbol: 'm/s',
-            factorToAnchor: 1,
-          ),
-          _UnitDefinition(
-            id: 'kph',
-            labelZh: '千米/小时',
-            labelEn: 'Kilometer per hour',
-            symbol: 'km/h',
-            factorToAnchor: 0.2777777778,
-          ),
-          _UnitDefinition(
-            id: 'mph',
-            labelZh: '英里/小时',
-            labelEn: 'Mile per hour',
-            symbol: 'mph',
-            factorToAnchor: 0.44704,
-          ),
-          _UnitDefinition(
-            id: 'knot',
-            labelZh: '海里/小时（节）',
-            labelEn: 'Nautical mile per hour',
-            symbol: 'kn',
-            factorToAnchor: 0.5144444444,
-          ),
-        ],
+      _UnitDefinition(
+        id: 'km',
+        labelKey: 'inline.plan295.life.kilometer.a4da246415c3',
+        symbol: 'km',
+        factorToAnchor: 1000,
       ),
-      _UnitCategoryDefinition(
-        id: 'force',
-        labelZh: '力',
-        labelEn: 'Force',
-        units: <_UnitDefinition>[
-          _UnitDefinition(
-            id: 'n',
-            labelZh: '牛顿',
-            labelEn: 'Newton',
-            symbol: 'N',
-            factorToAnchor: 1,
-          ),
-          _UnitDefinition(
-            id: 'kn',
-            labelZh: '千牛',
-            labelEn: 'Kilonewton',
-            symbol: 'kN',
-            factorToAnchor: 1000,
-          ),
-          _UnitDefinition(
-            id: 'gf',
-            labelZh: '克力',
-            labelEn: 'Gram-force',
-            symbol: 'gf',
-            factorToAnchor: 0.00980665,
-          ),
-          _UnitDefinition(
-            id: 'kgf',
-            labelZh: '公斤力',
-            labelEn: 'Kilogram-force',
-            symbol: 'kgf',
-            factorToAnchor: 9.80665,
-          ),
-          _UnitDefinition(
-            id: 'lbf',
-            labelZh: '磅力',
-            labelEn: 'Pound-force',
-            symbol: 'lbf',
-            factorToAnchor: 4.4482216153,
-          ),
-          _UnitDefinition(
-            id: 'dyn',
-            labelZh: '达因',
-            labelEn: 'Dyne',
-            symbol: 'dyn',
-            factorToAnchor: 0.00001,
-          ),
-        ],
+      _UnitDefinition(
+        id: 'li',
+        labelKey: 'inline.plan295.life.li.0002e076dc15',
+        symbol: '里',
+        factorToAnchor: 500,
       ),
-      _UnitCategoryDefinition(
-        id: 'density',
-        labelZh: '密度',
-        labelEn: 'Density',
-        units: <_UnitDefinition>[
-          _UnitDefinition(
-            id: 'kgm3',
-            labelZh: '千克/立方米',
-            labelEn: 'Kilogram per cubic meter',
-            symbol: 'kg/m³',
-            factorToAnchor: 1,
-          ),
-          _UnitDefinition(
-            id: 'gl',
-            labelZh: '克/升',
-            labelEn: 'Gram per liter',
-            symbol: 'g/L',
-            factorToAnchor: 1,
-          ),
-          _UnitDefinition(
-            id: 'gml',
-            labelZh: '克/毫升',
-            labelEn: 'Gram per milliliter',
-            symbol: 'g/mL',
-            factorToAnchor: 1000,
-          ),
-          _UnitDefinition(
-            id: 'gcc',
-            labelZh: '克/立方厘米',
-            labelEn: 'Gram per cubic centimeter',
-            symbol: 'g/cm³',
-            factorToAnchor: 1000,
-          ),
-          _UnitDefinition(
-            id: 'lbft3',
-            labelZh: '磅/立方英尺',
-            labelEn: 'Pound per cubic foot',
-            symbol: 'lb/ft³',
-            factorToAnchor: 16.01846337396,
-          ),
-          _UnitDefinition(
-            id: 'lbin3',
-            labelZh: '磅/立方英寸',
-            labelEn: 'Pound per cubic inch',
-            symbol: 'lb/in³',
-            factorToAnchor: 27679.9047102,
-          ),
-        ],
+      _UnitDefinition(
+        id: 'inch',
+        labelKey: 'inline.plan295.life.inch.51e0faecfdb3',
+        symbol: 'in',
+        factorToAnchor: 0.0254,
       ),
-      _UnitCategoryDefinition(
-        id: 'power',
-        labelZh: '功率',
-        labelEn: 'Power',
-        units: <_UnitDefinition>[
-          _UnitDefinition(
-            id: 'w',
-            labelZh: '瓦',
-            labelEn: 'Watt',
-            symbol: 'W',
-            factorToAnchor: 1,
-          ),
-          _UnitDefinition(
-            id: 'kw',
-            labelZh: '千瓦',
-            labelEn: 'Kilowatt',
-            symbol: 'kW',
-            factorToAnchor: 1000,
-          ),
-          _UnitDefinition(
-            id: 'mw',
-            labelZh: '兆瓦',
-            labelEn: 'Megawatt',
-            symbol: 'MW',
-            factorToAnchor: 1000000,
-          ),
-          _UnitDefinition(
-            id: 'hp',
-            labelZh: '英制马力',
-            labelEn: 'Horsepower',
-            symbol: 'hp',
-            factorToAnchor: 745.699871582,
-          ),
-          _UnitDefinition(
-            id: 'ps',
-            labelZh: '公制马力',
-            labelEn: 'Metric horsepower',
-            symbol: 'PS',
-            factorToAnchor: 735.49875,
-          ),
-          _UnitDefinition(
-            id: 'cals',
-            labelZh: '卡/秒',
-            labelEn: 'Calorie per second',
-            symbol: 'cal/s',
-            factorToAnchor: 4.184,
-          ),
-        ],
+      _UnitDefinition(
+        id: 'ft',
+        labelKey: 'inline.plan295.life.foot.0046a67e934f',
+        symbol: 'ft',
+        factorToAnchor: 0.3048,
       ),
-      _UnitCategoryDefinition(
-        id: 'energy',
-        labelZh: '热量/能量',
-        labelEn: 'Heat / energy',
-        units: <_UnitDefinition>[
-          _UnitDefinition(
-            id: 'j',
-            labelZh: '焦耳',
-            labelEn: 'Joule',
-            symbol: 'J',
-            factorToAnchor: 1,
-          ),
-          _UnitDefinition(
-            id: 'kj',
-            labelZh: '千焦',
-            labelEn: 'Kilojoule',
-            symbol: 'kJ',
-            factorToAnchor: 1000,
-          ),
-          _UnitDefinition(
-            id: 'cal',
-            labelZh: '卡',
-            labelEn: 'Calorie',
-            symbol: 'cal',
-            factorToAnchor: 4.184,
-          ),
-          _UnitDefinition(
-            id: 'kcal',
-            labelZh: '千卡',
-            labelEn: 'Kilocalorie',
-            symbol: 'kcal',
-            factorToAnchor: 4184,
-          ),
-          _UnitDefinition(
-            id: 'wh',
-            labelZh: '瓦时',
-            labelEn: 'Watt-hour',
-            symbol: 'Wh',
-            factorToAnchor: 3600,
-          ),
-          _UnitDefinition(
-            id: 'kwh',
-            labelZh: '千瓦时',
-            labelEn: 'Kilowatt-hour',
-            symbol: 'kWh',
-            factorToAnchor: 3600000,
-          ),
-          _UnitDefinition(
-            id: 'btu',
-            labelZh: '英热单位',
-            labelEn: 'British thermal unit',
-            symbol: 'BTU',
-            factorToAnchor: 1055.05585262,
-          ),
-        ],
+      _UnitDefinition(
+        id: 'yd',
+        labelKey: 'inline.plan295.life.yard.99f0da222bb3',
+        symbol: 'yd',
+        factorToAnchor: 0.9144,
       ),
-      _UnitCategoryDefinition(
-        id: 'data',
-        labelZh: '数据',
-        labelEn: 'Data',
-        units: <_UnitDefinition>[
-          _UnitDefinition(
-            id: 'byte',
-            labelZh: '字节',
-            labelEn: 'Byte',
-            symbol: 'B',
-            factorToAnchor: 1,
-          ),
-          _UnitDefinition(
-            id: 'kb',
-            labelZh: 'KB',
-            labelEn: 'Kilobyte',
-            symbol: 'KB',
-            factorToAnchor: 1000,
-          ),
-          _UnitDefinition(
-            id: 'mb',
-            labelZh: 'MB',
-            labelEn: 'Megabyte',
-            symbol: 'MB',
-            factorToAnchor: 1000000,
-          ),
-          _UnitDefinition(
-            id: 'gb',
-            labelZh: 'GB',
-            labelEn: 'Gigabyte',
-            symbol: 'GB',
-            factorToAnchor: 1000000000,
-          ),
-          _UnitDefinition(
-            id: 'tb',
-            labelZh: 'TB',
-            labelEn: 'Terabyte',
-            symbol: 'TB',
-            factorToAnchor: 1000000000000,
-          ),
-          _UnitDefinition(
-            id: 'kib',
-            labelZh: 'KiB',
-            labelEn: 'Kibibyte',
-            symbol: 'KiB',
-            factorToAnchor: 1024,
-          ),
-          _UnitDefinition(
-            id: 'mib',
-            labelZh: 'MiB',
-            labelEn: 'Mebibyte',
-            symbol: 'MiB',
-            factorToAnchor: 1048576,
-          ),
-          _UnitDefinition(
-            id: 'gib',
-            labelZh: 'GiB',
-            labelEn: 'Gibibyte',
-            symbol: 'GiB',
-            factorToAnchor: 1073741824,
-          ),
-          _UnitDefinition(
-            id: 'tib',
-            labelZh: 'TiB',
-            labelEn: 'Tebibyte',
-            symbol: 'TiB',
-            factorToAnchor: 1099511627776,
-          ),
-        ],
+      _UnitDefinition(
+        id: 'mile',
+        labelKey: 'inline.plan295.life.mile.1115867cbc37',
+        symbol: 'mi',
+        factorToAnchor: 1609.344,
       ),
-      _UnitCategoryDefinition(
-        id: 'time',
-        labelZh: '时间',
-        labelEn: 'Time',
-        units: <_UnitDefinition>[
-          _UnitDefinition(
-            id: 'sec',
-            labelZh: '秒',
-            labelEn: 'Second',
-            symbol: 's',
-            factorToAnchor: 1,
-          ),
-          _UnitDefinition(
-            id: 'min',
-            labelZh: '分钟',
-            labelEn: 'Minute',
-            symbol: 'min',
-            factorToAnchor: 60,
-          ),
-          _UnitDefinition(
-            id: 'hour',
-            labelZh: '小时',
-            labelEn: 'Hour',
-            symbol: 'h',
-            factorToAnchor: 3600,
-          ),
-          _UnitDefinition(
-            id: 'day',
-            labelZh: '天',
-            labelEn: 'Day',
-            symbol: 'd',
-            factorToAnchor: 86400,
-          ),
-          _UnitDefinition(
-            id: 'week',
-            labelZh: '周',
-            labelEn: 'Week',
-            symbol: 'wk',
-            factorToAnchor: 604800,
-          ),
-        ],
+      _UnitDefinition(
+        id: 'nmi',
+        labelKey: 'inline.plan295.life.nautical_mile.5d139b2b21b6',
+        symbol: 'nmi',
+        factorToAnchor: 1852,
       ),
-      _UnitCategoryDefinition(
-        id: 'css',
-        labelZh: 'CSS 尺寸',
-        labelEn: 'CSS size',
-        units: <_UnitDefinition>[
-          _UnitDefinition(
-            id: 'px',
-            labelZh: '像素',
-            labelEn: 'Pixel',
-            symbol: 'px',
-            factorToAnchor: 1,
-          ),
-          _UnitDefinition(
-            id: 'rem',
-            labelZh: '根字号倍数',
-            labelEn: 'Root em',
-            symbol: 'rem',
-            factorToAnchor: 1,
-          ),
-          _UnitDefinition(
-            id: 'em',
-            labelZh: '当前字号倍数',
-            labelEn: 'Em',
-            symbol: 'em',
-            factorToAnchor: 1,
-          ),
-          _UnitDefinition(
-            id: 'pt',
-            labelZh: '点',
-            labelEn: 'Point',
-            symbol: 'pt',
-            factorToAnchor: 1,
-          ),
-          _UnitDefinition(
-            id: 'pc',
-            labelZh: '派卡',
-            labelEn: 'Pica',
-            symbol: 'pc',
-            factorToAnchor: 1,
-          ),
-          _UnitDefinition(
-            id: 'inch',
-            labelZh: '英寸',
-            labelEn: 'Inch',
-            symbol: 'in',
-            factorToAnchor: 1,
-          ),
-          _UnitDefinition(
-            id: 'cm',
-            labelZh: '厘米',
-            labelEn: 'Centimeter',
-            symbol: 'cm',
-            factorToAnchor: 1,
-          ),
-          _UnitDefinition(
-            id: 'mm',
-            labelZh: '毫米',
-            labelEn: 'Millimeter',
-            symbol: 'mm',
-            factorToAnchor: 1,
-          ),
-          _UnitDefinition(
-            id: 'q',
-            labelZh: '四分之一毫米',
-            labelEn: 'Quarter-millimeter',
-            symbol: 'Q',
-            factorToAnchor: 1,
-          ),
-        ],
+      _UnitDefinition(
+        id: 'au',
+        labelKey: 'inline.plan295.life.astronomical_unit.a46a19c83de0',
+        symbol: 'AU',
+        factorToAnchor: 149597870700,
       ),
-      _UnitCategoryDefinition(
-        id: 'id_photo',
-        labelZh: '证件照尺寸',
-        labelEn: 'ID photo size',
-        units: <_UnitDefinition>[],
-        kind: _UnitCategoryKind.photo,
+      _UnitDefinition(
+        id: 'ly',
+        labelKey: 'inline.plan295.life.light_year.0d72aca83253',
+        symbol: 'ly',
+        factorToAnchor: 9460730472580800,
       ),
-    ];
+    ],
+  ),
+  _UnitCategoryDefinition(
+    id: 'weight',
+    labelKey: 'inline.plan295.life.weight.a353a17dc3f6',
+    units: <_UnitDefinition>[
+      _UnitDefinition(
+        id: 'ug',
+        labelKey: 'inline.plan295.life.microgram.ae520be50c79',
+        symbol: 'ug',
+        factorToAnchor: 0.000000001,
+      ),
+      _UnitDefinition(
+        id: 'mg',
+        labelKey: 'inline.plan295.life.milligram.3c2b08df842e',
+        symbol: 'mg',
+        factorToAnchor: 0.000001,
+      ),
+      _UnitDefinition(
+        id: 'g',
+        labelKey: 'inline.plan295.life.gram.d901d66d5e2f',
+        symbol: 'g',
+        factorToAnchor: 0.001,
+      ),
+      _UnitDefinition(
+        id: 'jin',
+        labelKey: 'inline.plan295.life.jin.308f3356f496',
+        symbol: '斤',
+        factorToAnchor: 0.5,
+      ),
+      _UnitDefinition(
+        id: 'kg',
+        labelKey: 'inline.plan295.life.kilogram.c4f0c9a02d5e',
+        symbol: 'kg',
+        factorToAnchor: 1,
+      ),
+      _UnitDefinition(
+        id: 'ton',
+        labelKey: 'inline.plan295.life.metric_ton.618eaab94808',
+        symbol: 't',
+        factorToAnchor: 1000,
+      ),
+      _UnitDefinition(
+        id: 'lb',
+        labelKey: 'inline.plan295.life.pound.0331b8d00c40',
+        symbol: 'lb',
+        factorToAnchor: 0.45359237,
+      ),
+      _UnitDefinition(
+        id: 'oz',
+        labelKey: 'inline.plan295.life.ounce.08f01b0cc4b4',
+        symbol: 'oz',
+        factorToAnchor: 0.028349523125,
+      ),
+      _UnitDefinition(
+        id: 'stone',
+        labelKey: 'inline.plan295.life.stone.7e89e734d1a3',
+        symbol: 'st',
+        factorToAnchor: 6.35029318,
+      ),
+    ],
+  ),
+  _UnitCategoryDefinition(
+    id: 'temperature',
+    labelKey:
+        'inline.ui.pages.toolbox_daily_choice.daily_choice_wear_module.temperature_fb37d5',
+    units: <_UnitDefinition>[
+      _UnitDefinition(
+        id: 'c',
+        labelKey: 'inline.plan295.life.celsius.3926b11e39f5',
+        symbol: '°C',
+        factorToAnchor: 1,
+        offsetToAnchor: 273.15,
+      ),
+      _UnitDefinition(
+        id: 'f',
+        labelKey: 'inline.plan295.life.fahrenheit.5601fa9cb868',
+        symbol: '°F',
+        factorToAnchor: 5 / 9,
+        offsetToAnchor: 255.3722222222,
+      ),
+      _UnitDefinition(
+        id: 'k',
+        labelKey: 'inline.plan295.life.kelvin.e03397ee29c9',
+        symbol: 'K',
+        factorToAnchor: 1,
+      ),
+    ],
+  ),
+  _UnitCategoryDefinition(
+    id: 'area',
+    labelKey: 'inline.plan295.life.area.ebeca77e446f',
+    units: <_UnitDefinition>[
+      _UnitDefinition(
+        id: 'sqm',
+        labelKey: 'inline.plan295.life.square_meter.2da33b245fd4',
+        symbol: 'm²',
+        factorToAnchor: 1,
+      ),
+      _UnitDefinition(
+        id: 'sqcm',
+        labelKey: 'inline.plan295.life.square_centimeter.1f6333d475eb',
+        symbol: 'cm²',
+        factorToAnchor: 0.0001,
+      ),
+      _UnitDefinition(
+        id: 'sqmm',
+        labelKey: 'inline.plan295.life.square_millimeter.2a14d83230d2',
+        symbol: 'mm²',
+        factorToAnchor: 0.000001,
+      ),
+      _UnitDefinition(
+        id: 'mu',
+        labelKey: 'inline.plan295.life.mu.934b578f9dfe',
+        symbol: '亩',
+        factorToAnchor: 666.6666667,
+      ),
+      _UnitDefinition(
+        id: 'sqft',
+        labelKey: 'inline.plan295.life.square_foot.7504c5974f05',
+        symbol: 'ft²',
+        factorToAnchor: 0.09290304,
+      ),
+      _UnitDefinition(
+        id: 'acre',
+        labelKey: 'inline.plan295.life.acre.70db88a71864',
+        symbol: 'ac',
+        factorToAnchor: 4046.8564224,
+      ),
+      _UnitDefinition(
+        id: 'hectare',
+        labelKey: 'inline.plan295.life.hectare.f276a91d958a',
+        symbol: 'ha',
+        factorToAnchor: 10000,
+      ),
+    ],
+  ),
+  _UnitCategoryDefinition(
+    id: 'volume',
+    labelKey: 'inline.plan295.life.volume.e0cd499ede11',
+    units: <_UnitDefinition>[
+      _UnitDefinition(
+        id: 'ml',
+        labelKey: 'inline.plan295.life.milliliter.16d8765e56fd',
+        symbol: 'mL',
+        factorToAnchor: 0.001,
+      ),
+      _UnitDefinition(
+        id: 'l',
+        labelKey: 'inline.plan295.life.liter.073da36b9faf',
+        symbol: 'L',
+        factorToAnchor: 1,
+      ),
+      _UnitDefinition(
+        id: 'm3',
+        labelKey: 'inline.plan295.life.cubic_meter.5ce4ed9d3b79',
+        symbol: 'm³',
+        factorToAnchor: 1000,
+      ),
+      _UnitDefinition(
+        id: 'cc',
+        labelKey: 'inline.plan295.life.cubic_centimeter.960470b92fdd',
+        symbol: 'cm³',
+        factorToAnchor: 0.001,
+      ),
+      _UnitDefinition(
+        id: 'cup',
+        labelKey: 'inline.plan295.life.cup.6bc77c197220',
+        symbol: 'cup',
+        factorToAnchor: 0.2365882365,
+      ),
+      _UnitDefinition(
+        id: 'pt',
+        labelKey: 'inline.plan295.life.pint.00f9a4988ac9',
+        symbol: 'pt',
+        factorToAnchor: 0.473176473,
+      ),
+      _UnitDefinition(
+        id: 'gal',
+        labelKey: 'inline.plan295.life.gallon.d19992e15d49',
+        symbol: 'gal',
+        factorToAnchor: 3.785411784,
+      ),
+    ],
+  ),
+  _UnitCategoryDefinition(
+    id: 'speed',
+    labelKey:
+        'inline.ui.pages.toolbox_human_tests_hand_eye_settings.speed_29ca97',
+    units: <_UnitDefinition>[
+      _UnitDefinition(
+        id: 'mps',
+        labelKey: 'inline.plan295.life.meter_per_second.471ca3f0431d',
+        symbol: 'm/s',
+        factorToAnchor: 1,
+      ),
+      _UnitDefinition(
+        id: 'kph',
+        labelKey: 'inline.plan295.life.kilometer_per_hour.e968e5a4ccdd',
+        symbol: 'km/h',
+        factorToAnchor: 0.2777777778,
+      ),
+      _UnitDefinition(
+        id: 'mph',
+        labelKey: 'inline.plan295.life.mile_per_hour.0da0ac90d1a7',
+        symbol: 'mph',
+        factorToAnchor: 0.44704,
+      ),
+      _UnitDefinition(
+        id: 'knot',
+        labelKey: 'inline.plan295.life.nautical_mile_per_hour.31bd520ae0dc',
+        symbol: 'kn',
+        factorToAnchor: 0.5144444444,
+      ),
+    ],
+  ),
+  _UnitCategoryDefinition(
+    id: 'force',
+    labelKey: 'inline.plan295.life.force.d3ff4a2991b4',
+    units: <_UnitDefinition>[
+      _UnitDefinition(
+        id: 'n',
+        labelKey: 'inline.plan295.life.newton.476680c0aadb',
+        symbol: 'N',
+        factorToAnchor: 1,
+      ),
+      _UnitDefinition(
+        id: 'kn',
+        labelKey: 'inline.plan295.life.kilonewton.a38073e6253d',
+        symbol: 'kN',
+        factorToAnchor: 1000,
+      ),
+      _UnitDefinition(
+        id: 'gf',
+        labelKey: 'inline.plan295.life.gram_force.c8ba8f4544e6',
+        symbol: 'gf',
+        factorToAnchor: 0.00980665,
+      ),
+      _UnitDefinition(
+        id: 'kgf',
+        labelKey: 'inline.plan295.life.kilogram_force.c798f61470c4',
+        symbol: 'kgf',
+        factorToAnchor: 9.80665,
+      ),
+      _UnitDefinition(
+        id: 'lbf',
+        labelKey: 'inline.plan295.life.pound_force.59555a2118fe',
+        symbol: 'lbf',
+        factorToAnchor: 4.4482216153,
+      ),
+      _UnitDefinition(
+        id: 'dyn',
+        labelKey: 'inline.plan295.life.dyne.a00ec75a643d',
+        symbol: 'dyn',
+        factorToAnchor: 0.00001,
+      ),
+    ],
+  ),
+  _UnitCategoryDefinition(
+    id: 'density',
+    labelKey: 'inline.plan295.life.density.02f64cf6bb37',
+    units: <_UnitDefinition>[
+      _UnitDefinition(
+        id: 'kgm3',
+        labelKey: 'inline.plan295.life.kilogram_per_cubic_meter.9adb4edbe879',
+        symbol: 'kg/m³',
+        factorToAnchor: 1,
+      ),
+      _UnitDefinition(
+        id: 'gl',
+        labelKey: 'inline.plan295.life.gram_per_liter.0a0becfa7b0c',
+        symbol: 'g/L',
+        factorToAnchor: 1,
+      ),
+      _UnitDefinition(
+        id: 'gml',
+        labelKey: 'inline.plan295.life.gram_per_milliliter.d27b10c02568',
+        symbol: 'g/mL',
+        factorToAnchor: 1000,
+      ),
+      _UnitDefinition(
+        id: 'gcc',
+        labelKey: 'inline.plan295.life.gram_per_cubic_centimeter.8745e803aaef',
+        symbol: 'g/cm³',
+        factorToAnchor: 1000,
+      ),
+      _UnitDefinition(
+        id: 'lbft3',
+        labelKey: 'inline.plan295.life.pound_per_cubic_foot.ccbd0deaad01',
+        symbol: 'lb/ft³',
+        factorToAnchor: 16.01846337396,
+      ),
+      _UnitDefinition(
+        id: 'lbin3',
+        labelKey: 'inline.plan295.life.pound_per_cubic_inch.eb936c9428e1',
+        symbol: 'lb/in³',
+        factorToAnchor: 27679.9047102,
+      ),
+    ],
+  ),
+  _UnitCategoryDefinition(
+    id: 'power',
+    labelKey: 'inline.plan295.life.power.0d91303bc14c',
+    units: <_UnitDefinition>[
+      _UnitDefinition(
+        id: 'w',
+        labelKey: 'inline.plan295.life.watt.cff24297126f',
+        symbol: 'W',
+        factorToAnchor: 1,
+      ),
+      _UnitDefinition(
+        id: 'kw',
+        labelKey: 'inline.plan295.life.kilowatt.43be899db17f',
+        symbol: 'kW',
+        factorToAnchor: 1000,
+      ),
+      _UnitDefinition(
+        id: 'mw',
+        labelKey: 'inline.plan295.life.megawatt.96f426ce27b3',
+        symbol: 'MW',
+        factorToAnchor: 1000000,
+      ),
+      _UnitDefinition(
+        id: 'hp',
+        labelKey: 'inline.plan295.life.horsepower.9db0efba78a6',
+        symbol: 'hp',
+        factorToAnchor: 745.699871582,
+      ),
+      _UnitDefinition(
+        id: 'ps',
+        labelKey: 'inline.plan295.life.metric_horsepower.c4b0668d3702',
+        symbol: 'PS',
+        factorToAnchor: 735.49875,
+      ),
+      _UnitDefinition(
+        id: 'cals',
+        labelKey: 'inline.plan295.life.calorie_per_second.751703d2167c',
+        symbol: 'cal/s',
+        factorToAnchor: 4.184,
+      ),
+    ],
+  ),
+  _UnitCategoryDefinition(
+    id: 'energy',
+    labelKey: 'inline.plan295.life.heat_energy.c9e48eb8aa38',
+    units: <_UnitDefinition>[
+      _UnitDefinition(
+        id: 'j',
+        labelKey: 'inline.plan295.life.joule.bc52d1e67c6a',
+        symbol: 'J',
+        factorToAnchor: 1,
+      ),
+      _UnitDefinition(
+        id: 'kj',
+        labelKey: 'inline.plan295.life.kilojoule.6d58fd31bfc7',
+        symbol: 'kJ',
+        factorToAnchor: 1000,
+      ),
+      _UnitDefinition(
+        id: 'cal',
+        labelKey: 'inline.plan295.life.calorie.b0fb9758a100',
+        symbol: 'cal',
+        factorToAnchor: 4.184,
+      ),
+      _UnitDefinition(
+        id: 'kcal',
+        labelKey: 'inline.plan295.life.kilocalorie.521ff534817d',
+        symbol: 'kcal',
+        factorToAnchor: 4184,
+      ),
+      _UnitDefinition(
+        id: 'wh',
+        labelKey: 'inline.plan295.life.watt_hour.c34dffcd30f8',
+        symbol: 'Wh',
+        factorToAnchor: 3600,
+      ),
+      _UnitDefinition(
+        id: 'kwh',
+        labelKey: 'inline.plan295.life.kilowatt_hour.245a969a0c6d',
+        symbol: 'kWh',
+        factorToAnchor: 3600000,
+      ),
+      _UnitDefinition(
+        id: 'btu',
+        labelKey: 'inline.plan295.life.british_thermal_unit.d9a26453ee8d',
+        symbol: 'BTU',
+        factorToAnchor: 1055.05585262,
+      ),
+    ],
+  ),
+  _UnitCategoryDefinition(
+    id: 'data',
+    labelKey: 'inline.plan295.life.data.79398b2fc733',
+    units: <_UnitDefinition>[
+      _UnitDefinition(
+        id: 'byte',
+        labelKey: 'inline.plan295.life.byte.1c46fd594f49',
+        symbol: 'B',
+        factorToAnchor: 1,
+      ),
+      _UnitDefinition(
+        id: 'kb',
+        labelKey: 'inline.plan295.life.kilobyte.aac0dfe8c4d6',
+        symbol: 'KB',
+        factorToAnchor: 1000,
+      ),
+      _UnitDefinition(
+        id: 'mb',
+        labelKey: 'inline.plan295.life.megabyte.606a4379513b',
+        symbol: 'MB',
+        factorToAnchor: 1000000,
+      ),
+      _UnitDefinition(
+        id: 'gb',
+        labelKey: 'inline.plan295.life.gigabyte.bdc580a612ed',
+        symbol: 'GB',
+        factorToAnchor: 1000000000,
+      ),
+      _UnitDefinition(
+        id: 'tb',
+        labelKey: 'inline.plan295.life.terabyte.9f9b2d8a5ff7',
+        symbol: 'TB',
+        factorToAnchor: 1000000000000,
+      ),
+      _UnitDefinition(
+        id: 'kib',
+        labelKey: 'inline.plan295.life.kibibyte.95d03d1627a6',
+        symbol: 'KiB',
+        factorToAnchor: 1024,
+      ),
+      _UnitDefinition(
+        id: 'mib',
+        labelKey: 'inline.plan295.life.mebibyte.cc784ed0ac16',
+        symbol: 'MiB',
+        factorToAnchor: 1048576,
+      ),
+      _UnitDefinition(
+        id: 'gib',
+        labelKey: 'inline.plan295.life.gibibyte.a18d7c01420c',
+        symbol: 'GiB',
+        factorToAnchor: 1073741824,
+      ),
+      _UnitDefinition(
+        id: 'tib',
+        labelKey: 'inline.plan295.life.tebibyte.6377168d14e0',
+        symbol: 'TiB',
+        factorToAnchor: 1099511627776,
+      ),
+    ],
+  ),
+  _UnitCategoryDefinition(
+    id: 'time',
+    labelKey: 'inline.ui.pages.toolbox_human_tests_typing.time_b4685a',
+    units: <_UnitDefinition>[
+      _UnitDefinition(
+        id: 'sec',
+        labelKey: 'inline.plan295.life.second.8bad2d2ed174',
+        symbol: 's',
+        factorToAnchor: 1,
+      ),
+      _UnitDefinition(
+        id: 'min',
+        labelKey: 'inline.plan295.life.minute.aed74b54c4c7',
+        symbol: 'min',
+        factorToAnchor: 60,
+      ),
+      _UnitDefinition(
+        id: 'hour',
+        labelKey: 'inline.plan295.life.hour.065840e3aa31',
+        symbol: 'h',
+        factorToAnchor: 3600,
+      ),
+      _UnitDefinition(
+        id: 'day',
+        labelKey: 'inline.plan295.life.day.63a96425451d',
+        symbol: 'd',
+        factorToAnchor: 86400,
+      ),
+      _UnitDefinition(
+        id: 'week',
+        labelKey: 'inline.plan295.life.week.3d541f151800',
+        symbol: 'wk',
+        factorToAnchor: 604800,
+      ),
+    ],
+  ),
+  _UnitCategoryDefinition(
+    id: 'css',
+    labelKey: 'inline.plan295.life.css_size.1538daa28190',
+    units: <_UnitDefinition>[
+      _UnitDefinition(
+        id: 'px',
+        labelKey: 'inline.plan295.life.pixel.d57e570585c6',
+        symbol: 'px',
+        factorToAnchor: 1,
+      ),
+      _UnitDefinition(
+        id: 'rem',
+        labelKey: 'inline.plan295.life.root_em.e5bdfd39e36c',
+        symbol: 'rem',
+        factorToAnchor: 1,
+      ),
+      _UnitDefinition(
+        id: 'em',
+        labelKey: 'inline.plan295.life.em.8707fe73bacd',
+        symbol: 'em',
+        factorToAnchor: 1,
+      ),
+      _UnitDefinition(
+        id: 'pt',
+        labelKey: 'inline.plan295.life.point.e07fc19463e0',
+        symbol: 'pt',
+        factorToAnchor: 1,
+      ),
+      _UnitDefinition(
+        id: 'pc',
+        labelKey: 'inline.plan295.life.pica.a766b1a6dc17',
+        symbol: 'pc',
+        factorToAnchor: 1,
+      ),
+      _UnitDefinition(
+        id: 'inch',
+        labelKey: 'inline.plan295.life.inch.51e0faecfdb3',
+        symbol: 'in',
+        factorToAnchor: 1,
+      ),
+      _UnitDefinition(
+        id: 'cm',
+        labelKey: 'inline.plan295.life.centimeter.16520bb8d303',
+        symbol: 'cm',
+        factorToAnchor: 1,
+      ),
+      _UnitDefinition(
+        id: 'mm',
+        labelKey: 'inline.plan295.life.millimeter.0e992d10bbbf',
+        symbol: 'mm',
+        factorToAnchor: 1,
+      ),
+      _UnitDefinition(
+        id: 'q',
+        labelKey: 'inline.plan295.life.quarter_millimeter.d2e43403fdfa',
+        symbol: 'Q',
+        factorToAnchor: 1,
+      ),
+    ],
+  ),
+  _UnitCategoryDefinition(
+    id: 'id_photo',
+    labelKey: 'inline.plan295.life.id_photo_size.284764ab0964',
+    units: <_UnitDefinition>[],
+    kind: _UnitCategoryKind.photo,
+  ),
+];
 
 const List<_IdPhotoPreset> _idPhotoPresets = <_IdPhotoPreset>[
   _IdPhotoPreset(
     id: '1_inch',
-    labelZh: '1寸',
-    labelEn: '1 inch photo',
+    labelKey: 'inline.plan295.life.1_inch_photo.994b29d2e76c',
     aliasInchWidth: 1.0,
     aliasInchHeight: 1.4,
     mmWidth: 25,
@@ -832,8 +722,7 @@ const List<_IdPhotoPreset> _idPhotoPresets = <_IdPhotoPreset>[
   ),
   _IdPhotoPreset(
     id: 'small_1_inch',
-    labelZh: '小1寸',
-    labelEn: 'Small 1 inch',
+    labelKey: 'inline.plan295.life.small_1_inch.f35153b3d117',
     aliasInchWidth: 0.9,
     aliasInchHeight: 1.3,
     mmWidth: 22,
@@ -841,8 +730,7 @@ const List<_IdPhotoPreset> _idPhotoPresets = <_IdPhotoPreset>[
   ),
   _IdPhotoPreset(
     id: '2_inch',
-    labelZh: '2寸',
-    labelEn: '2 inch photo',
+    labelKey: 'inline.plan295.life.2_inch_photo.d0e2f4cc1bad',
     aliasInchWidth: 1.4,
     aliasInchHeight: 2.0,
     mmWidth: 35,
@@ -850,8 +738,7 @@ const List<_IdPhotoPreset> _idPhotoPresets = <_IdPhotoPreset>[
   ),
   _IdPhotoPreset(
     id: 'large_1_inch',
-    labelZh: '大1寸',
-    labelEn: 'Large 1 inch',
+    labelKey: 'inline.plan295.life.large_1_inch.f39a9a731d05',
     aliasInchWidth: 1.3,
     aliasInchHeight: 1.9,
     mmWidth: 33,
@@ -859,8 +746,7 @@ const List<_IdPhotoPreset> _idPhotoPresets = <_IdPhotoPreset>[
   ),
   _IdPhotoPreset(
     id: 'passport',
-    labelZh: '护照',
-    labelEn: 'Passport',
+    labelKey: 'inline.plan295.life.passport.70b5caab0996',
     aliasInchWidth: 1.3,
     aliasInchHeight: 1.9,
     mmWidth: 33,
@@ -868,8 +754,7 @@ const List<_IdPhotoPreset> _idPhotoPresets = <_IdPhotoPreset>[
   ),
   _IdPhotoPreset(
     id: 'visa_2x2',
-    labelZh: '2x2 签证照',
-    labelEn: '2x2 visa',
+    labelKey: 'inline.plan295.life.2x2_visa.4cba9cde051a',
     aliasInchWidth: 2,
     aliasInchHeight: 2,
     mmWidth: 51,
@@ -937,7 +822,10 @@ class _UnitConverterToolPageState extends State<_UnitConverterToolPage> {
       _targetController.text = '';
       _error = _sourceController.text.trim().isEmpty
           ? null
-          : _lifeText(context, zh: '请输入有效数字', en: 'Enter a valid number');
+          : _lifeI18nText(
+              context,
+              'inline.plan295.life.enter_a_valid_number.d75ca05f858f',
+            );
     } else {
       final result = _convertValue(
         value: value,
@@ -963,7 +851,10 @@ class _UnitConverterToolPageState extends State<_UnitConverterToolPage> {
       _sourceController.text = '';
       _error = _targetController.text.trim().isEmpty
           ? null
-          : _lifeText(context, zh: '请输入有效数字', en: 'Enter a valid number');
+          : _lifeI18nText(
+              context,
+              'inline.plan295.life.enter_a_valid_number.d75ca05f858f',
+            );
     } else {
       final result = _convertValue(
         value: value,
@@ -1109,10 +1000,9 @@ class _UnitConverterToolPageState extends State<_UnitConverterToolPage> {
     final sourceValue = _parseInput(_sourceController.text);
     final targetValue = _parseInput(_targetController.text);
     if (sourceValue == null || targetValue == null) {
-      return _lifeText(
+      return _lifeI18nText(
         context,
-        zh: '输入数字后会实时显示换算结果。',
-        en: 'Enter a number to see the conversion result live.',
+        'inline.plan295.life.enter_a_number_to_see_the_conversion.21fd3c87f3fc',
       );
     }
     return '${_formatUnitNumber(sourceValue)} ${_sourceUnit.symbol} = '
@@ -1121,23 +1011,20 @@ class _UnitConverterToolPageState extends State<_UnitConverterToolPage> {
 
   String _subtitleText() {
     if (_isPhotoCategory) {
-      return _lifeText(
+      return _lifeI18nText(
         context,
-        zh: '常见证件照尺寸会同时给出英制别名、公制尺寸和指定 DPI 下的像素参考。',
-        en: 'Common ID photo sizes show their inch alias, metric size, and pixel reference at the selected DPI.',
+        'inline.plan295.life.common_id_photo_sizes_show_their_inc.9535498e58b7',
       );
     }
     if (_isCssCategory) {
-      return _lifeText(
+      return _lifeI18nText(
         context,
-        zh: 'CSS 换算会用当前基准字号计算 rem / em，并保留 96px = 1in 的常见浏览器口径。',
-        en: 'CSS conversions use the current base font size for rem / em and keep the standard 96px = 1in browser reference.',
+        'inline.plan295.life.css_conversions_use_the_current_base.81006cbfb044',
       );
     }
-    return _lifeText(
+    return _lifeI18nText(
       context,
-      zh: '长度、重量、温度、力、密度、功率、热量等分类都可双向编辑换算。',
-      en: 'Length, weight, temperature, force, density, power, heat, and more all support bidirectional conversion.',
+      'inline.plan295.life.length_weight_temperature_force_dens.8d5a6e318455',
     );
   }
 
@@ -1152,18 +1039,23 @@ class _UnitConverterToolPageState extends State<_UnitConverterToolPage> {
         : '';
 
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '全能单位换算', en: 'Unit converter'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '覆盖更多常用单位、CSS 尺寸和证件照尺寸参考；既能做日常标量换算，也能处理设计与打印场景。',
-        en: 'Covers more everyday units, CSS sizing, and ID photo references so it works for both scalar conversions and design or print tasks.',
+        'inline.plan295.life.unit_converter.53644e92a340',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.covers_more_everyday_units_css_sizin.1a10d39c93f9',
       ),
       child: Column(
         key: const ValueKey<String>('life-unit-converter-page'),
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '换算摘要', en: 'Summary'),
+            title: _lifeI18nText(
+              context,
+              'inline.plan295.life.summary.f651872ce10d',
+            ),
             subtitle: _subtitleText(),
             children: <Widget>[
               Text(
@@ -1178,31 +1070,42 @@ class _UnitConverterToolPageState extends State<_UnitConverterToolPage> {
                 runSpacing: 8,
                 children: <Widget>[
                   ToolboxMetricCard(
-                    label: _lifeText(context, zh: '当前类别', en: 'Category'),
+                    label: _lifeI18nText(
+                      context,
+                      'inline.plan295.life.category.01bb8de30952',
+                    ),
                     value: _category.label(context),
                   ),
                   if (_isPhotoCategory)
                     ToolboxMetricCard(
-                      label: _lifeText(context, zh: '像素参考', en: 'Pixel size'),
+                      label: _lifeI18nText(
+                        context,
+                        'inline.plan295.life.pixel_size.5a00afad8a59',
+                      ),
                       value: _photoPixelPair(_photoPreset),
                     )
                   else
                     ToolboxMetricCard(
-                      label: _lifeText(context, zh: '换算率', en: 'Rate'),
+                      label: _lifeI18nText(
+                        context,
+                        'inline.plan295.life.rate.b13e52582178',
+                      ),
                       value:
                           '1 ${_sourceUnit.symbol} = $rateText ${_targetUnit.symbol}',
                     ),
                   if (_isCssCategory)
                     ToolboxMetricCard(
-                      label: _lifeText(context, zh: '基准字号', en: 'Base size'),
+                      label: _lifeI18nText(
+                        context,
+                        'inline.plan295.life.base_size.418fa67607ac',
+                      ),
                       value: '${_cssBasePx.round()} px',
                     )
                   else if (_isPhotoCategory)
                     ToolboxMetricCard(
-                      label: _lifeText(
+                      label: _lifeI18nText(
                         context,
-                        zh: '当前 DPI',
-                        en: 'Current DPI',
+                        'inline.plan295.life.current_dpi.0f2fa03398d1',
                       ),
                       value: _photoDpi.round().toString(),
                     ),
@@ -1219,22 +1122,26 @@ class _UnitConverterToolPageState extends State<_UnitConverterToolPage> {
           ),
           const SizedBox(height: 12),
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '换算设置', en: 'Conversion setup'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '先选类别，再决定是做普通单位换算，还是查看证件照的尺寸参考。',
-              en: 'Pick a category first, then either do a normal conversion or inspect ID photo dimensions.',
+              'inline.plan295.life.conversion_setup.4f98927bdb29',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.pick_a_category_first_then_either_do.99b641cc39bc',
             ),
             children: <Widget>[
               _LifeSegmentedField<_UnitCategoryDefinition>(
-                label: _lifeText(context, zh: '换算类别', en: 'Category'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.category.d92f7dfb2767',
+                ),
                 value: _category,
                 options: _unitConverterCategories
                     .map(
                       (category) => _LifeOption<_UnitCategoryDefinition>(
                         value: category,
-                        labelZh: category.labelZh,
-                        labelEn: category.labelEn,
+                        labelKey: category.labelKey,
                       ),
                     )
                     .toList(growable: false),
@@ -1243,14 +1150,16 @@ class _UnitConverterToolPageState extends State<_UnitConverterToolPage> {
               if (_isPhotoCategory) ...<Widget>[
                 const SizedBox(height: 14),
                 _LifeSegmentedField<_IdPhotoPreset>(
-                  label: _lifeText(context, zh: '证件照规格', en: 'Photo preset'),
+                  label: _lifeI18nText(
+                    context,
+                    'inline.plan295.life.photo_preset.69f15dc54716',
+                  ),
                   value: _photoPreset,
                   options: _idPhotoPresets
                       .map(
                         (preset) => _LifeOption<_IdPhotoPreset>(
                           value: preset,
-                          labelZh: preset.labelZh,
-                          labelEn: preset.labelEn,
+                          labelKey: preset.labelKey,
                         ),
                       )
                       .toList(growable: false),
@@ -1258,7 +1167,10 @@ class _UnitConverterToolPageState extends State<_UnitConverterToolPage> {
                 ),
                 const SizedBox(height: 12),
                 _LifeSliderField(
-                  label: _lifeText(context, zh: '输出 DPI', en: 'Output DPI'),
+                  label: _lifeI18nText(
+                    context,
+                    'inline.plan295.life.output_dpi.8d832829b304',
+                  ),
                   valueText: _photoDpi.round().toString(),
                   value: _photoDpi,
                   min: 72,
@@ -1270,7 +1182,10 @@ class _UnitConverterToolPageState extends State<_UnitConverterToolPage> {
                 const SizedBox(height: 14),
                 if (_isCssCategory) ...<Widget>[
                   _LifeSliderField(
-                    label: _lifeText(context, zh: '基准字号', en: 'Base font size'),
+                    label: _lifeI18nText(
+                      context,
+                      'inline.plan295.life.base_font_size.decc868f15e9',
+                    ),
                     valueText: '${_cssBasePx.round()} px',
                     value: _cssBasePx,
                     min: 10,
@@ -1287,7 +1202,10 @@ class _UnitConverterToolPageState extends State<_UnitConverterToolPage> {
                   builder: (context, constraints) {
                     final vertical = constraints.maxWidth < 520;
                     final fromField = _UnitFieldCard(
-                      title: _lifeText(context, zh: '源值', en: 'From'),
+                      title: _lifeI18nText(
+                        context,
+                        'inline.plan295.life.from.b67ec9554275',
+                      ),
                       controller: _sourceController,
                       unit: _sourceUnit,
                       units: _category.units,
@@ -1301,7 +1219,10 @@ class _UnitConverterToolPageState extends State<_UnitConverterToolPage> {
                       },
                     );
                     final toField = _UnitFieldCard(
-                      title: _lifeText(context, zh: '目标值', en: 'To'),
+                      title: _lifeI18nText(
+                        context,
+                        'inline.plan295.life.to.e5c80c4b289d',
+                      ),
                       controller: _targetController,
                       unit: _targetUnit,
                       units: _category.units,
@@ -1328,7 +1249,10 @@ class _UnitConverterToolPageState extends State<_UnitConverterToolPage> {
                               onPressed: _swapUnits,
                               icon: const Icon(Icons.swap_vert_rounded),
                               label: Text(
-                                _lifeText(context, zh: '交换方向', en: 'Swap'),
+                                _lifeI18nText(
+                                  context,
+                                  'inline.plan295.life.swap.49c81e337f01',
+                                ),
                               ),
                             ),
                           ),
@@ -1352,7 +1276,10 @@ class _UnitConverterToolPageState extends State<_UnitConverterToolPage> {
                             onPressed: _swapUnits,
                             icon: const Icon(Icons.swap_horiz_rounded),
                             label: Text(
-                              _lifeText(context, zh: '交换', en: 'Swap'),
+                              _lifeI18nText(
+                                context,
+                                'inline.plan295.life.swap.e65d1ed03269',
+                              ),
                             ),
                           ),
                         ),
@@ -1367,20 +1294,24 @@ class _UnitConverterToolPageState extends State<_UnitConverterToolPage> {
           ),
           const SizedBox(height: 12),
           _LifeSettingsPanel(
-            title: _lifeText(
-              context,
-              zh: _isPhotoCategory ? '尺寸参考' : '常用结果',
-              en: _isPhotoCategory ? 'Reference sizes' : 'Quick results',
-            ),
-            subtitle: _lifeText(
-              context,
-              zh: _isPhotoCategory
-                  ? '直接给出英制、公制和像素口径，方便做证件照排版或下单核对。'
-                  : '用当前源值快速查看同类里的几个常用单位，适合日常估算。',
-              en: _isPhotoCategory
-                  ? 'See inch, metric, and pixel references together for print or ordering checks.'
-                  : 'See a few common units from the same category using the current source value.',
-            ),
+            title: _isPhotoCategory
+                ? _lifeI18nText(
+                    context,
+                    'inline.plan295.life.reference_sizes.28c01bd53f60',
+                  )
+                : _lifeI18nText(
+                    context,
+                    'inline.plan295.life.quick_results.c0cc60c70a24',
+                  ),
+            subtitle: _isPhotoCategory
+                ? _lifeI18nText(
+                    context,
+                    'inline.plan295.life.see_inch_metric_and_pixel_references.2bb551f9b9d6',
+                  )
+                : _lifeI18nText(
+                    context,
+                    'inline.plan295.life.see_a_few_common_units_from_the_same.f52ca1227e2f',
+                  ),
             children: <Widget>[
               if (_isPhotoCategory)
                 Wrap(
@@ -1388,7 +1319,10 @@ class _UnitConverterToolPageState extends State<_UnitConverterToolPage> {
                   runSpacing: 8,
                   children: <Widget>[
                     ToolboxMetricCard(
-                      label: _lifeText(context, zh: '英制别名', en: 'Inch alias'),
+                      label: _lifeI18nText(
+                        context,
+                        'inline.plan295.life.inch_alias.0aaa2c72e666',
+                      ),
                       value: _formatPhotoPair(
                         _photoPreset.aliasInchWidth,
                         _photoPreset.aliasInchHeight,
@@ -1396,7 +1330,10 @@ class _UnitConverterToolPageState extends State<_UnitConverterToolPage> {
                       ),
                     ),
                     ToolboxMetricCard(
-                      label: _lifeText(context, zh: '公制厘米', en: 'Centimeter'),
+                      label: _lifeI18nText(
+                        context,
+                        'inline.plan295.life.centimeter.a68ad2d8a79b',
+                      ),
                       value: _formatPhotoPair(
                         _photoPreset.mmWidth / 10,
                         _photoPreset.mmHeight / 10,
@@ -1404,7 +1341,10 @@ class _UnitConverterToolPageState extends State<_UnitConverterToolPage> {
                       ),
                     ),
                     ToolboxMetricCard(
-                      label: _lifeText(context, zh: '公制毫米', en: 'Millimeter'),
+                      label: _lifeI18nText(
+                        context,
+                        'inline.plan295.life.millimeter.e2381e590a26',
+                      ),
                       value: _formatPhotoPair(
                         _photoPreset.mmWidth,
                         _photoPreset.mmHeight,
@@ -1412,17 +1352,19 @@ class _UnitConverterToolPageState extends State<_UnitConverterToolPage> {
                       ),
                     ),
                     ToolboxMetricCard(
-                      label: _lifeText(context, zh: '像素尺寸', en: 'Pixel size'),
+                      label: _lifeI18nText(
+                        context,
+                        'inline.plan295.life.pixel_size.a5584b17425b',
+                      ),
                       value: _photoPixelPair(_photoPreset),
                     ),
                   ],
                 )
               else if (quickUnits.isEmpty || sourceValue == null)
                 Text(
-                  _lifeText(
+                  _lifeI18nText(
                     context,
-                    zh: '输入一个数字后，这里会显示同类常用单位的速览结果。',
-                    en: 'Enter a number and this area will show quick results for common units in the same category.',
+                    'inline.plan295.life.enter_a_number_and_this_area_will_sh.244f72c20d9e',
                   ),
                 )
               else
@@ -1447,25 +1389,25 @@ class _UnitConverterToolPageState extends State<_UnitConverterToolPage> {
           ),
           const SizedBox(height: 12),
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '使用提示', en: 'Notes'),
+            title: _lifeI18nText(
+              context,
+              'inline.plan295.life.notes.e137c60482e9',
+            ),
             children: <Widget>[
               Text(
                 _isPhotoCategory
-                    ? _lifeText(
+                    ? _lifeI18nText(
                         context,
-                        zh: '证件照里的“寸”通常是市场称呼，页面同时给出英制别名和实际公制尺寸；像素结果按当前 DPI 计算，适合作为排版和打印前核对参考。',
-                        en: 'Chinese ID photo inch names are common market aliases, so the page shows both the inch label and the actual metric size. Pixel values are calculated from the current DPI for layout and print checks.',
+                        'inline.plan295.life.chinese_id_photo_inch_names_are_comm.52ca6aaffe76',
                       )
                     : _isCssCategory
-                    ? _lifeText(
+                    ? _lifeI18nText(
                         context,
-                        zh: 'CSS 里的 rem / em 依赖字号上下文。这里为了便于换算，默认把 em 也按当前基准字号处理；真实页面里如果父级字号不同，结果会跟着变化。',
-                        en: 'In CSS, rem and em depend on font-size context. This calculator treats em with the current base size for convenience; real pages may differ when parent font sizes change.',
+                        'inline.plan295.life.in_css_rem_and_em_depend_on_font_siz.2baa3c5191b1',
                       )
-                    : _lifeText(
+                    : _lifeI18nText(
                         context,
-                        zh: '当前以本地静态单位表做换算，不依赖网络；温度使用开尔文作中间基准，数据单位同时保留十进制与二进制口径。',
-                        en: 'All conversions run locally with a static unit table. Temperature uses Kelvin as the anchor, and data units keep both decimal and binary conventions.',
+                        'inline.plan295.life.all_conversions_run_locally_with_a_s.acd0d1faa44d',
                       ),
               ),
             ],
@@ -1537,7 +1479,10 @@ class _UnitFieldCard extends StatelessWidget {
             },
             decoration: InputDecoration(
               border: const OutlineInputBorder(),
-              labelText: _lifeText(context, zh: '单位', en: 'Unit'),
+              labelText: _lifeI18nText(
+                context,
+                'inline.plan295.life.unit.56e8aefdd46b',
+              ),
             ),
           ),
           const SizedBox(height: 10),
@@ -1551,7 +1496,10 @@ class _UnitFieldCard extends StatelessWidget {
             ),
             decoration: InputDecoration(
               border: const OutlineInputBorder(),
-              labelText: _lifeText(context, zh: '数值', en: 'Value'),
+              labelText: _lifeI18nText(
+                context,
+                'inline.plan295.life.value.0578b7f5768b',
+              ),
             ),
           ),
         ],

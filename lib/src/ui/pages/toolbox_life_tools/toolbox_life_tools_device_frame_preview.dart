@@ -160,10 +160,9 @@ class _DeviceFrameEmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '先导入一张本地截图',
-              en: 'Pick a local screenshot first',
+              'inline.plan295.life.pick_a_local_screenshot_first.b43b91026384',
             ),
             textAlign: TextAlign.center,
             style: theme.textTheme.titleSmall?.copyWith(
@@ -173,10 +172,9 @@ class _DeviceFrameEmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '随后选择机模、背景、裁切方式和状态栏。',
-              en: 'Then choose the mockup, backdrop, fit, and status bar.',
+              'inline.plan295.life.then_choose_the_mockup_backdrop_fit.be90f5795a76',
             ),
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall?.copyWith(

@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 import '../../i18n/app_i18n.dart';
 import '../../services/toolbox_schulte_engine.dart';
 import '../../services/toolbox_schulte_prefs_service.dart';
-import '../ui_copy.dart';
 import 'toolbox_tool_shell.dart';
 
 class SchulteGridTrainingCard extends StatefulWidget {
@@ -89,9 +88,6 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
   }
 
   AppI18n get _i18n => AppI18n(Localizations.localeOf(context).languageCode);
-
-  String _t(String zh, String en) => pickUiText(_i18n, zh: zh, en: en);
-
   int get _sessionDurationMs => switch (_mode) {
     SchultePlayMode.timer => 0,
     SchultePlayMode.countdown => _countdownSeconds * 1000,
@@ -514,93 +510,130 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
   }
 
   String _modeLabel(SchultePlayMode mode) => switch (mode) {
-    SchultePlayMode.timer => _t('标准计时', 'Timer'),
-    SchultePlayMode.countdown => _t('限时倒计时', 'Countdown'),
-    SchultePlayMode.jump => _t('连续跳转', 'Jump'),
+    SchultePlayMode.timer => _i18n.t(
+      'toolbox.mindTools.schulte.timer.25ccf87e',
+    ),
+    SchultePlayMode.countdown => _i18n.t(
+      'toolbox.mindTools.schulte.countdown.002ef82e',
+    ),
+    SchultePlayMode.jump => _i18n.t('toolbox.mindTools.schulte.jump.a6efc3b2'),
   };
 
   String _shapeLabel(SchulteBoardShape shape) => switch (shape) {
-    SchulteBoardShape.square => _t('方形', 'Square'),
-    SchulteBoardShape.triangle => _t('三角', 'Triangle'),
-    SchulteBoardShape.cross => _t('十字', 'Cross'),
-    SchulteBoardShape.diamond => _t('菱形', 'Diamond'),
-    SchulteBoardShape.ring => _t('环形', 'Ring'),
+    SchulteBoardShape.square => _i18n.t(
+      'toolbox.mindTools.schulte.square.48ff8d49',
+    ),
+    SchulteBoardShape.triangle => _i18n.t(
+      'toolbox.mindTools.schulte.triangle.c68c4760',
+    ),
+    SchulteBoardShape.cross => _i18n.t(
+      'toolbox.mindTools.schulte.cross.1f1e4596',
+    ),
+    SchulteBoardShape.diamond => _i18n.t(
+      'toolbox.mindTools.schulte.diamond.099db43a',
+    ),
+    SchulteBoardShape.ring => _i18n.t(
+      'toolbox.mindTools.schulte.ring.9ed71cf8',
+    ),
   };
 
   String _sourceLabel(SchulteSourceMode sourceMode) => switch (sourceMode) {
-    SchulteSourceMode.numbers => _t('数字序列', 'Number sequence'),
-    SchulteSourceMode.custom => _t('自定义内容', 'Custom content'),
+    SchulteSourceMode.numbers => _i18n.t(
+      'toolbox.mindTools.schulte.number_sequence.f685d26f',
+    ),
+    SchulteSourceMode.custom => _i18n.t(
+      'toolbox.mindTools.schulte.custom_content.9dd3c9c7',
+    ),
   };
 
   String _splitModeLabel(SchulteContentSplitMode splitMode) =>
       switch (splitMode) {
-        SchulteContentSplitMode.character => _t('按单字符', 'Character split'),
-        SchulteContentSplitMode.word => _t('按词组', 'Word split'),
+        SchulteContentSplitMode.character => _i18n.t(
+          'toolbox.mindTools.schulte.character_split.4a543a3e',
+        ),
+        SchulteContentSplitMode.word => _i18n.t(
+          'toolbox.mindTools.schulte.word_split.aeae37ff',
+        ),
       };
 
   String _statusTitle() {
     if (_sourceMode == SchulteSourceMode.custom && _board.sequence.isEmpty) {
-      return _t('请先录入训练内容', 'Enter training content');
+      return _i18n.t(
+        'toolbox.mindTools.schulte.enter_training_content.6a21ad2f',
+      );
     }
 
     return switch (_runState) {
-      _RunState.idle => _t('准备就绪', 'Ready'),
+      _RunState.idle => _i18n.t('toolbox.mindTools.schulte.ready.78951216'),
       _RunState.running => switch (_mode) {
-        SchultePlayMode.timer => _t('正在训练', 'Training in progress'),
-        SchultePlayMode.countdown => _t('限时训练进行中', 'Timed session in progress'),
-        SchultePlayMode.jump => _t('连续跳转训练进行中', 'Continuous jump session'),
+        SchultePlayMode.timer => _i18n.t(
+          'toolbox.mindTools.schulte.training_in_progress.2475dcfc',
+        ),
+        SchultePlayMode.countdown => _i18n.t(
+          'toolbox.mindTools.schulte.timed_session_in_progress.3b316f8a',
+        ),
+        SchultePlayMode.jump => _i18n.t(
+          'toolbox.mindTools.schulte.continuous_jump_session.0c340b29',
+        ),
       },
-      _RunState.cleared => _t('本轮完成', 'Round complete'),
-      _RunState.timeout => _t('训练时间结束', 'Time limit reached'),
-      _RunState.jumpEnded => _t('连续跳转训练结束', 'Jump session complete'),
+      _RunState.cleared => _i18n.t(
+        'toolbox.mindTools.schulte.round_complete.5f66451a',
+      ),
+      _RunState.timeout => _i18n.t(
+        'toolbox.mindTools.schulte.time_limit_reached.0b5e4c20',
+      ),
+      _RunState.jumpEnded => _i18n.t(
+        'toolbox.mindTools.schulte.jump_session_complete.ab84deee',
+      ),
     };
   }
 
   String _statusBody() {
     if (_sourceMode == SchulteSourceMode.custom && _board.sequence.isEmpty) {
-      return _t(
-        '请输入或粘贴自定义文本，系统将按当前拆分方式生成训练方格。',
-        'Enter or paste custom text. The grid will be generated with the current split mode.',
+      return _i18n.t(
+        'toolbox.mindTools.schulte.enter_or_paste_custom_text_the_grid.e0f81386',
       );
     }
 
     if (_runState == _RunState.cleared) {
-      return _t(
-        '本轮完成用时：${_formatDuration(_elapsedMs)}。',
-        'Completion time: ${_formatDuration(_elapsedMs)}.',
+      return _i18n.t(
+        'toolbox.mindTools.schulte.completion_time_value.892afec0',
+        params: <String, Object?>{'elapsedMs': _formatDuration(_elapsedMs)},
       );
     }
 
     if (_runState == _RunState.timeout) {
-      return _t(
-        '本轮未在规定时间内完成，可重新开始后继续训练。',
-        'The round was not completed within the allotted time. Restart to continue.',
+      return _i18n.t(
+        'toolbox.mindTools.schulte.the_round_was_not_completed_within_the.1937a2ca',
       );
     }
 
     if (_runState == _RunState.jumpEnded) {
-      return _t(
-        '本次成绩：正确点击 $_jumpScore 次，完成 $_jumpBoards 盘。',
-        'Session result: $_jumpScore correct taps across $_jumpBoards completed boards.',
+      return _i18n.t(
+        'toolbox.mindTools.schulte.session_result_value_correct_taps_across_value.13f3ac25',
+        params: <String, Object?>{
+          'jumpScore': _jumpScore,
+          'jumpBoards': _jumpBoards,
+        },
       );
     }
 
     if (_nextTarget != null) {
-      return _t('当前目标：$_nextTarget', 'Current target: $_nextTarget');
+      return _i18n.t(
+        'toolbox.mindTools.schulte.current_target_value.18f87cdf',
+        params: <String, Object?>{'nextTarget': _nextTarget},
+      );
     }
 
     return switch (_mode) {
-      SchultePlayMode.timer => _t(
-        '点击首个正确目标后将自动开始计时，已完成的格位会立即隐藏。',
-        'Timing begins on the first correct tap, and cleared cells are hidden immediately.',
+      SchultePlayMode.timer => _i18n.t(
+        'toolbox.mindTools.schulte.timing_begins_on_the_first_correct_tap.ffbf1fae',
       ),
-      SchultePlayMode.countdown => _t(
-        '点击首个正确目标后启动本轮倒计时，请在时限内完成全部目标。',
-        'The countdown starts on the first correct tap. Clear all targets before time expires.',
+      SchultePlayMode.countdown => _i18n.t(
+        'toolbox.mindTools.schulte.the_countdown_starts_on_the_first_correct.52464731',
       ),
-      SchultePlayMode.jump => _t(
-        '点击首个正确目标后进入连续跳转训练，请在限定时长内完成尽可能多的目标。',
-        'The jump session starts on the first correct tap. Complete as many targets as possible within the time window.',
+      SchultePlayMode.jump => _i18n.t(
+        'toolbox.mindTools.schulte.the_jump_session_starts_on_the_first.2250b707',
       ),
     };
   }
@@ -631,28 +664,29 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
     if (_mode == SchultePlayMode.jump) {
       final record = _bestJumpRecordByKey[_recordKey];
       if (record == null) {
-        return _t(
-          '当前模式、棋盘与内容组合尚无记录。',
-          'No record is available for the current mode, board, and content combination.',
+        return _i18n.t(
+          'toolbox.mindTools.schulte.no_record_is_available_for_the_current.46438f53',
         );
       }
-      return _t(
-        '最佳成绩：正确点击 ${record.score} 次，完成 ${record.rounds} 盘。',
-        'Best result: ${record.score} correct taps across ${record.rounds} completed boards.',
+      return _i18n.t(
+        'toolbox.mindTools.schulte.best_result_value_correct_taps_across_value.ac7232e6',
+        params: <String, Object?>{
+          'score': record.score,
+          'rounds': record.rounds,
+        },
       );
     }
 
     final best = _bestTimeMsByKey[_recordKey];
     if (best == null) {
-      return _t(
-        '当前模式、棋盘与内容组合尚无记录。',
-        'No record is available for the current mode, board, and content combination.',
+      return _i18n.t(
+        'toolbox.mindTools.schulte.no_record_is_available_for_the_current.46438f53',
       );
     }
 
-    return _t(
-      '最佳完成用时：${_formatDuration(best)}。',
-      'Best completion time: ${_formatDuration(best)}.',
+    return _i18n.t(
+      'toolbox.mindTools.schulte.best_completion_time_value.3fdbb7fa',
+      params: <String, Object?>{'best': _formatDuration(best)},
     );
   }
 
@@ -667,25 +701,25 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
 
   String _contentPanelSummary(_SchulteContentStats stats) {
     if (_sourceMode == SchulteSourceMode.numbers) {
-      return _t(
-        '数字序列 / 共 ${_board.sequence.length} 个目标',
-        'Number sequence / ${_board.sequence.length} targets',
+      return _i18n.t(
+        'toolbox.mindTools.schulte.number_sequence_value_targets.cf761ec7',
+        params: <String, Object?>{'sequence': _board.sequence.length},
       );
     }
     if (stats.total == 0) {
-      return _t('自定义内容 / 尚未录入', 'Custom content / empty');
+      return _i18n.t('toolbox.mindTools.schulte.custom_content_empty.8e428b33');
     }
-    return _t(
-      '自定义内容 / 已使用 ${stats.visible}/${stats.total} 项',
-      'Custom content / ${stats.visible}/${stats.total} items in use',
+    return _i18n.t(
+      'toolbox.mindTools.schulte.custom_content_value_value_items_in_use.7d4c9d5b',
+      params: <String, Object?>{'visible': stats.visible, 'total': stats.total},
     );
   }
 
   String _assistPanelSummary() {
     final cue = _highlightNextTarget
-        ? _t('目标提示开启', 'Target cue on')
-        : _t('目标提示关闭', 'Target cue off');
-    return '$cue / ${_t('最佳记录', 'Best')}: ${_bestValue()}';
+        ? _i18n.t('toolbox.mindTools.schulte.target_cue_on.b265fe57')
+        : _i18n.t('toolbox.mindTools.schulte.target_cue_off.172f81de');
+    return '$cue / ${_i18n.t('toolbox.mindTools.schulte.best.4a16ee59')}: ${_bestValue()}';
   }
 
   Widget _panel({
@@ -765,9 +799,8 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
         alignment: Alignment.center,
         padding: const EdgeInsets.all(24),
         child: Text(
-          _t(
-            '录入自定义内容后，此处将生成训练方格。',
-            'Enter custom content to generate the training grid.',
+          _i18n.t(
+            'toolbox.mindTools.schulte.enter_custom_content_to_generate_the_training.76df1021',
           ),
           textAlign: TextAlign.center,
         ),
@@ -892,7 +925,7 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         _chips<SchultePlayMode>(
-          title: _t('训练模式', 'Training mode'),
+          title: _i18n.t('toolbox.mindTools.schulte.training_mode.6da89598'),
           values: SchultePlayMode.values,
           selected: _mode,
           keyBuilder: (value) => Key('schulte-mode-${value.id}'),
@@ -901,7 +934,7 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
         ),
         const SizedBox(height: 16),
         _chips<int>(
-          title: _t('棋盘尺寸', 'Board size'),
+          title: _i18n.t('toolbox.mindTools.schulte.board_size.56dba7e2'),
           values: schulteBoardSizes,
           selected: _boardSize,
           keyBuilder: (value) => Key('schulte-size-$value'),
@@ -910,7 +943,7 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
         ),
         const SizedBox(height: 16),
         _chips<SchulteBoardShape>(
-          title: _t('棋盘版式', 'Board shape'),
+          title: _i18n.t('toolbox.mindTools.schulte.board_shape.adcb185e'),
           values: SchulteBoardShape.values,
           selected: _shape,
           keyBuilder: (value) => Key('schulte-shape-${value.id}'),
@@ -920,11 +953,16 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
         if (_mode == SchultePlayMode.countdown) ...<Widget>[
           const SizedBox(height: 16),
           _chips<int>(
-            title: _t('倒计时长度', 'Countdown duration'),
+            title: _i18n.t(
+              'toolbox.mindTools.schulte.countdown_duration.3888701c',
+            ),
             values: schulteCountdownOptions,
             selected: _countdownSeconds,
             keyBuilder: (value) => Key('schulte-countdown-$value'),
-            labelBuilder: (value) => _t('$value 秒', '$value s'),
+            labelBuilder: (value) => _i18n.t(
+              'toolbox.mindTools.schulte.value_s.4ef44407',
+              params: <String, Object?>{'value': value},
+            ),
             onSelected: (value) =>
                 _updateConfig(() => _countdownSeconds = value),
           ),
@@ -932,11 +970,14 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
         if (_mode == SchultePlayMode.jump) ...<Widget>[
           const SizedBox(height: 16),
           _chips<int>(
-            title: _t('训练时长', 'Jump duration'),
+            title: _i18n.t('toolbox.mindTools.schulte.jump_duration.01f34276'),
             values: schulteJumpOptions,
             selected: _jumpSeconds,
             keyBuilder: (value) => Key('schulte-jump-$value'),
-            labelBuilder: (value) => _t('$value 秒', '$value s'),
+            labelBuilder: (value) => _i18n.t(
+              'toolbox.mindTools.schulte.value_s.4ef44407',
+              params: <String, Object?>{'value': value},
+            ),
             onSelected: (value) => _updateConfig(() => _jumpSeconds = value),
           ),
         ],
@@ -951,7 +992,7 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         _chips<SchulteSourceMode>(
-          title: _t('内容来源', 'Content source'),
+          title: _i18n.t('toolbox.mindTools.schulte.content_source.5b6fa8e4'),
           values: SchulteSourceMode.values,
           selected: _sourceMode,
           keyBuilder: (value) => Key('schulte-source-${value.id}'),
@@ -966,7 +1007,7 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
         const SizedBox(height: 16),
         if (_sourceMode == SchulteSourceMode.custom) ...<Widget>[
           _chips<SchulteContentSplitMode>(
-            title: _t('拆分方式', 'Split mode'),
+            title: _i18n.t('toolbox.mindTools.schulte.split_mode.444f1087'),
             values: SchulteContentSplitMode.values,
             selected: _splitMode,
             keyBuilder: (value) => Key('schulte-split-${value.id}'),
@@ -981,17 +1022,15 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
             maxLines: 8,
             decoration: InputDecoration(
               border: const OutlineInputBorder(),
-              hintText: _t(
-                '请输入句子、字符序列或词组列表；支持直接粘贴整段文本。',
-                'Enter sentences, character sequences, or short word lists. Pasting full text is supported.',
+              hintText: _i18n.t(
+                'toolbox.mindTools.schulte.enter_sentences_character_sequences_or_short_word.de054a95',
               ),
             ),
           ),
           const SizedBox(height: 10),
           Text(
-            _t(
-              '系统将按当前拆分方式顺序取用内容，不会以重复填充的方式补齐缺失项。',
-              'Content is consumed in order with the selected split mode. Missing cells are not backfilled by repetition.',
+            _i18n.t(
+              'toolbox.mindTools.schulte.content_is_consumed_in_order_with_the.aebd9ad2',
             ),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
@@ -1005,14 +1044,20 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
               FilterChip(
                 key: const Key('schulte-strip-whitespace'),
                 selected: _stripWhitespace,
-                label: Text(_t('清理空白字符', 'Trim whitespace')),
+                label: Text(
+                  _i18n.t('toolbox.mindTools.schulte.trim_whitespace.3d4c18e7'),
+                ),
                 onSelected: (value) =>
                     _updateConfig(() => _stripWhitespace = value),
               ),
               FilterChip(
                 key: const Key('schulte-ignore-punctuation'),
                 selected: _ignorePunctuation,
-                label: Text(_t('忽略标点符号', 'Ignore punctuation')),
+                label: Text(
+                  _i18n.t(
+                    'toolbox.mindTools.schulte.ignore_punctuation.542c2ba0',
+                  ),
+                ),
                 onSelected: (value) =>
                     _updateConfig(() => _ignorePunctuation = value),
               ),
@@ -1027,27 +1072,35 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
               color: theme.colorScheme.surfaceContainerHighest,
             ),
             child: Text(
-              _t(
-                '当前内容共 ${stats.total} 项，其中唯一项 ${stats.unique} 项，重复类别 ${stats.duplicateKinds} 组。',
-                'Entries ${stats.total}, unique ${stats.unique}, duplicate groups ${stats.duplicateKinds}.',
+              _i18n.t(
+                'toolbox.mindTools.schulte.entries_value_unique_value_duplicate_groups_value.e7285b91',
+                params: <String, Object?>{
+                  'total': stats.total,
+                  'unique': stats.unique,
+                  'duplicateKinds': stats.duplicateKinds,
+                },
               ),
               key: const Key('schulte-content-stats'),
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            _t(
-              '本屏使用 ${stats.visible}/${stats.total} 项内容，自动生成 ${stats.boardSize} x ${stats.boardSize} 棋盘。',
-              'This screen uses ${stats.visible} of ${stats.total} items and generates a ${stats.boardSize} x ${stats.boardSize} board.',
+            _i18n.t(
+              'toolbox.mindTools.schulte.this_screen_uses_value_of_value_items.a043d07f',
+              params: <String, Object?>{
+                'visible': stats.visible,
+                'total': stats.total,
+                'boardSize': stats.boardSize,
+              },
             ),
             style: theme.textTheme.bodySmall,
           ),
           if (stats.hidden > 0) ...<Widget>[
             const SizedBox(height: 6),
             Text(
-              _t(
-                '为保证单格可点击性，本屏暂未显示其余 ${stats.hidden} 项内容。',
-                '${stats.hidden} additional items are hidden on this screen to preserve tile tap targets.',
+              _i18n.t(
+                'toolbox.mindTools.schulte.value_additional_items_are_hidden_on_this.01f27648',
+                params: <String, Object?>{'hidden': stats.hidden},
               ),
               style: theme.textTheme.bodySmall,
             ),
@@ -1061,9 +1114,8 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
               color: theme.colorScheme.surfaceContainerHighest,
             ),
             child: Text(
-              _t(
-                '切换为自定义内容后，可使用字母、汉字、词组或短句进行顺序训练。',
-                'Switch to custom content to train with letters, characters, words, or short sentences.',
+              _i18n.t(
+                'toolbox.mindTools.schulte.switch_to_custom_content_to_train_with.9b8d8608',
               ),
             ),
           ),
@@ -1081,11 +1133,12 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
           key: const Key('schulte-highlight-next-switch'),
           contentPadding: EdgeInsets.zero,
           value: _highlightNextTarget,
-          title: Text(_t('目标高亮提示', 'Highlight next target')),
+          title: Text(
+            _i18n.t('toolbox.mindTools.schulte.highlight_next_target.071673e0'),
+          ),
           subtitle: Text(
-            _t(
-              '当训练内容存在重复项时，系统将同步高亮当前顺序下所有有效目标。',
-              'When duplicate content exists, all valid cells for the current step are highlighted.',
+            _i18n.t(
+              'toolbox.mindTools.schulte.when_duplicate_content_exists_all_valid_cells.02ec9af7',
             ),
           ),
           onChanged: (value) => _toggle(() => _highlightNextTarget = value),
@@ -1094,11 +1147,12 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             value: _showMemoryHint,
-            title: Text(_t('显示记忆提示', 'Show memory hint')),
+            title: Text(
+              _i18n.t('toolbox.mindTools.schulte.show_memory_hint.a9c9504d'),
+            ),
             subtitle: Text(
-              _t(
-                '根据当前可见内容生成简要提示，便于快速预览训练素材。',
-                'Generate a compact prompt from the visible content for quick review.',
+              _i18n.t(
+                'toolbox.mindTools.schulte.generate_a_compact_prompt_from_the_visible.459aaecb',
               ),
             ),
             onChanged: (value) => _toggle(() => _showMemoryHint = value),
@@ -1113,9 +1167,8 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
               ),
               child: Text(
                 hint.isEmpty
-                    ? _t(
-                        '录入自定义内容后，此处将生成简要记忆提示。',
-                        'Add custom content to generate a memory hint.',
+                    ? _i18n.t(
+                        'toolbox.mindTools.schulte.add_custom_content_to_generate_a_memory.c25e6bdd',
                       )
                     : hint,
                 key: const Key('schulte-memory-hint'),
@@ -1127,11 +1180,12 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           value: _wrongTapPenaltyEnabled,
-          title: Text(_t('错误点击惩罚', 'Wrong tap penalty')),
+          title: Text(
+            _i18n.t('toolbox.mindTools.schulte.wrong_tap_penalty.1e560f81'),
+          ),
           subtitle: Text(
-            _t(
-              '限时模式追加 1 秒惩罚，连续跳转模式扣减 1 分。',
-              'Timed modes add a 1 second penalty, and jump mode deducts 1 point.',
+            _i18n.t(
+              'toolbox.mindTools.schulte.timed_modes_add_a_1_second_penalty.e300d1a8',
             ),
           ),
           onChanged: (value) => _toggle(() => _wrongTapPenaltyEnabled = value),
@@ -1139,18 +1193,17 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           value: _hapticsEnabled,
-          title: Text(_t('触觉反馈', 'Haptics')),
+          title: Text(_i18n.t('toolbox.mindTools.schulte.haptics.7f19ba14')),
           subtitle: Text(
-            _t(
-              '在正确或错误点击时提供轻量触觉反馈。',
-              'Provide light haptic feedback for correct and incorrect taps.',
+            _i18n.t(
+              'toolbox.mindTools.schulte.provide_light_haptic_feedback_for_correct_and.50bbb766',
             ),
           ),
           onChanged: (value) => _toggle(() => _hapticsEnabled = value),
         ),
         const SizedBox(height: 8),
         Text(
-          _t('当前最佳记录', 'Current best record'),
+          _i18n.t('toolbox.mindTools.schulte.current_best_record.8be6e28a'),
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w800,
           ),
@@ -1177,13 +1230,17 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
               key: const Key('schulte-clear-current-record'),
               onPressed: _hasCurrentRecord ? _clearCurrentRecord : null,
               icon: const Icon(Icons.cleaning_services_outlined),
-              label: Text(_t('清除当前记录', 'Clear current')),
+              label: Text(
+                _i18n.t('toolbox.mindTools.schulte.clear_current.a1706539'),
+              ),
             ),
             OutlinedButton.icon(
               key: const Key('schulte-clear-all-records'),
               onPressed: _hasAnyRecord ? _clearAllRecords : null,
               icon: const Icon(Icons.delete_sweep_outlined),
-              label: Text(_t('清除全部记录', 'Clear all')),
+              label: Text(
+                _i18n.t('toolbox.mindTools.schulte.clear_all.c44d8cf4'),
+              ),
             ),
           ],
         ),
@@ -1212,16 +1269,15 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            _t('舒尔特方格训练', 'Schulte Grid Training'),
+            _i18n.t('toolbox.mindTools.schulte.schulte_grid_training.b22cd9c4'),
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            _t(
-              '用于训练视觉搜索、注意稳定与顺序追踪能力。',
-              'Designed to train visual search, sustained attention, and sequential tracking.',
+            _i18n.t(
+              'toolbox.mindTools.schulte.designed_to_train_visual_search_sustained_attention.f75a0237',
             ),
           ),
           const SizedBox(height: 18),
@@ -1239,30 +1295,33 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
             runSpacing: 10,
             children: <Widget>[
               ToolboxMetricCard(
-                label: _t('目标', 'Next'),
+                label: _i18n.t('toolbox.mindTools.schulte.next.52d78e26'),
                 value: _nextTarget ?? '--',
               ),
               ToolboxMetricCard(
-                label: _t('进度', 'Progress'),
+                label: _i18n.t('toolbox.mindTools.schulte.progress.ea452572'),
                 value: '$_nextIndex / ${_board.sequence.length}',
               ),
               ToolboxMetricCard(
                 label: _mode == SchultePlayMode.timer
-                    ? _t('已用时间', 'Elapsed')
-                    : _t('剩余时间', 'Remaining'),
+                    ? _i18n.t('toolbox.mindTools.schulte.elapsed.590f9127')
+                    : _i18n.t('toolbox.mindTools.schulte.remaining.e4f802a9'),
                 value: _mode == SchultePlayMode.timer
                     ? _formatDuration(_elapsedMs)
                     : _formatDuration(_remainingMs),
               ),
-              ToolboxMetricCard(label: _t('最佳', 'Best'), value: _bestValue()),
+              ToolboxMetricCard(
+                label: _i18n.t('toolbox.mindTools.schulte.best.cc3085e0'),
+                value: _bestValue(),
+              ),
               if (_mode == SchultePlayMode.jump)
                 ToolboxMetricCard(
-                  label: _t('得分', 'Score'),
+                  label: _i18n.t('toolbox.mindTools.schulte.score.e88e14ea'),
                   value: '$_jumpScore',
                 )
               else
                 ToolboxMetricCard(
-                  label: _t('失误', 'Mistakes'),
+                  label: _i18n.t('toolbox.mindTools.schulte.mistakes.24aa307d'),
                   value: '$_mistakes',
                 ),
             ],
@@ -1276,17 +1335,17 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
     final theme = Theme.of(context);
     final note =
         _sourceMode == SchulteSourceMode.custom && _board.sequence.isEmpty
-        ? _t('请先录入内容以生成棋盘。', 'Enter content first to generate the grid.')
-        : _t(
-            '点击首个正确目标后将自动开始计时；正确点击的格位会立即隐藏。',
-            'Timing begins on the first correct tap, and cleared cells are hidden immediately.',
+        ? _i18n.t(
+            'toolbox.mindTools.schulte.enter_content_first_to_generate_the_grid.05703290',
+          )
+        : _i18n.t(
+            'toolbox.mindTools.schulte.timing_begins_on_the_first_correct_tap.e948402c',
           );
 
     return _panel(
-      title: _t('训练面板', 'Training Board'),
-      subtitle: _t(
-        '用于开始新一轮、重排棋盘并完成当前训练。',
-        'Use this area to start a fresh round, reshuffle the board, and complete the current session.',
+      title: _i18n.t('toolbox.mindTools.schulte.training_board.e36ff4af'),
+      subtitle: _i18n.t(
+        'toolbox.mindTools.schulte.use_this_area_to_start_a_fresh.33d0a1c3',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1304,14 +1363,18 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
                 ),
                 label: Text(
                   _runState == _RunState.idle
-                      ? _t('刷新棋盘', 'Refresh board')
-                      : _t('重新开始', 'Restart'),
+                      ? _i18n.t(
+                          'toolbox.mindTools.schulte.refresh_board.ea7e5e89',
+                        )
+                      : _i18n.t('toolbox.mindTools.schulte.restart.ad54dd61'),
                 ),
               ),
               OutlinedButton.icon(
                 onPressed: _board.sequence.isEmpty ? null : _reshuffleBoard,
                 icon: const Icon(Icons.shuffle_rounded),
-                label: Text(_t('随机重排', 'Reshuffle')),
+                label: Text(
+                  _i18n.t('toolbox.mindTools.schulte.reshuffle.e4cf2fc5'),
+                ),
               ),
             ],
           ),
@@ -1343,10 +1406,9 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
         const SizedBox(height: 14),
         _FoldPanel(
           toggleKey: const Key('schulte-panel-mode-toggle'),
-          title: _t('模式与棋盘设置', 'Mode and Board'),
-          subtitle: _t(
-            '配置训练模式、棋盘尺寸与版式。',
-            'Configure the training mode, board size, and layout.',
+          title: _i18n.t('toolbox.mindTools.schulte.mode_and_board.c18e0392'),
+          subtitle: _i18n.t(
+            'toolbox.mindTools.schulte.configure_the_training_mode_board_size_and.803b8ef0',
           ),
           summary: _modePanelSummary(),
           expanded: _modePanelExpanded,
@@ -1360,10 +1422,9 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
         const SizedBox(height: 14),
         _FoldPanel(
           toggleKey: const Key('schulte-panel-content-toggle'),
-          title: _t('内容设置', 'Content'),
-          subtitle: _t(
-            '切换数字或自定义内容，并查看当前内容统计。',
-            'Switch between number and custom content, and review content statistics.',
+          title: _i18n.t('toolbox.mindTools.schulte.content.69486526'),
+          subtitle: _i18n.t(
+            'toolbox.mindTools.schulte.switch_between_number_and_custom_content_and.234802cf',
           ),
           summary: _contentPanelSummary(stats),
           expanded: _contentPanelExpanded,
@@ -1377,10 +1438,11 @@ class _SchulteGridTrainingCardState extends State<SchulteGridTrainingCard> {
         const SizedBox(height: 14),
         _FoldPanel(
           toggleKey: const Key('schulte-panel-assist-toggle'),
-          title: _t('辅助与记录', 'Assist and Records'),
-          subtitle: _t(
-            '管理提示方式、触觉反馈与当前成绩记录。',
-            'Manage guidance cues, haptics, and performance records.',
+          title: _i18n.t(
+            'toolbox.mindTools.schulte.assist_and_records.9f675a0a',
+          ),
+          subtitle: _i18n.t(
+            'toolbox.mindTools.schulte.manage_guidance_cues_haptics_and_performance_records.8aa954f0',
           ),
           summary: _assistPanelSummary(),
           expanded: _assistPanelExpanded,

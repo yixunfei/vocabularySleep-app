@@ -143,11 +143,11 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
         appBar: AppBar(title: Text(widget.title)),
         body: EmptyStateView(
           icon: Icons.fitness_center_rounded,
-          title: pickUiText(i18n, zh: '没有可练习内容', en: 'No words to practice'),
-          message: pickUiText(
-            i18n,
-            zh: '请先在词库中准备一些单词，再开始会话练习。',
-            en: 'Prepare some words in your library before starting a session.',
+          title: i18n.t(
+            'inline.ui.pages.practice_session_page.no_words_to_practice_8771b7',
+          ),
+          message: i18n.t(
+            'inline.ui.pages.practice_session_page.prepare_some_words_in_your_library_before_starting_a_ses_bb3330',
           ),
         ),
       );
@@ -275,34 +275,32 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               SectionHeader(
-                title: pickUiText(i18n, zh: '本轮完成', en: 'Session completed'),
-                subtitle: pickUiText(
-                  i18n,
-                  zh: '你已完成本次练习会话。',
-                  en: 'You have completed this practice session.',
+                title: i18n.t(
+                  'inline.ui.pages.practice_session_page.session_completed_363753',
+                ),
+                subtitle: i18n.t(
+                  'inline.ui.pages.practice_session_page.you_have_completed_this_practice_session_1c65da',
                 ),
               ),
               const SizedBox(height: 12),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '正确率：$accuracy%',
-                  en: 'Accuracy: $accuracy%',
+                i18n.t(
+                  'inline.ui.pages.practice_session_page.accuracy_accuracy_5e2b02',
                 ),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 6),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '记住：$remembered，需加强：$weakCount（共 $total）',
-                  en: 'Remembered: $remembered, Weak: $weakCount (Total $total)',
+                i18n.t(
+                  'inline.ui.pages.practice_session_page.remembered_remembered_weak_weakcount_total_total_97ec42',
                 ),
               ),
               if (_rememberedWords.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 12),
                 Text(
-                  pickUiText(i18n, zh: '已记住单词', en: 'Remembered words'),
+                  i18n.t(
+                    'inline.ui.pages.practice_session_page.remembered_words_7a959b',
+                  ),
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
@@ -326,7 +324,7 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
               if (_weakWords.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 12),
                 Text(
-                  pickUiText(i18n, zh: '薄弱词', en: 'Weak words'),
+                  i18n.t('inline.ui.pages.practice_page.weak_words_f19247'),
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
@@ -342,7 +340,9 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
               if (reasonCounts.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 12),
                 Text(
-                  pickUiText(i18n, zh: '主要失分原因', en: 'Main weak reasons'),
+                  i18n.t(
+                    'inline.ui.pages.practice_session_page.main_weak_reasons_4d3507',
+                  ),
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
@@ -386,7 +386,9 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
               onPressed: () => _restart(_rememberedWords, shuffle: true),
               icon: const Icon(Icons.auto_awesome_rounded),
               label: Text(
-                pickUiText(i18n, zh: '复习已记住', en: 'Review remembered'),
+                i18n.t(
+                  'inline.ui.pages.practice_page_sections.review_remembered_a87a77',
+                ),
               ),
             ),
           if (_weakWords.isNotEmpty)
@@ -394,13 +396,17 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
               onPressed: () => _restart(_weakWords),
               icon: const Icon(Icons.fitness_center_rounded),
               label: Text(
-                pickUiText(i18n, zh: '复习薄弱词', en: 'Retry weak words'),
+                i18n.t(
+                  'inline.ui.pages.practice_session_page.retry_weak_words_c930e2',
+                ),
               ),
             ),
           OutlinedButton.icon(
             onPressed: () => Navigator.of(context).pop(),
             icon: const Icon(Icons.close_rounded),
-            label: Text(pickUiText(i18n, zh: '结束会话', en: 'Finish')),
+            label: Text(
+              i18n.t('inline.ui.pages.practice_session_page.finish_10bd36'),
+            ),
           ),
         ],
       ),
@@ -421,22 +427,22 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             SectionHeader(
-              title: pickUiText(i18n, zh: '练习进度', en: 'Session progress'),
+              title: i18n.t(
+                'inline.ui.pages.practice_session_page.session_progress_3fa31c',
+              ),
               subtitle:
                   widget.subtitle ??
-                  pickUiText(
-                    i18n,
-                    zh: '第 ${_index + 1} / $total 题',
-                    en: 'Item ${_index + 1} of $total',
+                  i18n.t(
+                    'inline.ui.pages.practice_session_page.item_index_1_of_total_d48de9',
                   ),
             ),
             const SizedBox(height: 12),
             Semantics(
-              label: pickUiText(i18n, zh: '练习进度', en: 'Session progress'),
-              value: pickUiText(
-                i18n,
-                zh: '第 ${_index + 1} 题，共 $total 题',
-                en: 'Item ${_index + 1} of $total',
+              label: i18n.t(
+                'inline.ui.pages.practice_session_page.session_progress_3fa31c',
+              ),
+              value: i18n.t(
+                'inline.ui.pages.practice_session_page.item_index_1_of_total_d48de9',
               ),
               child: ExcludeSemantics(
                 child: LinearProgressIndicator(value: progress),
@@ -450,15 +456,15 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        pickUiText(i18n, zh: '会话设置', en: 'Session settings'),
+                        i18n.t(
+                          'inline.ui.pages.practice_session_page.session_settings_35f8c2',
+                        ),
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        pickUiText(
-                          i18n,
-                          zh: '题型、自动项和答题弹窗都可以在这里统一控制。',
-                          en: 'Question mode, automation toggles, and answer popup behavior live here.',
+                        i18n.t(
+                          'inline.ui.pages.practice_session_page.question_mode_automation_toggles_and_answer_popup_behavi_4a6189',
                         ),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
@@ -501,14 +507,18 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                       size: 16,
                     ),
                     label: Text(
-                      pickUiText(i18n, zh: '自动加入任务词', en: 'Auto task sync'),
+                      i18n.t(
+                        'inline.ui.pages.practice_session_page.auto_task_sync_e022a9',
+                      ),
                     ),
                   ),
                 if (_autoPlayPronunciation)
                   Chip(
                     avatar: const Icon(Icons.volume_up_rounded, size: 16),
                     label: Text(
-                      pickUiText(i18n, zh: '自动发音', en: 'Auto pronunciation'),
+                      i18n.t(
+                        'inline.ui.pages.practice_session_page.auto_pronunciation_88fe0a',
+                      ),
                     ),
                   ),
                 if (_hintRevealed)
@@ -518,7 +528,9 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                       size: 16,
                     ),
                     label: Text(
-                      pickUiText(i18n, zh: '提示已展开', en: 'Hints open'),
+                      i18n.t(
+                        'inline.ui.pages.practice_session_page.hints_open_cd49e0',
+                      ),
                     ),
                   ),
                 Chip(
@@ -530,11 +542,11 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                   ),
                   label: Text(
                     _answerFeedbackDialogEnabled
-                        ? pickUiText(i18n, zh: '答题弹窗开启', en: 'Answer popup on')
-                        : pickUiText(
-                            i18n,
-                            zh: '答题弹窗关闭',
-                            en: 'Answer popup off',
+                        ? i18n.t(
+                            'inline.ui.pages.practice_session_page.answer_popup_on_a723da',
+                          )
+                        : i18n.t(
+                            'inline.ui.pages.practice_session_page.answer_popup_off_3cbd34',
                           ),
                   ),
                 ),
@@ -573,17 +585,13 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                 contentPadding: EdgeInsets.zero,
                 dense: true,
                 title: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '没记住时自动加入任务本',
-                    en: 'Auto-add missed words to task list',
+                  i18n.t(
+                    'inline.ui.pages.practice_session_page.auto_add_missed_words_to_task_list_c14c46',
                   ),
                 ),
                 subtitle: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '开启后，点击“没记住”会自动把当前词加入任务本。',
-                    en: 'When enabled, tapping "Not yet" also adds the current word to the task list.',
+                  i18n.t(
+                    'inline.ui.pages.practice_session_page.when_enabled_tapping_not_yet_also_adds_the_current_word_19b1a7',
                   ),
                 ),
                 value: _autoAddWeakWordsToTask,
@@ -601,17 +609,13 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                 contentPadding: EdgeInsets.zero,
                 dense: true,
                 title: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '切题时自动播放发音',
-                    en: 'Auto-play pronunciation',
+                  i18n.t(
+                    'inline.ui.pages.practice_session_page.auto_play_pronunciation_753fca',
                   ),
                 ),
                 subtitle: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '每次进入新题时自动播放当前单词发音。',
-                    en: 'Automatically play the current word pronunciation when a new card appears.',
+                  i18n.t(
+                    'inline.ui.pages.practice_session_page.automatically_play_the_current_word_pronunciation_when_a_deffde',
                   ),
                 ),
                 value: _autoPlayPronunciation,
@@ -633,13 +637,13 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                 contentPadding: EdgeInsets.zero,
                 dense: true,
                 title: Text(
-                  pickUiText(i18n, zh: '新题默认展开提示', en: 'Show hints by default'),
+                  i18n.t(
+                    'inline.ui.pages.practice_session_page.show_hints_by_default_244613',
+                  ),
                 ),
                 subtitle: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '每次切到新题时默认展开字段提示，适合复习模式。',
-                    en: 'Keep field hints expanded when a new card opens, useful for review mode.',
+                  i18n.t(
+                    'inline.ui.pages.practice_session_page.keep_field_hints_expanded_when_a_new_card_opens_useful_f_449fbd',
                   ),
                 ),
                 value: state.practiceShowHintsByDefault,
@@ -657,13 +661,13 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                 contentPadding: EdgeInsets.zero,
                 dense: true,
                 title: Text(
-                  pickUiText(i18n, zh: '答题后弹窗反馈', en: 'Show answer popup'),
+                  i18n.t(
+                    'inline.ui.pages.practice_session_page.show_answer_popup_ea92f3',
+                  ),
                 ),
                 subtitle: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '答完一题后显示鼓励弹窗，并可直接决定是否加入错题本。',
-                    en: 'Show the encouraging answer popup and let you decide whether to add the word to the wrong notebook.',
+                  i18n.t(
+                    'inline.ui.pages.practice_session_page.show_the_encouraging_answer_popup_and_let_you_decide_whe_aacd6b',
                   ),
                 ),
                 value: _answerFeedbackDialogEnabled,
@@ -713,8 +717,12 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
               icon: const Icon(Icons.lightbulb_outline_rounded),
               label: Text(
                 _hintRevealed
-                    ? pickUiText(i18n, zh: '隐藏提示', en: 'Hide hint')
-                    : pickUiText(i18n, zh: '显示提示', en: 'Show hint'),
+                    ? i18n.t(
+                        'inline.ui.pages.practice_session_page.hide_hint_cb9853',
+                      )
+                    : i18n.t(
+                        'inline.ui.pages.practice_session_page.show_hint_ce8f2a',
+                      ),
               ),
             ),
             FilledButton.tonalIcon(
@@ -726,8 +734,12 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
               icon: const Icon(Icons.visibility_rounded),
               label: Text(
                 _revealed
-                    ? pickUiText(i18n, zh: '隐藏答案', en: 'Hide answer')
-                    : pickUiText(i18n, zh: '显示答案', en: 'Reveal answer'),
+                    ? i18n.t(
+                        'inline.ui.pages.practice_session_page.hide_answer_484a2b',
+                      )
+                    : i18n.t(
+                        'inline.ui.pages.practice_session_page.reveal_answer_1acf1b',
+                      ),
               ),
             ),
           ],
@@ -744,7 +756,9 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                   ? () => _markResult(state, false)
                   : null,
               icon: const Icon(Icons.refresh_rounded),
-              label: Text(pickUiText(i18n, zh: '没记住', en: 'Not yet')),
+              label: Text(
+                i18n.t('inline.ui.pages.practice_session_page.not_yet_b8d1a5'),
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -754,7 +768,11 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                   ? () => _markResult(state, true)
                   : null,
               icon: const Icon(Icons.check_rounded),
-              label: Text(pickUiText(i18n, zh: '记住了', en: 'Remembered')),
+              label: Text(
+                i18n.t(
+                  'inline.ui.pages.practice_session_page.remembered_09b693',
+                ),
+              ),
             ),
           ),
         ],
@@ -792,15 +810,11 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
               const SizedBox(height: 8),
               Text(
                 _resolvedQuestionType == PracticeQuestionType.meaningChoice
-                    ? pickUiText(
-                        i18n,
-                        zh: '根据单词选择正确词义。',
-                        en: 'Choose the correct meaning for the word.',
+                    ? i18n.t(
+                        'inline.ui.pages.practice_session_page.choose_the_correct_meaning_for_the_word_ae2c33',
                       )
-                    : pickUiText(
-                        i18n,
-                        zh: '根据词义输入正确拼写。',
-                        en: 'Type the correct spelling from the meaning.',
+                    : i18n.t(
+                        'inline.ui.pages.practice_session_page.type_the_correct_spelling_from_the_meaning_8184d0',
                       ),
               ),
               const SizedBox(height: 14),
@@ -830,15 +844,19 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
           ),
           label: Text(
             _objectiveCorrect
-                ? pickUiText(i18n, zh: '继续下一题', en: 'Continue')
-                : pickUiText(i18n, zh: '继续并记为薄弱', en: 'Continue as weak'),
+                ? i18n.t('toolbox.breathing.continue_select')
+                : i18n.t(
+                    'inline.ui.pages.practice_session_page.continue_as_weak_89da0c',
+                  ),
           ),
         )
       else if (_resolvedQuestionType == PracticeQuestionType.spelling)
         FilledButton.icon(
           onPressed: _submitSpelling,
           icon: const Icon(Icons.task_alt_rounded),
-          label: Text(pickUiText(i18n, zh: '提交答案', en: 'Submit')),
+          label: Text(
+            i18n.t('inline.ui.pages.practice_session_page.submit_4bdd5b'),
+          ),
         ),
     ];
   }
@@ -876,22 +894,22 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
             children: <Widget>[
               Text(
                 feedback.remembered
-                    ? pickUiText(i18n, zh: '答得漂亮', en: 'Nice work')
-                    : pickUiText(i18n, zh: '没关系，再来一次', en: 'Keep going'),
+                    ? i18n.t(
+                        'inline.ui.pages.practice_session_page.nice_work_02e5d7',
+                      )
+                    : i18n.t(
+                        'inline.ui.pages.practice_session_page.keep_going_0195da',
+                      ),
                 style: theme.textTheme.titleLarge,
               ),
               const SizedBox(height: 8),
               Text(
                 feedback.remembered
-                    ? pickUiText(
-                        i18n,
-                        zh: '这题已经拿下了，继续保持。',
-                        en: 'You have this one. Keep the momentum going.',
+                    ? i18n.t(
+                        'inline.ui.pages.practice_session_page.you_have_this_one_keep_the_momentum_going_0b3817',
                       )
-                    : pickUiText(
-                        i18n,
-                        zh: '给这次卡壳补一个原因，下一轮会更准。',
-                        en: 'Tag the blocker and the next round will be more focused.',
+                    : i18n.t(
+                        'inline.ui.pages.practice_session_page.tag_the_blocker_and_the_next_round_will_be_more_focused_69a2af',
                       ),
               ),
               const SizedBox(height: 12),
@@ -921,13 +939,13 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                 SwitchListTile.adaptive(
                   contentPadding: EdgeInsets.zero,
                   title: Text(
-                    pickUiText(i18n, zh: '加入错题本', en: 'Add to wrong notebook'),
+                    i18n.t(
+                      'inline.ui.pages.practice_session_page.add_to_wrong_notebook_9e04fa',
+                    ),
                   ),
                   subtitle: Text(
-                    pickUiText(
-                      i18n,
-                      zh: '这一轮结束前也会立刻落地到错题本和记忆轨道。',
-                      en: 'This will persist to the wrong notebook and memory lanes right away.',
+                    i18n.t(
+                      'inline.ui.pages.practice_session_page.this_will_persist_to_the_wrong_notebook_and_memory_lanes_54f971',
                     ),
                   ),
                   value: feedback.addToWrongNotebook,
@@ -941,7 +959,9 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  pickUiText(i18n, zh: '没记住的主要原因', en: 'Main blocker'),
+                  i18n.t(
+                    'inline.ui.pages.practice_session_page.main_blocker_600ac9',
+                  ),
                   style: theme.textTheme.titleSmall,
                 ),
                 const SizedBox(height: 8),
@@ -982,10 +1002,8 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                     !state.isTaskEntry(feedback.current)) ...<Widget>[
                   const SizedBox(height: 12),
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '本题还会同步加入任务词，方便稍后回捞。',
-                      en: 'This word will also be added to your task list for follow-up practice.',
+                    i18n.t(
+                      'inline.ui.pages.practice_session_page.this_word_will_also_be_added_to_your_task_list_for_follo_12a6c7',
                     ),
                     style: theme.textTheme.bodySmall,
                   ),
@@ -1002,7 +1020,7 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                         _pendingAnswerFeedback = null;
                       });
                     },
-                    child: Text(pickUiText(i18n, zh: '返回', en: 'Back')),
+                    child: Text(i18n.t('toolbox.sound.locator.cue_label_back')),
                   ),
                   FilledButton.icon(
                     onPressed: () => _commitInlineAnswerFeedback(state),
@@ -1013,8 +1031,12 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                     ),
                     label: Text(
                       isLastItem
-                          ? pickUiText(i18n, zh: '完成这一轮', en: 'Finish round')
-                          : pickUiText(i18n, zh: '继续下一题', en: 'Next word'),
+                          ? i18n.t(
+                              'inline.ui.pages.practice_session_page.finish_round_231443',
+                            )
+                          : i18n.t(
+                              'inline.ui.pages.practice_session_page.next_word_21fddc',
+                            ),
                     ),
                   ),
                 ],
@@ -1047,7 +1069,7 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
             IconButton.filledTonal(
               onPressed: () => state.previewPronunciation(current.word),
               icon: const Icon(Icons.volume_up_rounded),
-              tooltip: pickUiText(i18n, zh: '播放发音', en: 'Play pronunciation'),
+              tooltip: i18n.t('playPronunciation'),
             ),
           ],
         ),
@@ -1092,11 +1114,9 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
         if (_objectiveAnswered)
           Text(
             _objectiveCorrect
-                ? pickUiText(i18n, zh: '回答正确。', en: 'Correct.')
-                : pickUiText(
-                    i18n,
-                    zh: '回答错误。正确答案：$correctMeaning',
-                    en: 'Not quite. Correct answer: $correctMeaning',
+                ? i18n.t('inline.ui.pages.practice_session_page.correct_c3dccf')
+                : i18n.t(
+                    'inline.ui.pages.practice_session_page.not_quite_correct_answer_correctmeaning_766850',
                   ),
           ),
       ],
@@ -1125,7 +1145,7 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
             IconButton.filledTonal(
               onPressed: () => state.previewPronunciation(current.word),
               icon: const Icon(Icons.volume_up_rounded),
-              tooltip: pickUiText(i18n, zh: '播放发音', en: 'Play pronunciation'),
+              tooltip: i18n.t('playPronunciation'),
             ),
           ],
         ),
@@ -1139,18 +1159,20 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
           onSubmitted: (_) => _submitSpelling(),
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
-            labelText: pickUiText(i18n, zh: '输入拼写', en: 'Type the word'),
+            labelText: i18n.t(
+              'inline.ui.pages.practice_session_page.type_the_word_48e7a0',
+            ),
           ),
         ),
         if (_objectiveAnswered) ...<Widget>[
           const SizedBox(height: 12),
           Text(
             _objectiveCorrect
-                ? pickUiText(i18n, zh: '拼写正确。', en: 'Correct spelling.')
-                : pickUiText(
-                    i18n,
-                    zh: '拼写错误。正确拼写：${current.word}',
-                    en: 'Not quite. Correct spelling: ${current.word}',
+                ? i18n.t(
+                    'inline.ui.pages.practice_session_page.correct_spelling_80e1f8',
+                  )
+                : i18n.t(
+                    'inline.ui.pages.practice_session_page.not_quite_correct_spelling_current_word_96d345',
                   ),
           ),
         ],
@@ -1166,19 +1188,15 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              pickUiText(
-                i18n,
-                zh: '如果没记住，主要卡在哪里？',
-                en: 'If missed, what was the main blocker?',
+              i18n.t(
+                'inline.ui.pages.practice_session_page.if_missed_what_was_the_main_blocker_9b55cd',
               ),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              pickUiText(
-                i18n,
-                zh: '可多选。记录后会同步到错题本和练习历史。',
-                en: 'Multiple choices are allowed. Reasons sync to the wrong notebook and session history.',
+              i18n.t(
+                'inline.ui.pages.practice_session_page.multiple_choices_are_allowed_reasons_sync_to_the_wrong_n_b1e871',
               ),
             ),
             const SizedBox(height: 12),
@@ -1450,14 +1468,14 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
   String _primaryActionLabel(AppI18n i18n) {
     if (_supportsNextBatch) {
       if (_showsNewRoundPrimaryAction) {
-        return pickUiText(i18n, zh: '新一轮', en: 'New round');
+        return i18n.t('inline.ui.pages.practice_session_page.new_round_d12512');
       }
-      return pickUiText(i18n, zh: '下一批', en: 'Next batch');
+      return i18n.t('inline.ui.pages.practice_session_page.next_batch_b677f3');
     }
     if (_showsNewRoundPrimaryAction) {
-      return pickUiText(i18n, zh: '新一轮', en: 'New round');
+      return i18n.t('inline.ui.pages.practice_session_page.new_round_d12512');
     }
-    return pickUiText(i18n, zh: '再来一轮', en: 'Restart');
+    return i18n.t('inline.ui.pages.practice_session_page.restart_8b7fcc');
   }
 
   void _reportSession({
@@ -1505,8 +1523,12 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
             return AlertDialog(
               title: Text(
                 remembered
-                    ? pickUiText(i18n, zh: '答得漂亮', en: 'Nice work')
-                    : pickUiText(i18n, zh: '没关系，再来一次', en: 'Keep going'),
+                    ? i18n.t(
+                        'inline.ui.pages.practice_session_page.nice_work_02e5d7',
+                      )
+                    : i18n.t(
+                        'inline.ui.pages.practice_session_page.keep_going_0195da',
+                      ),
               ),
               content: SingleChildScrollView(
                 child: Column(
@@ -1515,15 +1537,11 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                   children: <Widget>[
                     Text(
                       remembered
-                          ? pickUiText(
-                              i18n,
-                              zh: '这题已经拿下了，继续保持。',
-                              en: 'You have this one. Keep the momentum going.',
+                          ? i18n.t(
+                              'inline.ui.pages.practice_session_page.you_have_this_one_keep_the_momentum_going_0b3817',
                             )
-                          : pickUiText(
-                              i18n,
-                              zh: '给这次卡壳补一个原因，下一轮会更准。',
-                              en: 'Tag the blocker and the next round will be more focused.',
+                          : i18n.t(
+                              'inline.ui.pages.practice_session_page.tag_the_blocker_and_the_next_round_will_be_more_focused_69a2af',
                             ),
                     ),
                     const SizedBox(height: 12),
@@ -1555,17 +1573,13 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                       SwitchListTile.adaptive(
                         contentPadding: EdgeInsets.zero,
                         title: Text(
-                          pickUiText(
-                            i18n,
-                            zh: '加入错题本',
-                            en: 'Add to wrong notebook',
+                          i18n.t(
+                            'inline.ui.pages.practice_session_page.add_to_wrong_notebook_9e04fa',
                           ),
                         ),
                         subtitle: Text(
-                          pickUiText(
-                            i18n,
-                            zh: '这一轮结束前也会立刻落地到错题本和记忆轨道。',
-                            en: 'This will persist to the wrong notebook and memory lanes right away.',
+                          i18n.t(
+                            'inline.ui.pages.practice_session_page.this_will_persist_to_the_wrong_notebook_and_memory_lanes_54f971',
                           ),
                         ),
                         value: addToWrongNotebook,
@@ -1577,7 +1591,9 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        pickUiText(i18n, zh: '没记住的主要原因', en: 'Main blocker'),
+                        i18n.t(
+                          'inline.ui.pages.practice_session_page.main_blocker_600ac9',
+                        ),
                         style: Theme.of(context).textTheme.titleSmall,
                       ),
                       const SizedBox(height: 8),
@@ -1612,10 +1628,8 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                           !state.isTaskEntry(current)) ...<Widget>[
                         const SizedBox(height: 12),
                         Text(
-                          pickUiText(
-                            i18n,
-                            zh: '本题还会同步加入任务词，方便稍后回捞。',
-                            en: 'This word will also be added to your task list for follow-up practice.',
+                          i18n.t(
+                            'inline.ui.pages.practice_session_page.this_word_will_also_be_added_to_your_task_list_for_follo_12a6c7',
                           ),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
@@ -1627,7 +1641,7 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
               actions: <Widget>[
                 TextButton(
                   onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: Text(pickUiText(i18n, zh: '返回', en: 'Back')),
+                  child: Text(i18n.t('toolbox.sound.locator.cue_label_back')),
                 ),
                 FilledButton.icon(
                   onPressed: () {
@@ -1649,8 +1663,12 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                   ),
                   label: Text(
                     isLastItem
-                        ? pickUiText(i18n, zh: '完成这一轮', en: 'Finish round')
-                        : pickUiText(i18n, zh: '继续下一题', en: 'Next word'),
+                        ? i18n.t(
+                            'inline.ui.pages.practice_session_page.finish_round_231443',
+                          )
+                        : i18n.t(
+                            'inline.ui.pages.practice_session_page.next_word_21fddc',
+                          ),
                   ),
                 ),
               ],

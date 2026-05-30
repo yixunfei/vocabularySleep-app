@@ -42,17 +42,22 @@ class _ColorHelperToolPageState extends State<_ColorHelperToolPage> {
   @override
   Widget build(BuildContext context) {
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '配色助手', en: 'Color helper'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '搜索、匹配、复制色值和图片取色。',
-        en: 'Search, match, copy color values, and sample images.',
+        'inline.plan295.life.color_helper.10ac659af588',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.search_match_copy_color_values_and_s.23475628085d',
       ),
       backgroundColor: _pageColorPreviewEnabled ? _pagePreviewColor : null,
       scrollController: _scrollController,
       floatingActionButton: FloatingActionButton.small(
         heroTag: 'life_color_back_to_top',
-        tooltip: _lifeText(context, zh: '返回顶部', en: 'Back to top'),
+        tooltip: _lifeI18nText(
+          context,
+          'inline.ui.pages.toolbox_daily_choice.daily_choice_manager_sheet.back_to_top_b9ffaa',
+        ),
         onPressed: _scrollToTop,
         child: const Icon(Icons.keyboard_arrow_up_rounded),
       ),
@@ -61,15 +66,13 @@ class _ColorHelperToolPageState extends State<_ColorHelperToolPage> {
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return _LifeSettingsPanel(
-              title: _lifeText(
+              title: _lifeI18nText(
                 context,
-                zh: '颜色数据加载失败',
-                en: 'Palette load failed',
+                'inline.plan295.life.palette_load_failed.16e844fcd131',
               ),
-              subtitle: _lifeText(
+              subtitle: _lifeI18nText(
                 context,
-                zh: '本地色卡资产暂时不可用，请检查打包资源是否完整。',
-                en: 'The local palette assets are unavailable. Check whether the bundled resources are intact.',
+                'inline.plan295.life.the_local_palette_assets_are_unavail.2a53f7912d3c',
               ),
               children: <Widget>[SelectableText('${snapshot.error}')],
             );
@@ -77,11 +80,13 @@ class _ColorHelperToolPageState extends State<_ColorHelperToolPage> {
 
           if (!snapshot.hasData) {
             return _LifeSettingsPanel(
-              title: _lifeText(context, zh: '正在载入色卡', en: 'Loading palettes'),
-              subtitle: _lifeText(
+              title: _lifeI18nText(
                 context,
-                zh: '正在读取本地色卡数据。',
-                en: 'Reading local palette data.',
+                'inline.plan295.life.loading_palettes.d18b4e4cc453',
+              ),
+              subtitle: _lifeI18nText(
+                context,
+                'inline.plan295.life.reading_local_palette_data.ffb2e62bb098',
               ),
               children: const <Widget>[LinearProgressIndicator()],
             );
@@ -120,10 +125,9 @@ class _ColorHelperToolPageState extends State<_ColorHelperToolPage> {
               if (filteredColors.isEmpty)
                 _emptyPanel(
                   context,
-                  text: _lifeText(
+                  text: _lifeI18nText(
                     context,
-                    zh: '没有找到匹配的颜色，请换一个名称、拼音、罗马音或 HEX 片段。',
-                    en: 'No color matched. Try another name, phonetic spelling, romaji, or hex fragment.',
+                    'inline.plan295.life.no_color_matched_try_another_name_ph.d47b88211d5f',
                   ),
                 )
               else
@@ -139,11 +143,17 @@ class _ColorHelperToolPageState extends State<_ColorHelperToolPage> {
                   onTogglePagePreview: _setPagePreviewEnabled,
                   onCopyHex: (entry) => _copyText(
                     entry.hex,
-                    _lifeText(context, zh: '十六进制', en: 'hex'),
+                    _lifeI18nText(
+                      context,
+                      'inline.plan295.life.hex.a731c686157b',
+                    ),
                   ),
                   onCopyName: (entry) => _copyText(
                     entry.name,
-                    _lifeText(context, zh: '颜色名', en: 'name'),
+                    _lifeI18nText(
+                      context,
+                      'inline.plan295.life.name.0a0a54c8e406',
+                    ),
                   ),
                 ),
             ],
@@ -201,26 +211,32 @@ class _ColorHelperToolPageState extends State<_ColorHelperToolPage> {
 
   Widget _buildImageSampler(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '辅助图片取色', en: 'Auxiliary image sampler'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '导入本地图片后，点击任意位置即可读取像素颜色。',
-        en: 'Import a local image, then tap anywhere to read the pixel color.',
+        'inline.plan295.life.auxiliary_image_sampler.c763e8e3c3b7',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.import_a_local_image_then_tap_anywhe.fee20011e43f',
       ),
       children: <Widget>[
         FilledButton.tonalIcon(
           onPressed: _pickImage,
           icon: const Icon(Icons.upload_file_rounded),
-          label: Text(_lifeText(context, zh: '导入图片', en: 'Import image')),
+          label: Text(
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.import_image.040a2e597dc0',
+            ),
+          ),
         ),
         const SizedBox(height: 12),
         if (_image == null)
           _LifePreviewFrame(
             child: Text(
-              _lifeText(
+              _lifeI18nText(
                 context,
-                zh: '这里会显示可点击取色的图片预览。',
-                en: 'A tappable image preview will appear here.',
+                'inline.plan295.life.a_tappable_image_preview_will_appear.6d3f97e8fb00',
               ),
             ),
           )
@@ -230,10 +246,9 @@ class _ColorHelperToolPageState extends State<_ColorHelperToolPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  _lifeText(
+                  _lifeI18nText(
                     context,
-                    zh: '点击图片任意位置取色',
-                    en: 'Tap anywhere on the image to sample',
+                    'inline.plan295.life.tap_anywhere_on_the_image_to_sample.2c1f2c306984',
                   ),
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
@@ -432,10 +447,10 @@ class _ColorHelperToolPageState extends State<_ColorHelperToolPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          _lifeText(
+          _lifeI18nText(
             context,
-            zh: '已复制$label: $text',
-            en: 'Copied $label: $text',
+            'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.color.copied.9321f48be5',
+            params: <String, Object?>{'label': label, 'text': text},
           ),
         ),
       ),
@@ -472,7 +487,10 @@ class _ColorHelperToolPageState extends State<_ColorHelperToolPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      _lifeText(context, zh: '取样结果', en: 'Sample result'),
+                      _lifeI18nText(
+                        context,
+                        'inline.plan295.life.sample_result.3a4d72a89bc0',
+                      ),
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w900,
                       ),
@@ -483,10 +501,16 @@ class _ColorHelperToolPageState extends State<_ColorHelperToolPage> {
                 ),
               ),
               IconButton(
-                tooltip: _lifeText(context, zh: '复制色值', en: 'Copy hex'),
+                tooltip: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.copy_hex.a889d770d5d5',
+                ),
                 onPressed: () => _copyText(
                   _hexFromColor(color),
-                  _lifeText(context, zh: '十六进制', en: 'hex'),
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.hex.a731c686157b',
+                  ),
                 ),
                 icon: const Icon(Icons.copy_rounded),
               ),

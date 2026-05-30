@@ -140,11 +140,7 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
     );
     final i18n = AppI18n(appState.uiLanguage);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          i18n.t('toolbox.sleep.assessment.saved'),
-        ),
-      ),
+      SnackBar(content: Text(i18n.t('toolbox.sleep.assessment.saved'))),
     );
   }
 
@@ -252,8 +248,10 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                       controller: _goalController,
                       maxLines: 2,
                       decoration: InputDecoration(
-                         labelText: i18n.t('toolbox.sleep.assessment.currentGoal'),
-                         hintText: i18n.t('toolbox.sleep.assessment.goalHint'),
+                        labelText: i18n.t(
+                          'toolbox.sleep.assessment.currentGoal',
+                        ),
+                        hintText: i18n.t('toolbox.sleep.assessment.goalHint'),
                       ),
                     ),
                   ],
@@ -357,7 +355,9 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                     DropdownButtonFormField<SleepRiskLevel>(
                       initialValue: _snoringRisk,
                       decoration: InputDecoration(
-                         labelText: i18n.t('toolbox.sleep.assessment.snoringRisk'),
+                        labelText: i18n.t(
+                          'toolbox.sleep.assessment.snoringRisk',
+                        ),
                       ),
                       items: SleepRiskLevel.values
                           .map(
@@ -411,9 +411,7 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
                     ),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        i18n.t('toolbox.sleep.assessment.shiftWork'),
-                      ),
+                      title: Text(i18n.t('toolbox.sleep.assessment.shiftWork')),
                       value: _shiftWorkOrJetLag,
                       onChanged: (value) {
                         setState(() => _shiftWorkOrJetLag = value);
@@ -467,9 +465,7 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
             FilledButton.icon(
               onPressed: _save,
               icon: const Icon(Icons.save_rounded),
-              label: Text(
-                i18n.t('toolbox.sleep.assessment.save'),
-              ),
+              label: Text(i18n.t('toolbox.sleep.assessment.save')),
             ),
           ],
         ),

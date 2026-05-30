@@ -76,19 +76,20 @@ class _MortgageProPageState extends State<_MortgageProPage> {
     try {
       result = _service.calculate(_input());
     } on Object {
-      error = _lifeText(
+      error = _lifeI18nText(
         context,
-        zh: '请检查贷款金额、面积、单价、利率和年限，所有核心参数都需要为有效正数。',
-        en: 'Check loan amount, area, unit price, rate, and term. Core values must be valid positive numbers.',
+        'inline.plan295.life.check_loan_amount_area_unit_price_ra.ff9be74fea01',
       );
     }
 
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '房贷计算器', en: 'Mortgage calculator'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '支持等额本息、等额本金、按贷款额或住房面积测算，并纳入首次还款日、已还期数、提前还款和附加费用。',
-        en: 'Calculate equal installment or equal principal loans by amount or housing area, with first payment date, progress, prepayment, and fees.',
+        'inline.plan295.life.mortgage_calculator.3e4f4dddc3e6',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.calculate_equal_installment_or_equal.c783ac6feb3d',
       ),
       child: Column(
         key: const ValueKey<String>('life-mortgage-page'),
@@ -139,13 +140,22 @@ class _MortgageProPageState extends State<_MortgageProPage> {
         ? 0.0
         : result.remainingSchedule.first.totalCashOut;
     final headline = result == null
-        ? _lifeText(context, zh: '等待有效参数', en: 'Waiting for input')
+        ? _lifeI18nText(
+            context,
+            'inline.plan295.life.waiting_for_input.85833e6e2257',
+          )
         : result.remainingSchedule.isEmpty
-        ? _lifeText(context, zh: '贷款已结清', en: 'Loan paid off')
+        ? _lifeI18nText(
+            context,
+            'inline.plan295.life.loan_paid_off.0d96440d6f0e',
+          )
         : _money(nextPayment);
     final headlineLabel = result == null
-        ? _lifeText(context, zh: '当前状态', en: 'Status')
-        : _lifeText(context, zh: '下期应还', en: 'Next payment');
+        ? _lifeI18nText(context, 'inline.plan295.life.status.75268cb9d1d8')
+        : _lifeI18nText(
+            context,
+            'inline.plan295.life.next_payment.b6f30757d2f4',
+          );
 
     return Container(
       width: double.infinity,
@@ -180,14 +190,26 @@ class _MortgageProPageState extends State<_MortgageProPage> {
               _statusChip(
                 context,
                 _method == MortgageRepaymentMethod.equalInstallment
-                    ? _lifeText(context, zh: '等额本息', en: 'Equal installment')
-                    : _lifeText(context, zh: '等额本金', en: 'Equal principal'),
+                    ? _lifeI18nText(
+                        context,
+                        'inline.plan295.life.equal_installment.df0603e21433',
+                      )
+                    : _lifeI18nText(
+                        context,
+                        'inline.plan295.life.equal_principal.6c3fcbc21497',
+                      ),
               ),
               _statusChip(
                 context,
                 _mode == MortgageCalculationMode.loanAmount
-                    ? _lifeText(context, zh: '按贷款金额', en: 'By loan amount')
-                    : _lifeText(context, zh: '按住房面积', en: 'By housing area'),
+                    ? _lifeI18nText(
+                        context,
+                        'inline.plan295.life.by_loan_amount.c2502a6a7efa',
+                      )
+                    : _lifeI18nText(
+                        context,
+                        'inline.plan295.life.by_housing_area.ba2d0623d181',
+                      ),
               ),
             ],
           ),
@@ -214,27 +236,31 @@ class _MortgageProPageState extends State<_MortgageProPage> {
               runSpacing: 8,
               children: <Widget>[
                 ToolboxMetricCard(
-                  label: _lifeText(context, zh: '贷款金额', en: 'Principal'),
+                  label: _lifeI18nText(
+                    context,
+                    'inline.plan295.life.principal.b2f9f322ff64',
+                  ),
                   value: _money(result.principal),
                 ),
                 ToolboxMetricCard(
-                  label: _lifeText(
+                  label: _lifeI18nText(
                     context,
-                    zh: '原始总利息',
-                    en: 'Contract interest',
+                    'inline.plan295.life.contract_interest.b50f2128884d',
                   ),
                   value: _money(result.contractTotalInterest),
                 ),
                 ToolboxMetricCard(
-                  label: _lifeText(
+                  label: _lifeI18nText(
                     context,
-                    zh: '剩余本金',
-                    en: 'Remaining principal',
+                    'inline.plan295.life.remaining_principal.e52b52addb06',
                   ),
                   value: _money(result.remainingPrincipal),
                 ),
                 ToolboxMetricCard(
-                  label: _lifeText(context, zh: '还要还多久', en: 'Time left'),
+                  label: _lifeI18nText(
+                    context,
+                    'inline.plan295.life.time_left.b66df1df0814',
+                  ),
                   value: _monthsText(context, result.remainingMonths),
                 ),
               ],
@@ -247,44 +273,48 @@ class _MortgageProPageState extends State<_MortgageProPage> {
 
   Widget _loanPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '贷款配置', en: 'Loan setup'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '先选还款方式和计算方式，再录入贷款、利率、年限和首次还款时间。',
-        en: 'Choose repayment and calculation modes, then enter amount, rate, term, and first payment date.',
+        'inline.plan295.life.loan_setup.05855aa97a74',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.choose_repayment_and_calculation_mod.6d5b33cbdc86',
       ),
       children: <Widget>[
         _LifeSegmentedField<MortgageRepaymentMethod>(
-          label: _lifeText(context, zh: '贷款方式', en: 'Repayment method'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.repayment_method.fb54f6d819f0',
+          ),
           value: _method,
           options: const <_LifeOption<MortgageRepaymentMethod>>[
             _LifeOption(
               value: MortgageRepaymentMethod.equalInstallment,
-              labelZh: '等额本息',
-              labelEn: 'Equal installment',
+              labelKey: 'inline.plan295.life.equal_installment.df0603e21433',
             ),
             _LifeOption(
               value: MortgageRepaymentMethod.equalPrincipal,
-              labelZh: '等额本金',
-              labelEn: 'Equal principal',
+              labelKey: 'inline.plan295.life.equal_principal.6c3fcbc21497',
             ),
           ],
           onChanged: (value) => setState(() => _method = value),
         ),
         const SizedBox(height: 14),
         _LifeSegmentedField<MortgageCalculationMode>(
-          label: _lifeText(context, zh: '计算方式', en: 'Calculation mode'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.calculation_mode.54d1d3cd5df9',
+          ),
           value: _mode,
           options: const <_LifeOption<MortgageCalculationMode>>[
             _LifeOption(
               value: MortgageCalculationMode.loanAmount,
-              labelZh: '贷款金额',
-              labelEn: 'Loan amount',
+              labelKey: 'inline.plan295.life.loan_amount.63ea87de3c18',
             ),
             _LifeOption(
               value: MortgageCalculationMode.housingArea,
-              labelZh: '住房面积',
-              labelEn: 'Housing area',
+              labelKey: 'inline.plan295.life.housing_area.4582fef79724',
             ),
           ],
           onChanged: (value) => setState(() => _mode = value),
@@ -296,26 +326,34 @@ class _MortgageProPageState extends State<_MortgageProPage> {
               _numberField(
                 key: const ValueKey<String>('mortgage-loan-amount'),
                 controller: _loanAmountController,
-                label: _lifeText(context, zh: '贷款金额', en: 'Loan amount'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.loan_amount.63ea87de3c18',
+                ),
                 prefixText: '¥ ',
               )
             else ...<Widget>[
               _numberField(
                 controller: _areaController,
-                label: _lifeText(context, zh: '住房面积 m²', en: 'Housing area m²'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.housing_area_m.2f0cca3470cd',
+                ),
                 suffixText: ' m²',
               ),
               _numberField(
                 controller: _unitPriceController,
-                label: _lifeText(context, zh: '单价', en: 'Unit price'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.unit_price.ce7f54ca6ef4',
+                ),
                 prefixText: '¥ ',
               ),
               _numberField(
                 controller: _downPaymentAmountController,
-                label: _lifeText(
+                label: _lifeI18nText(
                   context,
-                  zh: '首付款金额（可选）',
-                  en: 'Down payment amount (optional)',
+                  'inline.plan295.life.down_payment_amount_optional.c3c7d0f457fb',
                 ),
                 prefixText: '¥ ',
               ),
@@ -323,24 +361,33 @@ class _MortgageProPageState extends State<_MortgageProPage> {
             _numberField(
               key: const ValueKey<String>('mortgage-rate'),
               controller: _rateController,
-              label: _lifeText(context, zh: '贷款利率', en: 'Annual rate'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.annual_rate.c17df6f9fd3f',
+              ),
               suffixText: '%',
             ),
             _numberField(
               key: const ValueKey<String>('mortgage-years'),
               controller: _yearsController,
-              label: _lifeText(context, zh: '贷款年限', en: 'Loan term'),
-              suffixText: _lifeText(context, zh: ' 年', en: ' years'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.loan_term.a43ba990427a',
+              ),
+              suffixText: _lifeI18nText(
+                context,
+                'inline.plan295.life.years.24b659b2963e',
+              ),
               decimal: false,
             ),
             FilledButton.tonalIcon(
               onPressed: _pickFirstPaymentDate,
               icon: const Icon(Icons.event_rounded),
               label: Text(
-                _lifeText(
+                _lifeI18nText(
                   context,
-                  zh: '首次还款 ${_dateText(_firstPaymentDate)}',
-                  en: 'First payment ${_dateText(_firstPaymentDate)}',
+                  'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.mortgage.first_payment.2b587166c3',
+                  params: <String, Object?>{'p0': _dateText(_firstPaymentDate)},
                 ),
               ),
             ),
@@ -349,7 +396,10 @@ class _MortgageProPageState extends State<_MortgageProPage> {
         if (_mode == MortgageCalculationMode.housingArea) ...<Widget>[
           const SizedBox(height: 14),
           _LifeSliderField(
-            label: _lifeText(context, zh: '首付比例', en: 'Down payment ratio'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.down_payment_ratio.9290b65f1ba4',
+            ),
             valueText: '${(_downPaymentRatio * 100).toStringAsFixed(0)}%',
             value: _downPaymentRatio,
             min: 0,
@@ -365,26 +415,29 @@ class _MortgageProPageState extends State<_MortgageProPage> {
   Widget _progressPanel(BuildContext context, MortgageResult? result) {
     final maxMonths = result?.totalMonths ?? 0;
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '还款进度与费用', en: 'Progress and fees'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '用已还期数和提前还款模拟当前剩余贷款；月费和一次性费用会进入总费用统计。',
-        en: 'Use paid periods and prepayment to estimate remaining debt. Monthly and upfront fees are included in cost totals.',
+        'inline.plan295.life.progress_and_fees.e331751003ee',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.use_paid_periods_and_prepayment_to_e.51db2c7c2d9f',
       ),
       children: <Widget>[
         _LifeSegmentedField<MortgageExtraPaymentStrategy>(
-          label: _lifeText(context, zh: '提前还款处理', en: 'Prepayment handling'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.prepayment_handling.0bf88ed29a39',
+          ),
           value: _extraStrategy,
           options: const <_LifeOption<MortgageExtraPaymentStrategy>>[
             _LifeOption(
               value: MortgageExtraPaymentStrategy.reduceMonthlyPayment,
-              labelZh: '月供降低',
-              labelEn: 'Lower payment',
+              labelKey: 'inline.plan295.life.lower_payment.a3e217c6d9a6',
             ),
             _LifeOption(
               value: MortgageExtraPaymentStrategy.shortenTerm,
-              labelZh: '期限缩短',
-              labelEn: 'Shorten term',
+              labelKey: 'inline.plan295.life.shorten_term.4fad6946a25e',
             ),
           ],
           onChanged: (value) => setState(() => _extraStrategy = value),
@@ -394,30 +447,37 @@ class _MortgageProPageState extends State<_MortgageProPage> {
           children: <Widget>[
             _numberField(
               controller: _paidMonthsController,
-              label: _lifeText(
+              label: _lifeI18nText(
                 context,
-                zh: '已还期数${maxMonths > 0 ? ' / $maxMonths' : ''}',
-                en: 'Paid periods${maxMonths > 0 ? ' / $maxMonths' : ''}',
+                'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.mortgage.paid_periods.34008aaa6e',
+                params: <String, Object?>{
+                  'p0': maxMonths > 0 ? ' / $maxMonths' : '',
+                },
               ),
               decimal: false,
             ),
             _numberField(
               controller: _extraPrincipalController,
-              label: _lifeText(
+              label: _lifeI18nText(
                 context,
-                zh: '已提前还本金',
-                en: 'Extra principal paid',
+                'inline.plan295.life.extra_principal_paid.0934304ce97e',
               ),
               prefixText: '¥ ',
             ),
             _numberField(
               controller: _monthlyFeeController,
-              label: _lifeText(context, zh: '每月附加费用', en: 'Monthly fee'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.monthly_fee.e6d5c74a085a',
+              ),
               prefixText: '¥ ',
             ),
             _numberField(
               controller: _oneTimeFeeController,
-              label: _lifeText(context, zh: '一次性费用', en: 'One-time fee'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.one_time_fee.4f61937cb44d',
+              ),
               prefixText: '¥ ',
             ),
           ],
@@ -428,11 +488,13 @@ class _MortgageProPageState extends State<_MortgageProPage> {
 
   Widget _detailPanel(BuildContext context, MortgageResult result) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '详细结果', en: 'Detailed result'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '这里把合同口径、已经还掉的部分、剩余成本和最终日期拆开展示。',
-        en: 'Contract totals, paid progress, remaining cost, and final date are separated here.',
+        'inline.plan295.life.detailed_result.35245b269441',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.contract_totals_paid_progress_remain.ed4d47727285',
       ),
       children: <Widget>[
         Wrap(
@@ -440,37 +502,64 @@ class _MortgageProPageState extends State<_MortgageProPage> {
           runSpacing: 8,
           children: <Widget>[
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '首月月供', en: 'First payment'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.first_payment.3d7f1953f20f',
+              ),
               value: _money(result.firstMonthlyPayment),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '末月月供', en: 'Last payment'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.last_payment.a7c6c5f153e9',
+              ),
               value: _money(result.lastMonthlyPayment),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '平均月供', en: 'Average payment'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.average_payment.bb662576fd8c',
+              ),
               value: _money(result.averageMonthlyPayment),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '合同期限', en: 'Contract term'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.contract_term.4733aebe56ad',
+              ),
               value: _monthsText(context, result.totalMonths),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '合同总费用', en: 'Contract cost'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.contract_cost.0eb49263d36d',
+              ),
               value: _money(result.contractTotalCost),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '剩余利息', en: 'Remaining interest'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.remaining_interest.3959f5785b77',
+              ),
               value: _money(result.remainingInterest),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '剩余总成本', en: 'Remaining cost'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.remaining_cost.7acf85e2b3d2',
+              ),
               value: _money(result.remainingTotalCost),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '结清日期', en: 'Payoff date'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.payoff_date.3fdc1e7dea97',
+              ),
               value: result.finalPaymentDate == null
-                  ? _lifeText(context, zh: '已结清', en: 'Paid off')
+                  ? _lifeI18nText(
+                      context,
+                      'inline.plan295.life.paid_off.d5429e9001fa',
+                    )
                   : _dateText(result.finalPaymentDate!),
             ),
           ],
@@ -478,36 +567,57 @@ class _MortgageProPageState extends State<_MortgageProPage> {
         const SizedBox(height: 12),
         _breakdownRow(
           context,
-          _lifeText(context, zh: '房屋总价', en: 'Property total'),
+          _lifeI18nText(
+            context,
+            'inline.plan295.life.property_total.e026071e26aa',
+          ),
           result.propertyTotal <= 0
-              ? _lifeText(context, zh: '未录入', en: 'Not set')
+              ? _lifeI18nText(
+                  context,
+                  'inline.plan295.life.not_set.1c12913fc41f',
+                )
               : _money(result.propertyTotal),
         ),
         _breakdownRow(
           context,
-          _lifeText(context, zh: '首付款', en: 'Down payment'),
+          _lifeI18nText(
+            context,
+            'inline.plan295.life.down_payment.5bf51dc016cd',
+          ),
           result.downPayment <= 0
-              ? _lifeText(context, zh: '未计入', en: 'Not included')
+              ? _lifeI18nText(
+                  context,
+                  'inline.plan295.life.not_included.30015cb3cae4',
+                )
               : _money(result.downPayment),
         ),
         _breakdownRow(
           context,
-          _lifeText(context, zh: '已还本金', en: 'Principal paid'),
+          _lifeI18nText(
+            context,
+            'inline.plan295.life.principal_paid.b32e74e268b9',
+          ),
           _money(result.paidPrincipal),
         ),
         _breakdownRow(
           context,
-          _lifeText(context, zh: '已还利息', en: 'Interest paid'),
+          _lifeI18nText(
+            context,
+            'inline.plan295.life.interest_paid.2fefd3046c47',
+          ),
           _money(result.paidInterest),
         ),
         _breakdownRow(
           context,
-          _lifeText(context, zh: '已计费用', en: 'Fees paid'),
+          _lifeI18nText(context, 'inline.plan295.life.fees_paid.f6dad8db0006'),
           _money(result.paidFees),
         ),
         _breakdownRow(
           context,
-          _lifeText(context, zh: '提前还款抵扣本金', en: 'Extra principal applied'),
+          _lifeI18nText(
+            context,
+            'inline.plan295.life.extra_principal_applied.3e203a298d99',
+          ),
           _money(result.extraPrincipalApplied),
         ),
       ],
@@ -517,16 +627,21 @@ class _MortgageProPageState extends State<_MortgageProPage> {
   Widget _schedulePanel(BuildContext context, MortgageResult result) {
     final schedule = result.remainingSchedule.take(12).toList(growable: false);
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '后续还款明细', en: 'Upcoming schedule'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '默认展示从下一期开始的前 12 期，等额本金会自然呈现逐月递减。',
-        en: 'Shows the next 12 periods. Equal principal naturally decreases month by month.',
+        'inline.plan295.life.upcoming_schedule.27f18e20f3c8',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.shows_the_next_12_periods_equal_prin.31f305c3a43f',
       ),
       children: <Widget>[
         if (schedule.isEmpty)
           Text(
-            _lifeText(context, zh: '当前没有剩余还款。', en: 'No remaining payments.'),
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.no_remaining_payments.911a0800ca44',
+            ),
           )
         else
           for (final payment in schedule)
@@ -537,18 +652,19 @@ class _MortgageProPageState extends State<_MortgageProPage> {
 
   Widget _riskPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '使用边界', en: 'Usage boundary'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '本工具用于本地估算和方案比较，不替代银行合同、征信审批、税费政策或提前还款违约金规则。',
-        en: 'This tool is for local estimation and comparison only. It does not replace bank contracts, credit approval, tax policy, or prepayment penalty rules.',
+        'inline.plan295.life.usage_boundary.5b4e7180375d',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.this_tool_is_for_local_estimation_an.bde8d992bca6',
       ),
       children: <Widget>[
         Text(
-          _lifeText(
+          _lifeI18nText(
             context,
-            zh: '公式按月复利和每月固定还款日测算；实际扣款可能受放款日、计息起点、LPR 调整、商贷/公积金组合、保险费、评估费和地区政策影响。',
-            en: 'The formulas use monthly compounding and fixed due dates. Real payments may differ because of disbursement date, interest start date, LPR changes, mixed commercial/provident loans, insurance, appraisal fees, and local policy.',
+            'inline.plan295.life.the_formulas_use_monthly_compounding.284aaf8e4bcd',
           ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
@@ -662,20 +778,31 @@ class _MortgageProPageState extends State<_MortgageProPage> {
 
   String _monthsText(BuildContext context, int months) {
     if (months <= 0) {
-      return _lifeText(context, zh: '0 个月', en: '0 months');
+      return _lifeI18nText(
+        context,
+        'inline.plan295.life.0_months.675e7c4b0b23',
+      );
     }
     final years = months ~/ 12;
     final rest = months % 12;
     if (years == 0) {
-      return _lifeText(context, zh: '$rest 个月', en: '$rest months');
+      return _lifeI18nText(
+        context,
+        'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.mortgage.months.0cf3168e08',
+        params: <String, Object?>{'rest': rest},
+      );
     }
     if (rest == 0) {
-      return _lifeText(context, zh: '$years 年', en: '$years years');
+      return _lifeI18nText(
+        context,
+        'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.mortgage.years.0b8d36650d',
+        params: <String, Object?>{'years': years},
+      );
     }
-    return _lifeText(
+    return _lifeI18nText(
       context,
-      zh: '$years 年 $rest 个月',
-      en: '$years years $rest months',
+      'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.mortgage.years_months.fe86338e06',
+      params: <String, Object?>{'years': years, 'rest': rest},
     );
   }
 
@@ -732,19 +859,31 @@ class _MortgagePaymentTile extends StatelessWidget {
             runSpacing: 8,
             children: <Widget>[
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '本金', en: 'Principal'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.principal.0205175d6cc8',
+                ),
                 value: formatter(payment.principal),
               ),
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '利息', en: 'Interest'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.interest.823504667e37',
+                ),
                 value: formatter(payment.interest),
               ),
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '费用', en: 'Fee'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.fee.06cbbd8aae55',
+                ),
                 value: formatter(payment.fee),
               ),
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '剩余本金', en: 'Balance'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.balance.8438767a1d0c',
+                ),
                 value: formatter(payment.remainingPrincipal),
               ),
             ],

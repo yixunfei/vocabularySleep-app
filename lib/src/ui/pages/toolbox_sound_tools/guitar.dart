@@ -119,8 +119,12 @@ class _GuitarToolState extends State<_GuitarTool> {
 
   String _presetSubtitle(AppI18n i18n, _GuitarPreset preset) {
     return switch (preset.id) {
-      'nylon_finger' => i18n.t('toolbox.sound.guitar.rounder_and_softer_for_slow'),
-      'ambient_chime' => i18n.t('toolbox.sound.guitar.longer_shimmer_and_overtones_for'),
+      'nylon_finger' => i18n.t(
+        'toolbox.sound.guitar.rounder_and_softer_for_slow',
+      ),
+      'ambient_chime' => i18n.t(
+        'toolbox.sound.guitar.longer_shimmer_and_overtones_for',
+      ),
       _ => i18n.t('toolbox.sound.guitar.clear_steelcore_tone_tuned_for'),
     };
   }
@@ -543,7 +547,9 @@ class _GuitarToolState extends State<_GuitarTool> {
                             vertical: 6,
                           ),
                           child: Text(
-                            compact ? i18n.t('toolbox.sound.guitar.swipe_label') : i18n.t('toolbox.sound.guitar.strum_label'),
+                            compact
+                                ? i18n.t('toolbox.sound.guitar.swipe_label')
+                                : i18n.t('toolbox.sound.guitar.strum_label'),
                             style: theme.textTheme.labelMedium?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
@@ -674,9 +680,7 @@ class _GuitarToolState extends State<_GuitarTool> {
         const SizedBox(height: 18),
         _buildChordSection(context, i18n, onSelectionChanged: refreshSheet),
         const SizedBox(height: 18),
-        Text(
-          i18n.t('toolbox.sound.guitar.resonance'),
-        ),
+        Text(i18n.t('toolbox.sound.guitar.resonance')),
         Slider(
           value: _resonance,
           min: 0.1,
@@ -695,9 +699,7 @@ class _GuitarToolState extends State<_GuitarTool> {
             refreshSheet();
           },
         ),
-        Text(
-          i18n.t('toolbox.sound.guitar.pick_position'),
-        ),
+        Text(i18n.t('toolbox.sound.guitar.pick_position')),
         Slider(
           value: _pickPosition,
           min: 0.1,
@@ -918,7 +920,9 @@ class _GuitarToolState extends State<_GuitarTool> {
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
                           Text(
-                            i18n.t('toolbox.sound.guitar.swipe_vertically_to_strum_tap'),
+                            i18n.t(
+                              'toolbox.sound.guitar.swipe_vertically_to_strum_tap',
+                            ),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: Colors.white70,
                             ),
@@ -1000,12 +1004,12 @@ class _GuitarToolState extends State<_GuitarTool> {
               const SizedBox(height: 12),
               SectionHeader(
                 title: i18n.t('toolbox.sound.guitar.tone_shaping'),
-                subtitle: i18n.t('toolbox.sound.guitar.resonance_shapes_body_response_and'),
+                subtitle: i18n.t(
+                  'toolbox.sound.guitar.resonance_shapes_body_response_and',
+                ),
               ),
               const SizedBox(height: 10),
-              Text(
-                i18n.t('toolbox.sound.guitar.resonance'),
-              ),
+              Text(i18n.t('toolbox.sound.guitar.resonance')),
               Slider(
                 value: _resonance,
                 min: 0.1,
@@ -1017,9 +1021,7 @@ class _GuitarToolState extends State<_GuitarTool> {
                   unawaited(_warmUpActivePreset());
                 },
               ),
-              Text(
-                i18n.t('toolbox.sound.guitar.pick_position'),
-              ),
+              Text(i18n.t('toolbox.sound.guitar.pick_position')),
               Slider(
                 value: _pickPosition,
                 min: 0.1,

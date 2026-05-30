@@ -21,8 +21,7 @@ Future<void> showDailyChoiceManagerSheet({
   required String initialCategoryId,
   List<DailyChoiceCategory> contexts = const <DailyChoiceCategory>[],
   String? initialContextId,
-  String contextLabelZh = '场景',
-  String contextLabelEn = 'Scene',
+  String contextLabelKey = 'toolbox.daily_choice.editor.field.scene',
   DailyChoiceEatLibraryStore? eatLibraryStore,
   Future<void> Function(DailyChoiceOption option)? onInspectOption,
   Future<DailyChoiceOption?> Function(DailyChoiceOption option)?
@@ -41,10 +40,9 @@ Future<void> showDailyChoiceManagerSheet({
           const DailyChoiceCategory(
             id: 'all',
             icon: Icons.grid_view_rounded,
-            titleZh: '全部',
-            titleEn: 'All',
-            subtitleZh: '不过滤分类',
-            subtitleEn: 'All categories',
+            titleKey: 'all',
+            subtitleKey:
+                'inline.plan295.daily_choice.all_categories.131fcb0d370f',
           ),
           ...categories,
         ];
@@ -54,10 +52,8 @@ Future<void> showDailyChoiceManagerSheet({
           DailyChoiceCategory(
             id: 'all',
             icon: Icons.tune_rounded,
-            titleZh: '全部',
-            titleEn: 'All',
-            subtitleZh: '不过滤$contextLabelZh',
-            subtitleEn: 'All $contextLabelEn',
+            titleKey: 'all',
+            subtitleKey: 'inline.plan295.daily_choice.all_scenes.bb6705527faa',
           ),
           ...contexts,
         ];
@@ -505,8 +501,7 @@ Future<void> showDailyChoiceManagerSheet({
                 initialCategoryId: editorInitialCategoryId,
                 contexts: editorContexts,
                 initialContextId: editorInitialContextId,
-                contextLabelZh: contextLabelZh,
-                contextLabelEn: contextLabelEn,
+                contextLabelKey: contextLabelKey,
                 option: option,
                 eatCollections: isEatModule
                     ? localState.eatCollections
@@ -567,7 +562,9 @@ Future<void> showDailyChoiceManagerSheet({
               }
               await publishWithProcessing(
                 nextState,
-                pickUiText(i18n, zh: '正在保存修改...', en: 'Saving changes...'),
+                i18n.t(
+                  'inline.plan295.daily_choice.saving_changes.6b31e6a1bfcd',
+                ),
               );
             }
 
@@ -599,7 +596,9 @@ Future<void> showDailyChoiceManagerSheet({
               }
               await publishWithProcessing(
                 localState.upsertAdjustedBuiltIn(result),
-                pickUiText(i18n, zh: '正在保存个人调整...', en: 'Saving adjustment...'),
+                i18n.t(
+                  'inline.plan295.daily_choice.saving_adjustment.ccf711d2c0d7',
+                ),
               );
             }
 
@@ -662,7 +661,9 @@ Future<void> showDailyChoiceManagerSheet({
               }
               await publishWithProcessing(
                 nextState,
-                pickUiText(i18n, zh: '正在保存副本...', en: 'Saving copy...'),
+                i18n.t(
+                  'inline.ui.pages.toolbox_daily_choice.daily_choice_manager_sheet.saving_copy_2718fa',
+                ),
               );
             }
 
@@ -682,7 +683,9 @@ Future<void> showDailyChoiceManagerSheet({
               }
               await publishWithProcessing(
                 nextState,
-                pickUiText(i18n, zh: '正在加入食谱集...', en: 'Adding to sets...'),
+                i18n.t(
+                  'inline.plan295.daily_choice.adding_to_sets.0003df24782e',
+                ),
               );
             }
 
@@ -702,7 +705,9 @@ Future<void> showDailyChoiceManagerSheet({
               }
               await publishWithProcessing(
                 nextState,
-                pickUiText(i18n, zh: '正在加入衣橱...', en: 'Adding to wardrobe...'),
+                i18n.t(
+                  'inline.plan295.daily_choice.adding_to_wardrobe.be64cad101f7',
+                ),
               );
             }
 
@@ -722,10 +727,8 @@ Future<void> showDailyChoiceManagerSheet({
               }
               await publishWithProcessing(
                 nextState,
-                pickUiText(
-                  i18n,
-                  zh: '正在加入行动集...',
-                  en: 'Adding to action set...',
+                i18n.t(
+                  'inline.plan295.daily_choice.adding_to_action_set.2fddd1a5e0de',
                 ),
               );
             }
@@ -737,16 +740,16 @@ Future<void> showDailyChoiceManagerSheet({
               if (isHidden) {
                 await publishWithProcessing(
                   localState.restoreBuiltIn(option.id),
-                  pickUiText(
-                    i18n,
-                    zh: isWearModule
-                        ? '正在恢复搭配...'
-                        : (isActivityModule ? '正在恢复行动...' : '正在恢复菜谱...'),
-                    en: isWearModule
-                        ? 'Restoring outfit...'
-                        : (isActivityModule
-                              ? 'Restoring action...'
-                              : 'Restoring recipe...'),
+                  i18n.t(
+                    _managerModuleKey(
+                      wearKey: 'inline.plan295.daily_choice.restoring_outfit.ae04744e159f',
+                      activityKey:
+                          'inline.plan295.daily_choice.restoring_action.18747f1d0c5e',
+                      eatKey:
+                          'inline.plan295.daily_choice.restoring_recipe.afef6f1e4252',
+                      isWearModule: isWearModule,
+                      isActivityModule: isActivityModule,
+                    ),
                   ),
                 );
                 return;
@@ -763,14 +766,14 @@ Future<void> showDailyChoiceManagerSheet({
               }
               await publishWithProcessing(
                 localState.hideBuiltIn(option.id),
-                pickUiText(
-                  i18n,
-                  zh: '正在加入不喜欢...',
-                  en: isWearModule
-                      ? 'Hiding outfit...'
-                      : (isActivityModule
-                            ? 'Hiding action...'
-                            : 'Hiding recipe...'),
+                i18n.t(
+                  _managerModuleKey(
+                    wearKey: 'toolbox.daily_choice.manager.hiding.wear',
+                    activityKey: 'toolbox.daily_choice.manager.hiding.activity',
+                    eatKey: 'toolbox.daily_choice.manager.hiding.eat',
+                    isWearModule: isWearModule,
+                    isActivityModule: isActivityModule,
+                  ),
                 ),
               );
             }
@@ -826,15 +829,25 @@ Future<void> showDailyChoiceManagerSheet({
               publish(localState.upsertActivityCollection(collection));
             }
 
-            void showManagerMessage({required String zh, required String en}) {
+            void showManagerMessageKey(
+              String key, {
+              Map<String, Object?> params = const <String, Object?>{},
+            }) {
               if (managerSheetClosed) {
                 return;
               }
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(pickUiText(i18n, zh: zh, en: en)),
+                  content: Text(i18n.t(key, params: params)),
                 ),
               );
+            }
+
+            String managerErrorText(Object error) {
+              if (error is FormatException && error.message.isNotEmpty) {
+                return error.message;
+              }
+              return '$error';
             }
 
             Future<void> renameSelectedCollection() async {
@@ -861,10 +874,8 @@ Future<void> showDailyChoiceManagerSheet({
                     titleEn: title.trim(),
                   ),
                 ),
-                pickUiText(
-                  i18n,
-                  zh: '正在重命名食谱集...',
-                  en: 'Renaming recipe set...',
+                i18n.t(
+                  'inline.plan295.daily_choice.renaming_recipe_set.8540dd2a12a9',
                 ),
               );
             }
@@ -889,10 +900,8 @@ Future<void> showDailyChoiceManagerSheet({
               resetBuiltInPaging();
               await publishWithProcessing(
                 localState.deleteEatCollection(collection.id),
-                pickUiText(
-                  i18n,
-                  zh: '正在删除食谱集...',
-                  en: 'Deleting recipe set...',
+                i18n.t(
+                  'inline.plan295.daily_choice.deleting_recipe_set.25a1235dce57',
                 ),
               );
             }
@@ -921,7 +930,9 @@ Future<void> showDailyChoiceManagerSheet({
                     titleEn: title.trim(),
                   ),
                 ),
-                pickUiText(i18n, zh: '正在重命名衣橱...', en: 'Renaming wardrobe...'),
+                i18n.t(
+                  'inline.plan295.daily_choice.renaming_wardrobe.df4d2349957d',
+                ),
               );
             }
 
@@ -945,7 +956,9 @@ Future<void> showDailyChoiceManagerSheet({
               resetBuiltInPaging();
               await publishWithProcessing(
                 localState.deleteWearCollection(collection.id),
-                pickUiText(i18n, zh: '正在删除衣橱...', en: 'Deleting wardrobe...'),
+                i18n.t(
+                  'inline.plan295.daily_choice.deleting_wardrobe.b05e694d025a',
+                ),
               );
             }
 
@@ -973,10 +986,8 @@ Future<void> showDailyChoiceManagerSheet({
                     titleEn: title.trim(),
                   ),
                 ),
-                pickUiText(
-                  i18n,
-                  zh: '正在重命名行动集...',
-                  en: 'Renaming action set...',
+                i18n.t(
+                  'inline.plan295.daily_choice.renaming_action_set.ffa51f85515c',
                 ),
               );
             }
@@ -1001,10 +1012,8 @@ Future<void> showDailyChoiceManagerSheet({
               resetBuiltInPaging();
               await publishWithProcessing(
                 localState.deleteActivityCollection(collection.id),
-                pickUiText(
-                  i18n,
-                  zh: '正在删除行动集...',
-                  en: 'Deleting action set...',
+                i18n.t(
+                  'inline.plan295.daily_choice.deleting_action_set.95504d256566',
                 ),
               );
             }
@@ -1014,9 +1023,8 @@ Future<void> showDailyChoiceManagerSheet({
                 selectedCollectionId,
               );
               if (collection == null) {
-                showManagerMessage(
-                  zh: '请先选择一个个人食谱集。',
-                  en: 'Choose a personal recipe set first.',
+                showManagerMessageKey(
+                  'toolbox.daily_choice.manager.message.choose_recipe_set',
                 );
                 return;
               }
@@ -1031,10 +1039,8 @@ Future<void> showDailyChoiceManagerSheet({
                 final fileName =
                     '${_safeEatCollectionExportFileName(collection.title(i18n))}.daily-choice-recipes.json';
                 final path = await FilePicker.platform.saveFile(
-                  dialogTitle: pickUiText(
-                    i18n,
-                    zh: '导出食谱集',
-                    en: 'Export recipe set',
+                  dialogTitle: i18n.t(
+                    'inline.plan295.daily_choice.export_recipe_set.6ac97d14a6e6',
                   ),
                   fileName: fileName,
                   type: FileType.custom,
@@ -1045,11 +1051,13 @@ Future<void> showDailyChoiceManagerSheet({
                 if (path == null) {
                   return;
                 }
-                showManagerMessage(zh: '食谱集已导出。', en: 'Recipe set exported.');
+                showManagerMessageKey(
+                  'toolbox.daily_choice.manager.message.recipe_set_exported',
+                );
               } catch (error) {
-                showManagerMessage(
-                  zh: '导出失败：$error',
-                  en: 'Export failed: $error',
+                showManagerMessageKey(
+                  'toolbox.daily_choice.manager.message.export_failed',
+                  params: <String, Object?>{'error': managerErrorText(error)},
                 );
               }
             }
@@ -1057,10 +1065,8 @@ Future<void> showDailyChoiceManagerSheet({
             Future<void> importCollections() async {
               try {
                 final result = await FilePicker.platform.pickFiles(
-                  dialogTitle: pickUiText(
-                    i18n,
-                    zh: '导入食谱集',
-                    en: 'Import recipe set',
+                  dialogTitle: i18n.t(
+                    'inline.plan295.daily_choice.import_recipe_set.72d93596e42c',
                   ),
                   type: FileType.custom,
                   allowedExtensions: const <String>['json'],
@@ -1072,13 +1078,19 @@ Future<void> showDailyChoiceManagerSheet({
                 }
                 final bytes = result.files.single.bytes;
                 if (bytes == null || bytes.isEmpty) {
-                  throw const FormatException(
-                    'Selected recipe set file could not be read.',
+                  throw FormatException(
+                    i18n.t(
+                      'toolbox.daily_choice.manager.error.selected_recipe_set_unreadable',
+                    ),
                   );
                 }
                 final decoded = jsonDecode(utf8.decode(bytes));
                 if (decoded is! Map) {
-                  throw const FormatException('Invalid recipe set package.');
+                  throw FormatException(
+                    i18n.t(
+                      'toolbox.daily_choice.manager.error.invalid_recipe_set_package',
+                    ),
+                  );
                 }
                 final imported = _importEatCollectionExportPackage(
                   state: localState,
@@ -1088,20 +1100,20 @@ Future<void> showDailyChoiceManagerSheet({
                 resetBuiltInPaging();
                 await publishWithProcessing(
                   imported.state,
-                  pickUiText(
-                    i18n,
-                    zh: '正在导入食谱集...',
-                    en: 'Importing recipe set...',
+                  i18n.t(
+                    'inline.plan295.daily_choice.importing_recipe_set.6f8da96d9e76',
                   ),
                 );
-                showManagerMessage(
-                  zh: '已导入 ${imported.collectionCount} 个食谱集。',
-                  en: '${imported.collectionCount} recipe set(s) imported.',
+                showManagerMessageKey(
+                  'toolbox.daily_choice.manager.message.recipe_sets_imported',
+                  params: <String, Object?>{
+                    'count': imported.collectionCount,
+                  },
                 );
               } catch (error) {
-                showManagerMessage(
-                  zh: '导入失败：$error',
-                  en: 'Import failed: $error',
+                showManagerMessageKey(
+                  'toolbox.daily_choice.manager.message.import_failed',
+                  params: <String, Object?>{'error': managerErrorText(error)},
                 );
               }
             }
@@ -1111,9 +1123,8 @@ Future<void> showDailyChoiceManagerSheet({
                 selectedWearCollectionId,
               );
               if (collection == null) {
-                showManagerMessage(
-                  zh: '请先选择一个衣橱。',
-                  en: 'Choose a wardrobe first.',
+                showManagerMessageKey(
+                  'toolbox.daily_choice.manager.message.choose_wardrobe',
                 );
                 return;
               }
@@ -1128,10 +1139,8 @@ Future<void> showDailyChoiceManagerSheet({
                 final fileName =
                     '${_safeWearCollectionExportFileName(collection.title(i18n))}.daily-choice-wardrobe.json';
                 final path = await FilePicker.platform.saveFile(
-                  dialogTitle: pickUiText(
-                    i18n,
-                    zh: '导出衣橱',
-                    en: 'Export wardrobe',
+                  dialogTitle: i18n.t(
+                    'inline.plan295.daily_choice.export_wardrobe.1f5808318d56',
                   ),
                   fileName: fileName,
                   type: FileType.custom,
@@ -1142,11 +1151,13 @@ Future<void> showDailyChoiceManagerSheet({
                 if (path == null) {
                   return;
                 }
-                showManagerMessage(zh: '衣橱已导出。', en: 'Wardrobe exported.');
+                showManagerMessageKey(
+                  'toolbox.daily_choice.manager.message.wardrobe_exported',
+                );
               } catch (error) {
-                showManagerMessage(
-                  zh: '导出失败：$error',
-                  en: 'Export failed: $error',
+                showManagerMessageKey(
+                  'toolbox.daily_choice.manager.message.export_failed',
+                  params: <String, Object?>{'error': managerErrorText(error)},
                 );
               }
             }
@@ -1154,10 +1165,8 @@ Future<void> showDailyChoiceManagerSheet({
             Future<void> importWearCollections() async {
               try {
                 final result = await FilePicker.platform.pickFiles(
-                  dialogTitle: pickUiText(
-                    i18n,
-                    zh: '导入衣橱',
-                    en: 'Import wardrobe',
+                  dialogTitle: i18n.t(
+                    'inline.plan295.daily_choice.import_wardrobe.43478a32fe5a',
                   ),
                   type: FileType.custom,
                   allowedExtensions: const <String>['json'],
@@ -1169,13 +1178,19 @@ Future<void> showDailyChoiceManagerSheet({
                 }
                 final bytes = result.files.single.bytes;
                 if (bytes == null || bytes.isEmpty) {
-                  throw const FormatException(
-                    'Selected wardrobe file could not be read.',
+                  throw FormatException(
+                    i18n.t(
+                      'toolbox.daily_choice.manager.error.selected_wardrobe_unreadable',
+                    ),
                   );
                 }
                 final decoded = jsonDecode(utf8.decode(bytes));
                 if (decoded is! Map) {
-                  throw const FormatException('Invalid wardrobe package.');
+                  throw FormatException(
+                    i18n.t(
+                      'toolbox.daily_choice.manager.error.invalid_wardrobe_package',
+                    ),
+                  );
                 }
                 final imported = _importWearCollectionExportPackage(
                   state: localState,
@@ -1185,20 +1200,20 @@ Future<void> showDailyChoiceManagerSheet({
                 resetBuiltInPaging();
                 await publishWithProcessing(
                   imported.state,
-                  pickUiText(
-                    i18n,
-                    zh: '正在导入衣橱...',
-                    en: 'Importing wardrobe...',
+                  i18n.t(
+                    'inline.plan295.daily_choice.importing_wardrobe.3de4a72c1023',
                   ),
                 );
-                showManagerMessage(
-                  zh: '已导入 ${imported.collectionCount} 个衣橱。',
-                  en: '${imported.collectionCount} wardrobe(s) imported.',
+                showManagerMessageKey(
+                  'toolbox.daily_choice.manager.message.wardrobes_imported',
+                  params: <String, Object?>{
+                    'count': imported.collectionCount,
+                  },
                 );
               } catch (error) {
-                showManagerMessage(
-                  zh: '导入失败：$error',
-                  en: 'Import failed: $error',
+                showManagerMessageKey(
+                  'toolbox.daily_choice.manager.message.import_failed',
+                  params: <String, Object?>{'error': managerErrorText(error)},
                 );
               }
             }
@@ -1208,9 +1223,8 @@ Future<void> showDailyChoiceManagerSheet({
                 selectedActivityCollectionId,
               );
               if (collection == null) {
-                showManagerMessage(
-                  zh: '请先选择一个行动集。',
-                  en: 'Choose an action set first.',
+                showManagerMessageKey(
+                  'toolbox.daily_choice.manager.message.choose_action_set',
                 );
                 return;
               }
@@ -1225,10 +1239,8 @@ Future<void> showDailyChoiceManagerSheet({
                 final fileName =
                     '${_safeActivityCollectionExportFileName(collection.title(i18n))}.daily-choice-actions.json';
                 final path = await FilePicker.platform.saveFile(
-                  dialogTitle: pickUiText(
-                    i18n,
-                    zh: '导出行动集',
-                    en: 'Export action set',
+                  dialogTitle: i18n.t(
+                    'inline.plan295.daily_choice.export_action_set.88daa28606df',
                   ),
                   fileName: fileName,
                   type: FileType.custom,
@@ -1239,11 +1251,13 @@ Future<void> showDailyChoiceManagerSheet({
                 if (path == null) {
                   return;
                 }
-                showManagerMessage(zh: '行动集已导出。', en: 'Action set exported.');
+                showManagerMessageKey(
+                  'toolbox.daily_choice.manager.message.action_set_exported',
+                );
               } catch (error) {
-                showManagerMessage(
-                  zh: '导出失败：$error',
-                  en: 'Export failed: $error',
+                showManagerMessageKey(
+                  'toolbox.daily_choice.manager.message.export_failed',
+                  params: <String, Object?>{'error': managerErrorText(error)},
                 );
               }
             }
@@ -1251,10 +1265,8 @@ Future<void> showDailyChoiceManagerSheet({
             Future<void> importActivityCollections() async {
               try {
                 final result = await FilePicker.platform.pickFiles(
-                  dialogTitle: pickUiText(
-                    i18n,
-                    zh: '导入行动集',
-                    en: 'Import action set',
+                  dialogTitle: i18n.t(
+                    'inline.plan295.daily_choice.import_action_set.0f57666dd30c',
                   ),
                   type: FileType.custom,
                   allowedExtensions: const <String>['json'],
@@ -1266,13 +1278,19 @@ Future<void> showDailyChoiceManagerSheet({
                 }
                 final bytes = result.files.single.bytes;
                 if (bytes == null || bytes.isEmpty) {
-                  throw const FormatException(
-                    'Selected action set file could not be read.',
+                  throw FormatException(
+                    i18n.t(
+                      'toolbox.daily_choice.manager.error.selected_action_set_unreadable',
+                    ),
                   );
                 }
                 final decoded = jsonDecode(utf8.decode(bytes));
                 if (decoded is! Map) {
-                  throw const FormatException('Invalid action set package.');
+                  throw FormatException(
+                    i18n.t(
+                      'toolbox.daily_choice.manager.error.invalid_action_set_package',
+                    ),
+                  );
                 }
                 final imported = _importActivityCollectionExportPackage(
                   state: localState,
@@ -1282,20 +1300,20 @@ Future<void> showDailyChoiceManagerSheet({
                 resetBuiltInPaging();
                 await publishWithProcessing(
                   imported.state,
-                  pickUiText(
-                    i18n,
-                    zh: '正在导入行动集...',
-                    en: 'Importing action set...',
+                  i18n.t(
+                    'inline.plan295.daily_choice.importing_action_set.275b09a3bb36',
                   ),
                 );
-                showManagerMessage(
-                  zh: '已导入 ${imported.collectionCount} 个行动集。',
-                  en: '${imported.collectionCount} action set(s) imported.',
+                showManagerMessageKey(
+                  'toolbox.daily_choice.manager.message.action_sets_imported',
+                  params: <String, Object?>{
+                    'count': imported.collectionCount,
+                  },
                 );
               } catch (error) {
-                showManagerMessage(
-                  zh: '导入失败：$error',
-                  en: 'Import failed: $error',
+                showManagerMessageKey(
+                  'toolbox.daily_choice.manager.message.import_failed',
+                  params: <String, Object?>{'error': managerErrorText(error)},
                 );
               }
             }
@@ -1358,10 +1376,8 @@ Future<void> showDailyChoiceManagerSheet({
                           padding: const EdgeInsets.fromLTRB(18, 4, 18, 88),
                           children: <Widget>[
                             Text(
-                              pickUiText(
-                                i18n,
-                                zh: '自定义管理',
-                                en: 'Custom manager',
+                              i18n.t(
+                                'inline.plan295.daily_choice.custom_manager.ce004bd01099',
                               ),
                               style: theme.textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.w900,
@@ -1389,10 +1405,10 @@ Future<void> showDailyChoiceManagerSheet({
                                 child: _ManagerSearchField(
                                   i18n: i18n,
                                   initialText: searchDraft,
-                                  labelZh: '搜索菜品名称',
-                                  labelEn: 'Search recipe name',
-                                  hintZh: '按菜名、简介关键词快速筛选',
-                                  hintEn: 'Search by recipe title or summary',
+                                  labelKey:
+                                      'inline.plan295.daily_choice.search_recipe_name.ff52c0f776fa',
+                                  hintKey:
+                                      'inline.plan295.daily_choice.search_by_recipe_title_or_summary.618aff37de48',
                                   onDraftChanged: (value) {
                                     searchDraft = value;
                                   },
@@ -1401,21 +1417,15 @@ Future<void> showDailyChoiceManagerSheet({
                               ),
                               const SizedBox(height: 12),
                               _ManagerExpandableSection(
-                                title: pickUiText(
-                                  i18n,
-                                  zh: '我的食谱集',
-                                  en: 'My recipe sets',
+                                title: i18n.t(
+                                  'inline.plan295.daily_choice.my_recipe_sets.074738053515',
                                 ),
                                 subtitle: selectedCollection == null
-                                    ? pickUiText(
-                                        i18n,
-                                        zh: '可把常做菜、减脂餐、待尝试等集合成独立随机池。',
-                                        en: 'Group favorites, weekday meals, or recipes to try into separate pools.',
+                                    ? i18n.t(
+                                        'inline.plan295.daily_choice.group_favorites_weekday_meals_or_rec.b73ee5980321',
                                       )
-                                    : pickUiText(
-                                        i18n,
-                                        zh: '当前只看「${selectedCollection.title(i18n)}」。',
-                                        en: 'Showing "${selectedCollection.title(i18n)}" only.',
+                                    : i18n.t(
+                                        'inline.plan295.daily_choice.showing_selectedcollection_title_i18.7636930244a9',
                                       ),
                                 accent: accent,
                                 expanded: collectionsExpanded,
@@ -1443,15 +1453,11 @@ Future<void> showDailyChoiceManagerSheet({
                                         prefixIcon: const Icon(
                                           Icons.bookmark_add_rounded,
                                         ),
-                                        labelText: pickUiText(
-                                          i18n,
-                                          zh: '新建食谱集',
-                                          en: 'New recipe set',
+                                        labelText: i18n.t(
+                                          'inline.plan295.daily_choice.new_recipe_set.165492496a7b',
                                         ),
-                                        hintText: pickUiText(
-                                          i18n,
-                                          zh: '例如：一周晚餐、低油清淡、想试试',
-                                          en: 'For example: Weeknight dinners',
+                                        hintText: i18n.t(
+                                          'inline.plan295.daily_choice.for_example_weeknight_dinners.f668034ef5ff',
                                         ),
                                       ),
                                     ),
@@ -1462,10 +1468,8 @@ Future<void> showDailyChoiceManagerSheet({
                                         onPressed: createCollection,
                                         icon: const Icon(Icons.add_rounded),
                                         label: Text(
-                                          pickUiText(
-                                            i18n,
-                                            zh: '创建食谱集',
-                                            en: 'Create set',
+                                          i18n.t(
+                                            'inline.plan295.daily_choice.create_set.3d6943ec3a4a',
                                           ),
                                         ),
                                       ),
@@ -1486,20 +1490,16 @@ Future<void> showDailyChoiceManagerSheet({
                                               prefixIcon: const Icon(
                                                 Icons.filter_list_rounded,
                                               ),
-                                              labelText: pickUiText(
-                                                i18n,
-                                                zh: '当前随机范围',
-                                                en: 'Random pool',
+                                              labelText: i18n.t(
+                                                'inline.plan295.daily_choice.random_pool.579f7405953a',
                                               ),
                                             ),
                                             items: <DropdownMenuItem<String>>[
                                               DropdownMenuItem<String>(
                                                 value: 'all',
                                                 child: Text(
-                                                  pickUiText(
-                                                    i18n,
-                                                    zh: '内置菜谱',
-                                                    en: 'Built-in recipes',
+                                                  i18n.t(
+                                                    'inline.plan295.daily_choice.built_in_recipes.b6a38d84379c',
                                                   ),
                                                 ),
                                               ),
@@ -1529,10 +1529,8 @@ Future<void> showDailyChoiceManagerSheet({
                                         ),
                                         const SizedBox(width: 8),
                                         Tooltip(
-                                          message: pickUiText(
-                                            i18n,
-                                            zh: '重命名食谱集',
-                                            en: 'Rename set',
+                                          message: i18n.t(
+                                            'inline.plan295.daily_choice.rename_set.e67b5a3dc805',
                                           ),
                                           child: IconButton.filledTonal(
                                             onPressed:
@@ -1548,10 +1546,8 @@ Future<void> showDailyChoiceManagerSheet({
                                         ),
                                         const SizedBox(width: 4),
                                         Tooltip(
-                                          message: pickUiText(
-                                            i18n,
-                                            zh: '删除食谱集',
-                                            en: 'Delete set',
+                                          message: i18n.t(
+                                            'inline.plan295.daily_choice.delete_set.772c5db1ee85',
                                           ),
                                           child: IconButton.filledTonal(
                                             onPressed:
@@ -1580,10 +1576,8 @@ Future<void> showDailyChoiceManagerSheet({
                                             Icons.ios_share_rounded,
                                           ),
                                           label: Text(
-                                            pickUiText(
-                                              i18n,
-                                              zh: '导出当前',
-                                              en: 'Export current',
+                                            i18n.t(
+                                              'inline.ui.pages.toolbox_daily_choice.daily_choice_manager_sheet.export_current_22a596',
                                             ),
                                           ),
                                         ),
@@ -1593,10 +1587,8 @@ Future<void> showDailyChoiceManagerSheet({
                                             Icons.file_upload_outlined,
                                           ),
                                           label: Text(
-                                            pickUiText(
-                                              i18n,
-                                              zh: '导入分享包',
-                                              en: 'Import package',
+                                            i18n.t(
+                                              'inline.plan295.daily_choice.import_package.32fea453f6d4',
                                             ),
                                           ),
                                         ),
@@ -1615,11 +1607,10 @@ Future<void> showDailyChoiceManagerSheet({
                                 child: _ManagerSearchField(
                                   i18n: i18n,
                                   initialText: searchDraft,
-                                  labelZh: '搜索搭配或单品',
-                                  labelEn: 'Search outfit or piece',
-                                  hintZh: '按搭配名称、真实单品、场景关键词筛选',
-                                  hintEn:
-                                      'Search by outfit, piece, or scene keyword',
+                                  labelKey:
+                                      'inline.plan295.daily_choice.search_outfit_or_piece.8e220a0c64e4',
+                                  hintKey:
+                                      'inline.plan295.daily_choice.search_by_outfit_piece_or_scene_keyw.eb8130da51a5',
                                   onDraftChanged: (value) {
                                     searchDraft = value;
                                   },
@@ -1628,21 +1619,15 @@ Future<void> showDailyChoiceManagerSheet({
                               ),
                               const SizedBox(height: 12),
                               _ManagerExpandableSection(
-                                title: pickUiText(
-                                  i18n,
-                                  zh: '衣柜集合',
-                                  en: 'Wardrobes',
+                                title: i18n.t(
+                                  'inline.plan295.daily_choice.wardrobes.8316dfe0d138',
                                 ),
                                 subtitle: selectedWearCollection == null
-                                    ? pickUiText(
-                                        i18n,
-                                        zh: '把真实会穿的通勤、周末、运动、雨天组合整理成独立衣柜。内置衣柜只做参考，你的衣柜才是日常随机的核心。',
-                                        en: 'Group real commute, weekend, active, or rainy-day outfits into wardrobes. Built-ins are references; your wardrobe is the daily core.',
+                                    ? i18n.t(
+                                        'inline.plan295.daily_choice.group_real_commute_weekend_active_or.ab0ebaa3cb5a',
                                       )
-                                    : pickUiText(
-                                        i18n,
-                                        zh: '当前只看「${selectedWearCollection.title(i18n)}」。',
-                                        en: 'Showing "${selectedWearCollection.title(i18n)}" only.',
+                                    : i18n.t(
+                                        'inline.plan295.daily_choice.showing_selectedwearcollection_title.e6f91512e431',
                                       ),
                                 accent: accent,
                                 expanded: collectionsExpanded,
@@ -1670,15 +1655,11 @@ Future<void> showDailyChoiceManagerSheet({
                                         prefixIcon: const Icon(
                                           Icons.checkroom_rounded,
                                         ),
-                                        labelText: pickUiText(
-                                          i18n,
-                                          zh: '新建我的衣柜',
-                                          en: 'New wardrobe',
+                                        labelText: i18n.t(
+                                          'inline.plan295.daily_choice.new_wardrobe.f5a77203272d',
                                         ),
-                                        hintText: pickUiText(
-                                          i18n,
-                                          zh: '例如：日常通勤、周末休闲、运动穿搭',
-                                          en: 'For example: Daily commute, Weekend casual',
+                                        hintText: i18n.t(
+                                          'inline.plan295.daily_choice.for_example_daily_commute_weekend_ca.ee62208b9276',
                                         ),
                                       ),
                                     ),
@@ -1689,10 +1670,8 @@ Future<void> showDailyChoiceManagerSheet({
                                         onPressed: createWearCollection,
                                         icon: const Icon(Icons.add_rounded),
                                         label: Text(
-                                          pickUiText(
-                                            i18n,
-                                            zh: '创建我的衣柜',
-                                            en: 'Create wardrobe',
+                                          i18n.t(
+                                            'inline.plan295.daily_choice.create_wardrobe.f86cfd51ae9f',
                                           ),
                                         ),
                                       ),
@@ -1714,20 +1693,16 @@ Future<void> showDailyChoiceManagerSheet({
                                               prefixIcon: const Icon(
                                                 Icons.filter_list_rounded,
                                               ),
-                                              labelText: pickUiText(
-                                                i18n,
-                                                zh: '当前随机范围',
-                                                en: 'Random pool',
+                                              labelText: i18n.t(
+                                                'inline.plan295.daily_choice.random_pool.579f7405953a',
                                               ),
                                             ),
                                             items: <DropdownMenuItem<String>>[
                                               DropdownMenuItem<String>(
                                                 value: 'all',
                                                 child: Text(
-                                                  pickUiText(
-                                                    i18n,
-                                                    zh: '全部衣柜',
-                                                    en: 'All wardrobes',
+                                                  i18n.t(
+                                                    'inline.plan295.daily_choice.all_wardrobes.679aed291107',
                                                   ),
                                                 ),
                                               ),
@@ -1758,10 +1733,8 @@ Future<void> showDailyChoiceManagerSheet({
                                         ),
                                         const SizedBox(width: 8),
                                         Tooltip(
-                                          message: pickUiText(
-                                            i18n,
-                                            zh: '重命名衣橱',
-                                            en: 'Rename wardrobe',
+                                          message: i18n.t(
+                                            'inline.plan295.daily_choice.rename_wardrobe.2b833f19423b',
                                           ),
                                           child: IconButton.filledTonal(
                                             onPressed:
@@ -1779,10 +1752,8 @@ Future<void> showDailyChoiceManagerSheet({
                                         ),
                                         const SizedBox(width: 4),
                                         Tooltip(
-                                          message: pickUiText(
-                                            i18n,
-                                            zh: '删除衣橱',
-                                            en: 'Delete wardrobe',
+                                          message: i18n.t(
+                                            'inline.plan295.daily_choice.delete_wardrobe.0b37ec4b04f6',
                                           ),
                                           child: IconButton.filledTonal(
                                             onPressed:
@@ -1814,10 +1785,8 @@ Future<void> showDailyChoiceManagerSheet({
                                             Icons.ios_share_rounded,
                                           ),
                                           label: Text(
-                                            pickUiText(
-                                              i18n,
-                                              zh: '导出当前',
-                                              en: 'Export current',
+                                            i18n.t(
+                                              'inline.ui.pages.toolbox_daily_choice.daily_choice_manager_sheet.export_current_22a596',
                                             ),
                                           ),
                                         ),
@@ -1827,10 +1796,8 @@ Future<void> showDailyChoiceManagerSheet({
                                             Icons.file_upload_outlined,
                                           ),
                                           label: Text(
-                                            pickUiText(
-                                              i18n,
-                                              zh: '导入分享包',
-                                              en: 'Import package',
+                                            i18n.t(
+                                              'inline.plan295.daily_choice.import_package.32fea453f6d4',
                                             ),
                                           ),
                                         ),
@@ -1849,10 +1816,10 @@ Future<void> showDailyChoiceManagerSheet({
                                 child: _ManagerSearchField(
                                   i18n: i18n,
                                   initialText: searchDraft,
-                                  labelZh: '搜索行动',
-                                  labelEn: 'Search action',
-                                  hintZh: '按行动名称、触发场景、标签筛选',
-                                  hintEn: 'Search by action, trigger, or tag',
+                                  labelKey:
+                                      'inline.plan295.daily_choice.search_action.95c3014264e8',
+                                  hintKey:
+                                      'inline.plan295.daily_choice.search_by_action_trigger_or_tag.87a61ae5c938',
                                   onDraftChanged: (value) {
                                     searchDraft = value;
                                   },
@@ -1861,21 +1828,15 @@ Future<void> showDailyChoiceManagerSheet({
                               ),
                               const SizedBox(height: 12),
                               _ManagerExpandableSection(
-                                title: pickUiText(
-                                  i18n,
-                                  zh: '行动集',
-                                  en: 'Action sets',
+                                title: i18n.t(
+                                  'inline.plan295.daily_choice.action_sets.847daea911f1',
                                 ),
                                 subtitle: selectedActivityCollection == null
-                                    ? pickUiText(
-                                        i18n,
-                                        zh: '把注意力重启、短出门、整理、学习、放松等行动整理成独立随机池。每次随机会先按当前行动集收口。',
-                                        en: 'Group focus resets, quick outings, tidying, learning, and recovery actions into separate random pools.',
+                                    ? i18n.t(
+                                        'inline.plan295.daily_choice.group_focus_resets_quick_outings_tid.78e20379f540',
                                       )
-                                    : pickUiText(
-                                        i18n,
-                                        zh: '当前只看「${selectedActivityCollection.title(i18n)}」。',
-                                        en: 'Showing "${selectedActivityCollection.title(i18n)}" only.',
+                                    : i18n.t(
+                                        'inline.plan295.daily_choice.showing_selectedactivitycollection_t.873ce359d318',
                                       ),
                                 accent: accent,
                                 expanded: collectionsExpanded,
@@ -1903,15 +1864,11 @@ Future<void> showDailyChoiceManagerSheet({
                                         prefixIcon: const Icon(
                                           Icons.playlist_add_check_rounded,
                                         ),
-                                        labelText: pickUiText(
-                                          i18n,
-                                          zh: '新建行动集',
-                                          en: 'New action set',
+                                        labelText: i18n.t(
+                                          'inline.plan295.daily_choice.new_action_set.10e5a49dd740',
                                         ),
-                                        hintText: pickUiText(
-                                          i18n,
-                                          zh: '例如：注意力重启、饭后出门、睡前收口',
-                                          en: 'For example: Focus reset, After-meal walk',
+                                        hintText: i18n.t(
+                                          'inline.plan295.daily_choice.for_example_focus_reset_after_meal_w.4cfe0f799b56',
                                         ),
                                       ),
                                     ),
@@ -1922,10 +1879,8 @@ Future<void> showDailyChoiceManagerSheet({
                                         onPressed: createActivityCollection,
                                         icon: const Icon(Icons.add_rounded),
                                         label: Text(
-                                          pickUiText(
-                                            i18n,
-                                            zh: '创建行动集',
-                                            en: 'Create action set',
+                                          i18n.t(
+                                            'inline.plan295.daily_choice.create_action_set.949f06efbfd5',
                                           ),
                                         ),
                                       ),
@@ -1947,20 +1902,16 @@ Future<void> showDailyChoiceManagerSheet({
                                               prefixIcon: const Icon(
                                                 Icons.filter_list_rounded,
                                               ),
-                                              labelText: pickUiText(
-                                                i18n,
-                                                zh: '当前随机范围',
-                                                en: 'Random pool',
+                                              labelText: i18n.t(
+                                                'inline.plan295.daily_choice.random_pool.579f7405953a',
                                               ),
                                             ),
                                             items: <DropdownMenuItem<String>>[
                                               DropdownMenuItem<String>(
                                                 value: 'all',
                                                 child: Text(
-                                                  pickUiText(
-                                                    i18n,
-                                                    zh: '内置行动库',
-                                                    en: 'Built-in actions',
+                                                  i18n.t(
+                                                    'inline.plan295.daily_choice.built_in_actions.e9cc78aca202',
                                                   ),
                                                 ),
                                               ),
@@ -1991,10 +1942,8 @@ Future<void> showDailyChoiceManagerSheet({
                                         ),
                                         const SizedBox(width: 8),
                                         Tooltip(
-                                          message: pickUiText(
-                                            i18n,
-                                            zh: '重命名行动集',
-                                            en: 'Rename action set',
+                                          message: i18n.t(
+                                            'inline.plan295.daily_choice.rename_action_set.887cc121bed7',
                                           ),
                                           child: IconButton.filledTonal(
                                             onPressed:
@@ -2012,10 +1961,8 @@ Future<void> showDailyChoiceManagerSheet({
                                         ),
                                         const SizedBox(width: 4),
                                         Tooltip(
-                                          message: pickUiText(
-                                            i18n,
-                                            zh: '删除行动集',
-                                            en: 'Delete action set',
+                                          message: i18n.t(
+                                            'inline.plan295.daily_choice.delete_action_set.39de31daffa6',
                                           ),
                                           child: IconButton.filledTonal(
                                             onPressed:
@@ -2047,10 +1994,8 @@ Future<void> showDailyChoiceManagerSheet({
                                             Icons.ios_share_rounded,
                                           ),
                                           label: Text(
-                                            pickUiText(
-                                              i18n,
-                                              zh: '导出当前',
-                                              en: 'Export current',
+                                            i18n.t(
+                                              'inline.ui.pages.toolbox_daily_choice.daily_choice_manager_sheet.export_current_22a596',
                                             ),
                                           ),
                                         ),
@@ -2060,10 +2005,8 @@ Future<void> showDailyChoiceManagerSheet({
                                             Icons.file_upload_outlined,
                                           ),
                                           label: Text(
-                                            pickUiText(
-                                              i18n,
-                                              zh: '导入分享包',
-                                              en: 'Import package',
+                                            i18n.t(
+                                              'inline.plan295.daily_choice.import_package.32fea453f6d4',
                                             ),
                                           ),
                                         ),
@@ -2075,34 +2018,31 @@ Future<void> showDailyChoiceManagerSheet({
                               const SizedBox(height: 12),
                             ],
                             _ManagerExpandableSection(
-                              title: pickUiText(
-                                i18n,
-                                zh: '筛选条件',
-                                en: 'Filters',
+                              title: i18n.t(
+                                'inline.plan295.daily_choice.filters.055e12bcd2a4',
                               ),
                               subtitle: activeFilterCount <= 0
-                                  ? pickUiText(
-                                      i18n,
-                                      zh: isWearModule
-                                          ? '当前显示全部范围。可以按性别参考、年龄阶段、风格和版型逐步缩小。'
-                                          : (isActivityModule
-                                                ? '当前显示全部行动方向，可按行动类型逐步缩小。'
-                                                : '当前显示全部范围，可折叠收起。'),
-                                      en: 'Showing the full range for now.',
+                                  ? i18n.t(
+                                      _managerModuleKey(
+                                        wearKey:
+                                            'toolbox.daily_choice.manager.filters.empty.wear',
+                                        activityKey:
+                                            'toolbox.daily_choice.manager.filters.empty.activity',
+                                        eatKey:
+                                            'toolbox.daily_choice.manager.filters.empty.default',
+                                        isWearModule: isWearModule,
+                                        isActivityModule: isActivityModule,
+                                      ),
                                     )
-                                  : pickUiText(
-                                      i18n,
-                                      zh: '已启用 $activeFilterCount 项筛选。',
-                                      en: '$activeFilterCount filters enabled.',
+                                  : i18n.t(
+                                      'inline.plan295.daily_choice.activefiltercount_filters_enabled.6b3651f7782c',
                                     ),
                               accent: accent,
                               expanded: filtersExpanded,
                               countLabel: activeFilterCount <= 0
-                                  ? pickUiText(i18n, zh: '默认', en: 'Default')
-                                  : pickUiText(
-                                      i18n,
-                                      zh: '$activeFilterCount 项',
-                                      en: '$activeFilterCount active',
+                                  ? i18n.t('todoNoColor')
+                                  : i18n.t(
+                                      'inline.plan295.daily_choice.activefiltercount_active.721b68d05f03',
                                     ),
                               onToggle: () {
                                 setSheetState(() {
@@ -2114,10 +2054,8 @@ Future<void> showDailyChoiceManagerSheet({
                                 children: <Widget>[
                                   DailyChoiceCategorySelector(
                                     i18n: i18n,
-                                    title: pickUiText(
-                                      i18n,
-                                      zh: '只看这个分类',
-                                      en: 'Filter by category',
+                                    title: i18n.t(
+                                      'inline.plan295.daily_choice.filter_by_category.9f8cbe196273',
                                     ),
                                     categories: filterCategories,
                                     selectedId: selectedCategoryId,
@@ -2134,10 +2072,8 @@ Future<void> showDailyChoiceManagerSheet({
                                     const SizedBox(height: 12),
                                     DailyChoiceCategorySelector(
                                       i18n: i18n,
-                                      title: pickUiText(
-                                        i18n,
-                                        zh: '只看这个$contextLabelZh',
-                                        en: 'Filter by $contextLabelEn',
+                                      title: i18n.t(
+                                        'inline.plan295.daily_choice.filter_by_contextlabelen.301714535181',
                                       ),
                                       categories: filterContexts,
                                       selectedId:
@@ -2183,44 +2119,37 @@ Future<void> showDailyChoiceManagerSheet({
                               onPressed: () => openEditor(),
                               icon: const Icon(Icons.add_rounded),
                               label: Text(
-                                pickUiText(
-                                  i18n,
-                                  zh: isEatModule
-                                      ? '新增个人食谱'
-                                      : (isWearModule
-                                            ? '新建我的衣柜搭配'
-                                            : (isActivityModule
-                                                  ? '新增个人行动'
-                                                  : '新增')),
-                                  en: isEatModule
-                                      ? 'Add recipe'
-                                      : (isWearModule
-                                            ? 'Add wardrobe outfit'
-                                            : (isActivityModule
-                                                  ? 'Add action'
-                                                  : 'Add')),
+                                i18n.t(
+                                  isEatModule
+                                      ? 'inline.plan295.daily_choice.add_recipe.342dfa0d76b3'
+                                      : _managerModuleKey(
+                                          wearKey:
+                                              'inline.plan295.daily_choice.add_wardrobe_outfit.8015c1f80a7e',
+                                          activityKey:
+                                              'inline.plan295.daily_choice.add_action.ce9409a9a47b',
+                                          eatKey: 'addTodo',
+                                          isWearModule: isWearModule,
+                                          isActivityModule: isActivityModule,
+                                        ),
                                 ),
                               ),
                             ),
                             const SizedBox(height: 18),
                             _ManagerExpandableSection(
-                              title: pickUiText(
-                                i18n,
-                                zh: '我的自定义',
-                                en: 'My custom items',
+                              title: i18n.t(
+                                'inline.plan295.daily_choice.my_custom_items.1846e12c954b',
                               ),
-                              subtitle: pickUiText(
-                                i18n,
-                                zh: isWearModule
-                                    ? '这些是你基于真实衣柜保存的搭配，可编辑、删除，也会直接参与随机。'
-                                    : (isActivityModule
-                                          ? '这些是你保存的个人行动，可加入不同行动集并直接参与随机。'
-                                          : '完全属于你的新增条目，可直接编辑和删除。'),
-                                en: isWearModule
-                                    ? 'These outfits come from your real wardrobe and can be edited, removed, and used in random picks.'
-                                    : (isActivityModule
-                                          ? 'Your own saved actions can be edited, grouped, and used in random picks.'
-                                          : 'Your own saved items that can be edited or removed.'),
+                              subtitle: i18n.t(
+                                _managerModuleKey(
+                                  wearKey:
+                                      'toolbox.daily_choice.manager.custom.subtitle.wear',
+                                  activityKey:
+                                      'toolbox.daily_choice.manager.custom.subtitle.activity',
+                                  eatKey:
+                                      'toolbox.daily_choice.manager.custom.subtitle.default',
+                                  isWearModule: isWearModule,
+                                  isActivityModule: isActivityModule,
+                                ),
                               ),
                               accent: accent,
                               expanded: customExpanded,
@@ -2265,13 +2194,7 @@ Future<void> showDailyChoiceManagerSheet({
                                                   icon: const Icon(
                                                     Icons.edit_rounded,
                                                   ),
-                                                  label: Text(
-                                                    pickUiText(
-                                                      i18n,
-                                                      zh: '编辑',
-                                                      en: 'Edit',
-                                                    ),
-                                                  ),
+                                                  label: Text(i18n.t('edit')),
                                                 ),
                                                 if (isEatModule)
                                                   ..._managerCollectionActions(
@@ -2302,10 +2225,8 @@ Future<void> showDailyChoiceManagerSheet({
                                                                 optionId:
                                                                     item.id,
                                                               ),
-                                                          pickUiText(
-                                                            i18n,
-                                                            zh: '正在移出食谱集...',
-                                                            en: 'Removing from set...',
+                                                          i18n.t(
+                                                            'inline.plan295.daily_choice.removing_from_set.fd8a8a031c50',
                                                           ),
                                                         ),
                                                       );
@@ -2339,10 +2260,8 @@ Future<void> showDailyChoiceManagerSheet({
                                                                 optionId:
                                                                     item.id,
                                                               ),
-                                                          pickUiText(
-                                                            i18n,
-                                                            zh: '正在移出衣橱...',
-                                                            en: 'Removing from wardrobe...',
+                                                          i18n.t(
+                                                            'inline.plan295.daily_choice.removing_from_wardrobe.145955652981',
                                                           ),
                                                         ),
                                                       );
@@ -2376,10 +2295,8 @@ Future<void> showDailyChoiceManagerSheet({
                                                                 optionId:
                                                                     item.id,
                                                               ),
-                                                          pickUiText(
-                                                            i18n,
-                                                            zh: '正在移出行动集...',
-                                                            en: 'Removing from action set...',
+                                                          i18n.t(
+                                                            'inline.plan295.daily_choice.removing_from_action_set.ae4d94dac663',
                                                           ),
                                                         ),
                                                       );
@@ -2397,13 +2314,7 @@ Future<void> showDailyChoiceManagerSheet({
                                                     Icons
                                                         .delete_outline_rounded,
                                                   ),
-                                                  label: Text(
-                                                    pickUiText(
-                                                      i18n,
-                                                      zh: '删除',
-                                                      en: 'Delete',
-                                                    ),
-                                                  ),
+                                                  label: Text(i18n.t('delete')),
                                                 ),
                                               ],
                                             ),
@@ -2413,20 +2324,18 @@ Future<void> showDailyChoiceManagerSheet({
                             ),
                             if (isEatModule || isWearModule)
                               _ManagerExpandableSection(
-                                title: pickUiText(
-                                  i18n,
-                                  zh: isWearModule ? '我的穿搭调整' : '我的调整',
-                                  en: 'My adjustments',
+                                title: i18n.t(
+                                  isWearModule
+                                      ? 'inline.plan295.daily_choice.my_adjustments.1e2d81198552'
+                                      : 'toolbox.daily_choice.manager.adjustments.title.eat',
                                 ),
-                                subtitle: pickUiText(
-                                  i18n,
-                                  zh: isWearModule
-                                      ? '基于内置搭配保存的个人版本，会直接参与随机与筛选。'
-                                      : '基于内置菜谱保存的个人口味版本，会直接参与随机与筛选。',
-                                  en: isWearModule
-                                      ? 'Your personal overrides of built-in outfits.'
-                                      : 'Your personal overrides of built-in recipes.',
-                                ),
+                                subtitle: isWearModule
+                                    ? i18n.t(
+                                        'inline.plan295.daily_choice.your_personal_overrides_of_built_in.6dc6b648c7a9',
+                                      )
+                                    : i18n.t(
+                                        'inline.plan295.daily_choice.your_personal_overrides_of_built_in.7f6a30f69cf4',
+                                      ),
                                 accent: accent,
                                 expanded: adjustedExpanded,
                                 countLabel: '${adjustedItems.length}',
@@ -2437,12 +2346,10 @@ Future<void> showDailyChoiceManagerSheet({
                                 },
                                 child: adjustedItems.isEmpty
                                     ? _ManagerHint(
-                                        text: pickUiText(
-                                          i18n,
-                                          zh: isWearModule
-                                              ? '当前筛选下还没有保存过穿搭调整。点开内置搭配即可基于原方案做个人化微调。'
-                                              : '当前筛选下还没有保存过个人调整。点开内置菜即可基于原菜谱做个人化微调。',
-                                          en: 'No personal adjustments in this filter yet.',
+                                        text: i18n.t(
+                                          isWearModule
+                                              ? 'inline.plan295.daily_choice.no_personal_adjustments_in_this_filt.ec7ed074e071'
+                                              : 'toolbox.daily_choice.manager.adjustments.empty.eat',
                                         ),
                                       )
                                     : Column(
@@ -2479,16 +2386,12 @@ Future<void> showDailyChoiceManagerSheet({
                                                     managerActionErrorByOptionId
                                                         .containsKey(item.id),
                                                 chips: <String>[
-                                                  pickUiText(
-                                                    i18n,
-                                                    zh: '已调整',
-                                                    en: 'Adjusted',
+                                                  i18n.t(
+                                                    'inline.ui.pages.toolbox_daily_choice.daily_choice_manager_sheet.adjusted_321dc4',
                                                   ),
                                                   if (hidden.contains(item.id))
-                                                    pickUiText(
-                                                      i18n,
-                                                      zh: '已隐藏',
-                                                      en: 'Hidden',
+                                                    i18n.t(
+                                                      'inline.plan295.daily_choice.hidden.1a09896173ce',
                                                     ),
                                                   ..._managerChips(
                                                     i18n,
@@ -2503,8 +2406,8 @@ Future<void> showDailyChoiceManagerSheet({
                                                     _managerAsyncActionButton(
                                                       i18n: i18n,
                                                       icon: Icons.tune_rounded,
-                                                      labelZh: '继续调整',
-                                                      labelEn: 'Adjust',
+                                                      labelKey:
+                                                          'inline.plan295.daily_choice.adjust.1cf952b0e1c0',
                                                       loading: actionBusy(
                                                         _managerActionAdjust,
                                                         item,
@@ -2520,8 +2423,8 @@ Future<void> showDailyChoiceManagerSheet({
                                                     _managerAsyncActionButton(
                                                       i18n: i18n,
                                                       icon: Icons.copy_rounded,
-                                                      labelZh: '另存',
-                                                      labelEn: 'Save as',
+                                                      labelKey:
+                                                          'inline.plan295.daily_choice.save_as.ccb638e1d5f7',
                                                       loading: actionBusy(
                                                         _managerActionSaveAs,
                                                         item,
@@ -2560,10 +2463,8 @@ Future<void> showDailyChoiceManagerSheet({
                                                                   optionId:
                                                                       item.id,
                                                                 ),
-                                                            pickUiText(
-                                                              i18n,
-                                                              zh: '正在移出食谱集...',
-                                                              en: 'Removing from set...',
+                                                            i18n.t(
+                                                              'inline.plan295.daily_choice.removing_from_set.fd8a8a031c50',
                                                             ),
                                                           ),
                                                         );
@@ -2597,10 +2498,8 @@ Future<void> showDailyChoiceManagerSheet({
                                                                   optionId:
                                                                       item.id,
                                                                 ),
-                                                            pickUiText(
-                                                              i18n,
-                                                              zh: '正在移出衣橱...',
-                                                              en: 'Removing from wardrobe...',
+                                                            i18n.t(
+                                                              'inline.plan295.daily_choice.removing_from_wardrobe.145955652981',
                                                             ),
                                                           ),
                                                         );
@@ -2621,12 +2520,10 @@ Future<void> showDailyChoiceManagerSheet({
                                                       Icons.restart_alt_rounded,
                                                     ),
                                                     label: Text(
-                                                      pickUiText(
-                                                        i18n,
-                                                        zh: isWearModule
-                                                            ? '恢复原样'
-                                                            : '恢复原味',
-                                                        en: 'Restore original',
+                                                      i18n.t(
+                                                        isWearModule
+                                                            ? 'inline.plan295.daily_choice.restore_original.517272ccd104'
+                                                            : 'inline.plan295.daily_choice.restore_original.e5b6d6ca69f7',
                                                       ),
                                                     ),
                                                   ),
@@ -2637,16 +2534,17 @@ Future<void> showDailyChoiceManagerSheet({
                                       ),
                               ),
                             _ManagerExpandableSection(
-                              title: pickUiText(
-                                i18n,
-                                zh: isWearModule
-                                    ? '内置参考搭配'
-                                    : (isActivityModule ? '内置行动浏览' : '内置菜谱浏览'),
-                                en: isWearModule
-                                    ? 'Built-in references'
-                                    : (isActivityModule
-                                          ? 'Built-in actions'
-                                          : 'Built-in browser'),
+                              title: i18n.t(
+                                _managerModuleKey(
+                                  wearKey:
+                                      'inline.plan295.daily_choice.built_in_references.491678ac4b76',
+                                  activityKey:
+                                      'inline.plan295.daily_choice.built_in_actions.7612ba3a0b2b',
+                                  eatKey:
+                                      'inline.plan295.daily_choice.built_in_browser.399635bf6bc7',
+                                  isWearModule: isWearModule,
+                                  isActivityModule: isActivityModule,
+                                ),
                               ),
                               subtitle: _builtInSectionSubtitle(
                                 i18n,
@@ -2662,13 +2560,13 @@ Future<void> showDailyChoiceManagerSheet({
                               expanded: builtInExpanded,
                               countLabel: builtInExpanded
                                   ? (builtInSqlLoading && builtInTotalCount == 0
-                                        ? pickUiText(
-                                            i18n,
-                                            zh: '加载中',
-                                            en: 'Loading',
+                                        ? i18n.t(
+                                            'inline.ui.pages.toolbox_daily_choice.daily_choice_eat_module.loading_8285c7',
                                           )
                                         : '$builtInTotalCount')
-                                  : pickUiText(i18n, zh: '展开', en: 'Open'),
+                                  : i18n.t(
+                                      'inline.plan295.daily_choice.open.7b12e1b2a34e',
+                                    ),
                               onToggle: () {
                                 setSheetState(() {
                                   builtInExpanded = !builtInExpanded;
@@ -2680,35 +2578,36 @@ Future<void> showDailyChoiceManagerSheet({
                               child:
                                   builtInSqlLoading && visibleBuiltIns.isEmpty
                                   ? _ManagerHint(
-                                      text: pickUiText(
-                                        i18n,
-                                        zh: isWearModule
-                                            ? '正在读取内置搭配...'
-                                            : (isActivityModule
-                                                  ? '正在读取内置行动...'
-                                                  : '正在读取内置菜谱...'),
-                                        en: isWearModule
-                                            ? 'Loading built-in outfits...'
-                                            : (isActivityModule
-                                                  ? 'Loading built-in actions...'
-                                                  : 'Loading built-in recipes...'),
+                                      text: i18n.t(
+                                        _managerModuleKey(
+                                          wearKey:
+                                              'inline.plan295.daily_choice.loading_built_in_outfits.aeb0c77b12f6',
+                                          activityKey:
+                                              'inline.plan295.daily_choice.loading_built_in_actions.63de11b2d980',
+                                          eatKey:
+                                              'inline.plan295.daily_choice.loading_built_in_recipes.6c05be75cf9a',
+                                          isWearModule: isWearModule,
+                                          isActivityModule: isActivityModule,
+                                        ),
                                       ),
                                     )
                                   : builtInSqlError != null &&
                                         visibleBuiltIns.isEmpty
                                   ? _ManagerHint(
-                                      text: pickUiText(
-                                        i18n,
-                                        zh: isWearModule
-                                            ? '读取内置搭配失败：$builtInSqlError'
-                                            : (isActivityModule
-                                                  ? '读取内置行动失败：$builtInSqlError'
-                                                  : '读取内置菜谱失败：$builtInSqlError'),
-                                        en: isWearModule
-                                            ? 'Failed to load built-in outfits: $builtInSqlError'
-                                            : (isActivityModule
-                                                  ? 'Failed to load built-in actions: $builtInSqlError'
-                                                  : 'Failed to load built-in recipes: $builtInSqlError'),
+                                      text: i18n.t(
+                                        _managerModuleKey(
+                                          wearKey:
+                                              'inline.plan295.daily_choice.failed_to_load_built_in_outfits_buil.73d7f4c8e795',
+                                          activityKey:
+                                              'inline.plan295.daily_choice.failed_to_load_built_in_actions_buil.da34536227fd',
+                                          eatKey:
+                                              'inline.plan295.daily_choice.failed_to_load_built_in_recipes_buil.a07db9081867',
+                                          isWearModule: isWearModule,
+                                          isActivityModule: isActivityModule,
+                                        ),
+                                        params: <String, Object?>{
+                                          'builtInSqlError': builtInSqlError,
+                                        },
                                       ),
                                     )
                                   : visibleBuiltIns.isEmpty
@@ -2736,14 +2635,19 @@ Future<void> showDailyChoiceManagerSheet({
                                           return _ManagerTile(
                                             title: displayItem.title(i18n),
                                             subtitle: isHidden
-                                                ? pickUiText(
-                                                    i18n,
-                                                    zh: isWearModule
-                                                        ? '这套搭配当前已加入不喜欢列表。'
-                                                        : (isActivityModule
-                                                              ? '这个行动当前已加入不喜欢列表。'
-                                                              : '这道菜当前已加入不喜欢列表。'),
-                                                    en: 'This item is hidden right now.',
+                                                ? i18n.t(
+                                                    _managerModuleKey(
+                                                      wearKey:
+                                                          'toolbox.daily_choice.manager.hidden.subtitle.wear',
+                                                      activityKey:
+                                                          'toolbox.daily_choice.manager.hidden.subtitle.activity',
+                                                      eatKey:
+                                                          'toolbox.daily_choice.manager.hidden.subtitle.eat',
+                                                      isWearModule:
+                                                          isWearModule,
+                                                      isActivityModule:
+                                                          isActivityModule,
+                                                    ),
                                                   )
                                                 : displayItem.subtitle(i18n),
                                             accent: accent,
@@ -2770,16 +2674,12 @@ Future<void> showDailyChoiceManagerSheet({
                                                     ),
                                             chips: <String>[
                                               if (hasAdjustment)
-                                                pickUiText(
-                                                  i18n,
-                                                  zh: '已调整',
-                                                  en: 'Adjusted',
+                                                i18n.t(
+                                                  'inline.ui.pages.toolbox_daily_choice.daily_choice_manager_sheet.adjusted_321dc4',
                                                 ),
                                               if (isHidden)
-                                                pickUiText(
-                                                  i18n,
-                                                  zh: '已隐藏',
-                                                  en: 'Hidden',
+                                                i18n.t(
+                                                  'inline.plan295.daily_choice.hidden.1a09896173ce',
                                                 ),
                                               ..._managerChips(
                                                 i18n,
@@ -2795,12 +2695,8 @@ Future<void> showDailyChoiceManagerSheet({
                                                 _managerAsyncActionButton(
                                                   i18n: i18n,
                                                   icon: Icons.tune_rounded,
-                                                  labelZh: hasAdjustment
-                                                      ? '继续调整'
-                                                      : '个人调整',
-                                                  labelEn: hasAdjustment
-                                                      ? 'Adjust more'
-                                                      : 'Adjust',
+                                                  labelKey:
+                                                      'inline.plan295.daily_choice.adjust.1cf952b0e1c0',
                                                   loading: actionBusy(
                                                     _managerActionAdjust,
                                                     displayItem,
@@ -2815,8 +2711,8 @@ Future<void> showDailyChoiceManagerSheet({
                                                 _managerAsyncActionButton(
                                                   i18n: i18n,
                                                   icon: Icons.copy_rounded,
-                                                  labelZh: '另存',
-                                                  labelEn: 'Save as',
+                                                  labelKey:
+                                                      'inline.plan295.daily_choice.save_as.ccb638e1d5f7',
                                                   loading: actionBusy(
                                                     _managerActionSaveAs,
                                                     displayItem,
@@ -2857,10 +2753,8 @@ Future<void> showDailyChoiceManagerSheet({
                                                               optionId:
                                                                   baseItem.id,
                                                             ),
-                                                        pickUiText(
-                                                          i18n,
-                                                          zh: '正在移出食谱集...',
-                                                          en: 'Removing from set...',
+                                                        i18n.t(
+                                                          'inline.plan295.daily_choice.removing_from_set.fd8a8a031c50',
                                                         ),
                                                       ),
                                                     );
@@ -2894,10 +2788,8 @@ Future<void> showDailyChoiceManagerSheet({
                                                               optionId:
                                                                   baseItem.id,
                                                             ),
-                                                        pickUiText(
-                                                          i18n,
-                                                          zh: '正在移出衣橱...',
-                                                          en: 'Removing from wardrobe...',
+                                                        i18n.t(
+                                                          'inline.plan295.daily_choice.removing_from_wardrobe.145955652981',
                                                         ),
                                                       ),
                                                     );
@@ -2931,10 +2823,8 @@ Future<void> showDailyChoiceManagerSheet({
                                                               optionId:
                                                                   baseItem.id,
                                                             ),
-                                                        pickUiText(
-                                                          i18n,
-                                                          zh: '正在移出行动集...',
-                                                          en: 'Removing from action set...',
+                                                        i18n.t(
+                                                          'inline.plan295.daily_choice.removing_from_action_set.ae4d94dac663',
                                                         ),
                                                       ),
                                                     );
@@ -2956,10 +2846,8 @@ Future<void> showDailyChoiceManagerSheet({
                                                     Icons.restart_alt_rounded,
                                                   ),
                                                   label: Text(
-                                                    pickUiText(
-                                                      i18n,
-                                                      zh: '恢复原味',
-                                                      en: 'Restore original',
+                                                    i18n.t(
+                                                      'inline.plan295.daily_choice.restore_original.e5b6d6ca69f7',
                                                     ),
                                                   ),
                                                 ),
@@ -2982,15 +2870,11 @@ Future<void> showDailyChoiceManagerSheet({
                                                 ),
                                                 label: Text(
                                                   isHidden
-                                                      ? pickUiText(
-                                                          i18n,
-                                                          zh: '恢复',
-                                                          en: 'Restore',
+                                                      ? i18n.t(
+                                                          'toolbox.hub.edit.restore_action',
                                                         )
-                                                      : pickUiText(
-                                                          i18n,
-                                                          zh: '不喜欢',
-                                                          en: 'Hide',
+                                                      : i18n.t(
+                                                          'inline.plan295.daily_choice.hide.bd89cbfb20f9',
                                                         ),
                                                 ),
                                               ),
@@ -3002,23 +2886,33 @@ Future<void> showDailyChoiceManagerSheet({
                                           const SizedBox(height: 10),
                                           _ManagerHint(
                                             text: builtInSqlLoading
-                                                ? pickUiText(
-                                                    i18n,
-                                                    zh: isWearModule
-                                                        ? '正在加载更多内置搭配...'
-                                                        : (isActivityModule
-                                                              ? '正在加载更多内置行动...'
-                                                              : '正在加载更多内置菜谱...'),
-                                                    en: isWearModule
-                                                        ? 'Loading more built-in outfits...'
-                                                        : (isActivityModule
-                                                              ? 'Loading more built-in actions...'
-                                                              : 'Loading more built-in recipes...'),
+                                                ? i18n.t(
+                                                    _managerModuleKey(
+                                                      wearKey:
+                                                          'inline.plan295.daily_choice.loading_more_built_in_outfits.77e6ee77262b',
+                                                      activityKey:
+                                                          'inline.plan295.daily_choice.loading_more_built_in_actions.c3e321de4e1a',
+                                                      eatKey:
+                                                          'inline.plan295.daily_choice.loading_more_built_in_recipes.0315887276c0',
+                                                      isWearModule:
+                                                          isWearModule,
+                                                      isActivityModule:
+                                                          isActivityModule,
+                                                    ),
                                                   )
-                                                : pickUiText(
-                                                    i18n,
-                                                    zh: '还有 ${builtInTotalCount - visibleBuiltIns.length} 条待加载。',
-                                                    en: '${builtInTotalCount - visibleBuiltIns.length} more ${isWearModule ? 'outfits' : (isActivityModule ? 'actions' : 'recipes')} are ready to load.',
+                                                : i18n.t(
+                                                    'inline.plan296.ui.pages.toolbox.daily.choice.daily.choice.manager.sheet.more_are_ready_to_load.a79fa6572b',
+                                                    params: <String, Object?>{
+                                                      'length':
+                                                          builtInTotalCount -
+                                                          visibleBuiltIns
+                                                              .length,
+                                                      'p1': isWearModule
+                                                          ? 'outfits'
+                                                          : (isActivityModule
+                                                                ? 'actions'
+                                                                : 'recipes'),
+                                                    },
                                                   ),
                                           ),
                                         ],
@@ -3033,10 +2927,8 @@ Future<void> showDailyChoiceManagerSheet({
                         bottom: 12,
                         child: FloatingActionButton.small(
                           heroTag: null,
-                          tooltip: pickUiText(
-                            i18n,
-                            zh: '回到页首',
-                            en: 'Back to top',
+                          tooltip: i18n.t(
+                            'inline.plan295.daily_choice.back_to_top.344567060476',
                           ),
                           backgroundColor: accent,
                           foregroundColor: theme.colorScheme.onPrimary,

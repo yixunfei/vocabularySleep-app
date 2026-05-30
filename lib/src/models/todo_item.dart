@@ -57,8 +57,7 @@ class TodoItem {
   List<int> get systemCalendarNotificationOffsets =>
       _buildSystemCalendarOffsets(
         enabled:
-            systemCalendarAlertMode ==
-            TodoSystemCalendarAlertMode.notification,
+            systemCalendarAlertMode == TodoSystemCalendarAlertMode.notification,
         minutesBefore: systemCalendarNotificationMinutesBefore,
       );
 

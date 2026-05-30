@@ -342,15 +342,8 @@ class _AimCompletionReportDialog extends StatelessWidget {
 
     return _HumanReportDialogFrame(
       title: Text(
-        pickUiText(
-          i18n,
-          zh: '瞄准测试结果报告',
-          en: 'Aim test report',
-          ja: 'エイムテストレポート',
-          de: 'Aim test report',
-          fr: 'Aim test report',
-          es: 'Informe de prueba de objetivos',
-          ru: 'Отчет об испытаниях на цель',
+        i18n.t(
+          'inline.ui.pages.toolbox_human_tests_aim_widgets.aim_test_report_8fed9f',
         ),
       ),
       accent: accent,
@@ -358,158 +351,65 @@ class _AimCompletionReportDialog extends StatelessWidget {
         _HumanMetricWrap(
           metrics: <(String, String)>[
             (
-              pickUiText(
-                i18n,
-                zh: '模式组合',
-                en: 'Mode combo',
-                ja: 'Mode combo',
-                de: 'Mode combo',
-                fr: 'Mode combo',
-                es: 'Mode combo',
-                ru: 'Режим комбо',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_aim_widgets.mode_combo_48ba25',
               ),
               modeLabel,
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '完成目标',
-                en: 'Targets',
-                ja: 'Targets',
-                de: 'Targets',
-                fr: 'Objectifs',
-                es: 'Metas',
-                ru: 'Цели',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_aim_widgets.targets_d13c96',
               ),
               '$resolvedTargets/$targetGoal',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '命中',
-                en: 'Hits',
-                ja: 'Hits',
-                de: 'Hits',
-                fr: 'Coups',
-                es: 'Golpes',
-                ru: 'Хиты',
-              ),
+              i18n.t('inline.ui.pages.toolbox_human_tests_action.hits_fe10b3'),
               '$hits',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '点空',
-                en: 'Blank taps',
-                ja: 'ブランクタップ',
-                de: 'Blank taps',
-                fr: 'Bouchons vierges',
-                es: 'Grifos en blanco',
-                ru: 'Бланковые краны',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_aim_widgets.blank_taps_00ed16',
               ),
               '$misses',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '假目标',
-                en: 'Decoys',
-                ja: 'Decoys',
-                de: 'Decoys',
-                fr: 'Décors',
-                es: 'Decoys',
-                ru: 'Декои',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_aim_widgets.decoys_7648df',
               ),
               '$decoyHits',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '超时',
-                en: 'Timeouts',
-                ja: 'Timeouts',
-                de: 'Timeouts',
-                fr: 'Délais',
-                es: 'Timeouts',
-                ru: 'Тайм-ауты',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_aim_widgets.timeouts_d74808',
               ),
               '$timeouts',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '狙击失败',
-                en: 'Sniper fails',
-                ja: 'Sniper fails',
-                de: 'Sniper fails',
-                fr: 'Le tireur échoue',
-                es: 'El francotirador falla',
-                ru: 'Снайпер провалился',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_aim_widgets.sniper_fails_72f20e',
               ),
               '$sniperFailures',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '准确率',
-                en: 'Accuracy',
-                ja: '精度',
-                de: 'Accuracy',
-                fr: 'Accuracy',
-                es: 'Precisión',
-                ru: 'точность',
-              ),
+              i18n.t('inline.ui.pages.practice_review_page.accuracy_8cf5a1'),
               accuracyText,
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '平均命中',
-                en: 'Avg hit',
-                ja: '平均ヒット',
-                de: 'Avg hit',
-                fr: 'Avg touché',
-                es: 'Avg hit',
-                ru: 'Авг ударил',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_aim_widgets.avg_hit_bb007b',
               ),
               averageText,
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '最佳连击',
-                en: 'Best streak',
-                ja: 'ベストストリーク',
-                de: 'Best streak',
-                fr: 'Meilleure série',
-                es: 'La mejor racha',
-                ru: 'Лучшая полоса',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_aim_widgets.best_streak_5a5a71',
               ),
               '$bestStreak',
             ),
+            (i18n.t('toolbox.breathing.total_time'), totalTime),
             (
-              pickUiText(
-                i18n,
-                zh: '总用时',
-                en: 'Total time',
-                ja: 'Total time',
-                de: 'Total time',
-                fr: 'Durée totale',
-                es: 'Tiempo total',
-                ru: 'Общее время',
-              ),
-              totalTime,
-            ),
-            (
-              pickUiText(
-                i18n,
-                zh: '评级',
-                en: 'Rating',
-                ja: 'Rating',
-                de: 'Rating',
-                fr: 'Évaluation',
-                es: 'Valoración',
-                ru: 'Рейтинг',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_aim_widgets.rating_1c57db',
               ),
               rating,
             ),
@@ -517,15 +417,8 @@ class _AimCompletionReportDialog extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         Text(
-          pickUiText(
-            i18n,
-            zh: '本次设置',
-            en: 'Round settings',
-            ja: 'Round settings',
-            de: 'Round settings',
-            fr: 'Réglages ronds',
-            es: 'Ajustes redondos',
-            ru: 'Круглые настройки',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_aim_widgets.round_settings_c284f3',
           ),
           style: Theme.of(
             context,
@@ -533,134 +426,49 @@ class _AimCompletionReportDialog extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         _AimReportSettingRow(
-          label: pickUiText(
-            i18n,
-            zh: '目标大小',
-            en: 'Target size',
-            ja: 'Target size',
-            de: 'Target size',
-            fr: 'Taille cible',
-            es: 'Tamaño del objetivo',
-            ru: 'Целевой размер',
+          label: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_aim_widgets.target_size_2f3de4',
           ),
           value: '${targetDiameter.round()} dp',
         ),
         _AimReportSettingRow(
-          label: pickUiText(
-            i18n,
-            zh: '移动',
-            en: 'Movement',
-            ja: 'Movement',
-            de: 'Movement',
-            fr: 'Mouvement',
-            es: 'Movimiento',
-            ru: 'Движение',
+          label: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_aim_widgets.movement_3f7d30',
           ),
           value: movementEnabled
-              ? '${pickUiText(i18n, zh: '开启', en: 'On', ja: 'On', de: 'On', fr: 'À', es: 'On', ru: 'На')} · ${movementSpeed.toStringAsFixed(1)}x'
-              : pickUiText(
-                  i18n,
-                  zh: '关闭',
-                  en: 'Off',
-                  ja: 'Off',
-                  de: 'Off',
-                  fr: 'Arrêt',
-                  es: 'Fuera.',
-                  ru: 'Оставить',
-                ),
+              ? '${i18n.t('inline.ui.pages.toolbox_human_tests_aim_widgets.on_0363b2')} · ${movementSpeed.toStringAsFixed(1)}x'
+              : i18n.t('toolbox.sound.flute.off'),
         ),
         _AimReportSettingRow(
-          label: pickUiText(
-            i18n,
-            zh: '降级放大',
-            en: 'Reveal growth',
-            ja: 'Reveal growth',
-            de: 'Reveal growth',
-            fr: 'La croissance révélée',
-            es: 'Crecimiento de la inversión',
-            ru: 'Показать рост',
+          label: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_aim_widgets.reveal_growth_e1d706',
           ),
           value: revealEnabled
               ? '$revealMilliseconds ms · ${growthSpeed.toStringAsFixed(1)}x'
-              : pickUiText(
-                  i18n,
-                  zh: '关闭',
-                  en: 'Off',
-                  ja: 'Off',
-                  de: 'Off',
-                  fr: 'Arrêt',
-                  es: 'Fuera.',
-                  ru: 'Оставить',
-                ),
+              : i18n.t('toolbox.sound.flute.off'),
         ),
         _AimReportSettingRow(
-          label: pickUiText(
-            i18n,
-            zh: '真假干扰',
-            en: 'Decoys',
-            ja: 'Decoys',
-            de: 'Decoys',
-            fr: 'Décors',
-            es: 'Decoys',
-            ru: 'Декои',
+          label: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_aim_widgets.decoys_7648df',
           ),
           value: decoysEnabled
               ? '$decoyCount'
-              : pickUiText(
-                  i18n,
-                  zh: '关闭',
-                  en: 'Off',
-                  ja: 'Off',
-                  de: 'Off',
-                  fr: 'Arrêt',
-                  es: 'Fuera.',
-                  ru: 'Оставить',
-                ),
+              : i18n.t('toolbox.sound.flute.off'),
         ),
         _AimReportSettingRow(
-          label: pickUiText(
-            i18n,
-            zh: '狙击手对决',
-            en: 'Sniper duel',
-            ja: 'Sniper duel',
-            de: 'Sniper duel',
-            fr: 'Sniper duel',
-            es: 'Duelo de francotirador',
-            ru: 'Снайперская дуэль',
+          label: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_aim_widgets.sniper_duel_85c2cf',
           ),
           value: sniperDuel
-              ? pickUiText(
-                  i18n,
-                  zh: '开启',
-                  en: 'On',
-                  ja: 'On',
-                  de: 'On',
-                  fr: 'À',
-                  es: 'On',
-                  ru: 'На',
+              ? i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_aim_widgets.on_0363b2',
                 )
-              : pickUiText(
-                  i18n,
-                  zh: '关闭',
-                  en: 'Off',
-                  ja: 'Off',
-                  de: 'Off',
-                  fr: 'Arrêt',
-                  es: 'Fuera.',
-                  ru: 'Оставить',
-                ),
+              : i18n.t('toolbox.sound.flute.off'),
         ),
         const SizedBox(height: 14),
         Text(
-          pickUiText(
-            i18n,
-            zh: '练习建议',
-            en: 'Training note',
-            ja: 'Training note',
-            de: 'Training note',
-            fr: 'Note de formation',
-            es: 'Nota de capacitación',
-            ru: 'Учебная записка',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_action.training_note_0dc151',
           ),
           style: Theme.of(
             context,
@@ -678,62 +486,27 @@ class _AimCompletionReportDialog extends StatelessWidget {
   String _aimReportAdvice(AppI18n i18n) {
     final resolvedAccuracy = accuracy ?? 0;
     if (sniperFailures > 0) {
-      return pickUiText(
-        i18n,
-        zh: '狙击失败偏多时，先调低放大速率或关闭移动放大，把第一眼定位练稳后再加难度。',
-        en: 'With sniper failures, lower growth speed or disable moving growth until first-sight acquisition feels stable.',
-        ja: 'With sniper failures, lower growth speed or disable moving growth until first-sight acquisition feels stable.',
-        de: 'With sniper failures, lower growth speed or disable moving growth until first-sight acquisition feels stable.',
-        fr: 'En cas de défaillance du sniper, la vitesse de croissance est réduite ou la croissance mobile est désactivée jusqu\'à ce que l\'acquisition de la première vue soit stable.',
-        es: 'Con fallos de francotirador, menor velocidad de crecimiento o desactivar el crecimiento de movimiento hasta que la adquisición de primera vista se sienta estable.',
-        ru: 'При снайперских сбоях низкая скорость роста или отключение движущегося роста до тех пор, пока приобретение первого взгляда не станет стабильным.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_aim_widgets.with_sniper_failures_lower_growth_speed_or_disable_movin_9bc6de',
       );
     }
     if (decoyHits > 0) {
-      return pickUiText(
-        i18n,
-        zh: '假目标命中偏多，可能是出手前确认不够。可以先减少假目标，练稳颜色识别再提速。',
-        en: 'Decoy hits suggest rushed confirmation. Reduce false targets first, then add speed back.',
-        ja: 'Decoy hits suggest rushed confirmation. Reduce false targets first, then add speed back.',
-        de: 'Decoy hits suggest rushed confirmation. Reduce false targets first, then add speed back.',
-        fr: 'Les hits déco suggèrent une confirmation rapide. Réduire d\'abord les fausses cibles, puis rajouter la vitesse.',
-        es: 'Los golpes de Decoy sugieren confirmación apresurada. Reduzca los falsos objetivos primero, luego agregue la velocidad.',
-        ru: 'Удары Декоя предполагают срочное подтверждение. Сначала уменьшите ложные цели, а затем добавьте скорость.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_aim_widgets.decoy_hits_suggest_rushed_confirmation_reduce_false_targ_848319',
       );
     }
     if (resolvedAccuracy < 0.75) {
-      return pickUiText(
-        i18n,
-        zh: '准确率偏低时，优先调大目标或降低移动速度，把稳定性放在速度前面。',
-        en: 'Accuracy is still settling. Increase target size or lower movement speed before pushing pace.',
-        ja: '精度はまだ落ち着いていません。ペースを押す前に、ターゲットサイズを大きくするか、移動速度を下げてください。',
-        de: 'Accuracy is still settling. Increase target size or lower movement speed before pushing pace.',
-        fr: 'Accuracy is still settling. Increase target size or lower movement speed before pushing pace.',
-        es: 'La precisión todavía se está adaptando. Aumentar el tamaño del objetivo o reducir la velocidad de movimiento antes de acelerar el ritmo.',
-        ru: 'Точность все еще остается. Увеличьте размер цели или меньшую скорость движения, прежде чем двигаться.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_aim_widgets.accuracy_is_still_settling_increase_target_size_or_lower_634f75',
       );
     }
     if ((averageHitMs ?? 9999) > 900) {
-      return pickUiText(
-        i18n,
-        zh: '命中稳定但速度还有空间，可以逐步降低目标大小或打开移动组合。',
-        en: 'Hits are stable, so the next step is smaller targets or a gentle movement combo.',
-        ja: 'Hits are stable, so the next step is smaller targets or a gentle movement combo.',
-        de: 'Hits are stable, so the next step is smaller targets or a gentle movement combo.',
-        fr: 'Les coups sont stables, de sorte que la prochaine étape est des cibles plus petites ou un combo de mouvement doux.',
-        es: 'Los éxitos son estables, por lo que el siguiente paso es objetivos más pequeños o un combo de movimiento suave.',
-        ru: 'Хиты стабильны, поэтому следующим шагом являются небольшие цели или нежная комбинация движений.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_aim_widgets.hits_are_stable_so_the_next_step_is_smaller_targets_or_a_8df796',
       );
     }
-    return pickUiText(
-      i18n,
-      zh: '本轮节奏不错，可以尝试移动放大或移动干扰，把预判和确认一起练起来。',
-      en: 'Nice rhythm. Try moving growth or moving decoys to train prediction and confirmation together.',
-      ja: 'Nice rhythm. Try moving growth or moving decoys to train prediction and confirmation together.',
-      de: 'Nice rhythm. Try moving growth or moving decoys to train prediction and confirmation together.',
-      fr: 'Joli rythme. Essayez de déplacer la croissance ou de déplacer les leurres pour former la prédiction et la confirmation ensemble.',
-      es: 'Buen ritmo. Trate de mover crecimiento o mover decoys para entrenar la predicción y confirmación juntos.',
-      ru: 'Отличный ритм. Попробуйте двигать рост или перемещать приманки, чтобы вместе тренировать предсказание и подтверждение.',
+    return i18n.t(
+      'inline.ui.pages.toolbox_human_tests_aim_widgets.nice_rhythm_try_moving_growth_or_moving_decoys_to_train_d39b15',
     );
   }
 }
@@ -817,16 +590,7 @@ class _AimStageIdleCard extends StatelessWidget {
           if (onStart != null) ...<Widget>[
             const SizedBox(height: 12),
             _HumanActionButton(
-              label: pickUiText(
-                i18n,
-                zh: '开始',
-                en: 'Start',
-                ja: 'Start',
-                de: 'Start',
-                fr: 'Démarrer',
-                es: 'Comienzo',
-                ru: 'Начинать',
-              ),
+              label: i18n.t('toolbox.breathing.start'),
               icon: Icons.play_arrow_rounded,
               onPressed: onStart,
             ),

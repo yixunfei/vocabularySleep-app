@@ -85,6 +85,12 @@ class _FocusArrangementEditorPageState
   int get _totalBeats =>
       _arrangementBeats.fold<int>(0, (sum, item) => sum + item);
 
+  AppI18n get _i18n => _toolboxI18n(context, listen: false);
+
+  String _t(String key, {Map<String, Object?> params = const {}}) {
+    return _i18n.t(key, params: params);
+  }
+
   String _newTemplateId() {
     return 'focus_tpl_${DateTime.now().microsecondsSinceEpoch}';
   }
@@ -159,9 +165,11 @@ class _FocusArrangementEditorPageState
       subdivision: 1,
     );
     if (!result.isValid || result.pattern == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('模板格式无效，无法应用。')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_t('toolbox.sound.focus.editor.invalid_template')),
+        ),
+      );
       return;
     }
     final beats = <int>[];
@@ -169,9 +177,13 @@ class _FocusArrangementEditorPageState
       final beatsValue = bars * widget.beatsPerBar;
       final rounded = beatsValue.round();
       if ((beatsValue - rounded).abs() > 0.001 || rounded < 1) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('模板包含非整数拍段，当前版本暂不支持。')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _t('toolbox.sound.focus.editor.non_integer_template'),
+            ),
+          ),
+        );
         return;
       }
       beats.add(rounded);
@@ -187,10 +199,17 @@ class _FocusArrangementEditorPageState
     FocusBeatsArrangementTemplate? editing,
   }) async {
     final formKey = GlobalKey<FormState>();
+    final i18n = _i18n;
     final nameController = TextEditingController(
       text:
           editing?.name ??
-          '模板 ${(DateTime.now().month).toString().padLeft(2, '0')}${DateTime.now().day.toString().padLeft(2, '0')}',
+          i18n.t(
+            'toolbox.sound.focus.editor.default_template_name',
+            params: <String, Object?>{
+              'date':
+                  '${DateTime.now().month.toString().padLeft(2, '0')}${DateTime.now().day.toString().padLeft(2, '0')}',
+            },
+          ),
     );
     var favorite = editing?.isFavorite ?? false;
 
@@ -198,7 +217,11 @@ class _FocusArrangementEditorPageState
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(editing == null ? '保存编排模板' : '编辑编排模板'),
+          title: Text(
+            editing == null
+                ? i18n.t('toolbox.sound.focus.editor.save_template_title')
+                : i18n.t('toolbox.sound.focus.editor.edit_template_title'),
+          ),
           content: Form(
             key: formKey,
             child: Column(
@@ -208,13 +231,19 @@ class _FocusArrangementEditorPageState
                   controller: nameController,
                   autofocus: true,
                   maxLength: 18,
-                  decoration: const InputDecoration(
-                    labelText: '模板名称',
-                    hintText: '如：专注冲刺 20min',
+                  decoration: InputDecoration(
+                    labelText: i18n.t(
+                      'toolbox.sound.focus.editor.template_name_label',
+                    ),
+                    hintText: i18n.t(
+                      'toolbox.sound.focus.editor.template_name_hint',
+                    ),
                   ),
                   validator: (value) {
                     if ((value ?? '').trim().isEmpty) {
-                      return '请输入模板名称';
+                      return i18n.t(
+                        'toolbox.sound.focus.editor.template_name_required',
+                      );
                     }
                     return null;
                   },
@@ -229,7 +258,9 @@ class _FocusArrangementEditorPageState
                           favorite = value;
                         });
                       },
-                      title: const Text('收藏模板'),
+                      title: Text(
+                        i18n.t('toolbox.sound.focus.editor.favorite_template'),
+                      ),
                     );
                   },
                 ),
@@ -239,7 +270,7 @@ class _FocusArrangementEditorPageState
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('取消'),
+              child: Text(i18n.t('cancel')),
             ),
             FilledButton(
               onPressed: () {
@@ -248,7 +279,7 @@ class _FocusArrangementEditorPageState
                 }
                 Navigator.of(context).pop(true);
               },
-              child: const Text('保存'),
+              child: Text(i18n.t('save')),
             ),
           ],
         );
@@ -292,17 +323,23 @@ class _FocusArrangementEditorPageState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) {
+        final i18n = _toolboxI18n(context);
         return AlertDialog(
-          title: const Text('删除模板'),
-          content: Text('确定删除「${template.name}」吗？'),
+          title: Text(i18n.t('toolbox.sound.focus.editor.delete_template')),
+          content: Text(
+            i18n.t(
+              'toolbox.sound.focus.editor.delete_template_confirm',
+              params: <String, Object?>{'name': template.name},
+            ),
+          ),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('取消'),
+              child: Text(i18n.t('cancel')),
             ),
             FilledButton.tonal(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('删除'),
+              child: Text(i18n.t('delete')),
             ),
           ],
         );
@@ -334,6 +371,7 @@ class _FocusArrangementEditorPageState
   }
 
   Widget _buildPatternPreview(BuildContext context) {
+    final i18n = _toolboxI18n(context);
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -349,7 +387,16 @@ class _FocusArrangementEditorPageState
               ),
             ),
             child: Text(
-              'S${index + 1} · ${_arrangementBeats[index]}拍 · ${_focusBarsLabel(_arrangementBeats[index] / widget.beatsPerBar)}',
+              i18n.t(
+                'toolbox.sound.focus.editor.segment_preview',
+                params: <String, Object?>{
+                  'index': index + 1,
+                  'beats': _arrangementBeats[index],
+                  'bars': _focusBarsLabel(
+                    _arrangementBeats[index] / widget.beatsPerBar,
+                  ),
+                },
+              ),
               style: Theme.of(context).textTheme.labelMedium,
             ),
           ),
@@ -360,6 +407,7 @@ class _FocusArrangementEditorPageState
   Widget _buildTemplateItem(FocusBeatsArrangementTemplate template) {
     final selected = template.id == _activeTemplateId;
     final colorScheme = Theme.of(context).colorScheme;
+    final i18n = _toolboxI18n(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
@@ -406,7 +454,7 @@ class _FocusArrangementEditorPageState
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    '当前',
+                    i18n.t('toolbox.sound.focus.editor.current'),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: colorScheme.onPrimary,
                       fontWeight: FontWeight.w700,
@@ -428,12 +476,12 @@ class _FocusArrangementEditorPageState
               FilledButton.tonalIcon(
                 onPressed: () => _applyTemplate(template),
                 icon: const Icon(Icons.play_circle_outline_rounded),
-                label: const Text('应用'),
+                label: Text(i18n.t('toolbox.sound.soothing.apply')),
               ),
               OutlinedButton.icon(
                 onPressed: () => _promptSaveTemplate(editing: template),
                 icon: const Icon(Icons.drive_file_rename_outline_rounded),
-                label: const Text('重命名'),
+                label: Text(i18n.t('rename')),
               ),
               OutlinedButton.icon(
                 onPressed: () => _toggleTemplateFavorite(template),
@@ -442,12 +490,16 @@ class _FocusArrangementEditorPageState
                       ? Icons.star_border_rounded
                       : Icons.star_rounded,
                 ),
-                label: Text(template.isFavorite ? '取消收藏' : '收藏'),
+                label: Text(
+                  template.isFavorite
+                      ? i18n.t('toolbox.sound.focus.editor.unfavorite')
+                      : i18n.t('toolbox.sound.focus.editor.favorite'),
+                ),
               ),
               OutlinedButton.icon(
                 onPressed: () => _promptDeleteTemplate(template),
                 icon: const Icon(Icons.delete_outline_rounded),
-                label: const Text('删除'),
+                label: Text(i18n.t('delete')),
               ),
             ],
           ),
@@ -474,11 +526,15 @@ class _FocusArrangementEditorPageState
 
   @override
   Widget build(BuildContext context) {
+    final i18n = _toolboxI18n(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('编排与模板编辑'),
+        title: Text(i18n.t('toolbox.sound.focus.editor.page_title')),
         actions: <Widget>[
-          TextButton(onPressed: _finishEditing, child: const Text('完成')),
+          TextButton(
+            onPressed: _finishEditing,
+            child: Text(i18n.t('toolbox.breathing.done')),
+          ),
         ],
       ),
       body: ListView(
@@ -495,15 +551,26 @@ class _FocusArrangementEditorPageState
                 }
               });
             },
-            title: const Text('启用循环编排'),
+            title: Text(i18n.t('toolbox.sound.focus.editor.enable_pattern')),
             subtitle: Text(
               _patternEnabled
-                  ? '当前编排：$_patternRaw（共 $_totalBeats 拍）'
-                  : '当前为单小节循环',
+                  ? i18n.t(
+                      'toolbox.sound.focus.editor.current_pattern',
+                      params: <String, Object?>{
+                        'pattern': _patternRaw,
+                        'beats': _totalBeats,
+                      },
+                    )
+                  : i18n.t('toolbox.sound.focus.editor.single_bar_loop'),
             ),
           ),
           const SizedBox(height: 10),
-          const SectionHeader(title: '拍段编辑', subtitle: '按拍段逐个加减，可插入与删除。'),
+          SectionHeader(
+            title: i18n.t('toolbox.sound.focus.editor.segment_editing'),
+            subtitle: i18n.t(
+              'toolbox.sound.focus.editor.segment_editing_subtitle',
+            ),
+          ),
           const SizedBox(height: 8),
           Column(
             children: <Widget>[
@@ -524,13 +591,21 @@ class _FocusArrangementEditorPageState
                       Row(
                         children: <Widget>[
                           Text(
-                            '拍段 ${i + 1}',
+                            i18n.t(
+                              'toolbox.sound.focus.editor.segment_title',
+                              params: <String, Object?>{'index': i + 1},
+                            ),
                             style: Theme.of(context).textTheme.titleSmall
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
                           const Spacer(),
                           Text(
-                            '${_arrangementBeats[i]}拍',
+                            i18n.t(
+                              'toolbox.sound.focus.editor.beats_count',
+                              params: <String, Object?>{
+                                'beats': _arrangementBeats[i],
+                              },
+                            ),
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ],
@@ -543,24 +618,30 @@ class _FocusArrangementEditorPageState
                           OutlinedButton.icon(
                             onPressed: () => _changeSegmentBeats(i, -1),
                             icon: const Icon(Icons.remove_rounded),
-                            label: const Text('-1 拍'),
+                            label: Text(
+                              i18n.t('toolbox.sound.focus.editor.minus_beat'),
+                            ),
                           ),
                           OutlinedButton.icon(
                             onPressed: () => _changeSegmentBeats(i, 1),
                             icon: const Icon(Icons.add_rounded),
-                            label: const Text('+1 拍'),
+                            label: Text(
+                              i18n.t('toolbox.sound.focus.editor.plus_beat'),
+                            ),
                           ),
                           OutlinedButton.icon(
                             onPressed: () => _insertSegmentAfter(i),
                             icon: const Icon(Icons.add_box_outlined),
-                            label: const Text('后插拍段'),
+                            label: Text(
+                              i18n.t('toolbox.sound.focus.editor.insert_after'),
+                            ),
                           ),
                           OutlinedButton.icon(
                             onPressed: _arrangementBeats.length <= 1
                                 ? null
                                 : () => _removeSegment(i),
                             icon: const Icon(Icons.delete_outline_rounded),
-                            label: const Text('删除'),
+                            label: Text(i18n.t('delete')),
                           ),
                         ],
                       ),
@@ -580,7 +661,7 @@ class _FocusArrangementEditorPageState
               FilledButton.tonalIcon(
                 onPressed: _addSegment,
                 icon: const Icon(Icons.add_circle_outline_rounded),
-                label: const Text('新增拍段'),
+                label: Text(i18n.t('toolbox.sound.focus.editor.add_segment')),
               ),
               OutlinedButton.icon(
                 onPressed: () {
@@ -590,12 +671,14 @@ class _FocusArrangementEditorPageState
                   });
                 },
                 icon: const Icon(Icons.restart_alt_rounded),
-                label: const Text('重置编排'),
+                label: Text(i18n.t('toolbox.sound.focus.editor.reset_pattern')),
               ),
               FilledButton.tonalIcon(
                 onPressed: () => _promptSaveTemplate(),
                 icon: const Icon(Icons.bookmark_add_rounded),
-                label: const Text('保存为模板'),
+                label: Text(
+                  i18n.t('toolbox.sound.focus.editor.save_as_template'),
+                ),
               ),
             ],
           ),
@@ -606,7 +689,7 @@ class _FocusArrangementEditorPageState
             children: widget.presets
                 .map(
                   (preset) => ActionChip(
-                    label: Text(preset.name),
+                    label: Text(preset.label(i18n)),
                     onPressed: () => _applyPreset(preset),
                   ),
                 )
@@ -615,11 +698,16 @@ class _FocusArrangementEditorPageState
           const SizedBox(height: 10),
           _buildPatternPreview(context),
           const SizedBox(height: 14),
-          const SectionHeader(title: '编排模板库', subtitle: '可收藏、命名、应用、删除。'),
+          SectionHeader(
+            title: i18n.t('toolbox.sound.focus.editor.template_library'),
+            subtitle: i18n.t(
+              'toolbox.sound.focus.editor.template_library_subtitle',
+            ),
+          ),
           const SizedBox(height: 8),
           if (_sortedTemplates.isEmpty)
             Text(
-              '还没有模板，可先编辑拍段后点击“保存为模板”。',
+              i18n.t('toolbox.sound.focus.editor.empty_templates'),
               style: Theme.of(context).textTheme.bodySmall,
             )
           else
@@ -640,7 +728,7 @@ class _FocusArrangementEditorPageState
           FilledButton.icon(
             onPressed: _finishEditing,
             icon: const Icon(Icons.check_rounded),
-            label: const Text('完成并返回'),
+            label: Text(i18n.t('toolbox.sound.focus.editor.done_return')),
           ),
         ],
       ),

@@ -97,9 +97,13 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
     return switch (instrument) {
       _HarpDeckInstrument.piano => i18n.t('toolbox.sound.deck.piano_gesture'),
       _HarpDeckInstrument.flute => i18n.t('toolbox.sound.deck.flute_gesture'),
-      _HarpDeckInstrument.drumPad => i18n.t('toolbox.sound.deck.drum_pad_gesture'),
+      _HarpDeckInstrument.drumPad => i18n.t(
+        'toolbox.sound.deck.drum_pad_gesture',
+      ),
       _HarpDeckInstrument.guitar => i18n.t('toolbox.sound.deck.guitar_gesture'),
-      _HarpDeckInstrument.triangle => i18n.t('toolbox.sound.deck.triangle_gesture'),
+      _HarpDeckInstrument.triangle => i18n.t(
+        'toolbox.sound.deck.triangle_gesture',
+      ),
       _HarpDeckInstrument.violin => i18n.t('toolbox.sound.deck.violin_gesture'),
       _HarpDeckInstrument.pickup => i18n.t('toolbox.sound.deck.pickup_gesture'),
       _ => i18n.t('toolbox.sound.deck.harp_gesture'),
@@ -183,9 +187,7 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
               });
             },
             title: Text(i18n.t('toolbox.sound.deck.instrument_switch')),
-            subtitle: Text(
-              i18n.t('toolbox.sound.deck.instrument_switch_sub'),
-            ),
+            subtitle: Text(i18n.t('toolbox.sound.deck.instrument_switch_sub')),
             children: <Widget>[
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
@@ -213,9 +215,7 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
                     FilledButton.tonalIcon(
                       onPressed: _openInstrumentFullScreen,
                       icon: const Icon(Icons.open_in_full_rounded),
-                      label: Text(
-                        i18n.t('toolbox.sound.deck.full_screen'),
-                      ),
+                      label: Text(i18n.t('toolbox.sound.deck.full_screen')),
                     ),
                     const SizedBox(height: 8),
                     OutlinedButton.icon(
@@ -225,11 +225,16 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
                         });
                       },
                       icon: const Icon(Icons.tips_and_updates_rounded),
-                      label: const Text('Quick tips'),
+                      label: Text(i18n.t('toolbox.sound.deck.quick_tips')),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Current: ${_label(i18n, _selected)}',
+                      i18n.t(
+                        'toolbox.sound.deck.current_instrument',
+                        params: <String, Object?>{
+                          'instrument': _label(i18n, _selected),
+                        },
+                      ),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
@@ -421,7 +426,7 @@ class FocusBeatsToolPage extends StatelessWidget {
       subtitle: i18n.t('toolbox.sound.deck.focus_beats_sub'),
       appBarActions: <Widget>[
         IconButton(
-          tooltip: '一键全屏启动',
+          tooltip: i18n.t('toolbox.sound.deck.focus_fullscreen_quick_start'),
           icon: const Icon(Icons.open_in_full_rounded),
           onPressed: () =>
               _openFullScreen(context, autoStart: true, immersive: true),

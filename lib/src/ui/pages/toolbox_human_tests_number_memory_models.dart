@@ -5,34 +5,23 @@ enum _NumberMemoryDifficulty { beginner, intermediate, advanced, custom }
 enum _NumberMemoryMode { digits, coloredDigits, multiTarget, equation }
 
 class _NumberMemoryColorSpec {
-  const _NumberMemoryColorSpec({
-    required this.color,
-    required this.zh,
-    required this.en,
-    required this.ja,
-    required this.de,
-    required this.fr,
-    required this.es,
-    required this.ru,
-  });
+  const _NumberMemoryColorSpec({required this.color, required this.labelKey});
 
   final Color color;
-  final String zh;
-  final String en;
-  final String ja;
-  final String de;
-  final String fr;
-  final String es;
-  final String ru;
+  final String labelKey;
 
-  String label(AppI18n i18n) =>
-      pickUiText(i18n, zh: zh, en: en, ja: ja, de: de, fr: fr, es: es, ru: ru);
+  String label(AppI18n i18n) => i18n.t(labelKey);
 
   String lowerLabel(AppI18n i18n) {
     final labelText = label(i18n);
     return AppI18n.normalizeLanguageCode(i18n.languageCode) == 'en'
         ? labelText.toLowerCase()
         : labelText;
+  }
+
+  String get sizeToken {
+    final parts = labelKey.split('.');
+    return parts.length > 2 ? parts[parts.length - 2] : labelKey;
   }
 }
 
@@ -64,21 +53,10 @@ class _NumberMemoryRound {
     required this.displayText,
     required this.tokens,
     required this.groups,
-    required this.targetZh,
-    required this.targetEn,
-    required this.targetJa,
-    required this.targetDe,
-    required this.targetFr,
-    required this.targetEs,
-    required this.targetRu,
-    required this.inputZh,
-    required this.inputEn,
-    required this.inputJa,
-    required this.inputDe,
-    required this.inputFr,
-    required this.inputEs,
-    required this.inputRu,
+    required this.targetKey,
+    required this.inputKey,
     required this.sizeLabel,
+    this.targetGroupLabel,
     this.targetColor,
   });
 
@@ -88,43 +66,21 @@ class _NumberMemoryRound {
   final List<_NumberMemoryToken> tokens;
   final List<_NumberMemoryGroup> groups;
   final _NumberMemoryColorSpec? targetColor;
-  final String targetZh;
-  final String targetEn;
-  final String targetJa;
-  final String targetDe;
-  final String targetFr;
-  final String targetEs;
-  final String targetRu;
-  final String inputZh;
-  final String inputEn;
-  final String inputJa;
-  final String inputDe;
-  final String inputFr;
-  final String inputEs;
-  final String inputRu;
+  final String targetKey;
+  final String inputKey;
+  final String? targetGroupLabel;
   final String sizeLabel;
 
-  String targetText(AppI18n i18n) => pickUiText(
-    i18n,
-    zh: targetZh,
-    en: targetEn,
-    ja: targetJa,
-    de: targetDe,
-    fr: targetFr,
-    es: targetEs,
-    ru: targetRu,
-  );
+  Map<String, Object?> _textParams(AppI18n i18n) => <String, Object?>{
+    if (targetColor != null) 'color': targetColor!.label(i18n),
+    if (targetColor != null) 'lowerColor': targetColor!.lowerLabel(i18n),
+    if (targetGroupLabel != null) 'group': targetGroupLabel,
+  };
 
-  String inputText(AppI18n i18n) => pickUiText(
-    i18n,
-    zh: inputZh,
-    en: inputEn,
-    ja: inputJa,
-    de: inputDe,
-    fr: inputFr,
-    es: inputEs,
-    ru: inputRu,
-  );
+  String targetText(AppI18n i18n) =>
+      i18n.t(targetKey, params: _textParams(i18n));
+
+  String inputText(AppI18n i18n) => i18n.t(inputKey, params: _textParams(i18n));
 }
 
 class _NumberMemoryResult {

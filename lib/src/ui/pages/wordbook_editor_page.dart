@@ -146,18 +146,12 @@ class _WordbookEditorPageState extends ConsumerState<WordbookEditorPage> {
   ) async {
     final confirmed = await showConfirmDialog(
       context: context,
-      title: pickUiText(
-        i18n,
-        zh: '\u5220\u9664\u8bcd\u6761',
-        en: 'Delete word',
-      ),
-      message: pickUiText(
-        i18n,
-        zh: '\u5220\u9664\u540e\u65e0\u6cd5\u6062\u590d\uff0c\u786e\u5b9a\u7ee7\u7eed\u5417\uff1f',
-        en: 'This cannot be undone. Continue?',
+      title: i18n.t('inline.ui.pages.word_detail_page.delete_word_5cf638'),
+      message: i18n.t(
+        'inline.ui.pages.word_detail_page.this_cannot_be_undone_continue_887e94',
       ),
       danger: true,
-      confirmText: pickUiText(i18n, zh: '\u5220\u9664', en: 'Delete'),
+      confirmText: i18n.t('delete'),
     );
     if (!confirmed) return;
     await state.deleteWord(word);
@@ -179,10 +173,8 @@ class _WordbookEditorPageState extends ConsumerState<WordbookEditorPage> {
           localizedWordbookName(
             i18n,
             book,
-            placeholder: pickUiText(
-              i18n,
-              zh: '\u8bcd\u672c\u7f16\u8f91',
-              en: 'Wordbook editor',
+            placeholder: i18n.t(
+              'inline.ui.pages.wordbook_editor_page.wordbook_editor_6acfd5',
             ),
           ),
         ),
@@ -190,15 +182,11 @@ class _WordbookEditorPageState extends ConsumerState<WordbookEditorPage> {
       body: book == null
           ? EmptyStateView(
               icon: Icons.menu_book_rounded,
-              title: pickUiText(
-                i18n,
-                zh: '\u8bcd\u672c\u4e0d\u5b58\u5728',
-                en: 'Wordbook not found',
+              title: i18n.t(
+                'inline.ui.pages.wordbook_editor_page.wordbook_not_found_d0c5b6',
               ),
-              message: pickUiText(
-                i18n,
-                zh: '\u8fd9\u4e2a\u8bcd\u672c\u53ef\u80fd\u5df2\u88ab\u5220\u9664\u6216\u91cd\u547d\u540d\u3002',
-                en: 'This wordbook may have been deleted or renamed.',
+              message: i18n.t(
+                'inline.ui.pages.wordbook_editor_page.this_wordbook_may_have_been_deleted_or_renamed_9b14c0',
               ),
             )
           : !selectionReady
@@ -219,10 +207,8 @@ class _WordbookEditorPageState extends ConsumerState<WordbookEditorPage> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            pickUiText(
-                              i18n,
-                              zh: '${filteredWords.length}/${book.wordCount} \u4e2a\u8bcd \u00b7 \u70b9\u51fb\u8bcd\u6761\u53ef\u67e5\u770b\u8be6\u60c5\uff0c\u53f3\u4fa7\u83dc\u5355\u53ef\u76f4\u63a5\u7f16\u8f91\u6216\u5220\u9664',
-                              en: '${filteredWords.length}/${book.wordCount} words · tap a row for details, or use the menu to edit and delete directly',
+                            i18n.t(
+                              'inline.ui.pages.wordbook_editor_page.filteredwords_length_book_wordcount_words_tap_a_row_for_0f25b3',
                             ),
                           ),
                           const SizedBox(height: 14),
@@ -231,10 +217,8 @@ class _WordbookEditorPageState extends ConsumerState<WordbookEditorPage> {
                             onChanged: (_) => setState(() {}),
                             decoration: InputDecoration(
                               prefixIcon: const Icon(Icons.search_rounded),
-                              hintText: pickUiText(
-                                i18n,
-                                zh: '\u641c\u7d22\u8bcd\u5f62\u3001\u91ca\u4e49\u6216\u6a21\u7cca\u5339\u914d',
-                                en: 'Search by word, meaning, or fuzzy match',
+                              hintText: i18n.t(
+                                'inline.ui.pages.wordbook_editor_page.search_by_word_meaning_or_fuzzy_match_954f5f',
                               ),
                               suffixIcon: _searchController.text.trim().isEmpty
                                   ? null
@@ -278,30 +262,18 @@ class _WordbookEditorPageState extends ConsumerState<WordbookEditorPage> {
                   child: filteredWords.isEmpty
                       ? EmptyStateView(
                           icon: Icons.search_off_rounded,
-                          title: pickUiText(
-                            i18n,
-                            zh: _searchController.text.trim().isEmpty
-                                ? '\u8fd8\u6ca1\u6709\u8bcd\u6761'
-                                : '\u6ca1\u627e\u5230\u5339\u914d\u7684\u8bcd\u6761',
-                            en: _searchController.text.trim().isEmpty
-                                ? 'No words yet'
-                                : 'No matching words',
+                          title: i18n.t(
+                            _searchController.text.trim().isEmpty
+                                ? 'wordbookEditor.empty.noWordsTitle'
+                                : 'wordbookEditor.empty.noMatchesTitle',
                           ),
-                          message: pickUiText(
-                            i18n,
-                            zh: _searchController.text.trim().isEmpty
-                                ? '\u53ef\u4ee5\u76f4\u63a5\u65b0\u589e\u8bcd\u6761\uff0c\u6216\u8005\u5148\u5bfc\u5165\u5185\u5bb9\u518d\u56de\u6765\u7f16\u8f91\u3002'
-                                : '\u53ef\u4ee5\u8bd5\u8bd5\u66f4\u77ed\u7684\u5173\u952e\u8bcd\uff0c\u6216\u5207\u6362\u68c0\u7d22\u6a21\u5f0f\u3002',
-                            en: _searchController.text.trim().isEmpty
-                                ? 'Add a word directly, or import content and come back to edit it here.'
-                                : 'Try a shorter query or switch the search mode.',
+                          message: i18n.t(
+                            _searchController.text.trim().isEmpty
+                                ? 'wordbookEditor.empty.noWordsMessage'
+                                : 'wordbookEditor.empty.noMatchesMessage',
                           ),
                           actionLabel: _searchController.text.trim().isEmpty
-                              ? pickUiText(
-                                  i18n,
-                                  zh: '\u65b0\u589e\u8bcd\u6761',
-                                  en: 'Add word',
-                                )
+                              ? i18n.t('addWordTitle')
                               : null,
                           onAction: _searchController.text.trim().isEmpty
                               ? () => _openWordEditor(context)
@@ -346,23 +318,11 @@ class _WordbookEditorPageState extends ConsumerState<WordbookEditorPage> {
                                       <PopupMenuEntry<_WordbookWordAction>>[
                                         PopupMenuItem<_WordbookWordAction>(
                                           value: _WordbookWordAction.edit,
-                                          child: Text(
-                                            pickUiText(
-                                              i18n,
-                                              zh: '\u7f16\u8f91',
-                                              en: 'Edit',
-                                            ),
-                                          ),
+                                          child: Text(i18n.t('edit')),
                                         ),
                                         PopupMenuItem<_WordbookWordAction>(
                                           value: _WordbookWordAction.delete,
-                                          child: Text(
-                                            pickUiText(
-                                              i18n,
-                                              zh: '\u5220\u9664',
-                                              en: 'Delete',
-                                            ),
-                                          ),
+                                          child: Text(i18n.t('delete')),
                                         ),
                                       ],
                                 ),
@@ -378,13 +338,7 @@ class _WordbookEditorPageState extends ConsumerState<WordbookEditorPage> {
           : FloatingActionButton.extended(
               onPressed: () => _openWordEditor(context),
               icon: const Icon(Icons.add_rounded),
-              label: Text(
-                pickUiText(
-                  i18n,
-                  zh: '\u65b0\u589e\u8bcd\u6761',
-                  en: 'Add word',
-                ),
-              ),
+              label: Text(i18n.t('addWordTitle')),
             ),
     );
   }

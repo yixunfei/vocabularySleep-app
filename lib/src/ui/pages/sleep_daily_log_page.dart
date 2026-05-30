@@ -238,13 +238,9 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
     final appState = context.read<AppState>();
     final i18n = AppI18n(appState.uiLanguage);
     appState.saveSleepDailyLog(_draftLog());
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          i18n.t('toolbox.sleep.log.saved'),
-        ),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(i18n.t('toolbox.sleep.log.saved'))));
   }
 
   void _applyLogPreset(_SleepLogPreset preset) {
@@ -399,9 +395,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 6),
-                    Text(
-                      i18n.t('toolbox.sleep.log.log30secHint'),
-                    ),
+                    Text(i18n.t('toolbox.sleep.log.log30secHint')),
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
@@ -420,7 +414,9 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                                   worryLoadLevel: 2,
                                 ),
                                 _SleepLogPreset(
-                                  label: i18n.t('toolbox.sleep.log.presetShort'),
+                                  label: i18n.t(
+                                    'toolbox.sleep.log.presetShort',
+                                  ),
                                   sleepMinutes: 330,
                                   latencyMinutes: 45,
                                   wakeCount: 2,
@@ -432,7 +428,9 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                                   lateScreenExposure: true,
                                 ),
                                 _SleepLogPreset(
-                                  label: i18n.t('toolbox.sleep.log.presetWokeOften'),
+                                  label: i18n.t(
+                                    'toolbox.sleep.log.presetWokeOften',
+                                  ),
                                   sleepMinutes: 390,
                                   latencyMinutes: 20,
                                   wakeCount: 3,
@@ -460,9 +458,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                     FilledButton.tonalIcon(
                       onPressed: _save,
                       icon: const Icon(Icons.done_rounded),
-                      label: Text(
-                        i18n.t('toolbox.sleep.log.saveCurrent'),
-                      ),
+                      label: Text(i18n.t('toolbox.sleep.log.saveCurrent')),
                     ),
                   ],
                 ),
@@ -481,7 +477,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                     ),
                     const SizedBox(height: 8),
                     _TimeRow(
-                       label: i18n.t('toolbox.sleep.log.bedtime'),
+                      label: i18n.t('toolbox.sleep.log.bedtime'),
                       value: _bedtime,
                       onTap: () => _pickTime(
                         initial: _bedtime,
@@ -489,7 +485,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                       ),
                     ),
                     _TimeRow(
-                       label: i18n.t('toolbox.sleep.log.lightsOff'),
+                      label: i18n.t('toolbox.sleep.log.lightsOff'),
                       value: _lightsOff,
                       onTap: () => _pickTime(
                         initial: _lightsOff,
@@ -497,7 +493,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                       ),
                     ),
                     _TimeRow(
-                       label: i18n.t('toolbox.sleep.log.sleepOnset'),
+                      label: i18n.t('toolbox.sleep.log.sleepOnset'),
                       value: _sleepOnset,
                       onTap: () => _pickTime(
                         initial: _sleepOnset,
@@ -505,7 +501,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                       ),
                     ),
                     _TimeRow(
-                       label: i18n.t('toolbox.sleep.log.finalWake'),
+                      label: i18n.t('toolbox.sleep.log.finalWake'),
                       value: _finalWake,
                       onTap: () => _pickTime(
                         initial: _finalWake,
@@ -513,7 +509,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                       ),
                     ),
                     _TimeRow(
-                       label: i18n.t('toolbox.sleep.log.outOfBed'),
+                      label: i18n.t('toolbox.sleep.log.outOfBed'),
                       value: _outOfBed,
                       onTap: () => _pickTime(
                         initial: _outOfBed,
@@ -538,7 +534,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                     const SizedBox(height: 10),
                     _NumberField(
                       controller: _sleepMinutesController,
-                       label: i18n.t('toolbox.sleep.log.estimatedSleepMinutes'),
+                      label: i18n.t('toolbox.sleep.log.estimatedSleepMinutes'),
                     ),
                     _QuickValueChips(
                       values: const <int>[330, 360, 390, 420, 450, 480],
@@ -550,7 +546,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                     const SizedBox(height: 12),
                     _NumberField(
                       controller: _latencyController,
-                       label: i18n.t('toolbox.sleep.log.sleepLatency'),
+                      label: i18n.t('toolbox.sleep.log.sleepLatency'),
                     ),
                     _QuickValueChips(
                       values: const <int>[10, 20, 30, 45, 60],
@@ -561,7 +557,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                     const SizedBox(height: 12),
                     _NumberField(
                       controller: _wakeCountController,
-                       label: i18n.t('toolbox.sleep.log.wakeCount'),
+                      label: i18n.t('toolbox.sleep.log.wakeCount'),
                     ),
                     _QuickValueChips(
                       values: const <int>[0, 1, 2, 3, 4],
@@ -574,7 +570,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                     const SizedBox(height: 12),
                     _NumberField(
                       controller: _wakeMinutesController,
-                       label: i18n.t('toolbox.sleep.log.wakeTotal'),
+                      label: i18n.t('toolbox.sleep.log.wakeTotal'),
                     ),
                     _QuickValueChips(
                       values: const <int>[0, 10, 20, 40, 60],
@@ -585,7 +581,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                     const SizedBox(height: 12),
                     _NumberField(
                       controller: _napMinutesController,
-                       label: i18n.t('toolbox.sleep.log.napMinutes'),
+                      label: i18n.t('toolbox.sleep.log.napMinutes'),
                     ),
                     _QuickValueChips(
                       values: const <int>[0, 10, 20, 30, 45],
@@ -596,7 +592,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                     const SizedBox(height: 12),
                     _NumberField(
                       controller: _windDownMinutesController,
-                       label: i18n.t('toolbox.sleep.log.windDownMinutes'),
+                      label: i18n.t('toolbox.sleep.log.windDownMinutes'),
                     ),
                     _QuickValueChips(
                       values: const <int>[0, 8, 15, 30, 45],
@@ -609,7 +605,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                       controller: _notesController,
                       maxLines: 3,
                       decoration: InputDecoration(
-                         labelText: i18n.t('toolbox.sleep.log.contextNotes'),
+                        labelText: i18n.t('toolbox.sleep.log.contextNotes'),
                         hintText: i18n.t('toolbox.sleep.log.notesHint'),
                       ),
                     ),
@@ -732,26 +728,26 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                 _FactorSwitch(
                   value: _heavyDinner,
                   title: sleepDailyFactorTitle(i18n, 'heavyDinner'),
-                   subtitle: i18n.t('toolbox.sleep.log.heavyDinnerHint'),
+                  subtitle: i18n.t('toolbox.sleep.log.heavyDinnerHint'),
                   onChanged: (value) => setState(() => _heavyDinner = value),
                 ),
                 _FactorSwitch(
                   value: _intenseExerciseLate,
                   title: sleepDailyFactorTitle(i18n, 'intenseExerciseLate'),
-                   subtitle: i18n.t('toolbox.sleep.log.intenseExerciseHint'),
+                  subtitle: i18n.t('toolbox.sleep.log.intenseExerciseHint'),
                   onChanged: (value) =>
                       setState(() => _intenseExerciseLate = value),
                 ),
                 _FactorSwitch(
                   value: _hotBathDone,
                   title: sleepDailyFactorTitle(i18n, 'hotBathDone'),
-                   subtitle: i18n.t('toolbox.sleep.log.hotBathHint'),
+                  subtitle: i18n.t('toolbox.sleep.log.hotBathHint'),
                   onChanged: (value) => setState(() => _hotBathDone = value),
                 ),
                 _FactorSwitch(
                   value: _stretchingDone,
                   title: sleepDailyFactorTitle(i18n, 'stretchingDone'),
-                   subtitle: i18n.t('toolbox.sleep.log.stretchingHint'),
+                  subtitle: i18n.t('toolbox.sleep.log.stretchingHint'),
                   onChanged: (value) => setState(() => _stretchingDone = value),
                 ),
                 _FactorSwitch(
@@ -763,20 +759,20 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
                 _FactorSwitch(
                   value: _bedroomTooHot,
                   title: sleepDailyFactorTitle(i18n, 'bedroomTooHot'),
-                   subtitle: i18n.t('toolbox.sleep.log.bedroomHotHint'),
+                  subtitle: i18n.t('toolbox.sleep.log.bedroomHotHint'),
                   onChanged: (value) => setState(() => _bedroomTooHot = value),
                 ),
                 _FactorSwitch(
                   value: _bedroomTooBright,
                   title: sleepDailyFactorTitle(i18n, 'bedroomTooBright'),
-                   subtitle: i18n.t('toolbox.sleep.log.bedroomBrightHint'),
+                  subtitle: i18n.t('toolbox.sleep.log.bedroomBrightHint'),
                   onChanged: (value) =>
                       setState(() => _bedroomTooBright = value),
                 ),
                 _FactorSwitch(
                   value: _bedroomTooNoisy,
                   title: sleepDailyFactorTitle(i18n, 'bedroomTooNoisy'),
-                   subtitle: i18n.t('toolbox.sleep.log.bedroomNoisyHint'),
+                  subtitle: i18n.t('toolbox.sleep.log.bedroomNoisyHint'),
                   onChanged: (value) =>
                       setState(() => _bedroomTooNoisy = value),
                 ),

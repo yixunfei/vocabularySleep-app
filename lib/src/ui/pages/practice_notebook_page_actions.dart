@@ -13,11 +13,11 @@ extension _PracticeNotebookPageActions on _PracticeNotebookPageState {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => PracticeSessionPage(
-          title: pickUiText(i18n, zh: '错题本练习', en: 'Wrong notebook review'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '共 ${words.length} 个错题 · ${_orderLabel(i18n, _order)}',
-            en: '${words.length} notebook words · ${_orderLabel(i18n, _order)}',
+          title: i18n.t(
+            'inline.ui.pages.practice_notebook_page_actions.wrong_notebook_review_88939c',
+          ),
+          subtitle: i18n.t(
+            'inline.ui.pages.practice_notebook_page_actions.words_length_notebook_words_orderlabel_i18n_order_f4aa18',
           ),
           words: words,
           shuffle: shuffle,
@@ -40,14 +40,16 @@ extension _PracticeNotebookPageActions on _PracticeNotebookPageState {
     }
     final fileName = await showTextPromptDialog(
       context: context,
-      title: pickUiText(i18n, zh: '导出文件名', en: 'Export file name'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '文件会默认保存到：$defaultDirectory',
-        en: 'The file will be saved to: $defaultDirectory',
+      title: i18n.t(
+        'inline.ui.pages.practice_notebook_page_actions.export_file_name_518c5f',
+      ),
+      subtitle: i18n.t(
+        'inline.ui.pages.practice_notebook_page_actions.the_file_will_be_saved_to_defaultdirectory_682a9b',
       ),
       initialValue: 'xianyushengxi_wrong_notebook.${format.extension}',
-      confirmText: pickUiText(i18n, zh: '导出', en: 'Export'),
+      confirmText: i18n.t(
+        'inline.ui.pages.practice_notebook_page_actions.export_bc626a',
+      ),
     );
     if (fileName == null || fileName.trim().isEmpty) {
       return;
@@ -71,10 +73,8 @@ extension _PracticeNotebookPageActions on _PracticeNotebookPageState {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          pickUiText(
-            i18n,
-            zh: '错题本筛选结果已导出到：$path',
-            en: 'Filtered notebook results exported to: $path',
+          i18n.t(
+            'inline.ui.pages.practice_notebook_page_actions.filtered_notebook_results_exported_to_path_20dd67',
           ),
         ),
       ),
@@ -96,15 +96,11 @@ extension _PracticeNotebookPageActions on _PracticeNotebookPageState {
       SnackBar(
         content: Text(
           added <= 0
-              ? pickUiText(
-                  i18n,
-                  zh: '所选单词已全部在任务本中',
-                  en: 'All selected words are already in the task list.',
+              ? i18n.t(
+                  'inline.ui.pages.practice_notebook_page_actions.all_selected_words_are_already_in_the_task_list_c2f3af',
                 )
-              : pickUiText(
-                  i18n,
-                  zh: '已加入任务本：$added 项',
-                  en: 'Added to task list: $added',
+              : i18n.t(
+                  'inline.ui.pages.practice_notebook_page_actions.added_to_task_list_added_a18082',
                 ),
         ),
       ),
@@ -126,15 +122,11 @@ extension _PracticeNotebookPageActions on _PracticeNotebookPageState {
       SnackBar(
         content: Text(
           added <= 0
-              ? pickUiText(
-                  i18n,
-                  zh: '所选单词已全部在收藏中',
-                  en: 'All selected words are already favorited.',
+              ? i18n.t(
+                  'inline.ui.pages.practice_notebook_page_actions.all_selected_words_are_already_favorited_7c30bb',
                 )
-              : pickUiText(
-                  i18n,
-                  zh: '已加入收藏：$added 项',
-                  en: 'Added to favorites: $added',
+              : i18n.t(
+                  'inline.ui.pages.practice_notebook_page_actions.added_to_favorites_added_6ace25',
                 ),
         ),
       ),
@@ -167,30 +159,30 @@ extension _PracticeNotebookPageActions on _PracticeNotebookPageState {
         return AlertDialog(
           title: Text(
             masteredOnly
-                ? pickUiText(i18n, zh: '清理已掌握错题', en: 'Clear mastered words')
-                : pickUiText(i18n, zh: '清空错题本', en: 'Clear notebook'),
+                ? i18n.t(
+                    'inline.ui.pages.practice_notebook_page_actions.clear_mastered_words_2848c5',
+                  )
+                : i18n.t(
+                    'inline.ui.pages.practice_notebook_page_actions.clear_notebook_3e08fc',
+                  ),
           ),
           content: Text(
             masteredOnly
-                ? pickUiText(
-                    i18n,
-                    zh: '会从错题本移除当前已稳定掌握的单词，保留仍需复习的部分。',
-                    en: 'This removes words that look stable now and keeps the ones that still need review.',
+                ? i18n.t(
+                    'inline.ui.pages.practice_notebook_page_actions.this_removes_words_that_look_stable_now_and_keeps_the_on_98d96c',
                   )
-                : pickUiText(
-                    i18n,
-                    zh: '会移除错题本中的全部单词，但不会删除词库本身和历史记忆进度。',
-                    en: 'This removes all notebook entries but does not delete the wordbook data or memory history.',
+                : i18n.t(
+                    'inline.ui.pages.practice_notebook_page_actions.this_removes_all_notebook_entries_but_does_not_delete_th_51c7e0',
                   ),
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+              child: Text(i18n.t('cancel')),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: Text(pickUiText(i18n, zh: '继续', en: 'Continue')),
+              child: Text(i18n.t('toolbox.breathing.continue_select')),
             ),
           ],
         );
@@ -205,21 +197,15 @@ extension _PracticeNotebookPageActions on _PracticeNotebookPageState {
         .read(appStateProvider)
         .clearPracticeWeakWords(masteredOnly: masteredOnly);
     final message = removed <= 0
-        ? pickUiText(
-            i18n,
-            zh: '错题本没有可清理的内容',
-            en: 'There is nothing to clear in the notebook.',
+        ? i18n.t(
+            'inline.ui.pages.practice_notebook_page_actions.there_is_nothing_to_clear_in_the_notebook_4dbb2d',
           )
         : masteredOnly
-        ? pickUiText(
-            i18n,
-            zh: '已清理 $removed 个已掌握错题',
-            en: 'Cleared $removed mastered notebook words',
+        ? i18n.t(
+            'inline.ui.pages.practice_notebook_page_actions.cleared_removed_mastered_notebook_words_194c80',
           )
-        : pickUiText(
-            i18n,
-            zh: '已清空 $removed 个错题',
-            en: 'Cleared $removed notebook words',
+        : i18n.t(
+            'inline.ui.pages.practice_notebook_page_actions.cleared_removed_notebook_words_85a05e',
           );
     ScaffoldMessenger.of(
       context,

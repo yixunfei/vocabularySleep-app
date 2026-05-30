@@ -243,10 +243,7 @@ void main() {
             WordFieldItem(
               key: 'meanings_zh',
               label: 'Chinese meanings',
-              value: <String>[
-                '不定冠词，用于可数单数名词前',
-                '英文字母表中的第一个字母',
-              ],
+              value: <String>['不定冠词，用于可数单数名词前', '英文字母表中的第一个字母'],
             ),
             WordFieldItem(
               key: 'parts_of_speech',
@@ -314,17 +311,20 @@ void main() {
     );
   });
 
-  test('database schema version is aligned to current migration target', () async {
-    final database = AppDatabaseService(WordbookImportService());
-    await database.init();
-    addTearDown(database.dispose);
+  test(
+    'database schema version is aligned to current migration target',
+    () async {
+      final database = AppDatabaseService(WordbookImportService());
+      await database.init();
+      addTearDown(database.dispose);
 
-    final sqlite = sqlite3.open(database.dbPath);
-    addTearDown(sqlite.dispose);
-    final row = sqlite.select('PRAGMA user_version;').single;
+      final sqlite = sqlite3.open(database.dbPath);
+      addTearDown(sqlite.dispose);
+      final row = sqlite.select('PRAGMA user_version;').single;
 
-    expect((row['user_version'] as int?) ?? 0, 9);
-  });
+      expect((row['user_version'] as int?) ?? 0, 9);
+    },
+  );
 
   test('database init rejects unsupported future schema versions', () async {
     final dbPath = '${tempDir.path}${Platform.pathSeparator}vocabulary.db';

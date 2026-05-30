@@ -249,17 +249,13 @@ class _RecognitionSettingsPageState
     final sizeText = _resolveOfflineSizeText(provider);
     return showConfirmDialog(
       context: context,
-      title: pickUiText(
-        i18n,
-        zh: '下载离线识别包',
-        en: 'Download offline ASR package',
+      title: i18n.t(
+        'inline.ui.pages.recognition_settings_page.download_offline_asr_package_68700e',
       ),
-      message: pickUiText(
-        i18n,
-        zh: '${asrProviderLabel(i18n, provider)} 约 $sizeText，初始化下载可能需要一些时间。确认后开始下载，请耐心等待。',
-        en: '${asrProviderLabel(i18n, provider)} is about $sizeText. Download and initialization may take some time. Continue and please wait patiently.',
+      message: i18n.t(
+        'inline.ui.pages.recognition_settings_page.asrproviderlabel_i18n_provider_is_about_sizetext_downloa_08cd77',
       ),
-      confirmText: pickUiText(i18n, zh: '下载', en: 'Download'),
+      confirmText: i18n.t('download'),
     );
   }
 
@@ -269,13 +265,13 @@ class _RecognitionSettingsPageState
     final sizeText = _resolveScoringSizeText(method);
     return showConfirmDialog(
       context: context,
-      title: pickUiText(i18n, zh: '下载评分包', en: 'Download scoring pack'),
-      message: pickUiText(
-        i18n,
-        zh: '${_scoringMethodLabel(i18n, method)} 约 $sizeText，初始化下载可能需要一些时间。确认后开始下载，请耐心等待。',
-        en: '${_scoringMethodLabel(i18n, method)} is about $sizeText. Download and initialization may take some time. Continue and please wait patiently.',
+      title: i18n.t(
+        'inline.ui.pages.recognition_settings_page.download_scoring_pack_7ea597',
       ),
-      confirmText: pickUiText(i18n, zh: '下载', en: 'Download'),
+      message: i18n.t(
+        'inline.ui.pages.recognition_settings_page.scoringmethodlabel_i18n_method_is_about_sizetext_downloa_ee00e0',
+      ),
+      confirmText: i18n.t('download'),
     );
   }
 
@@ -304,17 +300,15 @@ class _RecognitionSettingsPageState
     final i18n = AppI18n(state.uiLanguage);
     return showConfirmDialog(
       context: context,
-      title: pickUiText(
-        i18n,
-        zh: '切换到本地识别？',
-        en: 'Switch to local recognition?',
+      title: i18n.t(
+        'inline.ui.pages.recognition_settings_page.switch_to_local_recognition_2b0619',
       ),
-      message: pickUiText(
-        i18n,
-        zh: '推荐优先使用 API 识别以保证准确率，API 免费，只需要注册即可。如果你仍想使用本地识别，也可以继续切换到 ${asrProviderLabel(i18n, provider)}。',
-        en: 'API recognition is recommended for better accuracy, and the API tier is free with a simple signup. You can still continue if you prefer ${asrProviderLabel(i18n, provider)}.',
+      message: i18n.t(
+        'inline.ui.pages.recognition_settings_page.api_recognition_is_recommended_for_better_accuracy_and_t_61fce8',
       ),
-      confirmText: pickUiText(i18n, zh: '仍然切换', en: 'Switch anyway'),
+      confirmText: i18n.t(
+        'inline.ui.pages.recognition_settings_page.switch_anyway_16961d',
+      ),
     );
   }
 
@@ -338,11 +332,13 @@ class _RecognitionSettingsPageState
           )
         : asr.engineOrder;
 
-    ref.read(appStateProvider).updateConfig(
-      config.copyWith(
-        asr: asr.copyWith(provider: value, engineOrder: nextEngineOrder),
-      ),
-    );
+    ref
+        .read(appStateProvider)
+        .updateConfig(
+          config.copyWith(
+            asr: asr.copyWith(provider: value, engineOrder: nextEngineOrder),
+          ),
+        );
   }
 
   @override
@@ -374,7 +370,11 @@ class _RecognitionSettingsPageState
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(pickUiText(i18n, zh: '识别与跟读', en: 'Recognition settings')),
+        title: Text(
+          i18n.t(
+            'inline.ui.pages.help_center_page.recognition_settings_887724',
+          ),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -386,23 +386,17 @@ class _RecognitionSettingsPageState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   SectionHeader(
-                    title: pickUiText(i18n, zh: 'ASR 开关', en: 'ASR switch'),
-                    subtitle: pickUiText(
-                      i18n,
-                      zh: '跟读练习会根据这个开关启用识别能力。',
-                      en: 'Follow-along practice uses this switch as the recognition gate.',
+                    title: i18n.t(
+                      'inline.ui.pages.recognition_settings_page.asr_switch_434718',
+                    ),
+                    subtitle: i18n.t(
+                      'inline.ui.pages.recognition_settings_page.follow_along_practice_uses_this_switch_as_the_recognitio_9e4981',
                     ),
                   ),
                   const SizedBox(height: 14),
                   SwitchListTile.adaptive(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '启用跟读识别',
-                        en: 'Enable ASR follow-along',
-                      ),
-                    ),
+                    title: Text(i18n.t('enableAsr')),
                     value: asr.enabled,
                     onChanged: (value) {
                       state.updateConfig(
@@ -437,10 +431,8 @@ class _RecognitionSettingsPageState
                   if (asr.provider == AsrProviderType.multiEngine) ...<Widget>[
                     const SizedBox(height: 12),
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '多引擎处理链',
-                        en: 'Multi-engine pipeline',
+                      i18n.t(
+                        'inline.ui.pages.recognition_settings_page.multi_engine_pipeline_c377ca',
                       ),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
@@ -448,10 +440,8 @@ class _RecognitionSettingsPageState
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '仅支持离线识别和 MFCC + DTW（本地相似度），不调用远程 API。',
-                        en: 'Offline recognizers and MFCC + DTW only. No remote API.',
+                      i18n.t(
+                        'inline.ui.pages.recognition_settings_page.offline_recognizers_and_mfcc_dtw_only_no_remote_api_441bc9',
                       ),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
@@ -488,25 +478,19 @@ class _RecognitionSettingsPageState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   SectionHeader(
-                    title: pickUiText(
-                      i18n,
-                      zh: '识别参数',
-                      en: 'Recognition tuning',
+                    title: i18n.t(
+                      'inline.ui.pages.recognition_settings_page.recognition_tuning_1617c3',
                     ),
-                    subtitle: pickUiText(
-                      i18n,
-                      zh: '控制语言、远程接口和诊断选项。',
-                      en: 'Tune language, API fields, and diagnostics.',
+                    subtitle: i18n.t(
+                      'inline.ui.pages.recognition_settings_page.tune_language_api_fields_and_diagnostics_5787c8',
                     ),
                   ),
                   const SizedBox(height: 14),
                   DropdownButtonFormField<String>(
                     initialValue: language,
                     decoration: InputDecoration(
-                      labelText: pickUiText(
-                        i18n,
-                        zh: '识别语言',
-                        en: 'Recognition language',
+                      labelText: i18n.t(
+                        'inline.ui.pages.recognition_settings_page.recognition_language_0dd524',
                       ),
                     ),
                     items: languageOptions
@@ -526,10 +510,8 @@ class _RecognitionSettingsPageState
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '语音输入已独立到“语音输入设置”。这里的语言只影响跟读与练习识别。',
-                      en: 'Voice input is configured separately. This language now applies only to follow-along and practice recognition.',
+                    i18n.t(
+                      'inline.ui.pages.recognition_settings_page.voice_input_is_configured_separately_this_language_now_a_c83fc6',
                     ),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -655,17 +637,13 @@ class _RecognitionSettingsPageState
                   SwitchListTile.adaptive(
                     contentPadding: EdgeInsets.zero,
                     title: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '保留识别中间音频',
-                        en: 'Keep recognition debug audio',
+                      i18n.t(
+                        'inline.ui.pages.recognition_settings_page.keep_recognition_debug_audio_e429c7',
                       ),
                     ),
                     subtitle: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '用于比较与排查，日常使用建议关闭。',
-                        en: 'Useful for diagnostics; keep off for daily use.',
+                      i18n.t(
+                        'inline.ui.pages.recognition_settings_page.useful_for_diagnostics_keep_off_for_daily_use_60d03b',
                       ),
                     ),
                     value: asr.dumpRecognitionAudioArtifacts,
@@ -692,10 +670,8 @@ class _RecognitionSettingsPageState
                 children: <Widget>[
                   SectionHeader(
                     title: i18n.t('asrOfflineModelManager'),
-                    subtitle: pickUiText(
-                      i18n,
-                      zh: '离线模型和评分包可在这里下载与删除。',
-                      en: 'Manage offline models and scoring packs here.',
+                    subtitle: i18n.t(
+                      'inline.ui.pages.recognition_settings_page.manage_offline_models_and_scoring_packs_here_cdf204',
                     ),
                   ),
                   if (_loadingPackages) ...<Widget>[
@@ -820,25 +796,19 @@ class _RecognitionSettingsPageState
   String _providerHint(AppI18n i18n, AsrProviderType provider) {
     return switch (provider) {
       AsrProviderType.localSimilarity => i18n.t('asrLocalSimilarityHint'),
-      AsrProviderType.multiEngine => pickUiText(
-        i18n,
-        zh: '多引擎仅用于本地离线识别链路，不调用远程 API。',
-        en: 'Multi-engine is offline-only and does not call remote API.',
+      AsrProviderType.multiEngine => i18n.t(
+        'inline.ui.pages.recognition_settings_page.multi_engine_is_offline_only_and_does_not_call_remote_ap_731ef5',
       ),
-      _ => pickUiText(
-        i18n,
-        zh: '你可以在练习页直接使用当前引擎配置。',
-        en: 'This engine selection will be used directly in practice pages.',
+      _ => i18n.t(
+        'inline.ui.pages.recognition_settings_page.this_engine_selection_will_be_used_directly_in_practice_dbce9f',
       ),
     };
   }
 
   String _engineLabel(AppI18n i18n, AsrProviderType provider) {
     if (provider == AsrProviderType.localSimilarity) {
-      return pickUiText(
-        i18n,
-        zh: 'MFCC + DTW（本地相似度）',
-        en: 'MFCC + DTW (Local similarity)',
+      return i18n.t(
+        'inline.ui.pages.recognition_settings_page.mfcc_dtw_local_similarity_a7c137',
       );
     }
     return asrProviderLabel(i18n, provider);

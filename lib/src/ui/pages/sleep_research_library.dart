@@ -70,7 +70,9 @@ List<SleepResearchTopic> buildSleepResearchTopics(AppI18n i18n) {
       title: i18n.t('toolbox.sleep.library.topic.digital_sunset.title'),
       summary: i18n.t('toolbox.sleep.library.topic.digital_sunset.summary'),
       detail: i18n.t('toolbox.sleep.library.topic.digital_sunset.detail'),
-      actionHint: i18n.t('toolbox.sleep.library.topic.digital_sunset.action_hint'),
+      actionHint: i18n.t(
+        'toolbox.sleep.library.topic.digital_sunset.action_hint',
+      ),
       sources: <SleepResearchSource>[
         SleepResearchSource(
           bookTitle: '《这本书能让你睡得好》',
@@ -91,7 +93,9 @@ List<SleepResearchTopic> buildSleepResearchTopics(AppI18n i18n) {
       title: i18n.t('toolbox.sleep.library.topic.stimulus_control.title'),
       summary: i18n.t('toolbox.sleep.library.topic.stimulus_control.summary'),
       detail: i18n.t('toolbox.sleep.library.topic.stimulus_control.detail'),
-      actionHint: i18n.t('toolbox.sleep.library.topic.stimulus_control.action_hint'),
+      actionHint: i18n.t(
+        'toolbox.sleep.library.topic.stimulus_control.action_hint',
+      ),
       sources: <SleepResearchSource>[
         SleepResearchSource(
           bookTitle: '《干掉失眠：让你睡个好觉的心理疗法》',
@@ -110,7 +114,9 @@ List<SleepResearchTopic> buildSleepResearchTopics(AppI18n i18n) {
       title: i18n.t('toolbox.sleep.library.topic.diary_trends.title'),
       summary: i18n.t('toolbox.sleep.library.topic.diary_trends.summary'),
       detail: i18n.t('toolbox.sleep.library.topic.diary_trends.detail'),
-      actionHint: i18n.t('toolbox.sleep.library.topic.diary_trends.action_hint'),
+      actionHint: i18n.t(
+        'toolbox.sleep.library.topic.diary_trends.action_hint',
+      ),
       sources: <SleepResearchSource>[
         SleepResearchSource(
           bookTitle: '《睡眠红宝书》',
@@ -131,7 +137,9 @@ List<SleepResearchTopic> buildSleepResearchTopics(AppI18n i18n) {
       title: i18n.t('toolbox.sleep.library.topic.sleep_cycles.title'),
       summary: i18n.t('toolbox.sleep.library.topic.sleep_cycles.summary'),
       detail: i18n.t('toolbox.sleep.library.topic.sleep_cycles.detail'),
-      actionHint: i18n.t('toolbox.sleep.library.topic.sleep_cycles.action_hint'),
+      actionHint: i18n.t(
+        'toolbox.sleep.library.topic.sleep_cycles.action_hint',
+      ),
       sources: <SleepResearchSource>[
         SleepResearchSource(
           bookTitle: '《世界第一的 R90 高效睡眠法》',
@@ -152,7 +160,9 @@ List<SleepResearchTopic> buildSleepResearchTopics(AppI18n i18n) {
       title: i18n.t('toolbox.sleep.library.topic.worry_unload.title'),
       summary: i18n.t('toolbox.sleep.library.topic.worry_unload.summary'),
       detail: i18n.t('toolbox.sleep.library.topic.worry_unload.detail'),
-      actionHint: i18n.t('toolbox.sleep.library.topic.worry_unload.action_hint'),
+      actionHint: i18n.t(
+        'toolbox.sleep.library.topic.worry_unload.action_hint',
+      ),
       sources: <SleepResearchSource>[
         SleepResearchSource(
           bookTitle: '《干掉失眠：让你睡个好觉的心理疗法》',
@@ -402,9 +412,13 @@ List<SleepAdviceItem> buildSleepAssessmentAdvice(
       SleepAdviceItem(
         id: 'assessment_wind_down',
         topicId: sleepTopicWorryUnload,
-        title: i18n.t('toolbox.sleep.library.advice_assessment_wind_down.title'),
+        title: i18n.t(
+          'toolbox.sleep.library.advice_assessment_wind_down.title',
+        ),
         body: i18n.t('toolbox.sleep.library.advice_assessment_wind_down.body'),
-        reason: i18n.t('toolbox.sleep.library.advice_assessment_wind_down.reason'),
+        reason: i18n.t(
+          'toolbox.sleep.library.advice_assessment_wind_down.reason',
+        ),
         tag: i18n.t('toolbox.sleep.library.tag.wind_down'),
         isPriority: items.isEmpty,
       ),
@@ -418,7 +432,9 @@ List<SleepAdviceItem> buildSleepAssessmentAdvice(
         topicId: sleepTopicCaffeineCutoff,
         title: i18n.t('toolbox.sleep.library.advice_assessment_caffeine.title'),
         body: i18n.t('toolbox.sleep.library.advice_assessment_caffeine.body'),
-        reason: i18n.t('toolbox.sleep.library.advice_assessment_caffeine.reason'),
+        reason: i18n.t(
+          'toolbox.sleep.library.advice_assessment_caffeine.reason',
+        ),
         tag: i18n.t('toolbox.sleep.library.tag.behavior'),
       ),
     );
@@ -432,9 +448,15 @@ List<SleepAdviceItem> buildSleepAssessmentAdvice(
       SleepAdviceItem(
         id: 'assessment_environment',
         topicId: sleepTopicBedroomSanctuary,
-        title: i18n.t('toolbox.sleep.library.advice_assessment_environment.title'),
-        body: i18n.t('toolbox.sleep.library.advice_assessment_environment.body'),
-        reason: i18n.t('toolbox.sleep.library.advice_assessment_environment.reason'),
+        title: i18n.t(
+          'toolbox.sleep.library.advice_assessment_environment.title',
+        ),
+        body: i18n.t(
+          'toolbox.sleep.library.advice_assessment_environment.body',
+        ),
+        reason: i18n.t(
+          'toolbox.sleep.library.advice_assessment_environment.reason',
+        ),
         tag: i18n.t('toolbox.sleep.library.tag.environment'),
       ),
     );
@@ -716,7 +738,9 @@ List<SleepAdviceItem> buildSleepWeeklyAdvice(
         topicId: sleepTopicBedroomSanctuary,
         title: i18n.t('toolbox.sleep.library.advice_weekly_environment.title'),
         body: i18n.t('toolbox.sleep.library.advice_weekly_environment.body'),
-        reason: i18n.t('toolbox.sleep.library.advice_weekly_environment.reason'),
+        reason: i18n.t(
+          'toolbox.sleep.library.advice_weekly_environment.reason',
+        ),
         tag: i18n.t('toolbox.sleep.library.tag.environment'),
       ),
     );
@@ -729,7 +753,9 @@ List<SleepAdviceItem> buildSleepWeeklyAdvice(
         topicId: sleepTopicMorningLight,
         title: i18n.t('toolbox.sleep.library.advice_weekly_sleep_amount.title'),
         body: i18n.t('toolbox.sleep.library.advice_weekly_sleep_amount.body'),
-        reason: i18n.t('toolbox.sleep.library.advice_weekly_sleep_amount.reason'),
+        reason: i18n.t(
+          'toolbox.sleep.library.advice_weekly_sleep_amount.reason',
+        ),
         tag: i18n.t('toolbox.sleep.library.tag.sleep_amount'),
       ),
     );
@@ -756,11 +782,9 @@ class SleepAdviceList extends StatelessWidget {
   Widget build(BuildContext context) {
     if (items.isEmpty) {
       final title =
-          emptyTitle ??
-          i18n.t('toolbox.sleep.library.empty.no_advice');
+          emptyTitle ?? i18n.t('toolbox.sleep.library.empty.no_advice');
       final message =
-          emptyMessage ??
-          i18n.t('toolbox.sleep.library.empty.no_advice_hint');
+          emptyMessage ?? i18n.t('toolbox.sleep.library.empty.no_advice_hint');
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),

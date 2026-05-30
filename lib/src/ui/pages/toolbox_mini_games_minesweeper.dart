@@ -124,28 +124,24 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
     }
   }
 
-  String _text(AppI18n i18n, {required String zh, required String en}) {
-    return pickUiText(i18n, zh: zh, en: en);
-  }
-
   String _presetLabel(AppI18n i18n, _MinesweeperPreset preset) {
     if (preset.label == 'Easy') {
-      return _text(i18n, zh: '简单', en: 'Easy');
+      return i18n.t('toolbox.miniGames.minesweeper.easy.34fe6875');
     }
     if (preset.label == 'Medium') {
-      return _text(i18n, zh: '标准', en: 'Medium');
+      return i18n.t('toolbox.miniGames.minesweeper.medium.6a119824');
     }
-    return _text(i18n, zh: '挑战', en: 'Hard');
+    return i18n.t('toolbox.miniGames.minesweeper.hard.eb5390bd');
   }
 
   String _statusLabel(AppI18n i18n) {
     if (_lost) {
-      return _text(i18n, zh: '爆炸', en: 'Boom');
+      return i18n.t('toolbox.miniGames.minesweeper.boom.5d7169c4');
     }
     if (_won) {
-      return _text(i18n, zh: '已通关', en: 'Cleared');
+      return i18n.t('toolbox.miniGames.minesweeper.cleared.26d83278');
     }
-    return _text(i18n, zh: '进行中', en: 'Playing');
+    return i18n.t('toolbox.miniGames.minesweeper.playing.f716639d');
   }
 
   void _revealHint() {
@@ -173,10 +169,9 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          _text(
-            i18n,
-            zh: '提示已翻开第 $row 行第 $col 列的安全格。',
-            en: 'Hint revealed a safe cell at row $row, column $col.',
+          i18n.t(
+            'toolbox.miniGames.minesweeper.hint_revealed_a_safe_cell_at_row.9269101a',
+            params: <String, Object?>{'row': row, 'col': col},
           ),
         ),
       ),
@@ -292,7 +287,9 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _text(i18n, zh: '扫雷通关，已自动插旗。', en: 'Minesweeper cleared!'),
+            i18n.t(
+              'toolbox.miniGames.minesweeper.minesweeper_cleared.d643d5ab',
+            ),
           ),
         ),
       );
@@ -353,16 +350,24 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
                       onPressed: () => _setFullscreen(false),
                       icon: const Icon(Icons.fullscreen_exit_rounded),
                       label: Text(
-                        _text(i18n, zh: '退出全屏', en: 'Exit fullscreen'),
+                        i18n.t(
+                          'toolbox.miniGames.minesweeper.exit_fullscreen.af67784f',
+                        ),
                       ),
                     ),
                     FilledButton.tonalIcon(
                       onPressed: _lost || _won ? null : _revealHint,
                       icon: const Icon(Icons.lightbulb_outline_rounded),
-                      label: Text(_text(i18n, zh: '提示', en: 'Hint')),
+                      label: Text(
+                        i18n.t('toolbox.miniGames.minesweeper.hint.09c61a16'),
+                      ),
                     ),
                     FilterChip(
-                      label: Text(_text(i18n, zh: '插旗模式', en: 'Flag mode')),
+                      label: Text(
+                        i18n.t(
+                          'toolbox.miniGames.minesweeper.flag_mode.9242bb28',
+                        ),
+                      ),
                       selected: _flagMode,
                       onSelected: (value) {
                         setState(() {
@@ -373,7 +378,11 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
                     OutlinedButton.icon(
                       onPressed: () => setState(() => _startNewGame()),
                       icon: const Icon(Icons.refresh_rounded),
-                      label: Text(_text(i18n, zh: '新开一局', en: 'New game')),
+                      label: Text(
+                        i18n.t(
+                          'toolbox.miniGames.minesweeper.new_game.361fb747',
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -383,19 +392,27 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
                   runSpacing: 10,
                   children: <Widget>[
                     ToolboxMetricCard(
-                      label: _text(i18n, zh: '棋盘', en: 'Board'),
+                      label: i18n.t(
+                        'toolbox.miniGames.minesweeper.board.3de83dc1',
+                      ),
                       value: '${_rows}x$_cols',
                     ),
                     ToolboxMetricCard(
-                      label: _text(i18n, zh: '地雷', en: 'Mines'),
+                      label: i18n.t(
+                        'toolbox.miniGames.minesweeper.mines.f88b1f6f',
+                      ),
                       value: '$_mineCount',
                     ),
                     ToolboxMetricCard(
-                      label: _text(i18n, zh: '剩余地雷', en: 'Mines left'),
+                      label: i18n.t(
+                        'toolbox.miniGames.minesweeper.mines_left.7f3c2da8',
+                      ),
                       value: '${math.max(0, _mineCount - flags)}',
                     ),
                     ToolboxMetricCard(
-                      label: _text(i18n, zh: '状态', en: 'Status'),
+                      label: i18n.t(
+                        'toolbox.miniGames.minesweeper.status.b7c49b3a',
+                      ),
                       value: _statusLabel(i18n),
                     ),
                   ],
@@ -441,13 +458,17 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      _text(i18n, zh: '自定义设置', en: 'Custom setup'),
+                      i18n.t(
+                        'toolbox.miniGames.minesweeper.custom_setup.ab94e5d4',
+                      ),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text('${_text(i18n, zh: '行数', en: 'Rows')}: $_draftRows'),
+                    Text(
+                      '${i18n.t('toolbox.miniGames.minesweeper.rows.97cf7dc9')}: $_draftRows',
+                    ),
                     Slider(
                       value: _draftRows.toDouble(),
                       min: 5,
@@ -462,7 +483,7 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
                       },
                     ),
                     Text(
-                      '${_text(i18n, zh: '列数', en: 'Columns')}: $_draftCols',
+                      '${i18n.t('toolbox.miniGames.minesweeper.columns.b5ac00ef')}: $_draftCols',
                     ),
                     Slider(
                       value: _draftCols.toDouble(),
@@ -478,7 +499,7 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
                       },
                     ),
                     Text(
-                      '${_text(i18n, zh: '地雷数', en: 'Mines')}: $_draftMines',
+                      '${i18n.t('toolbox.miniGames.minesweeper.mines.3318710b')}: $_draftMines',
                     ),
                     Slider(
                       value: _draftMines.toDouble(),
@@ -502,11 +523,17 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
                           onPressed: _applyCustom,
                           icon: const Icon(Icons.build_rounded),
                           label: Text(
-                            _text(i18n, zh: '应用自定义', en: 'Apply custom'),
+                            i18n.t(
+                              'toolbox.miniGames.minesweeper.apply_custom.09c61637',
+                            ),
                           ),
                         ),
                         FilterChip(
-                          label: Text(_text(i18n, zh: '插旗模式', en: 'Flag mode')),
+                          label: Text(
+                            i18n.t(
+                              'toolbox.miniGames.minesweeper.flag_mode.9242bb28',
+                            ),
+                          ),
                           selected: _flagMode,
                           onSelected: (value) {
                             setState(() {
@@ -517,13 +544,19 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
                         FilledButton.tonalIcon(
                           onPressed: _lost || _won ? null : _revealHint,
                           icon: const Icon(Icons.lightbulb_outline_rounded),
-                          label: Text(_text(i18n, zh: '提示', en: 'Hint')),
+                          label: Text(
+                            i18n.t(
+                              'toolbox.miniGames.minesweeper.hint.09c61a16',
+                            ),
+                          ),
                         ),
                         OutlinedButton.icon(
                           onPressed: () => _setFullscreen(true),
                           icon: const Icon(Icons.fullscreen_rounded),
                           label: Text(
-                            _text(i18n, zh: '全屏棋盘', en: 'Fullscreen board'),
+                            i18n.t(
+                              'toolbox.miniGames.minesweeper.fullscreen_board.cfae8089',
+                            ),
                           ),
                         ),
                       ],
@@ -538,31 +571,39 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
               runSpacing: 10,
               children: <Widget>[
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '棋盘', en: 'Board'),
+                  label: i18n.t('toolbox.miniGames.minesweeper.board.3de83dc1'),
                   value: '${_rows}x$_cols',
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '地雷', en: 'Mines'),
+                  label: i18n.t('toolbox.miniGames.minesweeper.mines.f88b1f6f'),
                   value: '$_mineCount',
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '剩余地雷', en: 'Mines left'),
+                  label: i18n.t(
+                    'toolbox.miniGames.minesweeper.mines_left.7f3c2da8',
+                  ),
                   value: '${math.max(0, _mineCount - flags)}',
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '旗子', en: 'Flags'),
+                  label: i18n.t('toolbox.miniGames.minesweeper.flags.a548d811'),
                   value: '$flags',
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '问号', en: 'Question'),
+                  label: i18n.t(
+                    'toolbox.miniGames.minesweeper.question.2c45963e',
+                  ),
                   value: '$questions',
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '进度', en: 'Progress'),
+                  label: i18n.t(
+                    'toolbox.miniGames.minesweeper.progress.71e79308',
+                  ),
                   value: '$_revealedSafe / $_safeCellTotal',
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '状态', en: 'Status'),
+                  label: i18n.t(
+                    'toolbox.miniGames.minesweeper.status.b7c49b3a',
+                  ),
                   value: _statusLabel(i18n),
                 ),
               ],
@@ -570,15 +611,11 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
             const SizedBox(height: 12),
             Text(
               _flagMode
-                  ? _text(
-                      i18n,
-                      zh: '插旗模式已开启：点击会在旗子、问号和空白之间切换。',
-                      en: 'Flag mode is on: taps cycle through flag, question, and none.',
+                  ? i18n.t(
+                      'toolbox.miniGames.minesweeper.flag_mode_is_on_taps_cycle_through.e5e7ee81',
                     )
-                  : _text(
-                      i18n,
-                      zh: '轻触翻开，长按可循环标记旗子和问号。',
-                      en: 'Tap to reveal, long press to cycle marks.',
+                  : i18n.t(
+                      'toolbox.miniGames.minesweeper.tap_to_reveal_long_press_to_cycle.7660c6b4',
                     ),
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -591,7 +628,9 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
             OutlinedButton.icon(
               onPressed: () => setState(() => _startNewGame()),
               icon: const Icon(Icons.refresh_rounded),
-              label: Text(_text(i18n, zh: '新开一局', en: 'New game')),
+              label: Text(
+                i18n.t('toolbox.miniGames.minesweeper.new_game.361fb747'),
+              ),
             ),
           ],
         ),

@@ -6,7 +6,6 @@ import '../../models/wordbook.dart';
 import '../../state/app_state.dart';
 import '../../state/app_state_provider.dart';
 import '../modal_helpers.dart';
-import '../ui_copy.dart';
 import '../wordbook_localization.dart';
 import 'wordbook_editor_page.dart';
 
@@ -20,15 +19,7 @@ class WordbookManagementPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          pickUiText(
-            i18n,
-            zh: '词本管理',
-            en: 'Wordbook management',
-            ja: '単語帳管理',
-            de: 'Wortbuchverwaltung',
-            fr: 'Gestion des livres de mots',
-            es: 'Gestion del libro de palabras',
-          ),
+          i18n.t('inline.ui.pages.help_center_page.wordbook_management_7c76ef'),
         ),
       ),
       body: ListView(
@@ -62,7 +53,7 @@ class WordbookManagementPage extends ConsumerWidget {
           FilledButton.tonalIcon(
             onPressed: () => _mergeWordbooks(context, state, i18n),
             icon: const Icon(Icons.merge_type_rounded),
-            label: Text(pickUiText(i18n, zh: '合并词本', en: 'Merge wordbooks')),
+            label: Text(i18n.t('mergeDialogTitle')),
           ),
         ],
       ),
@@ -76,11 +67,11 @@ class WordbookManagementPage extends ConsumerWidget {
   ) async {
     final name = await showTextPromptDialog(
       context: context,
-      title: pickUiText(i18n, zh: '新建词本', en: 'New wordbook'),
-      hintText: pickUiText(
-        i18n,
-        zh: '例如：睡前复习',
-        en: 'For example: Night review',
+      title: i18n.t(
+        'inline.ui.pages.wordbook_management_page.new_wordbook_3f4de3',
+      ),
+      hintText: i18n.t(
+        'inline.ui.pages.wordbook_management_page.for_example_night_review_714259',
       ),
     );
     if (name == null || name.trim().isEmpty) return;
@@ -94,13 +85,13 @@ class WordbookManagementPage extends ConsumerWidget {
   ) async {
     final confirmed = await showConfirmDialog(
       context: context,
-      title: pickUiText(i18n, zh: '导入词本', en: 'Import wordbook'),
-      message: pickUiText(
-        i18n,
-        zh: '将从本地文件中选择一个词本进行导入。下一步你可以先确认名称，再选择实际文件。',
-        en: 'You will choose a local wordbook file next. After that, you can confirm the import name before the file is processed.',
+      title: i18n.t(
+        'inline.ui.pages.wordbook_management_page.import_wordbook_4905aa',
       ),
-      confirmText: pickUiText(i18n, zh: '继续', en: 'Continue'),
+      message: i18n.t(
+        'inline.ui.pages.wordbook_management_page.you_will_choose_a_local_wordbook_file_next_after_that_yo_4f6559',
+      ),
+      confirmText: i18n.t('toolbox.breathing.continue_select'),
     );
     if (!confirmed || !context.mounted) return;
 
@@ -108,14 +99,16 @@ class WordbookManagementPage extends ConsumerWidget {
       requestName: (suggestedName) {
         return showTextPromptDialog(
           context: context,
-          title: pickUiText(i18n, zh: '导入词本', en: 'Import wordbook'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '请输入导入后显示的词本名称。',
-            en: 'Choose the display name for the imported wordbook.',
+          title: i18n.t(
+            'inline.ui.pages.wordbook_management_page.import_wordbook_4905aa',
+          ),
+          subtitle: i18n.t(
+            'inline.ui.pages.wordbook_management_page.choose_the_display_name_for_the_imported_wordbook_c226a0',
           ),
           initialValue: suggestedName,
-          confirmText: pickUiText(i18n, zh: '导入', en: 'Import'),
+          confirmText: i18n.t(
+            'inline.ui.pages.wordbook_management_page.import_3c273d',
+          ),
         );
       },
     );
@@ -131,10 +124,8 @@ class WordbookManagementPage extends ConsumerWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          pickUiText(
-            i18n,
-            zh: '已刷新在线词本目录。',
-            en: 'Online wordbook catalog refreshed.',
+          i18n.t(
+            'inline.ui.pages.wordbook_management_page.online_wordbook_catalog_refreshed_34f1d3',
           ),
         ),
       ),
@@ -171,7 +162,7 @@ class WordbookManagementPage extends ConsumerWidget {
   ) async {
     final name = await showTextPromptDialog(
       context: context,
-      title: pickUiText(i18n, zh: '重命名词本', en: 'Rename wordbook'),
+      title: i18n.t('renameWordbook'),
       initialValue: book.name,
     );
     if (name == null || name.trim().isEmpty) return;
@@ -186,14 +177,12 @@ class WordbookManagementPage extends ConsumerWidget {
   ) async {
     final confirmed = await showConfirmDialog(
       context: context,
-      title: pickUiText(i18n, zh: '删除词本', en: 'Delete wordbook'),
-      message: pickUiText(
-        i18n,
-        zh: '确定删除“${book.name}”吗？',
-        en: 'Delete "${book.name}"?',
+      title: i18n.t('deleteWordbook'),
+      message: i18n.t(
+        'inline.ui.pages.wordbook_management_page.delete_book_name_974093',
       ),
       danger: true,
-      confirmText: pickUiText(i18n, zh: '删除', en: 'Delete'),
+      confirmText: i18n.t('delete'),
     );
     if (!confirmed) return;
     await state.deleteWordbook(book);
@@ -209,10 +198,8 @@ class WordbookManagementPage extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            pickUiText(
-              i18n,
-              zh: '至少需要两个普通词本才能合并。',
-              en: 'You need at least two regular wordbooks to merge.',
+            i18n.t(
+              'inline.ui.pages.wordbook_management_page.you_need_at_least_two_regular_wordbooks_to_merge_88b3e6',
             ),
           ),
         ),
@@ -235,14 +222,16 @@ class WordbookManagementPage extends ConsumerWidget {
               target = targetChoices.first;
             }
             return AlertDialog(
-              title: Text(pickUiText(i18n, zh: '合并词本', en: 'Merge wordbooks')),
+              title: Text(i18n.t('mergeDialogTitle')),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   DropdownButtonFormField<Wordbook>(
                     initialValue: source,
                     decoration: InputDecoration(
-                      labelText: pickUiText(i18n, zh: '来源词本', en: 'Source'),
+                      labelText: i18n.t(
+                        'toolbox.sleep.science.referenceSource',
+                      ),
                     ),
                     items: books
                         .map(
@@ -263,7 +252,7 @@ class WordbookManagementPage extends ConsumerWidget {
                   DropdownButtonFormField<Wordbook>(
                     initialValue: target,
                     decoration: InputDecoration(
-                      labelText: pickUiText(i18n, zh: '目标词本', en: 'Target'),
+                      labelText: i18n.t('toolbox.breathing.target'),
                     ),
                     items: targetChoices
                         .map(
@@ -283,13 +272,7 @@ class WordbookManagementPage extends ConsumerWidget {
                   const SizedBox(height: 12),
                   SwitchListTile.adaptive(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '合并后删除来源词本',
-                        en: 'Delete source after merge',
-                      ),
-                    ),
+                    title: Text(i18n.t('deleteSourceAfterMerge')),
                     value: deleteSource,
                     onChanged: (value) {
                       setStateDialog(() {
@@ -347,15 +330,13 @@ class _QuickActionCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              pickUiText(i18n, zh: '快速操作', en: 'Quick actions'),
+              i18n.t('toolbox.sleep.assist.jumpTitle'),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              pickUiText(
-                i18n,
-                zh: '你可以新建空词本、从本地导入，或刷新当前可下载的内置/在线词本目录。',
-                en: 'Create a blank wordbook, import one from a local file, or refresh the built-in and online catalog.',
+              i18n.t(
+                'inline.ui.pages.wordbook_management_page.create_a_blank_wordbook_import_one_from_a_local_file_or_11655e',
               ),
             ),
             const SizedBox(height: 14),
@@ -366,23 +347,27 @@ class _QuickActionCard extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: onCreate,
                   icon: const Icon(Icons.add_rounded),
-                  label: Text(pickUiText(i18n, zh: '新建词本', en: 'New wordbook')),
+                  label: Text(
+                    i18n.t(
+                      'inline.ui.pages.wordbook_management_page.new_wordbook_3f4de3',
+                    ),
+                  ),
                 ),
                 FilledButton.tonalIcon(
                   onPressed: onImport,
                   icon: const Icon(Icons.file_upload_rounded),
                   label: Text(
-                    pickUiText(i18n, zh: '导入词本', en: 'Import wordbook'),
+                    i18n.t(
+                      'inline.ui.pages.wordbook_management_page.import_wordbook_4905aa',
+                    ),
                   ),
                 ),
                 OutlinedButton.icon(
                   onPressed: onDownloadOnline,
                   icon: const Icon(Icons.cloud_download_rounded),
                   label: Text(
-                    pickUiText(
-                      i18n,
-                      zh: '下载在线词本',
-                      en: 'Download online wordbooks',
+                    i18n.t(
+                      'inline.ui.pages.wordbook_management_page.download_online_wordbooks_1f8ecb',
                     ),
                   ),
                 ),
@@ -416,14 +401,11 @@ class _WordbookCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final subtitle = pickUiText(
-      i18n,
-      zh: book.isSystem
-          ? '${book.wordCount} 个词 · 内置词本'
-          : '${book.wordCount} 个词 · 自定义词本',
-      en: book.isSystem
-          ? '${book.wordCount} words · built-in'
-          : '${book.wordCount} words · custom',
+    final subtitle = i18n.t(
+      book.isSystem
+          ? 'wordbookManagement.card.builtInSubtitle'
+          : 'wordbookManagement.card.customSubtitle',
+      params: <String, Object?>{'count': book.wordCount},
     );
 
     return Card(
@@ -460,29 +442,29 @@ class _WordbookCard extends StatelessWidget {
                           : Icons.navigation_rounded,
                     ),
                     label: Text(
-                      pickUiText(
-                        i18n,
-                        zh: isCurrent ? '当前使用' : '设为当前',
-                        en: isCurrent ? 'Current' : 'Use',
+                      i18n.t(
+                        isCurrent
+                            ? 'wordbookManagement.card.currentAction'
+                            : 'wordbookManagement.card.useAction',
                       ),
                     ),
                   ),
                   OutlinedButton.icon(
                     onPressed: onOpenEditor,
                     icon: const Icon(Icons.edit_note_rounded),
-                    label: Text(pickUiText(i18n, zh: '编辑', en: 'Edit')),
+                    label: Text(i18n.t('edit')),
                   ),
                   if (onRename != null)
                     OutlinedButton.icon(
                       onPressed: onRename,
                       icon: const Icon(Icons.drive_file_rename_outline_rounded),
-                      label: Text(pickUiText(i18n, zh: '重命名', en: 'Rename')),
+                      label: Text(i18n.t('rename')),
                     ),
                   if (onDelete != null)
                     TextButton.icon(
                       onPressed: onDelete,
                       icon: const Icon(Icons.delete_outline_rounded),
-                      label: Text(pickUiText(i18n, zh: '删除', en: 'Delete')),
+                      label: Text(i18n.t('delete')),
                     ),
                 ],
               ),

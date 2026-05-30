@@ -14,10 +14,8 @@ enum _ZenRitualApplyMode { append, replace }
 class _ZenBackgroundSpec {
   const _ZenBackgroundSpec({
     required this.id,
-    required this.labelZh,
-    required this.labelEn,
-    required this.descriptionZh,
-    required this.descriptionEn,
+    required this.labelKey,
+    required this.descriptionKey,
     required this.startColor,
     required this.endColor,
     required this.accent,
@@ -30,10 +28,8 @@ class _ZenBackgroundSpec {
   });
 
   final String id;
-  final String labelZh;
-  final String labelEn;
-  final String descriptionZh;
-  final String descriptionEn;
+  final String labelKey;
+  final String descriptionKey;
   final Color startColor;
   final Color endColor;
   final Color accent;
@@ -44,9 +40,9 @@ class _ZenBackgroundSpec {
   final double lineSpacing;
   final double waveAmplitude;
 
-  String label(bool isZh) => isZh ? labelZh : labelEn;
+  String label(AppI18n i18n) => i18n.t(labelKey);
 
-  String description(bool isZh) => isZh ? descriptionZh : descriptionEn;
+  String description(AppI18n i18n) => i18n.t(descriptionKey);
 
   Color get fillColor => Color.lerp(startColor, endColor, 0.52)!;
 }
@@ -55,10 +51,8 @@ class _ZenToolSpec {
   const _ZenToolSpec({
     required this.id,
     required this.icon,
-    required this.labelZh,
-    required this.labelEn,
-    required this.helpZh,
-    required this.helpEn,
+    required this.labelKey,
+    required this.helpKey,
     required this.tint,
     this.isPlacement = false,
     this.supportsColor = false,
@@ -66,43 +60,34 @@ class _ZenToolSpec {
 
   final String id;
   final IconData icon;
-  final String labelZh;
-  final String labelEn;
-  final String helpZh;
-  final String helpEn;
+  final String labelKey;
+  final String helpKey;
   final Color tint;
   final bool isPlacement;
   final bool supportsColor;
 
-  String label(bool isZh) => isZh ? labelZh : labelEn;
+  String label(AppI18n i18n) => i18n.t(labelKey);
 
-  String help(bool isZh) => isZh ? helpZh : helpEn;
+  String help(AppI18n i18n) => i18n.t(helpKey);
 }
 
 class _ZenColorSpec {
-  const _ZenColorSpec({
-    required this.value,
-    required this.labelZh,
-    required this.labelEn,
-  });
+  const _ZenColorSpec({required this.value, required this.labelKey});
 
   final int value;
-  final String labelZh;
-  final String labelEn;
+  final String labelKey;
 
   Color get color => Color(value);
 
-  String label(bool isZh) => isZh ? labelZh : labelEn;
+  String label(AppI18n i18n) => i18n.t(labelKey);
 }
 
 class _ZenRitualPresetSpec {
   const _ZenRitualPresetSpec({
     required this.id,
     required this.icon,
-    required this.titleZh,
-    required this.titleEn,
-    required this.descriptionZh,
-    required this.descriptionEn,
+    required this.titleKey,
+    required this.descriptionKey,
     required this.backgroundId,
     required this.toolId,
     required this.brushSize,
@@ -112,19 +97,17 @@ class _ZenRitualPresetSpec {
 
   final String id;
   final IconData icon;
-  final String titleZh;
-  final String titleEn;
-  final String descriptionZh;
-  final String descriptionEn;
+  final String titleKey;
+  final String descriptionKey;
   final String backgroundId;
   final String toolId;
   final double brushSize;
   final Color accent;
   final int? colorValue;
 
-  String title(bool isZh) => isZh ? titleZh : titleEn;
+  String title(AppI18n i18n) => i18n.t(titleKey);
 
-  String description(bool isZh) => isZh ? descriptionZh : descriptionEn;
+  String description(AppI18n i18n) => i18n.t(descriptionKey);
 }
 
 final Map<String, _ZenBackgroundSpec> _backgroundById =

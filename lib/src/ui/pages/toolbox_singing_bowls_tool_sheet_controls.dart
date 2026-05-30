@@ -101,14 +101,14 @@ extension _SingingBowlsSheetControls on _SingingBowlsPracticeCardState {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      spec.name(isZh),
+                      spec.name(i18n),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '${formatFrequency(spec.frequency)} Hz · ${spec.subtitle(isZh)}',
+                      '${formatFrequency(spec.frequency)} Hz · ${spec.subtitle(i18n)}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
@@ -197,7 +197,7 @@ extension _SingingBowlsSheetControls on _SingingBowlsPracticeCardState {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      spec.name(isZh),
+                      spec.name(i18n),
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -207,7 +207,7 @@ extension _SingingBowlsSheetControls on _SingingBowlsPracticeCardState {
               ),
               const SizedBox(height: 8),
               Text(
-                spec.description(isZh),
+                spec.description(i18n),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   height: 1.42,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -279,9 +279,7 @@ extension _SingingBowlsSheetControls on _SingingBowlsPracticeCardState {
           dense: true,
           contentPadding: EdgeInsets.zero,
           title: Text(i18n.t('toolbox.sound.bowls.sheet_haptics_title')),
-          subtitle: Text(
-            i18n.t('toolbox.sound.bowls.sheet_haptics_subtitle'),
-          ),
+          subtitle: Text(i18n.t('toolbox.sound.bowls.sheet_haptics_subtitle')),
           onChanged: (bool value) {
             toggleHaptics(value);
             sheetSetState(() {});

@@ -35,10 +35,10 @@ class StartupStore extends ChangeNotifier {
     final nextStartupPage = _settings.loadStartupPage();
     final nextFocusStartupTab = _settings.loadFocusStartupTab();
     final nextStudyStartupTab = _settings.loadStudyStartupTab();
-    final nextStartupTodoPromptEnabled =
-        _settings.loadStartupTodoPromptEnabled();
-    final nextStartupTodoPromptSuppressedDate =
-        _settings.loadStartupTodoPromptSuppressedDate();
+    final nextStartupTodoPromptEnabled = _settings
+        .loadStartupTodoPromptEnabled();
+    final nextStartupTodoPromptSuppressedDate = _settings
+        .loadStartupTodoPromptSuppressedDate();
     var changed = false;
     if (_startupPage != nextStartupPage) {
       _startupPage = nextStartupPage;
@@ -135,10 +135,7 @@ class StartupStore extends ChangeNotifier {
     return true;
   }
 
-  bool setStartupDailyQuote({
-    required String? quote,
-    required String dateKey,
-  }) {
+  bool setStartupDailyQuote({required String? quote, required String dateKey}) {
     if (_startupDailyQuote == quote && _startupDailyQuoteDateKey == dateKey) {
       return false;
     }

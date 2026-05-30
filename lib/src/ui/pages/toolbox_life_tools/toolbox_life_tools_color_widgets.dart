@@ -46,17 +46,23 @@ class _LifeColorSearchPanel extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: Text(
-                  _lifeText(context, zh: '融合色库', en: 'Unified palette'),
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.unified_palette.d7eaece9138d',
+                  ),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
                 ),
               ),
               _LifeColorInfoPill(
-                text: _lifeText(
+                text: _lifeI18nText(
                   context,
-                  zh: '$filtered / $total 色',
-                  en: '$filtered / $total colors',
+                  'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.color.widgets.colors.dd27afe12e',
+                  params: <String, Object?>{
+                    'filtered': filtered,
+                    'total': total,
+                  },
                 ),
               ),
             ],
@@ -70,15 +76,17 @@ class _LifeColorSearchPanel extends StatelessWidget {
               suffixIcon: query.isEmpty
                   ? null
                   : IconButton(
-                      tooltip: _lifeText(context, zh: '清空', en: 'Clear'),
+                      tooltip: _lifeI18nText(
+                        context,
+                        'inline.plan294.zen_sand.clear_ea17218b',
+                      ),
                       onPressed: onClear,
                       icon: const Icon(Icons.close_rounded),
                     ),
               border: const OutlineInputBorder(),
-              labelText: _lifeText(
+              labelText: _lifeI18nText(
                 context,
-                zh: '名称 / 拼音 / 罗马音 / HEX / ??FF??',
-                en: 'Name / pinyin / romaji / hex / ??FF??',
+                'inline.plan295.life.name_pinyin_romaji_hex_ff.5e2c00de5e02',
               ),
             ),
             textInputAction: TextInputAction.search,
@@ -129,7 +137,10 @@ class _LifeColorBackgroundSwitch extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              _lifeText(context, zh: '页面背景', en: 'Page background'),
+              _lifeI18nText(
+                context,
+                'inline.plan295.life.page_background.b3dee92c27ca',
+              ),
               style: theme.textTheme.labelLarge?.copyWith(
                 color: tone,
                 fontWeight: FontWeight.w900,
@@ -541,13 +552,19 @@ class _UnifiedColorRowDetails extends StatelessWidget {
             runSpacing: 8,
             children: <Widget>[
               _LifeColorActionButton(
-                label: _lifeText(context, zh: '复制色值', en: 'Copy hex'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.copy_hex.a889d770d5d5',
+                ),
                 icon: Icons.copy_rounded,
                 foreground: foreground,
                 onPressed: onCopyHex,
               ),
               _LifeColorActionButton(
-                label: _lifeText(context, zh: '复制色名', en: 'Copy name'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.copy_name.9934e8949a86',
+                ),
                 icon: Icons.badge_rounded,
                 foreground: foreground,
                 onPressed: onCopyName,

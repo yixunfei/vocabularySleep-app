@@ -115,8 +115,10 @@ extension _RouletteGameView on _RouletteGameState {
                             const SizedBox(width: 4),
                             Text(
                               _audioReady
-                                  ? _text(i18n, zh: '真实音效', en: 'Live SFX')
-                                  : _text(i18n, zh: '系统回退', en: 'Fallback'),
+                                  ? i18n.t('toolbox.miniGames.roulette.liveSfx')
+                                  : i18n.t(
+                                      'toolbox.miniGames.roulette.fallbackSfx',
+                                    ),
                               style: Theme.of(context).textTheme.labelMedium
                                   ?.copyWith(
                                     color: const Color(
@@ -186,7 +188,7 @@ extension _RouletteGameView on _RouletteGameState {
             SizedBox(
               width: width,
               child: _RouletteMetricTile(
-                label: _text(i18n, zh: '装填', en: 'Load'),
+                label: i18n.t('toolbox.miniGames.roulette.metric.load'),
                 value: '$_bulletCount / ${_RouletteGameState._chambers}',
                 accent: const Color(0xFFC74C3F),
               ),
@@ -194,7 +196,7 @@ extension _RouletteGameView on _RouletteGameState {
             SizedBox(
               width: width,
               child: _RouletteMetricTile(
-                label: _text(i18n, zh: '空膛', en: 'Empty'),
+                label: i18n.t('toolbox.miniGames.roulette.metric.empty'),
                 value: '$_safePullCount',
                 accent: const Color(0xFFC9A76C),
               ),
@@ -202,7 +204,7 @@ extension _RouletteGameView on _RouletteGameState {
             SizedBox(
               width: width,
               child: _RouletteMetricTile(
-                label: _text(i18n, zh: '剩余', en: 'Remaining'),
+                label: i18n.t('toolbox.miniGames.roulette.metric.remaining'),
                 value: '$remaining',
                 accent: const Color(0xFF84A9D6),
               ),
@@ -210,7 +212,7 @@ extension _RouletteGameView on _RouletteGameState {
             SizedBox(
               width: width,
               child: _RouletteMetricTile(
-                label: _text(i18n, zh: '膛位', en: 'Current'),
+                label: i18n.t('toolbox.miniGames.roulette.metric.current'),
                 value: '${_activeChamber + 1}',
                 accent: const Color(0xFF9BCF9A),
               ),
@@ -296,7 +298,7 @@ extension _RouletteGameView on _RouletteGameState {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  _text(i18n, zh: '舞台控制', en: 'Stage controls'),
+                  i18n.t('toolbox.miniGames.roulette.stageControls'),
                   style: Theme.of(
                     context,
                   ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
@@ -313,7 +315,7 @@ extension _RouletteGameView on _RouletteGameState {
                       ? Icons.expand_less_rounded
                       : Icons.expand_more_rounded,
                 ),
-                label: Text(_text(i18n, zh: '设置', en: 'Settings')),
+                label: Text(i18n.t('toolbox.miniGames.roulette.settings')),
               ),
             ],
           ),
@@ -328,7 +330,7 @@ extension _RouletteGameView on _RouletteGameState {
                         onPressed: canPrepare ? _prepareRound : null,
                         icon: const Icon(Icons.autorenew_rounded),
                         label: Text(
-                          _text(i18n, zh: '旋转弹仓', en: 'Spin cylinder'),
+                          i18n.t('toolbox.miniGames.roulette.spinCylinder'),
                         ),
                       ),
                     ),
@@ -342,7 +344,7 @@ extension _RouletteGameView on _RouletteGameState {
                           foregroundColor: Colors.white,
                         ),
                         label: Text(
-                          _text(i18n, zh: '扣动扳机', en: 'Pull trigger'),
+                          i18n.t('toolbox.miniGames.roulette.pullTrigger'),
                         ),
                       ),
                     ),
@@ -354,7 +356,9 @@ extension _RouletteGameView on _RouletteGameState {
                   child: OutlinedButton.icon(
                     onPressed: () => _resetRound(),
                     icon: const Icon(Icons.refresh_rounded),
-                    label: Text(_text(i18n, zh: '重置本轮', en: 'Reset round')),
+                    label: Text(
+                      i18n.t('toolbox.miniGames.roulette.resetRound'),
+                    ),
                   ),
                 ),
               ],
@@ -366,7 +370,9 @@ extension _RouletteGameView on _RouletteGameState {
                   child: FilledButton.icon(
                     onPressed: canPrepare ? _prepareRound : null,
                     icon: const Icon(Icons.autorenew_rounded),
-                    label: Text(_text(i18n, zh: '旋转弹仓', en: 'Spin cylinder')),
+                    label: Text(
+                      i18n.t('toolbox.miniGames.roulette.spinCylinder'),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -378,14 +384,16 @@ extension _RouletteGameView on _RouletteGameState {
                       backgroundColor: const Color(0xFFB3211A),
                       foregroundColor: Colors.white,
                     ),
-                    label: Text(_text(i18n, zh: '扣动扳机', en: 'Pull trigger')),
+                    label: Text(
+                      i18n.t('toolbox.miniGames.roulette.pullTrigger'),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 OutlinedButton.icon(
                   onPressed: () => _resetRound(),
                   icon: const Icon(Icons.refresh_rounded),
-                  label: Text(_text(i18n, zh: '重置', en: 'Reset')),
+                  label: Text(i18n.t('toolbox.miniGames.roulette.reset')),
                 ),
               ],
             ),
@@ -416,7 +424,7 @@ extension _RouletteGameView on _RouletteGameState {
                         Row(
                           children: <Widget>[
                             Text(
-                              _text(i18n, zh: '装填数量', en: 'Rounds loaded'),
+                              i18n.t('toolbox.miniGames.roulette.roundsLoaded'),
                               style: Theme.of(context).textTheme.labelLarge
                                   ?.copyWith(fontWeight: FontWeight.w800),
                             ),
@@ -465,7 +473,7 @@ extension _RouletteGameView on _RouletteGameState {
                       Expanded(
                         child: _buildInlineSwitch(
                           context,
-                          label: _text(i18n, zh: '音效', en: 'SFX'),
+                          label: i18n.t('toolbox.miniGames.roulette.sfx'),
                           value: _soundEnabled,
                           onChanged: (value) {
                             setState(() {
@@ -481,7 +489,7 @@ extension _RouletteGameView on _RouletteGameState {
                       Expanded(
                         child: _buildInlineSwitch(
                           context,
-                          label: _text(i18n, zh: '震动', en: 'Haptics'),
+                          label: i18n.t('toolbox.miniGames.roulette.haptics'),
                           value: _hapticsEnabled,
                           onChanged: (value) {
                             setState(() {
@@ -496,11 +504,7 @@ extension _RouletteGameView on _RouletteGameState {
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: Text(
-                        _text(
-                          i18n,
-                          zh: '部分音效加载失败，已使用回退反馈。',
-                          en: 'Some SFX failed to load. Using fallback feedback now.',
-                        ),
+                        i18n.t('toolbox.miniGames.roulette.sfxFallbackNotice'),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: colors.error,
                           fontWeight: FontWeight.w700,

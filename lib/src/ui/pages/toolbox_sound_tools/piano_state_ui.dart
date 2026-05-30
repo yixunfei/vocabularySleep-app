@@ -62,7 +62,10 @@ extension _PianoToolStateUi on _PianoToolState {
               ),
               const SizedBox(width: 6),
               Text(
-                i18n.t('toolbox.sound.piano.keyCount', params: {'count': '${_activeKeyLayout.keyCount}'}),
+                i18n.t(
+                  'toolbox.sound.piano.keyCount',
+                  params: {'count': '${_activeKeyLayout.keyCount}'},
+                ),
                 style:
                     (compact
                             ? theme.textTheme.labelLarge
@@ -899,7 +902,15 @@ extension _PianoToolStateUi on _PianoToolState {
                 },
                 icon: const Icon(Icons.swap_vert_rounded),
                 label: Text(
-                  i18n.t('toolbox.sound.piano.switchKeyboard', params: {'side': inactiveFocus == _PianoCompactDeckFocus.high ? 'high' : 'low', 'label': inactiveSlice.label}),
+                  i18n.t(
+                    'toolbox.sound.piano.switchKeyboard',
+                    params: {
+                      'side': inactiveFocus == _PianoCompactDeckFocus.high
+                          ? 'high'
+                          : 'low',
+                      'label': inactiveSlice.label,
+                    },
+                  ),
                 ),
               ),
             ],
@@ -1216,12 +1227,8 @@ extension _PianoToolStateUi on _PianoToolState {
           onChanged: (value) => applySettings(() {
             _compactKeyboardMode = value;
           }),
-          title: Text(
-            i18n.t('toolbox.sound.piano.compactKeyboardMode'),
-          ),
-          subtitle: Text(
-            i18n.t('toolbox.sound.piano.compactKeyboardModeDesc'),
-          ),
+          title: Text(i18n.t('toolbox.sound.piano.compactKeyboardMode')),
+          subtitle: Text(i18n.t('toolbox.sound.piano.compactKeyboardModeDesc')),
         ),
         SwitchListTile.adaptive(
           contentPadding: EdgeInsets.zero,
@@ -1232,12 +1239,8 @@ extension _PianoToolStateUi on _PianoToolState {
               _dualKeyboardMode = false;
             }
           }),
-          title: Text(
-            i18n.t('toolbox.sound.piano.aggressiveOneHand'),
-          ),
-          subtitle: Text(
-            i18n.t('toolbox.sound.piano.aggressiveOneHandDesc'),
-          ),
+          title: Text(i18n.t('toolbox.sound.piano.aggressiveOneHand')),
+          subtitle: Text(i18n.t('toolbox.sound.piano.aggressiveOneHandDesc')),
         ),
         Text(
           _displayGestureThresholdLabelFixed(i18n),
@@ -1257,7 +1260,10 @@ extension _PianoToolStateUi on _PianoToolState {
           style: theme.textTheme.bodySmall,
         ),
         Text(
-          i18n.t('toolbox.sound.piano.keyHeight', params: {'percent': '${(_keyHeightScale * 100).round()}'}),
+          i18n.t(
+            'toolbox.sound.piano.keyHeight',
+            params: {'percent': '${(_keyHeightScale * 100).round()}'},
+          ),
           style: theme.textTheme.labelLarge,
         ),
         Slider(
@@ -1270,7 +1276,10 @@ extension _PianoToolStateUi on _PianoToolState {
           }),
         ),
         Text(
-          i18n.t('toolbox.sound.piano.blackKeyWidth', params: {'percent': '${(_blackKeyWidthRatio * 100).round()}'}),
+          i18n.t(
+            'toolbox.sound.piano.blackKeyWidth',
+            params: {'percent': '${(_blackKeyWidthRatio * 100).round()}'},
+          ),
           style: theme.textTheme.labelLarge,
         ),
         Slider(
@@ -1283,7 +1292,10 @@ extension _PianoToolStateUi on _PianoToolState {
           }),
         ),
         Text(
-          i18n.t('toolbox.sound.piano.blackKeyHeight', params: {'percent': '${(_blackKeyHeightRatio * 100).round()}'}),
+          i18n.t(
+            'toolbox.sound.piano.blackKeyHeight',
+            params: {'percent': '${(_blackKeyHeightRatio * 100).round()}'},
+          ),
           style: theme.textTheme.labelLarge,
         ),
         Slider(
@@ -1296,7 +1308,10 @@ extension _PianoToolStateUi on _PianoToolState {
           }),
         ),
         Text(
-          i18n.t('toolbox.sound.piano.chordDelay', params: {'percent': '${(_chordSpreadScale * 100).round()}'}),
+          i18n.t(
+            'toolbox.sound.piano.chordDelay',
+            params: {'percent': '${(_chordSpreadScale * 100).round()}'},
+          ),
           style: theme.textTheme.labelLarge,
         ),
         Slider(
@@ -1309,7 +1324,10 @@ extension _PianoToolStateUi on _PianoToolState {
           }),
         ),
         Text(
-          i18n.t('toolbox.sound.piano.chordFalloff', params: {'percent': '${(_chordFalloff * 100).round()}'}),
+          i18n.t(
+            'toolbox.sound.piano.chordFalloff',
+            params: {'percent': '${(_chordFalloff * 100).round()}'},
+          ),
           style: theme.textTheme.labelLarge,
         ),
         Slider(
@@ -1379,7 +1397,10 @@ extension _PianoToolStateUi on _PianoToolState {
           i18n.t('toolbox.sound.piano.rangeWindow'),
         ),
         Text(
-          i18n.t('toolbox.sound.piano.octaveSpanDesc', params: {'octaveSpan': '${viewport.octaveSpan}'}),
+          i18n.t(
+            'toolbox.sound.piano.octaveSpanDesc',
+            params: {'octaveSpan': '${viewport.octaveSpan}'},
+          ),
           style: theme.textTheme.bodySmall,
         ),
         const SizedBox(height: 10),
@@ -1594,8 +1615,12 @@ extension _PianoToolStateUi on _PianoToolState {
                               value: _PianoTopBarAction.toggleCompact,
                               child: Text(
                                 _compactKeyboardMode
-                                    ? i18n.t('toolbox.sound.piano.disableCompact')
-                                    : i18n.t('toolbox.sound.piano.enableCompact'),
+                                    ? i18n.t(
+                                        'toolbox.sound.piano.disableCompact',
+                                      )
+                                    : i18n.t(
+                                        'toolbox.sound.piano.enableCompact',
+                                      ),
                               ),
                             ),
                             PopupMenuItem<_PianoTopBarAction>(
@@ -1852,7 +1877,9 @@ extension _PianoToolStateUi on _PianoToolState {
               if (compactPhone) ...<Widget>[
                 SectionHeader(
                   title: i18n.t('toolbox.sound.piano.verticalKeyboard'),
-                  subtitle: i18n.t('toolbox.sound.piano.verticalKeyboardPhoneDesc'),
+                  subtitle: i18n.t(
+                    'toolbox.sound.piano.verticalKeyboardPhoneDesc',
+                  ),
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
@@ -1865,9 +1892,7 @@ extension _PianoToolStateUi on _PianoToolState {
                       slice: slice,
                     ),
                     icon: const Icon(Icons.tune_rounded),
-                    label: Text(
-                      i18n.t('toolbox.sound.piano.keyboardSettings'),
-                    ),
+                    label: Text(i18n.t('toolbox.sound.piano.keyboardSettings')),
                   ),
                 ),
               ] else
@@ -1877,7 +1902,9 @@ extension _PianoToolStateUi on _PianoToolState {
                     Expanded(
                       child: SectionHeader(
                         title: i18n.t('toolbox.sound.piano.verticalKeyboard'),
-                        subtitle: i18n.t('toolbox.sound.piano.verticalKeyboardDesc'),
+                        subtitle: i18n.t(
+                          'toolbox.sound.piano.verticalKeyboardDesc',
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -1911,7 +1938,9 @@ extension _PianoToolStateUi on _PianoToolState {
                           : Icons.view_day_rounded,
                     ),
                     label: Text(
-                      ultraCompactPhone ? i18n.t('toolbox.sound.piano.window') : i18n.t('toolbox.sound.piano.windowList'),
+                      ultraCompactPhone
+                          ? i18n.t('toolbox.sound.piano.window')
+                          : i18n.t('toolbox.sound.piano.windowList'),
                     ),
                   ),
                   if (!aggressiveOneHand)
@@ -1923,14 +1952,18 @@ extension _PianoToolStateUi on _PianoToolState {
                             : Icons.view_day_rounded,
                       ),
                       label: Text(
-                        ultraCompactPhone ? i18n.t('toolbox.sound.piano.dual') : i18n.t('toolbox.sound.piano.dualKeyboard'),
+                        ultraCompactPhone
+                            ? i18n.t('toolbox.sound.piano.dual')
+                            : i18n.t('toolbox.sound.piano.dualKeyboard'),
                       ),
                     ),
                   OutlinedButton.icon(
                     onPressed: () => _openFullScreen(context),
                     icon: const Icon(Icons.open_in_full_rounded),
                     label: Text(
-                      ultraCompactPhone ? i18n.t('toolbox.sound.piano.full') : i18n.t('toolbox.sound.piano.fullScreen'),
+                      ultraCompactPhone
+                          ? i18n.t('toolbox.sound.piano.full')
+                          : i18n.t('toolbox.sound.piano.fullScreen'),
                     ),
                   ),
                 ],
@@ -1987,7 +2020,9 @@ extension _PianoToolStateUi on _PianoToolState {
               ],
               const SizedBox(height: 10),
               Text(
-                compactPhone ? i18n.t('toolbox.sound.piano.glissandoGuideCompact') : i18n.t('toolbox.sound.piano.glissandoGuide'),
+                compactPhone
+                    ? i18n.t('toolbox.sound.piano.glissandoGuideCompact')
+                    : i18n.t('toolbox.sound.piano.glissandoGuide'),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
@@ -1997,6 +2032,3 @@ extension _PianoToolStateUi on _PianoToolState {
     );
   }
 }
-
-
-

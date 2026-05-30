@@ -64,29 +64,21 @@ class SoothingMiniPlayer extends StatelessWidget {
         final modeTitle = SoothingMusicCopy.modeTitle(i18n, modeId);
         final playbackMode = SoothingMusicRuntimeStore.playbackMode;
         final playbackLabel = switch (playbackMode) {
-          SoothingPlaybackMode.singleLoop => pickUiText(
-            i18n,
-            zh: '单曲循环',
-            en: 'Single loop',
+          SoothingPlaybackMode.singleLoop => i18n.t(
+            'toolbox.sound.soothing.playback_single_loop',
           ),
-          SoothingPlaybackMode.modeCycle => pickUiText(
-            i18n,
-            zh: '主题顺播',
-            en: 'Mode cycle',
+          SoothingPlaybackMode.modeCycle => i18n.t(
+            'toolbox.sound.soothing.playback_mode_cycle',
           ),
-          SoothingPlaybackMode.arrangement => pickUiText(
-            i18n,
-            zh: '编排播放',
-            en: 'Arrangement',
+          SoothingPlaybackMode.arrangement => i18n.t(
+            'toolbox.sound.soothing.playback_arrangement',
           ),
         };
         final arrangementLabel =
             playbackMode == SoothingPlaybackMode.arrangement &&
                 SoothingMusicRuntimeStore.arrangementSteps.isNotEmpty
-            ? pickUiText(
-                i18n,
-                zh: '第 ${SoothingMusicRuntimeStore.arrangementStepIndex.clamp(0, SoothingMusicRuntimeStore.arrangementSteps.length - 1) + 1}/${SoothingMusicRuntimeStore.arrangementSteps.length} 段',
-                en: 'Step ${SoothingMusicRuntimeStore.arrangementStepIndex.clamp(0, SoothingMusicRuntimeStore.arrangementSteps.length - 1) + 1}/${SoothingMusicRuntimeStore.arrangementSteps.length}',
+            ? i18n.t(
+                'inline.ui.widgets.soothing_mini_player.step_soothingmusicruntimestore_arrangementstepindex_clam_293aa4',
               )
             : null;
 
@@ -164,8 +156,10 @@ class SoothingMiniPlayer extends StatelessWidget {
                           const SizedBox(width: 8),
                           IconButton(
                             tooltip: SoothingMusicRuntimeStore.activePlaying
-                                ? pickUiText(i18n, zh: '暂停', en: 'Pause')
-                                : pickUiText(i18n, zh: '播放', en: 'Play'),
+                                ? i18n.t(
+                                    'inline.plan294.breathing.pause_b6fe36b8',
+                                  )
+                                : i18n.t('play'),
                             onPressed: onTogglePlayback == null
                                 ? null
                                 : () {

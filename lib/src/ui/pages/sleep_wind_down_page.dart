@@ -82,11 +82,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
     _reframeController.clear();
     final i18n = AppI18n(appState.uiLanguage);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          i18n.t('toolbox.sleep.winddown.unloadSaved'),
-        ),
-      ),
+      SnackBar(content: Text(i18n.t('toolbox.sleep.winddown.unloadSaved'))),
     );
   }
 
@@ -285,9 +281,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                                       .read<AppState>()
                                       .startSleepRoutine(),
                             icon: const Icon(Icons.play_arrow_rounded),
-                            label: Text(
-                              i18n.t('toolbox.sleep.winddown.start'),
-                            ),
+                            label: Text(i18n.t('toolbox.sleep.winddown.start')),
                           ),
                           OutlinedButton.icon(
                             onPressed:
@@ -297,9 +291,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                                       .pauseSleepRoutine()
                                 : null,
                             icon: const Icon(Icons.pause_rounded),
-                            label: Text(
-                              i18n.t('toolbox.sleep.core.pause'),
-                            ),
+                            label: Text(i18n.t('toolbox.sleep.core.pause')),
                           ),
                           OutlinedButton.icon(
                             onPressed: appState.sleepRoutineRunnerState.isPaused
@@ -308,9 +300,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                                       .resumeSleepRoutine()
                                 : null,
                             icon: const Icon(Icons.play_circle_outline_rounded),
-                            label: Text(
-                              i18n.t('toolbox.sleep.core.resume'),
-                            ),
+                            label: Text(i18n.t('toolbox.sleep.core.resume')),
                           ),
                           OutlinedButton.icon(
                             onPressed:
@@ -323,9 +313,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                                       .read<AppState>()
                                       .advanceSleepRoutine(),
                             icon: const Icon(Icons.skip_next_rounded),
-                            label: Text(
-                              i18n.t('toolbox.sleep.core.next'),
-                            ),
+                            label: Text(i18n.t('toolbox.sleep.core.next')),
                           ),
                           OutlinedButton.icon(
                             onPressed:
@@ -338,9 +326,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                                       .read<AppState>()
                                       .stopSleepRoutine(),
                             icon: const Icon(Icons.stop_rounded),
-                            label: Text(
-                              i18n.t('toolbox.sleep.core.stop'),
-                            ),
+                            label: Text(i18n.t('toolbox.sleep.core.stop')),
                           ),
                         ],
                       ),
@@ -385,7 +371,9 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                       controller: _reframeController,
                       maxLines: 2,
                       decoration: InputDecoration(
-                        labelText: i18n.t('toolbox.sleep.winddown.gentlerReframe'),
+                        labelText: i18n.t(
+                          'toolbox.sleep.winddown.gentlerReframe',
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -402,9 +390,7 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                     FilledButton.icon(
                       onPressed: _saveThought,
                       icon: const Icon(Icons.edit_note_rounded),
-                      label: Text(
-                        i18n.t('toolbox.sleep.winddown.saveUnload'),
-                      ),
+                      label: Text(i18n.t('toolbox.sleep.winddown.saveUnload')),
                     ),
                   ],
                 ),
@@ -432,7 +418,9 @@ class _SleepWindDownPageState extends State<SleepWindDownPage> {
                           onTap: () => showSleepWhiteNoiseSheet(context),
                         ),
                         SleepQuickToolButton(
-                          title: i18n.t('toolbox.sleep.winddown.caffeineCutoff'),
+                          title: i18n.t(
+                            'toolbox.sleep.winddown.caffeineCutoff',
+                          ),
                           icon: Icons.local_cafe_rounded,
                           onTap: () =>
                               showCaffeineCutoffCalculatorSheet(context),
@@ -644,11 +632,7 @@ class _RoutineTemplateCard extends StatelessWidget {
                     ),
                   ),
                   if (template.builtIn)
-                    Chip(
-                      label: Text(
-                        i18n.t('toolbox.sleep.winddown.builtIn'),
-                      ),
-                    ),
+                    Chip(label: Text(i18n.t('toolbox.sleep.winddown.builtIn'))),
                   const SizedBox(width: 8),
                   IconButton(
                     onPressed: onEdit,

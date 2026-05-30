@@ -139,11 +139,10 @@ class _CompassToolPageState extends State<_CompassToolPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '指南针', en: 'Compass'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(context, 'inline.plan295.life.compass.64c372418a25'),
+      subtitle: _lifeI18nText(
         context,
-        zh: '实时方向、持机角度和磁场状态都放在首屏，方便你快速判断当前朝向是否稳定。',
-        en: 'Heading, tilt, and magnetic quality stay visible on the first screen for quick orientation checks.',
+        'inline.plan295.life.heading_tilt_and_magnetic_quality_st.28488a978389',
       ),
       child: _sensorsAvailable
           ? _buildBody(context, theme)
@@ -158,11 +157,13 @@ class _CompassToolPageState extends State<_CompassToolPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         _LifeSettingsPanel(
-          title: _lifeText(context, zh: '方向舞台', en: 'Direction stage'),
-          subtitle: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '先看当前朝向，再看设备是否持平和磁场是否稳定。',
-            en: 'Check heading first, then device tilt and magnetic stability.',
+            'inline.plan295.life.direction_stage.30aa01e1aec8',
+          ),
+          subtitle: _lifeI18nText(
+            context,
+            'inline.plan295.life.check_heading_first_then_device_tilt.dd0814354b2e',
           ),
           children: <Widget>[
             Wrap(
@@ -176,10 +177,10 @@ class _CompassToolPageState extends State<_CompassToolPage> {
                 ),
                 _CompassStatusPill(
                   icon: Icons.screen_rotation_alt_rounded,
-                  label: _lifeText(
+                  label: _lifeI18nText(
                     context,
-                    zh: '倾斜 ${_tilt.toStringAsFixed(0)}°',
-                    en: 'Tilt ${_tilt.toStringAsFixed(0)}°',
+                    'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.compass.tilt.e423ee6c8e',
+                    params: <String, Object?>{'p0': _tilt.toStringAsFixed(0)},
                   ),
                   color: accent,
                 ),
@@ -232,10 +233,13 @@ class _CompassToolPageState extends State<_CompassToolPage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _lifeText(
+                    _lifeI18nText(
                       context,
-                      zh: '$direction · ${_compassHintZh()}',
-                      en: '$direction · ${_compassHintEn()}',
+                      'life.compass.heading_hint',
+                      params: <String, Object?>{
+                        'direction': direction,
+                        'hint': _compassHint(context),
+                      },
                     ),
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
@@ -253,33 +257,43 @@ class _CompassToolPageState extends State<_CompassToolPage> {
           runSpacing: 8,
           children: <Widget>[
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '当前方向', en: 'Heading'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.heading.0241420b8324',
+              ),
               value: '${_smoothHeading.toStringAsFixed(0)}°',
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '设备倾角', en: 'Tilt'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.tilt.42a72229a797',
+              ),
               value: '${_tilt.toStringAsFixed(0)}°',
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '磁场强度', en: 'Field'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.field.3abcdd52b20b',
+              ),
               value: '${_fieldStrength.toStringAsFixed(0)} μT',
             ),
           ],
         ),
         const SizedBox(height: 12),
         _LifeSettingsPanel(
-          title: _lifeText(context, zh: '使用提示', en: 'Usage notes'),
-          subtitle: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '磁场容易受金属、磁吸壳和桌面电器干扰，转动手机一圈通常能更快稳定。',
-            en: 'Metal, magnetic cases, and electronics can disturb the field. A slow full turn often stabilizes readings faster.',
+            'inline.plan295.life.usage_notes.d2647c27f0af',
+          ),
+          subtitle: _lifeI18nText(
+            context,
+            'inline.plan295.life.metal_magnetic_cases_and_electronics.0ef60c35b506',
           ),
           children: <Widget>[
             Text(
-              _lifeText(
+              _lifeI18nText(
                 context,
-                zh: '如果方向持续跳动，请离开磁吸配件、笔记本、音箱或车载支架后再看结果。',
-                en: 'If the dial keeps jumping, move away from magnetic accessories, laptops, speakers, or car mounts before trusting the result.',
+                'inline.plan295.life.if_the_dial_keeps_jumping_move_away.5965ff2ae423',
               ),
               style: theme.textTheme.bodyMedium,
             ),
@@ -291,11 +305,13 @@ class _CompassToolPageState extends State<_CompassToolPage> {
 
   Widget _buildUnsupported(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '设备不支持', en: 'Unavailable'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '当前设备没有可用的磁力计或加速度计，所以无法提供方向结果。',
-        en: 'This device does not expose the magnetometer or accelerometer needed for a compass fix.',
+        'inline.plan295.life.unavailable.bd744c3b3507',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.this_device_does_not_expose_the_magn.739200b65c49',
       ),
       children: <Widget>[
         Row(
@@ -304,10 +320,9 @@ class _CompassToolPageState extends State<_CompassToolPage> {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                _lifeText(
+                _lifeI18nText(
                   context,
-                  zh: '建议在真机手机上打开此工具，桌面端和部分模拟器通常不会提供完整磁传感器。',
-                  en: 'Open this tool on a real phone. Desktop targets and many simulators usually do not provide a full magnetic sensor stack.',
+                  'inline.plan295.life.open_this_tool_on_a_real_phone_deskt.a76b72c0b648',
                 ),
               ),
             ),
@@ -332,11 +347,23 @@ class _CompassToolPageState extends State<_CompassToolPage> {
 
   String _statusText(BuildContext context) {
     return switch (_status) {
-      'stable' => _lifeText(context, zh: '磁场稳定', en: 'Stable field'),
-      'tilted' => _lifeText(context, zh: '请放平手机', en: 'Flatten phone'),
-      'interference' => _lifeText(context, zh: '磁场受扰', en: 'Field disturbed'),
-      'unsupported' => _lifeText(context, zh: '设备不支持', en: 'Unsupported'),
-      _ => _lifeText(context, zh: '正在初始化', en: 'Starting'),
+      'stable' => _lifeI18nText(
+        context,
+        'inline.plan295.life.stable_field.367e70be2d1e',
+      ),
+      'tilted' => _lifeI18nText(
+        context,
+        'inline.plan295.life.flatten_phone.027bdc346566',
+      ),
+      'interference' => _lifeI18nText(
+        context,
+        'inline.plan295.life.field_disturbed.edb69e6fbd46',
+      ),
+      'unsupported' => _lifeI18nText(
+        context,
+        'inline.plan295.life.unsupported.b44bb9a343a6',
+      ),
+      _ => _lifeI18nText(context, 'inline.plan295.life.starting.48a42587727e'),
     };
   }
 
@@ -350,27 +377,29 @@ class _CompassToolPageState extends State<_CompassToolPage> {
   }
 
   String _directionLabel(double heading) {
-    const zh = <String>['北', '东北', '东', '东南', '南', '西南', '西', '西北'];
-    const en = <String>['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+    const keys = <String>[
+      'life.compass.direction.n',
+      'life.compass.direction.ne',
+      'life.compass.direction.e',
+      'life.compass.direction.se',
+      'life.compass.direction.s',
+      'life.compass.direction.sw',
+      'life.compass.direction.w',
+      'life.compass.direction.nw',
+    ];
     final index = ((heading + 22.5) / 45).floor() % 8;
-    return _lifeText(context, zh: zh[index], en: en[index]);
+    return _lifeI18nText(context, keys[index]);
   }
 
-  String _compassHintZh() {
+  String _compassHint(BuildContext context) {
     return switch (_status) {
-      'stable' => '可以用来判断大方向',
-      'tilted' => '请尽量保持机身平稳',
-      'interference' => '附近可能有磁干扰',
-      _ => '正在收敛方向读数',
-    };
-  }
-
-  String _compassHintEn() {
-    return switch (_status) {
-      'stable' => 'ready for rough orientation',
-      'tilted' => 'keep the phone flatter',
-      'interference' => 'magnetic interference nearby',
-      _ => 'settling the heading',
+      'stable' => _lifeI18nText(context, 'life.compass.hint.stable'),
+      'tilted' => _lifeI18nText(context, 'life.compass.hint.tilted'),
+      'interference' => _lifeI18nText(
+        context,
+        'life.compass.hint.interference',
+      ),
+      _ => _lifeI18nText(context, 'life.compass.hint.starting'),
     };
   }
 

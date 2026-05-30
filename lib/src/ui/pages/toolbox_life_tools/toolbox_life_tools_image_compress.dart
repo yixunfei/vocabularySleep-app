@@ -115,11 +115,13 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
       );
     }
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '图片压缩', en: 'Image compression'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '本地离线压缩，支持比例、宽度和质量控制。',
-        en: 'Offline local compression with ratio, width, and quality controls.',
+        'inline.plan295.life.image_compression.836f865a3636',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.offline_local_compression_with_ratio.1a2a2947ef22',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,11 +150,13 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
 
   Widget _buildSourcePanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '原图输入', en: 'Source image'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '选择本地图片后可按比例或宽度进行压缩。',
-        en: 'Pick a local image, then compress by ratio or target width.',
+        'inline.plan295.life.source_image.be0c3ad9c64b',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.pick_a_local_image_then_compress_by.0d77a9a57a2f',
       ),
       children: <Widget>[
         Row(
@@ -162,12 +166,20 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
                 key: const ValueKey<String>('life_image_compress_pick_button'),
                 onPressed: _compressing || _saving ? null : _pickImage,
                 icon: const Icon(Icons.photo_library_rounded),
-                label: Text(_lifeText(context, zh: '选择图片', en: 'Pick image')),
+                label: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.pick_image.9ce43eb388b3',
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 10),
             IconButton.filledTonal(
-              tooltip: _lifeText(context, zh: '清空', en: 'Clear'),
+              tooltip: _lifeI18nText(
+                context,
+                'inline.plan294.zen_sand.clear_ea17218b',
+              ),
               onPressed: _compressing || _saving ? null : _resetAll,
               icon: const Icon(Icons.clear_rounded),
             ),
@@ -177,10 +189,9 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
         _LifePreviewFrame(
           child: _sourcePreview == null
               ? Text(
-                  _lifeText(
+                  _lifeI18nText(
                     context,
-                    zh: '尚未选择图片。',
-                    en: 'No image selected yet.',
+                    'inline.plan295.life.no_image_selected_yet.1d4a4b1c698c',
                   ),
                 )
               : Column(
@@ -188,7 +199,10 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
                   children: <Widget>[
                     Text(
                       _sourceName ??
-                          _lifeText(context, zh: '未命名图片', en: 'Unnamed image'),
+                          _lifeI18nText(
+                            context,
+                            'inline.plan295.life.unnamed_image.e89ca462aeab',
+                          ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -197,10 +211,14 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      _lifeText(
+                      _lifeI18nText(
                         context,
-                        zh: '${_sourceWidth}x${_sourceHeight} · ${_formatBytes(_sourceSize)}',
-                        en: '${_sourceWidth}x${_sourceHeight} · ${_formatBytes(_sourceSize)}',
+                        'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.compress.x.ef519271df',
+                        params: <String, Object?>{
+                          '_sourceWidth': _sourceWidth,
+                          '_sourceHeight': _sourceHeight,
+                          'p2': _formatBytes(_sourceSize),
+                        },
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -232,69 +250,74 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
         .clamp(1, 600)
         .toInt();
     final targetSizeText = _sourceWidth == 0 || _sourceHeight == 0
-        ? _lifeText(context, zh: '等待选择图片', en: 'Waiting for image')
+        ? _lifeI18nText(
+            context,
+            'inline.plan295.life.waiting_for_image.99646e865bc7',
+          )
         : _mode == _ImageCompressMode.ratio
         ? '${(_sourceWidth * _ratio).round()}x${(_sourceHeight * _ratio).round()}'
         : '${clampedTargetWidth.round()}x${_scaledHeight(clampedTargetWidth.round())}';
 
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '压缩参数', en: 'Compression settings'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '默认输出 JPEG，可显著减小体积。',
-        en: 'Multiple compression algorithms with optional auto-best selection.',
+        'inline.plan295.life.compression_settings.f9cc25b98492',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.multiple_compression_algorithms_with.88612fe22f8d',
       ),
       children: <Widget>[
         _LifeSegmentedField<_ImageCompressMode>(
-          label: _lifeText(context, zh: '压缩模式', en: 'Mode'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.mode.5a854fd8b48d',
+          ),
           value: _mode,
           options: <_LifeOption<_ImageCompressMode>>[
             const _LifeOption<_ImageCompressMode>(
               value: _ImageCompressMode.ratio,
-              labelZh: '按比例',
-              labelEn: 'By ratio',
+              labelKey: 'inline.plan295.life.by_ratio.277739a0a091',
             ),
             const _LifeOption<_ImageCompressMode>(
               value: _ImageCompressMode.width,
-              labelZh: '按宽度',
-              labelEn: 'By width',
+              labelKey: 'inline.plan295.life.by_width.c0450e2c56f9',
             ),
           ],
           onChanged: (value) => setState(() => _mode = value),
         ),
         const SizedBox(height: 12),
         _LifeSegmentedField<_ImageCompressAlgorithm>(
-          label: _lifeText(
+          label: _lifeI18nText(
             context,
-            zh: 'Compression algorithm',
-            en: 'Algorithm',
+            'inline.plan295.life.algorithm.1f86c487e91d',
           ),
           value: _algorithm,
           options: <_LifeOption<_ImageCompressAlgorithm>>[
             const _LifeOption<_ImageCompressAlgorithm>(
               value: _ImageCompressAlgorithm.autoBest,
-              labelZh: 'Auto best',
-              labelEn: 'Auto best',
+              labelKey:
+                  'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.auto_best_43fd8b',
             ),
             const _LifeOption<_ImageCompressAlgorithm>(
               value: _ImageCompressAlgorithm.jpegBalanced,
-              labelZh: 'JPEG balanced',
-              labelEn: 'JPEG balanced',
+              labelKey:
+                  'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.jpeg_balanced_489128',
             ),
             const _LifeOption<_ImageCompressAlgorithm>(
               value: _ImageCompressAlgorithm.jpegAggressive,
-              labelZh: 'JPEG aggressive',
-              labelEn: 'JPEG aggressive',
+              labelKey:
+                  'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.jpeg_aggressive_22a8de',
             ),
             const _LifeOption<_ImageCompressAlgorithm>(
               value: _ImageCompressAlgorithm.pngLossless,
-              labelZh: 'PNG lossless',
-              labelEn: 'PNG lossless',
+              labelKey:
+                  'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.png_lossless_2d47ce',
             ),
             const _LifeOption<_ImageCompressAlgorithm>(
               value: _ImageCompressAlgorithm.gifIndexed,
-              labelZh: 'GIF indexed',
-              labelEn: 'GIF indexed',
+              labelKey:
+                  'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.gif_indexed_aa8150',
             ),
           ],
           onChanged: (value) => setState(() => _algorithm = value),
@@ -303,27 +326,26 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
         KeyedSubtree(
           key: const ValueKey<String>('life_image_compress_color_mode_field'),
           child: _LifeSegmentedField<_ImageCompressColorMode>(
-            label: _lifeText(
+            label: _lifeI18nText(
               context,
-              zh: 'Lossy preprocess',
-              en: 'Lossy preprocess',
+              'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.lossy_preprocess_8c458c',
             ),
             value: _colorMode,
             options: <_LifeOption<_ImageCompressColorMode>>[
               const _LifeOption<_ImageCompressColorMode>(
                 value: _ImageCompressColorMode.original,
-                labelZh: 'Original color',
-                labelEn: 'Original color',
+                labelKey:
+                    'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.original_color_567f1a',
               ),
               const _LifeOption<_ImageCompressColorMode>(
                 value: _ImageCompressColorMode.grayscale,
-                labelZh: 'Grayscale',
-                labelEn: 'Grayscale',
+                labelKey:
+                    'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.grayscale_0c177d',
               ),
               const _LifeOption<_ImageCompressColorMode>(
                 value: _ImageCompressColorMode.monochrome,
-                labelZh: 'Black/white',
-                labelEn: 'Black/white',
+                labelKey:
+                    'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.black_white_36588b',
               ),
             ],
             onChanged: (value) => setState(() => _colorMode = value),
@@ -332,7 +354,10 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
         if (_usesMonochromeThreshold) ...<Widget>[
           const SizedBox(height: 12),
           _LifeSliderField(
-            label: _lifeText(context, zh: 'BW threshold', en: 'BW threshold'),
+            label: _lifeI18nText(
+              context,
+              'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.bw_threshold_0228f7',
+            ),
             valueText: _bwThreshold.toStringAsFixed(2),
             value: _bwThreshold,
             min: 0.35,
@@ -345,18 +370,21 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
         KeyedSubtree(
           key: const ValueKey<String>('life_image_compress_dpi_mode_field'),
           child: _LifeSegmentedField<_ImageCompressDpiMode>(
-            label: _lifeText(context, zh: 'DPI option', en: 'DPI option'),
+            label: _lifeI18nText(
+              context,
+              'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.dpi_option_6201da',
+            ),
             value: _dpiMode,
             options: <_LifeOption<_ImageCompressDpiMode>>[
               const _LifeOption<_ImageCompressDpiMode>(
                 value: _ImageCompressDpiMode.keep,
-                labelZh: 'No custom DPI',
-                labelEn: 'No custom DPI',
+                labelKey:
+                    'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.no_custom_dpi_501946',
               ),
               const _LifeOption<_ImageCompressDpiMode>(
                 value: _ImageCompressDpiMode.pngMetadata,
-                labelZh: 'Write PNG DPI',
-                labelEn: 'Write PNG DPI',
+                labelKey:
+                    'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.write_png_dpi_0210f5',
               ),
             ],
             onChanged: (value) => setState(() => _dpiMode = value),
@@ -365,10 +393,9 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
         if (_usesDpiValue) ...<Widget>[
           const SizedBox(height: 12),
           _LifeSliderField(
-            label: _lifeText(
+            label: _lifeI18nText(
               context,
-              zh: 'PNG DPI metadata',
-              en: 'PNG DPI metadata',
+              'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.png_dpi_metadata_19b6d8',
             ),
             valueText: '${_dpi.round()} dpi',
             value: _dpi,
@@ -381,7 +408,10 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
         const SizedBox(height: 12),
         if (_mode == _ImageCompressMode.ratio)
           _LifeSliderField(
-            label: _lifeText(context, zh: '缩放比例', en: 'Scale ratio'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.scale_ratio.73c7742c8a80',
+            ),
             valueText: '${(_ratio * 100).round()}%',
             value: _ratio,
             min: 0.1,
@@ -393,7 +423,10 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
           )
         else
           _LifeSliderField(
-            label: _lifeText(context, zh: '目标宽度', en: 'Target width'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.target_width.28e0428cadba',
+            ),
             valueText: '${clampedTargetWidth.round()} px',
             value: clampedTargetWidth,
             min: 64,
@@ -406,7 +439,10 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
         if (_usesJpegQuality) ...<Widget>[
           const SizedBox(height: 12),
           _LifeSliderField(
-            label: _lifeText(context, zh: 'JPEG quality', en: 'JPEG quality'),
+            label: _lifeI18nText(
+              context,
+              'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_id_photo.jpeg_quality_d81539',
+            ),
             valueText: '${_jpegQuality.round()}',
             value: _jpegQuality,
             min: 20,
@@ -417,19 +453,18 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
         ],
         const SizedBox(height: 8),
         Text(
-          _lifeText(
+          _lifeI18nText(
             context,
-            zh: 'DPI metadata applies only to PNG output. JPEG/GIF ignore custom DPI metadata.',
-            en: 'DPI metadata applies only to PNG output. JPEG/GIF ignore custom DPI metadata.',
+            'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.dpi_metadata_applies_only_to_png_output_jpeg_gif_ignore_179e15',
           ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 8),
         Text(
-          _lifeText(
+          _lifeI18nText(
             context,
-            zh: '预期输出尺寸: $targetSizeText',
-            en: 'Expected output size: $targetSizeText',
+            'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.compress.expected_output_size.d89f044c2f',
+            params: <String, Object?>{'targetSizeText': targetSizeText},
           ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
@@ -454,8 +489,14 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
                 : const Icon(Icons.compress_rounded),
             label: Text(
               _compressing
-                  ? _lifeText(context, zh: '压缩中...', en: 'Compressing...')
-                  : _lifeText(context, zh: '开始压缩', en: 'Compress'),
+                  ? _lifeI18nText(
+                      context,
+                      'inline.plan295.life.compressing.106856574f74',
+                    )
+                  : _lifeI18nText(
+                      context,
+                      'inline.plan295.life.compress.73d7ee9a40ec',
+                    ),
             ),
           ),
         ),
@@ -474,8 +515,14 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
                 : const Icon(Icons.save_alt_rounded),
             label: Text(
               _saving
-                  ? _lifeText(context, zh: '保存中...', en: 'Saving...')
-                  : _lifeText(context, zh: '导出结果', en: 'Export'),
+                  ? _lifeI18nText(
+                      context,
+                      'inline.plan295.life.saving.2c9b4d88c6ff',
+                    )
+                  : _lifeI18nText(
+                      context,
+                      'inline.plan295.crypto.export.f7657dd92440',
+                    ),
             ),
           ),
         ),
@@ -509,7 +556,11 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        _lifeText(context, zh: '已保存: $_savedPath', en: 'Saved: $_savedPath'),
+        _lifeI18nText(
+          context,
+          'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.saved.7b5e2b53bc',
+          params: <String, Object?>{'_savedPath': _savedPath},
+        ),
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: Theme.of(context).colorScheme.onPrimaryContainer,
         ),
@@ -520,11 +571,13 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
   Widget _buildMetricsPanel(BuildContext context) {
     if (!_hasSource) {
       return _LifeSettingsPanel(
-        title: _lifeText(context, zh: '压缩结果', en: 'Compression result'),
-        subtitle: _lifeText(
+        title: _lifeI18nText(
           context,
-          zh: '选择图片并执行压缩后展示结果。',
-          en: 'Pick an image and run compression to view results.',
+          'inline.plan295.life.compression_result.38590e7ddf99',
+        ),
+        subtitle: _lifeI18nText(
+          context,
+          'inline.plan295.life.pick_an_image_and_run_compression_to.fdaeccc398ac',
         ),
         children: const <Widget>[],
       );
@@ -538,18 +591,23 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
         : '--';
     final dimensionText = _hasResult
         ? '${_resultWidth}x$_resultHeight'
-        : _lifeText(context, zh: 'Not compressed', en: 'Not compressed');
+        : _lifeI18nText(
+            context,
+            'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.not_compressed_c3e8a5',
+          );
     final algorithmText = _hasResult
         ? _algorithmLabel(_resultAlgorithm ?? _algorithm, context)
         : '--';
     final detailText = _hasResult ? (_resultAlgorithmDetail ?? '--') : '--';
 
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '压缩结果', en: 'Compression result'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '展示压缩后体积、比例和尺寸变化。',
-        en: 'Shows output size, ratio, and dimensions.',
+        'inline.plan295.life.compression_result.38590e7ddf99',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.shows_output_size_ratio_and_dimensio.2ada3d60a69f',
       ),
       children: <Widget>[
         Wrap(
@@ -557,34 +615,51 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
           runSpacing: 10,
           children: <Widget>[
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '原图体积', en: 'Source size'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.source_size.b47053a82484',
+              ),
               value: _formatBytes(_sourceSize),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '结果体积', en: 'Output size'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.output_size.bbdae54e8de3',
+              ),
               value: _hasResult ? _formatBytes(_resultSize) : '--',
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '体积占比', en: 'Size ratio'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.size_ratio.c388cbbbf0d9',
+              ),
               value: ratioText,
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '压缩幅度', en: 'Reduction'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.reduction.465277dac456',
+              ),
               value: shrinkText,
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '输出尺寸', en: 'Output dimensions'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.output_dimensions.50d1fb163588',
+              ),
               value: dimensionText,
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: 'Algorithm', en: 'Algorithm'),
+              label: _lifeI18nText(
+                context,
+                'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.algorithm_70b858',
+              ),
               value: algorithmText,
             ),
             ToolboxMetricCard(
-              label: _lifeText(
+              label: _lifeI18nText(
                 context,
-                zh: 'Encoding detail',
-                en: 'Encoding detail',
+                'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.encoding_detail_3b8a5b',
               ),
               value: detailText,
             ),
@@ -596,11 +671,10 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
 
   Widget _buildPreviewPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '效果预览', en: 'Preview'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(context, 'inline.plan295.life.preview.541b9f56bac7'),
+      subtitle: _lifeI18nText(
         context,
-        zh: '左侧原图，右侧压缩结果。',
-        en: 'Source on the left and compressed result on the right.',
+        'inline.plan295.life.source_on_the_left_and_compressed_re.5614b2c2e9d6',
       ),
       children: <Widget>[
         LayoutBuilder(
@@ -611,15 +685,13 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
                 children: <Widget>[
                   _previewTile(
                     context: context,
-                    titleZh: '原图',
-                    titleEn: 'Source',
+                    titleKey: 'inline.plan295.life.source.bd1f1bbdfe8e',
                     image: _sourcePreview,
                   ),
                   const SizedBox(height: 10),
                   _previewTile(
                     context: context,
-                    titleZh: '压缩后',
-                    titleEn: 'Compressed',
+                    titleKey: 'inline.plan295.life.compressed.e1f20d2e9acb',
                     image: _resultPreview,
                   ),
                 ],
@@ -630,8 +702,7 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
                 Expanded(
                   child: _previewTile(
                     context: context,
-                    titleZh: '原图',
-                    titleEn: 'Source',
+                    titleKey: 'inline.plan295.life.source.bd1f1bbdfe8e',
                     image: _sourcePreview,
                   ),
                 ),
@@ -639,8 +710,7 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
                 Expanded(
                   child: _previewTile(
                     context: context,
-                    titleZh: '压缩后',
-                    titleEn: 'Compressed',
+                    titleKey: 'inline.plan295.life.compressed.e1f20d2e9acb',
                     image: _resultPreview,
                   ),
                 ),
@@ -654,8 +724,7 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
 
   Widget _previewTile({
     required BuildContext context,
-    required String titleZh,
-    required String titleEn,
+    required String titleKey,
     required ui.Image? image,
   }) {
     return Container(
@@ -670,7 +739,7 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            _lifeText(context, zh: titleZh, en: titleEn),
+            _lifeI18nText(context, titleKey),
             style: Theme.of(
               context,
             ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -681,7 +750,10 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
             child: image == null
                 ? Center(
                     child: Text(
-                      _lifeText(context, zh: '暂无预览', en: 'No preview'),
+                      _lifeI18nText(
+                        context,
+                        'inline.plan295.crypto.no_preview.b2c10e9d539d',
+                      ),
                     ),
                   )
                 : ClipRRect(
@@ -743,10 +815,10 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '选择图片失败: $error',
-          en: 'Failed to pick image: $error',
+          'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.compress.failed_to_pick_image.6e0bad236d',
+          params: <String, Object?>{'error': error},
         );
       });
     }
@@ -805,10 +877,10 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '压缩失败: $error',
-          en: 'Compression failed: $error',
+          'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.compress.compression_failed.e559f85464',
+          params: <String, Object?>{'error': error},
         );
       });
     } finally {
@@ -837,10 +909,9 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
       String? savedPath;
       try {
         savedPath = await FilePicker.platform.saveFile(
-          dialogTitle: _lifeText(
+          dialogTitle: _lifeI18nText(
             context,
-            zh: '保存压缩图片',
-            en: 'Save compressed image',
+            'inline.plan295.life.save_compressed_image.071ebb6716f7',
           ),
           fileName: fileName,
           type: FileType.custom,
@@ -858,10 +929,9 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
       if (savedPath == null || savedPath.trim().isEmpty) {
         if (kIsWeb) {
           setState(() {
-            _savedPath = _lifeText(
+            _savedPath = _lifeI18nText(
               context,
-              zh: '浏览器下载已触发，请查看下载列表。',
-              en: 'Browser download started. Check your downloads.',
+              'inline.plan295.crypto.browser_download_started_check_your.b28d392515b4',
             );
           });
           return;
@@ -896,10 +966,10 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '保存失败: $error',
-          en: 'Save failed: $error',
+          'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.save_failed.733e2f2246',
+          params: <String, Object?>{'error': error},
         );
       });
     } finally {
@@ -1013,15 +1083,30 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
   ) {
     switch (algorithm) {
       case _ImageCompressAlgorithm.autoBest:
-        return _lifeText(context, zh: 'Auto best', en: 'Auto best');
+        return _lifeI18nText(
+          context,
+          'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.auto_best_43fd8b',
+        );
       case _ImageCompressAlgorithm.jpegBalanced:
-        return _lifeText(context, zh: 'JPEG balanced', en: 'JPEG balanced');
+        return _lifeI18nText(
+          context,
+          'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.jpeg_balanced_489128',
+        );
       case _ImageCompressAlgorithm.jpegAggressive:
-        return _lifeText(context, zh: 'JPEG aggressive', en: 'JPEG aggressive');
+        return _lifeI18nText(
+          context,
+          'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.jpeg_aggressive_22a8de',
+        );
       case _ImageCompressAlgorithm.pngLossless:
-        return _lifeText(context, zh: 'PNG lossless', en: 'PNG lossless');
+        return _lifeI18nText(
+          context,
+          'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.png_lossless_2d47ce',
+        );
       case _ImageCompressAlgorithm.gifIndexed:
-        return _lifeText(context, zh: 'GIF indexed', en: 'GIF indexed');
+        return _lifeI18nText(
+          context,
+          'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.gif_indexed_aa8150',
+        );
     }
   }
 

@@ -62,10 +62,8 @@ class _VoiceInputSettingsPageState
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
         SnackBar(
           content: Text(
-            pickUiText(
-              i18n,
-              zh: '语音输入离线模型操作失败：$error',
-              en: 'Voice input offline model action failed: $error',
+            i18n.t(
+              'inline.ui.pages.voice_input_settings_page.voice_input_offline_model_action_failed_error_aad121',
             ),
           ),
         ),
@@ -96,7 +94,11 @@ class _VoiceInputSettingsPageState
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(pickUiText(i18n, zh: '语音输入设置', en: 'Voice input settings')),
+        title: Text(
+          i18n.t(
+            'inline.ui.pages.help_center_page.voice_input_settings_2bf6ed',
+          ),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -108,21 +110,19 @@ class _VoiceInputSettingsPageState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   SectionHeader(
-                    title: pickUiText(i18n, zh: '输入引擎', en: 'Input engine'),
-                    subtitle: pickUiText(
-                      i18n,
-                      zh: '快速笔记的语音输入与跟读识别分开设置，互不影响。',
-                      en: 'Quick-note voice input is configured separately from follow-along recognition.',
+                    title: i18n.t(
+                      'inline.ui.pages.voice_input_settings_page.input_engine_79c053',
+                    ),
+                    subtitle: i18n.t(
+                      'inline.ui.pages.voice_input_settings_page.quick_note_voice_input_is_configured_separately_from_fol_39b5ac',
                     ),
                   ),
                   const SizedBox(height: 14),
                   DropdownButtonFormField<VoiceInputProviderType>(
                     initialValue: voiceInput.provider,
                     decoration: InputDecoration(
-                      labelText: pickUiText(
-                        i18n,
-                        zh: '语音输入方式',
-                        en: 'Voice input provider',
+                      labelText: i18n.t(
+                        'inline.ui.pages.voice_input_settings_page.voice_input_provider_f43cc4',
                       ),
                     ),
                     items: VoiceInputProviderType.values
@@ -164,21 +164,19 @@ class _VoiceInputSettingsPageState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   SectionHeader(
-                    title: pickUiText(i18n, zh: '输入语言', en: 'Input language'),
-                    subtitle: pickUiText(
-                      i18n,
-                      zh: '建议优先使用系统默认或完整语言区域码，例如 zh-CN、en-US。',
-                      en: 'Prefer the system default or a full locale tag such as zh-CN or en-US.',
+                    title: i18n.t(
+                      'inline.ui.pages.voice_input_settings_page.input_language_d81557',
+                    ),
+                    subtitle: i18n.t(
+                      'inline.ui.pages.voice_input_settings_page.prefer_the_system_default_or_a_full_locale_tag_such_as_z_f69b54',
                     ),
                   ),
                   const SizedBox(height: 14),
                   DropdownButtonFormField<String>(
                     initialValue: language,
                     decoration: InputDecoration(
-                      labelText: pickUiText(
-                        i18n,
-                        zh: '识别语言',
-                        en: 'Recognition language',
+                      labelText: i18n.t(
+                        'inline.ui.pages.recognition_settings_page.recognition_language_0dd524',
                       ),
                     ),
                     items: languageOptions
@@ -211,11 +209,11 @@ class _VoiceInputSettingsPageState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     SectionHeader(
-                      title: pickUiText(i18n, zh: 'API 参数', en: 'API fields'),
-                      subtitle: pickUiText(
-                        i18n,
-                        zh: 'API 模式用于语音输入转写，不会影响跟读评分链路。',
-                        en: 'These API fields are used only for voice-input transcription.',
+                      title: i18n.t(
+                        'inline.ui.pages.voice_input_settings_page.api_fields_342300',
+                      ),
+                      subtitle: i18n.t(
+                        'inline.ui.pages.voice_input_settings_page.these_api_fields_are_used_only_for_voice_input_transcrip_f12c2a',
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -288,29 +286,25 @@ class _VoiceInputSettingsPageState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     SectionHeader(
-                      title: pickUiText(i18n, zh: '离线模型', en: 'Offline model'),
-                      subtitle: pickUiText(
-                        i18n,
-                        zh: '首次使用离线语音输入前需要下载模型包。',
-                        en: 'Download the offline package before using offline voice input for the first time.',
+                      title: i18n.t(
+                        'inline.ui.pages.voice_input_settings_page.offline_model_0cdf80',
+                      ),
+                      subtitle: i18n.t(
+                        'inline.ui.pages.voice_input_settings_page.download_the_offline_package_before_using_offline_voice_d739a2',
                       ),
                     ),
                     const SizedBox(height: 14),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
-                        pickUiText(
-                          i18n,
-                          zh: '离线引擎包',
-                          en: 'Offline engine package',
+                        i18n.t(
+                          'inline.ui.pages.voice_input_settings_page.offline_engine_package_cdec31',
                         ),
                       ),
                       subtitle: Text(
                         offlineInstalled
-                            ? pickUiText(
-                                i18n,
-                                zh: '已安装，可直接用于语音输入。',
-                                en: 'Installed and ready for voice input.',
+                            ? i18n.t(
+                                'inline.ui.pages.voice_input_settings_page.installed_and_ready_for_voice_input_d05a98',
                               )
                             : i18n.t(
                                 'asrModelNotInstalled',
@@ -330,11 +324,11 @@ class _VoiceInputSettingsPageState
                                 install: !offlineInstalled,
                               ),
                               child: Text(
-                                pickUiText(
-                                  i18n,
-                                  zh: offlineInstalled ? '移除' : '下载',
-                                  en: offlineInstalled ? 'Remove' : 'Download',
-                                ),
+                                offlineInstalled
+                                    ? i18n.t(
+                                        'inline.ui.pages.practice_notebook_page.remove_2837f7',
+                                      )
+                                    : i18n.t('toolbox.sleep.tools.download'),
                               ),
                             ),
                     ),
@@ -352,23 +346,17 @@ class _VoiceInputSettingsPageState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     SectionHeader(
-                      title: pickUiText(
-                        i18n,
-                        zh: '系统语音识别',
-                        en: 'System speech recognition',
+                      title: i18n.t(
+                        'inline.ui.pages.voice_input_settings_page.system_speech_recognition_4b0cef',
                       ),
-                      subtitle: pickUiText(
-                        i18n,
-                        zh: 'Android 使用 SpeechRecognizer / RecognizerIntent，iOS 使用 SFSpeechRecognizer。',
-                        en: 'Android uses SpeechRecognizer / RecognizerIntent, and iOS uses SFSpeechRecognizer.',
+                      subtitle: i18n.t(
+                        'inline.ui.pages.voice_input_settings_page.android_uses_speechrecognizer_recognizerintent_and_ios_u_8dfad6',
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '该模式直接调用系统语音识别能力，适合快速输入短笔记。',
-                        en: 'This mode uses the platform recognizer directly and is ideal for fast short-note input.',
+                      i18n.t(
+                        'inline.ui.pages.voice_input_settings_page.this_mode_uses_the_platform_recognizer_directly_and_is_i_b29b9c',
                       ),
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
@@ -384,20 +372,14 @@ class _VoiceInputSettingsPageState
 
   String _providerHint(AppI18n i18n, VoiceInputProviderType provider) {
     return switch (provider) {
-      VoiceInputProviderType.api => pickUiText(
-        i18n,
-        zh: '使用远程 API 转写，识别质量更高，但需要网络与 API Key。',
-        en: 'Uses a remote API for transcription. Higher quality, but requires network access and an API key.',
+      VoiceInputProviderType.api => i18n.t(
+        'inline.ui.pages.voice_input_settings_page.uses_a_remote_api_for_transcription_higher_quality_but_r_8da13c',
       ),
-      VoiceInputProviderType.offline => pickUiText(
-        i18n,
-        zh: '在设备本地完成语音输入转写，首次需要下载离线模型。',
-        en: 'Transcribes voice input locally on-device and needs a one-time offline model download.',
+      VoiceInputProviderType.offline => i18n.t(
+        'inline.ui.pages.voice_input_settings_page.transcribes_voice_input_locally_on_device_and_needs_a_on_78298c',
       ),
-      VoiceInputProviderType.system => pickUiText(
-        i18n,
-        zh: '直接调用系统听写能力，适合快速输入，但体验依赖系统面板与设备实现。',
-        en: 'Uses built-in system dictation. Great for quick input, but the experience depends on the device implementation.',
+      VoiceInputProviderType.system => i18n.t(
+        'inline.ui.pages.voice_input_settings_page.uses_built_in_system_dictation_great_for_quick_input_but_69d42e',
       ),
     };
   }

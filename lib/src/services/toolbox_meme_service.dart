@@ -228,8 +228,7 @@ class ToolboxMemeService {
       maxLines: maxLines,
     );
     final boxWidth = painter.width + horizontalPadding * 2 + contentInset * 2;
-    final boxHeight =
-        painter.height + verticalPadding * 2 + contentInset * 2;
+    final boxHeight = painter.height + verticalPadding * 2 + contentInset * 2;
     final centerX = (canvasSize.width * layer.centerX)
         .clamp(0.0, canvasSize.width)
         .toDouble();

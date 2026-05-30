@@ -175,9 +175,15 @@ class _FluteToolState extends State<_FluteTool> {
 
   String _presetSubtitle(AppI18n i18n, _FlutePreset preset) {
     return switch (preset.id) {
-      'bamboo_breath' => i18n.t('toolbox.sound.flute.gentler_attacks_and_a_more'),
-      'lead_solo' => i18n.t('toolbox.sound.flute.brighter_lead_tone_with_stronger'),
-      'alto_warm' => i18n.t('toolbox.sound.flute.warmer_midrange_and_softer_tail'),
+      'bamboo_breath' => i18n.t(
+        'toolbox.sound.flute.gentler_attacks_and_a_more',
+      ),
+      'lead_solo' => i18n.t(
+        'toolbox.sound.flute.brighter_lead_tone_with_stronger',
+      ),
+      'alto_warm' => i18n.t(
+        'toolbox.sound.flute.warmer_midrange_and_softer_tail',
+      ),
       _ => i18n.t('toolbox.sound.flute.natural_breathy_tone_for_gentle'),
     };
   }
@@ -1906,7 +1912,9 @@ class _FluteToolState extends State<_FluteTool> {
               Expanded(
                 child: SectionHeader(
                   title: i18n.t('toolbox.sound.flute.vertical_flute'),
-                  subtitle: i18n.t('toolbox.sound.flute.rebuild_the_flute_body_finger'),
+                  subtitle: i18n.t(
+                    'toolbox.sound.flute.rebuild_the_flute_body_finger',
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -1983,7 +1991,9 @@ class _FluteToolState extends State<_FluteTool> {
           if (_blowPermissionDenied) ...<Widget>[
             const SizedBox(height: 8),
             Text(
-              i18n.t('toolbox.sound.flute.microphone_permission_unavailable_touch_play'),
+              i18n.t(
+                'toolbox.sound.flute.microphone_permission_unavailable_touch_play',
+              ),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.error,
               ),

@@ -11,7 +11,6 @@ import 'package:flutter/services.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../services/toolbox_audio_service.dart';
-import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 import 'toolbox_sudoku_card.dart';
 import 'toolbox_tool_shell.dart';
@@ -34,11 +33,9 @@ class MiniGamesToolPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return ToolboxToolPage(
-      title: pickUiText(i18n, zh: '小游戏模块', en: 'Mini games'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '在工具箱里集中放置俄罗斯轮盘赌、俄罗斯方块、推箱子、数独、扫雷、电子拼图、五子棋和 2048/4096。',
-        en: 'A compact game module with roulette, Tetris, Sokoban, Sudoku, Minesweeper, image jigsaw, Gomoku, and 2048/4096.',
+      title: i18n.t('inline.ui.module.module_access.mini_games_e63f5e'),
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_mini_games.a_compact_game_module_with_roulette_tetris_sokoban_sudok_d3bb03',
       ),
       child: const _MiniGamesHub(),
     );
@@ -52,11 +49,11 @@ class RouletteGamePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return ToolboxToolPage(
-      title: pickUiText(i18n, zh: '俄罗斯轮盘赌', en: 'Roulette trigger'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '设置子弹数后旋转弹仓，空膛播放拟真咔哒/咔咔机械声，命中时触发血色闪烁、震动和爆炸音效。',
-        en: 'Set the bullet count, spin the cylinder, and pull chamber by chamber. Empty pulls clack; hits flash red, vibrate, and blast.',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_mini_games.roulette_trigger_1bb5ec',
+      ),
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_mini_games.set_the_bullet_count_spin_the_cylinder_and_pull_chamber_f769c3',
       ),
       child: const _RouletteGame(),
     );
@@ -70,11 +67,9 @@ class TetrisGamePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return ToolboxToolPage(
-      title: pickUiText(i18n, zh: '俄罗斯方块', en: 'Tetris'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '经典 10x20 下落方块，支持旋转、软降、硬降、消行得分和暂停。',
-        en: 'Classic 10x20 falling blocks with rotate, soft drop, hard drop, line clears, scoring, and pause.',
+      title: i18n.t('inline.ui.pages.toolbox_mini_games.tetris_7fab1e'),
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_mini_games.classic_10x20_falling_blocks_with_rotate_soft_drop_hard_512f74',
       ),
       child: const _TetrisGame(),
     );
@@ -88,11 +83,9 @@ class SokobanGamePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return ToolboxToolPage(
-      title: pickUiText(i18n, zh: '推箱子', en: 'Sokoban'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '先生成可解正确路径，再布置障碍；支持提示、撤销和正确线路显示。',
-        en: 'Generates a solvable route first, then places walls. Includes hints, undo, and route reveal.',
+      title: i18n.t('inline.ui.pages.toolbox_mini_games.sokoban_4ed75c'),
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_mini_games.generates_a_solvable_route_first_then_places_walls_inclu_706ea2',
       ),
       child: const _SokobanGame(),
     );
@@ -106,11 +99,9 @@ class SudokuGamePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return ToolboxToolPage(
-      title: pickUiText(i18n, zh: '数独', en: 'Sudoku'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '9x9 数独，支持冲突高亮、擦除和重开。',
-        en: '9x9 Sudoku with conflict highlighting, clear cell, and new game.',
+      title: i18n.t('inline.ui.pages.toolbox_mini_games.sudoku_3498e2'),
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_mini_games.9x9_sudoku_with_conflict_highlighting_clear_cell_and_new_a6fef9',
       ),
       child: const SudokuGameCard(),
     );
@@ -124,11 +115,9 @@ class MinesweeperGamePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return ToolboxToolPage(
-      title: pickUiText(i18n, zh: '扫雷', en: 'Minesweeper'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '点击翻开、长按插旗，首步保证安全。',
-        en: 'Tap to reveal and long-press to flag. The first move is always safe.',
+      title: i18n.t('inline.ui.pages.toolbox_mini_games.minesweeper_1b6ec2'),
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_mini_games.tap_to_reveal_and_long_press_to_flag_the_first_move_is_a_d896b8',
       ),
       child: const _MinesweeperGame(),
     );
@@ -142,11 +131,9 @@ class JigsawGamePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return ToolboxToolPage(
-      title: pickUiText(i18n, zh: '电子拼图', en: 'Image jigsaw'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '导入图片后自动切片，通过交换拼块完成拼图。',
-        en: 'Import an image, split it into tiles, and solve by swapping tiles.',
+      title: i18n.t('inline.ui.pages.toolbox_mini_games.image_jigsaw_01767e'),
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_mini_games.import_an_image_split_it_into_tiles_and_solve_by_swappin_11cc58',
       ),
       child: const _JigsawGame(),
     );
@@ -160,11 +147,9 @@ class GomokuGamePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return ToolboxToolPage(
-      title: pickUiText(i18n, zh: '五子棋', en: 'Gomoku'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '人机对弈五子棋，AI 包含进攻、防守和落点评估逻辑。',
-        en: 'Play Gomoku against an AI with attack, defense, and position evaluation.',
+      title: i18n.t('inline.ui.pages.toolbox_mini_games.gomoku_053d7a'),
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_mini_games.play_gomoku_against_an_ai_with_attack_defense_and_positi_d3bf47',
       ),
       child: const _GomokuGame(),
     );
@@ -178,11 +163,9 @@ class SlideNumberGamePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return ToolboxToolPage(
-      title: pickUiText(i18n, zh: '2048 / 4096', en: '2048 / 4096'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '经典数字合并玩法，支持目标切换到 2048 或 4096。',
-        en: 'Classic merge puzzle with switchable targets: 2048 or 4096.',
+      title: i18n.t('inline.ui.pages.toolbox_mini_games.text_f00657'),
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_mini_games.classic_merge_puzzle_with_switchable_targets_2048_or_409_3c2419',
       ),
       child: const _SlideNumberGame(),
     );
@@ -197,73 +180,65 @@ class _MiniGamesHub extends StatelessWidget {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     final entries = <_MiniGameEntry>[
       _MiniGameEntry(
-        title: pickUiText(i18n, zh: '俄罗斯轮盘赌', en: 'Roulette trigger'),
-        subtitle: pickUiText(
-          i18n,
-          zh: '设置子弹数，逐次扣动扳机。',
-          en: 'Set bullets and pull one chamber at a time.',
+        title: i18n.t(
+          'inline.ui.pages.toolbox_mini_games.roulette_trigger_1bb5ec',
+        ),
+        subtitle: i18n.t(
+          'inline.ui.pages.toolbox_mini_games.set_bullets_and_pull_one_chamber_at_a_time_559d26',
         ),
         icon: Icons.casino_rounded,
         accent: const Color(0xFFC2554C),
         pageBuilder: RouletteGamePage.new,
       ),
       _MiniGameEntry(
-        title: pickUiText(i18n, zh: '俄罗斯方块', en: 'Tetris'),
-        subtitle: pickUiText(
-          i18n,
-          zh: '下落、旋转、消行和得分。',
-          en: 'Drop, rotate, clear lines, and score.',
+        title: i18n.t('inline.ui.pages.toolbox_mini_games.tetris_7fab1e'),
+        subtitle: i18n.t(
+          'inline.ui.pages.toolbox_mini_games.drop_rotate_clear_lines_and_score_8c5735',
         ),
         icon: Icons.view_module_rounded,
         accent: const Color(0xFF4B8BC8),
         pageBuilder: TetrisGamePage.new,
       ),
       _MiniGameEntry(
-        title: pickUiText(i18n, zh: '推箱子', en: 'Sokoban'),
-        subtitle: pickUiText(
-          i18n,
-          zh: '有解关卡、提示与正确路线。',
-          en: 'Solvable levels with hints and route reveal.',
+        title: i18n.t('inline.ui.pages.toolbox_mini_games.sokoban_4ed75c'),
+        subtitle: i18n.t(
+          'inline.ui.pages.toolbox_mini_games.solvable_levels_with_hints_and_route_reveal_d4aa30',
         ),
         icon: Icons.inventory_2_rounded,
         accent: const Color(0xFF8A6CCF),
         pageBuilder: SokobanGamePage.new,
       ),
       _MiniGameEntry(
-        title: pickUiText(i18n, zh: '数独', en: 'Sudoku'),
-        subtitle: pickUiText(i18n, zh: '9x9 逻辑填数。', en: '9x9 logic puzzle.'),
+        title: i18n.t('inline.ui.pages.toolbox_mini_games.sudoku_3498e2'),
+        subtitle: i18n.t(
+          'inline.ui.pages.toolbox_mini_games.9x9_logic_puzzle_e049f7',
+        ),
         icon: Icons.grid_on_rounded,
         accent: const Color(0xFF5C7BE1),
         pageBuilder: SudokuGamePage.new,
       ),
       _MiniGameEntry(
-        title: pickUiText(i18n, zh: '扫雷', en: 'Minesweeper'),
-        subtitle: pickUiText(
-          i18n,
-          zh: '翻开格子并插旗排雷。',
-          en: 'Reveal safe cells and flag mines.',
+        title: i18n.t('inline.ui.pages.toolbox_mini_games.minesweeper_1b6ec2'),
+        subtitle: i18n.t(
+          'inline.ui.pages.toolbox_mini_games.reveal_safe_cells_and_flag_mines_e9b976',
         ),
         icon: Icons.flag_rounded,
         accent: const Color(0xFF3EA37D),
         pageBuilder: MinesweeperGamePage.new,
       ),
       _MiniGameEntry(
-        title: pickUiText(i18n, zh: '电子拼图', en: 'Image jigsaw'),
-        subtitle: pickUiText(
-          i18n,
-          zh: '导入图片后自动切片拼图。',
-          en: 'Import an image and solve by swapping tiles.',
+        title: i18n.t('inline.ui.pages.toolbox_mini_games.image_jigsaw_01767e'),
+        subtitle: i18n.t(
+          'inline.ui.pages.toolbox_mini_games.import_an_image_and_solve_by_swapping_tiles_0eec72',
         ),
         icon: Icons.extension_rounded,
         accent: const Color(0xFFD0874A),
         pageBuilder: JigsawGamePage.new,
       ),
       _MiniGameEntry(
-        title: pickUiText(i18n, zh: '五子棋', en: 'Gomoku'),
-        subtitle: pickUiText(
-          i18n,
-          zh: '人机对战，AI 自动应对。',
-          en: 'Take on the AI and connect five.',
+        title: i18n.t('inline.ui.pages.toolbox_mini_games.gomoku_053d7a'),
+        subtitle: i18n.t(
+          'inline.ui.pages.toolbox_mini_games.take_on_the_ai_and_connect_five_a207ef',
         ),
         icon: Icons.radio_button_checked_rounded,
         accent: const Color(0xFF9A6B3A),
@@ -271,10 +246,8 @@ class _MiniGamesHub extends StatelessWidget {
       ),
       _MiniGameEntry(
         title: '2048 / 4096',
-        subtitle: pickUiText(
-          i18n,
-          zh: '滑动合并数字。',
-          en: 'Slide to merge number tiles.',
+        subtitle: i18n.t(
+          'inline.ui.pages.toolbox_mini_games.slide_to_merge_number_tiles_18c176',
         ),
         icon: Icons.view_module_rounded,
         accent: const Color(0xFFB47A45),
@@ -286,11 +259,9 @@ class _MiniGamesHub extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         SectionHeader(
-          title: pickUiText(i18n, zh: '游戏中心', en: 'Game hub'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '从工具箱的小游戏模块中选择一个开始。',
-            en: 'Choose a game from the toolbox mini-game module.',
+          title: i18n.t('inline.ui.pages.toolbox_mini_games.game_hub_6974bd'),
+          subtitle: i18n.t(
+            'inline.ui.pages.toolbox_mini_games.choose_a_game_from_the_toolbox_mini_game_module_639ec9',
           ),
         ),
         const SizedBox(height: 12),

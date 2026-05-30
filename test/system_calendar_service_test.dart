@@ -45,58 +45,55 @@ void main() {
     }
   });
 
-  test(
-    'system calendar sync keeps a single selected alert type',
-    () async {
-      final database = AppDatabaseService(WordbookImportService());
-      await database.init();
-      final service = PlatformSystemCalendarService(database);
-      MethodCall? capturedCall;
+  test('system calendar sync keeps a single selected alert type', () async {
+    final database = AppDatabaseService(WordbookImportService());
+    await database.init();
+    final service = PlatformSystemCalendarService(database);
+    MethodCall? capturedCall;
 
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(systemCalendarChannel, (call) async {
+          capturedCall = call;
+          return <String, Object?>{'success': true, 'eventId': 'event-1'};
+        });
+
+    addTearDown(() async {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(systemCalendarChannel, (call) async {
-            capturedCall = call;
-            return <String, Object?>{'success': true, 'eventId': 'event-1'};
-          });
+          .setMockMethodCallHandler(systemCalendarChannel, null);
+      await service.dispose();
+      database.dispose();
+    });
 
-      addTearDown(() async {
-        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(systemCalendarChannel, null);
-        await service.dispose();
-        database.dispose();
-      });
+    await service.syncTodo(
+      TodoItem(
+        id: 1,
+        content: 'Calendar alert split',
+        dueAt: DateTime(2026, 3, 18, 9, 30),
+        alarmEnabled: true,
+        systemCalendarNotificationEnabled: true,
+        systemCalendarNotificationMinutesBefore: 5,
+        systemCalendarAlarmEnabled: true,
+        systemCalendarAlarmMinutesBefore: 15,
+      ),
+    );
 
-      await service.syncTodo(
-        TodoItem(
-          id: 1,
-          content: 'Calendar alert split',
-          dueAt: DateTime(2026, 3, 18, 9, 30),
-          alarmEnabled: true,
-          systemCalendarNotificationEnabled: true,
-          systemCalendarNotificationMinutesBefore: 5,
-          systemCalendarAlarmEnabled: true,
-          systemCalendarAlarmMinutesBefore: 15,
-        ),
-      );
+    expect(capturedCall, isNotNull);
+    expect(capturedCall!.method, 'upsertTodoReminder');
 
-      expect(capturedCall, isNotNull);
-      expect(capturedCall!.method, 'upsertTodoReminder');
-
-      final arguments = Map<Object?, Object?>.from(
-        capturedCall!.arguments as Map,
-      );
-      expect(
-        List<Object?>.from(arguments['notificationOffsetsMinutes'] as List),
-        isEmpty,
-      );
-      expect(
-        List<Object?>.from(arguments['alarmOffsetsMinutes'] as List),
-        <Object?>[15],
-      );
-      expect(
-        List<Object?>.from(arguments['reminderOffsetsMinutes'] as List),
-        <Object?>[15],
-      );
-    },
-  );
+    final arguments = Map<Object?, Object?>.from(
+      capturedCall!.arguments as Map,
+    );
+    expect(
+      List<Object?>.from(arguments['notificationOffsetsMinutes'] as List),
+      isEmpty,
+    );
+    expect(
+      List<Object?>.from(arguments['alarmOffsetsMinutes'] as List),
+      <Object?>[15],
+    );
+    expect(
+      List<Object?>.from(arguments['reminderOffsetsMinutes'] as List),
+      <Object?>[15],
+    );
+  });
 }

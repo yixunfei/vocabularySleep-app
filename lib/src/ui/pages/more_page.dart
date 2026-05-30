@@ -27,15 +27,11 @@ class MorePage extends ConsumerWidget {
       children: <Widget>[
         PageHeader(
           eyebrow: pageLabelMore(i18n),
-          title: pickUiText(
-            i18n,
-            zh: '低频但重要的入口',
-            en: 'Low-frequency, high-value tools',
+          title: i18n.t(
+            'inline.ui.pages.more_page.low_frequency_high_value_tools_8680ee',
           ),
-          subtitle: pickUiText(
-            i18n,
-            zh: '把管理能力收拢到这里，让主流程更专注',
-            en: 'Keep management tools here so the primary flow stays focused.',
+          subtitle: i18n.t(
+            'inline.ui.pages.more_page.keep_management_tools_here_so_the_primary_flow_stays_foc_f3adde',
           ),
         ),
         const SizedBox(height: 18),
@@ -46,31 +42,27 @@ class MorePage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  pickUiText(i18n, zh: '当前状态', en: 'Current status'),
+                  i18n.t(
+                    'inline.ui.pages.data_management_page.current_status_ed1d4c',
+                  ),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '模式：${experienceModeTitle(i18n, mode)}',
-                    en: 'Mode: ${experienceModeTitle(i18n, mode)}',
+                  i18n.t(
+                    'inline.ui.pages.more_page.mode_experiencemodetitle_i18n_mode_a24484',
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '当前词本：${localizedWordbookName(i18n, state.selectedWordbook)}',
-                    en: 'Current wordbook: ${localizedWordbookName(i18n, state.selectedWordbook)}',
+                  i18n.t(
+                    'inline.ui.pages.more_page.current_wordbook_localizedwordbookname_i18n_state_select_3d822a',
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '可见词数：${state.visibleWords.length}',
-                    en: 'Visible words: ${state.visibleWords.length}',
+                  i18n.t(
+                    'inline.ui.pages.more_page.visible_words_state_visiblewords_length_9686c9',
                   ),
                 ),
               ],
@@ -85,15 +77,15 @@ class MorePage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  pickUiText(i18n, zh: '今日启动提示', en: 'Today startup prompt'),
+                  i18n.t(
+                    'inline.ui.pages.more_page.today_startup_prompt_b4b78b',
+                  ),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '启动后弹出今日待办、每日一言和天气摘要，可在弹窗中选择今日不再弹出。',
-                    en: 'Show today\'s todos, daily quote, and weather after launch. You can still mute it for the rest of the day from the popup.',
+                  i18n.t(
+                    'inline.ui.pages.more_page.show_today_s_todos_daily_quote_and_weather_after_launch_c81d04',
                   ),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
@@ -102,19 +94,17 @@ class MorePage extends ConsumerWidget {
                   contentPadding: EdgeInsets.zero,
                   value: state.startupTodoPromptEnabled,
                   title: Text(
-                    pickUiText(i18n, zh: '开启启动提示', en: 'Enable startup prompt'),
+                    i18n.t(
+                      'inline.ui.pages.more_page.enable_startup_prompt_ea03c4',
+                    ),
                   ),
                   subtitle: Text(
                     state.startupTodoPromptEnabled
-                        ? pickUiText(
-                            i18n,
-                            zh: '已开启，进入主界面时会自动显示今日摘要。',
-                            en: 'Enabled. The summary appears after entering the main screen.',
+                        ? i18n.t(
+                            'inline.ui.pages.more_page.enabled_the_summary_appears_after_entering_the_main_scre_c61cef',
                           )
-                        : pickUiText(
-                            i18n,
-                            zh: '已关闭，启动后不会自动弹出今日摘要。',
-                            en: 'Disabled. The summary stays hidden on startup.',
+                        : i18n.t(
+                            'inline.ui.pages.more_page.disabled_the_summary_stays_hidden_on_startup_e1d925',
                           ),
                   ),
                   onChanged: state.setStartupTodoPromptEnabled,
@@ -126,11 +116,9 @@ class MorePage extends ConsumerWidget {
         const SizedBox(height: 16),
         SettingTile(
           icon: Icons.tune_rounded,
-          title: pickUiText(i18n, zh: '设置中心', en: 'Settings center'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '语言、播放、语音和基础外观',
-            en: 'Language, playback, speech, startup prompt, and practical appearance settings.',
+          title: i18n.t('inline.ui.pages.more_page.settings_center_5780d6'),
+          subtitle: i18n.t(
+            'inline.ui.pages.more_page.language_playback_speech_startup_prompt_and_practical_ap_62b5ad',
           ),
           onTap: () {
             Navigator.of(context).push(
@@ -141,11 +129,11 @@ class MorePage extends ConsumerWidget {
         const SizedBox(height: 12),
         SettingTile(
           icon: Icons.collections_bookmark_outlined,
-          title: pickUiText(i18n, zh: '词本管理', en: 'Wordbook management'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '新增、导入、编辑、重命名和合并词本',
-            en: 'Create, import, edit, rename, and merge wordbooks.',
+          title: i18n.t(
+            'inline.ui.pages.help_center_page.wordbook_management_7c76ef',
+          ),
+          subtitle: i18n.t(
+            'inline.ui.pages.help_center_page.create_import_edit_rename_and_merge_wordbooks_02acd1',
           ),
           onTap: () {
             Navigator.of(context).push(
@@ -158,11 +146,11 @@ class MorePage extends ConsumerWidget {
         const SizedBox(height: 12),
         SettingTile(
           icon: Icons.storage_rounded,
-          title: pickUiText(i18n, zh: '数据管理', en: 'Data management'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '导入导出、迁移和任务词维护',
-            en: 'Import, export, migration, and task word maintenance.',
+          title: i18n.t(
+            'inline.ui.pages.data_management_page.data_management_87880c',
+          ),
+          subtitle: i18n.t(
+            'inline.ui.pages.more_page.import_export_migration_and_task_word_maintenance_bb6500',
           ),
           onTap: () {
             Navigator.of(context).push(
@@ -175,11 +163,9 @@ class MorePage extends ConsumerWidget {
         const SizedBox(height: 12),
         SettingTile(
           icon: Icons.help_outline_rounded,
-          title: pickUiText(i18n, zh: '关于与帮助', en: 'About & help'),
-          subtitle: pickUiText(
-            i18n,
-            zh: '查看版本信息、常见问题与使用指引',
-            en: 'Version info, FAQ, and quick guidance.',
+          title: i18n.t('inline.ui.pages.help_center_page.about_help_adbe73'),
+          subtitle: i18n.t(
+            'inline.ui.pages.more_page.version_info_faq_and_quick_guidance_71b833',
           ),
           onTap: () {
             Navigator.of(context).push(

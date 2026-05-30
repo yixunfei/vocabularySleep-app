@@ -95,11 +95,13 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
   Widget build(BuildContext context) {
     final result = _result;
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '城市薪资对比工具', en: 'City salary compare'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '参考 city_compare 的城市成本口径，在本地估算同等生活方式下的薪资换算与结余变化。',
-        en: 'Compare city costs locally and estimate equivalent salary for the same lifestyle.',
+        'inline.plan295.life.city_salary_compare.0924c6268506',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.compare_city_costs_locally_and_estim.68cba0a5dcba',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,11 +128,13 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
 
   Widget _setupPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '城市与薪资输入', en: 'Cities and salary'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '先选当前城市、目标城市和你手里的月薪税前，再看迁移后的结余变化。',
-        en: 'Pick the current city, target city, and your gross monthly salary first.',
+        'inline.plan295.life.cities_and_salary.f2da6544261a',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.pick_the_current_city_target_city_an.d98cdfea6f5d',
       ),
       children: <Widget>[
         _WorkWorthFieldGrid(
@@ -138,7 +142,10 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
             DropdownButtonFormField<String>(
               initialValue: _currentCity,
               decoration: InputDecoration(
-                labelText: _lifeText(context, zh: '当前城市', en: 'Current city'),
+                labelText: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.current_city.1a84f8481b8e',
+                ),
                 border: const OutlineInputBorder(),
               ),
               items: ToolboxCityCompareService.cities
@@ -155,7 +162,10 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
             DropdownButtonFormField<String>(
               initialValue: _targetCity,
               decoration: InputDecoration(
-                labelText: _lifeText(context, zh: '目标城市', en: 'Target city'),
+                labelText: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.target_city.9372e59c35c8',
+                ),
                 border: const OutlineInputBorder(),
               ),
               items: ToolboxCityCompareService.cities
@@ -177,10 +187,9 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
               ),
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
-                labelText: _lifeText(
+                labelText: _lifeI18nText(
                   context,
-                  zh: '当前月薪税前',
-                  en: 'Gross monthly salary',
+                  'inline.plan295.life.gross_monthly_salary.363b958ea3d2',
                 ),
                 prefixText: '¥ ',
                 border: const OutlineInputBorder(),
@@ -195,7 +204,12 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
                 });
               },
               icon: const Icon(Icons.swap_horiz_rounded),
-              label: Text(_lifeText(context, zh: '交换城市', en: 'Swap cities')),
+              label: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.swap_cities.77f39f18f487',
+                ),
+              ),
             ),
           ],
         ),
@@ -205,77 +219,79 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
 
   Widget _profilePanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '生活方式配置', en: 'Lifestyle profile'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '这里决定了“同等生活水平”的口径：住哪种房、怎么吃、怎么通勤、有没有教育与娱乐支出。',
-        en: 'This defines what “same lifestyle” means in the comparison.',
+        'inline.plan295.life.lifestyle_profile.41321c9b50c6',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.this_defines_what_same_lifestyle_mea.9b74b6f94ee5',
       ),
       children: <Widget>[
         _LifeSegmentedField<CityCompareHousingType>(
-          label: _lifeText(context, zh: '住房方案', en: 'Housing'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.housing.f9f28032fb67',
+          ),
           value: _housingType,
           options: const <_LifeOption<CityCompareHousingType>>[
             _LifeOption(
               value: CityCompareHousingType.suburbOneBedroom,
-              labelZh: '郊区一居',
-              labelEn: 'Suburb 1BR',
+              labelKey: 'inline.plan295.life.suburb_1br.106aed735a08',
             ),
             _LifeOption(
               value: CityCompareHousingType.centerOneBedroom,
-              labelZh: '市中心一居',
-              labelEn: 'Center 1BR',
+              labelKey: 'inline.plan295.life.center_1br.2d6e036225ad',
             ),
             _LifeOption(
               value: CityCompareHousingType.suburbThreeBedroom,
-              labelZh: '郊区三居',
-              labelEn: 'Suburb 3BR',
+              labelKey: 'inline.plan295.life.suburb_3br.dff6d1c03818',
             ),
             _LifeOption(
               value: CityCompareHousingType.centerThreeBedroom,
-              labelZh: '市中心三居',
-              labelEn: 'Center 3BR',
+              labelKey: 'inline.plan295.life.center_3br.8018b18239e8',
             ),
           ],
           onChanged: (value) => setState(() => _housingType = value),
         ),
         const SizedBox(height: 14),
         _LifeSegmentedField<CityCompareDiningType>(
-          label: _lifeText(context, zh: '餐饮习惯', en: 'Dining'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.dining.2ce463ab63e3',
+          ),
           value: _diningType,
           options: const <_LifeOption<CityCompareDiningType>>[
             _LifeOption(
               value: CityCompareDiningType.homeFocused,
-              labelZh: '在家为主',
-              labelEn: 'Mostly home',
+              labelKey: 'inline.plan295.life.mostly_home.0f56eb8b1918',
             ),
             _LifeOption(
               value: CityCompareDiningType.balanced,
-              labelZh: '均衡',
-              labelEn: 'Balanced',
+              labelKey: 'inline.plan295.life.balanced.bdebbbec386a',
             ),
             _LifeOption(
               value: CityCompareDiningType.dineOutOften,
-              labelZh: '常外食',
-              labelEn: 'Often dine out',
+              labelKey: 'inline.plan295.life.often_dine_out.f4f0660f95c8',
             ),
           ],
           onChanged: (value) => setState(() => _diningType = value),
         ),
         const SizedBox(height: 14),
         _LifeSegmentedField<CityCompareTransportType>(
-          label: _lifeText(context, zh: '通勤方式', en: 'Transport'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.transport.c1302229b46d',
+          ),
           value: _transportType,
           options: const <_LifeOption<CityCompareTransportType>>[
             _LifeOption(
               value: CityCompareTransportType.publicTransit,
-              labelZh: '公共交通',
-              labelEn: 'Transit',
+              labelKey: 'inline.plan295.life.transit.a80e822f1f76',
             ),
             _LifeOption(
               value: CityCompareTransportType.car,
-              labelZh: '私家车',
-              labelEn: 'Car',
+              labelKey: 'inline.plan295.life.car.7c28b4038fd2',
             ),
           ],
           onChanged: (value) => setState(() => _transportType = value),
@@ -284,33 +300,63 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
         DropdownButtonFormField<CityCompareEducationType>(
           initialValue: _educationType,
           decoration: InputDecoration(
-            labelText: _lifeText(context, zh: '教育支出', en: 'Education cost'),
+            labelText: _lifeI18nText(
+              context,
+              'inline.plan295.life.education_cost.1f5d6ca42779',
+            ),
             border: const OutlineInputBorder(),
           ),
           items: <DropdownMenuItem<CityCompareEducationType>>[
             DropdownMenuItem(
               value: CityCompareEducationType.none,
-              child: Text(_lifeText(context, zh: '无', en: 'None')),
+              child: Text(
+                _lifeI18nText(context, 'ref.wordTransitionStyleNone'),
+              ),
             ),
             DropdownMenuItem(
               value: CityCompareEducationType.kindergarten,
-              child: Text(_lifeText(context, zh: '幼儿园', en: 'Kindergarten')),
+              child: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.kindergarten.79adf55e9cf6',
+                ),
+              ),
             ),
             DropdownMenuItem(
               value: CityCompareEducationType.primary,
-              child: Text(_lifeText(context, zh: '小学', en: 'Primary')),
+              child: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.primary.f7a396f42a27',
+                ),
+              ),
             ),
             DropdownMenuItem(
               value: CityCompareEducationType.middle,
-              child: Text(_lifeText(context, zh: '初中', en: 'Middle')),
+              child: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.middle.adebe9ee472a',
+                ),
+              ),
             ),
             DropdownMenuItem(
               value: CityCompareEducationType.high,
-              child: Text(_lifeText(context, zh: '高中', en: 'High school')),
+              child: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.high_school.9b59e396e988',
+                ),
+              ),
             ),
             DropdownMenuItem(
               value: CityCompareEducationType.international,
-              child: Text(_lifeText(context, zh: '国际学校', en: 'International')),
+              child: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.international.409e3d99d2bd',
+                ),
+              ),
             ),
           ],
           onChanged: (value) => setState(
@@ -321,11 +367,19 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
         SwitchListTile(
           value: _includeFitness,
           contentPadding: EdgeInsets.zero,
-          title: Text(_lifeText(context, zh: '包含健身支出', en: 'Include fitness')),
+          title: Text(
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.include_fitness.da9416e5e222',
+            ),
+          ),
           onChanged: (value) => setState(() => _includeFitness = value),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '每月观影次数', en: 'Cinema trips / month'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.cinema_trips_month.3e509d3505e8',
+          ),
           valueText: _monthlyCinemaTrips.round().toString(),
           value: _monthlyCinemaTrips,
           min: 0,
@@ -339,25 +393,29 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
 
   Widget _comparisonPanel(BuildContext context, CityCompareResult result) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '双城拆解', en: 'Comparison breakdown'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '同一套生活方式下，看当前城市、目标城市同薪资，以及目标城市维持同等结余三种结果。',
-        en: 'See current city, same salary in target city, and the salary needed to keep the same buffer.',
+        'inline.plan295.life.comparison_breakdown.7cfbcde0e42c',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.see_current_city_same_salary_in_targ.5a561272d747',
       ),
       children: <Widget>[
         _CityCompareScenarioCard(
-          title: _lifeText(context, zh: '当前城市现状', en: 'Current city now'),
+          title: _lifeI18nText(
+            context,
+            'inline.plan295.life.current_city_now.8eebf3e8ad64',
+          ),
           cityName: result.currentCity.city,
           snapshot: result.currentSnapshot,
           breakdown: result.currentBreakdown,
         ),
         const SizedBox(height: 12),
         _CityCompareScenarioCard(
-          title: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '同薪资搬去目标城市',
-            en: 'Same salary in target city',
+            'inline.plan295.life.same_salary_in_target_city.4f7afaf80d50',
           ),
           cityName: result.targetCity.city,
           snapshot: result.sameSalaryTargetSnapshot,
@@ -366,10 +424,9 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
         const SizedBox(height: 12),
         _CityCompareScenarioCard(
           key: const ValueKey<String>('city-compare-required-card'),
-          title: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '保持同等结余所需薪资',
-            en: 'Target salary to match',
+            'inline.plan295.life.target_salary_to_match.12810bb41e4b',
           ),
           cityName: result.targetCity.city,
           snapshot: result.requiredTargetSnapshot,
@@ -382,19 +439,20 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
 
   Widget _adjustmentPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '费用微调与自定义支出',
-        en: 'Adjustments and custom expenses',
+        'inline.plan295.life.adjustments_and_custom_expenses.f4acdef49b57',
       ),
-      subtitle: _lifeText(
+      subtitle: _lifeI18nText(
         context,
-        zh: '如果你觉得预设基准不够贴近自己，可以按类别微调，也可以直接新增固定月支出。',
-        en: 'Fine-tune baseline costs by category or add your own fixed monthly expenses.',
+        'inline.plan295.life.fine_tune_baseline_costs_by_category.414d6e866849',
       ),
       children: <Widget>[
         _LifeSliderField(
-          label: _lifeText(context, zh: '住房倍率', en: 'Housing multiplier'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.housing_multiplier.88a47ed25e56',
+          ),
           valueText: _housingAdjustment.toStringAsFixed(2),
           value: _housingAdjustment,
           min: 0.5,
@@ -403,7 +461,10 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
           onChanged: (value) => setState(() => _housingAdjustment = value),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '餐饮倍率', en: 'Dining multiplier'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.dining_multiplier.a6cbdd7de6e7',
+          ),
           valueText: _diningAdjustment.toStringAsFixed(2),
           value: _diningAdjustment,
           min: 0.5,
@@ -412,7 +473,10 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
           onChanged: (value) => setState(() => _diningAdjustment = value),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '交通倍率', en: 'Transport multiplier'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.transport_multiplier.ed1f22539621',
+          ),
           valueText: _transportAdjustment.toStringAsFixed(2),
           value: _transportAdjustment,
           min: 0.5,
@@ -421,7 +485,10 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
           onChanged: (value) => setState(() => _transportAdjustment = value),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '教育倍率', en: 'Education multiplier'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.education_multiplier.30cee32e755a',
+          ),
           valueText: _educationAdjustment.toStringAsFixed(2),
           value: _educationAdjustment,
           min: 0.5,
@@ -430,7 +497,10 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
           onChanged: (value) => setState(() => _educationAdjustment = value),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '水电网话倍率', en: 'Utility multiplier'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.utility_multiplier.b3ed3afa191d',
+          ),
           valueText: _utilitiesAdjustment.toStringAsFixed(2),
           value: _utilitiesAdjustment,
           min: 0.5,
@@ -439,7 +509,10 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
           onChanged: (value) => setState(() => _utilitiesAdjustment = value),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '健身倍率', en: 'Fitness multiplier'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.fitness_multiplier.f5eee05c2d1c',
+          ),
           valueText: _fitnessAdjustment.toStringAsFixed(2),
           value: _fitnessAdjustment,
           min: 0.5,
@@ -448,7 +521,10 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
           onChanged: (value) => setState(() => _fitnessAdjustment = value),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '娱乐倍率', en: 'Leisure multiplier'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.leisure_multiplier.04a23598c382',
+          ),
           valueText: _leisureAdjustment.toStringAsFixed(2),
           value: _leisureAdjustment,
           min: 0.5,
@@ -466,10 +542,9 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
               ),
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
-                labelText: _lifeText(
+                labelText: _lifeI18nText(
                   context,
-                  zh: '健身月费覆写',
-                  en: 'Fitness override',
+                  'inline.plan295.life.fitness_override.a5bed820937f',
                 ),
                 prefixText: '¥ ',
                 border: const OutlineInputBorder(),
@@ -482,10 +557,9 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
               ),
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
-                labelText: _lifeText(
+                labelText: _lifeI18nText(
                   context,
-                  zh: '电影票单价覆写',
-                  en: 'Cinema ticket override',
+                  'inline.plan295.life.cinema_ticket_override.3e92fe35e41c',
                 ),
                 prefixText: '¥ ',
                 border: const OutlineInputBorder(),
@@ -495,7 +569,10 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
         ),
         const SizedBox(height: 14),
         Text(
-          _lifeText(context, zh: '自定义月支出', en: 'Custom monthly expenses'),
+          _lifeI18nText(
+            context,
+            'inline.plan295.life.custom_monthly_expenses.a30f0c5bdbe6',
+          ),
           style: Theme.of(
             context,
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
@@ -510,7 +587,10 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
               controller: _customExpenseLabelController,
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
-                labelText: _lifeText(context, zh: '支出名称', en: 'Expense label'),
+                labelText: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.expense_label.6020c4dc0f0a',
+                ),
                 border: const OutlineInputBorder(),
               ),
             ),
@@ -524,10 +604,9 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
               ),
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
-                labelText: _lifeText(
+                labelText: _lifeI18nText(
                   context,
-                  zh: '月支出金额',
-                  en: 'Monthly amount',
+                  'inline.plan295.life.monthly_amount.580db4ee7eac',
                 ),
                 prefixText: '¥ ',
                 border: const OutlineInputBorder(),
@@ -536,7 +615,10 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
             DropdownButtonFormField<CityCompareCustomExpenseCategory>(
               initialValue: _customExpenseCategory,
               decoration: InputDecoration(
-                labelText: _lifeText(context, zh: '分类', en: 'Category'),
+                labelText: _lifeI18nText(
+                  context,
+                  'inline.plan295.daily_choice.category.c3134f512d8c',
+                ),
                 border: const OutlineInputBorder(),
               ),
               items: CityCompareCustomExpenseCategory.values
@@ -557,7 +639,12 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
               key: const ValueKey<String>('city-compare-add-custom-expense'),
               onPressed: _addCustomExpense,
               icon: const Icon(Icons.add_rounded),
-              label: Text(_lifeText(context, zh: '添加支出', en: 'Add expense')),
+              label: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.add_expense.899addbc9ca8',
+                ),
+              ),
             ),
           ],
         ),
@@ -627,7 +714,10 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
             ),
           ),
           IconButton(
-            tooltip: _lifeText(context, zh: '删除', en: 'Remove'),
+            tooltip: _lifeI18nText(
+              context,
+              'inline.plan295.life.remove.756734973755',
+            ),
             onPressed: () => setState(() => _customExpenses.removeAt(index)),
             icon: const Icon(Icons.delete_outline_rounded),
           ),
@@ -641,66 +731,63 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
     CityCompareCustomExpenseCategory category,
   ) {
     return switch (category) {
-      CityCompareCustomExpenseCategory.lifestyle => _lifeText(
+      CityCompareCustomExpenseCategory.lifestyle => _lifeI18nText(
         context,
-        zh: '生活',
-        en: 'Lifestyle',
+        'inline.plan295.life.lifestyle.c19f79d1a1bb',
       ),
-      CityCompareCustomExpenseCategory.family => _lifeText(
+      CityCompareCustomExpenseCategory.family => _lifeI18nText(
         context,
-        zh: '家庭',
-        en: 'Family',
+        'inline.plan295.life.family.696ce7797c7f',
       ),
-      CityCompareCustomExpenseCategory.commute => _lifeText(
+      CityCompareCustomExpenseCategory.commute => _lifeI18nText(
         context,
-        zh: '通勤',
-        en: 'Commute',
+        'inline.plan295.daily_choice.commute.4799a6b90d47',
       ),
-      CityCompareCustomExpenseCategory.health => _lifeText(
+      CityCompareCustomExpenseCategory.health => _lifeI18nText(
         context,
-        zh: '健康',
-        en: 'Health',
+        'ref.toolbox.sleep.library.tag.risk',
       ),
-      CityCompareCustomExpenseCategory.debt => _lifeText(
+      CityCompareCustomExpenseCategory.debt => _lifeI18nText(
         context,
-        zh: '债务',
-        en: 'Debt',
+        'inline.plan295.life.debt.87850964f2dc',
       ),
-      CityCompareCustomExpenseCategory.other => _lifeText(
+      CityCompareCustomExpenseCategory.other => _lifeI18nText(
         context,
-        zh: '其他',
-        en: 'Other',
+        'inline.plan295.life.other.f0099311cd4a',
       ),
     };
   }
 
   Widget _notesPanel(BuildContext context, CityCompareResult result) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '口径与边界', en: 'Method and limits'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '这页适合做 offer、调动和迁居前的横向估算，不是实时房源、税务申报或工资条模拟器。',
-        en: 'Use this for side-by-side offer estimates, not as a real-time tax or payroll simulator.',
+        'inline.plan295.life.method_and_limits.733a7ee3a825',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.use_this_for_side_by_side_offer_esti.d50e085dae55',
       ),
       children: <Widget>[
         _WorkWorthBreakdownRow(
-          label: _lifeText(context, zh: '目标城市成本倍率', en: 'Target cost ratio'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.target_cost_ratio.1d84442f522f',
+          ),
           value: '${result.costRatio.toStringAsFixed(2)}x',
         ),
         _WorkWorthBreakdownRow(
-          label: _lifeText(
+          label: _lifeI18nText(
             context,
-            zh: '目标城市保本月薪',
-            en: 'Target break-even gross',
+            'inline.plan295.life.target_break_even_gross.c616964edbc1',
           ),
           value: _money(result.breakEvenTargetSnapshot.grossMonthlySalary),
         ),
         const SizedBox(height: 10),
         Text(
-          _lifeText(
+          _lifeI18nText(
             context,
-            zh: '原始字段口径来自 `Zippland/city_compare` README 和 `public/city_data.csv`：包括社保基数、租金、房价、餐饮、通勤、教育、水电网话、健身和电影票等条目；参考项目 README 进一步说明这些数据优先参考 Numbeo 公共数据。当前页面在此基础上做本地估算，并补充简化五险一金与个税模型。',
-            en: 'The raw fields come from the Zippland/city_compare README and public/city_data.csv, including social-security bases, rent, home prices, dining, transport, education, utilities, connectivity, fitness, and cinema. The README also states that the source data is primarily referenced from Numbeo public data. This page builds local estimates on top of that and adds a simplified social-security and tax model.',
+            'inline.plan295.life.the_raw_fields_come_from_the_zipplan.d73fa8ee9f07',
           ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
@@ -710,11 +797,13 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
 
   Widget _insightPanel(BuildContext context, CityCompareResult result) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '对比分析', en: 'Comparison insights'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '不只展示结果，也总结这次城市迁移里最值得盯住的差异项。',
-        en: 'Not just the result: this also summarizes the key differences to watch.',
+        'inline.plan295.life.comparison_insights.8da50bbbaf2d',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.not_just_the_result_this_also_summar.171c43bae39e',
       ),
       children: result.insights
           .map(
@@ -729,11 +818,13 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
 
   Widget _referencePanel(BuildContext context, CityCompareResult result) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '参考细分条目', en: 'Reference detail items'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '这里列出参考页里的原始成本字段，便于你核对差异到底来自哪类基础价格。',
-        en: 'These are the raw reference items behind the comparison.',
+        'inline.plan295.life.reference_detail_items.652135324191',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.these_are_the_raw_reference_items_be.af0ccb2986d1',
       ),
       children: <Widget>[
         for (final category in <String>[
@@ -758,20 +849,30 @@ class _CitySalaryComparePageState extends State<_CitySalaryComparePage> {
 
   String _referenceCategoryLabel(BuildContext context, String category) {
     return switch (category) {
-      'salary' => _lifeText(
+      'salary' => _lifeI18nText(
         context,
-        zh: '薪资与缴费基线',
-        en: 'Salary and contribution baseline',
+        'inline.plan295.life.salary_and_contribution_baseline.b91e5acbfc35',
       ),
-      'housing' => _lifeText(
+      'housing' => _lifeI18nText(
         context,
-        zh: '住房与房价',
-        en: 'Housing and home prices',
+        'inline.plan295.life.housing_and_home_prices.a83790926b86',
       ),
-      'daily' => _lifeText(context, zh: '日常消费', en: 'Daily spending'),
-      'transport' => _lifeText(context, zh: '通勤交通', en: 'Transport'),
-      'family' => _lifeText(context, zh: '教育家庭', en: 'Education and family'),
-      'leisure' => _lifeText(context, zh: '健身娱乐', en: 'Leisure'),
+      'daily' => _lifeI18nText(
+        context,
+        'inline.plan295.life.daily_spending.58219e24b7d8',
+      ),
+      'transport' => _lifeI18nText(
+        context,
+        'inline.plan295.life.transport.2a361d321b12',
+      ),
+      'family' => _lifeI18nText(
+        context,
+        'inline.plan295.life.education_and_family.15d0f85d5fe8',
+      ),
+      'leisure' => _lifeI18nText(
+        context,
+        'inline.plan295.life.leisure.da82b8744156',
+      ),
       _ => category,
     };
   }
@@ -818,10 +919,9 @@ class _CityCompareHero extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '同等生活方式目标月薪',
-              en: 'Equivalent target salary',
+              'inline.plan295.life.equivalent_target_salary.468ec855db46',
             ),
             style: theme.textTheme.labelLarge?.copyWith(
               color: Colors.white.withValues(alpha: 0.78),
@@ -839,10 +939,13 @@ class _CityCompareHero extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '想在 ${result.targetCity.city} 维持你现在在 ${result.currentCity.city} 的同等生活方式和月度结余，大致需要这个税前月薪。',
-              en: 'To keep the same lifestyle and monthly buffer when moving from ${result.currentCity.city} to ${result.targetCity.city}, this is the rough gross salary you need.',
+              'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.city.compare.to_keep_the_same_lifestyle_and.db6853b616',
+              params: <String, Object?>{
+                'city': result.targetCity.city,
+                'city1': result.currentCity.city,
+              },
             ),
             style: theme.textTheme.bodyMedium?.copyWith(
               color: Colors.white.withValues(alpha: 0.88),
@@ -854,14 +957,16 @@ class _CityCompareHero extends StatelessWidget {
             runSpacing: 10,
             children: <Widget>[
               _WorkWorthMetricPill(
-                label: _lifeText(context, zh: '当前月结余', en: 'Current buffer'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.current_buffer.6ada0630740f',
+                ),
                 value: _money(result.currentSnapshot.monthlyBuffer),
               ),
               _WorkWorthMetricPill(
-                label: _lifeText(
+                label: _lifeI18nText(
                   context,
-                  zh: '同薪资到目标城',
-                  en: 'Same salary buffer',
+                  'inline.plan295.life.same_salary_buffer.699aaaf693d9',
                 ),
                 value: _money(result.sameSalaryTargetSnapshot.monthlyBuffer),
               ),
@@ -881,7 +986,10 @@ class _CityCompareHero extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     Text(
-                      _lifeText(context, zh: '月薪差额', en: 'Salary delta'),
+                      _lifeI18nText(
+                        context,
+                        'inline.plan295.life.salary_delta.986b30ee0f0c',
+                      ),
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: Colors.white.withValues(alpha: 0.78),
                       ),
@@ -966,58 +1074,94 @@ class _CityCompareScenarioCard extends StatelessWidget {
             runSpacing: 8,
             children: <Widget>[
               _CityCompareStat(
-                label: _lifeText(context, zh: '税前月薪', en: 'Gross'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.gross.a3de9e0dcb3a',
+                ),
                 value: _money(snapshot.grossMonthlySalary),
               ),
               _CityCompareStat(
-                label: _lifeText(context, zh: '到手月薪', en: 'Net'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.net.cd65c198c7ff',
+                ),
                 value: _money(snapshot.netSalary),
               ),
               _CityCompareStat(
-                label: _lifeText(context, zh: '月成本', en: 'Monthly cost'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.monthly_cost.6bee2e4513fe',
+                ),
                 value: _money(snapshot.monthlyCost),
               ),
               _CityCompareStat(
-                label: _lifeText(context, zh: '月结余', en: 'Buffer'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.buffer.07a3d0f903ea',
+                ),
                 value: _money(snapshot.monthlyBuffer),
               ),
             ],
           ),
           const SizedBox(height: 12),
           _WorkWorthBreakdownRow(
-            label: _lifeText(context, zh: '社保公积金估算', en: 'Social security'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.social_security.9ce6f8b792d8',
+            ),
             value: _money(snapshot.socialSecurityContribution),
           ),
           _WorkWorthBreakdownRow(
-            label: _lifeText(context, zh: '个税估算', en: 'Income tax'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.income_tax.eadbcafd719b',
+            ),
             value: _money(snapshot.tax),
           ),
           _WorkWorthBreakdownRow(
-            label: _lifeText(context, zh: '住房', en: 'Housing'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.housing.f9ec7596039d',
+            ),
             value: _money(breakdown.housing),
           ),
           _WorkWorthBreakdownRow(
-            label: _lifeText(context, zh: '餐饮', en: 'Dining'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.dining.bc72cf150c43',
+            ),
             value: _money(breakdown.dining),
           ),
           _WorkWorthBreakdownRow(
-            label: _lifeText(context, zh: '交通', en: 'Transport'),
+            label: _lifeI18nText(context, 'ambientCategoryTransport'),
             value: _money(breakdown.transport),
           ),
           _WorkWorthBreakdownRow(
-            label: _lifeText(context, zh: '教育', en: 'Education'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.education.720fa00fa59f',
+            ),
             value: _money(breakdown.education),
           ),
           _WorkWorthBreakdownRow(
-            label: _lifeText(context, zh: '水电网话', en: 'Utilities + digital'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.utilities_digital.7feb6dfce7b9',
+            ),
             value: _money(breakdown.utilities + breakdown.digital),
           ),
           _WorkWorthBreakdownRow(
-            label: _lifeText(context, zh: '健身与娱乐', en: 'Fitness + leisure'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.fitness_leisure.f082874c40f4',
+            ),
             value: _money(breakdown.fitness + breakdown.leisure),
           ),
           _WorkWorthBreakdownRow(
-            label: _lifeText(context, zh: '自定义支出', en: 'Custom expenses'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.custom_expenses.e62db0d3eba5',
+            ),
             value: _money(breakdown.custom),
           ),
         ],
@@ -1085,7 +1229,7 @@ class _CityCompareInsightCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            _lifeText(context, zh: insight.titleZh, en: insight.titleEn),
+            _lifeI18nText(context, insight.titleKey),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w800,
               color: color,
@@ -1093,7 +1237,7 @@ class _CityCompareInsightCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            _lifeText(context, zh: insight.bodyZh, en: insight.bodyEn),
+            _lifeI18nRefText(context, insight.body),
             style: theme.textTheme.bodyMedium,
           ),
         ],
@@ -1144,7 +1288,7 @@ class _CityCompareReferenceRow extends StatelessWidget {
         ? const Color(0xFFE99A52)
         : const Color(0xFF5FBF95);
     return Container(
-      key: ValueKey<String>('city-compare-reference-${item.labelEn}'),
+      key: ValueKey<String>('city-compare-reference-${item.labelKey}'),
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -1156,7 +1300,7 @@ class _CityCompareReferenceRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            _lifeText(context, zh: item.labelZh, en: item.labelEn),
+            _lifeI18nText(context, item.labelKey),
             style: theme.textTheme.labelLarge?.copyWith(
               fontWeight: FontWeight.w700,
             ),
@@ -1167,22 +1311,22 @@ class _CityCompareReferenceRow extends StatelessWidget {
             runSpacing: 8,
             children: <Widget>[
               _CityCompareStat(
-                label: _lifeText(context, zh: '当前城市', en: 'Current'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.current.4d1c39c95186',
+                ),
                 value: _referenceValue(
                   context,
                   item.currentValue,
-                  item.unitZh,
-                  item.unitEn,
+                  item.unitKey,
                 ),
               ),
               _CityCompareStat(
-                label: _lifeText(context, zh: '目标城市', en: 'Target'),
-                value: _referenceValue(
+                label: _lifeI18nText(
                   context,
-                  item.targetValue,
-                  item.unitZh,
-                  item.unitEn,
+                  'inline.plan295.life.target.8794449b2b9a',
                 ),
+                value: _referenceValue(context, item.targetValue, item.unitKey),
               ),
               Container(
                 constraints: const BoxConstraints(minWidth: 120),
@@ -1199,7 +1343,10 @@ class _CityCompareReferenceRow extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     Text(
-                      _lifeText(context, zh: '差额 / 倍率', en: 'Delta / ratio'),
+                      _lifeI18nText(
+                        context,
+                        'inline.plan295.life.delta_ratio.4bceb51fb41f',
+                      ),
                       style: theme.textTheme.labelSmall,
                     ),
                     const SizedBox(height: 3),
@@ -1220,13 +1367,8 @@ class _CityCompareReferenceRow extends StatelessWidget {
     );
   }
 
-  String _referenceValue(
-    BuildContext context,
-    double value,
-    String unitZh,
-    String unitEn,
-  ) {
-    final unit = _lifeText(context, zh: unitZh, en: unitEn);
+  String _referenceValue(BuildContext context, double value, String unitKey) {
+    final unit = _lifeI18nText(context, unitKey);
     return '${value.toStringAsFixed(0)} $unit';
   }
 }

@@ -2,55 +2,37 @@ part of 'practice_page.dart';
 
 String _practiceRoundSourceLabel(AppI18n i18n, PracticeRoundSource source) {
   return switch (source) {
-    PracticeRoundSource.currentScope => pickUiText(
-      i18n,
-      zh: '当前范围',
-      en: 'Current scope',
+    PracticeRoundSource.currentScope => i18n.t(
+      'inline.ui.pages.practice_page_helpers.current_scope_dac5c3',
     ),
-    PracticeRoundSource.wholeWordbook => pickUiText(
-      i18n,
-      zh: '整本词本',
-      en: 'Whole wordbook',
+    PracticeRoundSource.wholeWordbook => i18n.t(
+      'inline.ui.pages.practice_page_helpers.whole_wordbook_97adc1',
     ),
-    PracticeRoundSource.wrongNotebook => pickUiText(
-      i18n,
-      zh: '错题本',
-      en: 'Wrong notebook',
+    PracticeRoundSource.wrongNotebook => i18n.t(
+      'inline.ui.pages.practice_notebook_page.wrong_notebook_6c7ca5',
     ),
-    PracticeRoundSource.taskWords => pickUiText(
-      i18n,
-      zh: '任务词',
-      en: 'Task words',
+    PracticeRoundSource.taskWords => i18n.t(
+      'inline.ui.pages.practice_page_helpers.task_words_75fdf1',
     ),
-    PracticeRoundSource.favorites => pickUiText(
-      i18n,
-      zh: '收藏词',
-      en: 'Favorites',
+    PracticeRoundSource.favorites => i18n.t(
+      'toolbox.sound.soothing.mode_filter_favorites',
     ),
-    PracticeRoundSource.recentWeak => pickUiText(
-      i18n,
-      zh: '最近薄弱词',
-      en: 'Recent weak words',
+    PracticeRoundSource.recentWeak => i18n.t(
+      'inline.ui.pages.practice_page_helpers.recent_weak_words_9759a1',
     ),
   };
 }
 
 String _practiceRoundStartModeLabel(AppI18n i18n, PracticeRoundStartMode mode) {
   return switch (mode) {
-    PracticeRoundStartMode.resumeCursor => pickUiText(
-      i18n,
-      zh: '从上次位置继续',
-      en: 'Resume last position',
+    PracticeRoundStartMode.resumeCursor => i18n.t(
+      'inline.ui.pages.practice_page_helpers.resume_last_position_980440',
     ),
-    PracticeRoundStartMode.currentWord => pickUiText(
-      i18n,
-      zh: '从当前词开始',
-      en: 'Start at current word',
+    PracticeRoundStartMode.currentWord => i18n.t(
+      'inline.ui.pages.practice_page_helpers.start_at_current_word_be574e',
     ),
-    PracticeRoundStartMode.fromStart => pickUiText(
-      i18n,
-      zh: '从头开始',
-      en: 'Start from the beginning',
+    PracticeRoundStartMode.fromStart => i18n.t(
+      'inline.ui.pages.practice_page_helpers.start_from_the_beginning_75193c',
     ),
   };
 }
@@ -239,10 +221,8 @@ void _showNoWordsSnack(BuildContext context, AppI18n i18n) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(
-        pickUiText(
-          i18n,
-          zh: '当前范围内没有可练习单词。',
-          en: 'No words available in the current scope.',
+        i18n.t(
+          'inline.ui.pages.practice_page_helpers.no_words_available_in_the_current_scope_b9f098',
         ),
       ),
     ),

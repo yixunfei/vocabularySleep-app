@@ -271,81 +271,66 @@ class _WoodfishToolState extends State<_WoodfishTool>
     );
   }
 
-  String _uiText(
-    BuildContext context, {
-    required String zh,
-    required String en,
-  }) {
-    final i18n = _toolboxI18n(context, listen: false);
-    return i18n.languageCode.startsWith('zh') ? zh : en;
-  }
-
   String _modeLabelText(BuildContext context) {
-    return _uiText(
-      context,
-      zh: _autoRunning ? '自动禅拍' : '手动叩击',
-      en: _autoRunning ? 'Auto rhythm' : 'Manual strike',
+    return _toolboxI18n(context, listen: false).t(
+      _autoRunning
+          ? 'inline.plan294.woodfish.auto_rhythm_44649fec'
+          : 'literal.ui.pages.toolbox_sound_tools.woodfish.manual_strike_8d0e01',
     );
   }
 
   String _soundLabelText(BuildContext context, _WoodfishSoundProfile profile) {
     return switch (profile) {
-      _WoodfishSoundProfile.temple => _uiText(
+      _WoodfishSoundProfile.temple => _toolboxI18n(
         context,
-        zh: '古寺木韵',
-        en: 'Temple',
-      ),
-      _WoodfishSoundProfile.sandal => _uiText(
+        listen: false,
+      ).t('inline.plan294.woodfish.temple_5f355916'),
+      _WoodfishSoundProfile.sandal => _toolboxI18n(
         context,
-        zh: '檀木清响',
-        en: 'Sandal',
-      ),
-      _WoodfishSoundProfile.bright => _uiText(
+        listen: false,
+      ).t('inline.plan294.woodfish.sandal_be0f2c57'),
+      _WoodfishSoundProfile.bright => _toolboxI18n(
         context,
-        zh: '晨钟明脆',
-        en: 'Bright',
-      ),
-      _WoodfishSoundProfile.hollow => _uiText(
+        listen: false,
+      ).t('inline.plan294.woodfish.bright_bb568b95'),
+      _WoodfishSoundProfile.hollow => _toolboxI18n(
         context,
-        zh: '空谷回鸣',
-        en: 'Hollow',
-      ),
-      _WoodfishSoundProfile.night => _uiText(context, zh: '夜静低鸣', en: 'Night'),
+        listen: false,
+      ).t('inline.plan294.woodfish.hollow_e6420358'),
+      _WoodfishSoundProfile.night => _toolboxI18n(
+        context,
+        listen: false,
+      ).t('inline.plan294.woodfish.night_85a46967'),
     };
   }
 
   String _visualStyleLabel(BuildContext context, _WoodfishVisualStyle style) {
     return switch (style) {
-      _WoodfishVisualStyle.inkSandal => _uiText(
+      _WoodfishVisualStyle.inkSandal => _toolboxI18n(
         context,
-        zh: '水墨檀影',
-        en: 'Ink Sandal',
-      ),
-      _WoodfishVisualStyle.nightLantern => _uiText(
+        listen: false,
+      ).t('inline.plan294.woodfish.ink_sandal_39e0528b'),
+      _WoodfishVisualStyle.nightLantern => _toolboxI18n(
         context,
-        zh: '灯火夜禅',
-        en: 'Night Lantern',
-      ),
-      _ => _uiText(context, zh: '古寺琥珀', en: 'Zen Amber'),
+        listen: false,
+      ).t('inline.plan294.woodfish.night_lantern_af41efdc'),
+      _ => _toolboxI18n(
+        context,
+        listen: false,
+      ).t('inline.plan294.woodfish.zen_amber_45fb130e'),
     };
   }
 
   String _visualStyleHint(BuildContext context, _WoodfishVisualStyle style) {
     return switch (style) {
-      _WoodfishVisualStyle.inkSandal => _uiText(
-        context,
-        zh: '冷色水墨底纹，檀木纹理更克制，适合静坐与夜读。',
-        en: 'Cool ink texture with restrained sandalwood details.',
+      _WoodfishVisualStyle.inkSandal => _toolboxI18n(context, listen: false).t(
+        'inline.plan294.woodfish.cool_ink_texture_with_restrained_sandalwood_deta_30803852',
       ),
-      _WoodfishVisualStyle.nightLantern => _uiText(
-        context,
-        zh: '暗夜灯影与暖金光晕，重击时更有香火流动感。',
-        en: 'Lantern-like night glow with warm ritual highlights.',
+      _WoodfishVisualStyle.nightLantern => _toolboxI18n(context, listen: false).t(
+        'inline.plan294.woodfish.lantern_like_night_glow_with_warm_ritual_highlig_652283c0',
       ),
-      _ => _uiText(
-        context,
-        zh: '古寺暖木配色，带轻微金粉与木纹起伏。',
-        en: 'Warm temple wood palette with subtle golden dust.',
+      _ => _toolboxI18n(context, listen: false).t(
+        'inline.plan294.woodfish.warm_temple_wood_palette_with_subtle_golden_dust_b70456cb',
       ),
     };
   }
@@ -355,12 +340,14 @@ class _WoodfishToolState extends State<_WoodfishTool>
     _WoodfishReboundArcPreset preset,
   ) {
     return switch (preset) {
-      _WoodfishReboundArcPreset.wide => _uiText(
+      _WoodfishReboundArcPreset.wide => _toolboxI18n(
         context,
-        zh: '舒展弧线',
-        en: 'Wide Arc',
-      ),
-      _ => _uiText(context, zh: '紧凑弧线', en: 'Compact Arc'),
+        listen: false,
+      ).t('inline.plan294.woodfish.wide_arc_d642a8d4'),
+      _ => _toolboxI18n(
+        context,
+        listen: false,
+      ).t('inline.plan294.woodfish.compact_arc_0f13223b'),
     };
   }
 
@@ -369,38 +356,64 @@ class _WoodfishToolState extends State<_WoodfishTool>
     _WoodfishReboundArcPreset preset,
   ) {
     return switch (preset) {
-      _WoodfishReboundArcPreset.wide => _uiText(
-        context,
-        zh: '回弹半径更大，击槌抬手更舒展，适合仪式感节奏。',
-        en: 'Larger rebound radius with a wider return arc.',
+      _WoodfishReboundArcPreset.wide => _toolboxI18n(context, listen: false).t(
+        'inline.plan294.woodfish.larger_rebound_radius_with_a_wider_return_arc_8ee37137',
       ),
-      _ => _uiText(
-        context,
-        zh: '回弹半径更短，轨迹收紧，适合稳定而克制的敲击。',
-        en: 'Shorter rebound radius for a tighter return path.',
+      _ => _toolboxI18n(context, listen: false).t(
+        'inline.plan294.woodfish.shorter_rebound_radius_for_a_tighter_return_path_9c1a1943',
       ),
     };
   }
 
   String _gestureLabel(BuildContext context) {
     return switch (_lastGesture) {
-      'Tap' => _uiText(context, zh: '轻叩', en: 'Tap'),
-      'Hold' => _uiText(context, zh: '长按连击', en: 'Hold roll'),
-      'Button' => _uiText(context, zh: '按钮叩击', en: 'Button strike'),
-      'Auto' => _uiText(context, zh: '自动禅拍', en: 'Auto rhythm'),
-      'Reset' => _uiText(context, zh: '重置', en: 'Reset'),
+      'Tap' => _toolboxI18n(
+        context,
+        listen: false,
+      ).t('inline.plan294.woodfish.tap_04839a81'),
+      'Hold' => _toolboxI18n(
+        context,
+        listen: false,
+      ).t('inline.plan294.woodfish.hold_roll_1a202e63'),
+      'Button' => _toolboxI18n(
+        context,
+        listen: false,
+      ).t('inline.plan294.woodfish.button_strike_862c159a'),
+      'Auto' => _toolboxI18n(
+        context,
+        listen: false,
+      ).t('inline.plan294.woodfish.auto_rhythm_44649fec'),
+      'Reset' => _toolboxI18n(context, listen: false).t('appearanceReset'),
       _ => _lastGesture,
     };
   }
 
   String _rhythmLabel(BuildContext context, String id) {
     return switch (id) {
-      'mantra_flow' => _uiText(context, zh: '咒息流转', en: 'Mantra Flow'),
-      'triplet_focus' => _uiText(context, zh: '三拍入静', en: 'Triplet Focus'),
-      'walking_eight' => _uiText(context, zh: '八拍行禅', en: 'Walking 8'),
-      'energy_roll' => _uiText(context, zh: '连击振心', en: 'Energy Roll'),
-      'custom' => _uiText(context, zh: '自定禅拍', en: 'Custom'),
-      _ => _uiText(context, zh: '四拍安定', en: 'Calm 4/4'),
+      'mantra_flow' => _toolboxI18n(
+        context,
+        listen: false,
+      ).t('inline.plan294.woodfish.mantra_flow_6f85f6bd'),
+      'triplet_focus' => _toolboxI18n(
+        context,
+        listen: false,
+      ).t('inline.plan294.woodfish.triplet_focus_81526560'),
+      'walking_eight' => _toolboxI18n(
+        context,
+        listen: false,
+      ).t('inline.plan294.woodfish.walking_8_750a31c1'),
+      'energy_roll' => _toolboxI18n(
+        context,
+        listen: false,
+      ).t('inline.plan294.woodfish.energy_roll_d0bc3dbd'),
+      'custom' => _toolboxI18n(
+        context,
+        listen: false,
+      ).t('inline.plan294.woodfish.custom_155b967b'),
+      _ => _toolboxI18n(
+        context,
+        listen: false,
+      ).t('inline.plan294.woodfish.calm_4_4_0f7996d0'),
     };
   }
 
@@ -722,11 +735,12 @@ class _WoodfishToolState extends State<_WoodfishTool>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         SectionHeader(
-          title: _uiText(context, zh: '禅拍节律', en: 'Rhythm arrangement'),
-          subtitle: _uiText(
+          title: _toolboxI18n(
             context,
-            zh: '先选预设入手，再微调 BPM、拍数与重音，让节律更贴合呼吸。',
-            en: 'Start with presets, then tune BPM, pulse count, and accents.',
+            listen: false,
+          ).t('inline.plan294.woodfish.rhythm_arrangement_9a857992'),
+          subtitle: _toolboxI18n(context, listen: false).t(
+            'inline.plan294.woodfish.start_with_presets_then_tune_bpm_pulse_count_and_2964e9e0',
           ),
         ),
         const SizedBox(height: 10),
@@ -747,7 +761,12 @@ class _WoodfishToolState extends State<_WoodfishTool>
               .toList(growable: false),
         ),
         const SizedBox(height: 12),
-        Text(_uiText(context, zh: '每分钟拍数 $_bpm', en: 'BPM $_bpm')),
+        Text(
+          _toolboxI18n(context, listen: false).t(
+            'inline.plan296.ui.pages.toolbox.sound.tools.woodfish.bpm.271cc19fc9',
+            params: <String, Object?>{'_bpm': _bpm},
+          ),
+        ),
         Slider(
           value: _bpm.toDouble(),
           min: 36,
@@ -763,10 +782,9 @@ class _WoodfishToolState extends State<_WoodfishTool>
           onChangeEnd: (_) => _schedulePersist(),
         ),
         Text(
-          _uiText(
-            context,
-            zh: '每轮拍数 $_beatsPerCycle',
-            en: 'Beats per cycle $_beatsPerCycle',
+          _toolboxI18n(context, listen: false).t(
+            'inline.plan296.ui.pages.toolbox.sound.tools.woodfish.beats_per_cycle.a464d0ba81',
+            params: <String, Object?>{'_beatsPerCycle': _beatsPerCycle},
           ),
         ),
         Slider(
@@ -784,10 +802,9 @@ class _WoodfishToolState extends State<_WoodfishTool>
           onChangeEnd: (_) => _schedulePersist(),
         ),
         Text(
-          _uiText(
-            context,
-            zh: '子拍细分 $_subdivision',
-            en: 'Subdivision $_subdivision',
+          _toolboxI18n(context, listen: false).t(
+            'inline.plan296.ui.pages.toolbox.sound.tools.woodfish.subdivision.aeae0851ac',
+            params: <String, Object?>{'_subdivision': _subdivision},
           ),
         ),
         Slider(
@@ -805,10 +822,9 @@ class _WoodfishToolState extends State<_WoodfishTool>
           onChangeEnd: (_) => _schedulePersist(),
         ),
         Text(
-          _uiText(
-            context,
-            zh: '每 $_accentEvery 拍重音一次',
-            en: 'Accent every $_accentEvery pulses',
+          _toolboxI18n(context, listen: false).t(
+            'inline.plan296.ui.pages.toolbox.sound.tools.woodfish.accent_every_pulses.35ff5bf751',
+            params: <String, Object?>{'_accentEvery': _accentEvery},
           ),
         ),
         Slider(
@@ -836,16 +852,20 @@ class _WoodfishToolState extends State<_WoodfishTool>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         SectionHeader(
-          title: _uiText(context, zh: '木鱼音色', en: 'Tone shaping'),
-          subtitle: _uiText(
+          title: _toolboxI18n(
             context,
-            zh: '调节共鸣、亮度、音高与击打力度，塑造你自己的木鱼声场。',
-            en: 'Tune resonance, brightness, pitch, and strike hardness.',
+            listen: false,
+          ).t('inline.plan294.woodfish.tone_shaping_5a4f32e0'),
+          subtitle: _toolboxI18n(context, listen: false).t(
+            'inline.plan294.woodfish.tune_resonance_brightness_pitch_and_strike_hardn_a7180d3e',
           ),
         ),
         const SizedBox(height: 10),
         Text(
-          _uiText(context, zh: '东方意境皮肤', en: 'Eastern visual style'),
+          _toolboxI18n(
+            context,
+            listen: false,
+          ).t('inline.plan294.woodfish.eastern_visual_style_f6de7251'),
           style: Theme.of(
             context,
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
@@ -878,7 +898,10 @@ class _WoodfishToolState extends State<_WoodfishTool>
         ),
         const SizedBox(height: 14),
         Text(
-          _uiText(context, zh: '木鱼音色包', en: 'Woodfish timbre'),
+          _toolboxI18n(
+            context,
+            listen: false,
+          ).t('inline.plan294.woodfish.woodfish_timbre_75bec78c'),
           style: Theme.of(
             context,
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
@@ -907,10 +930,9 @@ class _WoodfishToolState extends State<_WoodfishTool>
         ),
         const SizedBox(height: 12),
         Text(
-          _uiText(
-            context,
-            zh: '主音量 ${(_masterVolume * 100).round()}%',
-            en: 'Master volume ${(_masterVolume * 100).round()}%',
+          _toolboxI18n(context, listen: false).t(
+            'inline.plan296.ui.pages.toolbox.sound.tools.woodfish.master_volume.b0dfec8847',
+            params: <String, Object?>{'p0': (_masterVolume * 100).round()},
           ),
         ),
         Slider(
@@ -925,10 +947,9 @@ class _WoodfishToolState extends State<_WoodfishTool>
           onChangeEnd: (_) => _schedulePersist(),
         ),
         Text(
-          _uiText(
-            context,
-            zh: '重音增强 +${(_accentBoost * 100).round()}%',
-            en: 'Accent boost +${(_accentBoost * 100).round()}%',
+          _toolboxI18n(context, listen: false).t(
+            'inline.plan296.ui.pages.toolbox.sound.tools.woodfish.accent_boost.564091967c',
+            params: <String, Object?>{'p0': (_accentBoost * 100).round()},
           ),
         ),
         Slider(
@@ -943,10 +964,9 @@ class _WoodfishToolState extends State<_WoodfishTool>
           onChangeEnd: (_) => _schedulePersist(),
         ),
         Text(
-          _uiText(
-            context,
-            zh: '共鸣 ${(_resonance * 100).round()}%',
-            en: 'Resonance ${(_resonance * 100).round()}%',
+          _toolboxI18n(context, listen: false).t(
+            'inline.plan296.ui.pages.toolbox.sound.tools.woodfish.resonance.7f5257d79f',
+            params: <String, Object?>{'p0': (_resonance * 100).round()},
           ),
         ),
         Slider(
@@ -964,10 +984,9 @@ class _WoodfishToolState extends State<_WoodfishTool>
           },
         ),
         Text(
-          _uiText(
-            context,
-            zh: '亮度 ${(_brightness * 100).round()}%',
-            en: 'Brightness ${(_brightness * 100).round()}%',
+          _toolboxI18n(context, listen: false).t(
+            'inline.plan296.ui.pages.toolbox.sound.tools.woodfish.brightness.2f3768e106',
+            params: <String, Object?>{'p0': (_brightness * 100).round()},
           ),
         ),
         Slider(
@@ -985,10 +1004,12 @@ class _WoodfishToolState extends State<_WoodfishTool>
           },
         ),
         Text(
-          _uiText(
-            context,
-            zh: '音高 ${_pitch >= 0 ? '+' : ''}${_pitch.toStringAsFixed(1)} 半音',
-            en: 'Pitch ${_pitch >= 0 ? '+' : ''}${_pitch.toStringAsFixed(1)} st',
+          _toolboxI18n(context, listen: false).t(
+            'inline.plan296.ui.pages.toolbox.sound.tools.woodfish.pitch_st.1ddac5d669',
+            params: <String, Object?>{
+              'p0': _pitch >= 0 ? '+' : '',
+              'p1': _pitch.toStringAsFixed(1),
+            },
           ),
         ),
         Slider(
@@ -1006,10 +1027,9 @@ class _WoodfishToolState extends State<_WoodfishTool>
           },
         ),
         Text(
-          _uiText(
-            context,
-            zh: '击打硬度 ${(_strikeHardness * 100).round()}%',
-            en: 'Strike hardness ${(_strikeHardness * 100).round()}%',
+          _toolboxI18n(context, listen: false).t(
+            'inline.plan296.ui.pages.toolbox.sound.tools.woodfish.strike_hardness.cb2da80843',
+            params: <String, Object?>{'p0': (_strikeHardness * 100).round()},
           ),
         ),
         Slider(
@@ -1046,16 +1066,20 @@ class _WoodfishToolState extends State<_WoodfishTool>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         SectionHeader(
-          title: _uiText(context, zh: '修持与细节', en: 'Advanced'),
-          subtitle: _uiText(
+          title: _toolboxI18n(
             context,
-            zh: '设置每日目标、触感反馈、自动止拍与漂浮愿词，让体验更沉静。',
-            en: 'Fine tune target, haptics, auto-stop, and floating blessings.',
+            listen: false,
+          ).t('inline.plan294.woodfish.advanced_ed56b0f3'),
+          subtitle: _toolboxI18n(context, listen: false).t(
+            'inline.plan294.woodfish.fine_tune_target_haptics_auto_stop_and_floating__3ad99383',
           ),
         ),
         const SizedBox(height: 10),
         Text(
-          _uiText(context, zh: '修持目标', en: 'Target count'),
+          _toolboxI18n(
+            context,
+            listen: false,
+          ).t('inline.plan294.woodfish.target_count_211bec09'),
           style: Theme.of(
             context,
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
@@ -1083,12 +1107,15 @@ class _WoodfishToolState extends State<_WoodfishTool>
         const SizedBox(height: 8),
         SwitchListTile.adaptive(
           contentPadding: EdgeInsets.zero,
-          title: Text(_uiText(context, zh: '启用触感反馈', en: 'Enable haptics')),
-          subtitle: Text(
-            _uiText(
+          title: Text(
+            _toolboxI18n(
               context,
-              zh: '手动叩击时给出轻微震感，帮助建立节律沉浸。',
-              en: 'Add subtle vibration to manual strikes.',
+              listen: false,
+            ).t('inline.plan294.woodfish.enable_haptics_d9473052'),
+          ),
+          subtitle: Text(
+            _toolboxI18n(context, listen: false).t(
+              'inline.plan294.woodfish.add_subtle_vibration_to_manual_strikes_c864401a',
             ),
           ),
           value: _hapticsEnabled,
@@ -1101,13 +1128,14 @@ class _WoodfishToolState extends State<_WoodfishTool>
         SwitchListTile.adaptive(
           contentPadding: EdgeInsets.zero,
           title: Text(
-            _uiText(context, zh: '达到目标后止拍', en: 'Auto stop at target'),
+            _toolboxI18n(
+              context,
+              listen: false,
+            ).t('inline.plan294.woodfish.auto_stop_at_target_9bf3c1de'),
           ),
           subtitle: Text(
-            _uiText(
-              context,
-              zh: '自动节拍达到目标数后自动停下，便于结束当次修持。',
-              en: 'Stop auto rhythm once the target is reached.',
+            _toolboxI18n(context, listen: false).t(
+              'inline.plan294.woodfish.stop_auto_rhythm_once_the_target_is_reached_6149e253',
             ),
           ),
           value: _autoStopAtGoal,
@@ -1119,7 +1147,10 @@ class _WoodfishToolState extends State<_WoodfishTool>
         ),
         const SizedBox(height: 10),
         Text(
-          _uiText(context, zh: '击槌回弹弧线', en: 'Mallet rebound arc'),
+          _toolboxI18n(
+            context,
+            listen: false,
+          ).t('inline.plan294.woodfish.mallet_rebound_arc_1d1fda09'),
           style: Theme.of(
             context,
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
@@ -1154,7 +1185,10 @@ class _WoodfishToolState extends State<_WoodfishTool>
         ),
         const SizedBox(height: 10),
         Text(
-          _uiText(context, zh: '漂浮愿词', en: 'Floating text'),
+          _toolboxI18n(
+            context,
+            listen: false,
+          ).t('inline.plan294.woodfish.floating_text_6609c304'),
           style: Theme.of(
             context,
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
@@ -1164,11 +1198,10 @@ class _WoodfishToolState extends State<_WoodfishTool>
           controller: _floatingTextController,
           maxLength: 18,
           decoration: InputDecoration(
-            hintText: _uiText(
+            hintText: _toolboxI18n(
               context,
-              zh: '例如：功德 +1、清心 +1',
-              en: 'For example: Merit +1',
-            ),
+              listen: false,
+            ).t('inline.plan294.woodfish.for_example_merit_1_07f95cc2'),
             prefixIcon: const Icon(Icons.auto_awesome_rounded),
             border: const OutlineInputBorder(),
           ),
@@ -1217,12 +1250,22 @@ class _WoodfishToolState extends State<_WoodfishTool>
             OutlinedButton.icon(
               onPressed: _resetSession,
               icon: const Icon(Icons.refresh_rounded),
-              label: Text(_uiText(context, zh: '重置本次修持', en: 'Reset session')),
+              label: Text(
+                _toolboxI18n(
+                  context,
+                  listen: false,
+                ).t('inline.plan294.woodfish.reset_session_7db24a96'),
+              ),
             ),
             OutlinedButton.icon(
               onPressed: _resetAllTime,
               icon: const Icon(Icons.restart_alt_rounded),
-              label: Text(_uiText(context, zh: '清空总计', en: 'Clear total')),
+              label: Text(
+                _toolboxI18n(
+                  context,
+                  listen: false,
+                ).t('inline.plan294.woodfish.clear_total_569fcdc6'),
+              ),
             ),
           ],
         ),
@@ -1487,10 +1530,13 @@ class _WoodfishToolState extends State<_WoodfishTool>
                         Text('$_sessionCount', style: countTextStyle),
                         const SizedBox(height: 2),
                         Text(
-                          _uiText(
-                            context,
-                            zh: '目标 $_targetCount · 轮拍 ${_pulseInCycle + 1}/$_cyclePulses',
-                            en: 'Target $_targetCount · ${_pulseInCycle + 1}/$_cyclePulses',
+                          _toolboxI18n(context, listen: false).t(
+                            'inline.plan296.ui.pages.toolbox.sound.tools.woodfish.target.d022d113ed',
+                            params: <String, Object?>{
+                              '_targetCount': _targetCount,
+                              'p1': _pulseInCycle + 1,
+                              '_cyclePulses': _cyclePulses,
+                            },
                           ),
                           style: detailTextStyle,
                         ),
@@ -1688,7 +1734,12 @@ class _WoodfishToolState extends State<_WoodfishTool>
         FilledButton.icon(
           onPressed: () => unawaited(_performStrike(gesture: 'Button')),
           icon: const Icon(Icons.pan_tool_alt_rounded),
-          label: Text(_uiText(context, zh: '轻叩一次', en: 'Strike once')),
+          label: Text(
+            _toolboxI18n(
+              context,
+              listen: false,
+            ).t('inline.plan294.woodfish.strike_once_a09dbeda'),
+          ),
         ),
         FilledButton.tonalIcon(
           onPressed: _toggleAuto,
@@ -1698,17 +1749,22 @@ class _WoodfishToolState extends State<_WoodfishTool>
                 : Icons.play_circle_rounded,
           ),
           label: Text(
-            _uiText(
-              context,
-              zh: _autoRunning ? '止拍' : '启拍',
-              en: _autoRunning ? 'Stop auto' : 'Start auto',
+            _toolboxI18n(context, listen: false).t(
+              _autoRunning
+                  ? 'literal.ui.pages.toolbox_sound_tools.woodfish.stop_auto_b61a2c'
+                  : 'literal.ui.pages.toolbox_sound_tools.woodfish.start_auto_823c5e',
             ),
           ),
         ),
         OutlinedButton.icon(
           onPressed: _resetSession,
           icon: const Icon(Icons.refresh_rounded),
-          label: Text(_uiText(context, zh: '重置本次', en: 'Reset session')),
+          label: Text(
+            _toolboxI18n(
+              context,
+              listen: false,
+            ).t('inline.plan294.woodfish.reset_session_27946f98'),
+          ),
           style: immersive
               ? OutlinedButton.styleFrom(
                   foregroundColor: Colors.white,
@@ -1724,13 +1780,19 @@ class _WoodfishToolState extends State<_WoodfishTool>
               widget.onOpenFullScreen?.call(autoStart: shouldAutoStart);
             },
             icon: const Icon(Icons.open_in_full_rounded),
-            label: Text(_uiText(context, zh: '全屏', en: 'Full screen')),
+            label: Text(
+              _toolboxI18n(context, listen: false).t(
+                'inline.ui.pages.toolbox_sound_tools.drum_pad.full_screen_297ab3',
+              ),
+            ),
           ),
         if (widget.fullScreen)
           OutlinedButton.icon(
             onPressed: () => _openSettingsSheet(context),
             icon: const Icon(Icons.tune_rounded),
-            label: Text(_uiText(context, zh: '设置', en: 'Settings')),
+            label: Text(
+              _toolboxI18n(context, listen: false).t('arb.settings_b74cfc'),
+            ),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.white,
               side: BorderSide(color: Colors.white.withValues(alpha: 0.28)),
@@ -1752,52 +1814,76 @@ class _WoodfishToolState extends State<_WoodfishTool>
             runSpacing: 10,
             children: <Widget>[
               ToolboxMetricCard(
-                label: _uiText(context, zh: '本次', en: 'Session'),
+                label: _toolboxI18n(
+                  context,
+                  listen: false,
+                ).t('inline.plan294.woodfish.session_7cb213bb'),
                 value: '$_sessionCount',
               ),
               ToolboxMetricCard(
-                label: _uiText(context, zh: '累计', en: 'Total'),
+                label: _toolboxI18n(
+                  context,
+                  listen: false,
+                ).t('inline.plan294.woodfish.total_7d3408c8'),
                 value: '$_allTimeCount',
               ),
               ToolboxMetricCard(
-                label: _uiText(context, zh: '时长', en: 'Elapsed'),
+                label: _toolboxI18n(
+                  context,
+                  listen: false,
+                ).t('inline.plan294.woodfish.elapsed_47bf8b90'),
                 value: _formatElapsed(_elapsed),
               ),
               ToolboxMetricCard(
-                label: _uiText(context, zh: '模式', en: 'Mode'),
+                label: _toolboxI18n(
+                  context,
+                  listen: false,
+                ).t('inline.ui.pages.toolbox_human_tests_aim.mode_35c458'),
                 value: _modeLabelText(context),
               ),
               ToolboxMetricCard(
-                label: _uiText(context, zh: '节律', en: 'Rhythm'),
+                label: _toolboxI18n(
+                  context,
+                  listen: false,
+                ).t('ref.toolbox.sleep.library.tag.rhythm'),
                 value: _rhythmLabel(context, _activeRhythmPresetId),
               ),
               ToolboxMetricCard(
-                label: _uiText(context, zh: '音色', en: 'Tone'),
+                label: _toolboxI18n(
+                  context,
+                  listen: false,
+                ).t('inline.plan294.woodfish.tone_e6a7319d'),
                 value: _soundLabelText(context, _soundProfile),
               ),
               ToolboxMetricCard(
-                label: _uiText(context, zh: '意境', en: 'Style'),
+                label: _toolboxI18n(
+                  context,
+                  listen: false,
+                ).t('inline.plan294.woodfish.style_5db2ee08'),
                 value: _visualStyleLabel(context, _visualStyle),
               ),
             ],
           ),
           const SizedBox(height: 14),
           SectionHeader(
-            title: _uiText(context, zh: '叩击禅台', en: 'Strike stage'),
-            subtitle: _uiText(
+            title: _toolboxI18n(
               context,
-              zh: '轻触一叩，长按连击；亦可启拍，让呼吸与节律自然归一。',
-              en: 'Tap to strike, hold to roll, or start auto mode for stable pulse.',
+              listen: false,
+            ).t('inline.plan294.woodfish.strike_stage_b10a1443'),
+            subtitle: _toolboxI18n(context, listen: false).t(
+              'inline.plan294.woodfish.tap_to_strike_hold_to_roll_or_start_auto_mode_fo_d5415d25',
             ),
           ),
           const SizedBox(height: 10),
           _buildStrikeStage(context, immersive: false, height: 300),
           const SizedBox(height: 10),
           Text(
-            _uiText(
-              context,
-              zh: '当前手势：${_gestureLabel(context)} · 愿词：$_resolvedFloatingText',
-              en: 'Gesture: ${_gestureLabel(context)} · Floating text: $_resolvedFloatingText',
+            _toolboxI18n(context, listen: false).t(
+              'inline.plan296.ui.pages.toolbox.sound.tools.woodfish.gesture_floating_text.c6fcfc8c42',
+              params: <String, Object?>{
+                'p0': _gestureLabel(context),
+                '_resolvedFloatingText': _resolvedFloatingText,
+              },
             ),
             style: Theme.of(context).textTheme.bodySmall,
           ),
@@ -1835,23 +1921,36 @@ class _WoodfishToolState extends State<_WoodfishTool>
                           runSpacing: 8,
                           children: <Widget>[
                             _PianoOverlayChip(
-                              label: _uiText(context, zh: '模式', en: 'Mode'),
+                              label: _toolboxI18n(context, listen: false).t(
+                                'inline.ui.pages.toolbox_human_tests_aim.mode_35c458',
+                              ),
                               value: _modeLabelText(context),
                             ),
                             _PianoOverlayChip(
-                              label: _uiText(context, zh: '轮拍', en: 'Cycle'),
+                              label: _toolboxI18n(
+                                context,
+                                listen: false,
+                              ).t('inline.plan294.woodfish.cycle_00595c94'),
                               value: '${_pulseInCycle + 1}/$_cyclePulses',
                             ),
                             _PianoOverlayChip(
-                              label: _uiText(context, zh: '目标', en: 'Target'),
+                              label: _toolboxI18n(context, listen: false).t(
+                                'inline.ui.pages.toolbox_breathing_tool.target_6033c5',
+                              ),
                               value: '$_sessionCount/$_targetCount',
                             ),
                             _PianoOverlayChip(
-                              label: _uiText(context, zh: '音色', en: 'Tone'),
+                              label: _toolboxI18n(
+                                context,
+                                listen: false,
+                              ).t('inline.plan294.woodfish.tone_e6a7319d'),
                               value: _soundLabelText(context, _soundProfile),
                             ),
                             _PianoOverlayChip(
-                              label: _uiText(context, zh: '意境', en: 'Style'),
+                              label: _toolboxI18n(
+                                context,
+                                listen: false,
+                              ).t('inline.plan294.woodfish.style_5db2ee08'),
                               value: _visualStyleLabel(context, _visualStyle),
                             ),
                             _PianoOverlayChip(label: 'BPM', value: '$_bpm'),
@@ -1889,7 +1988,12 @@ class _WoodfishToolState extends State<_WoodfishTool>
                           foregroundColor: Colors.white,
                         ),
                         icon: const Icon(Icons.tune_rounded),
-                        label: Text(_uiText(context, zh: '设置', en: 'Settings')),
+                        label: Text(
+                          _toolboxI18n(
+                            context,
+                            listen: false,
+                          ).t('arb.settings_b74cfc'),
+                        ),
                       ),
                     ],
                   ),
@@ -1913,10 +2017,8 @@ class _WoodfishToolState extends State<_WoodfishTool>
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
                           Text(
-                            _uiText(
-                              context,
-                              zh: '手机沉浸禅台：大触控区、拟真击槌、可自定义愿词与节律。',
-                              en: 'Mobile immersive mode with large touch targets and realistic motion.',
+                            _toolboxI18n(context, listen: false).t(
+                              'inline.plan294.woodfish.mobile_immersive_mode_with_large_touch_targets_a_e31dab66',
                             ),
                             style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: Colors.white70),

@@ -170,18 +170,12 @@ class _SleepWhiteNoiseSheetState extends ConsumerState<_SleepWhiteNoiseSheet> {
             ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
-          Text(
-            i18n.t('toolbox.sleep.tools.ambientNoiseHint'),
-          ),
+          Text(i18n.t('toolbox.sleep.tools.ambientNoiseHint')),
           const SizedBox(height: 16),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text(
-              i18n.t('toolbox.sleep.tools.enableAmbient'),
-            ),
-            subtitle: Text(
-              i18n.t('toolbox.sleep.tools.masterSwitch'),
-            ),
+            title: Text(i18n.t('toolbox.sleep.tools.enableAmbient')),
+            subtitle: Text(i18n.t('toolbox.sleep.tools.masterSwitch')),
             value: appState.ambientEnabled,
             onChanged: (value) => appState.setAmbientEnabled(value),
           ),
@@ -286,9 +280,10 @@ class _AmbientSourceRow extends StatelessWidget {
               onChanged: onEnable,
             ),
             Text(
-              i18n.t('toolbox.sleep.tools.volume', params: {
-                'value': source.volume.toStringAsFixed(2),
-              }),
+              i18n.t(
+                'toolbox.sleep.tools.volume',
+                params: {'value': source.volume.toStringAsFixed(2)},
+              ),
             ),
             Slider(value: source.volume.clamp(0.0, 1.0), onChanged: onVolume),
           ],

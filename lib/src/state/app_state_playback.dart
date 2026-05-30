@@ -40,7 +40,9 @@ extension _AppStatePlayback on AppState {
   }
 
   Future<void> _syncPlaybackToSelectedWordbook(Wordbook wordbook) async {
-    if (!_playbackStore.isPlaying || _playbackStore.isPaused || _playbackStore.playingWordbookId == wordbook.id) {
+    if (!_playbackStore.isPlaying ||
+        _playbackStore.isPaused ||
+        _playbackStore.playingWordbookId == wordbook.id) {
       return;
     }
 
@@ -196,7 +198,10 @@ extension _AppStatePlayback on AppState {
       _log.w(
         'app_state',
         'start prepared play ignored',
-        data: {'isPlaying': _playbackStore.isPlaying, 'isPrepared': _playback.isPrepared},
+        data: {
+          'isPlaying': _playbackStore.isPlaying,
+          'isPrepared': _playback.isPrepared,
+        },
       );
       return;
     }
@@ -421,7 +426,10 @@ extension _AppStatePlayback on AppState {
     if (target == null) return;
     final focusIndex = _playbackStore.playingScopeWords.isEmpty
         ? null
-        : _playbackStore.playingScopeIndex.clamp(0, _playbackStore.playingScopeWords.length - 1);
+        : _playbackStore.playingScopeIndex.clamp(
+            0,
+            _playbackStore.playingScopeWords.length - 1,
+          );
     final focusEntry = focusIndex == null
         ? null
         : _playbackStore.playingScopeWords[focusIndex];
@@ -459,16 +467,25 @@ extension _AppStatePlayback on AppState {
   }
 
   Future<void> _movePlaybackPreviousWordImpl() async {
-    if (!_playbackStore.isPlaying || _playbackStore.playingScopeWords.isEmpty) return;
-    final current = _playbackStore.playingScopeIndex.clamp(0, _playbackStore.playingScopeWords.length - 1);
+    if (!_playbackStore.isPlaying || _playbackStore.playingScopeWords.isEmpty)
+      return;
+    final current = _playbackStore.playingScopeIndex.clamp(
+      0,
+      _playbackStore.playingScopeWords.length - 1,
+    );
     final target =
-        (current - 1 + _playbackStore.playingScopeWords.length) % _playbackStore.playingScopeWords.length;
+        (current - 1 + _playbackStore.playingScopeWords.length) %
+        _playbackStore.playingScopeWords.length;
     await _restartPlaybackFromPlayingScope(target);
   }
 
   Future<void> _movePlaybackNextWordImpl() async {
-    if (!_playbackStore.isPlaying || _playbackStore.playingScopeWords.isEmpty) return;
-    final current = _playbackStore.playingScopeIndex.clamp(0, _playbackStore.playingScopeWords.length - 1);
+    if (!_playbackStore.isPlaying || _playbackStore.playingScopeWords.isEmpty)
+      return;
+    final current = _playbackStore.playingScopeIndex.clamp(
+      0,
+      _playbackStore.playingScopeWords.length - 1,
+    );
     final target = (current + 1) % _playbackStore.playingScopeWords.length;
     await _restartPlaybackFromPlayingScope(target);
   }

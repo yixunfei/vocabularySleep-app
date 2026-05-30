@@ -43,6 +43,9 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
   bool _preferAvailableIngredients = false;
   late final TextEditingController _ingredientInputController;
   late final TextEditingController _customAvoidInputController;
+
+  String _categoryTitle(DailyChoiceCategory category, String languageCode) =>
+      category.title(AppI18n(languageCode));
   late DailyChoiceEatCatalogFilterResult _filterResult;
   final Map<String, Set<String>> _selectedTraitFilters = <String, Set<String>>{
     eatAttributeType: <String>{},
@@ -132,7 +135,9 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
       children: <Widget>[
         DailyChoiceCategorySelector(
           i18n: widget.i18n,
-          title: pickUiText(widget.i18n, zh: '选择餐段', en: 'Meal moment'),
+          title: widget.i18n.t(
+            'inline.plan295.daily_choice.meal_moment.832b046100f9',
+          ),
           categories: eatMealFilterCategories,
           selectedId: _mealId,
           accent: widget.accent,
@@ -144,7 +149,9 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
         const SizedBox(height: ToolboxUiTokens.cardSpacing),
         DailyChoiceCategorySelector(
           i18n: widget.i18n,
-          title: pickUiText(widget.i18n, zh: '选择厨具', en: 'Cooking tool'),
+          title: widget.i18n.t(
+            'inline.plan295.daily_choice.cooking_tool.52c5e0e7a6b9',
+          ),
           categories: cookToolCategories,
           selectedId: _toolId,
           accent: widget.accent,
@@ -217,15 +224,24 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
         DailyChoiceRandomPanel(
           i18n: widget.i18n,
           accent: widget.accent,
-          title: pickUiText(
-            widget.i18n,
-            zh: _toolId == 'all'
-                ? '${category.titleZh}吃什么'
-                : '${tool.titleZh} · ${category.titleZh}吃什么',
-            en: _toolId == 'all'
-                ? 'What for ${category.titleEn.toLowerCase()}'
-                : '${tool.titleEn} · ${category.titleEn}',
-          ),
+          title: _toolId == 'all'
+              ? widget.i18n.t(
+                  'inline.plan295.daily_choice.what_for_category_titleen_tolowercas.4b9f52de36d4',
+                  params: <String, Object?>{
+                    'category.titleZh': _categoryTitle(category, 'zh'),
+                    'category.titleEn.toLowerCase()':
+                        _categoryTitle(category, 'en').toLowerCase(),
+                  },
+                )
+              : widget.i18n.t(
+                  'inline.plan295.daily_choice.tool_titleen_category_titleen.ca8660c39c29',
+                  params: <String, Object?>{
+                    'tool.titleZh': _categoryTitle(tool, 'zh'),
+                    'category.titleZh': _categoryTitle(category, 'zh'),
+                    'tool.titleEn': _categoryTitle(tool, 'en'),
+                    'category.titleEn': _categoryTitle(category, 'en'),
+                  },
+                ),
           subtitle: _buildRandomPanelSubtitle(
             category,
             tool,
@@ -234,22 +250,14 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
             selectedCollection,
           ),
           options: displayed,
-          emptyText: pickUiText(
-            widget.i18n,
-            zh: selectedCollection != null
-                ? '这个食谱集在当前筛选下没有可选菜品。可以放宽筛选、向集合加入菜谱，或切回内置菜谱。'
+          emptyText: widget.i18n.t(
+            selectedCollection != null
+                ? 'inline.plan295.daily_choice.this_recipe_set_has_no_dishes_under.da5889d1de1b'
                 : (_hasAdvancedFilters
-                      ? '当前筛选条件有点严，没有找到合适菜品。可以放宽高级设置、换厨具，或在管理里新增你的个人菜谱。'
+                      ? 'inline.plan295.daily_choice.the_current_filters_are_too_strict_r.265c9cfc3b47'
                       : (_toolId == 'all'
-                            ? '这个餐段已经没有可选菜品，可以在管理里恢复内置菜或新增个人食谱。'
-                            : '这个餐段和厨具组合下暂时没有菜品，可以换一个厨具、恢复隐藏菜，或补充你的个人食谱。')),
-            en: selectedCollection != null
-                ? 'This recipe set has no dishes under the current filters. Relax filters, add recipes to the set, or switch back to built-in recipes.'
-                : (_hasAdvancedFilters
-                      ? 'The current filters are too strict. Relax advanced settings, switch tools, or add your own recipe in Manage.'
-                      : (_toolId == 'all'
-                            ? 'No dishes left for this meal. Restore built-ins or add a personal recipe in Manage.'
-                            : 'No dishes match this meal and tool yet. Try another tool, restore hidden dishes, or add a personal recipe.')),
+                            ? 'inline.plan295.daily_choice.no_dishes_left_for_this_meal_restore.ceb324d91ac2'
+                            : 'inline.plan295.daily_choice.no_dishes_match_this_meal_and_tool_y.0d50a6b8b6c0')),
           ),
           onDetail: (option) => unawaited(_openOptionDetail(option)),
           onGuide: () => unawaited(_openGuide()),
@@ -301,32 +309,20 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
           .join('、');
       final priority = _filterResult.ingredientPriority;
       return withCollection(
-        pickUiText(
-          widget.i18n,
-          zh: switch (priority.stage) {
+        widget.i18n.t(
+          switch (priority.stage) {
             DailyChoiceEatIngredientMatchStage.exact =>
               priority.broadenedForVariety
-                  ? '已先按全命中食材收口，再补入高重叠候选保持随机性。当前食材：$ingredientSummary。'
-                  : '已按全命中食材优先。当前食材：$ingredientSummary。',
+                  ? 'inline.plan295.daily_choice.exact_ingredient_matches_lead_the_po.6f5398af9222'
+                  : 'inline.plan295.daily_choice.exact_ingredient_matches_lead_the_po.503206b0115c',
             DailyChoiceEatIngredientMatchStage.strong =>
-              '没有找到全命中菜谱，已按高重叠食材优先。当前食材：$ingredientSummary。',
+              'inline.plan295.daily_choice.no_exact_match_yet_so_the_pool_prefe.493be8d1e1d1',
             DailyChoiceEatIngredientMatchStage.broad =>
-              '没有高重叠命中，已保留至少命中 1 项材料的相关菜谱。当前食材：$ingredientSummary。',
+              'inline.plan295.daily_choice.no_strong_overlap_yet_so_the_pool_ke.ba302e738567',
             DailyChoiceEatIngredientMatchStage.none =>
-              '暂时没有命中现有食材，仍保留当前筛选范围内的完整候选。当前食材：$ingredientSummary。',
+              'inline.plan295.daily_choice.no_ingredient_hit_yet_so_the_full_fi.fb50bf11239e',
           },
-          en: switch (priority.stage) {
-            DailyChoiceEatIngredientMatchStage.exact =>
-              priority.broadenedForVariety
-                  ? 'Exact ingredient matches lead the pool, then strong overlaps are added for variety.'
-                  : 'Exact ingredient matches lead the pool.',
-            DailyChoiceEatIngredientMatchStage.strong =>
-              'No exact match yet, so the pool prefers strong ingredient overlaps.',
-            DailyChoiceEatIngredientMatchStage.broad =>
-              'No strong overlap yet, so the pool keeps recipes that match at least one ingredient.',
-            DailyChoiceEatIngredientMatchStage.none =>
-              'No ingredient hit yet, so the full filtered pool stays available.',
-          },
+          params: <String, Object?>{'ingredientSummary': ingredientSummary},
         ),
       );
     }
@@ -334,10 +330,8 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
       return withCollection(category.subtitle(widget.i18n));
     }
     return withCollection(
-      pickUiText(
-        widget.i18n,
-        zh: '${tool.subtitleZh}。${category.subtitleZh}',
-        en: '${tool.subtitleEn}. ${category.subtitleEn}',
+      widget.i18n.t(
+        'inline.ui.pages.toolbox_daily_choice.daily_choice_eat_module.tool_subtitleen_category_subtitleen_79a0d9',
       ),
     );
   }
@@ -436,7 +430,9 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
       context: context,
       i18n: widget.i18n,
       accent: widget.accent,
-      title: pickUiText(widget.i18n, zh: '做菜之前', en: 'Before cooking'),
+      title: widget.i18n.t(
+        'inline.plan295.daily_choice.before_cooking.bb81becab0e3',
+      ),
       modules: buildCookingGuideModules(widget.libraryStatus.referenceTitles),
     );
   }
@@ -454,8 +450,7 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
       initialCategoryId: _mealId,
       contexts: cookToolCategories,
       initialContextId: _toolId,
-      contextLabelZh: '厨具',
-      contextLabelEn: 'Tool',
+      contextLabelKey: 'toolbox.daily_choice.editor.field.tool',
       eatLibraryStore: widget.libraryStore,
       onInspectOption: (option) =>
           _openOptionDetail(option, reportErrors: false),
@@ -493,10 +488,8 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              pickUiText(
-                widget.i18n,
-                zh: '读取菜谱详情失败：$error',
-                en: 'Failed to load recipe details: $error',
+              widget.i18n.t(
+                'inline.plan295.daily_choice.failed_to_load_recipe_details_error.d9f10a742c37',
               ),
             ),
           ),
@@ -553,8 +546,7 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
       initialCategoryId: resolved.categoryId,
       contexts: cookToolCategories,
       initialContextId: resolved.contextId,
-      contextLabelZh: '厨具',
-      contextLabelEn: 'Tool',
+      contextLabelKey: 'toolbox.daily_choice.editor.field.tool',
       option: resolved,
     );
     return result?.option;
@@ -580,8 +572,7 @@ class _EatChoiceModuleState extends State<_EatChoiceModule> {
       initialCategoryId: resolved.categoryId,
       contexts: cookToolCategories,
       initialContextId: resolved.contextId,
-      contextLabelZh: '厨具',
-      contextLabelEn: 'Tool',
+      contextLabelKey: 'toolbox.daily_choice.editor.field.tool',
       option: resolved,
       forceNewId: true,
       eatCollections: eatCollections,
@@ -623,12 +614,16 @@ class _EatLibraryStatusPanel extends StatelessWidget {
         ? null
         : '${updatedAt.year}-${updatedAt.month.toString().padLeft(2, '0')}-${updatedAt.day.toString().padLeft(2, '0')} ${updatedAt.hour.toString().padLeft(2, '0')}:${updatedAt.minute.toString().padLeft(2, '0')}';
     final compactStatusLabel = libraryLoading
-        ? pickUiText(i18n, zh: '加载中', en: 'Loading')
+        ? i18n.t(
+            'inline.ui.pages.toolbox_daily_choice.daily_choice_eat_module.loading_8285c7',
+          )
         : !hasInstalledLibrary
-        ? pickUiText(i18n, zh: '尚未加载', en: 'Not installed')
+        ? i18n.t('inline.plan295.daily_choice.not_installed.37e25c2c84db')
         : libraryInstalling
-        ? pickUiText(i18n, zh: '加载中', en: 'Loading')
-        : pickUiText(i18n, zh: '已就绪', en: 'Ready');
+        ? i18n.t(
+            'inline.ui.pages.toolbox_daily_choice.daily_choice_eat_module.loading_8285c7',
+          )
+        : i18n.t('timerIdle');
 
     return ToolboxSurfaceCard(
       padding: const EdgeInsets.all(14),
@@ -643,7 +638,9 @@ class _EatLibraryStatusPanel extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: Text(
-                  pickUiText(i18n, zh: '菜谱库', en: 'Recipe library'),
+                  i18n.t(
+                    'inline.plan295.daily_choice.recipe_library.5c3dec496681',
+                  ),
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
@@ -656,11 +653,13 @@ class _EatLibraryStatusPanel extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               IconButton(
-                tooltip: pickUiText(
-                  i18n,
-                  zh: expanded ? '收起' : '展开',
-                  en: expanded ? 'Collapse' : 'Expand',
-                ),
+                tooltip: expanded
+                    ? i18n.t(
+                        'inline.plan295.daily_choice.collapse.ad0db950964e',
+                      )
+                    : i18n.t(
+                        'inline.ui.widgets.word_detail_sections.expand_70ba34',
+                      ),
                 onPressed: onToggleExpanded,
                 style: IconButton.styleFrom(
                   backgroundColor: accent.withValues(alpha: 0.1),
@@ -682,19 +681,15 @@ class _EatLibraryStatusPanel extends StatelessWidget {
               runSpacing: 8,
               children: <Widget>[
                 ToolboxInfoPill(
-                  text: pickUiText(
-                    i18n,
-                    zh: '总库 ${libraryStatus.recipeCount}',
-                    en: 'Total ${libraryStatus.recipeCount}',
+                  text: i18n.t(
+                    'inline.plan295.daily_choice.total_librarystatus_recipecount.895006c8f6e8',
                   ),
                   accent: accent,
                   backgroundColor: theme.colorScheme.surfaceContainerLow,
                 ),
                 ToolboxInfoPill(
-                  text: pickUiText(
-                    i18n,
-                    zh: '当前池 $candidateCount',
-                    en: 'Pool $candidateCount',
+                  text: i18n.t(
+                    'inline.plan295.daily_choice.pool_candidatecount.2886b3be61e9',
                   ),
                   accent: accent,
                   backgroundColor: theme.colorScheme.surfaceContainerLow,
@@ -712,14 +707,12 @@ class _EatLibraryStatusPanel extends StatelessWidget {
                     : Icons.cloud_download_rounded,
               ),
               label: Text(
-                pickUiText(
-                  i18n,
-                  zh: busy ? '正在加载菜谱库…' : '点击加载菜谱库',
-                  en: libraryInstalling
-                      ? 'Loading recipe library…'
+                i18n.t(
+                  libraryInstalling
+                      ? 'toolbox.daily_choice.eat.library.loading'
                       : libraryLoading
-                      ? 'Reading recipe library…'
-                      : 'Load recipe library',
+                      ? 'toolbox.daily_choice.eat.library.reading'
+                      : 'toolbox.daily_choice.eat.library.load',
                 ),
               ),
             ),
@@ -727,15 +720,13 @@ class _EatLibraryStatusPanel extends StatelessWidget {
           if (expanded) ...<Widget>[
             const SizedBox(height: 10),
             Text(
-              pickUiText(
-                i18n,
-                zh: hasInstalledLibrary
-                    ? '菜谱摘要已经准备好，点开菜名时再展示完整做法。'
-                    : '首次使用需要准备菜谱库，完成后下次打开会更快。',
-                en: hasInstalledLibrary
-                    ? 'Recipe summaries are ready. Full instructions open when you view a dish.'
-                    : 'Prepare the recipe library once; future openings will be faster.',
-              ),
+              hasInstalledLibrary
+                  ? i18n.t(
+                      'inline.plan295.daily_choice.recipe_summaries_are_ready_full_inst.17390655c83b',
+                    )
+                  : i18n.t(
+                      'inline.plan295.daily_choice.prepare_the_recipe_library_once_futu.5f752dc78182',
+                    ),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
                 height: 1.35,
@@ -744,10 +735,8 @@ class _EatLibraryStatusPanel extends StatelessWidget {
             if (updatedLabel != null) ...<Widget>[
               const SizedBox(height: 6),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '最近更新 $updatedLabel',
-                  en: 'Updated $updatedLabel',
+                i18n.t(
+                  'inline.plan295.daily_choice.updated_updatedlabel.6e0ba6c7f960',
                 ),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
@@ -766,10 +755,8 @@ class _EatLibraryStatusPanel extends StatelessWidget {
           if (libraryStatus.errorMessage != null && expanded) ...<Widget>[
             const SizedBox(height: 8),
             Text(
-              pickUiText(
-                i18n,
-                zh: '最近一次同步有异常，当前会继续使用本地可用菜谱库。',
-                en: 'The latest sync reported an error. The page will keep using the local library that is already available.',
+              i18n.t(
+                'inline.plan295.daily_choice.the_latest_sync_reported_an_error_th.cfb5d0abc743',
               ),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.error,
@@ -818,7 +805,9 @@ class _EatCollectionSelectorPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(i18n, zh: '食谱集', en: 'Recipe set'),
+            i18n.t(
+              'inline.ui.pages.toolbox_daily_choice.daily_choice_eat_module.recipe_set_f58eb6',
+            ),
             style: theme.textTheme.labelLarge?.copyWith(
               fontWeight: FontWeight.w900,
               color: theme.colorScheme.onSurfaceVariant,
@@ -835,7 +824,9 @@ class _EatCollectionSelectorPanel extends StatelessWidget {
                 onTap: () => onSelected('all'),
                 leading: const Icon(Icons.all_inclusive_rounded, size: 18),
                 label: Text(
-                  pickUiText(i18n, zh: '内置菜谱', en: 'Built-in recipes'),
+                  i18n.t(
+                    'inline.plan295.daily_choice.built_in_recipes.b6a38d84379c',
+                  ),
                 ),
               ),
               ...collections.map(
@@ -926,17 +917,17 @@ class _EatAdvancedSettingsPanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickUiText(i18n, zh: '高级设置', en: 'Advanced settings'),
+                      i18n.t(
+                        'inline.ui.pages.toolbox_daily_choice.daily_choice_eat_module.advanced_settings_e4bcf4',
+                      ),
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '可以按现有材料、荤素结构和常见排除项把菜谱库进一步收口，并支持把食材与排除项拆成可增删的列表。',
-                        en: 'Refine the recipe pool by available ingredients, profile, and common avoid filters with editable token lists.',
+                      i18n.t(
+                        'inline.plan295.daily_choice.refine_the_recipe_pool_by_available.27c5b39b0a90',
                       ),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
@@ -953,7 +944,11 @@ class _EatAdvancedSettingsPanel extends StatelessWidget {
                     TextButton.icon(
                       onPressed: onClearAll,
                       icon: const Icon(Icons.restart_alt_rounded),
-                      label: Text(pickUiText(i18n, zh: '清空', en: 'Reset')),
+                      label: Text(
+                        i18n.t(
+                          'inline.plan295.daily_choice.reset.7b99f32b7636',
+                        ),
+                      ),
                     ),
                   TextButton.icon(
                     onPressed: onExpandedChanged,
@@ -972,11 +967,13 @@ class _EatAdvancedSettingsPanel extends StatelessWidget {
                           : Icons.keyboard_arrow_down_rounded,
                     ),
                     label: Text(
-                      pickUiText(
-                        i18n,
-                        zh: expanded ? '收起' : '展开',
-                        en: expanded ? 'Collapse' : 'Expand',
-                      ),
+                      expanded
+                          ? i18n.t(
+                              'inline.plan295.daily_choice.collapse.ad0db950964e',
+                            )
+                          : i18n.t(
+                              'inline.ui.widgets.word_detail_sections.expand_70ba34',
+                            ),
                     ),
                   ),
                 ],
@@ -992,20 +989,16 @@ class _EatAdvancedSettingsPanel extends StatelessWidget {
               activeTrackColor: accent.withValues(alpha: 0.32),
               onChanged: onPreferIngredientsChanged,
               title: Text(
-                pickUiText(
-                  i18n,
-                  zh: '已有材料优先匹配',
-                  en: 'Prioritize my ingredients',
+                i18n.t(
+                  'inline.plan295.daily_choice.prioritize_my_ingredients.a3571716cead',
                 ),
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w900,
                 ),
               ),
               subtitle: Text(
-                pickUiText(
-                  i18n,
-                  zh: '系统会先找全命中，再找高重叠，最后保留至少命中一项材料的相关菜谱，避免随机池被压成只剩一道菜。',
-                  en: 'The system tries exact matches first, then strong overlaps, then recipes that hit at least one ingredient to avoid collapsing to a single result.',
+                i18n.t(
+                  'inline.plan295.daily_choice.the_system_tries_exact_matches_first.b276b9b64fd2',
                 ),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
@@ -1017,25 +1010,21 @@ class _EatAdvancedSettingsPanel extends StatelessWidget {
             _EatEditableTokenSection(
               i18n: i18n,
               accent: accent,
-              title: pickUiText(
-                i18n,
-                zh: '当前已有材料',
-                en: 'Available ingredients',
+              title: i18n.t(
+                'inline.plan295.daily_choice.available_ingredients.02b32cd2b57d',
               ),
-              subtitle: pickUiText(
-                i18n,
-                zh: '支持一次输入多个食材，添加后会变成可删除的标签。匹配时会先看全交集，再看高重叠，最后保留相关合集。',
-                en: 'Add multiple ingredients at once. Matching prefers exact overlap first, then strong overlap, then broader related recipes.',
+              subtitle: i18n.t(
+                'inline.plan295.daily_choice.add_multiple_ingredients_at_once_mat.11dc9f94fa40',
               ),
               controller: ingredientInputController,
               chips: availableIngredients,
-              emptyHint: pickUiText(
-                i18n,
-                zh: '例如：鸡蛋、番茄、豆腐、土豆',
-                en: 'For example: egg, tomato, tofu, potato',
+              emptyHint: i18n.t(
+                'inline.plan295.daily_choice.for_example_egg_tomato_tofu_potato.bf554e3fc05e',
               ),
               prefixIcon: Icons.inventory_2_rounded,
-              addLabel: pickUiText(i18n, zh: '添加食材', en: 'Add ingredient'),
+              addLabel: i18n.t(
+                'inline.plan295.daily_choice.add_ingredient.0034c5724a06',
+              ),
               onSubmitted: onAddAvailableIngredients,
               onDeleted: onRemoveAvailableIngredient,
             ),
@@ -1055,11 +1044,9 @@ class _EatAdvancedSettingsPanel extends StatelessWidget {
             _EatAdvancedChipSection(
               i18n: i18n,
               accent: accent,
-              title: pickUiText(i18n, zh: '排除项', en: 'Exclude'),
-              subtitle: pickUiText(
-                i18n,
-                zh: '用于快速排除常见忌口与过敏原；命中后该菜会被移出当前候选。',
-                en: 'Quickly exclude common avoid items and allergens from the current pool.',
+              title: i18n.t('inline.plan295.daily_choice.exclude.eacf33047005'),
+              subtitle: i18n.t(
+                'inline.plan295.daily_choice.quickly_exclude_common_avoid_items_a.981b3318d565',
               ),
               options: eatContainsTraitGroup.options,
               selectedIds: excludedContains,
@@ -1069,21 +1056,21 @@ class _EatAdvancedSettingsPanel extends StatelessWidget {
             _EatEditableTokenSection(
               i18n: i18n,
               accent: accent,
-              title: pickUiText(i18n, zh: '自定义忌口 / 调料', en: 'Custom avoids'),
-              subtitle: pickUiText(
-                i18n,
-                zh: '适合补充香菜、鱼腥草、蒜、姜、葱等个性化忌口。会同时检查常见忌口标签和食材关键词。',
-                en: 'Use this for personal avoid items such as cilantro, houttuynia, garlic, ginger, or scallion.',
+              title: i18n.t(
+                'inline.plan295.daily_choice.custom_avoids.dfef4079c28f',
+              ),
+              subtitle: i18n.t(
+                'inline.plan295.daily_choice.use_this_for_personal_avoid_items_su.a718b51e072c',
               ),
               controller: customAvoidInputController,
               chips: customExcludedIngredients,
-              emptyHint: pickUiText(
-                i18n,
-                zh: '例如：香菜、鱼腥草、蒜',
-                en: 'For example: cilantro, houttuynia, garlic',
+              emptyHint: i18n.t(
+                'inline.plan295.daily_choice.for_example_cilantro_houttuynia_garl.3b22507a8679',
               ),
               prefixIcon: Icons.do_not_touch_rounded,
-              addLabel: pickUiText(i18n, zh: '添加忌口', en: 'Add avoid'),
+              addLabel: i18n.t(
+                'inline.plan295.daily_choice.add_avoid.17070976b76e',
+              ),
               onSubmitted: onAddCustomAvoids,
               onDeleted: onRemoveCustomAvoid,
             ),

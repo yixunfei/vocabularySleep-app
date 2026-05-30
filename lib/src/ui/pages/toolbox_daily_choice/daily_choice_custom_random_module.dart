@@ -71,25 +71,33 @@ class _CustomRandomModuleState extends State<_CustomRandomModule>
     return <_CustomRandomDraft>[
       _CustomRandomDraft(
         id: 'option_a',
-        label: pickUiText(widget.i18n, zh: '可选项 A', en: 'Option A'),
+        label: widget.i18n.t(
+          'inline.plan295.daily_choice.option_a.7bba547b8694',
+        ),
         weight: 3,
         conditionProbability: 0.8,
       ),
       _CustomRandomDraft(
         id: 'option_b',
-        label: pickUiText(widget.i18n, zh: '可选项 B', en: 'Option B'),
+        label: widget.i18n.t(
+          'inline.plan295.daily_choice.option_b.d1be692919c6',
+        ),
         weight: 2,
         conditionProbability: 0.6,
       ),
       _CustomRandomDraft(
         id: 'option_c',
-        label: pickUiText(widget.i18n, zh: '可选项 C', en: 'Option C'),
+        label: widget.i18n.t(
+          'inline.plan295.daily_choice.option_c.00bbcf55e120',
+        ),
         weight: 1,
         conditionProbability: 0.5,
       ),
       _CustomRandomDraft(
         id: 'option_d',
-        label: pickUiText(widget.i18n, zh: '可选项 D', en: 'Option D'),
+        label: widget.i18n.t(
+          'inline.plan295.daily_choice.option_d.6420b447189e',
+        ),
         weight: 1,
         conditionProbability: 0.4,
       ),
@@ -240,14 +248,18 @@ class _CustomRandomModuleState extends State<_CustomRandomModule>
                     onPressed: _canDraw ? _draw : null,
                     icon: Icon(_drawIcon),
                     label: Text(
-                      pickUiText(widget.i18n, zh: '抽取一次', en: 'Draw'),
+                      widget.i18n.t(
+                        'inline.plan295.daily_choice.draw.db79777c946e',
+                      ),
                     ),
                   ),
                   OutlinedButton.icon(
                     onPressed: _resetDemo,
                     icon: const Icon(Icons.restart_alt_rounded),
                     label: Text(
-                      pickUiText(widget.i18n, zh: '恢复示例', en: 'Reset'),
+                      widget.i18n.t(
+                        'inline.plan295.daily_choice.reset.b544c0676a8a',
+                      ),
                     ),
                   ),
                 ],
@@ -269,34 +281,26 @@ class _CustomRandomModuleState extends State<_CustomRandomModule>
 
   String? _validationText(int optionCount) {
     if (optionCount < 2) {
-      return pickUiText(
-        widget.i18n,
-        zh: '至少需要 2 个有效选项才能随机。',
-        en: 'At least 2 valid options are required.',
+      return widget.i18n.t(
+        'inline.plan295.daily_choice.at_least_2_valid_options_are_require.8b87d9104bd0',
       );
     }
     if (_animation == DailyChoiceCustomRandomAnimation.dice &&
         optionCount < 3) {
-      return pickUiText(
-        widget.i18n,
-        zh: '骰子模式至少需要 3 个选项；每颗骰子会分配 3 到 12 面。',
-        en: 'Dice mode needs at least 3 options; each die gets 3 to 12 faces.',
+      return widget.i18n.t(
+        'inline.plan295.daily_choice.dice_mode_needs_at_least_3_options_e.332255d2c8ea',
       );
     }
     if (_animation == DailyChoiceCustomRandomAnimation.coin &&
         optionCount != 2) {
-      return pickUiText(
-        widget.i18n,
-        zh: '硬币模式只使用两面，因此需要正好 2 个有效选项。',
-        en: 'Coin mode has exactly two sides, so it needs exactly 2 options.',
+      return widget.i18n.t(
+        'inline.plan295.daily_choice.coin_mode_has_exactly_two_sides_so_i.cfc1ef58c32b',
       );
     }
     if (_mode == DailyChoiceCustomRandomMode.weighted &&
         _activeOptions.every((item) => item.normalizedWeight <= 0)) {
-      return pickUiText(
-        widget.i18n,
-        zh: '全部权重为 0 时会自动退回均匀随机；建议至少给一个选项正权重。',
-        en: 'If all weights are 0, the draw falls back to uniform random.',
+      return widget.i18n.t(
+        'inline.plan295.daily_choice.if_all_weights_are_0_the_draw_falls.4823cd9ef7fd',
       );
     }
     if (_mode == DailyChoiceCustomRandomMode.jointDistribution &&
@@ -304,10 +308,8 @@ class _CustomRandomModuleState extends State<_CustomRandomModule>
           (item) =>
               item.normalizedWeight * item.normalizedConditionProbability <= 0,
         )) {
-      return pickUiText(
-        widget.i18n,
-        zh: '联合分布的权重 × 条件概率全为 0 时会退回均匀随机。',
-        en: 'If every joint mass is 0, the draw falls back to uniform random.',
+      return widget.i18n.t(
+        'inline.plan295.daily_choice.if_every_joint_mass_is_0_the_draw_fa.b5fbdbe5c180',
       );
     }
     return null;
@@ -379,10 +381,8 @@ class _CustomRandomModuleState extends State<_CustomRandomModule>
         ..._items,
         _CustomRandomDraft(
           id: 'custom_${DateTime.now().microsecondsSinceEpoch}',
-          label: pickUiText(
-            widget.i18n,
-            zh: '可选项 $nextIndex',
-            en: 'Option $nextIndex',
+          label: widget.i18n.t(
+            'inline.plan295.daily_choice.option_nextindex.f477e542fa13',
           ),
         ),
       ];
@@ -420,46 +420,29 @@ class _CustomRandomModuleState extends State<_CustomRandomModule>
       context: context,
       i18n: widget.i18n,
       accent: widget.accent,
-      title: pickUiText(
-        widget.i18n,
-        zh: '随机助手指南',
-        en: 'Random assistant guide',
+      title: widget.i18n.t(
+        'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_module.random_assistant_guide_b259e7',
       ),
       modules: <DailyChoiceGuideModule>[
         const DailyChoiceGuideModule(
           id: 'random_scope',
           icon: Icons.rule_folder_rounded,
-          titleZh: '先确认适用边界',
-          titleEn: 'Check the boundary first',
-          subtitleZh: '随机适合低风险、可回退、差异不大的选择。',
-          subtitleEn: 'Random choice fits low-stakes, reversible choices.',
+    titleKey: 'inline.plan295.daily_choice.check_the_boundary_first.78f54cbdfafe',
+    subtitleKey: 'inline.plan295.daily_choice.random_choice_fits_low_stakes_revers.6c704dcae087',
           entries: <DailyChoiceGuideEntry>[
             DailyChoiceGuideEntry(
               icon: Icons.low_priority_rounded,
-              titleZh: '均匀随机',
-              titleEn: 'Uniform random',
-              bodyZh: '每个选项概率相同，适合“都差不多，只想结束犹豫”的场景。',
-              bodyEn:
-                  'Every option has the same chance. Use it when all choices are close enough.',
-            ),
+        titleKey: 'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_widgets.uniform_random_851942',
+        bodyKey: 'inline.plan295.daily_choice.every_option_has_the_same_chance_use.e989f5341b23'),
             DailyChoiceGuideEntry(
               icon: Icons.balance_rounded,
-              titleZh: '加权随机',
-              titleEn: 'Weighted random',
-              bodyZh: '权重越高越容易被抽中，适合保留一点偏好但不完全按分数排序。',
-              bodyEn:
-                  'Higher weights get more chances. It keeps preference without turning the result into a strict ranking.',
-            ),
+        titleKey: 'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_widgets.weighted_random_28af44',
+        bodyKey: 'inline.plan295.daily_choice.higher_weights_get_more_chances_it_k.3ece5fbe976b'),
             DailyChoiceGuideEntry(
               icon: Icons.account_tree_rounded,
-              titleZh: '联合分布多轮',
-              titleEn: 'Joint multi-round',
-              bodyZh: '用权重 × 条件概率形成联合质量，多轮抽取后按出现次数收口。',
-              bodyEn:
-                  'Use weight × condition probability as joint mass, then draw multiple rounds and pick the strongest repeat.',
-            ),
-          ],
-        ),
+        titleKey: 'inline.plan295.daily_choice.joint_multi_round.d854ecdf35d2',
+        bodyKey: 'inline.plan295.daily_choice.use_weight_condition_probability_as.162d148577a3'),
+          ]),
       ],
     );
   }

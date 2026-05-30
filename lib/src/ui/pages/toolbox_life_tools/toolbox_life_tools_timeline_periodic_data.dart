@@ -5,24 +5,18 @@ class _TimelineFact {
     required this.id,
     required this.category,
     required this.yearsBeforePresent,
-    required this.displayZh,
-    required this.displayEn,
-    required this.titleZh,
-    required this.titleEn,
-    required this.detailZh,
-    required this.detailEn,
+    required this.displayKey,
+    required this.titleKey,
+    required this.detailKey,
     required this.sourceName,
     required this.sourceUrl,
   });
   final String id;
   final String category;
   final double yearsBeforePresent;
-  final String displayZh;
-  final String displayEn;
-  final String titleZh;
-  final String titleEn;
-  final String detailZh;
-  final String detailEn;
+  final String displayKey;
+  final String titleKey;
+  final String detailKey;
   final String sourceName;
   final String sourceUrl;
 }
@@ -139,15 +133,11 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'big_bang',
     category: 'cosmic',
     yearsBeforePresent: 13800000000.0,
-    displayZh: '\u7ea6 138 \u4ebf\u5e74\u524d',
-    displayEn: 'c. 13.8 billion years ago',
-    titleZh:
-        '\u53ef\u89c2\u6d4b\u5b87\u5b99\u65e9\u671f\u70ed\u5927\u7206\u70b8\u9636\u6bb5',
-    titleEn: 'Hot Big Bang era of the observable universe',
-    detailZh:
-        '\u73b0\u4ee3\u5b87\u5b99\u5b66\u7684\u4e3b\u6d41\u6a21\u578b\u8ba4\u4e3a\uff0c\u53ef\u89c2\u6d4b\u5b87\u5b99\u4ece\u7ea6 138 \u4ebf\u5e74\u524d\u7684\u9ad8\u6e29\u9ad8\u5bc6\u72b6\u6001\u6f14\u5316\u800c\u6765\u3002',
-    detailEn:
-        'Modern cosmology places the hot, dense early state of the observable universe about 13.8 billion years ago.',
+    displayKey: 'inline.plan297.life.c_13_8_billion_years_ago.7be0c38b2237',
+    titleKey:
+        'inline.plan297.life.hot_big_bang_era_of_the_observable_universe.c44c3e48fccd',
+    detailKey:
+        'inline.plan297.life.modern_cosmology_places_the_hot_dense_early_stat.27acefcef07b',
     sourceName: 'NASA Universe overview',
     sourceUrl: 'https://science.nasa.gov/universe/',
   ),
@@ -155,14 +145,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'earth_forms',
     category: 'earth',
     yearsBeforePresent: 4540000000.0,
-    displayZh: '\u7ea6 45.4 \u4ebf\u5e74\u524d',
-    displayEn: 'c. 4.54 billion years ago',
-    titleZh: '\u5730\u7403\u5f62\u6210',
-    titleEn: 'Earth forms',
-    detailZh:
-        '\u653e\u5c04\u6027\u6d4b\u5e74\u548c\u9668\u77f3\u8bc1\u636e\u652f\u6301\u5730\u7403\u7ea6\u5728 45.4 \u4ebf\u5e74\u524d\u5f62\u6210\u3002',
-    detailEn:
-        'Radiometric dating and meteorite evidence support an Earth age of about 4.54 billion years.',
+    displayKey: 'inline.plan297.life.c_4_54_billion_years_ago.3e92a42c6c11',
+    titleKey: 'inline.plan297.life.earth_forms.3a01ebc4fbb3',
+    detailKey:
+        'inline.plan297.life.radiometric_dating_and_meteorite_evidence_suppor.93da1e1fd6c3',
     sourceName: 'USGS: How old is Earth?',
     sourceUrl: 'https://www.usgs.gov/faqs/how-old-earth',
   ),
@@ -170,14 +156,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'first_life',
     category: 'earth',
     yearsBeforePresent: 3500000000.0,
-    displayZh: '\u7ea6 35 \u4ebf\u5e74\u524d',
-    displayEn: 'c. 3.5 billion years ago',
-    titleZh: '\u65e9\u671f\u751f\u547d\u8bc1\u636e',
-    titleEn: 'Early evidence of life',
-    detailZh:
-        '\u65e9\u671f\u5fae\u751f\u7269\u751f\u547d\u8bc1\u636e\u901a\u5e38\u88ab\u653e\u5728\u7ea6 35 \u4ebf\u5e74\u524d\u7684\u65f6\u95f4\u8303\u56f4\u5185\u3002',
-    detailEn:
-        'Common summaries place early microbial life evidence around 3.5 billion years ago.',
+    displayKey: 'inline.plan297.life.c_3_5_billion_years_ago.99b0f19ad58c',
+    titleKey: 'inline.plan297.life.early_evidence_of_life.16b7d9543020',
+    detailKey:
+        'inline.plan297.life.common_summaries_place_early_microbial_life_evid.cacd8f02b050',
     sourceName: 'Smithsonian Human Origins Program',
     sourceUrl: 'https://humanorigins.si.edu/',
   ),
@@ -185,14 +167,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'great_oxidation',
     category: 'earth',
     yearsBeforePresent: 2400000000.0,
-    displayZh: '\u7ea6 24 \u4ebf\u5e74\u524d',
-    displayEn: 'c. 2.4 billion years ago',
-    titleZh: '\u5927\u6c27\u5316\u4e8b\u4ef6',
-    titleEn: 'Great Oxidation Event',
-    detailZh:
-        '\u5730\u7403\u5927\u6c14\u548c\u6d77\u6d0b\u4e2d\u7684\u6c27\u542b\u91cf\u663e\u8457\u4e0a\u5347\uff0c\u6539\u53d8\u4e86\u540e\u7eed\u751f\u547d\u6f14\u5316\u73af\u5883\u3002',
-    detailEn:
-        'Atmospheric and ocean oxygen rose substantially, reshaping later biological evolution.',
+    displayKey: 'inline.plan297.life.c_2_4_billion_years_ago.8c4881d27f07',
+    titleKey: 'inline.plan297.life.great_oxidation_event.226b180bfb05',
+    detailKey:
+        'inline.plan297.life.atmospheric_and_ocean_oxygen_rose_substantially_.226ae67d384d',
     sourceName: 'NASA Astrobiology',
     sourceUrl: 'https://astrobiology.nasa.gov/',
   ),
@@ -200,14 +178,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'eukaryotes',
     category: 'earth',
     yearsBeforePresent: 1800000000.0,
-    displayZh: '\u7ea6 18 \u4ebf\u5e74\u524d',
-    displayEn: 'c. 1.8 billion years ago',
-    titleZh: '\u771f\u6838\u751f\u7269\u51fa\u73b0',
-    titleEn: 'Eukaryotes appear',
-    detailZh:
-        '\u5177\u6709\u7ec6\u80de\u6838\u7684\u771f\u6838\u751f\u7269\u5728\u53e4\u5143\u53e4\u4ee3\u5230\u4e2d\u5143\u53e4\u4ee3\u65e9\u671f\u51fa\u73b0\uff0c\u662f\u590d\u6742\u751f\u547d\u7684\u91cd\u8981\u57fa\u7840\u3002',
-    detailEn:
-        'Nucleated eukaryotic cells appeared in the Paleoproterozoic to early Mesoproterozoic, enabling later complex life.',
+    displayKey: 'inline.plan297.life.c_1_8_billion_years_ago.48c555bca08a',
+    titleKey: 'inline.plan297.life.eukaryotes_appear.70f3a67d47ce',
+    detailKey:
+        'inline.plan297.life.nucleated_eukaryotic_cells_appeared_in_the_paleo.9d348e50d788',
     sourceName: 'Encyclopaedia Britannica: eukaryote',
     sourceUrl: 'https://www.britannica.com/science/eukaryote',
   ),
@@ -215,14 +189,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'cambrian',
     category: 'earth',
     yearsBeforePresent: 538800000.0,
-    displayZh: '\u7ea6 5.388 \u4ebf\u5e74\u524d',
-    displayEn: 'c. 538.8 million years ago',
-    titleZh: '\u5bd2\u6b66\u7eaa\u5f00\u59cb',
-    titleEn: 'Cambrian Period begins',
-    detailZh:
-        'ICS 2024/12 \u5e74\u4ee3\u8868\u5c06\u5bd2\u6b66\u7eaa\u8d77\u70b9\u7f6e\u4e8e\u7ea6 5.388 \u4ebf\u5e74\u524d\u3002',
-    detailEn:
-        'The ICS 2024/12 chart places the start of the Cambrian at about 538.8 Ma.',
+    displayKey: 'inline.plan297.life.c_538_8_million_years_ago.ee736a11101d',
+    titleKey: 'inline.plan297.life.cambrian_period_begins.cd7c9d487e70',
+    detailKey:
+        'inline.plan297.life.the_ics_2024_12_chart_places_the_start_of_the_ca.a537b96554d9',
     sourceName: 'International Commission on Stratigraphy',
     sourceUrl: 'https://stratigraphy.org/chart',
   ),
@@ -230,14 +200,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'land_plants',
     category: 'earth',
     yearsBeforePresent: 470000000.0,
-    displayZh: '\u7ea6 4.7 \u4ebf\u5e74\u524d',
-    displayEn: 'c. 470 million years ago',
-    titleZh: '\u9646\u5730\u690d\u7269\u6269\u6563',
-    titleEn: 'Land plants spread',
-    detailZh:
-        '\u690d\u7269\u5411\u9646\u5730\u6269\u5c55\uff0c\u4e3a\u540e\u7eed\u9646\u751f\u751f\u6001\u7cfb\u7edf\u5960\u5b9a\u57fa\u7840\u3002',
-    detailEn:
-        'Plant expansion onto land laid the foundation for later terrestrial ecosystems.',
+    displayKey: 'inline.plan297.life.c_470_million_years_ago.789ef2fe6dcb',
+    titleKey: 'inline.plan297.life.land_plants_spread.fbda3524b4fe',
+    detailKey:
+        'inline.plan297.life.plant_expansion_onto_land_laid_the_foundation_fo.f7c4870dc8df',
     sourceName: 'Encyclopaedia Britannica: plant evolution',
     sourceUrl:
         'https://www.britannica.com/science/plant/Evolution-and-paleobotany',
@@ -246,14 +212,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'dinosaurs',
     category: 'earth',
     yearsBeforePresent: 230000000.0,
-    displayZh: '\u7ea6 2.3 \u4ebf\u5e74\u524d',
-    displayEn: 'c. 230 million years ago',
-    titleZh: '\u6050\u9f99\u51fa\u73b0',
-    titleEn: 'Dinosaurs appear',
-    detailZh:
-        '\u6050\u9f99\u5728\u4e09\u53e0\u7eaa\u665a\u671f\u51fa\u73b0\uff0c\u5e76\u5728\u4e2d\u751f\u4ee3\u957f\u671f\u5360\u636e\u91cd\u8981\u751f\u6001\u4f4d\u3002',
-    detailEn:
-        'Dinosaurs appeared in the Late Triassic and later dominated many Mesozoic ecosystems.',
+    displayKey: 'inline.plan297.life.c_230_million_years_ago.6cc6127f81da',
+    titleKey: 'inline.plan297.life.dinosaurs_appear.3b05c1158769',
+    detailKey:
+        'inline.plan297.life.dinosaurs_appeared_in_the_late_triassic_and_late.44b2ee700575',
     sourceName: 'Natural History Museum',
     sourceUrl: 'https://www.nhm.ac.uk/discover/when-did-dinosaurs-live.html',
   ),
@@ -261,14 +223,11 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'kpg_extinction',
     category: 'earth',
     yearsBeforePresent: 66000000.0,
-    displayZh: '\u7ea6 6600 \u4e07\u5e74\u524d',
-    displayEn: 'c. 66 million years ago',
-    titleZh: '\u767d\u57a9\u7eaa-\u53e4\u8fd1\u7eaa\u706d\u7edd\u4e8b\u4ef6',
-    titleEn: 'Cretaceous-Paleogene extinction',
-    detailZh:
-        '\u4e00\u6b21\u5927\u89c4\u6a21\u706d\u7edd\u4e8b\u4ef6\u7ec8\u7ed3\u4e86\u975e\u9e1f\u7c7b\u6050\u9f99\u65f6\u4ee3\uff0c\u5e76\u6539\u53d8\u4e86\u54fa\u4e73\u52a8\u7269\u6f14\u5316\u683c\u5c40\u3002',
-    detailEn:
-        'A mass extinction ended non-avian dinosaurs and reshaped mammalian evolution.',
+    displayKey: 'inline.plan297.life.c_66_million_years_ago.8c21bacf1731',
+    titleKey:
+        'inline.plan297.life.cretaceous_paleogene_extinction.465c9ac92be9',
+    detailKey:
+        'inline.plan297.life.a_mass_extinction_ended_non_avian_dinosaurs_and_.41c5389d3c3d',
     sourceName: 'USGS: Geologic time',
     sourceUrl:
         'https://www.usgs.gov/programs/national-geologic-map-database/geologic-time',
@@ -277,14 +236,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'homo_genus',
     category: 'human',
     yearsBeforePresent: 2800000.0,
-    displayZh: '\u7ea6 280 \u4e07\u5e74\u524d',
-    displayEn: 'c. 2.8 million years ago',
-    titleZh: '\u4eba\u5c5e\u65e9\u671f\u5316\u77f3\u8bb0\u5f55',
-    titleEn: 'Early Homo fossil record',
-    detailZh:
-        '\u4eba\u5c5e\u65e9\u671f\u5316\u77f3\u901a\u5e38\u653e\u5728\u7ea6 280 \u4e07\u5e74\u524d\u7684\u65f6\u95f4\u8303\u56f4\u5185\u3002',
-    detailEn:
-        'Early Homo fossil evidence is commonly placed around 2.8 million years ago.',
+    displayKey: 'inline.plan297.life.c_2_8_million_years_ago.2cc73ff3a938',
+    titleKey: 'inline.plan297.life.early_homo_fossil_record.9b85ece8428d',
+    detailKey:
+        'inline.plan297.life.early_homo_fossil_evidence_is_commonly_placed_ar.71989fcb7cc2',
     sourceName: 'Smithsonian Human Origins Program',
     sourceUrl:
         'https://humanorigins.si.edu/evidence/human-fossils/species/homo-habilis',
@@ -293,14 +248,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'stone_tools',
     category: 'human',
     yearsBeforePresent: 2600000.0,
-    displayZh: '\u7ea6 260 \u4e07\u5e74\u524d',
-    displayEn: 'c. 2.6 million years ago',
-    titleZh: '\u5965\u675c\u5a01\u77f3\u5668\u4f20\u7edf',
-    titleEn: 'Oldowan stone tools',
-    detailZh:
-        '\u5965\u675c\u5a01\u77f3\u5668\u4f20\u7edf\u662f\u65e9\u671f\u4eba\u7c7b\u6280\u672f\u884c\u4e3a\u7684\u7ecf\u5178\u8bc1\u636e\u4e4b\u4e00\u3002',
-    detailEn:
-        'Oldowan tools are a classic evidence line for early human technological behavior.',
+    displayKey: 'inline.plan297.life.c_2_6_million_years_ago.63eb23887f49',
+    titleKey: 'inline.plan297.life.oldowan_stone_tools.1bd3ae4fc95e',
+    detailKey:
+        'inline.plan297.life.oldowan_tools_are_a_classic_evidence_line_for_ea.5b34c867e6a8',
     sourceName: 'Smithsonian: Stone tools',
     sourceUrl: 'https://humanorigins.si.edu/evidence/behavior/stone-tools',
   ),
@@ -308,14 +259,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'homo_sapiens',
     category: 'human',
     yearsBeforePresent: 300000.0,
-    displayZh: '\u7ea6 30 \u4e07\u5e74\u524d',
-    displayEn: 'c. 300,000 years ago',
-    titleZh: '\u667a\u4eba\u51fa\u73b0',
-    titleEn: 'Homo sapiens appear',
-    detailZh:
-        '\u73b0\u6709\u5316\u77f3\u4e0e\u9057\u4f20\u8bc1\u636e\u901a\u5e38\u5c06\u667a\u4eba\u7684\u51fa\u73b0\u653e\u5728\u7ea6 30 \u4e07\u5e74\u524d\u3002',
-    detailEn:
-        'Current fossil and genetic evidence commonly places Homo sapiens around 300,000 years ago.',
+    displayKey: 'inline.plan297.life.c_300_000_years_ago.de7abada8a32',
+    titleKey: 'inline.plan297.life.homo_sapiens_appear.f5c862da7196',
+    detailKey:
+        'inline.plan297.life.current_fossil_and_genetic_evidence_commonly_pla.aa3c8989f502',
     sourceName: 'Smithsonian: Homo sapiens',
     sourceUrl:
         'https://humanorigins.si.edu/evidence/human-fossils/species/homo-sapiens',
@@ -324,14 +271,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'last_glacial_maximum',
     category: 'human',
     yearsBeforePresent: 26500.0,
-    displayZh: '\u7ea6 2.65 \u4e07\u5e74\u524d',
-    displayEn: 'c. 26,500 years ago',
-    titleZh: '\u672b\u6b21\u76db\u51b0\u671f',
-    titleEn: 'Last Glacial Maximum',
-    detailZh:
-        '\u5168\u7403\u51b0\u76d6\u5728\u672b\u6b21\u51b0\u671f\u4e2d\u8fbe\u5230\u63a5\u8fd1\u6700\u5927\u8303\u56f4\uff0c\u5bf9\u4eba\u7fa4\u8fc1\u5f99\u548c\u751f\u6001\u73af\u5883\u4ea7\u751f\u5f71\u54cd\u3002',
-    detailEn:
-        'Ice sheets reached near-maximum extent during the last glacial cycle, affecting environments and human movement.',
+    displayKey: 'inline.plan297.life.c_26_500_years_ago.fe13320c5b27',
+    titleKey: 'inline.plan297.life.last_glacial_maximum.2e32264076e5',
+    detailKey:
+        'inline.plan297.life.ice_sheets_reached_near_maximum_extent_during_th.9a3e9b4a19da',
     sourceName: 'NOAA Paleoclimatology',
     sourceUrl: 'https://www.ncei.noaa.gov/products/paleoclimatology',
   ),
@@ -339,14 +282,11 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'agriculture',
     category: 'civilization',
     yearsBeforePresent: 12000.0,
-    displayZh: '\u7ea6\u516c\u5143\u524d 10000 \u5e74',
-    displayEn: 'c. 10,000 BCE',
-    titleZh: '\u519c\u4e1a\u548c\u65b0\u77f3\u5668\u8f6c\u578b',
-    titleEn: 'Agriculture and Neolithic transition',
-    detailZh:
-        '\u591a\u5730\u4eba\u7fa4\u9010\u6b65\u9a6f\u5316\u690d\u7269\u548c\u52a8\u7269\uff0c\u5b9a\u5c45\u4e0e\u98df\u7269\u751f\u4ea7\u6210\u4e3a\u91cd\u8981\u8d8b\u52bf\u3002',
-    detailEn:
-        'Plant and animal domestication developed in multiple regions, making settlement and food production increasingly important.',
+    displayKey: 'inline.plan297.life.c_10_000_bce.1d96609e49ed',
+    titleKey:
+        'inline.plan297.life.agriculture_and_neolithic_transition.fbd60f7f2490',
+    detailKey:
+        'inline.plan297.life.plant_and_animal_domestication_developed_in_mult.c1f342554684',
     sourceName: 'Britannica: Neolithic Revolution',
     sourceUrl: 'https://www.britannica.com/event/Neolithic-Revolution',
   ),
@@ -354,14 +294,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'bronze_age',
     category: 'civilization',
     yearsBeforePresent: 5300.0,
-    displayZh: '\u7ea6\u516c\u5143\u524d 3300 \u5e74',
-    displayEn: 'c. 3300 BCE',
-    titleZh: '\u9752\u94dc\u65f6\u4ee3\u65e9\u671f',
-    titleEn: 'Early Bronze Age',
-    detailZh:
-        '\u9752\u94dc\u51b6\u91d1\u548c\u590d\u6742\u57ce\u5e02\u793e\u4f1a\u5728\u591a\u4e2a\u533a\u57df\u9010\u6b65\u53d1\u5c55\u3002',
-    detailEn:
-        'Bronze metallurgy and complex urban societies developed across several regions.',
+    displayKey: 'inline.plan297.life.c_3300_bce.69daaba38d63',
+    titleKey: 'inline.plan297.life.early_bronze_age.e86493ece9bf',
+    detailKey:
+        'inline.plan297.life.bronze_metallurgy_and_complex_urban_societies_de.a861cffe8c17',
     sourceName: 'Britannica: Bronze Age',
     sourceUrl: 'https://www.britannica.com/event/Bronze-Age',
   ),
@@ -369,14 +305,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'writing',
     category: 'civilization',
     yearsBeforePresent: 5200.0,
-    displayZh: '\u7ea6\u516c\u5143\u524d 3200 \u5e74',
-    displayEn: 'c. 3200 BCE',
-    titleZh: '\u65e9\u671f\u6587\u5b57\u7cfb\u7edf',
-    titleEn: 'Early writing systems',
-    detailZh:
-        '\u7f8e\u7d22\u4e0d\u8fbe\u7c73\u4e9a\u6954\u5f62\u6587\u5b57\u548c\u57c3\u53ca\u8c61\u5f62\u6587\u5b57\u7b49\u65e9\u671f\u6587\u5b57\u7cfb\u7edf\u51fa\u73b0\u3002',
-    detailEn:
-        'Early writing systems such as Mesopotamian cuneiform and Egyptian hieroglyphs appeared.',
+    displayKey: 'inline.plan297.life.c_3200_bce.af82a17e41bb',
+    titleKey: 'inline.plan297.life.early_writing_systems.40796a41a1e7',
+    detailKey:
+        'inline.plan297.life.early_writing_systems_such_as_mesopotamian_cunei.10b8e3125af5',
     sourceName: 'Britannica: writing',
     sourceUrl: 'https://www.britannica.com/topic/writing',
   ),
@@ -384,14 +316,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'iron_age',
     category: 'civilization',
     yearsBeforePresent: 3200.0,
-    displayZh: '\u7ea6\u516c\u5143\u524d 1200 \u5e74',
-    displayEn: 'c. 1200 BCE',
-    titleZh: '\u94c1\u5668\u65f6\u4ee3\u6269\u5c55',
-    titleEn: 'Iron Age expansion',
-    detailZh:
-        '\u94c1\u5de5\u5177\u548c\u6b66\u5668\u7684\u5e7f\u6cdb\u4f7f\u7528\u6539\u53d8\u4e86\u519c\u4e1a\u3001\u6218\u4e89\u548c\u793e\u4f1a\u7ec4\u7ec7\u3002',
-    detailEn:
-        'Widespread iron tools and weapons changed agriculture, warfare, and social organization.',
+    displayKey: 'inline.plan297.life.c_1200_bce.c46f7582314a',
+    titleKey: 'inline.plan297.life.iron_age_expansion.4644a1346fc2',
+    detailKey:
+        'inline.plan297.life.widespread_iron_tools_and_weapons_changed_agricu.a8893e4b247c',
     sourceName: 'Britannica: Iron Age',
     sourceUrl: 'https://www.britannica.com/event/Iron-Age',
   ),
@@ -399,14 +327,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'qin_unification',
     category: 'civilization',
     yearsBeforePresent: 2247.0,
-    displayZh: '\u516c\u5143\u524d 221 \u5e74',
-    displayEn: '221 BCE',
-    titleZh: '\u79e6\u7edf\u4e00\u4e2d\u56fd',
-    titleEn: 'Qin unifies China',
-    detailZh:
-        '\u79e6\u671d\u5b8c\u6210\u4e2d\u56fd\u5386\u53f2\u4e0a\u91cd\u8981\u7684\u653f\u6cbb\u7edf\u4e00\uff0c\u5e76\u63a8\u884c\u6807\u51c6\u5316\u5236\u5ea6\u3002',
-    detailEn:
-        'The Qin dynasty completed a major political unification in Chinese history and promoted standardization.',
+    displayKey: 'inline.plan297.life.221_bce.0c1cb92a4a80',
+    titleKey: 'inline.plan297.life.qin_unifies_china.96f98eadf559',
+    detailKey:
+        'inline.plan297.life.the_qin_dynasty_completed_a_major_political_unif.e579146f199d',
     sourceName: 'Britannica: Qin dynasty',
     sourceUrl: 'https://www.britannica.com/topic/Qin-dynasty',
   ),
@@ -414,14 +338,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'paper',
     category: 'civilization',
     yearsBeforePresent: 1921.0,
-    displayZh: '\u7ea6\u516c\u5143 105 \u5e74',
-    displayEn: 'c. 105 CE',
-    titleZh: '\u9020\u7eb8\u672f\u6539\u8fdb\u4e0e\u4f20\u64ad\u57fa\u7840',
-    titleEn: 'Papermaking refined',
-    detailZh:
-        '\u4f20\u7edf\u8bb0\u8f7d\u5c06\u8521\u4f26\u6539\u8fdb\u9020\u7eb8\u672f\u7f6e\u4e8e\u4e1c\u6c49\u65f6\u671f\uff0c\u7eb8\u5f20\u968f\u540e\u6210\u4e3a\u91cd\u8981\u4fe1\u606f\u8f7d\u4f53\u3002',
-    detailEn:
-        'Traditional accounts place Cai Lun\'s papermaking improvements in the Eastern Han, after which paper became a major information medium.',
+    displayKey: 'inline.plan297.life.c_105_ce.d579b9eca006',
+    titleKey: 'inline.plan297.life.papermaking_refined.1ba392c0ad4b',
+    detailKey:
+        'inline.plan297.life.traditional_accounts_place_cai_lun_s_papermaking.a710a304813e',
     sourceName: 'Britannica: papermaking',
     sourceUrl: 'https://www.britannica.com/technology/papermaking',
   ),
@@ -429,15 +349,11 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'black_death',
     category: 'civilization',
     yearsBeforePresent: 679.0,
-    displayZh: '1347-1351 \u5e74',
-    displayEn: '1347-1351 CE',
-    titleZh:
-        '\u9ed1\u6b7b\u75c5\u5e2d\u5377\u6b27\u4e9a\u5317\u975e\u591a\u5730',
-    titleEn: 'Black Death across Eurasia and North Africa',
-    detailZh:
-        '14 \u4e16\u7eaa\u4e2d\u53f6\u7684\u9f20\u75ab\u5927\u6d41\u884c\u9020\u6210\u5de8\u5927\u4eba\u53e3\u548c\u793e\u4f1a\u5f71\u54cd\u3002',
-    detailEn:
-        'The mid-14th-century plague pandemic caused enormous demographic and social consequences.',
+    displayKey: 'inline.plan297.life.1347_1351_ce.1f5d640e460e',
+    titleKey:
+        'inline.plan297.life.black_death_across_eurasia_and_north_africa.a70556cb8a72',
+    detailKey:
+        'inline.plan297.life.the_mid_14th_century_plague_pandemic_caused_enor.1e12db430d36',
     sourceName: 'Britannica: Black Death',
     sourceUrl: 'https://www.britannica.com/event/Black-Death',
   ),
@@ -445,14 +361,11 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'gutenberg',
     category: 'civilization',
     yearsBeforePresent: 576.0,
-    displayZh: '\u7ea6 1450 \u5e74',
-    displayEn: 'c. 1450 CE',
-    titleZh: '\u6b27\u6d32\u6d3b\u5b57\u5370\u5237\u6269\u6563',
-    titleEn: 'Movable-type printing spreads in Europe',
-    detailZh:
-        '\u53e4\u817e\u5821\u5370\u5237\u6280\u672f\u63a8\u52a8\u4e66\u7c4d\u590d\u5236\u6210\u672c\u4e0b\u964d\u548c\u77e5\u8bc6\u4f20\u64ad\u52a0\u901f\u3002',
-    detailEn:
-        'Gutenberg-era printing lowered book reproduction costs and accelerated knowledge circulation.',
+    displayKey: 'inline.plan297.life.c_1450_ce.6b23789e9ca4',
+    titleKey:
+        'inline.plan297.life.movable_type_printing_spreads_in_europe.51aa534eb9c2',
+    detailKey:
+        'inline.plan297.life.gutenberg_era_printing_lowered_book_reproduction.e444d4345c3b',
     sourceName: 'Britannica: printing press',
     sourceUrl: 'https://www.britannica.com/technology/printing-press',
   ),
@@ -460,15 +373,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'newton',
     category: 'science',
     yearsBeforePresent: 339.0,
-    displayZh: '1687 \u5e74',
-    displayEn: '1687 CE',
-    titleZh:
-        '\u300a\u81ea\u7136\u54f2\u5b66\u7684\u6570\u5b66\u539f\u7406\u300b\u51fa\u7248',
-    titleEn: 'Newton\'s Principia published',
-    detailZh:
-        '\u725b\u987f\u7cfb\u7edf\u9610\u8ff0\u8fd0\u52a8\u5b9a\u5f8b\u548c\u4e07\u6709\u5f15\u529b\uff0c\u6210\u4e3a\u8fd1\u4ee3\u79d1\u5b66\u7684\u91cd\u8981\u91cc\u7a0b\u7891\u3002',
-    detailEn:
-        'Newton systematized laws of motion and universal gravitation, a major milestone in modern science.',
+    displayKey: 'inline.plan297.life.1687_ce.dc8be3138fef',
+    titleKey: 'inline.plan297.life.newton_s_principia_published.13319f61403b',
+    detailKey:
+        'inline.plan297.life.newton_systematized_laws_of_motion_and_universal.430748982a46',
     sourceName: 'Britannica: Principia',
     sourceUrl:
         'https://www.britannica.com/topic/Philosophiae-Naturalis-Principia-Mathematica',
@@ -477,14 +385,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'industrial_revolution',
     category: 'modern',
     yearsBeforePresent: 266.0,
-    displayZh: '\u7ea6 1760 \u5e74\u8d77',
-    displayEn: 'from c. 1760 CE',
-    titleZh: '\u5de5\u4e1a\u9769\u547d\u5f00\u59cb',
-    titleEn: 'Industrial Revolution begins',
-    detailZh:
-        '\u673a\u68b0\u5316\u751f\u4ea7\u3001\u5316\u77f3\u80fd\u6e90\u548c\u5de5\u5382\u5236\u5ea6\u9010\u6b65\u6539\u53d8\u7ecf\u6d4e\u7ed3\u6784\u3002',
-    detailEn:
-        'Mechanized production, fossil energy, and factory systems gradually transformed economies.',
+    displayKey: 'inline.plan297.life.from_c_1760_ce.060213656827',
+    titleKey: 'inline.plan297.life.industrial_revolution_begins.968024e1ca7d',
+    detailKey:
+        'inline.plan297.life.mechanized_production_fossil_energy_and_factory_.dbff79d41a9a',
     sourceName: 'Britannica: Industrial Revolution',
     sourceUrl: 'https://www.britannica.com/event/Industrial-Revolution',
   ),
@@ -492,14 +396,11 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'darwin',
     category: 'science',
     yearsBeforePresent: 167.0,
-    displayZh: '1859 \u5e74',
-    displayEn: '1859 CE',
-    titleZh: '\u300a\u7269\u79cd\u8d77\u6e90\u300b\u51fa\u7248',
-    titleEn: 'On the Origin of Species published',
-    detailZh:
-        '\u8fbe\u5c14\u6587\u7684\u81ea\u7136\u9009\u62e9\u7406\u8bba\u6210\u4e3a\u73b0\u4ee3\u751f\u7269\u5b66\u7684\u6838\u5fc3\u57fa\u7840\u4e4b\u4e00\u3002',
-    detailEn:
-        'Darwin\'s theory of natural selection became one of the foundations of modern biology.',
+    displayKey: 'inline.plan297.life.1859_ce.1f611a91fd8b',
+    titleKey:
+        'inline.plan297.life.on_the_origin_of_species_published.01f6749ee8fc',
+    detailKey:
+        'inline.plan297.life.darwin_s_theory_of_natural_selection_became_one_.2415b0a8a0ed',
     sourceName: 'Britannica: On the Origin of Species',
     sourceUrl:
         'https://www.britannica.com/topic/On-the-Origin-of-Species-by-Means-of-Natural-Selection',
@@ -508,14 +409,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'periodic_table',
     category: 'science',
     yearsBeforePresent: 157.0,
-    displayZh: '1869 \u5e74',
-    displayEn: '1869 CE',
-    titleZh: '\u95e8\u6377\u5217\u592b\u5468\u671f\u8868',
-    titleEn: 'Mendeleev periodic table',
-    detailZh:
-        '\u95e8\u6377\u5217\u592b\u6309\u539f\u5b50\u91cf\u548c\u6027\u8d28\u6392\u5217\u5143\u7d20\uff0c\u5e76\u9884\u6d4b\u672a\u77e5\u5143\u7d20\u6027\u8d28\u3002',
-    detailEn:
-        'Mendeleev arranged elements by atomic weight and properties and predicted properties of undiscovered elements.',
+    displayKey: 'inline.plan297.life.1869_ce.37a5348fc0d5',
+    titleKey: 'inline.plan297.life.mendeleev_periodic_table.21cba26a5695',
+    detailKey:
+        'inline.plan297.life.mendeleev_arranged_elements_by_atomic_weight_and.1634dfb74a4a',
     sourceName: 'IUPAC Periodic Table',
     sourceUrl: 'https://iupac.org/what-we-do/periodic-table-of-elements/',
   ),
@@ -523,14 +420,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'un_founded',
     category: 'modern',
     yearsBeforePresent: 81.0,
-    displayZh: '1945 \u5e74',
-    displayEn: '1945 CE',
-    titleZh: '\u8054\u5408\u56fd\u6210\u7acb',
-    titleEn: 'United Nations founded',
-    detailZh:
-        '\u7b2c\u4e8c\u6b21\u4e16\u754c\u5927\u6218\u540e\uff0c\u8054\u5408\u56fd\u4f5c\u4e3a\u56fd\u9645\u7ec4\u7ec7\u6b63\u5f0f\u6210\u7acb\u3002',
-    detailEn:
-        'After World War II, the United Nations was formally established as an international organization.',
+    displayKey: 'inline.plan297.life.1945_ce.c29d4b3651a1',
+    titleKey: 'inline.plan297.life.united_nations_founded.fb41992a5d60',
+    detailKey:
+        'inline.plan297.life.after_world_war_ii_the_united_nations_was_formal.5c5b7a6ba72c',
     sourceName: 'United Nations: History',
     sourceUrl: 'https://www.un.org/en/about-us/history-of-the-un',
   ),
@@ -538,14 +431,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'dna_double_helix',
     category: 'science',
     yearsBeforePresent: 73.0,
-    displayZh: '1953 \u5e74',
-    displayEn: '1953 CE',
-    titleZh: 'DNA \u53cc\u87ba\u65cb\u7ed3\u6784\u63d0\u51fa',
-    titleEn: 'DNA double helix proposed',
-    detailZh:
-        '\u6c83\u68ee\u548c\u514b\u91cc\u514b\u63d0\u51fa DNA \u53cc\u87ba\u65cb\u6a21\u578b\uff0c\u8fde\u63a5\u9057\u4f20\u5b66\u4e0e\u5206\u5b50\u7ed3\u6784\u3002',
-    detailEn:
-        'Watson and Crick proposed the DNA double-helix model, linking genetics with molecular structure.',
+    displayKey: 'inline.plan297.life.1953_ce.8daabed68cf1',
+    titleKey: 'inline.plan297.life.dna_double_helix_proposed.a206edea1a73',
+    detailKey:
+        'inline.plan297.life.watson_and_crick_proposed_the_dna_double_helix_m.dcf58f76cefe',
     sourceName: 'Nobel Prize: DNA structure',
     sourceUrl: 'https://www.nobelprize.org/prizes/medicine/1962/summary/',
   ),
@@ -553,13 +442,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'moon_landing',
     category: 'science',
     yearsBeforePresent: 57.0,
-    displayZh: '1969 \u5e74',
-    displayEn: '1969 CE',
-    titleZh: '\u963f\u6ce2\u7f57 11 \u53f7\u767b\u6708',
-    titleEn: 'Apollo 11 Moon landing',
-    detailZh:
-        '\u4eba\u7c7b\u9996\u6b21\u5728\u6708\u7403\u8868\u9762\u884c\u8d70\u3002',
-    detailEn: 'Humans walked on the Moon for the first time.',
+    displayKey: 'inline.plan297.life.1969_ce.58209d5f0570',
+    titleKey: 'inline.plan297.life.apollo_11_moon_landing.e4c951f9a1a1',
+    detailKey:
+        'inline.plan297.life.humans_walked_on_the_moon_for_the_first_time.4ffc3353fc40',
     sourceName: 'NASA Apollo 11',
     sourceUrl: 'https://www.nasa.gov/history/apollo-11/',
   ),
@@ -567,14 +453,11 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'web',
     category: 'modern',
     yearsBeforePresent: 35.0,
-    displayZh: '1991 \u5e74',
-    displayEn: '1991 CE',
-    titleZh: '\u4e07\u7ef4\u7f51\u516c\u5f00\u53ef\u7528',
-    titleEn: 'World Wide Web becomes publicly available',
-    detailZh:
-        '\u4e07\u7ef4\u7f51\u5c06\u8d85\u6587\u672c\u3001URL \u548c\u4e92\u8054\u7f51\u8fde\u63a5\u4e3a\u5927\u4f17\u4fe1\u606f\u5e73\u53f0\u3002',
-    detailEn:
-        'The Web combined hypertext, URLs, and the Internet into a public information platform.',
+    displayKey: 'inline.plan297.life.1991_ce.8057f820b589',
+    titleKey:
+        'inline.plan297.life.world_wide_web_becomes_publicly_available.a34308c282d7',
+    detailKey:
+        'inline.plan297.life.the_web_combined_hypertext_urls_and_the_internet.1ba6c98ba3c5',
     sourceName: 'CERN: Birth of the Web',
     sourceUrl: 'https://home.cern/science/computing/birth-web',
   ),
@@ -582,14 +465,10 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'human_genome',
     category: 'science',
     yearsBeforePresent: 23.0,
-    displayZh: '2003 \u5e74',
-    displayEn: '2003 CE',
-    titleZh: '\u4eba\u7c7b\u57fa\u56e0\u7ec4\u8ba1\u5212\u5b8c\u6210',
-    titleEn: 'Human Genome Project completed',
-    detailZh:
-        '\u4eba\u7c7b\u57fa\u56e0\u7ec4\u8ba1\u5212\u5b8c\u6210\u4e86\u4eba\u7c7b\u57fa\u56e0\u7ec4\u53c2\u8003\u5e8f\u5217\u7684\u91cd\u8981\u9636\u6bb5\u3002',
-    detailEn:
-        'The Human Genome Project completed a major phase of the human reference genome sequence.',
+    displayKey: 'inline.plan297.life.2003_ce.ce0b724ff07b',
+    titleKey: 'inline.plan297.life.human_genome_project_completed.6d8232a172d1',
+    detailKey:
+        'inline.plan297.life.the_human_genome_project_completed_a_major_phase.94e05340cb6e',
     sourceName: 'NIH: Human Genome Project',
     sourceUrl: 'https://www.genome.gov/human-genome-project',
   ),
@@ -597,14 +476,11 @@ const List<_TimelineFact> _coreTimelineFacts = <_TimelineFact>[
     id: 'gravitational_waves',
     category: 'science',
     yearsBeforePresent: 11.0,
-    displayZh: '2015 \u5e74',
-    displayEn: '2015 CE',
-    titleZh: '\u9996\u6b21\u76f4\u63a5\u63a2\u6d4b\u5f15\u529b\u6ce2',
-    titleEn: 'First direct detection of gravitational waves',
-    detailZh:
-        'LIGO \u9996\u6b21\u76f4\u63a5\u63a2\u6d4b\u5230\u6765\u81ea\u53cc\u9ed1\u6d1e\u5e76\u5408\u7684\u5f15\u529b\u6ce2\u4fe1\u53f7\u3002',
-    detailEn:
-        'LIGO directly detected gravitational waves from a binary black-hole merger.',
+    displayKey: 'inline.plan297.life.2015_ce.4c5143e3995a',
+    titleKey:
+        'inline.plan297.life.first_direct_detection_of_gravitational_waves.9ac99d71a47d',
+    detailKey:
+        'inline.plan297.life.ligo_directly_detected_gravitational_waves_from_.b4ab5a4c856d',
     sourceName: 'LIGO discovery',
     sourceUrl: 'https://www.ligo.caltech.edu/page/detection-companion-papers',
   ),

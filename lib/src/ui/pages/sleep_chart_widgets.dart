@@ -64,9 +64,7 @@ class SleepMetricChartCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(18),
                   color: Theme.of(context).colorScheme.surfaceContainerLow,
                 ),
-                child: Text(
-                  i18n.t('toolbox.sleep.core.noData'),
-                ),
+                child: Text(i18n.t('toolbox.sleep.core.noData')),
               )
             else
               SizedBox(

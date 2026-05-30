@@ -70,12 +70,10 @@ class _PlayPageState extends ConsumerState<PlayPage> {
     if (selectedWordbook == null) {
       return EmptyStateView(
         icon: Icons.play_circle_outline_rounded,
-        title: pickUiText(i18n, zh: '还没有播放内容', en: 'Nothing to play yet'),
+        title: i18n.t('inline.ui.pages.play_page.nothing_to_play_yet_1a4919'),
         message: i18n.t('noWordbookYet'),
-        actionLabel: pickUiText(
-          i18n,
-          zh: '去词库选择词本',
-          en: 'Choose wordbook in Library',
+        actionLabel: i18n.t(
+          'inline.ui.pages.play_page.choose_wordbook_in_library_c5eef0',
         ),
         onAction: widget.onOpenLibrary,
       );
@@ -87,53 +85,17 @@ class _PlayPageState extends ConsumerState<PlayPage> {
             ? Icons.library_books_rounded
             : Icons.play_circle_outline_rounded,
         title: deferredLoad
-            ? pickUiText(
-                i18n,
-                zh: '当前词本待加载',
-                en: 'Wordbook ready to load',
-                ja: '単語帳を読み込む準備ができました',
-                de: 'Wortbuch kann geladen werden',
-                fr: 'Le carnet est prêt à être chargé',
-                es: 'El cuaderno está listo para cargarse',
-              )
-            : pickUiText(
-                i18n,
-                zh: '还没有播放内容',
-                en: 'Nothing to play yet',
-                ja: 'まだ再生できる内容がありません',
-                de: 'Noch nichts zum Abspielen',
-                fr: 'Rien à lire pour le moment',
-                es: 'Todavía no hay contenido para reproducir',
-              ),
+            ? i18n.t('inline.ui.pages.play_page.wordbook_ready_to_load_6c76bb')
+            : i18n.t('inline.ui.pages.play_page.nothing_to_play_yet_1a4919'),
         message: deferredLoad
-            ? pickUiText(
-                i18n,
-                zh: '${localizedWordbookName(i18n, selectedWordbook)} 共有 ${state.visibleWordCount} 个词条。为保证大词库在手机上进入更稳定，请先按需加载，再由你决定何时开始播放。',
-                en: '${localizedWordbookName(i18n, selectedWordbook)} has ${state.visibleWordCount} words. To keep large wordbooks stable on mobile, load it first and start playback only when you are ready.',
-                ja: '${localizedWordbookName(i18n, selectedWordbook)} には ${state.visibleWordCount} 件の単語があります。モバイルで安定して使えるよう、まず必要分だけ読み込み、その後に好きなタイミングで再生を始められます。',
-                de: '${localizedWordbookName(i18n, selectedWordbook)} enthält ${state.visibleWordCount} Wörter. Damit große Wortbücher mobil stabil bleiben, laden Sie es zuerst und starten die Wiedergabe erst dann, wenn Sie bereit sind.',
-                fr: '${localizedWordbookName(i18n, selectedWordbook)} contient ${state.visibleWordCount} mots. Pour garder les grands carnets stables sur mobile, chargez-les d’abord puis lancez la lecture quand vous le souhaitez.',
-                es: '${localizedWordbookName(i18n, selectedWordbook)} contiene ${state.visibleWordCount} palabras. Para mantener estables los cuadernos grandes en móvil, primero cárgalo y empieza la reproducción solo cuando quieras.',
+            ? i18n.t(
+                'inline.ui.pages.play_page.localizedwordbookname_i18n_selectedwordbook_has_state_vi_c42762',
               )
             : i18n.t('noWordbookYet'),
         actionLabel: deferredLoad
-            ? pickUiText(
-                i18n,
-                zh: '加载',
-                en: 'Load',
-                ja: '読み込む',
-                de: 'Laden',
-                fr: 'Charger',
-                es: 'Cargar',
-              )
-            : pickUiText(
-                i18n,
-                zh: '去词库选择词本',
-                en: 'Choose wordbook in Library',
-                ja: 'ライブラリで単語帳を選択',
-                de: 'Wortbuch in der Bibliothek wählen',
-                fr: 'Choisir un carnet dans la bibliothèque',
-                es: 'Elegir cuaderno en la biblioteca',
+            ? i18n.t('inline.ui.pages.play_page.load_d7c72d')
+            : i18n.t(
+                'inline.ui.pages.play_page.choose_wordbook_in_library_c5eef0',
               ),
         onAction: deferredLoad
             ? () => state.playCurrentWordbook()
@@ -173,10 +135,8 @@ class _PlayPageState extends ConsumerState<PlayPage> {
       children: <Widget>[
         PageHeader(
           eyebrow: experienceModeTitle(i18n, mode),
-          title: pickUiText(
-            i18n,
-            zh: '今晚想怎么听',
-            en: 'How do you want to play today',
+          title: i18n.t(
+            'inline.ui.pages.play_page.how_do_you_want_to_play_today_95f31c',
           ),
           subtitle: experienceModeDescription(i18n, mode),
           action: headerAction,
@@ -189,11 +149,11 @@ class _PlayPageState extends ConsumerState<PlayPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 SectionHeader(
-                  title: pickUiText(i18n, zh: '连续路径', en: 'Continuous path'),
-                  subtitle: pickUiText(
-                    i18n,
-                    zh: '先播放一轮，再进入练习巩固，最后按当前模式微调展示策略。',
-                    en: 'Move from playback into practice, then fine-tune the current mode strategy.',
+                  title: i18n.t(
+                    'inline.ui.pages.play_page.continuous_path_f22825',
+                  ),
+                  subtitle: i18n.t(
+                    'inline.ui.pages.play_page.move_from_playback_into_practice_then_fine_tune_the_curr_ef58fe',
                   ),
                   trailing: TextButton.icon(
                     onPressed: () {
@@ -208,8 +168,10 @@ class _PlayPageState extends ConsumerState<PlayPage> {
                     ),
                     label: Text(
                       _continuousPathExpanded
-                          ? pickUiText(i18n, zh: '收起', en: 'Collapse')
-                          : pickUiText(i18n, zh: '展开', en: 'Expand'),
+                          ? i18n.t(
+                              'inline.plan295.daily_choice.collapse.ad0db950964e',
+                            )
+                          : i18n.t('inline.ui.pages.play_page.expand_33fdcb'),
                     ),
                   ),
                 ),
@@ -221,10 +183,8 @@ class _PlayPageState extends ConsumerState<PlayPage> {
                   firstChild: Padding(
                     padding: const EdgeInsets.only(top: 12),
                     child: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '路径已折叠，需要时再展开查看播放、练习和策略调整建议。',
-                        en: 'The path is hidden. Expand it whenever you want the playback, practice, and tuning suggestions.',
+                      i18n.t(
+                        'inline.ui.pages.play_page.the_path_is_hidden_expand_it_whenever_you_want_the_playb_5ff4be',
                       ),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
@@ -237,21 +197,15 @@ class _PlayPageState extends ConsumerState<PlayPage> {
                         icon: isPlaybackPaused
                             ? Icons.play_circle_fill_rounded
                             : Icons.headphones_rounded,
-                        title: pickUiText(
-                          i18n,
-                          zh: '1. 播放当前范围',
-                          en: '1. Play this scope',
+                        title: i18n.t(
+                          'inline.ui.pages.play_page.1_play_this_scope_ef8a6d',
                         ),
                         description: isPlaybackPaused
-                            ? pickUiText(
-                                i18n,
-                                zh: '从上次停下的位置继续听，保持节奏不断。',
-                                en: 'Resume from where you paused and keep the rhythm going.',
+                            ? i18n.t(
+                                'inline.ui.pages.play_page.resume_from_where_you_paused_and_keep_the_rhythm_going_1c0033',
                               )
-                            : pickUiText(
-                                i18n,
-                                zh: '围绕当前单词继续听一轮，先把输入打满。',
-                                en: 'Continue one focused pass around the current word to saturate input first.',
+                            : i18n.t(
+                                'inline.ui.pages.play_page.continue_one_focused_pass_around_the_current_word_to_sat_31f09b',
                               ),
                         action: FilledButton.icon(
                           onPressed: isPlaybackPaused
@@ -264,11 +218,9 @@ class _PlayPageState extends ConsumerState<PlayPage> {
                           ),
                           label: Text(
                             isPlaybackPaused
-                                ? pickUiText(i18n, zh: '继续播放', en: 'Resume')
-                                : pickUiText(
-                                    i18n,
-                                    zh: '开始一轮播放',
-                                    en: 'Start playback',
+                                ? i18n.t('resume')
+                                : i18n.t(
+                                    'inline.ui.pages.play_page.start_playback_ecb1be',
                                   ),
                           ),
                         ),
@@ -278,40 +230,32 @@ class _PlayPageState extends ConsumerState<PlayPage> {
                         icon: weakCount > 0
                             ? Icons.fitness_center_rounded
                             : Icons.school_rounded,
-                        title: pickUiText(
-                          i18n,
-                          zh: '2. 进入练习巩固',
-                          en: '2. Reinforce in practice',
+                        title: i18n.t(
+                          'inline.ui.pages.play_page.2_reinforce_in_practice_065b8b',
                         ),
                         description: weakCount > 0
-                            ? pickUiText(
-                                i18n,
-                                zh: '你有 $weakCount 个最近薄弱词，优先回收这些不稳定项。',
-                                en: 'You have $weakCount recent weak words. Recover the unstable items first.',
+                            ? i18n.t(
+                                'inline.ui.pages.play_page.you_have_weakcount_recent_weak_words_recover_the_unstabl_b00953',
                               )
-                            : pickUiText(
-                                i18n,
-                                zh: state.practiceTodaySessions > 0
-                                    ? '今天已完成 ${state.practiceTodaySessions} 次练习，当前正确率 $todayAccuracy%。可以继续巩固。'
-                                    : '听完一轮后立刻进入练习，会更容易把短时记忆压实。',
-                                en: state.practiceTodaySessions > 0
-                                    ? 'You finished ${state.practiceTodaySessions} sessions today at $todayAccuracy% accuracy. Keep reinforcing.'
-                                    : 'Practice immediately after one pass to lock short-term memory in place.',
-                              ),
+                            : state.practiceTodaySessions > 0
+                            ? i18n.t(
+                                'play.practice.todaySummary',
+                                params: <String, Object?>{
+                                  'sessions': state.practiceTodaySessions,
+                                  'accuracy': todayAccuracy,
+                                },
+                              )
+                            : i18n.t('play.practice.afterPlaybackHint'),
                         action: FilledButton.tonalIcon(
                           onPressed: widget.onOpenPractice,
                           icon: const Icon(Icons.arrow_forward_rounded),
                           label: Text(
                             weakCount > 0
-                                ? pickUiText(
-                                    i18n,
-                                    zh: '复习薄弱词',
-                                    en: 'Review weak words',
+                                ? i18n.t(
+                                    'inline.ui.pages.play_page.review_weak_words_303857',
                                   )
-                                : pickUiText(
-                                    i18n,
-                                    zh: '打开练习中心',
-                                    en: 'Open practice',
+                                : i18n.t(
+                                    'inline.ui.pages.play_page.open_practice_846215',
                                   ),
                           ),
                         ),
@@ -319,27 +263,19 @@ class _PlayPageState extends ConsumerState<PlayPage> {
                       const SizedBox(height: 10),
                       _FlowStepCard(
                         icon: Icons.tune_rounded,
-                        title: pickUiText(
-                          i18n,
-                          zh: '3. 调整模式策略',
-                          en: '3. Tune mode strategy',
+                        title: i18n.t(
+                          'inline.ui.pages.play_page.3_tune_mode_strategy_9c9945',
                         ),
                         description: showModeSuggestion
                             ? (mode == AppExperienceMode.sleep
-                                  ? pickUiText(
-                                      i18n,
-                                      zh: '当前是 Sleep 模式，建议切到纯听，减少视觉刺激。',
-                                      en: 'Sleep mode works better as a listening-first experience with less visual stimulation.',
+                                  ? i18n.t(
+                                      'inline.ui.pages.play_page.sleep_mode_works_better_as_a_listening_first_experience_ddd97e',
                                     )
-                                  : pickUiText(
-                                      i18n,
-                                      zh: '当前是 Focus 模式，建议显示文本，提高复习密度。',
-                                      en: 'Focus mode works better with text visible for denser review.',
+                                  : i18n.t(
+                                      'inline.ui.pages.play_page.focus_mode_works_better_with_text_visible_for_denser_rev_d2da30',
                                     ))
-                            : pickUiText(
-                                i18n,
-                                zh: '当前展示策略已经和模式匹配，可以直接保持。',
-                                en: 'Your current presentation strategy already matches the active mode.',
+                            : i18n.t(
+                                'inline.ui.pages.play_page.your_current_presentation_strategy_already_matches_the_a_cbe677',
                               ),
                         action: FilledButton.tonalIcon(
                           onPressed: showModeSuggestion
@@ -355,20 +291,14 @@ class _PlayPageState extends ConsumerState<PlayPage> {
                           label: Text(
                             showModeSuggestion
                                 ? (mode == AppExperienceMode.sleep
-                                      ? pickUiText(
-                                          i18n,
-                                          zh: '切到纯听模式',
-                                          en: 'Hide text now',
+                                      ? i18n.t(
+                                          'inline.ui.pages.play_page.hide_text_now_d44c57',
                                         )
-                                      : pickUiText(
-                                          i18n,
-                                          zh: '显示文本提示',
-                                          en: 'Show text now',
+                                      : i18n.t(
+                                          'inline.ui.pages.play_page.show_text_now_a800ff',
                                         ))
-                                : pickUiText(
-                                    i18n,
-                                    zh: '策略已匹配',
-                                    en: 'Already aligned',
+                                : i18n.t(
+                                    'inline.ui.pages.play_page.already_aligned_224c0f',
                                   ),
                           ),
                         ),
@@ -384,10 +314,8 @@ class _PlayPageState extends ConsumerState<PlayPage> {
         WordbookSwitcher(
           wordbook: state.selectedWordbook,
           title: localizedWordbookName(i18n, state.selectedWordbook),
-          subtitle: pickUiText(
-            i18n,
-            zh: '${state.visibleWords.length} 个词可播放',
-            en: '${state.visibleWords.length} words in scope',
+          subtitle: i18n.t(
+            'inline.ui.pages.play_page.state_visiblewords_length_words_in_scope_5b655d',
           ),
           onTap: () => _openWordbookSheet(context, state, i18n),
         ),
@@ -430,15 +358,19 @@ class _PlayPageState extends ConsumerState<PlayPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               SectionHeader(
-                title: pickUiText(i18n, zh: '播放进度', en: 'Playback progress'),
-                subtitle: pickUiText(
-                  i18n,
-                  zh: _progressDragValue == null
-                      ? '当前位置 ${index + 1}/${visibleWords.length}'
-                      : '预览位置 ${previewIndex + 1}/${visibleWords.length}',
-                  en: _progressDragValue == null
-                      ? 'Current position ${index + 1}/${visibleWords.length}'
-                      : 'Preview position ${previewIndex + 1}/${visibleWords.length}',
+                title: i18n.t(
+                  'inline.ui.pages.play_page.playback_progress_4535e2',
+                ),
+                subtitle: i18n.t(
+                  _progressDragValue == null
+                      ? 'play.progress.currentPosition'
+                      : 'play.progress.previewPosition',
+                  params: <String, Object?>{
+                    'position': _progressDragValue == null
+                        ? index + 1
+                        : previewIndex + 1,
+                    'total': visibleWords.length,
+                  },
                 ),
               ),
               const SizedBox(height: 10),
@@ -505,7 +437,11 @@ class _PlayPageState extends ConsumerState<PlayPage> {
                             visibleWords: visibleWords,
                             currentIndex: index,
                           ),
-                    label: Text(pickUiText(i18n, zh: '精确跳转', en: 'Exact jump')),
+                    label: Text(
+                      i18n.t(
+                        'inline.ui.pages.play_page_navigation.exact_jump_8b53eb',
+                      ),
+                    ),
                   ),
                   ActionChip(
                     onPressed: visibleWords.length <= 1
@@ -531,11 +467,11 @@ class _PlayPageState extends ConsumerState<PlayPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 SectionHeader(
-                  title: pickUiText(i18n, zh: '播放模式', en: 'Playback mode'),
-                  subtitle: pickUiText(
-                    i18n,
-                    zh: '把高频控制收在主场景里',
-                    en: 'Keep high-frequency controls close to the listening flow.',
+                  title: i18n.t(
+                    'inline.ui.pages.play_page.playback_mode_c376ec',
+                  ),
+                  subtitle: i18n.t(
+                    'inline.ui.pages.play_page.keep_high_frequency_controls_close_to_the_listening_flow_8f61b8',
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -559,10 +495,8 @@ class _PlayPageState extends ConsumerState<PlayPage> {
                   contentPadding: EdgeInsets.zero,
                   title: Text(i18n.t('showText')),
                   subtitle: Text(
-                    pickUiText(
-                      i18n,
-                      zh: '睡眠场景可关闭释义，只保留语音输入',
-                      en: 'Hide text when you want a lower-visual listening mode.',
+                    i18n.t(
+                      'inline.ui.pages.play_page.hide_text_when_you_want_a_lower_visual_listening_mode_bdf164',
                     ),
                   ),
                   value: state.config.showText,
@@ -605,7 +539,9 @@ class _PlayPageState extends ConsumerState<PlayPage> {
                       builder: (_) => AmbientSheet(state: state, i18n: i18n),
                     ),
                     icon: const Icon(Icons.surround_sound_rounded),
-                    label: Text(pickUiText(i18n, zh: '环境音', en: 'Ambient')),
+                    label: Text(
+                      i18n.t('inline.ui.pages.play_page.ambient_6e3e01'),
+                    ),
                   ),
                   OutlinedButton.icon(
                     onPressed: widget.onOpenPractice,

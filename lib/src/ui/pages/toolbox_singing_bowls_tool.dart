@@ -72,10 +72,6 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
   int _playerBuildNonce = 0;
   List<_SpectrumBurst> _bursts = const <_SpectrumBurst>[];
 
-  bool get isZh => Localizations.localeOf(
-    context,
-  ).languageCode.toLowerCase().startsWith('zh');
-
   AppI18n get i18n => AppI18n(Localizations.localeOf(context).languageCode);
 
   _SingingBowlFrequencySpec get frequencySpec =>

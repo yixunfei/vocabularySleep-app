@@ -15,7 +15,6 @@ import 'package:path_provider/path_provider.dart';
 import '../../i18n/app_i18n.dart';
 import '../../services/toolbox_crypto_service.dart';
 import '../../services/toolbox_steganography_service.dart';
-import '../ui_copy.dart';
 import 'toolbox/toolbox_ui_components.dart';
 import 'toolbox/toolbox_ui_tokens.dart';
 import 'toolbox_tool_shell.dart';
@@ -24,11 +23,11 @@ part 'toolbox_crypto_security/toolbox_crypto_security_hub.dart';
 part 'toolbox_crypto_security/toolbox_crypto_security_shared.dart';
 part 'toolbox_crypto_security/toolbox_crypto_security_steganography.dart';
 
-String _lifeText(
-  BuildContext context, {
-  required String zh,
-  required String en,
+String _lifeI18nText(
+  BuildContext context,
+  String key, {
+  Map<String, Object?>? params,
 }) {
   final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-  return pickUiText(i18n, zh: zh, en: en);
+  return i18n.t(key, params: params ?? const <String, Object?>{});
 }

@@ -114,10 +114,8 @@ class _WordDetailPageState extends ConsumerState<WordDetailPage> {
         appBar: AppBar(),
         body: Center(
           child: Text(
-            pickUiText(
-              i18n,
-              zh: '这个词条已经不存在了',
-              en: 'This word no longer exists.',
+            i18n.t(
+              'inline.ui.pages.word_detail_page.this_word_no_longer_exists_c471c1',
             ),
           ),
         ),
@@ -189,11 +187,11 @@ class _WordDetailPageState extends ConsumerState<WordDetailPage> {
                 case 'delete':
                   final confirmed = await showConfirmDialog(
                     context: context,
-                    title: pickUiText(i18n, zh: '删除词条', en: 'Delete word'),
-                    message: pickUiText(
-                      i18n,
-                      zh: '删除后无法恢复，确定继续吗？',
-                      en: 'This cannot be undone. Continue?',
+                    title: i18n.t(
+                      'inline.ui.pages.word_detail_page.delete_word_5cf638',
+                    ),
+                    message: i18n.t(
+                      'inline.ui.pages.word_detail_page.this_cannot_be_undone_continue_887e94',
                     ),
                     danger: true,
                   );
@@ -203,14 +201,8 @@ class _WordDetailPageState extends ConsumerState<WordDetailPage> {
               }
             },
             itemBuilder: (context) => <PopupMenuEntry<String>>[
-              PopupMenuItem(
-                value: 'edit',
-                child: Text(pickUiText(i18n, zh: '编辑', en: 'Edit')),
-              ),
-              PopupMenuItem(
-                value: 'delete',
-                child: Text(pickUiText(i18n, zh: '删除', en: 'Delete')),
-              ),
+              PopupMenuItem(value: 'edit', child: Text(i18n.t('edit'))),
+              PopupMenuItem(value: 'delete', child: Text(i18n.t('delete'))),
             ],
           ),
         ],
@@ -290,24 +282,18 @@ class _WordDetailPageState extends ConsumerState<WordDetailPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
                               SectionHeader(
-                                title: pickUiText(
-                                  i18n,
-                                  zh: '字段详情',
-                                  en: 'Field details',
+                                title: i18n.t(
+                                  'inline.ui.pages.word_detail_page.field_details_8215f0',
                                 ),
-                                subtitle: pickUiText(
-                                  i18n,
-                                  zh: '按核心、用法、语言学、记忆与其他分组展示；长内容支持折叠，避免移动端一屏信息冲突。',
-                                  en: 'Fields are grouped into core, usage, linguistics, memory, and other sections, with long text collapsed for mobile readability.',
+                                subtitle: i18n.t(
+                                  'inline.ui.pages.word_detail_page.fields_are_grouped_into_core_usage_linguistics_memory_an_f4a863',
                                 ),
                               ),
                               const SizedBox(height: 14),
                               if (groupedFields.isEmpty)
                                 Text(
-                                  pickUiText(
-                                    i18n,
-                                    zh: '当前没有可展示的结构化字段，已回退到词卡摘要视图。',
-                                    en: 'No structured fields are available right now, so the card summary is used as the fallback view.',
+                                  i18n.t(
+                                    'inline.ui.pages.word_detail_page.no_structured_fields_are_available_right_now_so_the_card_43714b',
                                   ),
                                 )
                               else
@@ -337,15 +323,15 @@ class _WordDetailPageState extends ConsumerState<WordDetailPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          pickUiText(i18n, zh: '文本当前已隐藏', en: 'Text is hidden'),
+                          i18n.t(
+                            'inline.ui.pages.word_detail_page.text_is_hidden_262961',
+                          ),
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          pickUiText(
-                            i18n,
-                            zh: '点击右上角的可见性按钮，可以重新显示释义和字段内容。',
-                            en: 'Use the visibility button in the top bar to reveal meanings and field content again.',
+                          i18n.t(
+                            'inline.ui.pages.word_detail_page.use_the_visibility_button_in_the_top_bar_to_reveal_meani_acc3a4',
                           ),
                         ),
                         const SizedBox(height: 14),
@@ -356,9 +342,7 @@ class _WordDetailPageState extends ConsumerState<WordDetailPage> {
                             );
                           },
                           icon: const Icon(Icons.visibility_rounded),
-                          label: Text(
-                            pickUiText(i18n, zh: '显示文本', en: 'Show text'),
-                          ),
+                          label: Text(i18n.t('showText')),
                         ),
                       ],
                     ),

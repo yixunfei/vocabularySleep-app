@@ -1,18 +1,13 @@
 part of '../toolbox_crypto_security.dart';
 
 class _LifeOption<T> {
-  const _LifeOption({
-    required this.value,
-    required this.labelZh,
-    required this.labelEn,
-  });
+  const _LifeOption({required this.value, required this.labelKey});
 
   final T value;
-  final String labelZh;
-  final String labelEn;
+  final String labelKey;
 
   String label(BuildContext context) {
-    return _lifeText(context, zh: labelZh, en: labelEn);
+    return _lifeI18nText(context, labelKey);
   }
 }
 

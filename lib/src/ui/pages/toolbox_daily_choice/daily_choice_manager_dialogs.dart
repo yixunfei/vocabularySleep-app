@@ -12,32 +12,32 @@ Future<bool?> _confirmHideBuiltInRecipe({
     builder: (context) {
       return AlertDialog(
         title: Text(
-          pickUiText(
-            i18n,
-            zh: '确认不喜欢？',
-            en: isWearModule
-                ? 'Hide this outfit?'
-                : (isActivityModule
-                      ? 'Hide this action?'
-                      : 'Hide this recipe?'),
+          i18n.t(
+            _managerModuleKey(
+              wearKey: 'inline.plan295.daily_choice.hide_this_outfit.a7a55c353895',
+              activityKey: 'toolbox.daily_choice.manager.dialog.hide_action',
+              eatKey: 'toolbox.daily_choice.manager.dialog.hide_recipe',
+              isWearModule: isWearModule,
+              isActivityModule: isActivityModule,
+            ),
           ),
         ),
         content: Text(
-          pickUiText(
-            i18n,
-            zh: '「${option.title(i18n)}」会从随机候选中隐藏，之后仍可在管理页恢复。',
-            en: '"${option.title(i18n)}" will be hidden from random picks. You can restore it later in Manage.',
+          i18n.t(
+            'inline.plan295.daily_choice.option_title_i18n_will_be_hidden_fro.34f412bf6405',
           ),
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+            child: Text(i18n.t('cancel')),
           ),
           FilledButton.icon(
             onPressed: () => Navigator.of(context).pop(true),
             icon: const Icon(Icons.remove_circle_outline_rounded),
-            label: Text(pickUiText(i18n, zh: '确认不喜欢', en: 'Hide')),
+            label: Text(
+              i18n.t('inline.plan295.daily_choice.hide.fce11f87a15c'),
+            ),
           ),
         ],
       );

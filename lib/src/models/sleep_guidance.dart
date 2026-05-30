@@ -1,8 +1,5 @@
 class SleepResearchSource {
-  const SleepResearchSource({
-    required this.bookTitle,
-    required this.relevance,
-  });
+  const SleepResearchSource({required this.bookTitle, required this.relevance});
 
   final String bookTitle;
   final String relevance;

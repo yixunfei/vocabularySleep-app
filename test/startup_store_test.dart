@@ -22,31 +22,34 @@ class _MapSettingsStoreRepository implements SettingsStoreRepository {
 }
 
 void main() {
-  test('syncPersistentStateFromSettings restores persisted startup settings', () {
-    final settings = SettingsService.fromRepository(
-      _MapSettingsStoreRepository(<String, String>{}),
-    );
-    settings.saveStartupPage(AppHomeTab.toolbox);
-    settings.saveFocusStartupTab(FocusStartupTab.timer);
-    settings.saveStudyStartupTab(StudyStartupTab.library);
-    settings.saveStartupTodoPromptEnabled(true);
-    settings.saveStartupTodoPromptSuppressedDate('2026-04-20');
+  test(
+    'syncPersistentStateFromSettings restores persisted startup settings',
+    () {
+      final settings = SettingsService.fromRepository(
+        _MapSettingsStoreRepository(<String, String>{}),
+      );
+      settings.saveStartupPage(AppHomeTab.toolbox);
+      settings.saveFocusStartupTab(FocusStartupTab.timer);
+      settings.saveStudyStartupTab(StudyStartupTab.library);
+      settings.saveStartupTodoPromptEnabled(true);
+      settings.saveStartupTodoPromptSuppressedDate('2026-04-20');
 
-    final store = StartupStore(settings: settings);
-    var notifications = 0;
-    store.addListener(() {
-      notifications += 1;
-    });
+      final store = StartupStore(settings: settings);
+      var notifications = 0;
+      store.addListener(() {
+        notifications += 1;
+      });
 
-    store.syncPersistentStateFromSettings();
+      store.syncPersistentStateFromSettings();
 
-    expect(store.startupPage, AppHomeTab.toolbox);
-    expect(store.focusStartupTab, FocusStartupTab.timer);
-    expect(store.studyStartupTab, StudyStartupTab.library);
-    expect(store.startupTodoPromptEnabled, isTrue);
-    expect(store.startupTodoPromptSuppressedDate, '2026-04-20');
-    expect(notifications, 1);
-  });
+      expect(store.startupPage, AppHomeTab.toolbox);
+      expect(store.focusStartupTab, FocusStartupTab.timer);
+      expect(store.studyStartupTab, StudyStartupTab.library);
+      expect(store.startupTodoPromptEnabled, isTrue);
+      expect(store.startupTodoPromptSuppressedDate, '2026-04-20');
+      expect(notifications, 1);
+    },
+  );
 
   test('startup setters persist changes through SettingsService', () {
     final settings = SettingsService.fromRepository(

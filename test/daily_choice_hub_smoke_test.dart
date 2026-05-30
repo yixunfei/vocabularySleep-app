@@ -989,8 +989,7 @@ void main() {
                         ...cookToolCategories,
                       ],
                       initialContextId: 'all',
-                      contextLabelZh: '厨具',
-                      contextLabelEn: 'Tool',
+                      contextLabelKey: 'toolbox.daily_choice.editor.field.tool',
                     ),
                   );
                 },
@@ -1038,8 +1037,7 @@ void main() {
                     initialCategoryId: 'lunch',
                     contexts: cookToolCategories,
                     initialContextId: 'pot',
-                    contextLabelZh: '厨具',
-                    contextLabelEn: 'Tool',
+                    contextLabelKey: 'toolbox.daily_choice.editor.field.tool',
                     eatCollections: const <DailyChoiceEatCollection>[
                       dailyChoiceFavoriteEatCollection,
                       DailyChoiceEatCollection(

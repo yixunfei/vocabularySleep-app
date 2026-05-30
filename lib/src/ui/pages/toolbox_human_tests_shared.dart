@@ -502,8 +502,8 @@ class _HumanSettingsSectionState extends State<_HumanSettingsSection> {
       alpha: _expanded ? 0.13 : 0.075,
     );
     final toggleLabel = _expanded
-        ? pickUiText(i18n, zh: '收起', en: 'Collapse')
-        : pickUiText(i18n, zh: '展开', en: 'Expand');
+        ? i18n.t('inline.plan295.daily_choice.collapse.ad0db950964e')
+        : i18n.t('inline.ui.pages.play_page.expand_33fdcb');
     final iconTint = _expanded
         ? colorScheme.primary.withValues(alpha: 0.18)
         : colorScheme.surfaceContainerHighest.withValues(alpha: 0.72);

@@ -80,7 +80,10 @@ class _WoodfishStateStore {
   }
 
   void applyRhythmPreset(_WoodfishRhythmPreset preset) {
-    final nextCyclePulses = math.max(1, preset.beatsPerCycle * preset.subdivision);
+    final nextCyclePulses = math.max(
+      1,
+      preset.beatsPerCycle * preset.subdivision,
+    );
     activeRhythmPresetId = preset.id;
     bpm = preset.bpm;
     beatsPerCycle = preset.beatsPerCycle;

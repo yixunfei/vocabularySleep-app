@@ -109,9 +109,9 @@ class SleepMorningQuickCheckPanel extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                      hasQuickFeedback
-                          ? i18n.t('toolbox.sleep.low.wakeTapDone')
-                          : i18n.t('toolbox.sleep.low.wakeTapHint'),
+                        hasQuickFeedback
+                            ? i18n.t('toolbox.sleep.low.wakeTapDone')
+                            : i18n.t('toolbox.sleep.low.wakeTapHint'),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -146,21 +146,21 @@ class SleepMorningQuickCheckPanel extends StatelessWidget {
                     _SleepMorningMoodButton(
                       width: buttonWidth,
                       icon: Icons.drag_handle_rounded,
-                        label: i18n.t('toolbox.sleep.low.same'),
+                      label: i18n.t('toolbox.sleep.low.same'),
                       onPressed: () =>
                           onMoodSelected(SleepMorningQuickMood.same),
                     ),
                     _SleepMorningMoodButton(
                       width: buttonWidth,
                       icon: Icons.trending_down_rounded,
-                        label: i18n.t('toolbox.sleep.low.worse'),
+                      label: i18n.t('toolbox.sleep.low.worse'),
                       onPressed: () =>
                           onMoodSelected(SleepMorningQuickMood.worse),
                     ),
                     _SleepMorningMoodButton(
                       width: buttonWidth,
                       icon: Icons.trending_up_rounded,
-                        label: i18n.t('toolbox.sleep.low.better'),
+                      label: i18n.t('toolbox.sleep.low.better'),
                       onPressed: () =>
                           onMoodSelected(SleepMorningQuickMood.better),
                     ),
@@ -174,9 +174,7 @@ class SleepMorningQuickCheckPanel extends StatelessWidget {
               child: TextButton.icon(
                 onPressed: onOpenLog,
                 icon: const Icon(Icons.edit_note_rounded),
-                label: Text(
-                    i18n.t('toolbox.sleep.low.openFullLog'),
-                ),
+                label: Text(i18n.t('toolbox.sleep.low.openFullLog')),
               ),
             ),
           ],
@@ -209,14 +207,14 @@ class SleepBedtimeSceneSheet extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
         children: <Widget>[
           Text(
-              i18n.t('toolbox.sleep.low.bedtimeScene'),
+            i18n.t('toolbox.sleep.low.bedtimeScene'),
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 6),
           Text(
-              i18n.t('toolbox.sleep.low.bedtimeSceneHint'),
+            i18n.t('toolbox.sleep.low.bedtimeSceneHint'),
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -257,9 +255,7 @@ class SleepBedtimeSceneSheet extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: onWhiteNoise,
             icon: const Icon(Icons.graphic_eq_rounded),
-            label: Text(
-              i18n.t('toolbox.sleep.low.chooseAudio'),
-            ),
+            label: Text(i18n.t('toolbox.sleep.low.chooseAudio')),
           ),
           TextButton(
             onPressed: onClose,
@@ -364,31 +360,23 @@ class SleepTiredModeSheet extends StatelessWidget {
           FilledButton.icon(
             onPressed: onTinyRoutine,
             icon: const Icon(Icons.bedtime_rounded),
-            label: Text(
-              i18n.t('toolbox.sleep.low.start8min'),
-            ),
+            label: Text(i18n.t('toolbox.sleep.low.start8min')),
           ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
             onPressed: onWhiteNoise,
             icon: const Icon(Icons.graphic_eq_rounded),
-            label: Text(
-              i18n.t('toolbox.sleep.low.audioOnly'),
-            ),
+            label: Text(i18n.t('toolbox.sleep.low.audioOnly')),
           ),
           const SizedBox(height: 10),
           TextButton.icon(
             onPressed: onNightRescue,
             icon: const Icon(Icons.self_improvement_rounded),
-            label: Text(
-              i18n.t('toolbox.sleep.low.wokeAtNight'),
-            ),
+            label: Text(i18n.t('toolbox.sleep.low.wokeAtNight')),
           ),
           TextButton(
             onPressed: onClose,
-            child: Text(
-              i18n.t('toolbox.sleep.low.do3Steps'),
-            ),
+            child: Text(i18n.t('toolbox.sleep.low.do3Steps')),
           ),
         ],
       ),

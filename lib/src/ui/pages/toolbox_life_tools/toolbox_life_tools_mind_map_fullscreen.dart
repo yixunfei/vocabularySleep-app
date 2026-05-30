@@ -66,15 +66,26 @@ class _MindMapFullscreenPageState extends State<_MindMapFullscreenPage> {
       appBar: AppBar(
         leading: IconButton(
           key: const ValueKey<String>('life_mind_map_fullscreen_close_button'),
-          tooltip: _lifeText(context, zh: '关闭', en: 'Close'),
+          tooltip: _lifeI18nText(
+            context,
+            'inline.plan295.life.close.370fb8697deb',
+          ),
           onPressed: () => Navigator.of(context).maybePop(),
           icon: const Icon(Icons.close_rounded),
         ),
-        title: Text(_lifeText(context, zh: '便捷整理', en: 'Quick arrange')),
+        title: Text(
+          _lifeI18nText(
+            context,
+            'inline.plan295.life.quick_arrange.e36855ec9199',
+          ),
+        ),
         actions: <Widget>[
           _compactActionButton(
             key: const ValueKey<String>('life_mind_map_fullscreen_edit_button'),
-            tooltip: _lifeText(context, zh: '编辑标题', en: 'Edit title'),
+            tooltip: _lifeI18nText(
+              context,
+              'inline.plan295.life.edit_title.654526fe0945',
+            ),
             icon: Icons.edit_rounded,
             onPressed: _editSelectedTitle,
           ),
@@ -82,7 +93,10 @@ class _MindMapFullscreenPageState extends State<_MindMapFullscreenPage> {
             key: const ValueKey<String>(
               'life_mind_map_fullscreen_add_child_button',
             ),
-            tooltip: _lifeText(context, zh: '添加子节点', en: 'Add child'),
+            tooltip: _lifeI18nText(
+              context,
+              'inline.plan295.life.add_child.c714076a5fea',
+            ),
             icon: Icons.account_tree_rounded,
             onPressed: _addChild,
           ),
@@ -90,7 +104,10 @@ class _MindMapFullscreenPageState extends State<_MindMapFullscreenPage> {
             key: const ValueKey<String>(
               'life_mind_map_fullscreen_add_sibling_button',
             ),
-            tooltip: _lifeText(context, zh: '添加同级', en: 'Add sibling'),
+            tooltip: _lifeI18nText(
+              context,
+              'inline.plan295.life.add_sibling.3810e08aac41',
+            ),
             icon: Icons.call_split_rounded,
             onPressed: _selectedNode.parentId == null ? null : _addSibling,
           ),
@@ -98,7 +115,10 @@ class _MindMapFullscreenPageState extends State<_MindMapFullscreenPage> {
             key: const ValueKey<String>(
               'life_mind_map_fullscreen_delete_button',
             ),
-            tooltip: _lifeText(context, zh: '删除节点', en: 'Delete node'),
+            tooltip: _lifeI18nText(
+              context,
+              'inline.plan295.life.delete_node.0120e26a6469',
+            ),
             icon: Icons.delete_outline_rounded,
             onPressed: _selectedNode.parentId == null ? null : _deleteNode,
           ),
@@ -106,15 +126,24 @@ class _MindMapFullscreenPageState extends State<_MindMapFullscreenPage> {
             key: const ValueKey<String>(
               'life_mind_map_fullscreen_reflow_button',
             ),
-            tooltip: _lifeText(context, zh: '自动重排', en: 'Auto arrange'),
+            tooltip: _lifeI18nText(
+              context,
+              'inline.plan295.life.auto_arrange.6010d89e52da',
+            ),
             onPressed: _resetLayout,
             icon: Icons.auto_fix_high_rounded,
           ),
           _compactActionButton(
             key: const ValueKey<String>('life_mind_map_fullscreen_snap_button'),
             tooltip: _snapToGrid
-                ? _lifeText(context, zh: '关闭吸附', en: 'Turn snap off')
-                : _lifeText(context, zh: '开启吸附', en: 'Turn snap on'),
+                ? _lifeI18nText(
+                    context,
+                    'inline.plan295.life.turn_snap_off.8d31fcafa2d4',
+                  )
+                : _lifeI18nText(
+                    context,
+                    'inline.plan295.life.turn_snap_on.8f8e7ffb607d',
+                  ),
             onPressed: () => _setSnap(!_snapToGrid),
             icon: _snapToGrid ? Icons.grid_on_rounded : Icons.grid_off_rounded,
           ),
@@ -184,8 +213,14 @@ class _MindMapFullscreenPageState extends State<_MindMapFullscreenPage> {
           const SizedBox(width: 8),
           _MindMapModePill(
             label: _snapToGrid
-                ? _lifeText(context, zh: '吸附开启', en: 'Snap on')
-                : _lifeText(context, zh: '自由拖拽', en: 'Free drag'),
+                ? _lifeI18nText(
+                    context,
+                    'inline.plan295.life.snap_on.6467246aeff3',
+                  )
+                : _lifeI18nText(
+                    context,
+                    'inline.plan295.life.free_drag.5e8aefede1ee',
+                  ),
             icon: _snapToGrid
                 ? Icons.grid_4x4_rounded
                 : Icons.open_with_rounded,
@@ -226,10 +261,9 @@ class _MindMapFullscreenPageState extends State<_MindMapFullscreenPage> {
           children: <Widget>[
             Expanded(
               child: Text(
-                _lifeText(
+                _lifeI18nText(
                   context,
-                  zh: '按住节点拖拽，松手后位置会保留。',
-                  en: 'Hold and drag a node; its position is kept.',
+                  'inline.plan295.life.hold_and_drag_a_node_its_position_is.db7c05ccfe19',
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -334,28 +368,38 @@ class _MindMapTitleEditDialogState extends State<_MindMapTitleEditDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(_lifeText(context, zh: '编辑节点', en: 'Edit node')),
+      title: Text(
+        _lifeI18nText(context, 'inline.plan295.life.edit_node.5655d04a06c5'),
+      ),
       content: TextField(
         key: const ValueKey<String>('life_mind_map_fullscreen_title_field'),
         controller: _controller,
         autofocus: true,
         textInputAction: TextInputAction.done,
         decoration: InputDecoration(
-          labelText: _lifeText(context, zh: '节点标题', en: 'Node title'),
+          labelText: _lifeI18nText(
+            context,
+            'inline.plan295.life.node_title.56915dce29c0',
+          ),
         ),
         onSubmitted: (value) => Navigator.of(context).pop(value),
       ),
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(_lifeText(context, zh: '取消', en: 'Cancel')),
+          child: Text(_lifeI18nText(context, 'cancel')),
         ),
         FilledButton(
           key: const ValueKey<String>(
             'life_mind_map_fullscreen_title_save_button',
           ),
           onPressed: () => Navigator.of(context).pop(_controller.text),
-          child: Text(_lifeText(context, zh: '保存', en: 'Save')),
+          child: Text(
+            _lifeI18nText(
+              context,
+              'inline.ui.pages.ambient_presets_page.save_50f681',
+            ),
+          ),
         ),
       ],
     );

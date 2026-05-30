@@ -8,21 +8,17 @@ enum ToolboxIdPhotoOutputFormat { png, jpg }
 class ToolboxIdPhotoPreset {
   const ToolboxIdPhotoPreset({
     required this.id,
-    required this.labelZh,
-    required this.labelEn,
+    required this.labelKey,
     required this.mmWidth,
     required this.mmHeight,
-    this.noteZh = '',
-    this.noteEn = '',
+    this.noteKey = '',
   });
 
   final String id;
-  final String labelZh;
-  final String labelEn;
+  final String labelKey;
   final double mmWidth;
   final double mmHeight;
-  final String noteZh;
-  final String noteEn;
+  final String noteKey;
 
   int pixelWidth(double dpi) => _millimeterToPixel(mmWidth, dpi);
 
@@ -34,49 +30,41 @@ class ToolboxIdPhotoPreset {
 const List<ToolboxIdPhotoPreset> toolboxIdPhotoPresets = <ToolboxIdPhotoPreset>[
   ToolboxIdPhotoPreset(
     id: 'one_inch',
-    labelZh: '1 寸',
-    labelEn: '1 inch',
+    labelKey: 'life.id_photo.preset.one_inch',
     mmWidth: 25,
     mmHeight: 35,
   ),
   ToolboxIdPhotoPreset(
     id: 'small_one_inch',
-    labelZh: '小 1 寸',
-    labelEn: 'Small 1 inch',
+    labelKey: 'life.id_photo.preset.small_one_inch',
     mmWidth: 22,
     mmHeight: 32,
   ),
   ToolboxIdPhotoPreset(
     id: 'large_one_inch',
-    labelZh: '大 1 寸',
-    labelEn: 'Large 1 inch',
+    labelKey: 'life.id_photo.preset.large_one_inch',
     mmWidth: 33,
     mmHeight: 48,
   ),
   ToolboxIdPhotoPreset(
     id: 'two_inch',
-    labelZh: '2 寸',
-    labelEn: '2 inch',
+    labelKey: 'life.id_photo.preset.two_inch',
     mmWidth: 35,
     mmHeight: 49,
   ),
   ToolboxIdPhotoPreset(
     id: 'passport',
-    labelZh: '护照',
-    labelEn: 'Passport',
+    labelKey: 'life.id_photo.preset.passport',
     mmWidth: 33,
     mmHeight: 48,
-    noteZh: '常见护照照片参考，实际以办理机构为准。',
-    noteEn: 'Common passport reference. Follow the issuing authority.',
+    noteKey: 'life.id_photo.preset.passport.note',
   ),
   ToolboxIdPhotoPreset(
     id: 'visa_2x2',
-    labelZh: '2x2 签证照',
-    labelEn: '2x2 visa',
+    labelKey: 'life.id_photo.preset.visa_2x2',
     mmWidth: 50.8,
     mmHeight: 50.8,
-    noteZh: '约 2x2 英寸方形签证照。',
-    noteEn: 'Approximate 2x2 inch square visa photo.',
+    noteKey: 'life.id_photo.preset.visa_2x2.note',
   ),
 ];
 

@@ -93,19 +93,25 @@ extension _SingingBowlsSheet on _SingingBowlsPracticeCardState {
                   sheetSectionTitle(
                     context,
                     title: i18n.t('toolbox.sound.bowls.sheet_frequency_menu'),
-                    subtitle: i18n.t('toolbox.sound.bowls.sheet_frequency_subtitle'),
+                    subtitle: i18n.t(
+                      'toolbox.sound.bowls.sheet_frequency_subtitle',
+                    ),
                   ),
                   const SizedBox(height: 10),
                   buildSheetFrequencyGroup(
                     context,
-                    groupLabel: i18n.t('toolbox.sound.bowls.sheet_chakra_group'),
+                    groupLabel: i18n.t(
+                      'toolbox.sound.bowls.sheet_chakra_group',
+                    ),
                     group: _SingingBowlGroup.chakra,
                     sheetSetState: sheetSetState,
                   ),
                   const SizedBox(height: 14),
                   buildSheetFrequencyGroup(
                     context,
-                    groupLabel: i18n.t('toolbox.sound.bowls.sheet_resonance_group'),
+                    groupLabel: i18n.t(
+                      'toolbox.sound.bowls.sheet_resonance_group',
+                    ),
                     group: _SingingBowlGroup.resonance,
                     sheetSetState: sheetSetState,
                   ),
@@ -113,7 +119,9 @@ extension _SingingBowlsSheet on _SingingBowlsPracticeCardState {
                   sheetSectionTitle(
                     context,
                     title: i18n.t('toolbox.sound.bowls.sheet_voices_title'),
-                    subtitle: i18n.t('toolbox.sound.bowls.sheet_voices_subtitle'),
+                    subtitle: i18n.t(
+                      'toolbox.sound.bowls.sheet_voices_subtitle',
+                    ),
                   ),
                   const SizedBox(height: 10),
                   buildSheetVoiceGrid(context, sheetSetState),
@@ -121,7 +129,9 @@ extension _SingingBowlsSheet on _SingingBowlsPracticeCardState {
                   sheetSectionTitle(
                     context,
                     title: i18n.t('toolbox.sound.bowls.sheet_autoplay_title'),
-                    subtitle: i18n.t('toolbox.sound.bowls.sheet_autoplay_subtitle'),
+                    subtitle: i18n.t(
+                      'toolbox.sound.bowls.sheet_autoplay_subtitle',
+                    ),
                   ),
                   const SizedBox(height: 10),
                   buildSheetAutoplay(context, sheetSetState),
@@ -191,14 +201,19 @@ extension _SingingBowlsSheet on _SingingBowlsPracticeCardState {
                 textColor: Theme.of(context).colorScheme.onSurface,
               ),
               ToolboxInfoPill(
-                text: voiceSpec.name(isZh),
+                text: voiceSpec.name(i18n),
                 accent: spec.glow,
                 backgroundColor: Colors.white.withValues(alpha: 0.72),
                 textColor: Theme.of(context).colorScheme.onSurface,
               ),
               if (_autoPlayEnabled)
                 ToolboxInfoPill(
-                  text: i18n.t('toolbox.sound.bowls.auto_interval_label', params: <String, Object?>{'interval': '${_autoPlayIntervalMs ~/ 1000}'}),
+                  text: i18n.t(
+                    'toolbox.sound.bowls.auto_interval_label',
+                    params: <String, Object?>{
+                      'interval': '${_autoPlayIntervalMs ~/ 1000}',
+                    },
+                  ),
                   accent: spec.accent.withValues(alpha: 0.78),
                   backgroundColor: Colors.white.withValues(alpha: 0.72),
                   textColor: Theme.of(context).colorScheme.onSurface,
@@ -207,7 +222,7 @@ extension _SingingBowlsSheet on _SingingBowlsPracticeCardState {
           ),
           const SizedBox(height: 12),
           Text(
-            spec.name(isZh),
+            spec.name(i18n),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w900,
               letterSpacing: -0.3,
@@ -215,7 +230,7 @@ extension _SingingBowlsSheet on _SingingBowlsPracticeCardState {
           ),
           const SizedBox(height: 4),
           Text(
-            spec.subtitle(isZh),
+            spec.subtitle(i18n),
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
               color: spec.accent,
               fontWeight: FontWeight.w700,
@@ -223,7 +238,7 @@ extension _SingingBowlsSheet on _SingingBowlsPracticeCardState {
           ),
           const SizedBox(height: 8),
           Text(
-            spec.description(isZh),
+            spec.description(i18n),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               height: 1.55,
               color: Theme.of(context).colorScheme.onSurfaceVariant,

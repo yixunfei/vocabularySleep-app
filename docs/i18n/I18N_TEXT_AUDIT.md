@@ -4,6 +4,38 @@
 - 基线提交: `c38e2fee4f8b5df079d0398745fe82e9b6077ff9`
 - 执行边界: 本轮只新增 i18n 资源与审计文档，未修改 Dart/Kotlin/Gradle/YAML 运行时代码。
 
+## 2026-05-30 运行时接入补充
+
+- `PLAN_292_i18n_runtime_full_wiring` 已将旧 `pickUiText(...)` 入口接入 JSON catalog 运行时反查。
+- 中文与英文继续以当前代码源文本为准；日语、德语、法语、西语、俄语优先读取集中 catalog，避免旧内联写法继续回退英文。
+- registry 中 4076 条 `inline_pick_ui_text` 已可通过 source-pair 命中，其中 397 条动态文本通过模板匹配保留运行时变量。
+- 首批直接硬编码 UI 文本已收口到本地化入口：禅沙小工具按钮、小游戏数独指标/按钮/SnackBar、生活实用外链错误提示、声音工具 Deck 快捷提示与当前乐器状态。
+- 剩余 `dart_string_literal_candidate` 仍需按上下文人工判断，包含大量内容数据、资源路径、单位/乐理/数值、存储 key、日志和测试文本，不应批量强制替换。
+
+## 2026-05-30 直接 UI literal 二次收口
+
+- `PLAN_293_i18n_direct_ui_literal_followup` 已完成 Focus 编排编辑器的弹窗、SnackBar、输入框、按钮、模板预设、状态 chip 与节拍摘要接入。
+- 追加收口声音工具 Deck 全屏快速启动 tooltip、单词行“当前/文本已隐藏”、生活实用以图搜图 Google Lens 手动降级提示和结果摘要。
+- 每日抉择周边地图的定位/IP 粗略定位服务诊断已在面板展示层映射为运行时多语言；service 层英文诊断原文保留为内部状态来源。
+- 本轮新增/登记 18 个运行时 key，并复查 PLAN_293 涉及的 57 个 key 在 zh/en/ja/de/fr/es/ru 中均无缺失、无占位符不一致、无 `???` 可疑文本。
+- 收尾直接 UI literal 扫描仍会命中数值、温度、序号、文件名 hint、项目符号、服务诊断原文和已包含 `i18n.t(...)` 的拼接误报；这些已按非固定 UI 文案或展示层已映射候选处理。
+
+## 2026-05-30 工具模块标题与设置项补漏
+
+- `PLAN_294_i18n_toolbox_module_titles_settings_followup` 已针对用户点名的音钵、舒缓轻音、木鱼、舒尔特方格、呼吸训练、禅意沙盘和生活实用入口继续收口。
+- 旧版舒缓轻音预设、按钮、预设区标题说明和音量文案已改为 `AppI18n.t(...)`；舒缓轻音 v2 的 `SoothingMusicCopy.text(...)` 已接入 JSON catalog，9 种模式类型、37 个曲目名、筛选/定时/错误/继续播放设置不再使用独立英文兜底。
+- 木鱼 `_uiText(...)`、禅意沙盘 `_text(...)`/spec/widget、音钵 spec 与布局调用已统一通过 `pickUiText(...)` 或 catalog 反查；呼吸训练、舒尔特和生活实用 hub 的标题、说明、设置项、弹窗和动态提示 source-pair 已登记。
+- 本轮新增/登记 485 个 key：woodfish 67、breathing 100、life_hub 25、zen_sand 134、singing_bowls 40、soothing semantic 11、soothing v2 108。
+- 校验结果：485 个 key 七语言缺失 0、占位符不一致 0、registry missing 0、非预期英文回退 0；点名模块 479 处 helper source-pair 命中缺失 0。
+
+## 2026-05-30 PLAN_296 单一 catalog 收口
+
+- Life Tools 服务层新增 `ToolboxI18nTextRef` 协议，AI Interview、City Compare、Offer Select 等服务不再返回用户可见中文/英文句子，而是返回 catalog key 与参数。
+- `pickUiText(...)`、`_lifeText(...)`、`_lifeCatalogPairText(...)`、`_uiText(...)`、`pickSleepText(...)`、`lookupBySourcePair(...)`、`contextLabelZh/contextLabelEn` 在 `lib/test` Dart 代码中已无残留引用。
+- 本轮补齐 321 个 `life.*` runtime key，覆盖 AI Interview、City Compare、Offer Select、Work Worth、ID Photo、Compass、Date Calculator、Time Screen、Mind Map、Number Marks。
+- 七语言 JSON catalog 与 registry 已同步；ja/de/fr/es/ru 通过已验证可用的本地 OpenAI-compatible API 批量生成，311 个 key 机器翻译、10 个罗盘方向/连接符/原样参数人工固定，翻译占位符回退 0。
+- 校验结果：321 个 Life Tools key 七语言缺失 0、registry missing 0、占位符不一致 0；`app_i18n_catalog_test` 与相关 Life Tools 服务测试通过。
+
 ## 资源产物
 
 - `lib/l10n/catalog/app_text_registry.json`: 全量机器可读文案总账。

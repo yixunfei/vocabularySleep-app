@@ -43,45 +43,33 @@ Widget _buildPracticeRoundSetupCard(
   );
   final previewWord = sourceWords.isEmpty ? '' : sourceWords[previewIndex].word;
   final roundSummary = sourceWords.isEmpty
-      ? pickUiText(
-          i18n,
-          zh: '当前来源还没有可用单词，先切换范围或词本。',
-          en: 'No words available for this source yet.',
+      ? i18n.t(
+          'inline.ui.pages.practice_page_sections.no_words_available_for_this_source_yet_6c6fcd',
         )
-      : pickUiText(
-          i18n,
-          zh: '一轮 $effectiveRoundSize 个词，来源：$sourceLabel',
-          en: 'One round: $effectiveRoundSize words from $sourceLabel',
+      : i18n.t(
+          'inline.ui.pages.practice_page_sections.one_round_effectiveroundsize_words_from_sourcelabel_5fdb0b',
         );
   final startSummary = sourceWords.isEmpty
-      ? pickUiText(
-          i18n,
-          zh: '起点会在有可用单词后自动计算。',
-          en: 'A starting point will appear once words are available.',
+      ? i18n.t(
+          'inline.ui.pages.practice_page_sections.a_starting_point_will_appear_once_words_are_available_023baf',
         )
       : switch (settings.startMode) {
-          PracticeRoundStartMode.resumeCursor => pickUiText(
-            i18n,
-            zh: '从上次位置继续：第 ${previewIndex + 1} 个词 $previewWord',
-            en: 'Resume from saved position: #${previewIndex + 1} $previewWord',
+          PracticeRoundStartMode.resumeCursor => i18n.t(
+            'inline.ui.pages.practice_page_sections.resume_from_saved_position_previewindex_1_previewword_b60e63',
           ),
-          PracticeRoundStartMode.currentWord => pickUiText(
-            i18n,
-            zh: '从当前词开始：第 ${previewIndex + 1} 个词 $previewWord',
-            en: 'Start from current word: #${previewIndex + 1} $previewWord',
+          PracticeRoundStartMode.currentWord => i18n.t(
+            'inline.ui.pages.practice_page_sections.start_from_current_word_previewindex_1_previewword_89f95e',
           ),
-          PracticeRoundStartMode.fromStart => pickUiText(
-            i18n,
-            zh: '从头开始：第 ${previewIndex + 1} 个词 $previewWord',
-            en: 'Start from the beginning: #${previewIndex + 1} $previewWord',
+          PracticeRoundStartMode.fromStart => i18n.t(
+            'inline.ui.pages.practice_page_sections.start_from_the_beginning_previewindex_1_previewword_dcbfcd',
           ),
         };
   final availableSummary = sourceWords.isEmpty
-      ? pickUiText(i18n, zh: '可用词数 0', en: '0 words available')
-      : pickUiText(
-          i18n,
-          zh: '当前来源共 ${sourceWords.length} 个词',
-          en: '${sourceWords.length} words available',
+      ? i18n.t(
+          'inline.ui.pages.practice_page_sections.0_words_available_d9cb8f',
+        )
+      : i18n.t(
+          'inline.ui.pages.practice_page_sections.sourcewords_length_words_available_cdf53d',
         );
 
   return Card(
@@ -98,7 +86,9 @@ Widget _buildPracticeRoundSetupCard(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickUiText(i18n, zh: '一轮设置', en: 'Round setup'),
+                      i18n.t(
+                        'inline.ui.pages.practice_page_sections.round_setup_a216ad',
+                      ),
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 6),
@@ -133,7 +123,9 @@ Widget _buildPracticeRoundSetupCard(
               initialValue: settings.source,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
-                labelText: pickUiText(i18n, zh: '练习来源', en: 'Practice source'),
+                labelText: i18n.t(
+                  'inline.ui.pages.practice_page_sections.practice_source_a73c09',
+                ),
               ),
               items: PracticeRoundSource.values
                   .map(
@@ -156,7 +148,9 @@ Widget _buildPracticeRoundSetupCard(
               initialValue: settings.startMode,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
-                labelText: pickUiText(i18n, zh: '起点规则', en: 'Starting point'),
+                labelText: i18n.t(
+                  'inline.ui.pages.practice_page_sections.starting_point_e5916e',
+                ),
               ),
               items: PracticeRoundStartMode.values
                   .map(
@@ -188,7 +182,9 @@ Widget _buildPracticeRoundSetupCard(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    pickUiText(i18n, zh: '每轮单词数', en: 'Words per round'),
+                    i18n.t(
+                      'inline.ui.pages.practice_page_sections.words_per_round_38ed23',
+                    ),
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 10),
@@ -244,13 +240,13 @@ Widget _buildPracticeRoundSetupCard(
             SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,
               title: Text(
-                pickUiText(i18n, zh: '轮内乱序', en: 'Shuffle within round'),
+                i18n.t(
+                  'inline.ui.pages.practice_page_sections.shuffle_within_round_4bc816',
+                ),
               ),
               subtitle: Text(
-                pickUiText(
-                  i18n,
-                  zh: '每一轮仍按你设定的起点取词，但轮内顺序会打散。',
-                  en: 'Keep the selected start point, but shuffle the order inside each round.',
+                i18n.t(
+                  'inline.ui.pages.practice_page_sections.keep_the_selected_start_point_but_shuffle_the_order_insi_bde80e',
                 ),
               ),
               value: settings.shuffle,
@@ -264,17 +260,15 @@ Widget _buildPracticeRoundSetupCard(
                   ? null
                   : () => _openPracticeSession(
                       context,
-                      title: pickUiText(
-                        i18n,
-                        zh: '$sourceLabel一轮练习',
-                        en: '$sourceLabel round',
+                      title: i18n.t(
+                        'inline.ui.pages.practice_page_sections.sourcelabel_round_540f13',
                       ),
                       subtitle: sourceWords.isEmpty
-                          ? pickUiText(i18n, zh: '暂无单词', en: 'No words')
-                          : pickUiText(
-                              i18n,
-                              zh: '$effectiveRoundSize / ${sourceWords.length} 个词',
-                              en: '$effectiveRoundSize of ${sourceWords.length} words',
+                          ? i18n.t(
+                              'inline.ui.pages.practice_page_sections.no_words_587afb',
+                            )
+                          : i18n.t(
+                              'inline.ui.pages.practice_page_sections.effectiveroundsize_of_sourcewords_length_words_e05728',
                             ),
                       words: sourceWords,
                       shuffle: settings.shuffle,
@@ -286,7 +280,9 @@ Widget _buildPracticeRoundSetupCard(
                     ),
               icon: const Icon(Icons.play_arrow_rounded),
               label: Text(
-                pickUiText(i18n, zh: '按当前设置开始', en: 'Start this round'),
+                i18n.t(
+                  'inline.ui.pages.practice_page_sections.start_this_round_6ce704',
+                ),
               ),
             ),
           ],
@@ -315,11 +311,11 @@ Widget _buildMemoryLanesCard(
     }
     await _openPracticeSession(
       context,
-      title: pickUiText(i18n, zh: '当前范围会话', en: 'Current scope session'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '共 ${scopeWords.length} 个词',
-        en: '${scopeWords.length} words',
+      title: i18n.t(
+        'inline.ui.pages.practice_page_sections.current_scope_session_a26a55',
+      ),
+      subtitle: i18n.t(
+        'inline.ui.pages.practice_page_sections.scopewords_length_words_4a9571',
       ),
       words: scopeWords,
       shuffle: false,
@@ -338,15 +334,15 @@ Widget _buildMemoryLanesCard(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(i18n, zh: '记忆轨道', en: 'Memory lanes'),
+            i18n.t(
+              'inline.ui.pages.practice_page_sections.memory_lanes_9cc2bd',
+            ),
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 8),
           Text(
-            pickUiText(
-              i18n,
-              zh: '把每次练习结果分成“已记住”和“待加强”两条轨道，下一步练什么会更清晰。',
-              en: 'Split each finished session into stable and recovery lanes so the next drill is always clear.',
+            i18n.t(
+              'inline.ui.pages.practice_page_sections.split_each_finished_session_into_stable_and_recovery_lan_d59edf',
             ),
           ),
           const SizedBox(height: 14),
@@ -358,25 +354,33 @@ Widget _buildMemoryLanesCard(
                 context,
                 icon: Icons.check_circle_outline_rounded,
                 value: '$rememberedToday',
-                label: pickUiText(i18n, zh: '今日已记住', en: 'Remembered today'),
+                label: i18n.t(
+                  'inline.ui.pages.practice_page_sections.remembered_today_fa8872',
+                ),
               ),
               _buildStatBadge(
                 context,
                 icon: Icons.refresh_rounded,
                 value: '$needsReviewToday',
-                label: pickUiText(i18n, zh: '今日待复习', en: 'Need review'),
+                label: i18n.t(
+                  'inline.ui.pages.practice_page_sections.need_review_893c05',
+                ),
               ),
               _buildStatBadge(
                 context,
                 icon: Icons.auto_awesome_rounded,
                 value: '${stableWords.length}',
-                label: pickUiText(i18n, zh: '稳定队列', en: 'Stable queue'),
+                label: i18n.t(
+                  'inline.ui.pages.practice_page_sections.stable_queue_1e03b3',
+                ),
               ),
               _buildStatBadge(
                 context,
                 icon: Icons.fitness_center_rounded,
                 value: '${recoveryWords.length}',
-                label: pickUiText(i18n, zh: '恢复队列', en: 'Recovery queue'),
+                label: i18n.t(
+                  'inline.ui.pages.practice_page_sections.recovery_queue_8c63b4',
+                ),
               ),
             ],
           ),
@@ -386,35 +390,33 @@ Widget _buildMemoryLanesCard(
             key: const ValueKey<String>('practice-memory-stable'),
             i18n: i18n,
             icon: Icons.auto_awesome_rounded,
-            title: pickUiText(i18n, zh: '稳定轨道', en: 'Stable lane'),
+            title: i18n.t(
+              'inline.ui.pages.practice_page_sections.stable_lane_27722e',
+            ),
             subtitle: hasStableWords
-                ? pickUiText(
-                    i18n,
-                    zh: '把已记住的单词再练一轮，保持回忆速度和发音稳定性。',
-                    en: 'Revisit words you already know to keep recall and pronunciation smooth.',
+                ? i18n.t(
+                    'inline.ui.pages.practice_page_sections.revisit_words_you_already_know_to_keep_recall_and_pronun_f48cf9',
                   )
-                : pickUiText(
-                    i18n,
-                    zh: '完成一轮练习后，已记住的单词会沉淀到这里。',
-                    en: 'Finish one session and the words you remember will collect here.',
+                : i18n.t(
+                    'inline.ui.pages.practice_page_sections.finish_one_session_and_the_words_you_remember_will_colle_adc0fb',
                   ),
             words: stableWords,
             actionLabel: hasStableWords
-                ? pickUiText(i18n, zh: '复习已记住', en: 'Review remembered')
-                : pickUiText(i18n, zh: '先完成一轮', en: 'Start first session'),
+                ? i18n.t(
+                    'inline.ui.pages.practice_page_sections.review_remembered_a87a77',
+                  )
+                : i18n.t(
+                    'inline.ui.pages.practice_page_sections.start_first_session_0efab9',
+                  ),
             onTap: hasStableWords
                 ? () => _openReviewSession(
                     context,
                     i18n,
-                    title: pickUiText(
-                      i18n,
-                      zh: '已记住单词复习',
-                      en: 'Remembered word review',
+                    title: i18n.t(
+                      'inline.ui.pages.practice_page_sections.remembered_word_review_adca85',
                     ),
-                    subtitle: pickUiText(
-                      i18n,
-                      zh: '共 ${stableWords.length} 个已记住单词',
-                      en: '${stableWords.length} remembered words',
+                    subtitle: i18n.t(
+                      'inline.ui.pages.practice_page_sections.stablewords_length_remembered_words_299de1',
                     ),
                     words: stableWords,
                   )
@@ -426,31 +428,33 @@ Widget _buildMemoryLanesCard(
             key: const ValueKey<String>('practice-memory-recovery'),
             i18n: i18n,
             icon: Icons.fitness_center_rounded,
-            title: pickUiText(i18n, zh: '恢复轨道', en: 'Recovery lane'),
+            title: i18n.t(
+              'inline.ui.pages.practice_page_sections.recovery_lane_df0c26',
+            ),
             subtitle: recoveryWords.isNotEmpty
-                ? pickUiText(
-                    i18n,
-                    zh: '把薄弱词和任务词合并复习，优先补齐还不稳定的词。',
-                    en: 'Mix weak and task words into one queue so you can close the gaps quickly.',
+                ? i18n.t(
+                    'inline.ui.pages.practice_page_sections.mix_weak_and_task_words_into_one_queue_so_you_can_close_79e214',
                   )
-                : pickUiText(
-                    i18n,
-                    zh: '没记住的单词会留在这里，后续可以集中恢复。',
-                    en: 'Words you miss will stay here so you can recover them in focused batches.',
+                : i18n.t(
+                    'inline.ui.pages.practice_page_sections.words_you_miss_will_stay_here_so_you_can_recover_them_in_9ede65',
                   ),
             words: recoveryWords,
             actionLabel: recoveryWords.isNotEmpty
-                ? pickUiText(i18n, zh: '开始恢复复习', en: 'Start recovery review')
-                : pickUiText(i18n, zh: '先完成一轮', en: 'Start first session'),
+                ? i18n.t(
+                    'inline.ui.pages.practice_page_sections.start_recovery_review_b56c92',
+                  )
+                : i18n.t(
+                    'inline.ui.pages.practice_page_sections.start_first_session_0efab9',
+                  ),
             onTap: recoveryWords.isNotEmpty
                 ? () => _openReviewSession(
                     context,
                     i18n,
-                    title: pickUiText(i18n, zh: '恢复轨道', en: 'Recovery lane'),
-                    subtitle: pickUiText(
-                      i18n,
-                      zh: '共 ${recoveryWords.length} 个待加强单词',
-                      en: '${recoveryWords.length} words to reinforce',
+                    title: i18n.t(
+                      'inline.ui.pages.practice_page_sections.recovery_lane_df0c26',
+                    ),
+                    subtitle: i18n.t(
+                      'inline.ui.pages.practice_page_sections.recoverywords_length_words_to_reinforce_66e959',
                     ),
                     words: recoveryWords,
                   )
@@ -531,21 +535,19 @@ Widget _buildWrongNotebookCard(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(i18n, zh: '错题本', en: 'Wrong notebook'),
+            i18n.t(
+              'inline.ui.pages.practice_notebook_page.wrong_notebook_6c7ca5',
+            ),
             style: theme.textTheme.titleLarge,
           ),
           const SizedBox(height: 8),
           Text(
             hasNotebookWords
-                ? pickUiText(
-                    i18n,
-                    zh: '把近期没记住的单词集中管理，支持错题顺序、到期优先、薄弱优先和随机练习。',
-                    en: 'Keep missed words in one place with notebook order, due-first, weak-first, and shuffle review.',
+                ? i18n.t(
+                    'inline.ui.pages.practice_page_sections.keep_missed_words_in_one_place_with_notebook_order_due_f_7d1f3c',
                   )
-                : pickUiText(
-                    i18n,
-                    zh: '练习时点击“没记住”后，单词会自动进入错题本，方便后续集中复习。',
-                    en: 'When you mark a word as "Not yet" during practice, it will be added here for focused review later.',
+                : i18n.t(
+                    'inline.ui.pages.practice_page_sections.when_you_mark_a_word_as_not_yet_during_practice_it_will_dbb1b0',
                   ),
           ),
           const SizedBox(height: 14),
@@ -557,19 +559,23 @@ Widget _buildWrongNotebookCard(
                 context,
                 icon: Icons.bookmarks_rounded,
                 value: '${notebookWords.length}',
-                label: pickUiText(i18n, zh: '错题数', en: 'Notebook words'),
+                label: i18n.t(
+                  'inline.ui.pages.practice_notebook_page.notebook_words_9adfda',
+                ),
               ),
               _buildStatBadge(
                 context,
                 icon: Icons.schedule_rounded,
                 value: '$dueCount',
-                label: pickUiText(i18n, zh: '待复习', en: 'Due now'),
+                label: i18n.t(
+                  'inline.ui.pages.practice_notebook_page.due_now_30a228',
+                ),
               ),
               _buildStatBadge(
                 context,
                 icon: Icons.layers_rounded,
                 value: '$wordbookCount',
-                label: pickUiText(i18n, zh: '涉及词库', en: 'Wordbooks'),
+                label: i18n.t('wordbooks'),
               ),
             ],
           ),
@@ -589,27 +595,31 @@ Widget _buildWrongNotebookCard(
                   );
                 },
                 icon: const Icon(Icons.menu_book_rounded),
-                label: Text(pickUiText(i18n, zh: '打开错题本', en: 'Open notebook')),
+                label: Text(
+                  i18n.t(
+                    'inline.ui.pages.practice_page_sections.open_notebook_0cd739',
+                  ),
+                ),
               ),
               if (hasNotebookWords)
                 OutlinedButton.icon(
                   onPressed: () => _openPracticeSession(
                     context,
-                    title: pickUiText(
-                      i18n,
-                      zh: '错题本练习',
-                      en: 'Wrong notebook review',
+                    title: i18n.t(
+                      'inline.ui.pages.practice_notebook_page_actions.wrong_notebook_review_88939c',
                     ),
-                    subtitle: pickUiText(
-                      i18n,
-                      zh: '共 ${notebookWords.length} 个错题',
-                      en: '${notebookWords.length} notebook words',
+                    subtitle: i18n.t(
+                      'inline.ui.pages.practice_page_sections.notebookwords_length_notebook_words_87aa77',
                     ),
                     words: notebookWords,
                     shuffle: false,
                   ),
                   icon: const Icon(Icons.play_circle_outline_rounded),
-                  label: Text(pickUiText(i18n, zh: '直接复习', en: 'Start now')),
+                  label: Text(
+                    i18n.t(
+                      'inline.ui.pages.practice_page_sections.start_now_c4829b',
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -633,15 +643,15 @@ Widget _buildRecentHistoryCard(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(i18n, zh: '最近练习历史', en: 'Recent session history'),
+            i18n.t(
+              'inline.ui.pages.practice_page_sections.recent_session_history_bc2d00',
+            ),
             style: theme.textTheme.titleLarge,
           ),
           const SizedBox(height: 8),
           Text(
-            pickUiText(
-              i18n,
-              zh: '保留最近几次练习结果，方便回看准确率变化和主要薄弱点。',
-              en: 'Keep the latest sessions visible so you can track accuracy and the main weak spots.',
+            i18n.t(
+              'inline.ui.pages.practice_page_sections.keep_the_latest_sessions_visible_so_you_can_track_accura_fd41e0',
             ),
           ),
           const SizedBox(height: 12),
@@ -657,7 +667,9 @@ Widget _buildRecentHistoryCard(
               },
               icon: const Icon(Icons.analytics_outlined),
               label: Text(
-                pickUiText(i18n, zh: '打开复盘页', en: 'Open review page'),
+                i18n.t(
+                  'inline.ui.pages.practice_page_sections.open_review_page_3d0013',
+                ),
               ),
             ),
           ),
@@ -671,10 +683,8 @@ Widget _buildRecentHistoryCard(
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Text(
-                pickUiText(
-                  i18n,
-                  zh: '还没有练习历史，完成一轮会话后会自动显示在这里。',
-                  en: 'No session history yet. Finish one session and it will appear here.',
+                i18n.t(
+                  'inline.ui.pages.practice_page_sections.no_session_history_yet_finish_one_session_and_it_will_ap_204206',
                 ),
                 style: theme.textTheme.bodySmall,
               ),
@@ -701,10 +711,8 @@ Widget _buildRecentHistoryCard(
                         Expanded(
                           child: Text(
                             record.title.isEmpty
-                                ? pickUiText(
-                                    i18n,
-                                    zh: '练习会话',
-                                    en: 'Practice session',
+                                ? i18n.t(
+                                    'inline.ui.pages.practice_page_sections.practice_session_562029',
                                   )
                                 : record.title,
                             style: theme.textTheme.titleMedium,
@@ -718,10 +726,8 @@ Widget _buildRecentHistoryCard(
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '正确率 ${(record.accuracy * 100).round()}% · 记住 ${record.remembered}/${record.total} · 错题 ${record.weakCount}',
-                        en: 'Accuracy ${(record.accuracy * 100).round()}% · ${record.remembered}/${record.total} remembered · ${record.weakCount} weak',
+                      i18n.t(
+                        'inline.ui.pages.practice_page_sections.accuracy_record_accuracy_100_round_record_remembered_rec_b4a3e4',
                       ),
                       style: theme.textTheme.bodyMedium,
                     ),
@@ -772,7 +778,7 @@ Widget _buildWordPreviewChips(
         borderRadius: BorderRadius.circular(14),
       ),
       child: Text(
-        pickUiText(i18n, zh: '还没有单词', en: 'No words yet'),
+        i18n.t('inline.ui.pages.practice_page_sections.no_words_yet_06b153'),
         style: theme.textTheme.bodySmall,
       ),
     );

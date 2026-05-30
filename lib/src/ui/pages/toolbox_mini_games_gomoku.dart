@@ -1,4 +1,4 @@
-﻿part of 'toolbox_mini_games.dart';
+part of 'toolbox_mini_games.dart';
 
 enum _GomokuStone { empty, black, white }
 
@@ -50,10 +50,6 @@ class _GomokuGameState extends State<_GomokuGame> {
     return row >= 0 && row < _size && col >= 0 && col < _size;
   }
 
-  String _text(AppI18n i18n, {required String zh, required String en}) {
-    return pickUiText(i18n, zh: zh, en: en);
-  }
-
   _GomokuStone _opponent(_GomokuStone stone) {
     return stone == _GomokuStone.black
         ? _GomokuStone.white
@@ -62,9 +58,15 @@ class _GomokuGameState extends State<_GomokuGame> {
 
   String _difficultyLabel(AppI18n i18n, _GomokuDifficulty difficulty) {
     return switch (difficulty) {
-      _GomokuDifficulty.easy => _text(i18n, zh: '简单', en: 'Easy'),
-      _GomokuDifficulty.medium => _text(i18n, zh: '标准', en: 'Medium'),
-      _GomokuDifficulty.hard => _text(i18n, zh: '困难', en: 'Hard'),
+      _GomokuDifficulty.easy => i18n.t(
+        'toolbox.miniGames.gomoku.easy.2839bbd0',
+      ),
+      _GomokuDifficulty.medium => i18n.t(
+        'toolbox.miniGames.gomoku.medium.50654e8e',
+      ),
+      _GomokuDifficulty.hard => i18n.t(
+        'toolbox.miniGames.gomoku.hard.1d80ea4f',
+      ),
     };
   }
 
@@ -146,14 +148,14 @@ class _GomokuGameState extends State<_GomokuGame> {
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(_text(i18n, zh: '关闭', en: 'Close')),
+              child: Text(i18n.t('toolbox.miniGames.gomoku.close.bb9a5940')),
             ),
             FilledButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 _resetGame();
               },
-              child: Text(_text(i18n, zh: '新开一局', en: 'New game')),
+              child: Text(i18n.t('toolbox.miniGames.gomoku.new_game.73979522')),
             ),
           ],
         );
@@ -174,24 +176,26 @@ class _GomokuGameState extends State<_GomokuGame> {
     });
     if (_winAt(index, _GomokuStone.black)) {
       _finishGame(
-        status: _text(i18n, zh: '你获胜了', en: 'You win'),
-        title: _text(i18n, zh: '对局结束', en: 'Game over'),
-        message: _text(i18n, zh: '你赢下了这局五子棋。', en: 'You win this Gomoku game.'),
+        status: i18n.t('toolbox.miniGames.gomoku.you_win.12038a06'),
+        title: i18n.t('toolbox.miniGames.gomoku.game_over.7416fb87'),
+        message: i18n.t(
+          'toolbox.miniGames.gomoku.you_win_this_gomoku_game.e74f446f',
+        ),
       );
       return;
     }
     if (_moves >= _total) {
       _finishGame(
-        status: _text(i18n, zh: '平局', en: 'Draw'),
-        title: _text(i18n, zh: '对局结束', en: 'Game over'),
-        message: _text(i18n, zh: '平局，棋盘已满。', en: 'Draw. No more moves.'),
+        status: i18n.t('toolbox.miniGames.gomoku.draw.407c4731'),
+        title: i18n.t('toolbox.miniGames.gomoku.game_over.7416fb87'),
+        message: i18n.t('toolbox.miniGames.gomoku.draw_no_more_moves.5974770a'),
       );
       return;
     }
     setState(() {
       _turn = _GomokuStone.white;
       _aiThinking = true;
-      _status = _text(i18n, zh: 'AI 思考中...', en: 'AI thinking...');
+      _status = i18n.t('toolbox.miniGames.gomoku.ai_thinking.9700f995');
     });
     _runAiTurn();
   }
@@ -203,9 +207,9 @@ class _GomokuGameState extends State<_GomokuGame> {
     final bestMove = _chooseAiMove();
     if (bestMove == null) {
       _finishGame(
-        status: _text(i18n, zh: '平局', en: 'Draw'),
-        title: _text(i18n, zh: '对局结束', en: 'Game over'),
-        message: _text(i18n, zh: '平局，棋盘已满。', en: 'Draw. No more moves.'),
+        status: i18n.t('toolbox.miniGames.gomoku.draw.407c4731'),
+        title: i18n.t('toolbox.miniGames.gomoku.game_over.7416fb87'),
+        message: i18n.t('toolbox.miniGames.gomoku.draw_no_more_moves.5974770a'),
       );
       return;
     }
@@ -218,27 +222,25 @@ class _GomokuGameState extends State<_GomokuGame> {
     });
     if (_winAt(bestMove, _GomokuStone.white)) {
       _finishGame(
-        status: _text(i18n, zh: 'AI 获胜', en: 'AI wins'),
-        title: _text(i18n, zh: '对局结束', en: 'Game over'),
-        message: _text(
-          i18n,
-          zh: 'AI 赢下了这局五子棋。',
-          en: 'AI wins this Gomoku game.',
+        status: i18n.t('toolbox.miniGames.gomoku.ai_wins.b2816bf1'),
+        title: i18n.t('toolbox.miniGames.gomoku.game_over.7416fb87'),
+        message: i18n.t(
+          'toolbox.miniGames.gomoku.ai_wins_this_gomoku_game.a22ad4e2',
         ),
       );
       return;
     }
     if (_moves >= _total) {
       _finishGame(
-        status: _text(i18n, zh: '平局', en: 'Draw'),
-        title: _text(i18n, zh: '对局结束', en: 'Game over'),
-        message: _text(i18n, zh: '平局，棋盘已满。', en: 'Draw. No more moves.'),
+        status: i18n.t('toolbox.miniGames.gomoku.draw.407c4731'),
+        title: i18n.t('toolbox.miniGames.gomoku.game_over.7416fb87'),
+        message: i18n.t('toolbox.miniGames.gomoku.draw_no_more_moves.5974770a'),
       );
       return;
     }
     setState(() {
       _turn = _GomokuStone.black;
-      _status = _text(i18n, zh: '轮到你执黑落子', en: 'Your turn (black)');
+      _status = i18n.t('toolbox.miniGames.gomoku.your_turn_black.c50daa6f');
     });
   }
 
@@ -646,10 +648,9 @@ class _GomokuGameState extends State<_GomokuGame> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          _text(
-            i18n,
-            zh: '建议在第 $row 行第 $col 列落子。',
-            en: 'Suggested move: row $row, column $col.',
+          i18n.t(
+            'toolbox.miniGames.gomoku.suggested_move_row_value_column_value.e080452c',
+            params: <String, Object?>{'row': row, 'col': col},
           ),
         ),
       ),
@@ -754,8 +755,8 @@ class _GomokuGameState extends State<_GomokuGame> {
     final displayStatus = _gameOver
         ? _status
         : _aiThinking
-        ? _text(i18n, zh: 'AI 思考中...', en: 'AI thinking...')
-        : _text(i18n, zh: '轮到你执黑落子', en: 'Your turn (black)');
+        ? i18n.t('toolbox.miniGames.gomoku.ai_thinking.9700f995')
+        : i18n.t('toolbox.miniGames.gomoku.your_turn_black.c50daa6f');
     if (_fullscreen) {
       return Card(
         clipBehavior: Clip.antiAlias,
@@ -774,7 +775,9 @@ class _GomokuGameState extends State<_GomokuGame> {
                       onPressed: () => _setFullscreen(false),
                       icon: const Icon(Icons.fullscreen_exit_rounded),
                       label: Text(
-                        _text(i18n, zh: '退出全屏', en: 'Exit fullscreen'),
+                        i18n.t(
+                          'toolbox.miniGames.gomoku.exit_fullscreen.adad14ea',
+                        ),
                       ),
                     ),
                     FilledButton.tonalIcon(
@@ -785,12 +788,16 @@ class _GomokuGameState extends State<_GomokuGame> {
                           ? null
                           : _showHint,
                       icon: const Icon(Icons.tips_and_updates_outlined),
-                      label: Text(_text(i18n, zh: '提示', en: 'Hint')),
+                      label: Text(
+                        i18n.t('toolbox.miniGames.gomoku.hint.7bc3c1bc'),
+                      ),
                     ),
                     OutlinedButton.icon(
                       onPressed: _resetGame,
                       icon: const Icon(Icons.refresh_rounded),
-                      label: Text(_text(i18n, zh: '新开一局', en: 'New game')),
+                      label: Text(
+                        i18n.t('toolbox.miniGames.gomoku.new_game.73979522'),
+                      ),
                     ),
                   ],
                 ),
@@ -800,19 +807,21 @@ class _GomokuGameState extends State<_GomokuGame> {
                   runSpacing: 10,
                   children: <Widget>[
                     ToolboxMetricCard(
-                      label: _text(i18n, zh: '棋盘', en: 'Board'),
+                      label: i18n.t('toolbox.miniGames.gomoku.board.2999f1e6'),
                       value: '15x15',
                     ),
                     ToolboxMetricCard(
-                      label: _text(i18n, zh: '步数', en: 'Moves'),
+                      label: i18n.t('toolbox.miniGames.gomoku.moves.e992cb6f'),
                       value: '$_moves',
                     ),
                     ToolboxMetricCard(
-                      label: _text(i18n, zh: '状态', en: 'Status'),
+                      label: i18n.t('toolbox.miniGames.gomoku.status.7c405acf'),
                       value: displayStatus,
                     ),
                     ToolboxMetricCard(
-                      label: _text(i18n, zh: 'AI 难度', en: 'AI level'),
+                      label: i18n.t(
+                        'toolbox.miniGames.gomoku.ai_level.19e3b3c8',
+                      ),
                       value: _difficultyLabel(i18n, _difficulty),
                     ),
                   ],
@@ -838,19 +847,19 @@ class _GomokuGameState extends State<_GomokuGame> {
               runSpacing: 10,
               children: <Widget>[
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '棋盘', en: 'Board'),
+                  label: i18n.t('toolbox.miniGames.gomoku.board.2999f1e6'),
                   value: '15x15',
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '步数', en: 'Moves'),
+                  label: i18n.t('toolbox.miniGames.gomoku.moves.e992cb6f'),
                   value: '$_moves',
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '状态', en: 'Status'),
+                  label: i18n.t('toolbox.miniGames.gomoku.status.7c405acf'),
                   value: displayStatus,
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: 'AI 难度', en: 'AI level'),
+                  label: i18n.t('toolbox.miniGames.gomoku.ai_level.19e3b3c8'),
                   value: _difficultyLabel(i18n, _difficulty),
                 ),
               ],
@@ -859,10 +868,8 @@ class _GomokuGameState extends State<_GomokuGame> {
             _buildDifficultySelector(i18n),
             const SizedBox(height: 12),
             Text(
-              _text(
-                i18n,
-                zh: '你执黑先行。点击空位落子，可使用提示查看建议落点。',
-                en: 'You play black first. Tap an empty cell to place a stone, or use hint for a suggested move.',
+              i18n.t(
+                'toolbox.miniGames.gomoku.you_play_black_first_tap_an_empty.eb6b8fd1',
               ),
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -879,7 +886,9 @@ class _GomokuGameState extends State<_GomokuGame> {
                 OutlinedButton.icon(
                   onPressed: _resetGame,
                   icon: const Icon(Icons.refresh_rounded),
-                  label: Text(_text(i18n, zh: '新开一局', en: 'New game')),
+                  label: Text(
+                    i18n.t('toolbox.miniGames.gomoku.new_game.73979522'),
+                  ),
                 ),
                 FilledButton.tonalIcon(
                   onPressed:
@@ -887,12 +896,16 @@ class _GomokuGameState extends State<_GomokuGame> {
                       ? null
                       : _showHint,
                   icon: const Icon(Icons.tips_and_updates_outlined),
-                  label: Text(_text(i18n, zh: '提示', en: 'Hint')),
+                  label: Text(i18n.t('toolbox.miniGames.gomoku.hint.7bc3c1bc')),
                 ),
                 OutlinedButton.icon(
                   onPressed: () => _setFullscreen(true),
                   icon: const Icon(Icons.fullscreen_rounded),
-                  label: Text(_text(i18n, zh: '全屏棋盘', en: 'Fullscreen board')),
+                  label: Text(
+                    i18n.t(
+                      'toolbox.miniGames.gomoku.fullscreen_board.ed7ca85a',
+                    ),
+                  ),
                 ),
                 if (_aiThinking)
                   Chip(
@@ -901,7 +914,9 @@ class _GomokuGameState extends State<_GomokuGame> {
                       height: 14,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
-                    label: Text(_text(i18n, zh: 'AI 思考中', en: 'AI thinking')),
+                    label: Text(
+                      i18n.t('toolbox.miniGames.gomoku.ai_thinking.6506fe39'),
+                    ),
                   ),
               ],
             ),

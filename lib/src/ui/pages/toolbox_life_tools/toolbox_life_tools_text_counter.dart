@@ -41,17 +41,9 @@ List<Map<String, Object>> buildLifeTextCounterTestChunks({
   }).toList();
 }
 
-enum _TextCountMetric {
-  total,
-  noSymbols,
-  noWhitespace,
-  contentOnly,
-}
+enum _TextCountMetric { total, noSymbols, noWhitespace, contentOnly }
 
-enum _TextSplitMode {
-  fixedLength,
-  sentencePreferred,
-}
+enum _TextSplitMode { fixedLength, sentencePreferred }
 
 class _TextSplitResult {
   const _TextSplitResult({
@@ -131,9 +123,13 @@ class _TextCounterPageState extends State<_TextCounterPage> {
       case _TextCountMetric.total:
         return text.characters.length;
       case _TextCountMetric.noSymbols:
-        return text.characters.where((char) => !_isSymbolCharacter(char)).length;
+        return text.characters
+            .where((char) => !_isSymbolCharacter(char))
+            .length;
       case _TextCountMetric.noWhitespace:
-        return text.characters.where((char) => !_isWhitespaceCharacter(char)).length;
+        return text.characters
+            .where((char) => !_isWhitespaceCharacter(char))
+            .length;
       case _TextCountMetric.contentOnly:
         return text.characters.where(_isContentCharacter).length;
     }
@@ -218,11 +214,13 @@ class _TextCounterPageState extends State<_TextCounterPage> {
     final sentenceHint = _sentenceEndings().join(' ');
 
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '字数拆分与统计', en: 'Text split and count'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '统计字符信息，并在需要时展开自动拆分与逐块复制。',
-        en: 'Count text and expand auto-splitting only when needed.',
+        'inline.plan295.life.text_split_and_count.1f879ec08a67',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.count_text_and_expand_auto_splitting.15295828df9a',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,11 +232,13 @@ class _TextCounterPageState extends State<_TextCounterPage> {
             onChanged: _handleInputChanged,
             decoration: InputDecoration(
               border: const OutlineInputBorder(),
-              labelText: _lifeText(context, zh: '输入文本', en: 'Input text'),
-              hintText: _lifeText(
+              labelText: _lifeI18nText(
                 context,
-                zh: '先统计全文；需要时再打开拆分开关生成分块。',
-                en: 'Count first, then enable splitting when needed.',
+                'inline.plan295.life.input_text.7f94eb5eae24',
+              ),
+              hintText: _lifeI18nText(
+                context,
+                'inline.plan295.life.count_first_then_enable_splitting_wh.3035ad4d19f4',
               ),
             ),
           ),
@@ -248,23 +248,38 @@ class _TextCounterPageState extends State<_TextCounterPage> {
             runSpacing: 10,
             children: <Widget>[
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '总字符数', en: 'Total'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.total.80c11663ed42',
+                ),
                 value: '$total',
               ),
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '符号数', en: 'Symbols'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.symbols.11e6462b50cc',
+                ),
                 value: '$symbols',
               ),
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '去符号', en: 'No symbols'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.no_symbols.8b31011b4ebc',
+                ),
                 value: '$noSymbols',
               ),
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '去空白', en: 'No whitespace'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.no_whitespace.124363a7bc4f',
+                ),
                 value: '$noWhitespace',
               ),
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '仅正文', en: 'Content only'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.content_only.edb91509ece5',
+                ),
                 value: '$contentOnly',
               ),
             ],
@@ -282,13 +297,15 @@ class _TextCounterPageState extends State<_TextCounterPage> {
                   value: _splitEnabled,
                   contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
                   title: Text(
-                    _lifeText(context, zh: '启用自动拆分', en: 'Enable auto split'),
+                    _lifeI18nText(
+                      context,
+                      'inline.plan295.life.enable_auto_split.9d881440b2c1',
+                    ),
                   ),
                   subtitle: Text(
-                    _lifeText(
+                    _lifeI18nText(
                       context,
-                      zh: '关闭时仅统计。打开后可按规则生成可复制分块。',
-                      en: 'Off for counting only. On to generate copyable chunks.',
+                      'inline.plan295.life.off_for_counting_only_on_to_generate.5fcf05bb3535',
                     ),
                   ),
                   onChanged: (value) {
@@ -306,22 +323,30 @@ class _TextCounterPageState extends State<_TextCounterPage> {
                   Theme(
                     data: theme.copyWith(dividerColor: Colors.transparent),
                     child: ExpansionTile(
-                      key: const PageStorageKey<String>('life_text_split_panel'),
+                      key: const PageStorageKey<String>(
+                        'life_text_split_panel',
+                      ),
                       initiallyExpanded: _splitPanelExpanded,
                       onExpansionChanged: (expanded) {
                         setState(() => _splitPanelExpanded = expanded);
                       },
                       title: Text(
-                        _lifeText(context, zh: '拆分设置与结果', en: 'Split settings and results'),
+                        _lifeI18nText(
+                          context,
+                          'inline.plan295.life.split_settings_and_results.6ae20ba89081',
+                        ),
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                       subtitle: Text(
-                        _lifeText(
+                        _lifeI18nText(
                           context,
-                          zh: '当前按 ${_metricLabel(context, _metric)} 统计，预计 ${chunks.length} 块。',
-                          en: 'Using ${_metricLabel(context, _metric)} with ${chunks.length} chunk(s).',
+                          'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.text.counter.using_with_chunk_s.9a90aaa3a7',
+                          params: <String, Object?>{
+                            'p0': _metricLabel(context, _metric),
+                            'length': chunks.length,
+                          },
                         ),
                       ),
                       childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -330,7 +355,10 @@ class _TextCounterPageState extends State<_TextCounterPage> {
                           initialValue: _metric,
                           decoration: InputDecoration(
                             border: const OutlineInputBorder(),
-                            labelText: _lifeText(context, zh: '计数标准', en: 'Count by'),
+                            labelText: _lifeI18nText(
+                              context,
+                              'inline.plan295.life.count_by.64ca83d7fe99',
+                            ),
                           ),
                           onChanged: (value) {
                             if (value == null) {
@@ -350,7 +378,10 @@ class _TextCounterPageState extends State<_TextCounterPage> {
                           initialValue: _splitMode,
                           decoration: InputDecoration(
                             border: const OutlineInputBorder(),
-                            labelText: _lifeText(context, zh: '拆分方式', en: 'Split mode'),
+                            labelText: _lifeI18nText(
+                              context,
+                              'inline.plan295.life.split_mode.b2b8c203c746',
+                            ),
                           ),
                           onChanged: (value) {
                             if (value == null) {
@@ -372,15 +403,13 @@ class _TextCounterPageState extends State<_TextCounterPage> {
                           onChanged: (_) => setState(() {}),
                           decoration: InputDecoration(
                             border: const OutlineInputBorder(),
-                            labelText: _lifeText(
+                            labelText: _lifeI18nText(
                               context,
-                              zh: '单块字数上限',
-                              en: 'Chunk size limit',
+                              'inline.plan295.life.chunk_size_limit.a469ed8648e8',
                             ),
-                            helperText: _lifeText(
+                            helperText: _lifeI18nText(
                               context,
-                              zh: '按当前计数标准计算，默认 300。',
-                              en: 'Uses the selected metric. Default is 300.',
+                              'inline.plan295.life.uses_the_selected_metric_default_is.946bbae1bedf',
                             ),
                           ),
                         ),
@@ -390,15 +419,13 @@ class _TextCounterPageState extends State<_TextCounterPage> {
                           onChanged: (_) => setState(() {}),
                           decoration: InputDecoration(
                             border: const OutlineInputBorder(),
-                            labelText: _lifeText(
+                            labelText: _lifeI18nText(
                               context,
-                              zh: '句末符号',
-                              en: 'Sentence endings',
+                              'inline.plan295.life.sentence_endings.441354c823d2',
                             ),
-                            helperText: _lifeText(
+                            helperText: _lifeI18nText(
                               context,
-                              zh: '句末优先模式会尽量在这些符号处截断。',
-                              en: 'Sentence-first mode prefers these endings.',
+                              'inline.plan295.life.sentence_first_mode_prefers_these_en.594287ee8bf5',
                             ),
                           ),
                         ),
@@ -409,36 +436,48 @@ class _TextCounterPageState extends State<_TextCounterPage> {
                           decoration: BoxDecoration(
                             color: theme.colorScheme.surfaceContainer,
                             borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: theme.colorScheme.outlineVariant),
+                            border: Border.all(
+                              color: theme.colorScheme.outlineVariant,
+                            ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
                               Text(
-                                _lifeText(context, zh: '拆分概览', en: 'Split overview'),
+                                _lifeI18nText(
+                                  context,
+                                  'inline.plan295.life.split_overview.854b98ff4508',
+                                ),
                                 style: theme.textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                _lifeText(
+                                _lifeI18nText(
                                   context,
-                                  zh: '当前按 ${_metricLabel(context, _metric)} 统计，共 $totalEffective 个有效字符，预计分成 ${chunks.length} 块。',
-                                  en: 'Using ${_metricLabel(context, _metric)}, there are $totalEffective effective characters in ${chunks.length} chunk(s).',
+                                  'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.text.counter.using_there_are_effective_characters_in.650f97f4b7',
+                                  params: <String, Object?>{
+                                    'p0': _metricLabel(context, _metric),
+                                    'totalEffective': totalEffective,
+                                    'length': chunks.length,
+                                  },
                                 ),
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: theme.colorScheme.onSurfaceVariant,
                                 ),
                               ),
-                              if (_splitMode == _TextSplitMode.sentencePreferred &&
+                              if (_splitMode ==
+                                      _TextSplitMode.sentencePreferred &&
                                   sentenceHint.isNotEmpty) ...<Widget>[
                                 const SizedBox(height: 6),
                                 Text(
-                                  _lifeText(
+                                  _lifeI18nText(
                                     context,
-                                    zh: '句末优先符号: $sentenceHint',
-                                    en: 'Preferred endings: $sentenceHint',
+                                    'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.text.counter.preferred_endings.f989e11f88',
+                                    params: <String, Object?>{
+                                      'sentenceHint': sentenceHint,
+                                    },
                                   ),
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: theme.colorScheme.onSurfaceVariant,
@@ -455,31 +494,37 @@ class _TextCounterPageState extends State<_TextCounterPage> {
                                         ? null
                                         : () => _copyText(
                                             text,
-                                            _lifeText(
+                                            _lifeI18nText(
                                               context,
-                                              zh: '原文已复制',
-                                              en: 'Original text copied',
+                                              'inline.plan295.life.original_text_copied.90765dddd9c7',
                                             ),
                                           ),
                                     icon: const Icon(Icons.copy_all_rounded),
                                     label: Text(
-                                      _lifeText(context, zh: '复制原文', en: 'Copy original'),
+                                      _lifeI18nText(
+                                        context,
+                                        'inline.plan295.life.copy_original.ed31164abdbd',
+                                      ),
                                     ),
                                   ),
                                   FilledButton.tonalIcon(
                                     onPressed: chunks.isEmpty
                                         ? null
                                         : () => _copyText(
-                                            chunks.map((chunk) => chunk.content).join('\n\n'),
-                                            _lifeText(
+                                            chunks
+                                                .map((chunk) => chunk.content)
+                                                .join('\n\n'),
+                                            _lifeI18nText(
                                               context,
-                                              zh: '全部分块已复制',
-                                              en: 'All chunks copied',
+                                              'inline.plan295.life.all_chunks_copied.ee0b667733a8',
                                             ),
                                           ),
                                     icon: const Icon(Icons.splitscreen_rounded),
                                     label: Text(
-                                      _lifeText(context, zh: '复制全部分块', en: 'Copy all chunks'),
+                                      _lifeI18nText(
+                                        context,
+                                        'inline.plan295.life.copy_all_chunks.426cc95e293d',
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -495,13 +540,14 @@ class _TextCounterPageState extends State<_TextCounterPage> {
                             decoration: BoxDecoration(
                               color: theme.colorScheme.surfaceContainerLow,
                               borderRadius: BorderRadius.circular(18),
-                              border: Border.all(color: theme.colorScheme.outlineVariant),
+                              border: Border.all(
+                                color: theme.colorScheme.outlineVariant,
+                              ),
                             ),
                             child: Text(
-                              _lifeText(
+                              _lifeI18nText(
                                 context,
-                                zh: '输入文本后，这里会生成默认折叠的可复制分块。',
-                                en: 'Collapsed copyable chunks will appear here after input.',
+                                'inline.plan295.life.collapsed_copyable_chunks_will_appea.ee9f3cb3f95a',
                               ),
                             ),
                           ),
@@ -517,10 +563,10 @@ class _TextCounterPageState extends State<_TextCounterPage> {
                                 _toggleChunkCompleted(i, value),
                             onCopy: () => _copyText(
                               chunks[i].content,
-                              _lifeText(
+                              _lifeI18nText(
                                 context,
-                                zh: '第 ${i + 1} 块已复制',
-                                en: 'Chunk ${i + 1} copied',
+                                'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.text.counter.chunk_copied.f830e8d908',
+                                params: <String, Object?>{'p0': i + 1},
                               ),
                             ),
                           ),
@@ -530,10 +576,9 @@ class _TextCounterPageState extends State<_TextCounterPage> {
                           Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
-                              _lifeText(
+                              _lifeI18nText(
                                 context,
-                                zh: '提示: 分块默认折叠，适合长文本快速处理。勾选后会保留划线完成态，方便逐块清理。',
-                                en: 'Tip: chunks stay collapsed by default, and checked chunks keep a done style.',
+                                'inline.plan295.life.tip_chunks_stay_collapsed_by_default.152516c937ab',
                               ),
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
@@ -628,19 +673,23 @@ class _TextSplitCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Text(
-                              _lifeText(
+                              _lifeI18nText(
                                 context,
-                                zh: '第 $index 块',
-                                en: 'Chunk $index',
+                                'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.text.counter.chunk.2c7eda6e36',
+                                params: <String, Object?>{'index': index},
                               ),
                               style: titleStyle,
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              _lifeText(
+                              _lifeI18nText(
                                 context,
-                                zh: '原始 ${chunk.rawLength} 字 | $metricLabel ${chunk.effectiveLength} 字',
-                                en: 'Raw ${chunk.rawLength} | $metricLabel ${chunk.effectiveLength}',
+                                'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.text.counter.raw.7f7b0f8770',
+                                params: <String, Object?>{
+                                  'rawLength': chunk.rawLength,
+                                  'metricLabel': metricLabel,
+                                  'effectiveLength': chunk.effectiveLength,
+                                },
                               ),
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
@@ -656,14 +705,20 @@ class _TextSplitCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   IconButton(
-                    tooltip: _lifeText(context, zh: '复制', en: 'Copy'),
+                    tooltip: _lifeI18nText(context, 'copyField'),
                     onPressed: onCopy,
                     icon: const Icon(Icons.content_copy_rounded),
                   ),
                   IconButton(
                     tooltip: isExpanded
-                        ? _lifeText(context, zh: '收起', en: 'Collapse')
-                        : _lifeText(context, zh: '展开', en: 'Expand'),
+                        ? _lifeI18nText(
+                            context,
+                            'inline.plan295.daily_choice.collapse.ad0db950964e',
+                          )
+                        : _lifeI18nText(
+                            context,
+                            'inline.ui.pages.play_page.expand_33fdcb',
+                          ),
                     onPressed: onToggleExpanded,
                     icon: Icon(
                       isExpanded
@@ -695,25 +750,35 @@ class _TextSplitCard extends StatelessWidget {
 
 String _metricLabel(BuildContext context, _TextCountMetric metric) {
   return switch (metric) {
-    _TextCountMetric.total => _lifeText(context, zh: '总字符', en: 'Total'),
-    _TextCountMetric.noSymbols => _lifeText(context, zh: '去符号', en: 'No symbols'),
-    _TextCountMetric.noWhitespace => _lifeText(context, zh: '去空白', en: 'No whitespace'),
-    _TextCountMetric.contentOnly => _lifeText(context, zh: '仅正文', en: 'Content only'),
+    _TextCountMetric.total => _lifeI18nText(
+      context,
+      'inline.plan295.life.total.213226d3339d',
+    ),
+    _TextCountMetric.noSymbols => _lifeI18nText(
+      context,
+      'inline.plan295.life.no_symbols.8b31011b4ebc',
+    ),
+    _TextCountMetric.noWhitespace => _lifeI18nText(
+      context,
+      'inline.plan295.life.no_whitespace.124363a7bc4f',
+    ),
+    _TextCountMetric.contentOnly => _lifeI18nText(
+      context,
+      'inline.plan295.life.content_only.edb91509ece5',
+    ),
   };
 }
 
 String _splitModeLabel(BuildContext context, _TextSplitMode mode) {
   return switch (mode) {
-    _TextSplitMode.fixedLength => _lifeText(
-        context,
-        zh: '固定字数拆分',
-        en: 'Fixed-length split',
-      ),
-    _TextSplitMode.sentencePreferred => _lifeText(
-        context,
-        zh: '句末优先拆分',
-        en: 'Sentence-first split',
-      ),
+    _TextSplitMode.fixedLength => _lifeI18nText(
+      context,
+      'inline.plan295.life.fixed_length_split.ac3a3a138c37',
+    ),
+    _TextSplitMode.sentencePreferred => _lifeI18nText(
+      context,
+      'inline.plan295.life.sentence_first_split.b5d66ebecb8a',
+    ),
   };
 }
 

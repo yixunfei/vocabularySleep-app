@@ -47,26 +47,35 @@ class _ScoreboardToolPageState extends State<_ScoreboardToolPage>
   @override
   Widget build(BuildContext context) {
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '记分牌', en: 'Scoreboard'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '双队计分 + 混合积分模式',
-        en: 'Two-team and mixed points mode',
+        'inline.plan295.life.scoreboard.331767dc94ac',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.two_team_and_mixed_points_mode.c7377211c4e2',
       ),
       child: Column(
         children: <Widget>[
           TabBar(
             controller: _tabController,
             tabs: <Tab>[
-              Tab(text: _lifeText(context, zh: '双队计分', en: 'Two-team')),
-              Tab(text: _lifeText(context, zh: '混合积分', en: 'Mixed')),
+              Tab(
+                text: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.two_team.e80a640e21e9',
+                ),
+              ),
+              Tab(
+                text: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.mixed.fc8f0031fe1b',
+                ),
+              ),
             ],
           ),
           SizedBox(
-            height: math.max(
-              420,
-              MediaQuery.sizeOf(context).height - 280,
-            ),
+            height: math.max(420, MediaQuery.sizeOf(context).height - 280),
             child: TabBarView(
               controller: _tabController,
               children: <Widget>[
@@ -104,11 +113,23 @@ class _StepValueSetting extends StatelessWidget {
         SwitchListTile(
           dense: true,
           contentPadding: EdgeInsets.zero,
-          title: Text(_lifeText(context, zh: '步进值', en: 'Step value')),
+          title: Text(
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.step_value.b99d33bc33e9',
+            ),
+          ),
           subtitle: Text(
             enabled
-                ? _lifeText(context, zh: '每次增减 $value 分', en: '+/- $value per tap')
-                : _lifeText(context, zh: '默认每次 1 分', en: 'Default +/- 1'),
+                ? _lifeI18nText(
+                    context,
+                    'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.scoreboard.per_tap.7260235428',
+                    params: <String, Object?>{'value': value},
+                  )
+                : _lifeI18nText(
+                    context,
+                    'inline.plan295.life.default_1.3685180e053b',
+                  ),
           ),
           value: enabled,
           onChanged: onToggle,
@@ -119,11 +140,13 @@ class _StepValueSetting extends StatelessWidget {
             child: Wrap(
               spacing: 6,
               children: _steps
-                  .map((s) => ChoiceChip(
-                        selected: value == s,
-                        label: Text('+$s'),
-                        onSelected: (_) => onValueChanged(s),
-                      ))
+                  .map(
+                    (s) => ChoiceChip(
+                      selected: value == s,
+                      label: Text('+$s'),
+                      onSelected: (_) => onValueChanged(s),
+                    ),
+                  )
                   .toList(growable: false),
             ),
           ),

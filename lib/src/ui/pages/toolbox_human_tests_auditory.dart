@@ -17,37 +17,16 @@ class AuditoryReactionTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(
-        i18n,
-        zh: '听觉测试',
-        en: 'Auditory test',
-        ja: '聴覚テスト',
-        de: 'Auditory test',
-        fr: 'Test auditif',
-        es: 'Prueba de auditoria',
-        ru: 'Слуховой тест',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.auditory_test_65f8f1',
       ),
-      subtitle: pickUiText(
-        i18n,
-        zh: '通过频率、音量和方向任务，观察自己对声音变化的反应。',
-        en: 'Use frequency, volume, and direction tasks to observe how you respond to sound changes.',
-        ja: 'Use frequency, volume, and direction tasks to observe how you respond to sound changes.',
-        de: 'Use frequency, volume, and direction tasks to observe how you respond to sound changes.',
-        fr: 'Use frequency, volume, and direction tasks to observe how you respond to sound changes.',
-        es: 'Use frequency, volume, and direction tasks to observe how you respond to sound changes.',
-        ru: 'Use frequency, volume, and direction tasks to observe how you respond to sound changes.',
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.use_frequency_volume_and_direction_tasks_to_observe_how_8a234a',
       ),
       accent: _accent,
       icon: Icons.hearing_rounded,
-      status: pickUiText(
-        i18n,
-        zh: '戴上耳机，准备好判断声音变化',
-        en: 'Next: wear headphones, choose a mode, and start a hearing test set',
-        ja: 'Next: wear headphones, choose a mode, and start a hearing test set',
-        de: 'Next: wear headphones, choose a mode, and start a hearing test set',
-        fr: 'Suivant : porter un casque, choisir un mode et commencer un ensemble de tests auditifs',
-        es: 'Siguiente: usar auriculares, elegir un modo y comenzar un set de prueba auditiva',
-        ru: 'Следующая статья: Наденьте наушники, выберите режим и запустите тестовый набор для слуха',
+      status: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.next_wear_headphones_choose_a_mode_and_start_a_hearing_t_32f23e',
       ),
       child: const AuditoryLabPanel(),
     );
@@ -56,73 +35,26 @@ class AuditoryReactionTestPage extends StatelessWidget {
 
 class _AuditoryModeCopy {
   const _AuditoryModeCopy({
-    required this.zhLabel,
-    required this.enLabel,
-    required this.jaLabel,
-    required this.deLabel,
-    required this.frLabel,
-    required this.esLabel,
-    required this.ruLabel,
-    required this.zhDescription,
-    required this.enDescription,
-    required this.jaDescription,
-    required this.deDescription,
-    required this.frDescription,
-    required this.esDescription,
-    required this.ruDescription,
+    required this.labelKey,
+    required this.descriptionKey,
     required this.icon,
   });
 
-  final String zhLabel;
-  final String enLabel;
-  final String jaLabel;
-  final String deLabel;
-  final String frLabel;
-  final String esLabel;
-  final String ruLabel;
-  final String zhDescription;
-  final String enDescription;
-  final String jaDescription;
-  final String deDescription;
-  final String frDescription;
-  final String esDescription;
-  final String ruDescription;
+  final String labelKey;
+  final String descriptionKey;
   final IconData icon;
 
-  String label(AppI18n i18n) => pickUiText(
-    i18n,
-    zh: zhLabel,
-    en: enLabel,
-    ja: jaLabel,
-    de: deLabel,
-    fr: frLabel,
-    es: esLabel,
-    ru: ruLabel,
-  );
+  String label(AppI18n i18n) => i18n.t(labelKey);
 
-  String description(AppI18n i18n) => pickUiText(
-    i18n,
-    zh: zhDescription,
-    en: enDescription,
-    ja: jaDescription,
-    de: deDescription,
-    fr: frDescription,
-    es: esDescription,
-    ru: ruDescription,
-  );
+  String description(AppI18n i18n) => i18n.t(descriptionKey);
 }
 
 class _AuditoryStimulusSpec {
   const _AuditoryStimulusSpec({
     required this.id,
     required this.mode,
-    required this.zhLabel,
-    required this.enLabel,
-    required this.jaLabel,
-    required this.deLabel,
-    required this.frLabel,
-    required this.esLabel,
-    required this.ruLabel,
+    required this.labelKey,
+    this.labelParams = const <String, Object?>{},
     required this.frequencyHz,
     this.frequencyEndHz,
     required this.outputVolume,
@@ -135,13 +67,8 @@ class _AuditoryStimulusSpec {
 
   final String id;
   final _AuditoryMode mode;
-  final String zhLabel;
-  final String enLabel;
-  final String jaLabel;
-  final String deLabel;
-  final String frLabel;
-  final String esLabel;
-  final String ruLabel;
+  final String labelKey;
+  final Map<String, Object?> labelParams;
   final double frequencyHz;
   final double? frequencyEndHz;
   final double outputVolume;
@@ -161,13 +88,8 @@ class _AuditoryStimulusSpec {
 class _AuditoryRecord {
   const _AuditoryRecord({
     required this.mode,
-    required this.labelZh,
-    required this.labelEn,
-    required this.labelJa,
-    required this.labelDe,
-    required this.labelFr,
-    required this.labelEs,
-    required this.labelRu,
+    required this.labelKey,
+    this.labelParams = const <String, Object?>{},
     required this.frequencyHz,
     required this.outputVolume,
     required this.rhythm,
@@ -181,13 +103,8 @@ class _AuditoryRecord {
   });
 
   final _AuditoryMode mode;
-  final String labelZh;
-  final String labelEn;
-  final String labelJa;
-  final String labelDe;
-  final String labelFr;
-  final String labelEs;
-  final String labelRu;
+  final String labelKey;
+  final Map<String, Object?> labelParams;
   final double frequencyHz;
   final double outputVolume;
   final _AuditoryRhythm rhythm;
@@ -199,16 +116,7 @@ class _AuditoryRecord {
   final double? guessDegrees;
   final double? angleError;
 
-  String label(AppI18n i18n) => pickUiText(
-    i18n,
-    zh: labelZh,
-    en: labelEn,
-    ja: labelJa,
-    de: labelDe,
-    fr: labelFr,
-    es: labelEs,
-    ru: labelRu,
-  );
+  String label(AppI18n i18n) => i18n.t(labelKey, params: labelParams);
 }
 
 class _AuditoryTestCard extends StatefulWidget {
@@ -229,69 +137,24 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
   static const Map<_AuditoryMode, _AuditoryModeCopy>
   _modeCopies = <_AuditoryMode, _AuditoryModeCopy>{
     _AuditoryMode.frequency: _AuditoryModeCopy(
-      zhLabel: '频率',
-      enLabel: 'Frequency',
-      jaLabel: '周波数',
-      deLabel: 'Frequenz',
-      frLabel: 'Fréquence',
-      esLabel: 'Frecuencia',
-      ruLabel: 'Частота',
-      zhDescription: '逐步提高频率、音量和节奏复杂度；听到声音后点击。',
-      enDescription:
-          'Hear varied frequencies and rhythmic loudness; tap when audible.',
-      jaDescription: '周波数、音量、リズムの変化を聞き、聞こえたらタップします。',
-      deDescription:
-          'Höre wechselnde Frequenzen, Lautstärken und Rhythmen und tippe, wenn du den Ton hörst.',
-      frDescription:
-          'Écoutez des fréquences, volumes et rythmes variés, puis touchez dès que vous entendez le son.',
-      esDescription:
-          'Escucha frecuencias, volúmenes y ritmos variados; toca cuando oigas el sonido.',
-      ruDescription:
-          'Слушайте разные частоты, громкость и ритмы, затем нажимайте, когда слышите звук.',
+      labelKey:
+          'inline.plan297.human_tests.auditory.mode.label.frequency.5239dcfa76',
+      descriptionKey:
+          'inline.plan297.human_tests.auditory.mode.description.hear_varied_frequencies_and_rhythmic_loudness_tap_wh.60c3127ea0',
       icon: Icons.graphic_eq_rounded,
     ),
     _AuditoryMode.sensitivity: _AuditoryModeCopy(
-      zhLabel: '灵敏度',
-      enLabel: 'Sensitivity',
-      jaLabel: '感度',
-      deLabel: 'Empfindlichkeit',
-      frLabel: 'Sensibilité',
-      esLabel: 'Sensibilidad',
-      ruLabel: 'Чувствительность',
-      zhDescription: '围绕选定频率估计可听音量下限。',
-      enDescription:
-          'Check audible volume levels around a selected base frequency.',
-      jaDescription: '選んだ基準周波数で、聞き取れる音量の範囲を確認します。',
-      deDescription:
-          'Prüfe hörbare Lautstärken rund um eine ausgewählte Grundfrequenz.',
-      frDescription:
-          'Vérifiez les niveaux audibles autour d’une fréquence de référence.',
-      esDescription:
-          'Comprueba los niveles audibles alrededor de una frecuencia base.',
-      ruDescription:
-          'Проверьте слышимые уровни громкости вокруг выбранной базовой частоты.',
+      labelKey:
+          'inline.plan297.human_tests.auditory.mode.label.sensitivity.e9177d11c0',
+      descriptionKey:
+          'inline.plan297.human_tests.auditory.mode.description.check_audible_volume_levels_around_a_selected_base_f.834dfffd51',
       icon: Icons.volume_up_rounded,
     ),
     _AuditoryMode.spatial: _AuditoryModeCopy(
-      zhLabel: '空间',
-      enLabel: 'Spatial',
-      jaLabel: '空間',
-      deLabel: 'Richtung',
-      frLabel: 'Espace',
-      esLabel: 'Espacio',
-      ruLabel: 'Пространство',
-      zhDescription: '判断声源方向，并用空间按钮或指针标记感知位置。',
-      enDescription:
-          'Localize the sound direction and mark the perceived position with the slider.',
-      jaDescription: '音の方向を聞き分け、感じた位置をスライダーで示します。',
-      deDescription:
-          'Bestimme die Richtung des Tons und markiere die wahrgenommene Position.',
-      frDescription:
-          'Repérez la direction du son et indiquez la position perçue.',
-      esDescription:
-          'Ubica la dirección del sonido y marca la posición percibida.',
-      ruDescription:
-          'Определите направление звука и отметьте предполагаемое положение.',
+      labelKey:
+          'inline.plan297.human_tests.auditory.mode.label.spatial.9f1665885a',
+      descriptionKey:
+          'inline.plan297.human_tests.auditory.mode.description.localize_the_sound_direction_and_mark_the_perceived_.974ce1b242',
       icon: Icons.explore_rounded,
     ),
   };
@@ -498,13 +361,7 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
       return _AuditoryStimulusSpec(
         id: 'preview-empty',
         mode: mode,
-        zhLabel: '预览',
-        enLabel: 'Preview',
-        jaLabel: 'プレビュー',
-        deLabel: 'Vorschau',
-        frLabel: 'Aperçu',
-        esLabel: 'Vista previa',
-        ruLabel: 'Предпросмотр',
+        labelKey: 'inline.plan297.human_tests.auditory.stimulus.preview',
         frequencyHz: 1000,
         outputVolume: 0.7,
         pan: 0,
@@ -579,13 +436,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
       return _AuditoryStimulusSpec(
         id: 'frequency-$index',
         mode: _AuditoryMode.frequency,
-        zhLabel: '${_formatFrequency(frequency)} 阶梯',
-        enLabel: '${_formatFrequency(frequency)} step',
-        jaLabel: '${_formatFrequency(frequency)} ステップ',
-        deLabel: '${_formatFrequency(frequency)} Stufe',
-        frLabel: '${_formatFrequency(frequency)} palier',
-        esLabel: '${_formatFrequency(frequency)} paso',
-        ruLabel: '${_formatFrequency(frequency)} шаг',
+        labelKey: 'inline.plan297.human_tests.auditory.stimulus.frequency_step',
+        labelParams: <String, Object?>{'p0': _formatFrequency(frequency)},
         frequencyHz: frequency,
         frequencyEndHz: sweepEnd,
         outputVolume: outputVolume,
@@ -647,13 +499,9 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
           return _AuditoryStimulusSpec(
             id: 'sensitivity-$index',
             mode: _AuditoryMode.sensitivity,
-            zhLabel: '${(level * 100).round()}% 阶梯',
-            enLabel: '${(level * 100).round()}% step',
-            jaLabel: '${(level * 100).round()}% ステップ',
-            deLabel: '${(level * 100).round()}% Stufe',
-            frLabel: '${(level * 100).round()}% palier',
-            esLabel: '${(level * 100).round()}% paso',
-            ruLabel: '${(level * 100).round()}% шаг',
+            labelKey:
+                'inline.plan297.human_tests.auditory.stimulus.sensitivity_step',
+            labelParams: <String, Object?>{'p0': (level * 100).round()},
             frequencyHz: _sensitivityBaseFrequency,
             outputVolume: level,
             outputVolumeEnd: null,
@@ -698,13 +546,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
           return _AuditoryStimulusSpec(
             id: 'spatial-$index-${angle.round()}',
             mode: _AuditoryMode.spatial,
-            zhLabel: '${angle.round()}°',
-            enLabel: '${angle.round()}°',
-            jaLabel: '${angle.round()}°',
-            deLabel: '${angle.round()}°',
-            frLabel: '${angle.round()}°',
-            esLabel: '${angle.round()}°',
-            ruLabel: '${angle.round()}°',
+            labelKey: 'inline.plan297.human_tests.auditory.stimulus.degrees',
+            labelParams: <String, Object?>{'p0': angle.round()},
             frequencyHz: frequency,
             frequencyEndHz: frequency * (frontBackBias > 0 ? 1.04 : 0.96),
             outputVolume:
@@ -1487,13 +1330,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
       _records.add(
         _AuditoryRecord(
           mode: _mode,
-          labelZh: stimulus.zhLabel,
-          labelEn: stimulus.enLabel,
-          labelJa: stimulus.jaLabel,
-          labelDe: stimulus.deLabel,
-          labelFr: stimulus.frLabel,
-          labelEs: stimulus.esLabel,
-          labelRu: stimulus.ruLabel,
+          labelKey: stimulus.labelKey,
+          labelParams: stimulus.labelParams,
           frequencyHz: stimulus.frequencyHz,
           outputVolume: stimulus.outputVolume,
           rhythm: stimulus.rhythm,
@@ -1558,25 +1396,11 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
         _HumanMetricWrap(metrics: _metrics(i18n)),
         const SizedBox(height: 12),
         _HumanSettingsSection(
-          title: pickUiText(
-            i18n,
-            zh: '听觉设置',
-            en: 'Auditory settings',
-            ja: '聴覚設定',
-            de: 'Auditory settings',
-            fr: 'Paramètres auditifs',
-            es: 'Ajustes de los auditores',
-            ru: 'Аудиторские настройки',
+          title: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory.auditory_settings_c7e5b6',
           ),
-          subtitle: pickUiText(
-            i18n,
-            zh: '频率、音量、方向和报告选项都在这里。',
-            en: 'Adjust frequency groups, volume ladders, spatial directions, previews, and report style.',
-            ja: 'Adjust frequency groups, volume ladders, spatial directions, previews, and report style.',
-            de: 'Adjust frequency groups, volume ladders, spatial directions, previews, and report style.',
-            fr: 'Adjust frequency groups, volume ladders, spatial directions, previews, and report style.',
-            es: 'Adjust frequency groups, volume ladders, spatial directions, previews, and report style.',
-            ru: 'Adjust frequency groups, volume ladders, spatial directions, previews, and report style.',
+          subtitle: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory.adjust_frequency_groups_volume_ladders_spatial_direction_a77db3',
           ),
           initiallyExpanded: true,
           child: _buildSettings(context, i18n),
@@ -1589,75 +1413,23 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
 
   List<(String, String)> _metrics(AppI18n i18n) {
     final scoreLabel = _mode == _AuditoryMode.spatial
-        ? pickUiText(
-            i18n,
-            zh: '定位',
-            en: 'Localization',
-            ja: 'Localization',
-            de: 'Localization',
-            fr: 'Localisation',
-            es: 'Localización',
-            ru: 'Локализация',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory.localization_7eacab',
           )
-        : pickUiText(
-            i18n,
-            zh: '听到率',
-            en: 'Heard rate',
-            ja: 'Heard rate',
-            de: 'Heard rate',
-            fr: 'Taux d\'écoute',
-            es: 'Tasa de riesgo',
-            ru: 'Показатель слуха',
+        : i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory.heard_rate_21be7e',
           );
     return <(String, String)>[
-      (
-        pickUiText(
-          i18n,
-          zh: '进度',
-          en: 'Progress',
-          ja: 'Progress',
-          de: 'Progress',
-          fr: 'Progrès accomplis',
-          es: 'Progresos',
-          ru: 'Прогресс',
-        ),
-        '$_roundIndex/$_targetRoundCount',
-      ),
-      (
-        pickUiText(
-          i18n,
-          zh: '模式',
-          en: 'Mode',
-          ja: 'Mode',
-          de: 'Mode',
-          fr: 'Mode',
-          es: 'Modo',
-          ru: 'Режим',
-        ),
-        _modeCopies[_mode]!.label(i18n),
-      ),
+      (i18n.t('progress'), '$_roundIndex/$_targetRoundCount'),
+      (i18n.t('toolbox.sound.piano.mode'), _modeCopies[_mode]!.label(i18n)),
       (scoreLabel, '${(_scoreRatio * 100).round()}%'),
       (
         _mode == _AuditoryMode.spatial
-            ? pickUiText(
-                i18n,
-                zh: '平均偏差',
-                en: 'Avg error',
-                ja: '平均エラー',
-                de: 'Avg error',
-                fr: 'Erreur Avg',
-                es: 'Error de Avg',
-                ru: 'ошибка Avg',
+            ? i18n.t(
+                'inline.ui.pages.toolbox_human_tests_auditory.avg_error_f2ab21',
               )
-            : pickUiText(
-                i18n,
-                zh: '平均反应',
-                en: 'Avg response',
-                ja: '平均応答',
-                de: 'Avg response',
-                fr: 'Réponse',
-                es: 'Respuesta de Avg',
-                ru: 'Авг ответ',
+            : i18n.t(
+                'inline.ui.pages.toolbox_human_tests_auditory.avg_response_3140b8',
               ),
         _mode == _AuditoryMode.spatial
             ? '${_averageSpatialError.round()}°'
@@ -1722,15 +1494,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
               if (_playbackError) ...<Widget>[
                 const SizedBox(height: 8),
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '合成音播放失败，已尝试使用系统提示音兜底。',
-                    en: 'Synthetic tone playback failed; a system alert fallback was attempted.',
-                    ja: 'Synthetic tone playback failed; a system alert fallback was attempted.',
-                    de: 'Synthetic tone playback failed; a system alert fallback was attempted.',
-                    fr: 'La lecture de tons synthétiques a échoué; une alerte système a été tentée.',
-                    es: 'Falló la reproducción de tono sintético; se intentó un retroceso de alerta del sistema.',
-                    ru: 'Воспроизведение синтетического тона не удалось; была предпринята попытка восстановления системного оповещения.',
+                  i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_auditory.synthetic_tone_playback_failed_a_system_alert_fallback_w_3daccd',
                   ),
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -1746,15 +1511,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
                   onPressed: _busy ? _tapHeard : null,
                   icon: const Icon(Icons.touch_app_rounded),
                   label: Text(
-                    pickUiText(
-                      i18n,
-                      zh: '听到后点击',
-                      en: 'Tap when heard',
-                      ja: 'Tap when heard',
-                      de: 'Tap when heard',
-                      fr: 'Tapez quand vous avez entendu',
-                      es: 'Toca cuando se escucha',
-                      ru: 'Прыжок, когда слышно',
+                    i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_auditory.tap_when_heard_a354ae',
                     ),
                   ),
                   style: FilledButton.styleFrom(
@@ -1768,16 +1526,7 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
                 alignment: WrapAlignment.center,
                 children: <Widget>[
                   _HumanActionButton(
-                    label: pickUiText(
-                      i18n,
-                      zh: '开始',
-                      en: 'Start',
-                      ja: 'Start',
-                      de: 'Start',
-                      fr: 'Démarrer',
-                      es: 'Comienzo',
-                      ru: 'Начинать',
-                    ),
+                    label: i18n.t('toolbox.breathing.start'),
                     icon: Icons.play_arrow_rounded,
                     onPressed: _busy ? null : _start,
                   ),
@@ -1786,23 +1535,12 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
                         ? () => _reset(clearMode: false)
                         : null,
                     icon: const Icon(Icons.stop_rounded),
-                    label: Text(pickUiText(i18n, zh: '结束', en: 'Stop')),
+                    label: Text(i18n.t('stop')),
                   ),
                   OutlinedButton.icon(
                     onPressed: _reset,
                     icon: const Icon(Icons.refresh_rounded),
-                    label: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '重置',
-                        en: 'Reset',
-                        ja: 'Reset',
-                        de: 'Reset',
-                        fr: 'Réinitialiser',
-                        es: 'Reset',
-                        ru: 'сброс',
-                      ),
-                    ),
+                    label: Text(i18n.t('appearanceReset')),
                   ),
                   if (_allowReplay)
                     OutlinedButton.icon(
@@ -1813,15 +1551,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
                           : null,
                       icon: const Icon(Icons.hearing_rounded),
                       label: Text(
-                        pickUiText(
-                          i18n,
-                          zh: '重播',
-                          en: 'Replay',
-                          ja: 'Replay',
-                          de: 'Replay',
-                          fr: 'Rejouer',
-                          es: 'Replay',
-                          ru: 'воспроизведение',
+                        i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_auditory.replay_2cd06c',
                         ),
                       ),
                     ),
@@ -1834,25 +1565,11 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
           const SizedBox(height: 10),
           _HumanPill(
             text: _lastCorrect!
-                ? pickUiText(
-                    i18n,
-                    zh: '上一轮已记录',
-                    en: 'Last round recorded',
-                    ja: 'Last round recorded',
-                    de: 'Last round recorded',
-                    fr: 'Dernier tour enregistré',
-                    es: 'Última ronda grabada',
-                    ru: 'Последний раунд записан',
+                ? i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_auditory.last_round_recorded_8ee0c6',
                   )
-                : pickUiText(
-                    i18n,
-                    zh: '上一轮未命中',
-                    en: 'Last round missed',
-                    ja: 'Last round missed',
-                    de: 'Last round missed',
-                    fr: 'Dernier tour manqué',
-                    es: 'Última ronda perdida',
-                    ru: 'Последний пропущенный раунд',
+                : i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_auditory.last_round_missed_323436',
                   ),
             accent: _lastCorrect! ? const Color(0xFF4E8B6B) : Colors.redAccent,
           ),
@@ -1901,15 +1618,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
             ButtonSegment<_SpatialInputMode>(
               value: _SpatialInputMode.pad,
               label: Text(
-                pickUiText(
-                  i18n,
-                  zh: '八向面板',
-                  en: '8-way pad',
-                  ja: '8方向パッド',
-                  de: '8-way pad',
-                  fr: '8-way pad',
-                  es: 'Almohadilla de 8 vías',
-                  ru: '8-полосная площадка',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_auditory.8_way_pad_e0afed',
                 ),
               ),
               icon: const Icon(Icons.diamond_outlined),
@@ -1917,15 +1627,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
             ButtonSegment<_SpatialInputMode>(
               value: _SpatialInputMode.pointer,
               label: Text(
-                pickUiText(
-                  i18n,
-                  zh: '方向指针',
-                  en: 'Pointer',
-                  ja: 'Pointer',
-                  de: 'Pointer',
-                  fr: 'Pointeur',
-                  es: 'Pointer',
-                  ru: 'указатель',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_auditory.pointer_5c53b2',
                 ),
               ),
               icon: const Icon(Icons.tune_rounded),
@@ -1992,15 +1695,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
           onPressed: _busy && hasSpatialGuess ? _confirmSpatial : null,
           icon: const Icon(Icons.check_rounded),
           label: Text(
-            pickUiText(
-              i18n,
-              zh: '确认位置',
-              en: 'Confirm position',
-              ja: 'する',
-              de: 'Confirm position',
-              fr: 'Confirmer la position',
-              es: 'Confirmación de posición',
-              ru: 'Подтвердить позицию',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_auditory.confirm_position_3c5bcd',
             ),
           ),
           style: FilledButton.styleFrom(minimumSize: const Size(190, 52)),
@@ -2030,25 +1726,9 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         _AuditorySettingSlider(
-          label: pickUiText(
-            i18n,
-            zh: '测试轮数',
-            en: 'Rounds',
-            ja: 'Rounds',
-            de: 'Rounds',
-            fr: 'Rondes',
-            es: 'Rondas',
-            ru: 'Круги',
-          ),
-          valueText: pickUiText(
-            i18n,
-            zh: '$roundCount 轮',
-            en: '$roundCount rounds',
-            ja: '$roundCountラウンド',
-            de: '$roundCount rounds',
-            fr: '$roundCount rounds',
-            es: '&gt; &gt; &gt;',
-            ru: '$roundCount раунды',
+          label: i18n.t('rounds'),
+          valueText: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory.roundcount_rounds_685a31',
           ),
           value: roundCount.toDouble(),
           min: roundBounds.$1.toDouble(),
@@ -2059,15 +1739,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
               : (value) => setState(() => _roundCount = value.round()),
         ),
         Text(
-          pickUiText(
-            i18n,
-            zh: '频率模式建议 10 轮，其它模式可按需调整。',
-            en: 'Frequency defaults to 10 rounds, and each mode can be customized.',
-            ja: 'Frequency defaults to 10 rounds, and each mode can be customized.',
-            de: 'Frequency defaults to 10 rounds, and each mode can be customized.',
-            fr: 'La fréquence par défaut à 10 tours, et chaque mode peut être personnalisé.',
-            es: 'Frecuencia predeterminada a 10 rondas, y cada modo se puede personalizar.',
-            ru: 'Частота по умолчанию до 10 раундов, и каждый режим можно настроить.',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory.frequency_defaults_to_10_rounds_and_each_mode_can_be_cus_22ca27',
           ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
@@ -2078,15 +1751,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
         ),
         const SizedBox(height: 14),
         _sectionLabel(
-          pickUiText(
-            i18n,
-            zh: '玩法细节',
-            en: 'Mode settings',
-            ja: 'Mode settings',
-            de: 'Mode settings',
-            fr: 'Paramètres du mode',
-            es: 'Ajustes del modo',
-            ru: 'Настройки режимов',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory.mode_settings_1b453c',
           ),
         ),
         if (_mode == _AuditoryMode.frequency) _buildFrequencySettings(i18n),
@@ -2094,27 +1760,13 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
         if (_mode == _AuditoryMode.spatial) _buildSpatialSettings(i18n),
         const SizedBox(height: 14),
         _sectionLabel(
-          pickUiText(
-            i18n,
-            zh: '播放与报告',
-            en: 'Playback and report',
-            ja: 'Playback and report',
-            de: 'Playback and report',
-            fr: 'Lecture et rapport',
-            es: 'Retorno e informe',
-            ru: 'Воспроизведение и отчет',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory.playback_and_report_1c20c4',
           ),
         ),
         _AuditorySettingSlider(
-          label: pickUiText(
-            i18n,
-            zh: '单音时长',
-            en: 'Tone duration',
-            ja: 'Tone duration',
-            de: 'Tone duration',
-            fr: 'Durée de la tonalité',
-            es: 'Duración del tono',
-            ru: 'Длительность тонуса',
+          label: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory.tone_duration_1bd78e',
           ),
           valueText: '$_toneDurationMs ms',
           value: _toneDurationMs.toDouble(),
@@ -2126,15 +1778,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
               : (value) => setState(() => _toneDurationMs = value.round()),
         ),
         _AuditorySettingSlider(
-          label: pickUiText(
-            i18n,
-            zh: '响应窗口',
-            en: 'Response window',
-            ja: 'Response window',
-            de: 'Response window',
-            fr: 'Fenêtre de réponse',
-            es: 'ventana de respuesta',
-            ru: 'Окно отклика',
+          label: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory.response_window_3840f8',
           ),
           valueText: '${(_responseWindowMs / 1000).toStringAsFixed(1)} s',
           value: _responseWindowMs.toDouble(),
@@ -2149,15 +1794,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
           contentPadding: EdgeInsets.zero,
           dense: true,
           title: Text(
-            pickUiText(
-              i18n,
-              zh: '允许重播',
-              en: 'Allow replay',
-              ja: '許可リプレイを許可',
-              de: 'Allow replay',
-              fr: 'Permettre un replay',
-              es: 'Permitir la repetición',
-              ru: 'Разрешить воспроизведение',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_auditory.allow_replay_20377d',
             ),
           ),
           value: _allowReplay,
@@ -2167,15 +1805,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
           contentPadding: EdgeInsets.zero,
           dense: true,
           title: Text(
-            pickUiText(
-              i18n,
-              zh: '详细分组报告',
-              en: 'Detailed group report',
-              ja: 'Detailed group report',
-              de: 'Detailed group report',
-              fr: 'Rapport détaillé du groupe',
-              es: 'Informe del grupo detallado',
-              ru: 'Подробный доклад группы',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_auditory.detailed_group_report_813500',
             ),
           ),
           value: _showGroupReport,
@@ -2185,15 +1816,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
           contentPadding: EdgeInsets.zero,
           dense: true,
           title: Text(
-            pickUiText(
-              i18n,
-              zh: '显示详细记录',
-              en: 'Show details',
-              ja: '詳細を表示',
-              de: 'Details anzeigen',
-              fr: 'Afficher les détails',
-              es: 'Mostrar detalles',
-              ru: 'Показать детали',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_auditory.show_details_d95165',
             ),
           ),
           value: _showRawData,
@@ -2203,15 +1827,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
           contentPadding: EdgeInsets.zero,
           dense: true,
           title: Text(
-            pickUiText(
-              i18n,
-              zh: '自动弹出报告',
-              en: 'Auto report',
-              ja: '自動レポート',
-              de: 'Auto report',
-              fr: 'Rapport automatique',
-              es: 'Informe automático',
-              ru: 'Автоотчет',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_auditory.auto_report_4b91e0',
             ),
           ),
           value: _autoReport,
@@ -2228,15 +1845,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
                   : null,
               icon: const Icon(Icons.play_circle_outline_rounded),
               label: Text(
-                pickUiText(
-                  i18n,
-                  zh: '试听当前模式',
-                  en: 'Preview current mode',
-                  ja: 'Preview current mode',
-                  de: 'Preview current mode',
-                  fr: 'Aperçu du mode actuel',
-                  es: 'Previsualizar el modo actual',
-                  ru: 'Предварительный просмотр текущего режима',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_auditory.preview_current_mode_78a9e6',
                 ),
               ),
             ),
@@ -2246,15 +1856,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
                   : () => unawaited(_showReport()),
               icon: const Icon(Icons.summarize_rounded),
               label: Text(
-                pickUiText(
-                  i18n,
-                  zh: '查看报告',
-                  en: 'View report',
-                  ja: 'View report',
-                  de: 'View report',
-                  fr: 'Consulter le rapport',
-                  es: 'Ver informe',
-                  ru: 'Посмотреть доклад',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_aim.view_report_05b6eb',
                 ),
               ),
             ),
@@ -2270,15 +1873,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          pickUiText(
-            i18n,
-            zh: '频率范围',
-            en: 'Frequency range',
-            ja: 'Frequency range',
-            de: 'Frequency range',
-            fr: 'Plage de fréquences',
-            es: 'Rango de frecuencia',
-            ru: 'Частотный диапазон',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory.frequency_range_e745a8',
           ),
         ),
         RangeSlider(
@@ -2299,15 +1895,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
                 }),
         ),
         _choiceRow<int>(
-          label: pickUiText(
-            i18n,
-            zh: '分析频段',
-            en: 'Analysis bands',
-            ja: '分析バンド',
-            de: 'Analysis bands',
-            fr: 'Bandes d\'analyse',
-            es: 'Bandas de análisis',
-            ru: 'Полосы анализа',
+          label: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory.analysis_bands_9a8d52',
           ),
           values: bandOptions,
           selected: _analysisBands,
@@ -2315,15 +1904,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
           onSelected: (value) => setState(() => _analysisBands = value),
         ),
         _AuditorySettingSlider(
-          label: pickUiText(
-            i18n,
-            zh: '频率音量标尺',
-            en: 'Frequency volume scale',
-            ja: 'Frequency volume scale',
-            de: 'Frequency volume scale',
-            fr: 'Échelle de volume de fréquence',
-            es: 'Escala de volumen de frecuencia',
-            ru: 'Масштаб частотных объемов',
+          label: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory.frequency_volume_scale_b41fc9',
           ),
           valueText: '${(_frequencyVolumeScale * 100).round()}%',
           value: _frequencyVolumeScale,
@@ -2335,15 +1917,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
               : (value) => setState(() => _frequencyVolumeScale = value),
         ),
         _AuditorySettingSlider(
-          label: pickUiText(
-            i18n,
-            zh: '节奏响度深度',
-            en: 'Rhythmic loudness depth',
-            ja: 'Rhythmic loudness depth',
-            de: 'Rhythmic loudness depth',
-            fr: 'Profondeur de bruit rythmique',
-            es: 'Profundidad de ruido rítmico',
-            ru: 'Ритмическая глубина громкости',
+          label: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory.rhythmic_loudness_depth_faceee',
           ),
           valueText: '${(_rhythmDepth * 100).round()}%',
           value: _rhythmDepth,
@@ -2358,15 +1933,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
           contentPadding: EdgeInsets.zero,
           dense: true,
           title: Text(
-            pickUiText(
-              i18n,
-              zh: '混合节奏模式',
-              en: 'Mix rhythm patterns',
-              ja: 'Mix rhythm patterns',
-              de: 'Mix rhythm patterns',
-              fr: 'Mélanger les rythmes',
-              es: 'Patrones de ritmo mixto',
-              ru: 'Смешайте ритмические паттерны',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_auditory.mix_rhythm_patterns_76ada3',
             ),
           ),
           value: _includeRhythmPatterns,
@@ -2384,15 +1952,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         _choiceRow<double>(
-          label: pickUiText(
-            i18n,
-            zh: '基准频率',
-            en: 'Base frequency',
-            ja: '基本周波数',
-            de: 'Base frequency',
-            fr: 'Fréquence de base',
-            es: 'Frecuencia de la base',
-            ru: 'Базовая частота',
+          label: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory.base_frequency_64a87c',
           ),
           values: _baseFrequencies,
           selected: _sensitivityBaseFrequency,
@@ -2401,15 +1962,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
               setState(() => _sensitivityBaseFrequency = value),
         ),
         _choiceRow<int>(
-          label: pickUiText(
-            i18n,
-            zh: '灵敏度阶数',
-            en: 'Sensitivity levels',
-            ja: 'Sensitivity levels',
-            de: 'Sensitivity levels',
-            fr: 'Niveaux de sensibilité',
-            es: 'Niveles de sensibilidad',
-            ru: 'Уровни чувствительности',
+          label: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory.sensitivity_levels_c8f644',
           ),
           values: levelOptions,
           selected: _sensitivityLevelCount,
@@ -2417,15 +1971,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
           onSelected: (value) => setState(() => _sensitivityLevelCount = value),
         ),
         _AuditorySettingSlider(
-          label: pickUiText(
-            i18n,
-            zh: '最低输出',
-            en: 'Minimum output',
-            ja: 'Minimum output',
-            de: 'Minimum output',
-            fr: 'Sortie minimale',
-            es: 'Producción mínima',
-            ru: 'Минимальный выход',
+          label: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory.minimum_output_247a29',
           ),
           valueText: '${(_minimumOutput * 100).round()}%',
           value: _minimumOutput,
@@ -2440,15 +1987,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
                 }),
         ),
         _AuditorySettingSlider(
-          label: pickUiText(
-            i18n,
-            zh: '最高输出',
-            en: 'Maximum output',
-            ja: 'Maximum output',
-            de: 'Maximum output',
-            fr: 'Sortie maximale',
-            es: 'Producción máxima',
-            ru: 'Максимальный выход',
+          label: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory.maximum_output_d36237',
           ),
           valueText: '${(_maximumOutput * 100).round()}%',
           value: _maximumOutput,
@@ -2466,15 +2006,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
           contentPadding: EdgeInsets.zero,
           dense: true,
           title: Text(
-            pickUiText(
-              i18n,
-              zh: '对数音量阶梯',
-              en: 'Log volume steps',
-              ja: 'Log volume steps',
-              de: 'Log volume steps',
-              fr: 'Étapes de l\'enregistrement du volume',
-              es: 'Pasos del volumen de registro',
-              ru: 'Лог объемных шагов',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_auditory.log_volume_steps_abc0d1',
             ),
           ),
           value: _logSensitivitySteps,
@@ -2492,15 +2025,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         _choiceRow<int>(
-          label: pickUiText(
-            i18n,
-            zh: '方向数量',
-            en: 'Direction count',
-            ja: 'Direction count',
-            de: 'Direction count',
-            fr: 'Nombre de directions',
-            es: 'Cuenta de dirección',
-            ru: 'Прямой счет',
+          label: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory.direction_count_90c455',
           ),
           values: directionOptions,
           selected: _directionCount,
@@ -2508,15 +2034,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
           onSelected: (value) => setState(() => _directionCount = value),
         ),
         _AuditorySettingSlider(
-          label: pickUiText(
-            i18n,
-            zh: '空间音量',
-            en: 'Spatial volume',
-            ja: 'Spatial volume',
-            de: 'Spatial volume',
-            fr: 'Volume spatial',
-            es: 'Volumen espacial',
-            ru: 'Пространственный объем',
+          label: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory.spatial_volume_4f35b3',
           ),
           valueText: '${(_spatialVolume * 100).round()}%',
           value: _spatialVolume,
@@ -2528,15 +2047,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
               : (value) => setState(() => _spatialVolume = value),
         ),
         _AuditorySettingSlider(
-          label: pickUiText(
-            i18n,
-            zh: '空间容差',
-            en: 'Spatial tolerance',
-            ja: 'Spatial tolerance',
-            de: 'Spatial tolerance',
-            fr: 'Tolérance spatiale',
-            es: 'Tolerancia espacial',
-            ru: 'Пространственная толерантность',
+          label: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory.spatial_tolerance_68199e',
           ),
           valueText: '${_spatialTolerance.round()}°',
           value: _spatialTolerance,
@@ -2548,15 +2060,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
               : (value) => setState(() => _spatialTolerance = value),
         ),
         _AuditorySettingSlider(
-          label: pickUiText(
-            i18n,
-            zh: '指针平滑',
-            en: 'Slider smoothing',
-            ja: 'Slider smoothing',
-            de: 'Slider smoothing',
-            fr: 'Slider lissant',
-            es: 'Flujo deslizante',
-            ru: 'Сглаживание слайдера',
+          label: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory.slider_smoothing_f70ad6',
           ),
           valueText: '${(_spatialSmoothing * 100).round()}%',
           value: _spatialSmoothing,
@@ -2569,15 +2074,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
           contentPadding: EdgeInsets.zero,
           dense: true,
           title: Text(
-            pickUiText(
-              i18n,
-              zh: '自定义方向',
-              en: 'Custom direction',
-              ja: 'Custom direction',
-              de: 'Custom direction',
-              fr: 'Direction personnalisée',
-              es: 'Dirección personalizada',
-              ru: 'Индивидуальное направление',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_auditory.custom_direction_9f8efe',
             ),
           ),
           value: _customSpatialDirection,
@@ -2587,15 +2085,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
         ),
         if (_customSpatialDirection)
           _AuditorySettingSlider(
-            label: pickUiText(
-              i18n,
-              zh: '自定义目标方向',
-              en: 'Custom target direction',
-              ja: 'Custom target direction',
-              de: 'Custom target direction',
-              fr: 'Direction de la cible personnalisée',
-              es: 'Dirección de destino personalizada',
-              ru: 'Пользовательское целевое направление',
+            label: i18n.t(
+              'inline.ui.pages.toolbox_human_tests_auditory.custom_target_direction_85c106',
             ),
             valueText: _formatDirection(_customDirectionDegrees, i18n),
             value: _customDirectionDegrees,
@@ -2610,15 +2101,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
           contentPadding: EdgeInsets.zero,
           dense: true,
           title: Text(
-            pickUiText(
-              i18n,
-              zh: '显示方向标签',
-              en: 'Show direction labels',
-              ja: 'Show direction labels',
-              de: 'Show direction labels',
-              fr: 'Afficher les étiquettes de direction',
-              es: 'Mostrar etiquetas de dirección',
-              ru: 'Показать этикетки направления',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_auditory.show_direction_labels_ea6e01',
             ),
           ),
           value: _showDirectionLabels,
@@ -2684,15 +2168,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
       builder: (dialogContext) {
         return AlertDialog(
           title: Text(
-            pickUiText(
-              i18n,
-              zh: '听觉测试报告',
-              en: 'Auditory test report',
-              ja: '聴覚テストレポート',
-              de: 'Auditory test report',
-              fr: 'Rapport d\'essai auditif',
-              es: 'Informe de prueba de auditores',
-              ru: 'Отчет об испытаниях',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_auditory.auditory_test_report_685711',
             ),
           ),
           content: SingleChildScrollView(
@@ -2704,77 +2181,35 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
                   metrics: <(String, String)>[
                     (
                       _mode == _AuditoryMode.spatial
-                          ? pickUiText(
-                              i18n,
-                              zh: '定位',
-                              en: 'Localization',
-                              ja: 'Localization',
-                              de: 'Localization',
-                              fr: 'Localisation',
-                              es: 'Localización',
-                              ru: 'Локализация',
+                          ? i18n.t(
+                              'inline.ui.pages.toolbox_human_tests_auditory.localization_7eacab',
                             )
-                          : pickUiText(
-                              i18n,
-                              zh: '听到率',
-                              en: 'Heard rate',
-                              ja: 'Heard rate',
-                              de: 'Heard rate',
-                              fr: 'Taux d\'écoute',
-                              es: 'Tasa de riesgo',
-                              ru: 'Показатель слуха',
+                          : i18n.t(
+                              'inline.ui.pages.toolbox_human_tests_auditory.heard_rate_21be7e',
                             ),
                       '${(_scoreRatio * 100).round()}%',
                     ),
                     (
-                      pickUiText(
-                        i18n,
-                        zh: '平均反应',
-                        en: 'Avg response',
-                        ja: '平均応答',
-                        de: 'Avg response',
-                        fr: 'Réponse',
-                        es: 'Respuesta de Avg',
-                        ru: 'Авг ответ',
+                      i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_auditory.avg_response_3140b8',
                       ),
                       _averageMs == 0 ? '-' : _formatMilliseconds(_averageMs),
                     ),
                     (
-                      pickUiText(
-                        i18n,
-                        zh: '最佳连击',
-                        en: 'Best streak',
-                        ja: 'ベストストリーク',
-                        de: 'Best streak',
-                        fr: 'Meilleure série',
-                        es: 'La mejor racha',
-                        ru: 'Лучшая полоса',
+                      i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_aim_widgets.best_streak_5a5a71',
                       ),
                       '$_bestStreak',
                     ),
                     (
-                      pickUiText(
-                        i18n,
-                        zh: '未命中',
-                        en: 'Misses',
-                        ja: 'Misses',
-                        de: 'Misses',
-                        fr: 'Mlle',
-                        es: 'Misses',
-                        ru: 'Мисс.',
+                      i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_auditory.misses_bcc2a1',
                       ),
                       '$_misses',
                     ),
                     (
-                      pickUiText(
-                        i18n,
-                        zh: '抢答',
-                        en: 'False starts',
-                        ja: 'False starts',
-                        de: 'False starts',
-                        fr: 'Faux départs',
-                        es: 'False comienza',
-                        ru: 'Ложные старты',
+                      i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_auditory.false_starts_9a365d',
                       ),
                       '$_falseStarts',
                     ),
@@ -2787,15 +2222,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
                 const SizedBox(height: 10),
                 if (_showRawData) _buildRawRecords(i18n),
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '提醒：设备、耳机和环境都会影响结果。这里适合日常观察和练习对比，不能替代专业检查。',
-                    en: 'Note: device, headphones, and room conditions can affect results. Use this for everyday observation and practice comparison; it does not replace a professional check.',
-                    ja: '注: 端末、イヤホン、部屋の状態によって結果は変わります。日々の観察や練習の比較に使い、専門的な確認の代わりにはしないでください。',
-                    de: 'Hinweis: Gerät, Kopfhörer und Raum können die Ergebnisse beeinflussen. Nutze sie für Alltag, Übung und Vergleich; sie ersetzen keine fachliche Kontrolle.',
-                    fr: 'Remarque : l’appareil, les écouteurs et la pièce peuvent influencer les résultats. Utilisez-les pour observer et comparer vos entraînements ; ils ne remplacent pas un contrôle professionnel.',
-                    es: 'Nota: el dispositivo, los auriculares y la habitación pueden influir en los resultados. Úsalos para observar y comparar tu práctica; no sustituyen una revisión profesional.',
-                    ru: 'Примечание: устройство, наушники и комната могут влиять на результаты. Используйте их для наблюдения и сравнения тренировок; они не заменяют профессиональную проверку.',
+                  i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_auditory.note_device_headphones_and_room_conditions_can_affect_re_aedd19',
                   ),
                 ),
               ],
@@ -2804,18 +2232,7 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(
-                pickUiText(
-                  i18n,
-                  zh: '关闭',
-                  en: 'Close',
-                  ja: '閉じる',
-                  de: 'Close',
-                  fr: 'Fermer',
-                  es: 'Cerca',
-                  ru: 'Закрыть',
-                ),
-              ),
+              child: Text(i18n.t('inline.plan295.life.close.370fb8697deb')),
             ),
           ],
         );
@@ -2835,50 +2252,27 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(
-              i18n,
-              zh: '详细分组',
-              en: 'Detailed groups',
-              ja: '詳細グループ',
-              de: 'Detaillierte Gruppen',
-              fr: 'Groupes détaillés',
-              es: 'Grupos detallados',
-              ru: 'Подробные группы',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_auditory.detailed_groups_ded14a',
             ),
             style: const TextStyle(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 6),
           Text(
             switch (_mode) {
-              _AuditoryMode.frequency => pickUiText(
-                i18n,
-                zh: '高频截止估计: ${estimatedFrequencyCutoff == null ? '--' : _formatFrequency(estimatedFrequencyCutoff)}',
-                en: 'Estimated high-frequency cutoff: ${estimatedFrequencyCutoff == null ? '--' : _formatFrequency(estimatedFrequencyCutoff)}',
-                ja: '高周波の推定上限: ${estimatedFrequencyCutoff == null ? '--' : _formatFrequency(estimatedFrequencyCutoff)}',
-                de: 'Geschätzte Hochfrequenzgrenze: ${estimatedFrequencyCutoff == null ? '--' : _formatFrequency(estimatedFrequencyCutoff)}',
-                fr: 'Limite haute fréquence estimée : ${estimatedFrequencyCutoff == null ? '--' : _formatFrequency(estimatedFrequencyCutoff)}',
-                es: 'Límite estimado de alta frecuencia: ${estimatedFrequencyCutoff == null ? '--' : _formatFrequency(estimatedFrequencyCutoff)}',
-                ru: 'Оценка верхней частоты: ${estimatedFrequencyCutoff == null ? '--' : _formatFrequency(estimatedFrequencyCutoff)}',
+              _AuditoryMode.frequency => i18n.t(
+                'inline.plan296.ui.pages.toolbox.human.tests.auditory.estimated_high_frequency_cutoff.e8dfdd2adc',
+                params: <String, Object?>{
+                  'p0': estimatedFrequencyCutoff == null
+                      ? '--'
+                      : _formatFrequency(estimatedFrequencyCutoff),
+                },
               ),
-              _AuditoryMode.sensitivity => pickUiText(
-                i18n,
-                zh: '估计可听下限: ${(_estimatedThreshold() * 100).round()}%',
-                en: 'Estimated audible threshold: ${(_estimatedThreshold() * 100).round()}%',
-                ja: '推定可聴しきい値: ${(_estimatedThreshold() * 100).round()}%',
-                de: 'Geschätzte Hörschwelle: ${(_estimatedThreshold() * 100).round()}%',
-                fr: 'Seuil sonore estimé: ${(_estimatedThreshold() * 100).round()}%',
-                es: 'Umbral audible estimado: ${(_estimatedThreshold() * 100).round()}%',
-                ru: 'Оценка порога слышимости: ${(_estimatedThreshold() * 100).round()}%',
+              _AuditoryMode.sensitivity => i18n.t(
+                'inline.ui.pages.toolbox_human_tests_auditory.estimated_audible_threshold_estimatedthreshold_100_round_38a1f6',
               ),
-              _AuditoryMode.spatial => pickUiText(
-                i18n,
-                zh: '平均方位误差: ${_averageSpatialError.round()}°',
-                en: 'Average direction error: ${_averageSpatialError.round()}°',
-                ja: '平均方向誤差: ${_averageSpatialError.round()}°',
-                de: 'Durchschnittlicher Richtungsfehler: ${_averageSpatialError.round()}°',
-                fr: 'Erreur de direction moyenne : ${_averageSpatialError.round()}°',
-                es: 'Error medio de dirección: ${_averageSpatialError.round()}°',
-                ru: 'Средняя ошибка направления: ${_averageSpatialError.round()}°',
+              _AuditoryMode.spatial => i18n.t(
+                'inline.ui.pages.toolbox_human_tests_auditory.average_direction_error_averagespatialerror_round_2f16c4',
               ),
             },
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -2949,7 +2343,7 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
       final heard = inLevel.where((record) => record.heard).length;
       final total = inLevel.length;
       final ratio = total == 0 ? 0 : (heard / total * 100).round();
-      return '${index + 1}. ${pickUiText(i18n, zh: '输出', en: 'Output', ja: 'Output', de: 'Output', fr: 'Produit', es: 'Producto', ru: 'выход')} ${level.toStringAsFixed(2)}: $heard/$total ($ratio%)';
+      return '${index + 1}. ${i18n.t('inline.ui.pages.toolbox_human_tests_auditory.output_dafb97')} ${level.toStringAsFixed(2)}: $heard/$total ($ratio%)';
     });
   }
 
@@ -2981,26 +2375,12 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
   String _recommendation(AppI18n i18n) {
     if (_mode == _AuditoryMode.spatial) {
       if (_averageSpatialError > _spatialTolerance * 1.5) {
-        return pickUiText(
-          i18n,
-          zh: '可以先用 8 个方向、宽裕容差和较高空间音量建立基准，稳定后再切到 12 或 16 个方向。',
-          en: 'Suggestion: start with 8 directions, wider tolerance, and higher spatial volume; move to 16 directions after results stabilize.',
-          ja: 'Suggestion: start with 8 directions, wider tolerance, and higher spatial volume; move to 16 directions after results stabilize.',
-          de: 'Suggestion: start with 8 directions, wider tolerance, and higher spatial volume; move to 16 directions after results stabilize.',
-          fr: 'Suggestion : commencer par 8 directions, une tolérance plus grande et un volume spatial plus élevé; passer à 16 directions après stabilisation des résultats.',
-          es: 'Sugerencia: empezar con 8 direcciones, mayor tolerancia y mayor volumen espacial; pasar a 16 direcciones después de que los resultados se estabilicen.',
-          ru: 'Предложение: начать с 8 направлений, более широкой терпимости и более высокого пространственного объема; перейти к 16 направлениям после стабилизации результатов.',
+        return i18n.t(
+          'inline.ui.pages.toolbox_human_tests_auditory.suggestion_start_with_8_directions_wider_tolerance_and_h_b0f996',
         );
       }
-      return pickUiText(
-        i18n,
-        zh: '定位已经比较稳，可以提高方向数或收紧容差，继续细分方位。',
-        en: 'Suggestion: localization is stable; increase direction count or reduce tolerance.',
-        ja: '提案: 方向の聞き分けは安定しています。方向数を増やすか、許容範囲を少し狭めてみましょう。',
-        de: 'Vorschlag: Die Richtungswahrnehmung ist stabil. Erhöhe die Richtungsanzahl oder verringere die Toleranz.',
-        fr: 'Suggestion : la localisation est stable; augmenter le nombre de directions ou réduire la tolérance.',
-        es: 'Sugerencia: la localización es estable; aumentar el número de dirección o reducir la tolerancia.',
-        ru: 'Локализация стабильна; увеличить количество направлений или уменьшить толерантность.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.suggestion_localization_is_stable_increase_direction_cou_1c066a',
       );
     }
     final high = _records
@@ -3010,91 +2390,42 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
         ? 1.0
         : high.where((record) => record.heard).length / high.length;
     if (_mode == _AuditoryMode.frequency && highRate < 0.6) {
-      return pickUiText(
-        i18n,
-        zh: '如果高频可闻性偏弱，可以把上限缩到 6000-8000 Hz，并用 16-20 组重新测一次。',
-        en: 'Suggestion: if high-frequency audibility is weak, narrow the top range to 6000-8000 Hz and retest with 16-20 groups.',
-        ja: 'Suggestion: if high-frequency audibility is weak, narrow the top range to 6000-8000 Hz and retest with 16-20 groups.',
-        de: 'Suggestion: if high-frequency audibility is weak, narrow the top range to 6000-8000 Hz and retest with 16-20 groups.',
-        fr: 'Suggestion : si l\'audibilité à haute fréquence est faible, réduire la gamme supérieure à 6000-8000 Hz et tester de nouveau avec 16-20 groupes.',
-        es: 'Sugerencia: si la audibilidad de alta frecuencia es débil, estrecha el rango superior a 6000-8000 Hz y retesta con 16-20 grupos.',
-        ru: 'Предложение: если высокочастотная слышимость слаба, сузьте верхний диапазон до 6000-8000 Гц и повторно протестируйте с 16-20 группами.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.suggestion_if_high_frequency_audibility_is_weak_narrow_t_21ed94',
       );
     }
     if (_mode == _AuditoryMode.sensitivity) {
       final threshold = _estimatedThreshold();
-      return pickUiText(
-        i18n,
-        zh: '估计可听下限约 ${(threshold * 100).round()}%。可以降低最低输出，并用 16-20 阶重测。',
-        en: 'Suggestion: estimated audible threshold is about ${(threshold * 100).round()}%. Lower the minimum output and retest with 16-20 levels.',
-        ja: 'Suggestion: estimated audible threshold is about ${(threshold * 100).round()}%. Lower the minimum output and retest with 16-20 levels.',
-        de: 'Suggestion: estimated audible threshold is about ${(threshold * 100).round()}%. Lower the minimum output and retest with 16-20 levels.',
-        fr: 'Suggestion : le seuil sonore estimé est d\'environ ${(threshold * 100).round()}%. Abaissez la sortie minimale et retestez avec 16-20 niveaux.',
-        es: 'Sugerencia: umbral audible estimado es alrededor de יv0/%. Disminuya la producción y la prueba mínima con 16-20 niveles.',
-        ru: 'Предложение: оценочный звуковой порог составляет около ${(threshold * 100).round()}%. Снижение минимального выхода и повторный тест с 16-20 уровнями.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.suggestion_estimated_audible_threshold_is_about_threshol_10fd1a',
       );
     }
-    return pickUiText(
-      i18n,
-      zh: '当前设置可以继续保留；如果结果波动较大，可以增加轮数，并减小节奏音量变化。',
-      en: 'Suggestion: keep this setup; if results fluctuate, increase test size and lower rhythmic loudness depth.',
-      ja: 'Suggestion: keep this setup; if results fluctuate, increase test size and lower rhythmic loudness depth.',
-      de: 'Suggestion: keep this setup; if results fluctuate, increase test size and lower rhythmic loudness depth.',
-      fr: 'Suggestion : conservez cette configuration ; si les résultats fluctuent, augmentez la taille du test et réduisez la profondeur rythmique.',
-      es: 'Sugerencia: mantener esta configuración; si los resultados fluctúan, aumentar el tamaño de la prueba y bajar la profundidad de ruido rítmico.',
-      ru: 'Предложение: сохранить эту настройку; если результаты колеблются, увеличить размер теста и снизить глубину ритмической громкости.',
+    return i18n.t(
+      'inline.ui.pages.toolbox_human_tests_auditory.suggestion_keep_this_setup_if_results_fluctuate_increase_f9f0c7',
     );
   }
 
   String _phaseText(AppI18n i18n) {
     return switch (_phase) {
-      _AuditoryPhase.idle => pickUiText(
-        i18n,
-        zh: '点击开始后，听到声音立即点击按钮响应。',
-        en: 'Press start and wait for a random sound.',
-        ja: 'Press start and wait for a random sound.',
-        de: 'Press start and wait for a random sound.',
-        fr: 'Appuyez sur Démarrer et attendre un son aléatoire.',
-        es: 'Presione el inicio y espere un sonido aleatorio.',
-        ru: 'Нажмите «Пуск» и ждите случайного звука.',
+      _AuditoryPhase.idle => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.press_start_and_wait_for_a_random_sound_0f9b41',
       ),
       _AuditoryPhase.waiting => _activePhaseText(i18n),
       _AuditoryPhase.cue => _activePhaseText(i18n),
-      _AuditoryPhase.done => pickUiText(
-        i18n,
-        zh: '测试完成，可查看报告或重新开始。',
-        en: 'Session complete. View the report or restart.',
-        ja: 'Session complete. View the report or restart.',
-        de: 'Session complete. View the report or restart.',
-        fr: 'La séance est terminée. Affiche le rapport ou redémarre.',
-        es: 'Sesión completa. Vea el informe o reinicie.',
-        ru: 'Заседание завершено. Посмотреть отчет или перезапустить.',
+      _AuditoryPhase.done => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.session_complete_view_the_report_or_restart_d5948e',
       ),
     };
   }
 
   String _activePhaseText(AppI18n i18n) {
     if (_mode == _AuditoryMode.spatial) {
-      return pickUiText(
-        i18n,
-        zh: '保持专注，听到声音后选择感知方位。',
-        en: 'Stay focused. Choose the perceived direction when you hear the sound.',
-        ja: 'Stay focused. Choose the perceived direction when you hear the sound.',
-        de: 'Stay focused. Choose the perceived direction when you hear the sound.',
-        fr: 'Restez concentré. Choisissez la direction perçue lorsque vous entendez le son.',
-        es: 'Mantente concentrado. Elija la dirección percibida cuando escuche el sonido.',
-        ru: 'Сосредоточься. Выберите направление восприятия, когда вы слышите звук.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.stay_focused_choose_the_perceived_direction_when_you_hea_0da0bb',
       );
     }
-    return pickUiText(
-      i18n,
-      zh: '保持专注，听到声音后点击。',
-      en: 'Stay focused. Tap when you hear the sound.',
-      ja: 'Stay focused. Tap when you hear the sound.',
-      de: 'Stay focused. Tap when you hear the sound.',
-      fr: 'Restez concentré. Tapez quand vous entendez le son.',
-      es: 'Mantente concentrado. Toca cuando escuchas el sonido.',
-      ru: 'Сосредоточься. Нажмите, когда слышите звук.',
+    return i18n.t(
+      'inline.ui.pages.toolbox_human_tests_auditory.stay_focused_tap_when_you_hear_the_sound_c781a2',
     );
   }
 
@@ -3104,30 +2435,16 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
       return '${_formatFrequency(spec.frequencyHz)} / ${(spec.outputVolume * 100).round()}%';
     }
     if (!_showDirectionLabels) {
-      return pickUiText(
-        i18n,
-        zh: '空间声源',
-        en: 'Spatial sound',
-        ja: 'Spatial sound',
-        de: 'Spatial sound',
-        fr: 'Son spatial',
-        es: 'Sonido espacial',
-        ru: 'Пространственный звук',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.spatial_sound_ebc6fa',
       );
     }
     return _formatDirection(spec.directionDegrees ?? 0, i18n);
   }
 
   String _sizeSuggestion(AppI18n i18n) {
-    return pickUiText(
-      i18n,
-      zh: '快速筛查用 10-12 轮就够；想测得更稳，可以用 16-20 轮，并让分析频段数接近轮次规模。',
-      en: 'Suggested test size: use 10-12 rounds for a quick screen; use 16-20 rounds for assessment and keep analysis bands close to the round count.',
-      ja: 'Suggested test size: use 10-12 rounds for a quick screen; use 16-20 rounds for assessment and keep analysis bands close to the round count.',
-      de: 'Suggested test size: use 10-12 rounds for a quick screen; use 16-20 rounds for assessment and keep analysis bands close to the round count.',
-      fr: 'Taille suggérée de l\'essai : utiliser 10-12 rondes pour un écran rapide; utiliser 16-20 rondes pour l\'évaluation et garder les bandes d\'analyse près du nombre de rondes.',
-      es: 'Tamaño de prueba sugerido: utilizar 10-12 rondas para una pantalla rápida; utilizar 16-20 rondas para evaluación y mantener bandas de análisis cerca del recuento redondo.',
-      ru: 'Предлагаемый размер теста: используйте 10-12 раундов для быстрого экрана; используйте 16-20 раундов для оценки и держите полосы анализа близко к количеству раундов.',
+    return i18n.t(
+      'inline.ui.pages.toolbox_human_tests_auditory.suggested_test_size_use_10_12_rounds_for_a_quick_screen_e596ff',
     );
   }
 
@@ -3244,85 +2561,21 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
   String _formatDirection(double value, AppI18n i18n) {
     final normalized = value % 360;
     final label = switch ((normalized / 45).round() % 8) {
-      0 => pickUiText(
-        i18n,
-        zh: '前方',
-        en: 'Front',
-        ja: 'Front',
-        de: 'Front',
-        fr: 'Avant',
-        es: 'Frente',
-        ru: 'Фронт',
+      0 => i18n.t('inline.ui.pages.toolbox_human_tests_auditory.front_47418f'),
+      1 => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.front_right_a3f226',
       ),
-      1 => pickUiText(
-        i18n,
-        zh: '右前方',
-        en: 'Front right',
-        ja: 'Front right',
-        de: 'Front right',
-        fr: 'Devant à droite',
-        es: 'Frente derecho',
-        ru: 'Спереди справа',
+      2 => i18n.t('toolbox.sound.locator.cue_label_right'),
+      3 => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.back_right_731f4e',
       ),
-      2 => pickUiText(
-        i18n,
-        zh: '右侧',
-        en: 'Right',
-        ja: 'Right',
-        de: 'Right',
-        fr: 'Droite',
-        es: 'Bien.',
-        ru: 'Правильно.',
+      4 => i18n.t('toolbox.sound.locator.cue_label_back'),
+      5 => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.back_left_26a1be',
       ),
-      3 => pickUiText(
-        i18n,
-        zh: '右后方',
-        en: 'Back right',
-        ja: 'バック右',
-        de: 'Back right',
-        fr: 'En arrière à droite',
-        es: 'Atrás derecho',
-        ru: 'Направо.',
-      ),
-      4 => pickUiText(
-        i18n,
-        zh: '后方',
-        en: 'Back',
-        ja: 'バック',
-        de: 'Back',
-        fr: 'Précédent',
-        es: 'Atrás',
-        ru: 'Назад',
-      ),
-      5 => pickUiText(
-        i18n,
-        zh: '左后方',
-        en: 'Back left',
-        ja: 'バック左',
-        de: 'Back left',
-        fr: 'Retour à gauche',
-        es: 'A la izquierda',
-        ru: 'Налево.',
-      ),
-      6 => pickUiText(
-        i18n,
-        zh: '左侧',
-        en: 'Left',
-        ja: 'Left',
-        de: 'Left',
-        fr: 'Gauche',
-        es: 'Izquierda',
-        ru: 'Левый',
-      ),
-      _ => pickUiText(
-        i18n,
-        zh: '左前方',
-        en: 'Front left',
-        ja: 'Front left',
-        de: 'Front left',
-        fr: 'Avant gauche',
-        es: 'Front izquierda',
-        ru: 'Левый фронт',
+      6 => i18n.t('toolbox.breathing.left'),
+      _ => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.front_left_2ec86b',
       ),
     };
     return '$label ${normalized.round()}°';
@@ -3331,15 +2584,8 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
   String _spatialSelectionLabel(AppI18n i18n) {
     final value = _spatialGuessDegrees;
     if (value == null) {
-      return pickUiText(
-        i18n,
-        zh: '未选择方位',
-        en: 'No direction selected',
-        ja: 'No direction selected',
-        de: 'No direction selected',
-        fr: 'Aucune direction sélectionnée',
-        es: 'No hay dirección seleccionada',
-        ru: 'Не выбранное направление',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.no_direction_selected_8fa127',
       );
     }
     return _formatDirection(value, i18n);
@@ -3348,130 +2594,38 @@ class _AuditoryTestCardState extends State<_AuditoryTestCard> {
   String _directionName(double value, AppI18n i18n) {
     final normalized = value % 360;
     return switch ((normalized / 45).round() % 8) {
-      0 => pickUiText(
-        i18n,
-        zh: '前',
-        en: 'Front',
-        ja: 'Front',
-        de: 'Front',
-        fr: 'Avant',
-        es: 'Frente',
-        ru: 'Фронт',
+      0 => i18n.t('inline.ui.pages.toolbox_human_tests_auditory.front_47418f'),
+      1 => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.front_right_a3f226',
       ),
-      1 => pickUiText(
-        i18n,
-        zh: '右前',
-        en: 'Front right',
-        ja: 'Front right',
-        de: 'Front right',
-        fr: 'Devant à droite',
-        es: 'Frente derecho',
-        ru: 'Спереди справа',
+      2 => i18n.t('toolbox.sound.locator.cue_label_right'),
+      3 => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.back_right_731f4e',
       ),
-      2 => pickUiText(
-        i18n,
-        zh: '右',
-        en: 'Right',
-        ja: 'Right',
-        de: 'Right',
-        fr: 'Droite',
-        es: 'Bien.',
-        ru: 'Правильно.',
+      4 => i18n.t('toolbox.sound.locator.cue_label_back'),
+      5 => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.back_left_26a1be',
       ),
-      3 => pickUiText(
-        i18n,
-        zh: '右后',
-        en: 'Back right',
-        ja: 'バック右',
-        de: 'Back right',
-        fr: 'En arrière à droite',
-        es: 'Atrás derecho',
-        ru: 'Направо.',
-      ),
-      4 => pickUiText(
-        i18n,
-        zh: '后',
-        en: 'Back',
-        ja: 'バック',
-        de: 'Back',
-        fr: 'Précédent',
-        es: 'Atrás',
-        ru: 'Назад',
-      ),
-      5 => pickUiText(
-        i18n,
-        zh: '左后',
-        en: 'Back left',
-        ja: 'バック左',
-        de: 'Back left',
-        fr: 'Retour à gauche',
-        es: 'A la izquierda',
-        ru: 'Налево.',
-      ),
-      6 => pickUiText(
-        i18n,
-        zh: '左',
-        en: 'Left',
-        ja: 'Left',
-        de: 'Left',
-        fr: 'Gauche',
-        es: 'Izquierda',
-        ru: 'Левый',
-      ),
-      _ => pickUiText(
-        i18n,
-        zh: '左前',
-        en: 'Front left',
-        ja: 'Front left',
-        de: 'Front left',
-        fr: 'Avant gauche',
-        es: 'Front izquierda',
-        ru: 'Левый фронт',
+      6 => i18n.t('toolbox.breathing.left'),
+      _ => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.front_left_2ec86b',
       ),
     };
   }
 
   static String _rhythmLabel(_AuditoryRhythm rhythm, AppI18n i18n) {
     return switch (rhythm) {
-      _AuditoryRhythm.steady => pickUiText(
-        i18n,
-        zh: '平稳',
-        en: 'Steady',
-        ja: 'Steady',
-        de: 'Steady',
-        fr: 'Stabilité',
-        es: 'Tranquila',
-        ru: 'стойкий',
+      _AuditoryRhythm.steady => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.steady_73508d',
       ),
-      _AuditoryRhythm.doublePulse => pickUiText(
-        i18n,
-        zh: '双脉冲',
-        en: 'Double pulse',
-        ja: 'Double pulse',
-        de: 'Double pulse',
-        fr: 'Double impulsion',
-        es: 'Pulso doble',
-        ru: 'Двойной импульс',
+      _AuditoryRhythm.doublePulse => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.double_pulse_fc5430',
       ),
-      _AuditoryRhythm.triplePulse => pickUiText(
-        i18n,
-        zh: '三脉冲',
-        en: 'Triple pulse',
-        ja: 'Triple pulse',
-        de: 'Triple pulse',
-        fr: 'Trois impulsions',
-        es: 'Pulso triple',
-        ru: 'Тройной пульс',
+      _AuditoryRhythm.triplePulse => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.triple_pulse_40e963',
       ),
-      _AuditoryRhythm.rising => pickUiText(
-        i18n,
-        zh: '上升',
-        en: 'Rising',
-        ja: 'Rising',
-        de: 'Rising',
-        fr: 'Augmentation',
-        es: 'Rising',
-        ru: 'подъем',
+      _AuditoryRhythm.rising => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory.rising_126b52',
       ),
     };
   }

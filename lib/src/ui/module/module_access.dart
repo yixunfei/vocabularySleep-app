@@ -7,86 +7,54 @@ import '../ui_copy.dart';
 
 String localizedModuleLabel(AppI18n i18n, String moduleId) {
   return switch (moduleId) {
-    ModuleIds.study => pickUiText(i18n, zh: '学习', en: 'Study'),
-    ModuleIds.practice => pickUiText(i18n, zh: '练习', en: 'Practice'),
-    ModuleIds.focus => pickUiText(i18n, zh: '专注', en: 'Focus'),
-    ModuleIds.toolbox => pickUiText(i18n, zh: '工具箱', en: 'Toolbox'),
-    ModuleIds.more => pickUiText(i18n, zh: '更多', en: 'More'),
-    ModuleIds.toolboxSleepAssistant => pickUiText(
-      i18n,
-      zh: '睡眠助手',
-      en: 'Sleep assistant',
+    ModuleIds.study => i18n.t('toolbox.sound.soothing.v2.mode.study.title'),
+    ModuleIds.practice => i18n.t(
+      'inline.ui.module.module_access.practice_edc3b5',
     ),
-    ModuleIds.toolboxMiniGames => pickUiText(i18n, zh: '小游戏', en: 'Mini games'),
-    ModuleIds.toolboxHumanTests => pickUiText(
-      i18n,
-      zh: '人类测试',
-      en: 'Human tests',
+    ModuleIds.focus => i18n.t('ambientCategoryFocus'),
+    ModuleIds.toolbox => i18n.t('toolbox.hub.page.title'),
+    ModuleIds.more => i18n.t('inline.ui.module.module_access.more_25e68b'),
+    ModuleIds.toolboxSleepAssistant => i18n.t(
+      'inline.ui.module.module_access.sleep_assistant_7d7180',
     ),
-    ModuleIds.toolboxSoothingMusic => pickUiText(
-      i18n,
-      zh: '舒缓音乐',
-      en: 'Soothing music',
+    ModuleIds.toolboxMiniGames => i18n.t(
+      'inline.ui.module.module_access.mini_games_e63f5e',
     ),
-    ModuleIds.toolboxSoundDeck => pickUiText(
-      i18n,
-      zh: '乐器合奏台',
-      en: 'Sound deck',
+    ModuleIds.toolboxHumanTests => i18n.t(
+      'inline.ui.module.module_access.human_tests_b16d34',
     ),
-    ModuleIds.toolboxSingingBowls => pickUiText(
-      i18n,
-      zh: '疗愈音钵',
-      en: 'Healing bowls',
+    ModuleIds.toolboxSoothingMusic => i18n.t('toolbox.sleep.assist.music'),
+    ModuleIds.toolboxSoundDeck => i18n.t(
+      'inline.ui.module.module_access.sound_deck_129c55',
     ),
-    ModuleIds.toolboxSoundLocator => pickUiText(
-      i18n,
-      zh: '声源定位',
-      en: 'Sound locator',
+    ModuleIds.toolboxSingingBowls => i18n.t(
+      'inline.ui.module.module_access.healing_bowls_918cb2',
     ),
-    ModuleIds.toolboxFocusBeats => pickUiText(
-      i18n,
-      zh: '专注节拍',
-      en: 'Focus beats',
+    ModuleIds.toolboxSoundLocator => i18n.t('toolbox.sound.locator.page_title'),
+    ModuleIds.toolboxFocusBeats => i18n.t(
+      'inline.ui.module.module_access.focus_beats_68284f',
     ),
-    ModuleIds.toolboxWoodfish => pickUiText(
-      i18n,
-      zh: '电子木鱼',
-      en: 'Digital woodfish',
+    ModuleIds.toolboxWoodfish => i18n.t(
+      'inline.ui.module.module_access.digital_woodfish_35ef49',
     ),
-    ModuleIds.toolboxSchulteGrid => pickUiText(
-      i18n,
-      zh: '舒尔特方格',
-      en: 'Schulte grid',
+    ModuleIds.toolboxSchulteGrid => i18n.t(
+      'inline.ui.module.module_access.schulte_grid_0e6b45',
     ),
-    ModuleIds.toolboxBreathing => pickUiText(
-      i18n,
-      zh: '呼吸训练',
-      en: 'Breathing practice',
+    ModuleIds.toolboxBreathing => i18n.t(
+      'inline.ui.module.module_access.breathing_practice_211f64',
     ),
-    ModuleIds.toolboxPrayerBeads => pickUiText(
-      i18n,
-      zh: '静心念珠',
-      en: 'Prayer beads',
+    ModuleIds.toolboxPrayerBeads => i18n.t(
+      'inline.ui.module.module_access.prayer_beads_2fe197',
     ),
-    ModuleIds.toolboxZenSand => pickUiText(
-      i18n,
-      zh: '禅意沙盘',
-      en: 'Zen sand tray',
+    ModuleIds.toolboxZenSand => i18n.t(
+      'inline.plan294.zen_sand.zen_sand_tray_6452b86e',
     ),
-    ModuleIds.toolboxDailyDecision => pickUiText(
-      i18n,
-      zh: '每日决策',
-      en: 'Daily decision',
+    ModuleIds.toolboxDailyDecision => i18n.t('toolbox.daily_choice.hub_title'),
+    ModuleIds.toolboxLifeTools => i18n.t(
+      'inline.plan294.life_hub.life_tools_292cc56d',
     ),
-    ModuleIds.toolboxLifeTools => pickUiText(
-      i18n,
-      zh: '生活实用',
-      en: 'Life tools',
-    ),
-    ModuleIds.toolboxCryptoSecurity => pickUiText(
-      i18n,
-      zh: '加密安全',
-      en: 'Crypto security',
+    ModuleIds.toolboxCryptoSecurity => i18n.t(
+      'inline.ui.module.module_access.crypto_security_edbc46',
     ),
     _ => moduleId,
   };
@@ -94,10 +62,8 @@ String localizedModuleLabel(AppI18n i18n, String moduleId) {
 
 String moduleDisabledMessage(AppI18n i18n, String moduleId) {
   final label = localizedModuleLabel(i18n, moduleId);
-  return pickUiText(
-    i18n,
-    zh: '$label 模块当前已停用，请在设置中心的模块管理中重新开启。',
-    en: '$label is currently disabled. Re-enable it in module management.',
+  return i18n.t(
+    'inline.ui.module.module_access.label_is_currently_disabled_re_enable_it_in_module_manag_0dfbf2',
   );
 }
 

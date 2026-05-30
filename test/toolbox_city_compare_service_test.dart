@@ -33,7 +33,11 @@ void main() {
       expect(result.costRatio, greaterThan(1));
       expect(result.referenceItems.length, greaterThan(10));
       expect(
-        result.insights.any((insight) => insight.titleEn == 'Biggest delta'),
+        result.insights.any(
+          (insight) =>
+              insight.titleKey ==
+              'life.city_compare.insight.biggest_delta.title',
+        ),
         isTrue,
       );
     });
@@ -67,15 +71,24 @@ void main() {
       );
 
       expect(
-        result.referenceItems.any((item) => item.labelEn == 'Center 1BR rent'),
+        result.referenceItems.any(
+          (item) =>
+              item.labelKey == 'life.city_compare.reference.center_1br_rent',
+        ),
         isTrue,
       );
       expect(
-        result.referenceItems.any((item) => item.labelEn == 'Cheap meal'),
+        result.referenceItems.any(
+          (item) => item.labelKey == 'life.city_compare.reference.cheap_meal',
+        ),
         isTrue,
       );
       expect(
-        result.insights.any((insight) => insight.bodyEn.contains('center 1BR')),
+        result.insights.any(
+          (insight) =>
+              insight.body.key ==
+              'life.city_compare.insight.reference_note.body',
+        ),
         isTrue,
       );
     });

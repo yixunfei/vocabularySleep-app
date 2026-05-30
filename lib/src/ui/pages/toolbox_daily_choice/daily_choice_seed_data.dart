@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../i18n/app_i18n.dart';
-import '../../ui_copy.dart';
 import 'daily_choice_eat_support.dart';
 import 'daily_choice_models.dart';
 
@@ -23,106 +22,70 @@ const List<DailyChoiceModuleConfig> dailyChoiceModuleConfigs =
         id: 'eat',
         icon: Icons.restaurant_menu_rounded,
         accent: Color(0xFFE08B58),
-        titleZh: '吃什么',
-        titleEn: 'Eat',
-        subtitleZh: '按餐段摇出今天想吃的菜。',
-        subtitleEn: 'Pick a dish by meal moment.',
-      ),
+    titleKey: 'inline.plan295.daily_choice.eat.d63f09b7b74f',
+    subtitleKey: 'inline.plan295.daily_choice.pick_a_dish_by_meal_moment.dc6743f32eac'),
       DailyChoiceModuleConfig(
         id: 'wear',
         icon: Icons.checkroom_rounded,
         accent: Color(0xFF5F8F73),
-        titleZh: '穿什么',
-        titleEn: 'Wear',
-        subtitleZh: '按温度和场景挑一套不出错的搭配。',
-        subtitleEn: 'Match temperature and scene to choose an outfit.',
-      ),
+    titleKey: 'inline.plan295.daily_choice.wear.ff9423ba7740',
+    subtitleKey: 'inline.plan295.daily_choice.match_temperature_and_scene_to_choos.e8e972383462'),
       DailyChoiceModuleConfig(
         id: 'go',
         icon: Icons.explore_rounded,
         accent: Color(0xFF4A8DA8),
-        titleZh: '去哪儿',
-        titleEn: 'Go',
-        subtitleZh: '从出门、周边到远行，给自己一个方向。',
-        subtitleEn: 'Choose a nearby errand, local trip, or longer escape.',
-      ),
+    titleKey: 'inline.plan295.daily_choice.go.f0266169957c',
+    subtitleKey: 'inline.plan295.daily_choice.choose_a_nearby_errand_local_trip_or.0c19561bbff5'),
       DailyChoiceModuleConfig(
         id: 'activity',
         icon: Icons.auto_awesome_motion_rounded,
         accent: Color(0xFF8A70B5),
-        titleZh: '干什么',
-        titleEn: 'Do',
-        subtitleZh: '先选方向，也可以让方向一起随机。',
-        subtitleEn: 'Pick a direction, or randomize the direction too.',
-      ),
+    titleKey: 'inline.plan295.daily_choice.do.dc2ba8bc3572',
+    subtitleKey: 'inline.plan295.daily_choice.pick_a_direction_or_randomize_the_di.b725c483ba75'),
       DailyChoiceModuleConfig(
         id: 'custom_random',
         icon: Icons.shuffle_rounded,
         accent: Color(0xFF607C8F),
-        titleZh: '随机助手',
-        titleEn: 'Random assistant',
-        subtitleZh: '录入自己的选项，用转盘、骰子或硬币抽取。',
-        subtitleEn: 'Enter your own options and draw by wheel, dice, or coin.',
-      ),
+    titleKey: 'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_widgets.random_assistant_a5a3a1',
+    subtitleKey: 'inline.plan295.daily_choice.enter_your_own_options_and_draw_by_w.1e1e02b49eac'),
       DailyChoiceModuleConfig(
         id: 'assistant',
         icon: Icons.functions_rounded,
         accent: Color(0xFFB8793C),
-        titleZh: '决策助手',
-        titleEn: 'Decision',
-        subtitleZh: '用概率、期望和因子权重把纠结摊开。',
-        subtitleEn: 'Use probability, expected value, and factor weights.',
-      ),
+    titleKey: 'inline.plan295.daily_choice.decision.7067fb1a0cb9',
+    subtitleKey: 'inline.plan295.daily_choice.use_probability_expected_value_and_f.48e823c1aef0'),
     ];
 const DailyChoiceCategory allMealCategory = DailyChoiceCategory(
   id: 'all',
   icon: Icons.grid_view_rounded,
-  titleZh: '全部餐段',
-  titleEn: 'All meals',
-  subtitleZh: '不限定餐段，想吃什么都可以',
-  subtitleEn: 'Choose freely across meals',
-);
+    titleKey: 'inline.plan295.daily_choice.all_meals.26a4b15988dd',
+    subtitleKey: 'inline.plan295.daily_choice.choose_freely_across_meals.18390de685aa');
 const List<DailyChoiceCategory> mealCategories = <DailyChoiceCategory>[
   DailyChoiceCategory(
     id: 'breakfast',
     icon: Icons.wb_sunny_rounded,
-    titleZh: '早饭',
-    titleEn: 'Breakfast',
-    subtitleZh: '轻量、暖胃、快手',
-    subtitleEn: 'Light, warm, fast',
-  ),
+    titleKey: 'inline.plan295.daily_choice.breakfast.177e9b91b63c',
+    subtitleKey: 'inline.plan295.daily_choice.light_warm_fast.6ee056be5549'),
   DailyChoiceCategory(
     id: 'lunch',
     icon: Icons.rice_bowl_rounded,
-    titleZh: '午餐',
-    titleEn: 'Lunch',
-    subtitleZh: '主食明确，能量够',
-    subtitleEn: 'Filling and steady',
-  ),
+    titleKey: 'inline.plan295.daily_choice.lunch.387f9531b13a',
+    subtitleKey: 'inline.plan295.daily_choice.filling_and_steady.cf76e1936554'),
   DailyChoiceCategory(
     id: 'dinner',
     icon: Icons.dinner_dining_rounded,
-    titleZh: '晚餐',
-    titleEn: 'Dinner',
-    subtitleZh: '热菜、汤和下饭菜',
-    subtitleEn: 'Warm dishes and soups',
-  ),
+    titleKey: 'inline.plan295.daily_choice.dinner.72700bcfd0b3',
+    subtitleKey: 'inline.plan295.daily_choice.warm_dishes_and_soups.ce67858a9d47'),
   DailyChoiceCategory(
     id: 'tea',
     icon: Icons.local_cafe_rounded,
-    titleZh: '下午茶',
-    titleEn: 'Tea',
-    subtitleZh: '点心、小食、甜口',
-    subtitleEn: 'Snacks and sweets',
-  ),
+    titleKey: 'inline.plan295.daily_choice.tea.07e46701e17e',
+    subtitleKey: 'inline.plan295.daily_choice.snacks_and_sweets.a279894e2e25'),
   DailyChoiceCategory(
     id: 'night',
     icon: Icons.nightlight_round,
-    titleZh: '宵夜',
-    titleEn: 'Late snack',
-    subtitleZh: '少油、少折腾',
-    subtitleEn: 'Low effort, not too heavy',
-  ),
+    titleKey: 'inline.plan295.daily_choice.late_snack.c89a28c49b75',
+    subtitleKey: 'inline.plan295.daily_choice.low_effort_not_too_heavy.b08caa8863bf'),
 ];
 const List<DailyChoiceCategory> eatMealFilterCategories = <DailyChoiceCategory>[
   allMealCategory,
@@ -132,216 +95,145 @@ const List<DailyChoiceCategory> cookToolCategories = <DailyChoiceCategory>[
   DailyChoiceCategory(
     id: 'all',
     icon: Icons.grid_view_rounded,
-    titleZh: '全部厨具',
-    titleEn: 'All tools',
-    subtitleZh: '不限制厨具',
-    subtitleEn: 'No tool limit',
-  ),
+    titleKey: 'inline.plan295.daily_choice.all_tools.ef0a23dbad13',
+    subtitleKey: 'inline.plan295.daily_choice.no_tool_limit.05fe9c591df4'),
   DailyChoiceCategory(
     id: 'pot',
     icon: Icons.soup_kitchen_rounded,
-    titleZh: '一口大锅',
-    titleEn: 'Pot',
-    subtitleZh: '炒、煮、炖都能做',
-    subtitleEn: 'Pan and pot recipes',
-  ),
+    titleKey: 'inline.plan295.daily_choice.pot.9ad74bdea9f9',
+    subtitleKey: 'inline.plan295.daily_choice.pan_and_pot_recipes.fdf573ed589a'),
   DailyChoiceCategory(
     id: 'rice_cooker',
     icon: Icons.rice_bowl_rounded,
-    titleZh: '电饭煲',
-    titleEn: 'Rice cooker',
-    subtitleZh: '一锅出，省心稳',
-    subtitleEn: 'One-pot cooker dishes',
-  ),
+    titleKey: 'inline.plan295.daily_choice.rice_cooker.e4f8c556db64',
+    subtitleKey: 'inline.plan295.daily_choice.one_pot_cooker_dishes.b4de51be0220'),
   DailyChoiceCategory(
     id: 'microwave',
     icon: Icons.microwave_rounded,
-    titleZh: '微波炉',
-    titleEn: 'Microwave',
-    subtitleZh: '快手低门槛',
-    subtitleEn: 'Fast and low effort',
-  ),
+    titleKey: 'inline.plan295.daily_choice.microwave.bc3fc4975427',
+    subtitleKey: 'inline.plan295.daily_choice.fast_and_low_effort.48439cd8906f'),
   DailyChoiceCategory(
     id: 'air_fryer',
     icon: Icons.air_rounded,
-    titleZh: '空气炸锅',
-    titleEn: 'Air fryer',
-    subtitleZh: '省翻炒，易上手',
-    subtitleEn: 'Crisp with less tending',
-  ),
+    titleKey: 'inline.plan295.daily_choice.air_fryer.ed741cb9a527',
+    subtitleKey: 'inline.plan295.daily_choice.crisp_with_less_tending.e6b875a40b65'),
   DailyChoiceCategory(
     id: 'oven',
     icon: Icons.local_fire_department_rounded,
-    titleZh: '烤箱',
-    titleEn: 'Oven',
-    subtitleZh: '适合烘烤和批量做',
-    subtitleEn: 'Bake and roast batches',
-  ),
+    titleKey: 'inline.plan295.daily_choice.oven.d510d1c0c583',
+    subtitleKey: 'inline.plan295.daily_choice.bake_and_roast_batches.743261c8ac5b'),
 ];
 const List<DailyChoiceTraitGroup> eatTraitGroups = <DailyChoiceTraitGroup>[
   DailyChoiceTraitGroup(
     id: eatAttributeType,
     icon: Icons.ramen_dining_rounded,
-    titleZh: '做法与菜型',
-    titleEn: 'Dish type',
-    subtitleZh: '按汤、炒、拌、烧、饭面、甜品等收口',
-    subtitleEn: 'Filter by soup, stir-fry, cold dish, rice, noodles, and more',
+    titleKey: 'inline.plan295.daily_choice.dish_type.ba29b4e821d1',
+    subtitleKey: 'inline.plan295.daily_choice.filter_by_soup_stir_fry_cold_dish_ri.50142f3d6de3',
     options: <DailyChoiceTraitOption>[
       DailyChoiceTraitOption(
         id: 'cold_dish',
-        titleZh: '凉拌',
-        titleEn: 'Cold dish',
-        icon: Icons.eco_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.cold_dish.72cd921c080e',
+        icon: Icons.eco_rounded),
       DailyChoiceTraitOption(
         id: 'soup',
-        titleZh: '汤羹',
-        titleEn: 'Soup',
-        icon: Icons.soup_kitchen_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.soup.fd2d40a89049',
+        icon: Icons.soup_kitchen_rounded),
       DailyChoiceTraitOption(
         id: 'stir_fry',
-        titleZh: '炒菜',
-        titleEn: 'Stir-fry',
-        icon: Icons.local_fire_department_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.stir_fry.e80e69d81469',
+        icon: Icons.local_fire_department_rounded),
       DailyChoiceTraitOption(
         id: 'braise',
-        titleZh: '烧焖',
-        titleEn: 'Braise',
-        icon: Icons.whatshot_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.braise.fe57288c517a',
+        icon: Icons.whatshot_rounded),
       DailyChoiceTraitOption(
         id: 'stew',
-        titleZh: '炖煲',
-        titleEn: 'Stew',
-        icon: Icons.coffee_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.stew.0378ddd2562b',
+        icon: Icons.coffee_rounded),
       DailyChoiceTraitOption(
         id: 'steam',
-        titleZh: '蒸制',
-        titleEn: 'Steam',
-        icon: Icons.water_drop_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.steam.4296a0253411',
+        icon: Icons.water_drop_rounded),
       DailyChoiceTraitOption(
         id: 'pan_fry',
-        titleZh: '煎制',
-        titleEn: 'Pan-fry',
-        icon: Icons.egg_alt_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.pan_fry.b5934084242b',
+        icon: Icons.egg_alt_rounded),
       DailyChoiceTraitOption(
         id: 'deep_fry',
-        titleZh: '炸物',
-        titleEn: 'Deep-fry',
-        icon: Icons.bakery_dining_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.deep_fry.b6f4fc3ef7d9',
+        icon: Icons.bakery_dining_rounded),
       DailyChoiceTraitOption(
         id: 'bake',
-        titleZh: '烘烤',
-        titleEn: 'Bake',
-        icon: Icons.outdoor_grill_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.bake.1210318bbd4d',
+        icon: Icons.outdoor_grill_rounded),
       DailyChoiceTraitOption(
         id: 'rice',
-        titleZh: '饭粥类',
-        titleEn: 'Rice',
-        icon: Icons.rice_bowl_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.rice.3d2236734f4c',
+        icon: Icons.rice_bowl_rounded),
       DailyChoiceTraitOption(
         id: 'noodle',
-        titleZh: '面食类',
-        titleEn: 'Noodles',
-        icon: Icons.ramen_dining_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.noodles.ffd7e2007eb1',
+        icon: Icons.ramen_dining_rounded),
       DailyChoiceTraitOption(
         id: 'dessert',
-        titleZh: '甜品点心',
-        titleEn: 'Dessert',
-        icon: Icons.cake_rounded,
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.dessert.0e418d70d3fd',
+        icon: Icons.cake_rounded),
+    ]),
   DailyChoiceTraitGroup(
     id: eatAttributeProfile,
     icon: Icons.set_meal_rounded,
-    titleZh: '荤素结构',
-    titleEn: 'Profile',
-    subtitleZh: '按素菜、荤菜、荤素搭配、主食型收口',
-    subtitleEn: 'Filter by vegetarian, meat-based, mixed, or staple',
+    titleKey: 'inline.plan295.daily_choice.profile.393b1af98513',
+    subtitleKey: 'inline.plan295.daily_choice.filter_by_vegetarian_meat_based_mixe.37ec39564b42',
     options: <DailyChoiceTraitOption>[
       DailyChoiceTraitOption(
         id: eatProfileVegetarian,
-        titleZh: '偏素',
-        titleEn: 'Vegetarian',
-        icon: Icons.spa_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.vegetarian.4998bc32bbae',
+        icon: Icons.spa_rounded),
       DailyChoiceTraitOption(
         id: eatProfileMeatBased,
-        titleZh: '偏荤',
-        titleEn: 'Meat-based',
-        icon: Icons.set_meal_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.meat_based.d7affba2fb8b',
+        icon: Icons.set_meal_rounded),
       DailyChoiceTraitOption(
         id: eatProfileMixed,
-        titleZh: '荤素搭配',
-        titleEn: 'Mixed',
-        icon: Icons.dinner_dining_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.mixed.2c9888bab620',
+        icon: Icons.dinner_dining_rounded),
       DailyChoiceTraitOption(
         id: eatProfileStaple,
-        titleZh: '主食型',
-        titleEn: 'Staple',
-        icon: Icons.lunch_dining_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.staple.446c3b19df2c',
+        icon: Icons.lunch_dining_rounded),
       DailyChoiceTraitOption(
         id: eatProfileDessert,
-        titleZh: '甜口',
-        titleEn: 'Dessert',
-        icon: Icons.icecream_rounded,
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.dessert.2097b585433c',
+        icon: Icons.icecream_rounded),
+    ]),
 ];
 const DailyChoiceTraitGroup eatContainsTraitGroup = DailyChoiceTraitGroup(
   id: eatAttributeContains,
   icon: Icons.report_gmailerrorred_rounded,
-  titleZh: '常见忌口与过敏原',
-  titleEn: 'Avoid / allergens',
-  subtitleZh: '保留最高频的快速排除项，其余口味放到自定义忌口里添加',
-  subtitleEn: 'Keep the common quick avoids and add personal ones below',
+    titleKey: 'inline.plan295.daily_choice.avoid_allergens.7c04cb659c45',
+    subtitleKey: 'inline.plan295.daily_choice.keep_the_common_quick_avoids_and_add.23e4d5064965',
   options: <DailyChoiceTraitOption>[
     DailyChoiceTraitOption(
       id: 'cilantro',
-      titleZh: '香菜',
-      titleEn: 'Cilantro',
-      icon: Icons.local_florist_rounded,
-    ),
+        titleKey: 'inline.plan295.daily_choice.cilantro.f6d01666284b',
+      icon: Icons.local_florist_rounded),
     DailyChoiceTraitOption(
       id: 'seafood',
-      titleZh: '海鲜',
-      titleEn: 'Seafood',
-      icon: Icons.phishing_rounded,
-    ),
+        titleKey: 'inline.plan295.daily_choice.seafood.b01af20690cc',
+      icon: Icons.phishing_rounded),
     DailyChoiceTraitOption(
       id: eatContainsPeanutNut,
-      titleZh: '花生坚果',
-      titleEn: 'Peanut / nut',
-      icon: Icons.spa_rounded,
-    ),
+        titleKey: 'inline.plan295.daily_choice.peanut_nut.0386a838c040',
+      icon: Icons.spa_rounded),
     DailyChoiceTraitOption(
       id: 'alcohol',
-      titleZh: '酒精',
-      titleEn: 'Alcohol',
-      icon: Icons.no_drinks_rounded,
-    ),
+        titleKey: 'inline.plan295.daily_choice.alcohol.f81e7794290b',
+      icon: Icons.no_drinks_rounded),
     DailyChoiceTraitOption(
       id: 'spicy',
-      titleZh: '辣椒',
-      titleEn: 'Chili',
-      icon: Icons.local_fire_department_rounded,
-    ),
-  ],
-);
+        titleKey: 'inline.plan295.daily_choice.chili.0dd8c76bd276',
+      icon: Icons.local_fire_department_rounded),
+  ]);
 final List<DailyChoiceTraitGroup> eatManagerTraitGroups =
     <String>{eatAttributeType, eatAttributeProfile}
         .map((id) => eatTraitGroupById(id))
@@ -351,478 +243,319 @@ const List<DailyChoiceCategory> temperatureCategories = <DailyChoiceCategory>[
   DailyChoiceCategory(
     id: 'freezing',
     icon: Icons.ac_unit_rounded,
-    titleZh: '严寒',
-    titleEn: 'Freezing',
-    subtitleZh: '0°C 以下',
-    subtitleEn: 'Below 0°C',
-  ),
+    titleKey: 'inline.plan295.daily_choice.freezing.112ca90b1cba',
+    subtitleKey: 'inline.plan295.daily_choice.below_0_c.5595ec4d998b'),
   DailyChoiceCategory(
     id: 'cold',
     icon: Icons.severe_cold_rounded,
-    titleZh: '寒冷',
-    titleEn: 'Cold',
-    subtitleZh: '-5°C 到 10°C',
-    subtitleEn: '-5°C to 10°C',
-  ),
+    titleKey: 'inline.plan295.daily_choice.cold.5f5a5d94ebb0',
+    subtitleKey: 'inline.plan295.daily_choice.5_c_to_10_c.48ec3aa86bd4'),
   DailyChoiceCategory(
     id: 'cool',
     icon: Icons.cloud_queue_rounded,
-    titleZh: '凉爽',
-    titleEn: 'Cool',
-    subtitleZh: '10°C 到 15°C',
-    subtitleEn: '10°C to 15°C',
-  ),
+    titleKey: 'inline.plan295.daily_choice.cool.97b323d9a1f6',
+    subtitleKey: 'inline.plan295.daily_choice.10_c_to_15_c.47019b39de50'),
   DailyChoiceCategory(
     id: 'mild',
     icon: Icons.filter_vintage_rounded,
-    titleZh: '温和',
-    titleEn: 'Mild',
-    subtitleZh: '15°C 到 25°C',
-    subtitleEn: '15°C to 25°C',
-  ),
+    titleKey: 'inline.plan295.daily_choice.mild.55233cb9e60a',
+    subtitleKey: 'inline.plan295.daily_choice.15_c_to_25_c.11df045af05c'),
   DailyChoiceCategory(
     id: 'warm',
     icon: Icons.wb_sunny_outlined,
-    titleZh: '微热',
-    titleEn: 'Warm',
-    subtitleZh: '25°C 到 30°C',
-    subtitleEn: '25°C to 30°C',
-  ),
+    titleKey: 'inline.plan295.daily_choice.warm.7e5d01fcd40e',
+    subtitleKey: 'inline.plan295.daily_choice.25_c_to_30_c.829f81da743a'),
   DailyChoiceCategory(
     id: 'hot',
     icon: Icons.wb_sunny_rounded,
-    titleZh: '炎热',
-    titleEn: 'Hot',
-    subtitleZh: '30°C 到 35°C',
-    subtitleEn: '30°C to 35°C',
-  ),
+    titleKey: 'inline.plan295.daily_choice.hot.5b5815af79df',
+    subtitleKey: 'inline.plan295.daily_choice.30_c_to_35_c.42550ae59815'),
   DailyChoiceCategory(
     id: 'extreme_hot',
     icon: Icons.local_fire_department_rounded,
-    titleZh: '酷暑',
-    titleEn: 'Extreme heat',
-    subtitleZh: '35°C 以上',
-    subtitleEn: 'Above 35°C',
-  ),
+    titleKey: 'inline.plan295.daily_choice.extreme_heat.5c6fc7f42b77',
+    subtitleKey: 'inline.plan295.daily_choice.above_35_c.f58470be03af'),
 ];
 const DailyChoiceCategory allTemperatureCategory = DailyChoiceCategory(
   id: 'all',
   icon: Icons.grid_view_rounded,
-  titleZh: '全部气温',
-  titleEn: 'All temperatures',
-  subtitleZh: '不限定气温，覆盖整个衣橱',
-  subtitleEn: 'All temperatures, full wardrobe',
-);
+    titleKey: 'inline.plan295.daily_choice.all_temperatures.c1f346a28465',
+    subtitleKey: 'inline.plan295.daily_choice.all_temperatures_full_wardrobe.dc043ccba6f5');
 const List<DailyChoiceCategory> wearTemperatureFilterCategories =
     <DailyChoiceCategory>[allTemperatureCategory, ...temperatureCategories];
 const List<DailyChoiceCategory> wearSceneCategories = <DailyChoiceCategory>[
   DailyChoiceCategory(
     id: 'commute',
     icon: Icons.work_rounded,
-    titleZh: '通勤',
-    titleEn: 'Commute',
-    subtitleZh: '得体、耐坐、易打理',
-    subtitleEn: 'Polished and practical',
-  ),
+    titleKey: 'inline.plan295.daily_choice.commute.4799a6b90d47',
+    subtitleKey: 'inline.plan295.daily_choice.polished_and_practical.c9e392673587'),
   DailyChoiceCategory(
     id: 'casual',
     icon: Icons.weekend_rounded,
-    titleZh: '日常',
-    titleEn: 'Casual',
-    subtitleZh: '舒服、松弛、不费力',
-    subtitleEn: 'Comfortable and easy',
-  ),
+    titleKey: 'inline.plan295.daily_choice.casual.04c0350270ab',
+    subtitleKey: 'inline.plan295.daily_choice.comfortable_and_easy.418716dc2ece'),
   DailyChoiceCategory(
     id: 'business',
     icon: Icons.business_center_rounded,
-    titleZh: '正式',
-    titleEn: 'Business',
-    subtitleZh: '轮廓清楚，颜色克制',
-    subtitleEn: 'Structured and restrained',
-  ),
+    titleKey: 'inline.plan295.daily_choice.business.31da658066a7',
+    subtitleKey: 'inline.plan295.daily_choice.structured_and_restrained.4b4a35739092'),
   DailyChoiceCategory(
     id: 'date',
     icon: Icons.favorite_rounded,
-    titleZh: '约会',
-    titleEn: 'Date',
-    subtitleZh: '柔和、有记忆点',
-    subtitleEn: 'Soft with one highlight',
-  ),
+    titleKey: 'inline.plan295.daily_choice.date.8b68ec92c089',
+    subtitleKey: 'inline.plan295.daily_choice.soft_with_one_highlight.307967f73ed1'),
   DailyChoiceCategory(
     id: 'exercise',
     icon: Icons.directions_run_rounded,
-    titleZh: '运动',
-    titleEn: 'Exercise',
-    subtitleZh: '透气、可活动',
-    subtitleEn: 'Breathable and mobile',
-  ),
+    titleKey: 'inline.plan295.daily_choice.exercise.c95fb246e2c7',
+    subtitleKey: 'inline.plan295.daily_choice.breathable_and_mobile.79aeee148da8'),
   DailyChoiceCategory(
     id: 'rain',
     icon: Icons.umbrella_rounded,
-    titleZh: '雨天',
-    titleEn: 'Rain',
-    subtitleZh: '防滑、快干、轻外层',
-    subtitleEn: 'Grippy, quick-dry, layered',
-  ),
+    titleKey: 'inline.plan295.daily_choice.rain.653c02cd93ca',
+    subtitleKey: 'inline.plan295.daily_choice.grippy_quick_dry_layered.64d55a69b643'),
 ];
 const DailyChoiceCategory allWearSceneCategory = DailyChoiceCategory(
   id: 'all',
   icon: Icons.grid_view_rounded,
-  titleZh: '全部场景',
-  titleEn: 'All scenes',
-  subtitleZh: '不限定场景',
-  subtitleEn: 'All scenes',
-);
+    titleKey: 'inline.plan295.daily_choice.all_scenes.07f7ddffe20c',
+    subtitleKey: 'inline.plan295.daily_choice.all_scenes.bb6705527faa');
 const List<DailyChoiceCategory> wearSceneFilterCategories =
     <DailyChoiceCategory>[allWearSceneCategory, ...wearSceneCategories];
 const List<DailyChoiceTraitGroup> wearTraitGroups = <DailyChoiceTraitGroup>[
   DailyChoiceTraitGroup(
     id: 'gender',
     icon: Icons.wc_rounded,
-    titleZh: '性别参考',
-    titleEn: 'Gender reference',
-    subtitleZh: '只作为版型和单品方向参考，可按自己的穿着习惯自由选择',
-    subtitleEn:
-        'A fit and styling reference only; choose by your own wardrobe habits',
+    titleKey: 'inline.plan295.daily_choice.gender_reference.227689787637',
+    subtitleKey: 'inline.plan295.daily_choice.a_fit_and_styling_reference_only_cho.f2f507e5a46a',
     options: <DailyChoiceTraitOption>[
       DailyChoiceTraitOption(
         id: 'gender_neutral',
-        titleZh: '不限定',
-        titleEn: 'Open',
-        icon: Icons.all_inclusive_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.open.ee9fc2bd9171',
+        icon: Icons.all_inclusive_rounded),
       DailyChoiceTraitOption(
         id: 'womenswear',
-        titleZh: '女装方向',
-        titleEn: 'Womenswear',
-        icon: Icons.face_retouching_natural_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.womenswear.facc6d4b9dc1',
+        icon: Icons.face_retouching_natural_rounded),
       DailyChoiceTraitOption(
         id: 'menswear',
-        titleZh: '男装方向',
-        titleEn: 'Menswear',
-        icon: Icons.man_rounded,
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.menswear.4ed5ba5cb43e',
+        icon: Icons.man_rounded),
+    ]),
   DailyChoiceTraitGroup(
     id: 'age',
     icon: Icons.diversity_3_rounded,
-    titleZh: '年龄阶段',
-    titleEn: 'Age stage',
-    subtitleZh: '按生活阶段和穿着语气筛选，不把年龄当成硬限制',
-    subtitleEn: 'Filter by life stage and styling tone, not a hard age rule',
+    titleKey: 'inline.plan295.daily_choice.age_stage.5c243e27d79b',
+    subtitleKey: 'inline.plan295.daily_choice.filter_by_life_stage_and_styling_ton.455d2d6c514f',
     options: <DailyChoiceTraitOption>[
       DailyChoiceTraitOption(
         id: 'all_age',
-        titleZh: '通用不挑龄',
-        titleEn: 'Age-flexible',
-        icon: Icons.all_inclusive_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.age_flexible.9d7266f462ad',
+        icon: Icons.all_inclusive_rounded),
       DailyChoiceTraitOption(
         id: 'youth',
-        titleZh: '学生 / 青春',
-        titleEn: 'Youth',
-        icon: Icons.school_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.youth.e7674ca6c131',
+        icon: Icons.school_rounded),
       DailyChoiceTraitOption(
         id: 'young_adult',
-        titleZh: '年轻通勤',
-        titleEn: 'Young adult',
-        icon: Icons.badge_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.young_adult.88be2b9b7b2f',
+        icon: Icons.badge_rounded),
       DailyChoiceTraitOption(
         id: 'adult',
-        titleZh: '成熟日常',
-        titleEn: 'Adult',
-        icon: Icons.work_outline_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.adult.1ed5be66d036',
+        icon: Icons.work_outline_rounded),
       DailyChoiceTraitOption(
         id: 'mature',
-        titleZh: '稳重质感',
-        titleEn: 'Mature',
-        icon: Icons.workspace_premium_rounded,
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.mature.6524bac656aa',
+        icon: Icons.workspace_premium_rounded),
+    ]),
   DailyChoiceTraitGroup(
     id: 'style',
     icon: Icons.style_rounded,
-    titleZh: '风格',
-    titleEn: 'Style',
-    subtitleZh: '这个搭配整体给人的气质方向',
-    subtitleEn: 'How the outfit reads at a glance',
+    titleKey: 'ref.toolbox.sound.piano.style',
+    subtitleKey: 'inline.plan295.daily_choice.how_the_outfit_reads_at_a_glance.f4067a9f698f',
     options: <DailyChoiceTraitOption>[
       DailyChoiceTraitOption(
         id: 'minimal',
-        titleZh: '极简基础',
-        titleEn: 'Minimal',
-        icon: Icons.checkroom_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.minimal.1c786f1ba396',
+        icon: Icons.checkroom_rounded),
       DailyChoiceTraitOption(
         id: 'polished',
-        titleZh: '利落通勤',
-        titleEn: 'Polished',
-        icon: Icons.work_outline_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.polished.47b263e6660d',
+        icon: Icons.work_outline_rounded),
       DailyChoiceTraitOption(
         id: 'soft',
-        titleZh: '温柔轻熟',
-        titleEn: 'Soft',
-        icon: Icons.favorite_border_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.soft.22bf270f622a',
+        icon: Icons.favorite_border_rounded),
       DailyChoiceTraitOption(
         id: 'relaxed',
-        titleZh: '松弛休闲',
-        titleEn: 'Relaxed',
-        icon: Icons.weekend_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.relaxed.556d216b95e0',
+        icon: Icons.weekend_rounded),
       DailyChoiceTraitOption(
         id: 'sporty',
-        titleZh: '运动机能',
-        titleEn: 'Sporty',
-        icon: Icons.fitness_center_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.sporty.5c48952c2dcb',
+        icon: Icons.fitness_center_rounded),
       DailyChoiceTraitOption(
         id: 'retro',
-        titleZh: '复古文艺',
-        titleEn: 'Retro',
-        icon: Icons.history_edu_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.retro.5f7fcf5d1f85',
+        icon: Icons.history_edu_rounded),
       DailyChoiceTraitOption(
         id: 'street',
-        titleZh: '街头潮感',
-        titleEn: 'Street',
-        icon: Icons.flash_on_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.street.09be80d3b5c2',
+        icon: Icons.flash_on_rounded),
       DailyChoiceTraitOption(
         id: 'outdoor',
-        titleZh: '户外防护',
-        titleEn: 'Outdoor',
-        icon: Icons.terrain_rounded,
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.outdoor.52b51ce427df',
+        icon: Icons.terrain_rounded),
+    ]),
   DailyChoiceTraitGroup(
     id: 'silhouette',
     icon: Icons.straighten_rounded,
-    titleZh: '版型',
-    titleEn: 'Silhouette',
-    subtitleZh: '记录这套更偏修身、直筒、宽松还是层次',
-    subtitleEn: 'Capture the shape and proportion',
+    titleKey: 'inline.plan295.daily_choice.silhouette.4611e18bada9',
+    subtitleKey: 'inline.plan295.daily_choice.capture_the_shape_and_proportion.822356182b01',
     options: <DailyChoiceTraitOption>[
       DailyChoiceTraitOption(
         id: 'clean',
-        titleZh: '干净利落',
-        titleEn: 'Clean',
-        icon: Icons.crop_3_2_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.clean.79d9bc98707d',
+        icon: Icons.crop_3_2_rounded),
       DailyChoiceTraitOption(
         id: 'waist_defined',
-        titleZh: '强调腰线',
-        titleEn: 'Waist-defined',
-        icon: Icons.face_retouching_natural_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.waist_defined.66ee5293c64f',
+        icon: Icons.face_retouching_natural_rounded),
       DailyChoiceTraitOption(
         id: 'straight',
-        titleZh: '直筒修长',
-        titleEn: 'Straight',
-        icon: Icons.view_column_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.straight.b18107af4dbb',
+        icon: Icons.view_column_rounded),
       DailyChoiceTraitOption(
         id: 'relaxed',
-        titleZh: '宽松舒展',
-        titleEn: 'Relaxed fit',
-        icon: Icons.open_in_full_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.relaxed_fit.abfae1c26ef4',
+        icon: Icons.open_in_full_rounded),
       DailyChoiceTraitOption(
         id: 'drapey',
-        titleZh: '垂感流动',
-        titleEn: 'Drapey',
-        icon: Icons.waterfall_chart_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.drapey.045d3e784e68',
+        icon: Icons.waterfall_chart_rounded),
       DailyChoiceTraitOption(
         id: 'layered',
-        titleZh: '叠穿层次',
-        titleEn: 'Layered',
-        icon: Icons.layers_rounded,
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.layered.6ffd4abe235e',
+        icon: Icons.layers_rounded),
+    ]),
   DailyChoiceTraitGroup(
     id: 'key_piece',
     icon: Icons.category_rounded,
-    titleZh: '样式类型',
-    titleEn: 'Key pieces',
-    subtitleZh: '用来描述这套搭配最重要的核心单品',
-    subtitleEn: 'The main clothing types carrying the look',
+    titleKey: 'inline.plan295.daily_choice.key_pieces.f3609209ea4d',
+    subtitleKey: 'inline.plan295.daily_choice.the_main_clothing_types_carrying_the.e3903218b720',
     options: <DailyChoiceTraitOption>[
       DailyChoiceTraitOption(
         id: 'shirt',
-        titleZh: '衬衫 / Polo',
-        titleEn: 'Shirt / Polo',
-        icon: Icons.badge_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.shirt_polo.a01dff7830fe',
+        icon: Icons.badge_rounded),
       DailyChoiceTraitOption(
         id: 'knit',
-        titleZh: '针织 / 毛衣',
-        titleEn: 'Knit',
-        icon: Icons.texture_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.knit.b79a15a8b9d2',
+        icon: Icons.texture_rounded),
       DailyChoiceTraitOption(
         id: 'tailoring',
-        titleZh: '西装 / 西裤',
-        titleEn: 'Tailoring',
-        icon: Icons.business_center_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.tailoring.56d71335e98e',
+        icon: Icons.business_center_rounded),
       DailyChoiceTraitOption(
         id: 'coat',
-        titleZh: '外套 / 大衣',
-        titleEn: 'Outerwear',
-        icon: Icons.checkroom_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.outerwear.3ad5c2da8a8f',
+        icon: Icons.checkroom_rounded),
       DailyChoiceTraitOption(
         id: 'dress_skirt',
-        titleZh: '裙装 / 连衣裙',
-        titleEn: 'Dress / Skirt',
-        icon: Icons.dry_cleaning_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.dress_skirt.3e41e756b1b9',
+        icon: Icons.dry_cleaning_rounded),
       DailyChoiceTraitOption(
         id: 'trousers',
-        titleZh: '裤装主导',
-        titleEn: 'Trousers',
-        icon: Icons.accessibility_new_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.trousers.36c7596cc20b',
+        icon: Icons.accessibility_new_rounded),
       DailyChoiceTraitOption(
         id: 'shorts',
-        titleZh: '短裤 / 清凉下装',
-        titleEn: 'Shorts',
-        icon: Icons.wb_sunny_outlined,
-      ),
+        titleKey: 'inline.plan295.daily_choice.shorts.68530c8397fc',
+        icon: Icons.wb_sunny_outlined),
       DailyChoiceTraitOption(
         id: 'athleisure',
-        titleZh: '运动套组',
-        titleEn: 'Athleisure',
-        icon: Icons.sports_gymnastics_rounded,
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.athleisure.e1f12cd7bf95',
+        icon: Icons.sports_gymnastics_rounded),
+    ]),
   DailyChoiceTraitGroup(
     id: 'material',
     icon: Icons.grid_view_rounded,
-    titleZh: '面料与触感',
-    titleEn: 'Fabric',
-    subtitleZh: '帮助你记住这套依赖的材质关键词',
-    subtitleEn: 'Track the fabric and touch that define the outfit',
+    titleKey: 'inline.plan295.daily_choice.fabric.eeb696b9b80d',
+    subtitleKey: 'inline.plan295.daily_choice.track_the_fabric_and_touch_that_defi.102d8cc8295d',
     options: <DailyChoiceTraitOption>[
       DailyChoiceTraitOption(
         id: 'wool',
-        titleZh: '羊毛 / 呢料',
-        titleEn: 'Wool',
-        icon: Icons.ac_unit_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.wool.a47ca572a940',
+        icon: Icons.ac_unit_rounded),
       DailyChoiceTraitOption(
         id: 'knit',
-        titleZh: '针织感',
-        titleEn: 'Knit texture',
-        icon: Icons.texture_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.knit_texture.e54ab24cd0cc',
+        icon: Icons.texture_rounded),
       DailyChoiceTraitOption(
         id: 'cotton_linen',
-        titleZh: '棉麻透气',
-        titleEn: 'Cotton-linen',
-        icon: Icons.air_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.cotton_linen.a34c1b41c94c',
+        icon: Icons.air_rounded),
       DailyChoiceTraitOption(
         id: 'tailoring_fabric',
-        titleZh: '挺括西装料',
-        titleEn: 'Tailoring fabric',
-        icon: Icons.iron_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.tailoring_fabric.339e9fa8b11c',
+        icon: Icons.iron_rounded),
       DailyChoiceTraitOption(
         id: 'quick_dry',
-        titleZh: '速干凉感',
-        titleEn: 'Quick-dry',
-        icon: Icons.bolt_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.quick_dry.dfb916d9f28a',
+        icon: Icons.bolt_rounded),
       DailyChoiceTraitOption(
         id: 'waterproof',
-        titleZh: '防水防泼',
-        titleEn: 'Waterproof',
-        icon: Icons.umbrella_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.waterproof.b58ae4d6b661',
+        icon: Icons.umbrella_rounded),
       DailyChoiceTraitOption(
         id: 'denim',
-        titleZh: '牛仔 / 灯芯绒',
-        titleEn: 'Denim / corduroy',
-        icon: Icons.texture_outlined,
-      ),
+        titleKey: 'inline.plan295.daily_choice.denim_corduroy.ed2f19500045',
+        icon: Icons.texture_outlined),
       DailyChoiceTraitOption(
         id: 'soft_sheen',
-        titleZh: '柔软 / 光泽',
-        titleEn: 'Soft / sheen',
-        icon: Icons.auto_awesome_rounded,
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.soft_sheen.58990b1a0c0c',
+        icon: Icons.auto_awesome_rounded),
+    ]),
   DailyChoiceTraitGroup(
     id: 'highlight',
     icon: Icons.auto_awesome_rounded,
-    titleZh: '亮点',
-    titleEn: 'Highlight',
-    subtitleZh: '这套最值得被记住的点',
-    subtitleEn: 'The finishing note worth remembering',
+    titleKey: 'inline.plan295.daily_choice.highlight.b718d030b28c',
+    subtitleKey: 'inline.plan295.daily_choice.the_finishing_note_worth_remembering.952b6193c264',
     options: <DailyChoiceTraitOption>[
       DailyChoiceTraitOption(
         id: 'clean_color',
-        titleZh: '配色克制',
-        titleEn: 'Clean palette',
-        icon: Icons.palette_outlined,
-      ),
+        titleKey: 'inline.plan295.daily_choice.clean_palette.2e3ef7f003b6',
+        icon: Icons.palette_outlined),
       DailyChoiceTraitOption(
         id: 'color_accent',
-        titleZh: '颜色提气',
-        titleEn: 'Color accent',
-        icon: Icons.color_lens_outlined,
-      ),
+        titleKey: 'inline.plan295.daily_choice.color_accent.daba9dafb903',
+        icon: Icons.color_lens_outlined),
       DailyChoiceTraitOption(
         id: 'texture',
-        titleZh: '材质层次',
-        titleEn: 'Texture contrast',
-        icon: Icons.blur_on_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.texture_contrast.14fbcc764930',
+        icon: Icons.blur_on_rounded),
       DailyChoiceTraitOption(
         id: 'proportion',
-        titleZh: '比例优化',
-        titleEn: 'Proportion',
-        icon: Icons.height_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.proportion.637085fc0c9b',
+        icon: Icons.height_rounded),
       DailyChoiceTraitOption(
         id: 'accessory',
-        titleZh: '配饰收口',
-        titleEn: 'Accessory finish',
-        icon: Icons.watch_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.accessory_finish.fd34225380d1',
+        icon: Icons.watch_rounded),
       DailyChoiceTraitOption(
         id: 'weather_protection',
-        titleZh: '天气防护',
-        titleEn: 'Weather protection',
-        icon: Icons.shield_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.weather_protection.3120ee5c7d49',
+        icon: Icons.shield_rounded),
       DailyChoiceTraitOption(
         id: 'sun_protection',
-        titleZh: '防晒降温',
-        titleEn: 'Sun protection',
-        icon: Icons.beach_access_rounded,
-      ),
+        titleKey: 'inline.plan295.daily_choice.sun_protection.b48c2de4f401',
+        icon: Icons.beach_access_rounded),
       DailyChoiceTraitOption(
         id: 'shoe_anchor',
-        titleZh: '鞋履定调',
-        titleEn: 'Shoe anchor',
-        icon: Icons.shopping_bag_outlined,
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.shoe_anchor.187e64e15801',
+        icon: Icons.shopping_bag_outlined),
+    ]),
 ];
 final List<DailyChoiceTraitGroup> wearManagerTraitGroups =
     <String>{'gender', 'age', 'style', 'silhouette', 'key_piece'}
@@ -860,7 +593,7 @@ List<String> wearTraitLabels(
 }) {
   return _wearTraitLabelsForLanguage(
     attributes,
-    useZh: AppI18n.normalizeLanguageCode(i18n.languageCode) == 'zh',
+    i18n: i18n,
     groupIds: groupIds,
     limit: limit,
   );
@@ -873,7 +606,7 @@ List<String> wearTraitLabelsZh(
 }) {
   return _wearTraitLabelsForLanguage(
     attributes,
-    useZh: true,
+    i18n: AppI18n('zh'),
     groupIds: groupIds,
     limit: limit,
   );
@@ -886,7 +619,7 @@ List<String> wearTraitLabelsEn(
 }) {
   return _wearTraitLabelsForLanguage(
     attributes,
-    useZh: false,
+    i18n: AppI18n('en'),
     groupIds: groupIds,
     limit: limit,
   );
@@ -904,7 +637,7 @@ List<String> wearTraitLines(AppI18n i18n, DailyChoiceOption option) {
       continue;
     }
     lines.add(
-      '${group.title(i18n)}${pickUiText(i18n, zh: '：', en: ': ')}${labels.join(pickUiText(i18n, zh: '、', en: ', '))}',
+      '${group.title(i18n)}${i18n.t('inline.plan295.daily_choice.text.6e6eaf6a1043')}${labels.join(i18n.t('inline.plan295.daily_choice.text.2dce0380cd64'))}',
     );
   }
   return lines;
@@ -912,7 +645,7 @@ List<String> wearTraitLines(AppI18n i18n, DailyChoiceOption option) {
 
 List<String> _wearTraitLabelsForLanguage(
   Map<String, List<String>> attributes, {
-  required bool useZh,
+  required AppI18n i18n,
   List<String>? groupIds,
   int? limit,
 }) {
@@ -925,7 +658,7 @@ List<String> _wearTraitLabelsForLanguage(
       if (option == null) {
         continue;
       }
-      labels.add(useZh ? option.titleZh : option.titleEn);
+      labels.add(option.title(i18n));
       if (limit != null && labels.length >= limit) {
         return labels;
       }
@@ -967,7 +700,7 @@ List<String> eatTraitLabels(
 }) {
   return _eatTraitLabelsForLanguage(
     attributes,
-    useZh: AppI18n.normalizeLanguageCode(i18n.languageCode) == 'zh',
+    i18n: i18n,
     groupIds: groupIds,
     limit: limit,
   );
@@ -980,7 +713,7 @@ List<String> eatTraitLabelsZh(
 }) {
   return _eatTraitLabelsForLanguage(
     attributes,
-    useZh: true,
+    i18n: AppI18n('zh'),
     groupIds: groupIds,
     limit: limit,
   );
@@ -993,7 +726,7 @@ List<String> eatTraitLabelsEn(
 }) {
   return _eatTraitLabelsForLanguage(
     attributes,
-    useZh: false,
+    i18n: AppI18n('en'),
     groupIds: groupIds,
     limit: limit,
   );
@@ -1017,7 +750,7 @@ List<String> eatTraitLines(AppI18n i18n, DailyChoiceOption option) {
   final mealLabels = eatMealLabels(i18n, option);
   if (mealLabels.isNotEmpty) {
     lines.add(
-      '${pickUiText(i18n, zh: '适合餐段：', en: 'Meals: ')}${mealLabels.join(pickUiText(i18n, zh: '、', en: ', '))}',
+      '${i18n.t('inline.plan295.daily_choice.meals.cf474b56409b')}${mealLabels.join(i18n.t('inline.plan295.daily_choice.text.2dce0380cd64'))}',
     );
   }
   for (final group in <DailyChoiceTraitGroup>[
@@ -1033,7 +766,7 @@ List<String> eatTraitLines(AppI18n i18n, DailyChoiceOption option) {
       continue;
     }
     lines.add(
-      '${group.title(i18n)}${pickUiText(i18n, zh: '：', en: ': ')}${labels.join(pickUiText(i18n, zh: '、', en: ', '))}',
+      '${group.title(i18n)}${i18n.t('inline.plan295.daily_choice.text.6e6eaf6a1043')}${labels.join(i18n.t('inline.plan295.daily_choice.text.2dce0380cd64'))}',
     );
   }
   return lines;
@@ -1041,7 +774,7 @@ List<String> eatTraitLines(AppI18n i18n, DailyChoiceOption option) {
 
 List<String> _eatTraitLabelsForLanguage(
   Map<String, List<String>> attributes, {
-  required bool useZh,
+  required AppI18n i18n,
   List<String>? groupIds,
   int? limit,
 }) {
@@ -1059,7 +792,7 @@ List<String> _eatTraitLabelsForLanguage(
       if (option == null) {
         continue;
       }
-      labels.add(useZh ? option.titleZh : option.titleEn);
+      labels.add(option.title(i18n));
       if (limit != null && labels.length >= limit) {
         return labels;
       }
@@ -1072,677 +805,378 @@ const List<DailyChoiceCategory> placeCategories = <DailyChoiceCategory>[
   DailyChoiceCategory(
     id: 'outside',
     icon: Icons.door_front_door_rounded,
-    titleZh: '出门',
-    titleEn: 'Step out',
-    subtitleZh: '半小时内完成',
-    subtitleEn: 'Under 30 minutes',
-  ),
+    titleKey: 'inline.plan295.daily_choice.step_out.baf18d364c05',
+    subtitleKey: 'inline.plan295.daily_choice.under_30_minutes.689b9df746cc'),
   DailyChoiceCategory(
     id: 'nearby',
     icon: Icons.location_city_rounded,
-    titleZh: '周边',
-    titleEn: 'Nearby',
-    subtitleZh: '同城半日感',
-    subtitleEn: 'A local half-day',
-  ),
+    titleKey: 'inline.plan295.daily_choice.nearby.8d7779a99a74',
+    subtitleKey: 'inline.plan295.daily_choice.a_local_half_day.b01b923ee490'),
   DailyChoiceCategory(
     id: 'travel',
     icon: Icons.train_rounded,
-    titleZh: '远行',
-    titleEn: 'Travel',
-    subtitleZh: '需要提前规划',
-    subtitleEn: 'Needs planning',
-  ),
+    titleKey: 'inline.plan295.daily_choice.travel.66ca8f22e0c9',
+    subtitleKey: 'inline.plan295.daily_choice.needs_planning.9c9283e14b3a'),
 ];
 const DailyChoiceCategory allPlaceSceneCategory = DailyChoiceCategory(
   id: 'all',
   icon: Icons.grid_view_rounded,
-  titleZh: '全部场景',
-  titleEn: 'All scenes',
-  subtitleZh: '先看距离，再在整组地点里随机',
-  subtitleEn: 'Start from distance, then randomize across all scenes',
-);
+    titleKey: 'inline.plan295.daily_choice.all_scenes.07f7ddffe20c',
+    subtitleKey: 'inline.plan295.daily_choice.start_from_distance_then_randomize_a.6f0a551e29bf');
 const List<DailyChoiceCategory> placeSceneCategories = <DailyChoiceCategory>[
   DailyChoiceCategory(
     id: 'food',
     icon: Icons.restaurant_rounded,
-    titleZh: '饮食',
-    titleEn: 'Food',
-    subtitleZh: '餐馆、小吃、咖啡和夜宵',
-    subtitleEn: 'Meals, snacks, cafes, and late bites',
-  ),
+    titleKey: 'inline.plan295.daily_choice.food.180d201ea8ce',
+    subtitleKey: 'inline.plan295.daily_choice.meals_snacks_cafes_and_late_bites.b4bf3c969258'),
   DailyChoiceCategory(
     id: 'entertainment',
     icon: Icons.local_activity_rounded,
-    titleZh: '娱乐',
-    titleEn: 'Entertainment',
-    subtitleZh: '电影、电玩、桌游和演出',
-    subtitleEn: 'Movies, games, and live fun',
-  ),
+    titleKey: 'inline.plan295.daily_choice.entertainment.9fd0c0e75bb9',
+    subtitleKey: 'inline.plan295.daily_choice.movies_games_and_live_fun.30a895e44d5d'),
   DailyChoiceCategory(
     id: 'sports',
     icon: Icons.sports_basketball_rounded,
-    titleZh: '运动',
-    titleEn: 'Sports',
-    subtitleZh: '球馆、健身、游泳和运动场地',
-    subtitleEn: 'Gyms, courts, pools, and active venues',
-  ),
+    titleKey: 'inline.plan295.daily_choice.sports.4ccfe61b17e6',
+    subtitleKey: 'inline.plan295.daily_choice.gyms_courts_pools_and_active_venues.506aeb125159'),
   DailyChoiceCategory(
     id: 'culture',
     icon: Icons.palette_rounded,
-    titleZh: '文化',
-    titleEn: 'Culture',
-    subtitleZh: '博物馆、美术馆、剧场和展览',
-    subtitleEn: 'Museums, galleries, theaters, and exhibitions',
-  ),
+    titleKey: 'inline.ui.pages.playback_advanced_page.culture_faa85e',
+    subtitleKey: 'inline.plan295.daily_choice.museums_galleries_theaters_and_exhib.cb4f084eb9cc'),
   DailyChoiceCategory(
     id: 'history',
     icon: Icons.account_balance_rounded,
-    titleZh: '历史',
-    titleEn: 'History',
-    subtitleZh: '古迹、老街、遗址和旧建筑',
-    subtitleEn: 'Historic streets, relics, and old architecture',
-  ),
+    titleKey: 'inline.plan295.daily_choice.history.d46792db5fca',
+    subtitleKey: 'inline.plan295.daily_choice.historic_streets_relics_and_old_arch.f25999a1d064'),
   DailyChoiceCategory(
     id: 'nature',
     icon: Icons.park_rounded,
-    titleZh: '自然',
-    titleEn: 'Nature',
-    subtitleZh: '公园、绿道、湿地和山野',
-    subtitleEn: 'Parks, greenways, wetlands, and trails',
-  ),
+    titleKey: 'ambientCategoryNature',
+    subtitleKey: 'inline.plan295.daily_choice.parks_greenways_wetlands_and_trails.95f22bb85b73'),
   DailyChoiceCategory(
     id: 'study',
     icon: Icons.local_library_rounded,
-    titleZh: '学习',
-    titleEn: 'Study',
-    subtitleZh: '图书馆、自习室、书店和安静工作点',
-    subtitleEn: 'Libraries, study rooms, bookstores, and quiet work spots',
-  ),
+    titleKey: 'inline.ui.module.module_access.study_594a75',
+    subtitleKey: 'inline.plan295.daily_choice.libraries_study_rooms_bookstores_and.cd2123a37c23'),
   DailyChoiceCategory(
     id: 'shopping',
     icon: Icons.shopping_bag_rounded,
-    titleZh: '购物',
-    titleEn: 'Shopping',
-    subtitleZh: '商圈、市集、夜市和买手店',
-    subtitleEn: 'Malls, markets, and shopping districts',
-  ),
+    titleKey: 'inline.plan295.daily_choice.shopping.ba38e028ab31',
+    subtitleKey: 'inline.plan295.daily_choice.malls_markets_and_shopping_districts.14432d85df00'),
   DailyChoiceCategory(
     id: 'social',
     icon: Icons.groups_rounded,
-    titleZh: '社交',
-    titleEn: 'Social',
-    subtitleZh: '聊天、聚会、桌游和轻连接',
-    subtitleEn: 'Meetups, board games, and easy social time',
-  ),
+    titleKey: 'inline.plan295.daily_choice.social.8b1bc96611f4',
+    subtitleKey: 'inline.plan295.daily_choice.meetups_board_games_and_easy_social.6fc57166325a'),
   DailyChoiceCategory(
     id: 'family',
     icon: Icons.family_restroom_rounded,
-    titleZh: '亲子',
-    titleEn: 'Family',
-    subtitleZh: '亲子出游、长辈友好和多人同行',
-    subtitleEn: 'Family outings and multi-age friendly places',
-  ),
+    titleKey: 'inline.plan295.daily_choice.family.8cd1e0a00fc0',
+    subtitleKey: 'inline.plan295.daily_choice.family_outings_and_multi_age_friendl.aae9a888248f'),
   DailyChoiceCategory(
     id: 'nightlife',
     icon: Icons.nightlife_rounded,
-    titleZh: '夜生活',
-    titleEn: 'Nightlife',
-    subtitleZh: '酒吧、夜场、夜景和夜间活动',
-    subtitleEn: 'Bars, night shows, views, and late activities',
-  ),
+    titleKey: 'inline.plan295.daily_choice.nightlife.c52c0931be25',
+    subtitleKey: 'inline.plan295.daily_choice.bars_night_shows_views_and_late_acti.6519f2633335'),
   DailyChoiceCategory(
     id: 'relax',
     icon: Icons.spa_rounded,
-    titleZh: '放松',
-    titleEn: 'Relax',
-    subtitleZh: '温泉、茶室、疗愈和慢节奏空间',
-    subtitleEn: 'Hot springs, tea houses, and restorative places',
-  ),
+    titleKey: 'breakPhase',
+    subtitleKey: 'inline.plan295.daily_choice.hot_springs_tea_houses_and_restorati.61fa0f7d77bd'),
   DailyChoiceCategory(
     id: 'photo',
     icon: Icons.photo_camera_back_rounded,
-    titleZh: '出片',
-    titleEn: 'Photo',
-    subtitleZh: '街景、机位、观景台和建筑',
-    subtitleEn: 'Street scenes, viewpoints, and photo spots',
-  ),
+    titleKey: 'inline.plan295.daily_choice.photo.73846acf7437',
+    subtitleKey: 'inline.plan295.daily_choice.street_scenes_viewpoints_and_photo_s.998087b2480c'),
   DailyChoiceCategory(
     id: 'specialty',
     icon: Icons.explore_off_rounded,
-    titleZh: '特色区域',
-    titleEn: 'Special area',
-    subtitleZh: '创意园、非标空间和本地特色区',
-    subtitleEn: 'Creative parks and locally distinctive zones',
-  ),
+    titleKey: 'inline.plan295.daily_choice.special_area.77bf0527aa07',
+    subtitleKey: 'inline.plan295.daily_choice.creative_parks_and_locally_distincti.4286e68200a3'),
   DailyChoiceCategory(
     id: 'memorial',
     icon: Icons.flag_circle_rounded,
-    titleZh: '纪念',
-    titleEn: 'Memorial',
-    subtitleZh: '纪念馆、纪念园和城市记忆空间',
-    subtitleEn: 'Memorial halls, remembrance parks, and memory spaces',
-  ),
+    titleKey: 'inline.plan295.daily_choice.memorial.09900fc31d20',
+    subtitleKey: 'inline.plan295.daily_choice.memorial_halls_remembrance_parks_and.e127f0e11cce'),
 ];
 const DailyChoiceCategory randomActivityCategory = DailyChoiceCategory(
   id: 'any',
   icon: Icons.shuffle_rounded,
-  titleZh: '随机方向',
-  titleEn: 'Random',
-  subtitleZh: '方向也交给随机',
-  subtitleEn: 'Randomize the direction too',
-);
+    titleKey: 'inline.plan295.daily_choice.random.43e7c57cce0c',
+    subtitleKey: 'inline.plan295.daily_choice.randomize_the_direction_too.1423422f5015');
 const List<DailyChoiceCategory> activityCategories = <DailyChoiceCategory>[
   DailyChoiceCategory(
     id: 'focus',
     icon: Icons.center_focus_strong_rounded,
-    titleZh: '专注',
-    titleEn: 'Focus',
-    subtitleZh: '把注意力重新放回目标',
-    subtitleEn: 'Return attention to the current goal',
-  ),
+    titleKey: 'ambientCategoryFocus',
+    subtitleKey: 'inline.plan295.daily_choice.return_attention_to_the_current_goal.9a6144b68939'),
   DailyChoiceCategory(
     id: 'move',
     icon: Icons.fitness_center_rounded,
-    titleZh: '运动',
-    titleEn: 'Move',
-    subtitleZh: '让身体先醒来',
-    subtitleEn: 'Wake up the body',
-  ),
+    titleKey: 'inline.plan295.daily_choice.move.334053354298',
+    subtitleKey: 'inline.plan295.daily_choice.wake_up_the_body.12b3c52cb708'),
   DailyChoiceCategory(
     id: 'learn',
     icon: Icons.menu_book_rounded,
-    titleZh: '学习',
-    titleEn: 'Learn',
-    subtitleZh: '一个小闭环',
-    subtitleEn: 'One small loop',
-  ),
+    titleKey: 'inline.plan295.daily_choice.learn.04d5b02dec2f',
+    subtitleKey: 'inline.plan295.daily_choice.one_small_loop.ce4f2befd42a'),
   DailyChoiceCategory(
     id: 'outdoor',
     icon: Icons.hiking_rounded,
-    titleZh: '出行',
-    titleEn: 'Out',
-    subtitleZh: '换一个环境',
-    subtitleEn: 'Change environment',
-  ),
+    titleKey: 'inline.plan295.daily_choice.out.86591a8b5975',
+    subtitleKey: 'inline.plan295.daily_choice.change_environment.67cba1665e44'),
   DailyChoiceCategory(
     id: 'home',
     icon: Icons.home_repair_service_rounded,
-    titleZh: '整理',
-    titleEn: 'Tidy',
-    subtitleZh: '让空间轻一点',
-    subtitleEn: 'Lighten the space',
-  ),
+    titleKey: 'inline.plan295.daily_choice.tidy.b342e0532757',
+    subtitleKey: 'inline.plan295.daily_choice.lighten_the_space.c45af387f8b8'),
   DailyChoiceCategory(
     id: 'relax',
     icon: Icons.self_improvement_rounded,
-    titleZh: '放松',
-    titleEn: 'Relax',
-    subtitleZh: '降低刺激',
-    subtitleEn: 'Lower stimulation',
-  ),
+    titleKey: 'breakPhase',
+    subtitleKey: 'inline.plan295.daily_choice.lower_stimulation.7e41b44e3b27'),
   DailyChoiceCategory(
     id: 'create',
     icon: Icons.brush_rounded,
-    titleZh: '创作',
-    titleEn: 'Create',
-    subtitleZh: '留下一个作品痕迹',
-    subtitleEn: 'Leave a small artifact',
-  ),
+    titleKey: 'inline.plan295.daily_choice.create.8d833bf46a54',
+    subtitleKey: 'inline.plan295.daily_choice.leave_a_small_artifact.85414368f4b5'),
   DailyChoiceCategory(
     id: 'social',
     icon: Icons.groups_rounded,
-    titleZh: '社交',
-    titleEn: 'Social',
-    subtitleZh: '轻量连接别人',
-    subtitleEn: 'Connect lightly',
-  ),
+    titleKey: 'inline.plan295.daily_choice.social.8b1bc96611f4',
+    subtitleKey: 'inline.plan295.daily_choice.connect_lightly.5c243ae32d10'),
 ];
 const List<DailyChoiceGuideModule>
 cookingGuideModules = <DailyChoiceGuideModule>[
   DailyChoiceGuideModule(
     id: 'kitchen_readiness',
     icon: Icons.countertops_rounded,
-    titleZh: '入厨前基准',
-    titleEn: 'Kitchen baseline',
-    subtitleZh: '先确定人、时间、厨具和风险，再决定菜式',
-    subtitleEn: 'Confirm time, tools, people, and risks before choosing a dish',
+    titleKey: 'inline.plan295.daily_choice.kitchen_baseline.22f0ef0eb160',
+    subtitleKey: 'inline.plan295.daily_choice.confirm_time_tools_people_and_risks.7b2fe2923902',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.timer_rounded,
-        titleZh: '先问三件事：多久、几人、能洗几口锅',
-        titleEn: 'Ask time, servings, and cleanup first',
-        bodyZh:
-            '一道菜是否适合今天，不只看想不想吃，还要看可用时间、份量和收拾成本。工作日优先 30 分钟内、一锅或一盘能收口的菜；多人吃饭先确定主食、主菜、蔬菜和汤水的分工，避免最后全是重口味或全是淀粉。',
-        bodyEn:
-            'A suitable dish depends on time, servings, and cleanup. For busy days, prefer meals that finish within 30 minutes and use one pan or one tray. For a group meal, balance starch, protein, vegetables, and liquid before cooking.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.ask_time_servings_and_cleanup_first.efd11de01b1b',
+        bodyKey: 'inline.plan295.daily_choice.a_suitable_dish_depends_on_time_serv.6d25f6597fe9'),
       DailyChoiceGuideEntry(
         icon: Icons.inventory_2_rounded,
-        titleZh: '盘点材料时先分主料、配料、底味',
-        titleEn: 'Group ingredients by role',
-        bodyZh:
-            '主料决定菜名和饱腹感，配料负责颜色、口感和体积，底味来自葱姜蒜、洋葱、番茄、香菇、骨汤、酱油或香料。缺一味小配料时可以替代；缺主料或底味时，最好改菜，不要硬凑。',
-        bodyEn:
-            'Separate main ingredients, supporting ingredients, and flavor bases. Small supporting ingredients can often be swapped, but if the main ingredient or core flavor base is missing, choosing another dish is usually safer.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.group_ingredients_by_role.6b78bf52ec02',
+        bodyKey: 'inline.plan295.daily_choice.separate_main_ingredients_supporting.17edcda42dc0'),
       DailyChoiceGuideEntry(
         icon: Icons.warning_amber_rounded,
-        titleZh: '先排除不能吃，再追求好吃',
-        titleEn: 'Remove unsafe options before optimizing flavor',
-        bodyZh: '过敏、孕期、婴幼儿、老人吞咽能力、慢病控盐控糖等情况都要先单独判断。上桌前仍要看具体食材、调味、熟度和烹调工具是否混用。',
-        bodyEn:
-            'Allergies, pregnancy, infants, swallowing ability, and medical diets come first. Always check ingredients, seasoning, doneness, and tool separation before serving.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.remove_unsafe_options_before_optimiz.4e45ee806a5c',
+        bodyKey: 'inline.plan295.daily_choice.allergies_pregnancy_infants_swallowi.05f5c59b4a99'),
+    ]),
   DailyChoiceGuideModule(
     id: 'shopping_check',
     icon: Icons.shopping_basket_rounded,
-    titleZh: '采购与验收',
-    titleEn: 'Shopping and inspection',
-    subtitleZh: '买得对，比临场补救更可靠',
-    subtitleEn: 'Good ingredients reduce the need for rescue work',
+    titleKey: 'inline.plan295.daily_choice.shopping_and_inspection.aa31b4629f58',
+    subtitleKey: 'inline.plan295.daily_choice.good_ingredients_reduce_the_need_for.735b54baa0a2',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.eco_rounded,
-        titleZh: '蔬果看新鲜度，也看适合怎么做',
-        titleEn: 'Judge produce by freshness and cooking use',
-        bodyZh:
-            '叶菜看挺度、切口和黄烂；根茎看表皮、重量和发芽霉斑；瓜果看香气、弹性和伤口。水分足、口感脆的适合快炒凉拌，成熟度高、出汁多的更适合炖、烩、酱汁或做汤。',
-        bodyEn:
-            'For produce, check firmness, cut surfaces, bruising, sprouts, mold, aroma, and weight. Crisp produce suits quick cooking and cold dishes; riper or juicier produce works better in stews, sauces, and soups.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.judge_produce_by_freshness_and_cooki.0c3662c9e19f',
+        bodyKey: 'inline.plan295.daily_choice.for_produce_check_firmness_cut_surfa.19f667b1f7c3'),
       DailyChoiceGuideEntry(
         icon: Icons.set_meal_rounded,
-        titleZh: '肉鱼海鲜先看气味、弹性和冷链',
-        titleEn: 'Check smell, texture, and cold chain',
-        bodyZh:
-            '鲜肉应有正常肉香和弹性，鱼眼清亮、鱼鳃颜色正常、表面不粘手，贝类和虾蟹要看活力和异味。买回家后尽快冷藏或冷冻，生食级和熟食、凉拌菜必须分开放置。',
-        bodyEn:
-            'Meat should smell clean and feel elastic. Fish should have clear eyes, normal gills, and non-sticky skin. Shellfish and crustaceans need freshness and no off smell. Refrigerate quickly and keep raw seafood away from ready-to-eat foods.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.check_smell_texture_and_cold_chain.a70a0d01b46d',
+        bodyKey: 'inline.plan295.daily_choice.meat_should_smell_clean_and_feel_ela.9ffd84e98f24'),
       DailyChoiceGuideEntry(
         icon: Icons.grain_rounded,
-        titleZh: '干货、米面、调味料看保存状态',
-        titleEn: 'Inspect dry goods and seasoning storage',
-        bodyZh:
-            '米面豆类怕潮、虫和霉味，坚果芝麻怕哈喇味，香料怕受潮失香，油脂怕光照和高温。采购时少量高频比一次囤太久更稳，开封后用密封、避光、标日期来降低翻车率。',
-        bodyEn:
-            'Dry grains, beans, nuts, spices, and oils are sensitive to moisture, rancidity, light, and heat. Buy in practical quantities, seal after opening, avoid light, and date containers.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.inspect_dry_goods_and_seasoning_stor.e7ca21c73a50',
+        bodyKey: 'inline.plan295.daily_choice.dry_grains_beans_nuts_spices_and_oil.ce02cce7373c'),
+    ]),
   DailyChoiceGuideModule(
     id: 'washing',
     icon: Icons.water_drop_rounded,
-    titleZh: '清洗与去污',
-    titleEn: 'Washing and cleaning',
-    subtitleZh: '冲、泡、刷、剥、沥，要按食材结构选择',
-    subtitleEn:
-        'Choose rinsing, soaking, brushing, peeling, and draining by structure',
+    titleKey: 'inline.plan295.daily_choice.washing_and_cleaning.83891e6ab8c5',
+    subtitleKey: 'inline.plan295.daily_choice.choose_rinsing_soaking_brushing_peel.82fbd8860ec8',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.spa_rounded,
-        titleZh: '叶菜逐层冲洗，先去泥沙再沥水',
-        titleEn: 'Rinse leafy vegetables layer by layer',
-        bodyZh:
-            '包叶菜先剥外层和损伤叶，再把叶片掰开冲洗；小叶菜和香草先挑掉黄烂，再用流动水分散冲洗。短时浸泡可作为补充，但不要把久泡当成唯一方法，沥干水分才利于快炒、凉拌和保存。',
-        bodyEn:
-            'Remove damaged outer leaves, separate layers, rinse under running water, and drain well. Short soaking may help, but long soaking alone is not a reliable cleaning method and makes cooking watery.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.rinse_leafy_vegetables_layer_by_laye.e9a0984fa5b4',
+        bodyKey: 'inline.plan295.daily_choice.remove_damaged_outer_leaves_separate.64162ebebc02'),
       DailyChoiceGuideEntry(
         icon: Icons.brush_rounded,
-        titleZh: '根茎瓜果先刷表皮，再决定去不去皮',
-        titleEn: 'Brush firm skins before peeling decisions',
-        bodyZh:
-            '土豆、胡萝卜、莲藕、南瓜、黄瓜等先刷掉泥沙和表面附着物，再按菜式决定去皮、削伤口或保留皮香。表面凹凸多、缝隙多的食材要特别注意沟槽，切开后再冲容易把水和杂质带进切面。',
-        bodyEn:
-            'Brush root vegetables and firm-skinned produce before cutting. Pay attention to grooves and rough surfaces, then decide whether to peel based on the dish.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.brush_firm_skins_before_peeling_deci.ba49f2622f08',
+        bodyKey: 'inline.plan295.daily_choice.brush_root_vegetables_and_firm_skinn.8e86b70162ae'),
       DailyChoiceGuideEntry(
         icon: Icons.science_rounded,
-        titleZh: '盐、醋、小苏打和清洁剂不是万能答案',
-        titleEn: 'Salt, vinegar, baking soda, and produce wash are not magic',
-        bodyZh:
-            '家庭清洗的基本盘仍然是流动水、分层冲洗、必要时刷洗和去除外层。盐水、醋水、小苏打或清洁剂可能改变口感、残留气味或需要额外冲净，不能代替认真冲洗，也不应制造“洗过就绝对安全”的错觉。',
-        bodyEn:
-            'The baseline remains running water, separation, brushing when needed, and removing outer layers. Salt, vinegar, baking soda, or detergents can affect texture or leave residue and do not replace careful rinsing.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.salt_vinegar_baking_soda_and_produce.bed279483cd1',
+        bodyKey: 'inline.plan295.daily_choice.the_baseline_remains_running_water_s.031e7ae9c455'),
+    ]),
   DailyChoiceGuideModule(
     id: 'knife_work',
     icon: Icons.content_cut_rounded,
-    titleZh: '刀工与切配',
-    titleEn: 'Knife work and prep cuts',
-    subtitleZh: '刀工的核心不是炫技，而是受热一致',
-    subtitleEn: 'Knife work is about even cooking, not showing off',
+    titleKey: 'inline.plan295.daily_choice.knife_work_and_prep_cuts.7ff75abc55fd',
+    subtitleKey: 'inline.plan295.daily_choice.knife_work_is_about_even_cooking_not.85dd8d188e33',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.grid_on_rounded,
-        titleZh: '形状服务烹调方法',
-        titleEn: 'Shape should serve the cooking method',
-        bodyZh:
-            '丝、片、丁、块、段、滚刀块各有用途：快炒要薄和均匀，炖煮可稍大，煎烤要接触面稳定，凉拌要入口方便。新手先做到厚薄接近，比追求花刀更重要。',
-        bodyEn:
-            'Julienne, slices, dice, chunks, segments, and roll cuts should match the cooking method. Quick cooking needs thin and even cuts; braising can use larger pieces; pan-frying needs stable contact surfaces.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.shape_should_serve_the_cooking_metho.00881b7c6c43',
+        bodyKey: 'inline.plan295.daily_choice.julienne_slices_dice_chunks_segments.c0421e16cf1d'),
       DailyChoiceGuideEntry(
         icon: Icons.restaurant_rounded,
-        titleZh: '肉类先判断纹理和用途',
-        titleEn: 'Read meat grain and purpose first',
-        bodyZh:
-            '炒肉丝、肉片通常逆纹切更嫩，炖肉可以保留较大块，鸡胸适合薄片或小丁，带骨肉要沿骨和筋膜下刀。冷冻到半硬状态更容易切薄片，但解冻后不可长时间放在室温等待。',
-        bodyEn:
-            'For stir-fry, cut across the grain for tenderness. Braises can use larger pieces. Chicken breast works well as thin slices or dice. Semi-frozen meat is easier to slice, but do not leave thawed meat at room temperature for long.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.read_meat_grain_and_purpose_first.e3e3b424fa12',
+        bodyKey: 'inline.plan295.daily_choice.for_stir_fry_cut_across_the_grain_fo.48d39c753efa'),
       DailyChoiceGuideEntry(
         icon: Icons.health_and_safety_rounded,
-        titleZh: '案板顺序决定安全边界',
-        titleEn: 'Cutting-board order controls food safety',
-        bodyZh:
-            '推荐顺序是即食食材、蔬果、熟食、生肉、生海鲜；条件允许时生熟案板分开。若只能用一块案板，处理生肉海鲜后要洗手、清洁刀板和台面，再接触熟食或凉拌菜。',
-        bodyEn:
-            'Prepare ready-to-eat items, produce, cooked foods, raw meat, and raw seafood in a safe order. Separate boards are best; if using one board, clean hands, knife, board, and counter after raw meat or seafood.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.cutting_board_order_controls_food_sa.b5bf0ce4d45e',
+        bodyKey: 'inline.plan295.daily_choice.prepare_ready_to_eat_items_produce_c.dbeb87165f2a'),
+    ]),
   DailyChoiceGuideModule(
     id: 'mise_en_place',
     icon: Icons.fact_check_rounded,
-    titleZh: '备料顺序',
-    titleEn: 'Mise en place',
-    subtitleZh: '开火前把不可逆和等待步骤排好',
-    subtitleEn: 'Arrange irreversible and waiting steps before heat',
+    titleKey: 'inline.plan295.daily_choice.mise_en_place.7f9381b78c2d',
+    subtitleKey: 'inline.plan295.daily_choice.arrange_irreversible_and_waiting_ste.55dee2a53a88',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.schedule_rounded,
-        titleZh: '先开始长等待：浸泡、腌制、预热、煮饭',
-        titleEn: 'Start long waits first',
-        bodyZh:
-            '豆类、干货、米饭、烤箱预热、空气炸锅预热、肉类腌制、烧水焯菜都可能占用整顿饭的时间轴。先让等待步骤开始，再切配和调酱，整体节奏会轻很多。',
-        bodyEn:
-            'Soaking, marinating, preheating, rice cooking, and boiling water can dominate the timeline. Start them first, then cut and mix sauces.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.start_long_waits_first.a6119d31c81c',
+        bodyKey: 'inline.plan295.daily_choice.soaking_marinating_preheating_rice_c.105bb2ad15e2'),
       DailyChoiceGuideEntry(
         icon: Icons.bento_rounded,
-        titleZh: '调味和容器提前到手边',
-        titleEn: 'Place seasoning and containers within reach',
-        bodyZh:
-            '炒、煎、炸、勾芡和收汁的窗口很短，开火后再找盐、盘子、漏勺和淀粉水，很容易过火。把常用调味、小碗、盘子、锅盖、厨房纸和夹子提前放好，是稳定出品的基本功。',
-        bodyEn:
-            'Stir-frying, pan-frying, frying, thickening, and reducing move fast. Put seasoning, bowls, plates, lids, paper towels, and tongs within reach before heat.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.place_seasoning_and_containers_withi.e0c437598fa0',
+        bodyKey: 'inline.plan295.daily_choice.stir_frying_pan_frying_frying_thicke.f3bbdf5d9b10'),
       DailyChoiceGuideEntry(
         icon: Icons.layers_rounded,
-        titleZh: '按下锅时间分盘，不按食材类别乱堆',
-        titleEn: 'Group prep by cooking order',
-        bodyZh:
-            '同一类蔬菜也可能下锅时间不同：胡萝卜、土豆、豆角先入，青菜叶、葱花、香菜后放；肉片先滑散，易熟海鲜后下。按时间分盘，能避免一锅里同时出现夹生和过熟。',
-        bodyEn:
-            'Group ingredients by when they enter the pan, not merely by type. Firm vegetables go early, tender leaves and herbs go late, and seafood often needs less time than meat.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.group_prep_by_cooking_order.3c8e28e7db8d',
+        bodyKey: 'inline.plan295.daily_choice.group_ingredients_by_when_they_enter.85c904ccde27'),
+    ]),
   DailyChoiceGuideModule(
     id: 'seasoning',
     icon: Icons.soup_kitchen_rounded,
-    titleZh: '调味基准',
-    titleEn: 'Seasoning baseline',
-    subtitleZh: '咸、酸、甜、鲜、香、辣要分层建立',
-    subtitleEn: 'Build salt, acid, sweetness, umami, aroma, and heat in layers',
+    titleKey: 'inline.plan295.daily_choice.seasoning_baseline.67b57bf7ed20',
+    subtitleKey: 'inline.plan295.daily_choice.build_salt_acid_sweetness_umami_arom.0e18f596b1d6',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.tune_rounded,
-        titleZh: '先有底味，再做尾调',
-        titleEn: 'Build base seasoning, then finish',
-        bodyZh:
-            '盐、生抽、酱、汤底负责底味，醋、柠檬、糖、胡椒、香油、葱蒜、香草负责收口。汤、炖、焖和酱汁类不要一开始压得太咸，因为水分蒸发后味道会继续变重。',
-        bodyEn:
-            'Salt, soy sauce, pastes, and stock form the base. Acid, sugar, pepper, sesame oil, aromatics, and herbs finish the dish. Avoid heavy early seasoning in soups, braises, and sauces because reduction concentrates flavor.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.build_base_seasoning_then_finish.4781f73731d2',
+        bodyKey: 'inline.plan295.daily_choice.salt_soy_sauce_pastes_and_stock_form.6e7ddc205dbd'),
       DailyChoiceGuideEntry(
         icon: Icons.balance_rounded,
-        titleZh: '咸了补体积，淡了补层次',
-        titleEn: 'Fix salt with volume and blandness with layers',
-        bodyZh:
-            '过咸优先加无盐主料、水、汤或淀粉类稀释，不要只靠糖遮盖；太淡则先判断是盐不够、香气不足、酸度不足还是油脂不足。少量多次，比一次猛加更容易救。',
-        bodyEn:
-            'For over-salting, add unsalted volume, water, stock, or starch rather than only sugar. For blandness, identify whether salt, aroma, acid, or fat is missing and adjust gradually.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.fix_salt_with_volume_and_blandness_w.2f69856ec4e6',
+        bodyKey: 'inline.plan295.daily_choice.for_over_salting_add_unsalted_volume.b9a5f262b8bc'),
       DailyChoiceGuideEntry(
         icon: Icons.local_florist_rounded,
-        titleZh: '香气有先后：爆香、同煮、出锅香不同',
-        titleEn: 'Aromatics have timing',
-        bodyZh:
-            '葱姜蒜、洋葱、香料适合低到中火出香；香菜、葱花、柠檬皮、香油、部分辣椒油更适合出锅前后加入。香气材料放错时间，轻则无味，重则焦苦。',
-        bodyEn:
-            'Scallion, ginger, garlic, onion, and spices usually bloom over low to medium heat. Herbs, scallion greens, citrus zest, sesame oil, and some chili oils work better near the end.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.aromatics_have_timing.6c5b7d486ef7',
+        bodyKey: 'inline.plan295.daily_choice.scallion_ginger_garlic_onion_and_spi.f51b7311ce68'),
+    ]),
   DailyChoiceGuideModule(
     id: 'heat_pan',
     icon: Icons.local_fire_department_rounded,
-    titleZh: '火候与锅具',
-    titleEn: 'Heat and cookware',
-    subtitleZh: '看状态，不迷信固定分钟数',
-    subtitleEn: 'Read the food state instead of trusting minutes blindly',
+    titleKey: 'inline.plan295.daily_choice.heat_and_cookware.b40ac59d9ac9',
+    subtitleKey: 'inline.plan295.daily_choice.read_the_food_state_instead_of_trust.b16c5ffb4525',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.thermostat_rounded,
-        titleZh: '预热不是把锅烧到冒烟',
-        titleEn: 'Preheating does not mean smoking hot',
-        bodyZh:
-            '煎炒需要锅体热起来，但大量白烟通常说明油温过高或锅中残留物在焦化。判断预热可看油纹、听轻微滋声、试少量食材边缘反应；不粘锅尤其避免长时间空烧。',
-        bodyEn:
-            'Preheating means the pan is ready, not smoking aggressively. Watch oil movement, listen for a gentle sizzle, and test a small piece. Avoid prolonged dry heating, especially with nonstick pans.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.preheating_does_not_mean_smoking_hot.8a27ac8aa812',
+        bodyKey: 'inline.plan295.daily_choice.preheating_means_the_pan_is_ready_no.7beef427c05d'),
       DailyChoiceGuideEntry(
         icon: Icons.air_rounded,
-        titleZh: '锅气来自高温、少量、干爽和快速翻动',
-        titleEn: 'Wok aroma needs heat, small batches, dryness, and speed',
-        bodyZh: '快炒想香，食材要沥干，锅中不要堆太满，调味汁不要一次倒太多。家庭灶火力有限时，宁可分批炒，也不要一锅挤到变成煮菜。',
-        bodyEn:
-            'Good stir-fry aroma needs dry ingredients, enough heat, small batches, and fast movement. On a home stove, cook in batches rather than crowding the pan into steaming.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.wok_aroma_needs_heat_small_batches_d.8918d2a66f2b',
+        bodyKey: 'inline.plan295.daily_choice.good_stir_fry_aroma_needs_dry_ingred.f937e52103e8'),
       DailyChoiceGuideEntry(
         icon: Icons.visibility_rounded,
-        titleZh: '状态信号比时间更可靠',
-        titleEn: 'State signals beat fixed timing',
-        bodyZh:
-            '看颜色、出水、回缩、定型、冒泡、油水分离、筷子穿透感和中心温度。不同锅具、分量、火力和食材含水量都会改变分钟数，菜谱时间只能当起点。',
-        bodyEn:
-            'Watch color, moisture release, shrinkage, structure, bubbling, separation, texture, and center temperature. Pan, batch size, stove power, and water content all change timing.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.state_signals_beat_fixed_timing.c84dced6056c',
+        bodyKey: 'inline.plan295.daily_choice.watch_color_moisture_release_shrinka.930c5336c479'),
+    ]),
   DailyChoiceGuideModule(
     id: 'foundation_techniques',
     icon: Icons.science_rounded,
-    titleZh: '基础处理技法',
-    titleEn: 'Foundation techniques',
-    subtitleZh: '焯水、腌制、上浆、勾芡、收汁要知道目的',
-    subtitleEn: 'Know why you blanch, marinate, velvet, thicken, and reduce',
+    titleKey: 'inline.plan295.daily_choice.foundation_techniques.b88db9e6dfd2',
+    subtitleKey: 'inline.plan295.daily_choice.know_why_you_blanch_marinate_velvet.a67343b78df7',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.water_rounded,
-        titleZh: '焯水用于去味、定色、缩短后续时间',
-        titleEn: 'Blanching removes odor, sets color, and shortens cooking',
-        bodyZh:
-            '绿叶菜短焯后过凉可保色，排骨和部分内脏冷水下锅更利于带出血沫，豆角、笋、草酸高或有涩味的食材常需要预处理。焯水后要沥干，否则炒菜会变水。',
-        bodyEn:
-            'Blanch leafy greens briefly for color, start bones or offal in cold water for scum removal, and pre-treat beans, shoots, or astringent ingredients when needed. Drain well before stir-frying.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.blanching_removes_odor_sets_color_an.49668ee51584',
+        bodyKey: 'inline.plan295.daily_choice.blanch_leafy_greens_briefly_for_colo.70534470b81c'),
       DailyChoiceGuideEntry(
         icon: Icons.spa_rounded,
-        titleZh: '腌制和上浆是控水、入味、保护口感',
-        titleEn: 'Marinating and velveting control water, flavor, and texture',
-        bodyZh:
-            '肉片先少量盐或酱油打底，再按需要加淀粉、蛋清或油形成保护层。腌制不是越久越好，薄片快炒通常十几分钟即可，酸性材料太久会改变肉质。',
-        bodyEn:
-            'Use a little salt or soy sauce first, then starch, egg white, or oil if needed for a protective layer. Longer is not always better; thin stir-fry slices often need only minutes, and acid can change texture.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.marinating_and_velveting_control_wat.621ace78c6f3',
+        bodyKey: 'inline.plan295.daily_choice.use_a_little_salt_or_soy_sauce_first.1612ffb98524'),
       DailyChoiceGuideEntry(
         icon: Icons.opacity_rounded,
-        titleZh: '勾芡和收汁都在管理水分',
-        titleEn: 'Thickening and reducing are water management',
-        bodyZh:
-            '水淀粉要先搅匀，薄芡适合包裹，厚芡适合挂汁；收汁靠蒸发浓缩，火太小会拖时间，火太大容易焦底。先尝味再收汁，因为收浓后咸甜酸都会变明显。',
-        bodyEn:
-            'Stir starch slurry before adding it. Light thickening coats, heavy thickening clings. Reduction concentrates flavor, so taste before reducing and control heat to avoid scorching.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.thickening_and_reducing_are_water_ma.7d2e3367cf62',
+        bodyKey: 'inline.plan295.daily_choice.stir_starch_slurry_before_adding_it.dc9ae371a08c'),
+    ]),
   DailyChoiceGuideModule(
     id: 'cooking_methods',
     icon: Icons.restaurant_menu_rounded,
-    titleZh: '常用烹调法',
-    titleEn: 'Core cooking methods',
-    subtitleZh: '炒、煮、炖、蒸、煎、炸、烤、凉拌各有关键点',
-    subtitleEn: 'Each method has a few controlling variables',
+    titleKey: 'inline.plan295.daily_choice.core_cooking_methods.8c8fe1f57162',
+    subtitleKey: 'inline.plan295.daily_choice.each_method_has_a_few_controlling_va.45f7684eed07',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.whatshot_rounded,
-        titleZh: '炒和煎：控制水分与接触面',
-        titleEn: 'Stir-fry and pan-fry control moisture and contact',
-        bodyZh:
-            '炒菜食材要干爽、下锅顺序清楚、调味汁少量快入；煎东西要给表面定型时间，不要一直翻。粘锅时先判断锅温、油量、水分和是否太早移动。',
-        bodyEn:
-            'For stir-fry, keep ingredients dry, order clear, and sauce limited. For pan-fry, allow the surface to set before moving. Sticking often comes from temperature, oil, moisture, or moving too early.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.stir_fry_and_pan_fry_control_moistur.5689f419309c',
+        bodyKey: 'inline.plan295.daily_choice.for_stir_fry_keep_ingredients_dry_or.2ac4a6671e27'),
       DailyChoiceGuideEntry(
         icon: Icons.soup_kitchen_rounded,
-        titleZh: '煮、炖、焖、煲：液体决定质地',
-        titleEn: 'Boil, stew, braise, and simmer depend on liquid',
-        bodyZh: '清汤要稳火少搅，浓汤可靠煸炒、乳化或淀粉质食材增加厚度；炖肉要让胶原和纤维慢慢转化，焖菜则要控制液体刚好够熟而不糊底。',
-        bodyEn:
-            'Clear soups need gentle heat and little agitation. Thick soups rely on browning, emulsification, or starchy ingredients. Braises need time for collagen and fibers; covered simmering needs just enough liquid.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.boil_stew_braise_and_simmer_depend_o.5ef64d657ab1',
+        bodyKey: 'inline.plan295.daily_choice.clear_soups_need_gentle_heat_and_lit.f7f48df5a8ae'),
       DailyChoiceGuideEntry(
         icon: Icons.cloud_rounded,
-        titleZh: '蒸、炸、凉拌：一个看蒸汽，一个看油温，一个看沥干',
-        titleEn: 'Steam, fry, and cold dishes each have one main variable',
-        bodyZh:
-            '蒸菜要水开上汽后计时，盘中不要积太多水；炸物要分清低温浸熟、中温定型、高温复炸；凉拌的关键是食材熟度、沥水和最后调味，不要让菜泡在水里。',
-        bodyEn:
-            'For steaming, count after strong steam appears and avoid excess plate water. Frying uses different oil temperatures for cooking, setting, and crisping. Cold dishes need proper doneness, draining, and final seasoning.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.steam_fry_and_cold_dishes_each_have.48539bfaaa7e',
+        bodyKey: 'inline.plan295.daily_choice.for_steaming_count_after_strong_stea.1703a6fe34d0'),
+    ]),
   DailyChoiceGuideModule(
     id: 'grains_baking',
     icon: Icons.bakery_dining_rounded,
-    titleZh: '米面与烘焙',
-    titleEn: 'Grains, noodles, and baking',
-    subtitleZh: '主食和烘焙更依赖比例、吸水和温度',
-    subtitleEn:
-        'Staples and baking depend heavily on ratios, hydration, and temperature',
+    titleKey: 'inline.plan295.daily_choice.grains_noodles_and_baking.f9816067ba46',
+    subtitleKey: 'inline.plan295.daily_choice.staples_and_baking_depend_heavily_on.ef967f6f6803',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.rice_bowl_rounded,
-        titleZh: '米饭、粥、焖饭先看米水比和吸水',
-        titleEn: 'Rice, congee, and rice cooker meals start with water ratio',
-        bodyZh:
-            '新米、陈米、糙米、糯米吸水不同；焖饭还会从蔬菜、肉和调味汁得到额外水分。做电饭煲饭时，先保证米熟，再追求配料丰富，油脂和酱汁不要多到影响米粒吸水。',
-        bodyEn:
-            'Fresh rice, aged rice, brown rice, and glutinous rice absorb water differently. Rice cooker meals also get liquid from vegetables, meat, and sauce. Get the rice cooked first, then increase complexity.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.rice_congee_and_rice_cooker_meals_st.4773b408ecdc',
+        bodyKey: 'inline.plan295.daily_choice.fresh_rice_aged_rice_brown_rice_and.61012b10c449'),
       DailyChoiceGuideEntry(
         icon: Icons.ramen_dining_rounded,
-        titleZh: '面条粉类重视出锅时机',
-        titleEn: 'Noodles and starches depend on timing',
-        bodyZh:
-            '面条离火后仍会继续吸水变软，炒面和拌面通常要比直接吃略早捞；粉丝、米粉、年糕、意面都要按粗细和后续烹调留余地，避免先煮到满熟再二次加热。',
-        bodyEn:
-            'Noodles keep absorbing water after draining. For stir-fry or tossed noodles, drain slightly early. Vermicelli, rice noodles, rice cakes, and pasta all need room for later cooking.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.noodles_and_starches_depend_on_timin.26c9c6c005a2',
+        bodyKey: 'inline.plan295.daily_choice.noodles_keep_absorbing_water_after_d.9e1e4f14fbf7'),
       DailyChoiceGuideEntry(
         icon: Icons.scale_rounded,
-        titleZh: '烘焙先称量，再谈手感',
-        titleEn: 'For baking, measure before relying on feel',
-        bodyZh:
-            '面包、蛋糕、派塔、饼干和许多甜点对克重、温度、搅拌程度和冷却时间敏感。先量好粉、液体、糖、油脂、鸡蛋和膨松剂；烤箱温差大时，用状态和探针温度辅助判断。',
-        bodyEn:
-            'Bread, cake, tart, cookies, and desserts are sensitive to weight, temperature, mixing, and cooling. Measure dry goods, liquids, sugar, fat, eggs, and leaveners first, then judge by state and temperature.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.for_baking_measure_before_relying_on.9431d223c151',
+        bodyKey: 'inline.plan295.daily_choice.bread_cake_tart_cookies_and_desserts.96fb6217a611'),
+    ]),
   DailyChoiceGuideModule(
     id: 'storage_reheat',
     icon: Icons.kitchen_rounded,
-    titleZh: '保存与复热',
-    titleEn: 'Storage and reheating',
-    subtitleZh: '做完后的处理决定下一顿是否省心',
-    subtitleEn: 'Post-cooking handling determines how easy the next meal is',
+    titleKey: 'inline.plan295.daily_choice.storage_and_reheating.31d6859bf52c',
+    subtitleKey: 'inline.plan295.daily_choice.post_cooking_handling_determines_how.354b78281c75',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.ac_unit_rounded,
-        titleZh: '熟食尽快降温分装',
-        titleEn: 'Cool cooked food quickly and portion it',
-        bodyZh:
-            '大量热汤热饭不要整锅长时间放在室温，分浅盒、留缝散热、降温后冷藏更稳。生熟、荤素、汤汁和干爽菜分开装，能减少串味、出水和复热失败。',
-        bodyEn:
-            'Do not leave a large hot pot at room temperature for long. Portion into shallow containers, let steam escape, then refrigerate. Separate raw and cooked items, strong flavors, liquids, and dry dishes.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.cool_cooked_food_quickly_and_portion.315d5101def2',
+        bodyKey: 'inline.plan295.daily_choice.do_not_leave_a_large_hot_pot_at_room.7306ab80f831'),
       DailyChoiceGuideEntry(
         icon: Icons.microwave_rounded,
-        titleZh: '复热要补水或补脆，不是一律加热到烫',
-        titleEn: 'Reheat by restoring moisture or crispness',
-        bodyZh: '米饭、面条、炖菜常需要少量水或汤；炸物、烤物更适合烤箱或空气炸锅恢复表面；绿叶菜和海鲜不耐反复加热，最好少量做、尽快吃。',
-        bodyEn:
-            'Rice, noodles, and stews often need a little water or stock. Fried and baked foods regain texture better in an oven or air fryer. Leafy greens and seafood do not tolerate repeated reheating well.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.reheat_by_restoring_moisture_or_cris.ca431b698fc7',
+        bodyKey: 'inline.plan295.daily_choice.rice_noodles_and_stews_often_need_a.596f73c16b9b'),
       DailyChoiceGuideEntry(
         icon: Icons.recycling_rounded,
-        titleZh: '剩菜复用先换形态',
-        titleEn: 'Reuse leftovers by changing form',
-        bodyZh:
-            '剩米饭适合炒饭、粥、饭团；炖肉可变浇头、夹馍、面码；烤蔬菜可进沙拉、浓汤或意面。复用时补新鲜蔬菜和酸香，会比单纯反复加热更好吃。',
-        bodyEn:
-            'Leftover rice can become fried rice, congee, or rice balls. Braised meat can top noodles or sandwiches. Roasted vegetables can become salad, soup, or pasta. Add freshness and acid when reusing leftovers.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.reuse_leftovers_by_changing_form.04ce5d4f0a87',
+        bodyKey: 'inline.plan295.daily_choice.leftover_rice_can_become_fried_rice.8d5d62279d7b'),
+    ]),
   DailyChoiceGuideModule(
     id: 'troubleshooting',
     icon: Icons.build_circle_rounded,
-    titleZh: '翻车排查',
-    titleEn: 'Troubleshooting',
-    subtitleZh: '先找变量，再决定补救方式',
-    subtitleEn: 'Find the variable before choosing the rescue',
+    titleKey: 'inline.plan295.daily_choice.troubleshooting.767b202d7cd6',
+    subtitleKey: 'inline.plan295.daily_choice.find_the_variable_before_choosing_th.ab7592f5ed00',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.water_damage_rounded,
-        titleZh: '出水太多：通常是盐早、锅挤、火弱或没沥干',
-        titleEn:
-            'Too watery usually means early salt, crowding, weak heat, or poor draining',
-        bodyZh:
-            '蔬菜出水严重时可先盛出多余汤汁再回锅收口，或改成汤、烩、盖饭。下次减少提前撒盐，食材沥干，分批下锅，并把调味汁留到食材断生后再加。',
-        bodyEn:
-            'If a dish gets watery, remove excess liquid and reduce, or turn it into soup, stew, or rice topping. Next time, salt later, drain better, cook in batches, and add sauce after the food starts cooking through.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.too_watery_usually_means_early_salt.72599e813291',
+        bodyKey: 'inline.plan295.daily_choice.if_a_dish_gets_watery_remove_excess.a0e37bca9d0c'),
       DailyChoiceGuideEntry(
         icon: Icons.flash_on_rounded,
-        titleZh: '外焦内生：火太急或尺寸不匹配',
-        titleEn: 'Burnt outside and raw inside means heat or size mismatch',
-        bodyZh: '先降火、加盖、少量补水或转烤箱完成内部熟化。下次把食材切小或切薄，厚块先煎定型再低温焖熟，不要全程大火硬冲。',
-        bodyEn:
-            'Lower heat, cover, add a little liquid, or finish in the oven. Next time, cut smaller or thinner, sear for structure, then finish gently instead of using high heat throughout.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.burnt_outside_and_raw_inside_means_h.07605583a1e8',
+        bodyKey: 'inline.plan295.daily_choice.lower_heat_cover_add_a_little_liquid.a65005141457'),
       DailyChoiceGuideEntry(
         icon: Icons.sentiment_dissatisfied_rounded,
-        titleZh: '肉老、菜软、味闷：多半是时间和顺序错了',
-        titleEn:
-            'Tough meat, limp vegetables, and dull flavor often come from timing',
-        bodyZh:
-            '瘦肉过久会柴，海鲜过火会缩，绿叶菜久煮会黄软，香草久煮会失香。先把易老、易熟、易失香的材料后置，复杂菜拆成预处理、主烹调、出锅香三段更稳。',
-        bodyEn:
-            'Lean meat dries out, seafood shrinks, leafy greens turn dull, and herbs lose aroma when overcooked. Put delicate items later and split complex dishes into prep, main cooking, and finishing aroma.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.tough_meat_limp_vegetables_and_dull.0ac51f69c708',
+        bodyKey: 'inline.plan295.daily_choice.lean_meat_dries_out_seafood_shrinks.877042365456'),
+    ]),
 ];
 List<DailyChoiceGuideModule> buildCookingGuideModules(List<String> _) {
   return cookingGuideModules;
@@ -1752,525 +1186,290 @@ const List<DailyChoiceGuideModule> wearGuideModules = <DailyChoiceGuideModule>[
   DailyChoiceGuideModule(
     id: 'foundation',
     icon: Icons.checkroom_rounded,
-    titleZh: '基础与风格',
-    titleEn: 'Foundation',
-    subtitleZh: '先把常穿公式和自己的风格方向收清楚',
-    subtitleEn: 'Start from repeatable basics and your real style direction',
+    titleKey: 'inline.plan295.daily_choice.foundation.f56ef3715150',
+    subtitleKey: 'inline.plan295.daily_choice.start_from_repeatable_basics_and_you.92136804c0e1',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.layers_clear_rounded,
-        titleZh: '基础款是衣橱的主语，不是无聊的替身',
-        titleEn: 'Basics are the sentence, not a boring placeholder',
-        bodyZh:
-            '真正高频、耐用的穿搭，不靠一次次追新，而靠白衬衫、干净针织、直筒裤、轻外套、稳妥鞋履这些能反复重组的主力单品。先把大部分衣橱交给稳定基础款，再给颜色、图案和个性单品留一点位置，随机推荐才更容易命中你真的会穿的答案。',
-        bodyEn:
-            'The strongest shared lesson is that repeatable outfits come from stable core pieces first, then a smaller layer of personality and accents.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.basics_are_the_sentence_not_a_boring.d76448e8ac2f',
+        bodyKey: 'inline.plan295.daily_choice.the_strongest_shared_lesson_is_that.e72dc99fb3b5'),
       DailyChoiceGuideEntry(
         icon: Icons.psychology_alt_rounded,
-        titleZh: '风格不是标签堆叠，而是你真实的日常比例',
-        titleEn: 'Style is the ratio of your real life',
-        bodyZh:
-            '风格先回答“你常去哪里、想呈现什么、身体愿意穿什么”。如果你大多数时间在通勤、开会、久坐和短途出行之间切换，利落通勤、极简基础通常比强戏剧化更好用；如果你常在校园、咖啡店、散步和周末慢生活之间切换，松弛休闲和柔和搭配会更自然。先承认生活半径，风格才不会悬空。',
-        bodyEn:
-            'Style works best when it reflects your actual routines, social settings, and what your body is willing to wear all day.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.style_is_the_ratio_of_your_real_life.6644df161272',
+        bodyKey: 'inline.plan295.daily_choice.style_works_best_when_it_reflects_yo.c62578cfecb0'),
+    ]),
   DailyChoiceGuideModule(
     id: 'fit_ratio',
     icon: Icons.straighten_rounded,
-    titleZh: '版型与比例',
-    titleEn: 'Fit & Ratio',
-    subtitleZh: '合身、长度和腰线，比“流行元素”更先决定体面度',
-    subtitleEn: 'Fit, length, and waist definition matter before trend detail',
+    titleKey: 'inline.plan295.daily_choice.fit_ratio.1fddfc886529',
+    subtitleKey: 'inline.plan295.daily_choice.fit_length_and_waist_definition_matt.6b3ef250e707',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.crop_portrait_rounded,
-        titleZh: '先看肩线、裤长、后背，再看正面',
-        titleEn: 'Check shoulders, hem, and back view first',
-        bodyZh:
-            '合身永远先于复杂设计。肩线掉太多、裤脚堆太厚、后背绷紧或松垮，都会让再好的衣服显得没精神。挑衣服时先看能不能走路、坐下、抬手，再看镜子里的正面效果；正面漂亮但活动受限的衣服，实际穿着频率往往会很低。',
-        bodyEn:
-            'Fit starts with movement, shoulder line, hem length, and how the garment behaves from the back, not only the front mirror angle.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.check_shoulders_hem_and_back_view_fi.8d0fb6c4598c',
+        bodyKey: 'inline.plan295.daily_choice.fit_starts_with_movement_shoulder_li.6b84e3856152'),
       DailyChoiceGuideEntry(
         icon: Icons.height_rounded,
-        titleZh: '上下量感要分工，不要同时抢戏',
-        titleEn: 'Let top and bottom split the visual work',
-        bodyZh:
-            '常见的稳妥公式是：宽松上装配利落下装，修身上装配有量感下装；想显精神，就让腰线、裤线或鞋面承担收口任务。高腰、短外套、纵向线条、露脚踝或清晰鞋口，通常比一味堆层数更有效。',
-        bodyEn:
-            'Reliable proportion comes from letting either the top or the bottom carry volume while the other side stays clearer and cleaner.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.let_top_and_bottom_split_the_visual.db66e0ec098b',
+        bodyKey: 'inline.plan295.daily_choice.reliable_proportion_comes_from_letti.f451398475ff'),
+    ]),
   DailyChoiceGuideModule(
     id: 'scene',
     icon: Icons.event_seat_rounded,
-    titleZh: '场合与职场',
-    titleEn: 'Scene & Work',
-    subtitleZh: '先判断时间、地点、角色和今天的日程',
-    subtitleEn: 'Judge time, place, role, and today’s agenda first',
+    titleKey: 'inline.plan295.daily_choice.scene_work.f52e5d6da920',
+    subtitleKey: 'inline.plan295.daily_choice.judge_time_place_role_and_today_s_ag.112fd4a9d015',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.work_history_rounded,
-        titleZh: '职场穿衣先看行业、职位、日程三件事',
-        titleEn: 'For work, start with industry, role, and agenda',
-        bodyZh:
-            '职场穿衣先看环境和角色。创意行业、技术岗位、行政支持、管理层、对外见客户的穿法不必完全一样。问自己三个问题：今天会不会久坐？会不会频繁见人？会不会在室内外来回切换？答案会决定你该不该加外套、穿不穿明显配饰、鞋子要不要更正式。',
-        bodyEn:
-            'Workwear choices should react to industry, seniority, and what the day actually demands, especially meetings, sitting time, and indoor-outdoor switching.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.for_work_start_with_industry_role_an.82e6dcf6fd95',
+        bodyKey: 'inline.plan295.daily_choice.workwear_choices_should_react_to_ind.45026ed3c177'),
       DailyChoiceGuideEntry(
         icon: Icons.favorite_outline_rounded,
-        titleZh: '约会、周末、运动和雨天各有第一优先级',
-        titleEn: 'Every scene has its first priority',
-        bodyZh:
-            '约会先守“柔和 + 一个记忆点”；周末先守“舒服 + 不邋遢”；运动先守“排汗 + 活动范围”；雨天先守“防滑 + 快干 + 不拖地”。这类场景里，体感和行动便利要先于拍照效果。真正好看的搭配，是你不需要一直分神去照顾它。',
-        bodyEn:
-            'Dates, weekends, exercise, and rain all have different first priorities. Comfort and mobility should be solved before aesthetics start competing.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.every_scene_has_its_first_priority.1760e798a008',
+        bodyKey: 'inline.plan295.daily_choice.dates_weekends_exercise_and_rain_all.43fa8b755119'),
+    ]),
   DailyChoiceGuideModule(
     id: 'color_material',
     icon: Icons.palette_rounded,
-    titleZh: '色彩与材质',
-    titleEn: 'Color & Material',
-    subtitleZh: '颜色控制节奏，材质决定高级感和季节感',
-    subtitleEn: 'Color sets rhythm while fabric sets polish and seasonality',
+    titleKey: 'inline.plan295.daily_choice.color_material.30aa2c760b61',
+    subtitleKey: 'inline.plan295.daily_choice.color_sets_rhythm_while_fabric_sets.e3e5810efcd6',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.color_lens_outlined,
-        titleZh: '先用中性色稳住，再决定要不要加亮点',
-        titleEn: 'Anchor with neutrals before adding color',
-        bodyZh:
-            '配色可以先走一条稳妥路线：用黑、白、灰、海军蓝、卡其、深棕这类中性色打底，再加一个小面积提气色。安全做法是一主色、一中性色、一亮点；想再大胆一些，也先从低饱和配色、同色系深浅变化和“黑色带彩色”开始练习。',
-        bodyEn:
-            'A practical route into color is to stabilize the outfit with neutrals first, then add a small accent instead of starting with several loud tones.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.anchor_with_neutrals_before_adding_c.f16de4627815',
+        bodyKey: 'inline.plan295.daily_choice.a_practical_route_into_color_is_to_s.2442460c6891'),
       DailyChoiceGuideEntry(
         icon: Icons.blur_on_rounded,
-        titleZh: '材质会直接决定“看起来贵不贵、轻不轻松”',
-        titleEn: 'Fabric decides whether the look feels polished or cheap',
-        bodyZh:
-            '挺括面料更容易撑起职业感，柔软材质更容易制造亲和感，垂感面料更适合热天和约会，棉麻更适合微热到炎热，羊毛与针织则更适合冷天层次。配色一样时，材质差异往往比颜色本身更能拉开质感差距。',
-        bodyEn:
-            'Structure, drape, and texture often change the perceived quality of an outfit more than color alone.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.fabric_decides_whether_the_look_feel.03df6bd8936f',
+        bodyKey: 'inline.plan295.daily_choice.structure_drape_and_texture_often_ch.bd73bbdb64a0'),
+    ]),
   DailyChoiceGuideModule(
     id: 'season_weather',
     icon: Icons.wb_sunny_rounded,
-    titleZh: '季节与天气',
-    titleEn: 'Season & Weather',
-    subtitleZh: '温度、体感、风雨和温差要一起看',
-    subtitleEn: 'Read temperature, feels-like, rain, wind, and swing together',
+    titleKey: 'inline.plan295.daily_choice.season_weather.47ad90efcd78',
+    subtitleKey: 'inline.plan295.daily_choice.read_temperature_feels_like_rain_win.fa773ae8bbe6',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.layers_rounded,
-        titleZh: '三层原则比“一件扛到底”更稳',
-        titleEn: 'The three-layer rule beats one heavy item',
-        bodyZh:
-            '低温和换季场景里，最实用的公式还是内层舒适排汗、中层负责保暖、外层负责挡风防雨。体感温度和昼夜温差比气温数字更接近日常真实感受，所以页面默认会按天气体感推荐档位，但你仍可以手动覆盖。要点不是穿得最多，而是让你随时能加、能减、能走动。',
-        bodyEn:
-            'Layering is mainly about adjustability: stay comfortable now, but keep room to react to wind, rain, and daily temperature swing.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.the_three_layer_rule_beats_one_heavy.7c25d1b672d3',
+        bodyKey: 'inline.plan295.daily_choice.layering_is_mainly_about_adjustabili.d3b0a363311d'),
       DailyChoiceGuideEntry(
         icon: Icons.umbrella_rounded,
-        titleZh: '高温、低温、降雨各有收尾检查表',
-        titleEn: 'Heat, cold, and rain each need a final checklist',
-        bodyZh:
-            '高温重点看防晒、补水、面料散热和空调房温差；低温重点看颈部、手部、脚踝和鞋底抓地；雨天重点看裤脚长度、鞋面、防滑和备用干物。出门前只花半分钟做这一步，往往比临时补救更省心。',
-        bodyEn:
-            'For heat, check ventilation and sun protection. For cold, cover the small exposed zones. For rain, control hem length, traction, and backup dry items.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.heat_cold_and_rain_each_need_a_final.3b443d0108d9',
+        bodyKey: 'inline.plan295.daily_choice.for_heat_check_ventilation_and_sun_p.772810d35c54'),
+    ]),
   DailyChoiceGuideModule(
     id: 'accessories',
     icon: Icons.watch_rounded,
-    titleZh: '鞋履与配饰',
-    titleEn: 'Shoes & Accessories',
-    subtitleZh: '鞋和配件是收口，不是抢主题',
-    subtitleEn: 'Shoes and accessories finish the look instead of stealing it',
+    titleKey: 'inline.plan295.daily_choice.shoes_accessories.b76497b8a962',
+    subtitleKey: 'inline.plan295.daily_choice.shoes_and_accessories_finish_the_loo.f2e5d8c8500f',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.shopping_bag_outlined,
-        titleZh: '鞋子决定完成度，包和腰带负责统一',
-        titleEn: 'Shoes finish the outfit, bag and belt unify it',
-        bodyZh:
-            '鞋子常常决定一套搭配是否完整。通勤和正式场景先保证鞋面整洁、线条清楚、适合久走；包、腰带、表和首饰则尽量配合同一语气，不需要每样都出彩，只要整体不散。想省力时，优先把鞋和包选稳。',
-        bodyEn:
-            'Shoes often reveal the most about whether an outfit feels intentional, while bag and belt keep the whole look speaking in one tone.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.shoes_finish_the_outfit_bag_and_belt.499d842f2e35',
+        bodyKey: 'inline.plan295.daily_choice.shoes_often_reveal_the_most_about_wh.dcc18615462e'),
       DailyChoiceGuideEntry(
         icon: Icons.auto_fix_high_rounded,
-        titleZh: '配饰要么补气色，要么补比例，不要只是“多一个”',
-        titleEn: 'Accessories should fix color or proportion',
-        bodyZh:
-            '围巾、耳饰、项链、帽子、方巾、腕表最适合承担两种任务：一是给脸部和上半身提气，二是把视线拉向你想强调的位置。若一套搭配已经有明显图案、鲜艳颜色或复杂面料，配饰就减法处理；若整体过于平，可以用一件小配件做记忆点。',
-        bodyEn:
-            'Accessories work best when they either lift color near the face or guide the eye toward the area you want to emphasize.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.accessories_should_fix_color_or_prop.878642a5bfb6',
+        bodyKey: 'inline.plan295.daily_choice.accessories_work_best_when_they_eith.e63feafd1e65'),
+    ]),
   DailyChoiceGuideModule(
     id: 'wardrobe',
     icon: Icons.inventory_2_rounded,
-    titleZh: '衣橱整理与练习',
-    titleEn: 'Wardrobe Practice',
-    subtitleZh: '衣橱越清楚，随机推荐越接近你真会穿的答案',
-    subtitleEn: 'A clearer wardrobe makes recommendations more realistic',
+    titleKey: 'inline.plan295.daily_choice.wardrobe_practice.c1b063846d4d',
+    subtitleKey: 'inline.plan295.daily_choice.a_clearer_wardrobe_makes_recommendat.f3524a30a0fc',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.cleaning_services_rounded,
-        titleZh: '按常穿频率和场景保留，不按愧疚感保留',
-        titleEn: 'Keep by frequency and scene, not by guilt',
-        bodyZh:
-            '衣橱管理重在质胜于量。整理衣橱时，先留下最合身、最常穿、最好搭、最能代表你当前生活的核心款；低频、难打理、总需要“等一个合适场合”的衣服，要么转入备用，要么尽快清理。你在管理页里标注的风格、版型和样式类型，本质上就是帮自己建立这套衣橱索引。',
-        bodyEn:
-            'Edit the closet around what fits, gets worn, and actually supports your current life. The guided traits in management are there to make that inventory visible.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.keep_by_frequency_and_scene_not_by_g.8dba30ac1c5c',
+        bodyKey: 'inline.plan295.daily_choice.edit_the_closet_around_what_fits_get.783f7a2a14e1'),
       DailyChoiceGuideEntry(
         icon: Icons.photo_camera_back_rounded,
-        titleZh: '在家练穿搭，比出门前临时拼更有效',
-        titleEn: 'Practice at home before needing the outfit',
-        bodyZh:
-            '不要把所有试错都放在出门前五分钟。可以把高频场景的几套组合提前试好、拍照、记录优缺点，再把最常穿的搭配录入管理页。久而久之，页面里的随机结果会越来越接近你的个人衣橱，而不是一组抽象建议。',
-        bodyEn:
-            'Testing combinations ahead of time builds a personal outfit library, which makes both daily choice and wardrobe management dramatically more useful.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.practice_at_home_before_needing_the.d5e23876c333',
+        bodyKey: 'inline.plan295.daily_choice.testing_combinations_ahead_of_time_b.88897aa0220f'),
+    ]),
 ];
 const List<DailyChoiceGuideModule> placeGuideModules = <DailyChoiceGuideModule>[
   DailyChoiceGuideModule(
     id: 'scope',
     icon: Icons.timer_rounded,
-    titleZh: '先定范围',
-    titleEn: 'Set the scope first',
-    subtitleZh: '先把时间和半径收口，再谈目的地',
-    subtitleEn: 'Bound the time and radius before choosing the place',
+    titleKey: 'inline.plan295.daily_choice.set_the_scope_first.65e4fbaeab32',
+    subtitleKey: 'inline.plan295.daily_choice.bound_the_time_and_radius_before_cho.f112cd3620b6',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.door_front_door_rounded,
-        titleZh: '出门、周边、远行不是强度，而是边界',
-        titleEn: 'Step out, nearby, and travel are boundaries',
-        bodyZh:
-            '“出门”适合 30 分钟到 1 小时的低门槛切换，“周边”适合同城半日，“远行”则意味着你愿意为这次外出留出完整行程。先确定你愿意给这件事多少时间，地点才不会无限膨胀。',
-        bodyEn:
-            'Step out is for a low-friction 30-to-60-minute change, nearby fits a local half day, and travel means you are willing to turn the outing into a full plan.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.step_out_nearby_and_travel_are_bound.0d5f349e807e',
+        bodyKey: 'inline.plan295.daily_choice.step_out_is_for_a_low_friction_30_to.d97f5fec1860'),
       DailyChoiceGuideEntry(
         icon: Icons.filter_alt_rounded,
-        titleZh: '先选距离，再选场景',
-        titleEn: 'Distance first, scene second',
-        bodyZh:
-            '当纠结来自“想出门但不知道去哪儿”，先用距离把范围缩到可执行，再用饮食、娱乐、运动、文化等场景把结果拉向你当前真正需要的体验。',
-        bodyEn:
-            'When the problem is “I want to go out but do not know where,” reduce the radius first, then use scenes like food, sports, or culture to shape the mood you actually need.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.distance_first_scene_second.9a110f0395ce',
+        bodyKey: 'inline.plan295.daily_choice.when_the_problem_is_i_want_to_go_out.c7920da8b23f'),
+    ]),
   DailyChoiceGuideModule(
     id: 'matching',
     icon: Icons.interests_rounded,
-    titleZh: '按场景匹配',
-    titleEn: 'Match by scene',
-    subtitleZh: '先认清你是想吃、想玩、想动，还是想安静',
-    subtitleEn: 'Name the kind of outing you actually want',
+    titleKey: 'inline.plan295.daily_choice.match_by_scene.fe2862d5ceef',
+    subtitleKey: 'inline.plan295.daily_choice.name_the_kind_of_outing_you_actually.47cbd14e1691',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.psychology_rounded,
-        titleZh: '问题不是去哪儿，而是现在缺什么',
-        titleEn: 'The issue is what you lack right now',
-        bodyZh:
-            '饮食类解决的是”补一顿”与”找个能坐下来的地方”，娱乐类解决新鲜感，运动类解决身体唤醒，学习类解决专注环境，放松类则解决恢复感。先识别缺口，比盲抽地名更准。',
-        bodyEn:
-            'Food solves hunger or the need for a place to sit, entertainment gives novelty, sports wake up the body, study gives focus, and relax scenes restore energy.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.the_issue_is_what_you_lack_right_now.37db3b9a4597',
+        bodyKey: 'inline.plan295.daily_choice.food_solves_hunger_or_the_need_for_a.147861712619'),
       DailyChoiceGuideEntry(
         icon: Icons.group_work_rounded,
-        titleZh: '同行对象会改写最优解',
-        titleEn: 'Who goes with you changes the best answer',
-        bodyZh:
-            '一个人适合低沟通成本的点位，两三个人适合能边走边聊或能临时换计划的地点，带长辈和小孩则优先看无障碍、洗手间、休息位和就餐衔接。',
-        bodyEn:
-            'Solo trips work best with low-communication destinations, small groups need flexible places, and multi-age outings should prioritize accessibility, seating, and restroom support.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.who_goes_with_you_changes_the_best_a.4590a86292b5',
+        bodyKey: 'inline.plan295.daily_choice.solo_trips_work_best_with_low_commun.144c3c2aa8cd'),
+    ]),
   DailyChoiceGuideModule(
     id: 'map',
     icon: Icons.map_rounded,
-    titleZh: '地图与检索',
-    titleEn: 'Maps and search',
-    subtitleZh: '先看营业、通勤、预约和替代点',
-    subtitleEn: 'Check opening hours, transit, booking, and backups',
+    titleKey: 'inline.plan295.daily_choice.maps_and_search.84e317088235',
+    subtitleKey: 'inline.plan295.daily_choice.check_opening_hours_transit_booking.99d9d72d8754',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.search_rounded,
-        titleZh: '先搜关键词，不要先认一家店',
-        titleEn: 'Search by keyword before committing to one place',
-        bodyZh:
-            '这一版详情页会给出地图搜索词。先用关键词搜一组候选，再按评分、步行时间、营业时间和是否容易收尾来选，比一开始就锁死某一家更稳。',
-        bodyEn:
-            'This version gives you a map query. Search the keyword first, then choose by rating, transit time, opening hours, and how easy the outing is to close out.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.search_by_keyword_before_committing.c15c44e1f02f',
+        bodyKey: 'inline.plan295.daily_choice.this_version_gives_you_a_map_query_s.0b8aa747eeb4'),
       DailyChoiceGuideEntry(
         icon: Icons.alt_route_rounded,
-        titleZh: '永远准备一个替代点',
-        titleEn: 'Always keep a backup',
-        bodyZh:
-            '排队、满场、闭馆、下雨和临时取消都很常见。真正降低决策压力的方法，是在同一片区域预留一个替代点，而不是让整次外出因为一个点失败而中断。',
-        bodyEn:
-            'Queues, closures, rain, or sold-out tickets happen often. A backup in the same area keeps the outing alive instead of collapsing the whole plan.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.always_keep_a_backup.a8c5d8082c94',
+        bodyKey: 'inline.plan295.daily_choice.queues_closures_rain_or_sold_out_tic.ef02d79ef396'),
+    ]),
   DailyChoiceGuideModule(
     id: 'weather_budget',
     icon: Icons.wb_sunny_rounded,
-    titleZh: '天气、预算与安全',
-    titleEn: 'Weather, budget, and safety',
-    subtitleZh: '天气和返程可行性永远比“理想感”更重要',
-    subtitleEn: 'Practicality matters more than the idealized destination',
+    titleKey: 'inline.plan295.daily_choice.weather_budget_and_safety.a5d8102a0720',
+    subtitleKey: 'inline.plan295.daily_choice.practicality_matters_more_than_the_i.552e326044b5',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.thunderstorm_rounded,
-        titleZh: '户外和夜间点先看天气',
-        titleEn: 'Outdoor and night outings start with weather',
-        bodyZh: '公园、滨水、街景、夜景和远行类地点对天气很敏感。遇到高温、降雨、大风或夜间温差，优先准备替代的室内点，而不是硬扛。',
-        bodyEn:
-            'Parks, waterfronts, street scenes, night views, and longer trips are weather-sensitive. In heat, rain, or wind, prepare an indoor fallback instead of forcing it.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.outdoor_and_night_outings_start_with.70ad7697b503',
+        bodyKey: 'inline.plan295.daily_choice.parks_waterfronts_street_scenes_nigh.cb8e765fadaa'),
       DailyChoiceGuideEntry(
         icon: Icons.account_balance_wallet_rounded,
-        titleZh: '预算要把路费一起算进去',
-        titleEn: 'Budget means transit cost too',
-        bodyZh: '真正的出门成本不只是门票和餐费，还包括打车、停车、地铁换乘、预约损耗和返程时间。远行类地点尤其要把“回得来”一起算清楚。',
-        bodyEn:
-            'The real cost includes transit, parking, transfers, booking friction, and the return trip, not only the ticket or meal itself.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.budget_means_transit_cost_too.83788bd2efb3',
+        bodyKey: 'inline.plan295.daily_choice.the_real_cost_includes_transit_parki.c9f02c6eb411'),
+    ]),
   DailyChoiceGuideModule(
     id: 'pack',
     icon: Icons.backpack_rounded,
-    titleZh: '最小准备包',
-    titleEn: 'Minimal prep pack',
-    subtitleZh: '少带，但别漏掉关键物件',
-    subtitleEn: 'Carry little, but do not forget the essentials',
+    titleKey: 'inline.plan295.daily_choice.minimal_prep_pack.185400786510',
+    subtitleKey: 'inline.plan295.daily_choice.carry_little_but_do_not_forget_the_e.1c836202d497',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.battery_charging_full_rounded,
-        titleZh: '短出门看电量，远行看补给',
-        titleEn: 'Short trips need battery, long trips need backup',
-        bodyZh: '出门和周边优先确保手机、电量、钥匙、纸巾和水；远行则再加证件、药品、充电线、雨具和返程所需的轻补给。',
-        bodyEn:
-            'For step-out and nearby trips, phone, battery, keys, tissue, and water usually cover it. For travel, add ID, meds, a cable, weather gear, and small return-trip supplies.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.short_trips_need_battery_long_trips.8ce4f702586d',
+        bodyKey: 'inline.plan295.daily_choice.for_step_out_and_nearby_trips_phone.708e72854b73'),
       DailyChoiceGuideEntry(
         icon: Icons.history_toggle_off_rounded,
-        titleZh: '到点就收，不把随机外出拖成负担',
-        titleEn: 'End on time instead of dragging it out',
-        bodyZh:
-            '随机工具的意义是把你推出去，不是把一天压得更满。达到时间盒、完成主要体验、身体开始疲惫，或者返程窗口快关闭时，就可以安心收口。',
-        bodyEn:
-            'The tool is meant to get you moving, not overload the day. Once the time box is reached or the main experience is done, it is okay to close the outing cleanly.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.end_on_time_instead_of_dragging_it_o.fb33abfd2439',
+        bodyKey: 'inline.plan295.daily_choice.the_tool_is_meant_to_get_you_moving.811dff52898d'),
+    ]),
 ];
 const List<DailyChoiceGuideEntry>
 activityGuideEntries = <DailyChoiceGuideEntry>[
   DailyChoiceGuideEntry(
     icon: Icons.flag_rounded,
-    titleZh: '动作要小到能开始',
-    titleEn: 'Make it startable',
-    bodyZh: '如果某件事听起来太大，就把它改成 5 分钟版本。每日抉择的价值是破冰，不是替你安排完整人生。',
-    bodyEn:
-        'If an activity feels too large, shrink it to a five-minute version. Daily choice breaks the ice; it does not schedule your whole life.',
-  ),
+    titleKey: 'inline.plan295.daily_choice.make_it_startable.f7bb2ac42fd3',
+    bodyKey: 'inline.plan295.daily_choice.if_an_activity_feels_too_large_shrin.050f1ba48602'),
   DailyChoiceGuideEntry(
     icon: Icons.repeat_rounded,
-    titleZh: '先做一次，再决定继续',
-    titleEn: 'One round first',
-    bodyZh: '运动、学习、整理都先做一次。完成后再选择继续、换方向或停止，避免一开始就被计划压住。',
-    bodyEn:
-        'Move, study, or tidy for one round first. After that, choose continue, switch, or stop.',
-  ),
+    titleKey: 'inline.plan295.daily_choice.one_round_first.c6245bb840b3',
+    bodyKey: 'inline.plan295.daily_choice.move_study_or_tidy_for_one_round_fir.f98a3b42bc92'),
   DailyChoiceGuideEntry(
     icon: Icons.psychology_rounded,
-    titleZh: '方向也可以随机',
-    titleEn: 'Randomize direction too',
-    bodyZh: '当你连大方向都不想选时，用“随机方向”。先让系统给一个方向，再从该方向里摇出具体动作。',
-    bodyEn:
-        'When even the direction feels hard, use Random. Let the tool pick the direction and then a concrete action.',
-  ),
+    titleKey: 'inline.plan295.daily_choice.randomize_direction_too.dfb3ed3d2a36',
+    bodyKey: 'inline.plan295.daily_choice.when_even_the_direction_feels_hard_u.adfcdade9e8f'),
 ];
 const List<DailyChoiceGuideModule>
 activityGuideModules = <DailyChoiceGuideModule>[
   DailyChoiceGuideModule(
     id: 'attention',
     icon: Icons.center_focus_strong_rounded,
-    titleZh: '注意力涣散',
-    titleEn: 'Attention drift',
-    subtitleZh: '先复盘涣散内容，再决定回到目标还是换一个低阻力动作',
-    subtitleEn:
-        'Review the drift, then return to the goal or pick a smaller action',
+    titleKey: 'inline.plan295.daily_choice.attention_drift.ce70d56e3e8e',
+    subtitleKey: 'inline.plan295.daily_choice.review_the_drift_then_return_to_the.fe532d277123',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.psychology_alt_rounded,
-        titleZh: '不评价地回看刚才在想什么',
-        titleEn: 'Review the drift without judgment',
-        bodyZh: '停 20 秒，写下刚才跑掉的内容：是在幻想结果、担心别人评价、想逃开任务，还是身体真的累了。只记录，不批评。',
-        bodyEn:
-            'Pause for 20 seconds and name the drift: fantasy, fear of judgment, task avoidance, or real fatigue. Record it without scolding yourself.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.review_the_drift_without_judgment.da1b3ff34c71',
+        bodyKey: 'inline.plan295.daily_choice.pause_for_20_seconds_and_name_the_dr.ff6edf15bb6b'),
       DailyChoiceGuideEntry(
         icon: Icons.flag_rounded,
-        titleZh: '重新说出当前目标',
-        titleEn: 'Restate the current goal',
-        bodyZh:
-            '用一句话写出“我现在原本要完成什么”。如果目标太大，改成 5 分钟版本；如果目标已经失效，就允许重新随机一个更贴近当下的行动。',
-        bodyEn:
-            'Write one sentence for what you meant to do. If it is too large, shrink it to five minutes; if it no longer fits, reroll a better action.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.restate_the_current_goal.3b1b54c58af2',
+        bodyKey: 'inline.plan295.daily_choice.write_one_sentence_for_what_you_mean.ebc19f5c438c'),
       DailyChoiceGuideEntry(
         icon: Icons.timer_rounded,
-        titleZh: '只承诺一小段',
-        titleEn: 'Commit to one small round',
-        bodyZh: '先做一小段 5 到 12 分钟。到点后再决定继续、休息或换方向，避免把随机结果变成新的压力。',
-        bodyEn:
-            'Do one 5 to 12 minute round first. When it ends, choose continue, rest, or switch.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.commit_to_one_small_round.cf7b3d2357af',
+        bodyKey: 'inline.plan295.daily_choice.do_one_5_to_12_minute_round_first_wh.cbdb35739d66'),
+    ]),
   DailyChoiceGuideModule(
     id: 'walk',
     icon: Icons.directions_walk_rounded,
-    titleZh: '什么时候出门走走',
-    titleEn: 'When to walk outside',
-    subtitleZh: '把出门当作状态切换，而不是逃避任务',
-    subtitleEn: 'Use walking as a state shift, not pure avoidance',
+    titleKey: 'inline.plan295.daily_choice.when_to_walk_outside.7a1d17b39400',
+    subtitleKey: 'inline.plan295.daily_choice.use_walking_as_a_state_shift_not_pur.9f5de9754cf8',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.cloud_queue_rounded,
-        titleZh: '身体和环境允许时优先短出门',
-        titleEn: 'Choose a short outing when conditions allow',
-        bodyZh: '天气安全、身体没有明显不适、任务卡住超过 15 分钟、室内刺激变得黏滞时，优先选择 8 到 20 分钟散步。',
-        bodyEn:
-            'If weather and body are safe, the task has been stuck for 15 minutes, and the room feels stale, pick an 8 to 20 minute walk.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.choose_a_short_outing_when_condition.1e2e431ca87b',
+        bodyKey: 'inline.plan295.daily_choice.if_weather_and_body_are_safe_the_tas.1be6ecf38d2b'),
       DailyChoiceGuideEntry(
         icon: Icons.route_rounded,
-        titleZh: '走固定短路线',
-        titleEn: 'Use a fixed short route',
-        bodyZh: '路线越固定越不耗决策力。出门前只检查钥匙、手机、电量和天气；不要把散步扩展成复杂外出。',
-        bodyEn:
-            'A fixed route costs less decision energy. Check keys, phone, battery, and weather; do not let the walk grow into a complex outing.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.use_a_fixed_short_route.82f08c689ab6',
+        bodyKey: 'inline.plan295.daily_choice.a_fixed_route_costs_less_decision_en.2af692324bc9'),
       DailyChoiceGuideEntry(
         icon: Icons.assignment_return_rounded,
-        titleZh: '回来要接一个小动作',
-        titleEn: 'Return into one small action',
-        bodyZh: '回到室内后立刻接一个 2 分钟动作：打开文档、洗杯子、整理桌面一角或写下一句目标，防止散步后继续漂走。',
-        bodyEn:
-            'After returning, do one two-minute action: open the document, wash a cup, clear one desk corner, or write the goal.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.return_into_one_small_action.f8329546536c',
+        bodyKey: 'inline.plan295.daily_choice.after_returning_do_one_two_minute_ac.96bc185b2ea0'),
+    ]),
   DailyChoiceGuideModule(
     id: 'low_energy',
     icon: Icons.battery_2_bar_rounded,
-    titleZh: '低能量开始',
-    titleEn: 'Low-energy start',
-    subtitleZh: '降低动作体积，让开始先发生',
-    subtitleEn: 'Shrink the action so starting happens first',
+    titleKey: 'inline.plan295.daily_choice.low_energy_start.9217cb3e1b6e',
+    subtitleKey: 'inline.plan295.daily_choice.shrink_the_action_so_starting_happen.ecfd297c75c7',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.compress_rounded,
-        titleZh: '把任务缩到一个可见终点',
-        titleEn: 'Shrink to a visible endpoint',
-        bodyZh: '不要写“学习英语”，写“复习 10 个词”；不要写“收拾房间”，写“只清空桌面左上角”。',
-        bodyEn:
-            'Do not write “study English”; write “review 10 words.” Do not write “clean the room”; write “clear the top-left desk corner.”',
-      ),
+        titleKey: 'inline.plan295.daily_choice.shrink_to_a_visible_endpoint.f272eaa6a69d',
+        bodyKey: 'inline.plan295.daily_choice.do_not_write_study_english_write_rev.1d85b958fe95'),
       DailyChoiceGuideEntry(
         icon: Icons.hourglass_empty_rounded,
-        titleZh: '默认时间盒要短',
-        titleEn: 'Keep the time box short',
-        bodyZh: '能量低时，5 分钟不是偷懒，而是开始的小仪式。完成后如果状态变好，再自愿追加一次。',
-        bodyEn:
-            'At low energy, five minutes is a start protocol, not laziness. Add another round only if it helps.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.keep_the_time_box_short.a4a8f60902f9',
+        bodyKey: 'inline.plan295.daily_choice.at_low_energy_five_minutes_is_a_star.e0d0ae4c6089'),
+    ]),
   DailyChoiceGuideModule(
     id: 'boundaries',
     icon: Icons.rule_rounded,
-    titleZh: '行动边界',
-    titleEn: 'Action boundaries',
-    subtitleZh: '知道什么时候停，也知道什么时候换行动',
-    subtitleEn: 'Know when to stop and when to switch',
+    titleKey: 'inline.plan295.daily_choice.action_boundaries.3fe8e2c32d89',
+    subtitleKey: 'inline.plan295.daily_choice.know_when_to_stop_and_when_to_switch.1ebc38a45fcb',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.stop_circle_rounded,
-        titleZh: '到点停止也算完成',
-        titleEn: 'Stopping on time counts',
-        bodyZh: '随机工具只负责帮你开始和收口。到达时间盒、身体不舒服、外部条件不合适或行动明显偏题时，可以停止。',
-        bodyEn:
-            'The randomizer helps you start and close. Stop when the time box ends, body feels wrong, conditions are poor, or the action drifts off target.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.stopping_on_time_counts.e5b503f22715',
+        bodyKey: 'inline.plan295.daily_choice.the_randomizer_helps_you_start_and_c.67e500458389'),
       DailyChoiceGuideEntry(
         icon: Icons.swap_horiz_rounded,
-        titleZh: '换行动要保留原因',
-        titleEn: 'Keep the reason when switching',
-        bodyZh: '如果你换掉当前结果，记录一句原因：太晚、太吵、身体累、需要别人配合、目标不匹配。这样下次可以优化行动集。',
-        bodyEn:
-            'When switching, keep one reason: too late, too noisy, tired body, needs another person, or mismatched goal. Use it to improve the set later.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.keep_the_reason_when_switching.48477b2a4492',
+        bodyKey: 'inline.plan295.daily_choice.when_switching_keep_one_reason_too_l.7ac439d0b7ee'),
+    ]),
 ];
 const List<DailyChoiceGuideEntry>
 decisionGuideEntries = <DailyChoiceGuideEntry>[
   DailyChoiceGuideEntry(
     icon: Icons.casino_rounded,
-    titleZh: '均匀随机',
-    titleEn: 'Uniform random',
-    bodyZh: '所有选项权重相同，适合低风险、差别不大的选择。它不是科学最优，只是快速结束犹豫。',
-    bodyEn:
-        'Every option has equal weight. Good for low-risk choices where options are similar.',
-  ),
+    titleKey: 'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_widgets.uniform_random_851942',
+    bodyKey: 'inline.plan295.daily_choice.every_option_has_equal_weight_good_f.8707d5a4b689'),
   DailyChoiceGuideEntry(
     icon: Icons.functions_rounded,
-    titleZh: '期望加权',
-    titleEn: 'Expected value',
-    bodyZh: '用“概率 × 收益 - 风险 - 成本”粗略排序。适合把模糊直觉摊开，但输入值仍然来自你的判断。',
-    bodyEn:
-        'Ranks by probability times value minus risk and cost. Useful for exposing assumptions, not for guaranteed truth.',
-  ),
+    titleKey: 'inline.plan295.daily_choice.expected_value.9314aecb22d2',
+    bodyKey: 'inline.plan295.daily_choice.ranks_by_probability_times_value_min.c7cb50a11b6a'),
   DailyChoiceGuideEntry(
     icon: Icons.account_tree_rounded,
-    titleZh: '联合概率',
-    titleEn: 'Joint probability',
-    bodyZh: '当一个结果依赖多个条件同时成立时，把概率相乘会更保守，也能提醒你哪一环最需要补信息。',
-    bodyEn:
-        'When an outcome depends on several events, multiplying probabilities gives a more conservative view and shows which link needs more information.',
-  ),
+    titleKey: 'toolbox.daily_choice.joint_probability',
+    bodyKey: 'inline.plan295.daily_choice.when_an_outcome_depends_on_several_e.a7f022ed1c72'),
   DailyChoiceGuideEntry(
     icon: Icons.show_chart_rounded,
-    titleZh: '校准预测',
-    titleEn: 'Calibrated forecast',
-    bodyZh: '当预期特别乐观或悲观时，先和平均情况做比较，给极端判断留一点回拉空间。',
-    bodyEn:
-        'When a forecast feels extremely optimistic or pessimistic, compare it with the average case and pull the estimate back a little.',
-  ),
+    titleKey: 'inline.plan295.daily_choice.calibrated_forecast.b196f3a7b02e',
+    bodyKey: 'inline.plan295.daily_choice.when_a_forecast_feels_extremely_opti.f58b2ad99904'),
 ];
 List<DailyChoiceOption> buildDailyChoiceFallbackEatOptions() {
   return List<DailyChoiceOption>.unmodifiable(_eatOptions);

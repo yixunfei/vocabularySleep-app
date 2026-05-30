@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../i18n/app_i18n.dart';
-import '../../ui_copy.dart';
 import 'daily_choice_decision_engine.dart';
 import 'daily_choice_models.dart';
 
@@ -9,37 +8,26 @@ class DailyChoiceDecisionMethodSpec {
   const DailyChoiceDecisionMethodSpec({
     required this.method,
     required this.icon,
-    required this.titleZh,
-    required this.titleEn,
-    required this.subtitleZh,
-    required this.subtitleEn,
-    required this.formulaZh,
-    required this.formulaEn,
-    required this.cautionZh,
-    required this.cautionEn,
+    required this.titleKey,
+    required this.subtitleKey,
+    required this.formulaKey,
+    required this.cautionKey,
   });
 
   final DailyChoiceDecisionMethod method;
   final IconData icon;
-  final String titleZh;
-  final String titleEn;
-  final String subtitleZh;
-  final String subtitleEn;
-  final String formulaZh;
-  final String formulaEn;
-  final String cautionZh;
-  final String cautionEn;
+  final String titleKey;
+  final String subtitleKey;
+  final String formulaKey;
+  final String cautionKey;
 
-  String title(AppI18n i18n) => pickUiText(i18n, zh: titleZh, en: titleEn);
+  String title(AppI18n i18n) => i18n.t(titleKey);
 
-  String subtitle(AppI18n i18n) =>
-      pickUiText(i18n, zh: subtitleZh, en: subtitleEn);
+  String subtitle(AppI18n i18n) => i18n.t(subtitleKey);
 
-  String formula(AppI18n i18n) =>
-      pickUiText(i18n, zh: formulaZh, en: formulaEn);
+  String formula(AppI18n i18n) => i18n.t(formulaKey);
 
-  String caution(AppI18n i18n) =>
-      pickUiText(i18n, zh: cautionZh, en: cautionEn);
+  String caution(AppI18n i18n) => i18n.t(cautionKey);
 }
 
 DailyChoiceDecisionMethodSpec decisionMethodSpec(
@@ -49,123 +37,63 @@ DailyChoiceDecisionMethodSpec decisionMethodSpec(
     DailyChoiceDecisionMethod.random => const DailyChoiceDecisionMethodSpec(
       method: DailyChoiceDecisionMethod.random,
       icon: Icons.casino_rounded,
-      titleZh: '均匀随机',
-      titleEn: 'Uniform random',
-      subtitleZh: '适合低风险、可回退、差别不大的日常选择。',
-      subtitleEn:
-          'Best for low-stakes, reversible choices with tiny differences.',
-      formulaZh: '每个选项概率相同，目的是尽快结束犹豫。',
-      formulaEn:
-          'Each option gets the same chance. The goal is to end dithering fast.',
-      cautionZh: '不要把随机当成高风险决策的依据。',
-      cautionEn: 'Do not use random choice for high-stakes decisions.',
-    ),
+        titleKey: 'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_widgets.uniform_random_851942',
+        subtitleKey: 'inline.plan295.daily_choice.best_for_low_stakes_reversible_choic.49b02cca4e88',
+        formulaKey: 'inline.plan295.daily_choice.each_option_gets_the_same_chance_the.530c0754efc4',
+        cautionKey: 'inline.plan295.daily_choice.do_not_use_random_choice_for_high_st.a4b7bf74d435'),
     DailyChoiceDecisionMethod.weightedFactors =>
       const DailyChoiceDecisionMethodSpec(
         method: DailyChoiceDecisionMethod.weightedFactors,
         icon: Icons.tune_rounded,
-        titleZh: '加权因素',
-        titleEn: 'Weighted factors',
-        subtitleZh: '把价值、成功率、可回退性、风险和信息差放到同一把尺子上比较。',
-        subtitleEn:
-            'Compare value, success odds, reversibility, risk, and info gaps on one ruler.',
-        formulaZh: '正向项加权 - 风险/投入/后悔/信息差惩罚。',
-        formulaEn:
-            'Weighted positives minus penalties for risk, effort, regret, and info gaps.',
-        cautionZh: '它适合排序，不代表绝对正确。',
-        cautionEn: 'Useful for ranking, not for claiming certainty.',
-      ),
+        titleKey: 'toolbox.daily_choice.weighted_factors',
+        subtitleKey: 'inline.plan295.daily_choice.compare_value_success_odds_reversibi.bb60361dc10d',
+        formulaKey: 'inline.plan295.daily_choice.weighted_positives_minus_penalties_f.0a2df1c694a2',
+        cautionKey: 'inline.plan295.daily_choice.useful_for_ranking_not_for_claiming.20c9bff74b77'),
     DailyChoiceDecisionMethod.expectedValue =>
       const DailyChoiceDecisionMethodSpec(
         method: DailyChoiceDecisionMethod.expectedValue,
         icon: Icons.functions_rounded,
-        titleZh: '期望收益',
-        titleEn: 'Expected value',
-        subtitleZh: '适合结果不确定、但可以估一个大致成功率的选择。',
-        subtitleEn:
-            'Best for uncertain outcomes when you can estimate rough odds.',
-        formulaZh: '成功概率 × 收益 - 失败暴露 - 投入成本。',
-        formulaEn:
-            'Success probability × upside - downside exposure - effort cost.',
-        cautionZh: '输入概率来自你的判断，先做独立估值再讨论。',
-        cautionEn:
-            'Your inputs are still judgments, so estimate independently first.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.expected_value.794b96c77f96',
+        subtitleKey: 'inline.plan295.daily_choice.best_for_uncertain_outcomes_when_you.7df1ac1849b5',
+        formulaKey: 'inline.plan295.daily_choice.success_probability_upside_downside.1121b1821c12',
+        cautionKey: 'inline.plan295.daily_choice.your_inputs_are_still_judgments_so_e.6f65d3599cf4'),
     DailyChoiceDecisionMethod.jointProbability => const DailyChoiceDecisionMethodSpec(
       method: DailyChoiceDecisionMethod.jointProbability,
       icon: Icons.account_tree_rounded,
-      titleZh: '联合概率',
-      titleEn: 'Joint probability',
-      subtitleZh: '当结果需要“判断对 + 执行到位 + 条件真的成立”时，用更保守的乘法。',
-      subtitleEn:
-          'Use a conservative product when success needs multiple things to line up.',
-      formulaZh: '成功概率 × 执行概率 × 把握度，再扣掉下行暴露。',
-      formulaEn:
-          'Success probability × execution probability × confidence, then subtract downside exposure.',
-      cautionZh: '适合多条件联动，不适合把彼此强相关的事件硬拆开。',
-      cautionEn:
-          'Great for multi-step dependence, weaker when the events are strongly correlated.',
-    ),
+        titleKey: 'toolbox.daily_choice.joint_probability',
+        subtitleKey: 'inline.plan295.daily_choice.use_a_conservative_product_when_succ.895ecf0333e3',
+        formulaKey: 'inline.plan295.daily_choice.success_probability_execution_probab.b6f2ee76e62e',
+        cautionKey: 'inline.plan295.daily_choice.great_for_multi_step_dependence_weak.bb2794167cfc'),
     DailyChoiceDecisionMethod.scenarioBlend => const DailyChoiceDecisionMethodSpec(
       method: DailyChoiceDecisionMethod.scenarioBlend,
       icon: Icons.alt_route_rounded,
-      titleZh: '情景分析',
-      titleEn: 'Scenario blend',
-      subtitleZh: '把乐观、基准、悲观三种情景同时摆出来，避免只盯着最好结果。',
-      subtitleEn:
-          'Blend optimistic, base, and pessimistic scenarios so you do not stare only at the upside.',
-      formulaZh: '乐观 + 基准 + 悲观按不确定性加权汇总。',
-      formulaEn: 'A weighted blend of optimistic, base, and pessimistic cases.',
-      cautionZh: '高不确定时要让悲观情景真正进场。',
-      cautionEn:
-          'When uncertainty is high, let the pessimistic case carry real weight.',
-    ),
+        titleKey: 'inline.plan295.daily_choice.scenario_blend.4e8073ad7308',
+        subtitleKey: 'inline.plan295.daily_choice.blend_optimistic_base_and_pessimisti.5266aa331e22',
+        formulaKey: 'inline.plan295.daily_choice.a_weighted_blend_of_optimistic_base.0c81b385db5b',
+        cautionKey: 'inline.plan295.daily_choice.when_uncertainty_is_high_let_the_pes.6cfeb72c81c9'),
     DailyChoiceDecisionMethod.regretBalance => const DailyChoiceDecisionMethodSpec(
       method: DailyChoiceDecisionMethod.regretBalance,
       icon: Icons.history_toggle_off_rounded,
-      titleZh: '后悔与机会成本',
-      titleEn: 'Regret and opportunity cost',
-      subtitleZh: '适合容易事后反复想“早知道就选另一个”的选择。',
-      subtitleEn:
-          'Useful when you are likely to revisit the decision and ask what you should have chosen.',
-      formulaZh: '已实现潜力 + 可回退补偿 - 后悔暴露 - 机会成本。',
-      formulaEn:
-          'Realized upside plus reversibility buffer minus regret exposure and opportunity cost.',
-      cautionZh: '它是在校正情绪，不是在预测命运。',
-      cautionEn: 'This lens corrects emotion; it does not predict destiny.',
-    ),
+        titleKey: 'inline.plan295.daily_choice.regret_and_opportunity_cost.cfff906e06f8',
+        subtitleKey: 'inline.plan295.daily_choice.useful_when_you_are_likely_to_revisi.b683c4218c87',
+        formulaKey: 'inline.plan295.daily_choice.realized_upside_plus_reversibility_b.860a2ba330ac',
+        cautionKey: 'inline.plan295.daily_choice.this_lens_corrects_emotion_it_does_n.2ed3c8b413ed'),
     DailyChoiceDecisionMethod.thresholdGuardrail =>
       const DailyChoiceDecisionMethodSpec(
         method: DailyChoiceDecisionMethod.thresholdGuardrail,
         icon: Icons.rule_rounded,
-        titleZh: '安全线优先',
-        titleEn: 'Guardrails first',
-        subtitleZh: '先看是否过最低门槛，再在过关选项里比较优先级。',
-        subtitleEn:
-            'Check minimum standards first, then rank only the options that clear them.',
-        formulaZh: '先判定信心、风险、可回退性、信息差是否过线，再用综合分做同档比较。',
-        formulaEn:
-            'Check confidence, downside, reversibility, and info gaps first, then break ties with a composite score.',
-        cautionZh: '高风险场景先看安全线，再谈收益。',
-        cautionEn:
-            'In high-stakes situations, protect the floor before chasing upside.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.guardrails_first.7fb9a9ace5b2',
+        subtitleKey: 'inline.plan295.daily_choice.check_minimum_standards_first_then_r.4e024f9b9ef3',
+        formulaKey: 'inline.plan295.daily_choice.check_confidence_downside_reversibil.88742b8d959d',
+        cautionKey: 'inline.plan295.daily_choice.in_high_stakes_situations_protect_th.2aae39e943dd'),
     DailyChoiceDecisionMethod.calibratedForecast =>
       const DailyChoiceDecisionMethodSpec(
         method: DailyChoiceDecisionMethod.calibratedForecast,
         icon: Icons.show_chart_rounded,
-        titleZh: '校准预测',
-        titleEn: 'Calibrated forecast',
-        subtitleZh: '把过于极端的期望值往均值拉回，减少过度自信。',
-        subtitleEn:
-            'Shrink extreme forecasts back toward the mean to curb overconfidence.',
-        formulaZh: '平均值 + 把握度 × (原始预期 - 平均值)。',
-        formulaEn:
-            'Average score + confidence × (raw forecast - average forecast).',
-        cautionZh: '它不是机器学习，只是把极端判断收一点。',
-        cautionEn:
-            'This is not machine learning; it is a disciplined pull back from extremes.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.calibrated_forecast.b196f3a7b02e',
+        subtitleKey: 'inline.plan295.daily_choice.shrink_extreme_forecasts_back_toward.3d545d855d8d',
+        formulaKey: 'inline.plan295.daily_choice.average_score_confidence_raw_forecas.f3588f3f19f9',
+        cautionKey: 'inline.plan295.daily_choice.this_is_not_machine_learning_it_is_a.797f23988d39'),
   };
 }
 
@@ -174,225 +102,122 @@ decisionGuideModules = <DailyChoiceGuideModule>[
   DailyChoiceGuideModule(
     id: 'flow',
     icon: Icons.route_rounded,
-    titleZh: '先分型再选法',
-    titleEn: 'Classify before choosing a method',
-    subtitleZh: '真正高质量的决策，先判断是什么类型，再决定用哪种计算镜头。',
-    subtitleEn:
-        'High-quality decisions start by identifying the type of decision before choosing the math lens.',
+    titleKey: 'inline.plan295.daily_choice.classify_before_choosing_a_method.5c362700c026',
+    subtitleKey: 'inline.plan295.daily_choice.high_quality_decisions_start_by_iden.1ffc73c266e4',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.low_priority_rounded,
-        titleZh: '低风险且可回退：直接快决',
-        titleEn: 'Low stakes and reversible: decide fast',
-        bodyZh: '餐厅、周末安排、轻量购买这类问题，重点不是“最优”，而是别把精力耗在犹豫上。随机或加权因素通常就够。',
-        bodyEn:
-            'For restaurants, weekend plans, or lightweight purchases, the point is not perfection. Random choice or weighted factors are usually enough.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.low_stakes_and_reversible_decide_fas.85bd722073ee',
+        bodyKey: 'inline.plan295.daily_choice.for_restaurants_weekend_plans_or_lig.51d951b6b143'),
       DailyChoiceGuideEntry(
         icon: Icons.warning_amber_rounded,
-        titleZh: '高风险或难回头：先设安全门槛',
-        titleEn: 'High stakes or hard to undo: set guardrails first',
-        bodyZh: '如果一旦做错很难补救，先看风险、把握度、信息差和可回退性是否过线，再比较收益。',
-        bodyEn:
-            'When mistakes are costly to unwind, check risk, confidence, info gaps, and reversibility before chasing upside.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.high_stakes_or_hard_to_undo_set_guar.2c14a05dd003',
+        bodyKey: 'inline.plan295.daily_choice.when_mistakes_are_costly_to_unwind_c.40085046f629'),
       DailyChoiceGuideEntry(
         icon: Icons.cloud_sync_rounded,
-        titleZh: '高不确定：一定要把悲观情景拉进来',
-        titleEn: 'High uncertainty: bring in the pessimistic case',
-        bodyZh: '当你知道自己不知道很多时，单一分数不够，要同时看联合概率、情景分析和信息价值。',
-        bodyEn:
-            'When you know you do not know enough, a single score is not enough. Use joint probability, scenarios, and information value together.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.high_uncertainty_bring_in_the_pessim.ac8388c60509',
+        bodyKey: 'inline.plan295.daily_choice.when_you_know_you_do_not_know_enough.3496dfe685ef'),
+    ]),
   DailyChoiceGuideModule(
     id: 'quality',
     icon: Icons.workspace_premium_rounded,
-    titleZh: '优质决策六要素',
-    titleEn: 'Six elements of decision quality',
-    subtitleZh: '来自斯坦福决策质量框架，是这个子模块最重要的骨架。',
-    subtitleEn:
-        'Taken from the Stanford decision-quality framework. This is the backbone of the module.',
+    titleKey: 'inline.plan295.daily_choice.six_elements_of_decision_quality.6b3690164386',
+    subtitleKey: 'inline.plan295.daily_choice.taken_from_the_stanford_decision_qua.57e8224220cd',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.filter_center_focus_rounded,
-        titleZh: '先把问题框准',
-        titleEn: 'Frame the question correctly',
-        bodyZh: '先明确你在决定什么、时间范围是什么、哪些约束不能破。问题框错了，再精细计算也会偏。',
-        bodyEn:
-            'Clarify what is being decided, the time horizon, and which constraints are non-negotiable. A bad frame corrupts later analysis.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.frame_the_question_correctly.e96e0f5385fb',
+        bodyKey: 'inline.plan295.daily_choice.clarify_what_is_being_decided_the_ti.8260b12e9cbb'),
       DailyChoiceGuideEntry(
         icon: Icons.auto_fix_high_rounded,
-        titleZh: '至少造出 2 到 3 个可选项',
-        titleEn: 'Generate at least 2 to 3 viable options',
-        bodyZh: '很多糟糕决策不是在坏选项里选，而是根本没有认真生成备选。先扩展，再收口。',
-        bodyEn:
-            'Many bad decisions happen because the option set was poor, not because comparison failed. Expand first, then narrow.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.generate_at_least_2_to_3_viable_opti.77fe003553db',
+        bodyKey: 'inline.plan295.daily_choice.many_bad_decisions_happen_because_th.7a5fa26bf521'),
       DailyChoiceGuideEntry(
         icon: Icons.fact_check_rounded,
-        titleZh: '信息要相关且可靠',
-        titleEn: 'Use relevant and reliable information',
-        bodyZh: '不是信息越多越好，而是越接近关键不确定因素越好。信息差高时，先问“哪条信息最可能改变结论”。',
-        bodyEn:
-            'More information is not always better. Focus on the facts that are closest to the real uncertainty. Ask which missing fact could actually change the choice.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.use_relevant_and_reliable_informatio.c45d95e13e7e',
+        bodyKey: 'inline.plan295.daily_choice.more_information_is_not_always_bette.acbca3e3404d'),
       DailyChoiceGuideEntry(
         icon: Icons.scale_rounded,
-        titleZh: '把价值和权衡写出来',
-        titleEn: 'Write down values and tradeoffs',
-        bodyZh: '收益、成本、时间、体力、风险、体面、长期空间，哪些最重要，最好先写下来，再评分。',
-        bodyEn:
-            'List what matters most before you score: upside, cost, time, energy, risk, reputation, or long-term room to grow.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.write_down_values_and_tradeoffs.2b68aa8658a3',
+        bodyKey: 'inline.plan295.daily_choice.list_what_matters_most_before_you_sc.59480813613b'),
       DailyChoiceGuideEntry(
         icon: Icons.analytics_rounded,
-        titleZh: '论证要透明，可复盘',
-        titleEn: 'Keep reasoning transparent and reviewable',
-        bodyZh: '不要只说“我感觉”。把概率、假设、门槛和为什么输给别的方案讲清楚，之后才知道该修哪一步。',
-        bodyEn:
-            'Do not stop at “it feels right.” Make the probabilities, assumptions, thresholds, and tradeoffs visible so the decision can be reviewed later.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.keep_reasoning_transparent_and_revie.b5f8ef586eb9',
+        bodyKey: 'inline.plan295.daily_choice.do_not_stop_at_it_feels_right_make_t.937f6c91f6e3'),
       DailyChoiceGuideEntry(
         icon: Icons.playlist_add_check_circle_rounded,
-        titleZh: '决定后必须落到动作',
-        titleEn: 'A decision must end in action',
-        bodyZh: '没有下一步动作的“决策”，往往只是延迟焦虑。决定后至少写下第一步、截止点和复盘时间。',
-        bodyEn:
-            'A decision with no next action is usually just postponed anxiety. End with a first step, a stop point, and a review moment.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.a_decision_must_end_in_action.b641ba205ce6',
+        bodyKey: 'inline.plan295.daily_choice.a_decision_with_no_next_action_is_us.e99173a29ce5'),
+    ]),
   DailyChoiceGuideModule(
     id: 'probability',
     icon: Icons.functions_rounded,
-    titleZh: '概率与不确定性',
-    titleEn: 'Probability and uncertainty',
-    subtitleZh: '把“确定/不确定”的情绪语言，转成更可比较的概率语言。',
-    subtitleEn:
-        'Translate emotional certainty into probability language that can actually be compared.',
+    titleKey: 'toolbox.daily_choice.probability_uncertainty',
+    subtitleKey: 'inline.plan295.daily_choice.translate_emotional_certainty_into_p.3485dc4e2dd1',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.percent_rounded,
-        titleZh: '先给概率，再谈结论',
-        titleEn: 'Assign probabilities before conclusions',
-        bodyZh: '把“我觉得会成”改成“我估计成功率 0.65 左右”。粗略也没关系，关键是强迫自己显式表达不确定性。',
-        bodyEn:
-            'Replace “I think it will work” with something like “I estimate the success chance around 0.65.” Rough is fine. Explicit beats vague.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.assign_probabilities_before_conclusi.1ced45f3f68a',
+        bodyKey: 'inline.plan295.daily_choice.replace_i_think_it_will_work_with_so.d1d5df62a4b5'),
       DailyChoiceGuideEntry(
         icon: Icons.merge_type_rounded,
-        titleZh: '多条件同时成立时，用乘法更保守',
-        titleEn: 'Use multiplication when several conditions must hold',
-        bodyZh: '如果一个结果依赖多个环节都不掉链子，联合概率通常比单一主观概率更诚实。',
-        bodyEn:
-            'When success depends on several links all holding together, joint probability is usually more honest than one broad guess.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.use_multiplication_when_several_cond.e1d6fdddba07',
+        bodyKey: 'inline.plan295.daily_choice.when_success_depends_on_several_link.ee5022ccf3e7'),
       DailyChoiceGuideEntry(
         icon: Icons.compare_arrows_rounded,
-        titleZh: '高不确定时，把极端判断往均值拉回',
-        titleEn: 'Pull extreme forecasts back toward the mean',
-        bodyZh: '当证据不足但你给了很高或很低的预期，先做一次校准预测，防止过度自信或过度悲观。',
-        bodyEn:
-            'If evidence is thin but your forecast is extreme, run a calibrated forecast to reduce overconfidence or over-pessimism.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.pull_extreme_forecasts_back_toward_t.cff091d3beef',
+        bodyKey: 'inline.plan295.daily_choice.if_evidence_is_thin_but_your_forecas.ec0689f58f72'),
       DailyChoiceGuideEntry(
         icon: Icons.update_rounded,
-        titleZh: '新证据来了，就更新，不要硬扛',
-        titleEn: 'Update when evidence changes',
-        bodyZh: '贝叶斯思维的核心不是公式，而是接受“我之前估错了，现在该改”。',
-        bodyEn:
-            'The core of Bayesian thinking is not the formula. It is the willingness to say, “I estimated badly before, and now I will update.”',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.update_when_evidence_changes.6cfb62a924c5',
+        bodyKey: 'inline.plan295.daily_choice.the_core_of_bayesian_thinking_is_not.13b40141ff9a'),
+    ]),
   DailyChoiceGuideModule(
     id: 'bias_noise',
     icon: Icons.shield_moon_rounded,
-    titleZh: '偏差与噪声校正',
-    titleEn: 'Bias and noise control',
-    subtitleZh: '避免被锚点、沉没成本、故事感和群体噪声带跑。',
-    subtitleEn:
-        'Avoid getting dragged around by anchors, sunk costs, compelling stories, or group noise.',
+    titleKey: 'inline.plan295.daily_choice.bias_and_noise_control.6e9cd25f9e4f',
+    subtitleKey: 'inline.plan295.daily_choice.avoid_getting_dragged_around_by_anch.fbd0e46d0bb3',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.ads_click_rounded,
-        titleZh: '先独立估，再交流，防锚定',
-        titleEn: 'Estimate independently before discussion',
-        bodyZh: '一旦先看到别人给的数或强烈意见，你自己的判断很容易被拖走。先写，再看。',
-        bodyEn:
-            'Once you see someone else’s number or strong opinion, your own judgment drifts. Write yours down first.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.estimate_independently_before_discus.d65b21718786',
+        bodyKey: 'inline.plan295.daily_choice.once_you_see_someone_else_s_number_o.656312fa37d2'),
       DailyChoiceGuideEntry(
         icon: Icons.money_off_csred_rounded,
-        titleZh: '沉没成本不是继续投入的理由',
-        titleEn: 'Sunk cost is not a reason to continue',
-        bodyZh: '已经花掉、且回不来的时间和钱，不该决定下一步。下一步只看未来成本和未来回报。',
-        bodyEn:
-            'Past time and money that cannot be recovered should not govern the next step. Look only at future cost and future value.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.sunk_cost_is_not_a_reason_to_continu.66fe3cb2d8b0',
+        bodyKey: 'inline.plan295.daily_choice.past_time_and_money_that_cannot_be_r.70b6625b0a03'),
       DailyChoiceGuideEntry(
         icon: Icons.grid_view_rounded,
-        titleZh: '用统一尺度逐项比较，降低噪声',
-        titleEn: 'Use a common scale to reduce noise',
-        bodyZh: '对每个选项都用同一组字段、同一组尺度、同一顺序去评估，比“想到什么算什么”稳定得多。',
-        bodyEn:
-            'Using the same fields, scales, and order across options is much more stable than improvising criteria as you go.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.use_a_common_scale_to_reduce_noise.feb14a53dea6',
+        bodyKey: 'inline.plan295.daily_choice.using_the_same_fields_scales_and_ord.b6a9eb272102'),
       DailyChoiceGuideEntry(
         icon: Icons.visibility_rounded,
-        titleZh: '故事好听，不等于证据够强',
-        titleEn: 'A good story is not strong evidence',
-        bodyZh: '确认偏差、后见之明和幸存者偏差都会让故事显得过于圆满。回到数据、概率和基准率。',
-        bodyEn:
-            'Confirmation bias, hindsight, and survivorship bias all make stories seem more convincing than they are. Go back to numbers, probabilities, and base rates.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.a_good_story_is_not_strong_evidence.00bffbe7f65c',
+        bodyKey: 'inline.plan295.daily_choice.confirmation_bias_hindsight_and_surv.da670750c41a'),
+    ]),
   DailyChoiceGuideModule(
     id: 'action',
     icon: Icons.task_alt_rounded,
-    titleZh: '何时继续查，何时直接做',
-    titleEn: 'When to research more and when to move',
-    subtitleZh: '信息价值不是无限的，分析也需要停表点。',
-    subtitleEn: 'Information has value, but analysis still needs a stop point.',
+    titleKey: 'inline.plan295.daily_choice.when_to_research_more_and_when_to_mo.21fa41f67222',
+    subtitleKey: 'inline.plan295.daily_choice.information_has_value_but_analysis_s.254a6e0edf24',
     entries: <DailyChoiceGuideEntry>[
       DailyChoiceGuideEntry(
         icon: Icons.travel_explore_rounded,
-        titleZh: '如果一条信息最可能改结论，就先去补它',
-        titleEn: 'Collect the one fact most likely to change the answer',
-        bodyZh: '不是“继续搜一搜”这么模糊，而是明确要补什么信息、什么时候补到停止。',
-        bodyEn:
-            'Do not just “do more research.” Define which missing fact matters and when the search stops.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.collect_the_one_fact_most_likely_to.c39d89f0a299',
+        bodyKey: 'inline.plan295.daily_choice.do_not_just_do_more_research_define.84849f9495a7'),
       DailyChoiceGuideEntry(
         icon: Icons.timer_rounded,
-        titleZh: '设停止规则，防止无限分析',
-        titleEn: 'Set a stopping rule',
-        bodyZh: '例如“今晚 10 点前补完 3 条证据就定”“连续两轮结果一致就执行”。没有停止规则，焦虑会冒充认真。',
-        bodyEn:
-            'Examples: “I decide after three pieces of evidence” or “I act once two rounds agree.” Without a stop rule, anxiety pretends to be diligence.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.set_a_stopping_rule.65474237847f',
+        bodyKey: 'inline.plan295.daily_choice.examples_i_decide_after_three_pieces.c081d51e5679'),
       DailyChoiceGuideEntry(
         icon: Icons.report_problem_rounded,
-        titleZh: '高风险先做一次预演式失败复盘',
-        titleEn: 'Run a premortem for high-stakes choices',
-        bodyZh: '假设三个月后这件事失败了，最可能是因为什么。把最容易翻车的环节提前写出来。',
-        bodyEn:
-            'Imagine the choice has failed three months from now. What most likely caused it? Write down the plausible failure modes now.',
-      ),
+        titleKey: 'inline.plan295.daily_choice.run_a_premortem_for_high_stakes_choi.53ddd92a3327',
+        bodyKey: 'inline.plan295.daily_choice.imagine_the_choice_has_failed_three.ef35f6ffb394'),
       DailyChoiceGuideEntry(
         icon: Icons.health_and_safety_rounded,
-        titleZh: '医疗、法律、金融仍需专业判断',
-        titleEn: 'Medical, legal, and financial calls still need experts',
-        bodyZh: '这个模块适合辅助日常与一般工作生活决策，不替代医生、律师、理财顾问或正式风控流程。',
-        bodyEn:
-            'This module supports everyday and general work-life decisions. It does not replace doctors, lawyers, financial advisers, or formal risk controls.',
-      ),
-    ],
-  ),
+        titleKey: 'inline.plan295.daily_choice.medical_legal_and_financial_calls_st.a6dcb3056e25',
+        bodyKey: 'inline.plan295.daily_choice.this_module_supports_everyday_and_ge.9735ce4eb775'),
+    ]),
 ];
 
 List<DailyChoiceGuideEntry> buildDecisionHygieneEntries({
@@ -402,40 +227,24 @@ List<DailyChoiceGuideEntry> buildDecisionHygieneEntries({
   final entries = <DailyChoiceGuideEntry>[
     const DailyChoiceGuideEntry(
       icon: Icons.ads_click_rounded,
-      titleZh: '先独立打分，再看别人意见',
-      titleEn: 'Score independently first',
-      bodyZh: '锚定通常发生在讨论开始前。先写自己的概率、风险和收益，再去听外部意见。',
-      bodyEn:
-          'Anchoring happens before the conversation even starts. Write your own probabilities, risks, and payoffs before hearing outside views.',
-    ),
+    titleKey: 'inline.plan295.daily_choice.score_independently_first.dc1ee0057f83',
+    bodyKey: 'inline.plan295.daily_choice.anchoring_happens_before_the_convers.7d3b5f748eb3'),
     const DailyChoiceGuideEntry(
       icon: Icons.money_off_rounded,
-      titleZh: '不要为沉没成本追加投入',
-      titleEn: 'Do not double down on sunk cost',
-      bodyZh: '已经花出去的时间、金钱和面子，不是继续的理由。下一步只看未来代价与未来价值。',
-      bodyEn:
-          'Past time, money, or ego are not reasons to continue. The next move should be based only on future cost and future value.',
-    ),
+    titleKey: 'inline.plan295.daily_choice.do_not_double_down_on_sunk_cost.81cca2167298',
+    bodyKey: 'inline.plan295.daily_choice.past_time_money_or_ego_are_not_reaso.a24babae6353'),
     const DailyChoiceGuideEntry(
       icon: Icons.rule_folder_rounded,
-      titleZh: '用同一套字段比较所有选项',
-      titleEn: 'Use the same fields for every option',
-      bodyZh: '噪声常来自“这个方案看重努力，另一个方案却看重结果”。统一标准比争论更能降噪。',
-      bodyEn:
-          'Noise often comes from shifting standards midstream. Consistent fields reduce noise better than more argument.',
-    ),
+    titleKey: 'inline.plan295.daily_choice.use_the_same_fields_for_every_option.04158e075510',
+    bodyKey: 'inline.plan295.daily_choice.noise_often_comes_from_shifting_stan.45961a96a459'),
   ];
 
   if (context.uncertainty == DailyChoiceDecisionLevel.high) {
     entries.add(
       const DailyChoiceGuideEntry(
         icon: Icons.insights_rounded,
-        titleZh: '高不确定时，优先看基准率和均值回归',
-        titleEn: 'Use base rates when uncertainty is high',
-        bodyZh: '当你没有足够案例支撑极端判断时，先用校准预测把预期拉回中间，再看证据是否足以推离均值。',
-        bodyEn:
-            'If you do not have enough evidence for an extreme forecast, pull it toward the middle first and then ask whether the evidence is strong enough to move away from the mean.',
-      ),
+    titleKey: 'inline.plan295.daily_choice.use_base_rates_when_uncertainty_is_h.ecaa309adaa7',
+    bodyKey: 'inline.plan295.daily_choice.if_you_do_not_have_enough_evidence_f.31a9f6f2057b'),
     );
   }
 
@@ -443,12 +252,8 @@ List<DailyChoiceGuideEntry> buildDecisionHygieneEntries({
     entries.add(
       const DailyChoiceGuideEntry(
         icon: Icons.travel_explore_rounded,
-        titleZh: '先补最可能改变结论的那条信息',
-        titleEn: 'Research the fact most likely to change the answer',
-        bodyZh: '如果要继续查，不要散着查。先找那条最可能把胜负翻过去的信息，再决定是否值得继续。',
-        bodyEn:
-            'If you do more research, do not do it randomly. Target the single fact most likely to flip the choice first.',
-      ),
+    titleKey: 'inline.plan295.daily_choice.research_the_fact_most_likely_to_cha.15f23c677a28',
+    bodyKey: 'inline.plan295.daily_choice.if_you_do_more_research_do_not_do_it.7cb48ac7ff8f'),
     );
   }
 
@@ -456,12 +261,8 @@ List<DailyChoiceGuideEntry> buildDecisionHygieneEntries({
     entries.add(
       const DailyChoiceGuideEntry(
         icon: Icons.report_rounded,
-        titleZh: '高风险决策先做一次预演式复盘',
-        titleEn: 'Run a premortem for high stakes',
-        bodyZh: '假设结果失败了，最可能会输在哪一步。把这一步写出来，通常比继续堆更多信息更有用。',
-        bodyEn:
-            'Assume the decision fails. Where is it most likely to break? Writing that down is often more useful than endlessly gathering more information.',
-      ),
+    titleKey: 'inline.plan295.daily_choice.run_a_premortem_for_high_stakes.f9344f65b1d7',
+    bodyKey: 'inline.plan295.daily_choice.assume_the_decision_fails_where_is_i.f3692e23824c'),
     );
   }
 
@@ -469,12 +270,8 @@ List<DailyChoiceGuideEntry> buildDecisionHygieneEntries({
     entries.add(
       const DailyChoiceGuideEntry(
         icon: Icons.compare_rounded,
-        titleZh: '跨方法分歧大时，回到价值排序',
-        titleEn: 'Return to value ranking when methods disagree',
-        bodyZh: '不同方法若给出不同答案，通常不是模型错了，而是你真正看重的东西还没排清楚。',
-        bodyEn:
-            'When the methods disagree, the problem is often not the math. It is that your true priorities have not been ranked clearly yet.',
-      ),
+    titleKey: 'inline.plan295.daily_choice.return_to_value_ranking_when_methods.be589978df63',
+    bodyKey: 'inline.plan295.daily_choice.when_the_methods_disagree_the_proble.a1a2c92c6876'),
     );
   }
 
@@ -482,12 +279,8 @@ List<DailyChoiceGuideEntry> buildDecisionHygieneEntries({
     entries.add(
       const DailyChoiceGuideEntry(
         icon: Icons.timer_rounded,
-        titleZh: '现在就要定时，先写下停止规则',
-        titleEn: 'If you must decide now, define a stopping rule',
-        bodyZh: '例如“看完这轮排名和守门线就执行，不再开新变量”。在时间压力下，边分析边扩题只会放大噪声。',
-        bodyEn:
-            'For example: “Once I finish this ranking and guardrail pass, I act and stop opening new variables.” Under time pressure, expanding the question only amplifies noise.',
-      ),
+    titleKey: 'inline.plan295.daily_choice.if_you_must_decide_now_define_a_stop.25fb18838bf3',
+    bodyKey: 'inline.plan295.daily_choice.for_example_once_i_finish_this_ranki.fd765f571ff1'),
     );
   }
 

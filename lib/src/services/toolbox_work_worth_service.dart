@@ -159,33 +159,24 @@ class WorkWorthResult {
 }
 
 class WorkWorthRating {
-  const WorkWorthRating({
-    required this.key,
-    required this.zh,
-    required this.en,
-  });
+  const WorkWorthRating({required this.key, required this.labelKey});
 
   final String key;
-  final String zh;
-  final String en;
+  final String labelKey;
 }
 
 class WorkWorthReferenceStandard {
   const WorkWorthReferenceStandard({
     required this.key,
-    required this.zh,
-    required this.en,
+    required this.titleKey,
     required this.value,
-    required this.noteZh,
-    required this.noteEn,
+    required this.noteKey,
   });
 
   final String key;
-  final String zh;
-  final String en;
+  final String titleKey;
   final String value;
-  final String noteZh;
-  final String noteEn;
+  final String noteKey;
 }
 
 class ToolboxWorkWorthService {
@@ -240,61 +231,45 @@ class ToolboxWorkWorthService {
     ),
   };
 
-  static const List<WorkWorthReferenceStandard>
-  referenceStandards = <WorkWorthReferenceStandard>[
-    WorkWorthReferenceStandard(
-      key: 'work_week',
-      zh: '标准工时',
-      en: 'Standard work week',
-      value: '5 天 / 40 小时',
-      noteZh: '常用健康基线；超过 45 小时建议显式计入时间成本。',
-      noteEn:
-          'Common healthy baseline; count time cost explicitly above 45h/week.',
-    ),
-    WorkWorthReferenceStandard(
-      key: 'commute',
-      zh: '通勤参考',
-      en: 'Commute reference',
-      value: '≤ 1h 舒适 / ≥ 2h 偏重',
-      noteZh: '按每天往返计算；居家办公会按比例折减。',
-      noteEn: 'Round trip per day; WFH days reduce it proportionally.',
-    ),
-    WorkWorthReferenceStandard(
-      key: 'annual_leave',
-      zh: '年假参考',
-      en: 'Annual leave reference',
-      value: '5 / 10 / 15 天',
-      noteZh: '可按 1-10 年、10-20 年、20 年以上工作年限估算。',
-      noteEn: 'Estimate by 1-10, 10-20, and 20+ years of service.',
-    ),
-    WorkWorthReferenceStandard(
-      key: 'public_holidays',
-      zh: '公共假期',
-      en: 'Public holidays',
-      value: '约 13 天/年',
-      noteZh: '作为年度工作日估算默认值；遇到年份政策变化可手动调整。',
-      noteEn:
-          'Default for annual workday estimate; adjust manually for policy changes.',
-    ),
-    WorkWorthReferenceStandard(
-      key: 'surplus',
-      zh: '现金安全垫',
-      en: 'Cash safety margin',
-      value: '≥ 收入 30%',
-      noteZh: '月可支配若低于 15%，分数会被生活成本显著压低。',
-      noteEn:
-          'Below 15% monthly surplus, living cost heavily suppresses score.',
-    ),
-    WorkWorthReferenceStandard(
-      key: 'health',
-      zh: '健康损耗预留',
-      en: 'Health reserve',
-      value: '0% - 18%',
-      noteZh: '从自由舒适到拿命换分层估算，越危险预留越高。',
-      noteEn:
-          'Estimated by environment tier from free/comfortable to life-trade.',
-    ),
-  ];
+  static const List<WorkWorthReferenceStandard> referenceStandards =
+      <WorkWorthReferenceStandard>[
+        WorkWorthReferenceStandard(
+          key: 'work_week',
+          titleKey: 'life.work_worth.reference.work_week.title',
+          value: '5 天 / 40 小时',
+          noteKey: 'life.work_worth.reference.work_week.note',
+        ),
+        WorkWorthReferenceStandard(
+          key: 'commute',
+          titleKey: 'life.work_worth.reference.commute.title',
+          value: '≤ 1h 舒适 / ≥ 2h 偏重',
+          noteKey: 'life.work_worth.reference.commute.note',
+        ),
+        WorkWorthReferenceStandard(
+          key: 'annual_leave',
+          titleKey: 'life.work_worth.reference.annual_leave.title',
+          value: '5 / 10 / 15 天',
+          noteKey: 'life.work_worth.reference.annual_leave.note',
+        ),
+        WorkWorthReferenceStandard(
+          key: 'public_holidays',
+          titleKey: 'life.work_worth.reference.public_holidays.title',
+          value: '约 13 天/年',
+          noteKey: 'life.work_worth.reference.public_holidays.note',
+        ),
+        WorkWorthReferenceStandard(
+          key: 'surplus',
+          titleKey: 'life.work_worth.reference.surplus.title',
+          value: '≥ 收入 30%',
+          noteKey: 'life.work_worth.reference.surplus.note',
+        ),
+        WorkWorthReferenceStandard(
+          key: 'health',
+          titleKey: 'life.work_worth.reference.health.title',
+          value: '0% - 18%',
+          noteKey: 'life.work_worth.reference.health.note',
+        ),
+      ];
 
   WorkWorthResult calculate(WorkWorthInput input) {
     final workingDays = _workingDays(input);
@@ -396,29 +371,42 @@ class ToolboxWorkWorthService {
     if (score < 0.6) {
       return const WorkWorthRating(
         key: 'terrible',
-        zh: '不建议硬扛',
-        en: 'Not worth it',
+        labelKey: 'life.work_worth.rating.terrible',
       );
     }
     if (score < 1.0) {
-      return const WorkWorthRating(key: 'poor', zh: '偏低', en: 'Low');
+      return const WorkWorthRating(
+        key: 'poor',
+        labelKey: 'life.work_worth.rating.poor',
+      );
     }
     if (score <= 1.8) {
-      return const WorkWorthRating(key: 'average', zh: '一般', en: 'Average');
+      return const WorkWorthRating(
+        key: 'average',
+        labelKey: 'life.work_worth.rating.average',
+      );
     }
     if (score <= 2.5) {
-      return const WorkWorthRating(key: 'good', zh: '还不错', en: 'Good');
+      return const WorkWorthRating(
+        key: 'good',
+        labelKey: 'life.work_worth.rating.good',
+      );
     }
     if (score <= 3.2) {
-      return const WorkWorthRating(key: 'great', zh: '很划算', en: 'Great');
+      return const WorkWorthRating(
+        key: 'great',
+        labelKey: 'life.work_worth.rating.great',
+      );
     }
     if (score <= 4.0) {
-      return const WorkWorthRating(key: 'excellent', zh: '优秀', en: 'Excellent');
+      return const WorkWorthRating(
+        key: 'excellent',
+        labelKey: 'life.work_worth.rating.excellent',
+      );
     }
     return const WorkWorthRating(
       key: 'legendary',
-      zh: '神仙工位',
-      en: 'Exceptional',
+      labelKey: 'life.work_worth.rating.legendary',
     );
   }
 

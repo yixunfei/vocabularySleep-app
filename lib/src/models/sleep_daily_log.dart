@@ -153,8 +153,7 @@ class SleepDailyLog {
       sleepEfficiency: sleepEfficiency ?? this.sleepEfficiency,
       morningEnergy: morningEnergy ?? this.morningEnergy,
       daytimeSleepiness: daytimeSleepiness ?? this.daytimeSleepiness,
-      caffeineAfterCutoff:
-          caffeineAfterCutoff ?? this.caffeineAfterCutoff,
+      caffeineAfterCutoff: caffeineAfterCutoff ?? this.caffeineAfterCutoff,
       alcoholAtNight: alcoholAtNight ?? this.alcoholAtNight,
       lateScreenExposure: lateScreenExposure ?? this.lateScreenExposure,
       morningLightDone: morningLightDone ?? this.morningLightDone,
@@ -236,7 +235,9 @@ class SleepDailyLog {
       sleepOnsetAt: _readDateTime(map['sleep_onset_at']),
       finalWakeAt: _readDateTime(map['final_wake_at']),
       outOfBedAt: _readDateTime(map['out_of_bed_at']),
-      estimatedTotalSleepMinutes: _readInt(map['estimated_total_sleep_minutes']),
+      estimatedTotalSleepMinutes: _readInt(
+        map['estimated_total_sleep_minutes'],
+      ),
       sleepLatencyMinutes: _readInt(map['sleep_latency_minutes']),
       nightWakeCount: _readInt(map['night_wake_count']) ?? 0,
       nightWakeTotalMinutes: _readInt(map['night_wake_total_minutes']) ?? 0,

@@ -66,11 +66,13 @@ class _LegacyTextCounterPageState extends State<_LegacyTextCounterPage> {
     final noSymbols = total - symbols;
     final noWhitespace = text.replaceAll(RegExp(r'\s+'), '').characters.length;
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '字数计算', en: 'Text counter'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '统计总字符、符号、去符号、去空白。',
-        en: 'Counts total/symbol/non-symbol/non-whitespace.',
+        'inline.plan295.life.text_counter.cbbe4083b63c',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.counts_total_symbol_non_symbol_non_w.dfe034300622',
       ),
       child: Column(
         children: <Widget>[
@@ -83,26 +85,44 @@ class _LegacyTextCounterPageState extends State<_LegacyTextCounterPage> {
           const SizedBox(height: 12),
           Card(
             child: ListTile(
-              title: Text(_lifeText(context, zh: '总字符数', en: 'Total')),
+              title: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.total.80c11663ed42',
+                ),
+              ),
               trailing: Text('$total'),
             ),
           ),
           Card(
             child: ListTile(
-              title: Text(_lifeText(context, zh: '符号数', en: 'Symbols')),
+              title: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.symbols.11e6462b50cc',
+                ),
+              ),
               trailing: Text('$symbols'),
             ),
           ),
           Card(
             child: ListTile(
-              title: Text(_lifeText(context, zh: '去符号字符数', en: 'No symbols')),
+              title: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.no_symbols.a097692ca216',
+                ),
+              ),
               trailing: Text('$noSymbols'),
             ),
           ),
           Card(
             child: ListTile(
               title: Text(
-                _lifeText(context, zh: '去空白字符数', en: 'No whitespace'),
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.no_whitespace.da904b772103',
+                ),
               ),
               trailing: Text('$noWhitespace'),
             ),
@@ -150,11 +170,13 @@ class _TextEncodingPageState extends State<_TextEncodingPage> {
   @override
   Widget build(BuildContext context) {
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '文本编码', en: 'Text encoding'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '趣味编码 + Base64 + MD5 + SHA256 + Morse + 兽语。',
-        en: 'Fun codes + Base64 + MD5 + SHA256 + Morse + Beast.',
+        'inline.plan295.life.text_encoding.dff53b3f0a78',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.fun_codes_base64_md5_sha256_morse_be.96af10469db7',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -164,7 +186,10 @@ class _TextEncodingPageState extends State<_TextEncodingPage> {
             maxLines: 4,
             decoration: InputDecoration(
               border: const OutlineInputBorder(),
-              labelText: _lifeText(context, zh: '输入文本', en: 'Input'),
+              labelText: _lifeI18nText(
+                context,
+                'inline.plan295.life.input.ae956811ac06',
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -172,7 +197,10 @@ class _TextEncodingPageState extends State<_TextEncodingPage> {
             controller: _key,
             decoration: InputDecoration(
               border: const OutlineInputBorder(),
-              labelText: _lifeText(context, zh: '密钥（RC4）', en: 'Key (RC4)'),
+              labelText: _lifeI18nText(
+                context,
+                'inline.plan295.life.key_rc4.edb89da99c4d',
+              ),
             ),
           ),
           const SizedBox(height: 10),
@@ -194,8 +222,14 @@ class _TextEncodingPageState extends State<_TextEncodingPage> {
                     'base64' => 'Base64',
                     'md5' => 'MD5',
                     'sha256' => 'SHA256',
-                    'morse' => _lifeText(context, zh: '摩斯', en: 'Morse'),
-                    'beast' => _lifeText(context, zh: '兽语', en: 'Beast'),
+                    'morse' => _lifeI18nText(
+                      context,
+                      'inline.plan295.life.morse.43afc9300fbb',
+                    ),
+                    'beast' => _lifeI18nText(
+                      context,
+                      'inline.plan295.life.beast.90f87d75d9fd',
+                    ),
                     'rc4' => 'RC4',
                     _ => mode.toUpperCase(),
                   }),
@@ -322,11 +356,13 @@ class _UnitConverterPageState extends State<_UnitConverterPage> {
   @override
   Widget build(BuildContext context) {
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '全能单位换算', en: 'Unit converter'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '支持长度、重量、温度等常见单位换算。',
-        en: 'Convert common units including length, weight, and temperature.',
+        'inline.plan295.life.unit_converter.53644e92a340',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.convert_common_units_including_lengt.3af885c8005c',
       ),
       child: Column(
         children: <Widget>[
@@ -335,15 +371,30 @@ class _UnitConverterPageState extends State<_UnitConverterPage> {
             items: <DropdownMenuItem<String>>[
               DropdownMenuItem(
                 value: 'length',
-                child: Text(_lifeText(context, zh: '长度', en: 'Length')),
+                child: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.ui.pages.toolbox_human_tests_typing_widgets.length_f37873',
+                  ),
+                ),
               ),
               DropdownMenuItem(
                 value: 'weight',
-                child: Text(_lifeText(context, zh: '重量', en: 'Weight')),
+                child: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.weight.a353a17dc3f6',
+                  ),
+                ),
               ),
               DropdownMenuItem(
                 value: 'temp',
-                child: Text(_lifeText(context, zh: '温度', en: 'Temperature')),
+                child: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.ui.pages.toolbox_daily_choice.daily_choice_wear_module.temperature_fb37d5',
+                  ),
+                ),
               ),
             ],
             onChanged: (value) => setState(() => _mode = value ?? 'length'),
@@ -357,7 +408,12 @@ class _UnitConverterPageState extends State<_UnitConverterPage> {
           const SizedBox(height: 8),
           FilledButton(
             onPressed: _convert,
-            child: Text(_lifeText(context, zh: '转换', en: 'Convert')),
+            child: Text(
+              _lifeI18nText(
+                context,
+                'inline.plan295.life.convert.46d20ffe33a5',
+              ),
+            ),
           ),
           const SizedBox(height: 12),
           SelectableText(_result),
@@ -396,18 +452,23 @@ class _LegacyWorkWorthPageState extends State<_LegacyWorkWorthPage> {
   @override
   Widget build(BuildContext context) {
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '工作性价比计算器', en: 'Work value calculator'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '增加生活开销、保险公积金与健康因子。',
-        en: 'Includes living cost, insurance/fund, and health factor.',
+        'inline.plan295.life.work_value_calculator.766dbe3047f2',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.includes_living_cost_insurance_fund.2ce3e76c9b72',
       ),
       child: Column(
         children: <Widget>[
           TextField(
             controller: _salary,
             decoration: InputDecoration(
-              labelText: _lifeText(context, zh: '月收入', en: 'Monthly income'),
+              labelText: _lifeI18nText(
+                context,
+                'inline.plan295.life.monthly_income.5af85bd8e221',
+              ),
               border: OutlineInputBorder(),
             ),
           ),
@@ -415,7 +476,10 @@ class _LegacyWorkWorthPageState extends State<_LegacyWorkWorthPage> {
           TextField(
             controller: _cost,
             decoration: InputDecoration(
-              labelText: _lifeText(context, zh: '月生活开销', en: 'Monthly cost'),
+              labelText: _lifeI18nText(
+                context,
+                'inline.plan295.life.monthly_cost.fea07322cec3',
+              ),
               border: OutlineInputBorder(),
             ),
           ),
@@ -423,10 +487,9 @@ class _LegacyWorkWorthPageState extends State<_LegacyWorkWorthPage> {
           TextField(
             controller: _insurance,
             decoration: InputDecoration(
-              labelText: _lifeText(
+              labelText: _lifeI18nText(
                 context,
-                zh: '五险一金',
-                en: 'Insurance and fund',
+                'inline.plan295.life.insurance_and_fund.589a9e0e7a04',
               ),
               border: OutlineInputBorder(),
             ),
@@ -442,7 +505,12 @@ class _LegacyWorkWorthPageState extends State<_LegacyWorkWorthPage> {
           ),
           FilledButton(
             onPressed: _compute,
-            child: Text(_lifeText(context, zh: '计算', en: 'Calculate')),
+            child: Text(
+              _lifeI18nText(
+                context,
+                'inline.plan295.life.calculate.d89e10c4a2ce',
+              ),
+            ),
           ),
           const SizedBox(height: 8),
           SelectableText(_result),
@@ -494,18 +562,23 @@ class _MortgagePageState extends State<_MortgagePage> {
   @override
   Widget build(BuildContext context) {
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '房贷计算器', en: 'Mortgage calculator'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '等额本息快速估算月供和总利息。',
-        en: 'Quickly estimate monthly payments and total interest using equal installments.',
+        'inline.plan295.life.mortgage_calculator.3e4f4dddc3e6',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.quickly_estimate_monthly_payments_an.5755ce4df71b',
       ),
       child: Column(
         children: <Widget>[
           TextField(
             controller: _principal,
             decoration: InputDecoration(
-              labelText: _lifeText(context, zh: '贷款金额', en: 'Loan amount'),
+              labelText: _lifeI18nText(
+                context,
+                'inline.plan295.life.loan_amount.63ea87de3c18',
+              ),
               border: OutlineInputBorder(),
             ),
           ),
@@ -513,10 +586,9 @@ class _MortgagePageState extends State<_MortgagePage> {
           TextField(
             controller: _rate,
             decoration: InputDecoration(
-              labelText: _lifeText(
+              labelText: _lifeI18nText(
                 context,
-                zh: '年利率(%)',
-                en: 'Annual rate (%)',
+                'inline.plan295.life.annual_rate.cf9b736de5ab',
               ),
               border: OutlineInputBorder(),
             ),
@@ -525,14 +597,22 @@ class _MortgagePageState extends State<_MortgagePage> {
           TextField(
             controller: _years,
             decoration: InputDecoration(
-              labelText: _lifeText(context, zh: '贷款年限', en: 'Loan term'),
+              labelText: _lifeI18nText(
+                context,
+                'inline.plan295.life.loan_term.a43ba990427a',
+              ),
               border: OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 8),
           FilledButton(
             onPressed: _calc,
-            child: Text(_lifeText(context, zh: '计算', en: 'Calculate')),
+            child: Text(
+              _lifeI18nText(
+                context,
+                'inline.plan295.life.calculate.d89e10c4a2ce',
+              ),
+            ),
           ),
           const SizedBox(height: 8),
           SelectableText(_result),
@@ -612,11 +692,13 @@ class _SupSubPageState extends State<_SupSubPage> {
   @override
   Widget build(BuildContext context) {
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '数字转标', en: 'Super or subscript'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '将文本和数字转换为上标或下标样式。',
-        en: 'Convert text and numbers to superscript or subscript style.',
+        'inline.plan295.life.super_or_subscript.725857aea674',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.convert_text_and_numbers_to_superscr.933439c94c1e',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -629,12 +711,22 @@ class _SupSubPageState extends State<_SupSubPage> {
           const SizedBox(height: 8),
           SwitchListTile(
             value: _subscript,
-            title: Text(_lifeText(context, zh: '使用下标', en: 'Use subscript')),
+            title: Text(
+              _lifeI18nText(
+                context,
+                'inline.plan295.life.use_subscript.34f2b7330592',
+              ),
+            ),
             onChanged: (value) => setState(() => _subscript = value),
           ),
           FilledButton(
             onPressed: _convert,
-            child: Text(_lifeText(context, zh: '转换', en: 'Convert')),
+            child: Text(
+              _lifeI18nText(
+                context,
+                'inline.plan295.life.convert.46d20ffe33a5',
+              ),
+            ),
           ),
           const SizedBox(height: 10),
           SelectableText(_output),

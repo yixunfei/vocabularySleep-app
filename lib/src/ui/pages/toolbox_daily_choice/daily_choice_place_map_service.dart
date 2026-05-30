@@ -30,10 +30,8 @@ final Uri dailyChoiceIpCoarseLocationEndpoint = Uri(
 class DailyChoiceMapTileProviderSpec {
   const DailyChoiceMapTileProviderSpec({
     required this.id,
-    required this.titleZh,
-    required this.titleEn,
-    required this.descriptionZh,
-    required this.descriptionEn,
+    required this.titleKey,
+    required this.descriptionKey,
     required this.urlTemplate,
     required this.attribution,
     this.subdomains = const <String>[],
@@ -44,10 +42,8 @@ class DailyChoiceMapTileProviderSpec {
   });
 
   final String id;
-  final String titleZh;
-  final String titleEn;
-  final String descriptionZh;
-  final String descriptionEn;
+  final String titleKey;
+  final String descriptionKey;
   final String urlTemplate;
   final String attribution;
   final List<String> subdomains;
@@ -61,11 +57,8 @@ const List<DailyChoiceMapTileProviderSpec>
 dailyChoicePlaceMapTileProviders = <DailyChoiceMapTileProviderSpec>[
   DailyChoiceMapTileProviderSpec(
     id: DailyChoicePlaceMapSettings.defaultTileProviderId,
-    titleZh: 'OSM HOT',
-    titleEn: 'OSM HOT',
-    descriptionZh: '默认地图源，使用 OSM 人道主义样式；地名和道路层级更醒目，适合作为受限网络下的优先尝试源。',
-    descriptionEn:
-        'Default tile source using the OSM humanitarian style, with more visible labels and road hierarchy for restricted networks.',
+    titleKey: 'daily_choice.place.map.provider.osm_hot.title',
+    descriptionKey: 'daily_choice.place.map.provider.osm_hot.description',
     urlTemplate: dailyChoicePlaceMapTileUrlTemplate,
     attribution: 'OpenStreetMap contributors, HOT, OpenStreetMap France',
     subdomains: <String>['a', 'b', 'c'],
@@ -73,11 +66,9 @@ dailyChoicePlaceMapTileProviders = <DailyChoiceMapTileProviderSpec>[
   ),
   DailyChoiceMapTileProviderSpec(
     id: 'osm_france_fallback',
-    titleZh: 'OSM France',
-    titleEn: 'OSM France',
-    descriptionZh: 'OSM France 社区瓦片；作为备用源保留，通常需要可访问国际网络的环境。',
-    descriptionEn:
-        'OSM France community tiles kept as a fallback; usually requires access to the international network.',
+    titleKey: 'daily_choice.place.map.provider.osm_france_fallback.title',
+    descriptionKey:
+        'daily_choice.place.map.provider.osm_france_fallback.description',
     urlTemplate: 'https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png',
     attribution: 'OpenStreetMap contributors, OpenStreetMap France',
     subdomains: <String>['a', 'b', 'c'],
@@ -85,22 +76,16 @@ dailyChoicePlaceMapTileProviders = <DailyChoiceMapTileProviderSpec>[
   ),
   DailyChoiceMapTileProviderSpec(
     id: 'osm_de',
-    titleZh: 'OpenStreetMap.de',
-    titleEn: 'OpenStreetMap.de',
-    descriptionZh: '德国 OSM 社区样式；通常需要可访问国际网络的环境，默认源不稳定时可手动切换。',
-    descriptionEn:
-        'German OSM community style; usually requires access to the international network and can be selected when the default source is unstable.',
+    titleKey: 'daily_choice.place.map.provider.osm_de.title',
+    descriptionKey: 'daily_choice.place.map.provider.osm_de.description',
     urlTemplate: 'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
     attribution: 'OpenStreetMap contributors, OpenStreetMap.de',
     requiresConservativeUse: true,
   ),
   DailyChoiceMapTileProviderSpec(
     id: 'osm_standard',
-    titleZh: 'OSM Standard',
-    titleEn: 'OSM Standard',
-    descriptionZh: 'OpenStreetMap 官方标准瓦片；通常需要可访问国际网络的环境，仅在需要核对标准样式时手动切换。',
-    descriptionEn:
-        'Official OpenStreetMap standard tiles; usually requires access to the international network and should be selected only when the standard style is needed.',
+    titleKey: 'daily_choice.place.map.provider.osm_standard.title',
+    descriptionKey: 'daily_choice.place.map.provider.osm_standard.description',
     urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: 'OpenStreetMap contributors',
     maxZoom: 19,
@@ -109,11 +94,8 @@ dailyChoicePlaceMapTileProviders = <DailyChoiceMapTileProviderSpec>[
   ),
   DailyChoiceMapTileProviderSpec(
     id: 'carto_voyager_fallback',
-    titleZh: 'CARTO Voyager',
-    titleEn: 'CARTO Voyager',
-    descriptionZh: 'CARTO 真实街区样式；通常需要可访问国际网络的环境，在部分地区可能不可用。',
-    descriptionEn:
-        'CARTO street basemap that usually requires access to the international network and may be unavailable in some regions.',
+    titleKey: 'daily_choice.place.map.provider.carto_voyager.title',
+    descriptionKey: 'daily_choice.place.map.provider.carto_voyager.description',
     urlTemplate:
         'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     attribution: 'OpenStreetMap contributors, CARTO',
@@ -122,11 +104,8 @@ dailyChoicePlaceMapTileProviders = <DailyChoiceMapTileProviderSpec>[
   ),
   DailyChoiceMapTileProviderSpec(
     id: 'carto_light',
-    titleZh: 'CARTO Light',
-    titleEn: 'CARTO Light',
-    descriptionZh: '更克制的浅色底图，适合降低视觉噪声；通常需要可访问国际网络的环境，作为非默认备用源保留。',
-    descriptionEn:
-        'A quieter light basemap that keeps dense place markers easier to scan; usually requires access to the international network.',
+    titleKey: 'daily_choice.place.map.provider.carto_light.title',
+    descriptionKey: 'daily_choice.place.map.provider.carto_light.description',
     urlTemplate:
         'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
     attribution: 'OpenStreetMap contributors, CARTO',

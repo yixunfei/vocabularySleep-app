@@ -9,10 +9,10 @@ extension _PlayPageWeather on _PlayPageState {
   }) {
     final statusBadge = StatusBadge(
       label: isPlaybackPaused
-          ? pickUiText(i18n, zh: '已暂停', en: 'Paused')
+          ? i18n.t('inline.ui.pages.play_page_weather.paused_e99815')
           : state.isPlaying
-          ? pickUiText(i18n, zh: '播放中', en: 'Playing')
-          : pickUiText(i18n, zh: '待播放', en: 'Ready'),
+          ? i18n.t('toolbox.sound.focus.stagePulseMoving')
+          : i18n.t('timerIdle'),
       icon: isPlaybackPaused
           ? Icons.pause_circle_filled_rounded
           : state.isPlaying
@@ -43,12 +43,10 @@ extension _PlayPageWeather on _PlayPageState {
         ? Icons.cloud_sync_rounded
         : weatherCodeIcon(snapshot.weatherCode, isDay: snapshot.isDay);
     final tooltip = snapshot == null
-        ? pickUiText(
-            i18n,
-            zh: state.weatherLoading ? '正在更新天气' : '点击查看天气详情',
-            en: state.weatherLoading
-                ? 'Refreshing weather'
-                : 'Open weather details',
+        ? i18n.t(
+            state.weatherLoading
+                ? 'play.weather.refreshingTooltip'
+                : 'play.weather.openDetailsTooltip',
           )
         : '${snapshot.city} · ${snapshot.temperatureCelsius.round()}°C · ${weatherCodeLabel(i18n, snapshot.weatherCode, isDay: snapshot.isDay)}';
     final temperatureLabel = snapshot == null
@@ -144,7 +142,9 @@ extension _PlayPageWeather on _PlayPageState {
                 ? const <WeatherForecastDay>[]
                 : forecastDays.skip(1).toList(growable: false);
             final currentCondition = snapshot == null
-                ? pickUiText(i18n, zh: '天气获取中', en: 'Loading weather')
+                ? i18n.t(
+                    'inline.ui.pages.play_page_weather.loading_weather_cac6b1',
+                  )
                 : weatherCodeLabel(
                     i18n,
                     snapshot.weatherCode,
@@ -181,10 +181,8 @@ extension _PlayPageWeather on _PlayPageState {
                           children: <Widget>[
                             Text(
                               snapshot == null
-                                  ? pickUiText(
-                                      i18n,
-                                      zh: '当前城市天气',
-                                      en: 'Local weather',
+                                  ? i18n.t(
+                                      'inline.ui.pages.play_page_weather.local_weather_895d0a',
                                     )
                                   : '${snapshot.city}, ${snapshot.countryCode}',
                               style: theme.textTheme.titleLarge,
@@ -200,7 +198,9 @@ extension _PlayPageWeather on _PlayPageState {
                         ),
                       ),
                       IconButton(
-                        tooltip: pickUiText(i18n, zh: '刷新天气', en: 'Refresh'),
+                        tooltip: i18n.t(
+                          'inline.plan295.life.refresh.bea0dc8c1c92',
+                        ),
                         onPressed: state.weatherLoading
                             ? null
                             : () => state.refreshWeather(force: true),
@@ -224,10 +224,8 @@ extension _PlayPageWeather on _PlayPageState {
                   const SizedBox(height: 18),
                   if (snapshot == null)
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '正在获取当前位置天气，稍后可下拉刷新查看更完整信息。',
-                        en: 'Fetching local weather. Refresh in a moment for more details.',
+                      i18n.t(
+                        'inline.ui.pages.play_page_weather.fetching_local_weather_refresh_in_a_moment_for_more_deta_cf7362',
                       ),
                       style: theme.textTheme.bodyMedium,
                     )
@@ -256,10 +254,8 @@ extension _PlayPageWeather on _PlayPageState {
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
-                                  pickUiText(
-                                    i18n,
-                                    zh: '体感 ${snapshot.apparentTemperatureCelsius.round()}°C',
-                                    en: 'Feels like ${snapshot.apparentTemperatureCelsius.round()}°C',
+                                  i18n.t(
+                                    'inline.ui.pages.play_page_weather.feels_like_snapshot_apparenttemperaturecelsius_round_c_2ffa66',
                                   ),
                                   style: theme.textTheme.bodyMedium,
                                 ),
@@ -271,10 +267,8 @@ extension _PlayPageWeather on _PlayPageState {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: <Widget>[
                                 Text(
-                                  pickUiText(
-                                    i18n,
-                                    zh: '今日高/低',
-                                    en: 'Today H/L',
+                                  i18n.t(
+                                    'inline.ui.pages.play_page_weather.today_h_l_dec6e7',
                                   ),
                                   style: theme.textTheme.labelMedium,
                                 ),
@@ -295,21 +289,21 @@ extension _PlayPageWeather on _PlayPageState {
                       children: <Widget>[
                         _buildWeatherMetricChip(
                           context: sheetContext,
-                          label: pickUiText(i18n, zh: '风速', en: 'Wind'),
+                          label: i18n.t('ambientNameNatureWind'),
                           value: '${snapshot.windSpeedKph.round()} km/h',
                         ),
                         _buildWeatherMetricChip(
                           context: sheetContext,
-                          label: pickUiText(i18n, zh: '天气', en: 'Condition'),
+                          label: i18n.t(
+                            'inline.ui.pages.play_page_weather.condition_4faac4',
+                          ),
                           value: currentCondition,
                         ),
                         if (todayHigh != null && todayLow != null)
                           _buildWeatherMetricChip(
                             context: sheetContext,
-                            label: pickUiText(
-                              i18n,
-                              zh: '最高/最低',
-                              en: 'High / Low',
+                            label: i18n.t(
+                              'inline.ui.pages.play_page_weather.high_low_6eaab2',
                             ),
                             value:
                                 '${todayHigh.round()}° / ${todayLow.round()}°',
@@ -319,7 +313,9 @@ extension _PlayPageWeather on _PlayPageState {
                     if (upcomingDays.isNotEmpty) ...<Widget>[
                       const SizedBox(height: 18),
                       Text(
-                        pickUiText(i18n, zh: '未来天气', en: 'Upcoming forecast'),
+                        i18n.t(
+                          'inline.ui.pages.play_page_weather.upcoming_forecast_ed9efb',
+                        ),
                         style: theme.textTheme.titleMedium,
                       ),
                       const SizedBox(height: 10),
@@ -419,11 +415,11 @@ extension _PlayPageWeather on _PlayPageState {
   String _weatherDayLabel(BuildContext context, AppI18n i18n, DateTime date) {
     final today = DateTime.now();
     if (DateUtils.isSameDay(date, today)) {
-      return pickUiText(i18n, zh: '今天', en: 'Today');
+      return i18n.t('inline.ui.app_shell.today_23dc4e');
     }
     final tomorrow = today.add(const Duration(days: 1));
     if (DateUtils.isSameDay(date, tomorrow)) {
-      return pickUiText(i18n, zh: '明天', en: 'Tomorrow');
+      return i18n.t('inline.ui.app_shell.tomorrow_08dc97');
     }
     return MaterialLocalizations.of(context).formatShortDate(date);
   }

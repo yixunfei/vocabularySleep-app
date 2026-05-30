@@ -1,4 +1,4 @@
-﻿part of 'toolbox_mini_games.dart';
+part of 'toolbox_mini_games.dart';
 
 class _JigsawGame extends StatefulWidget {
   const _JigsawGame();
@@ -38,10 +38,6 @@ class _JigsawGameState extends State<_JigsawGame> {
     super.dispose();
   }
 
-  String _text(AppI18n i18n, {required String zh, required String en}) {
-    return pickUiText(i18n, zh: zh, en: en);
-  }
-
   Future<void> _setFullscreen(bool value) async {
     if (_fullscreen == value) {
       return;
@@ -58,8 +54,8 @@ class _JigsawGameState extends State<_JigsawGame> {
 
   String _statusLabel(AppI18n i18n) {
     return _solved
-        ? _text(i18n, zh: '已完成', en: 'Solved')
-        : _text(i18n, zh: '进行中', en: 'Playing');
+        ? i18n.t('toolbox.miniGames.jigsaw.solved.3bc003ee')
+        : i18n.t('toolbox.miniGames.jigsaw.playing.be376216');
   }
 
   Future<void> _importImage() async {
@@ -83,11 +79,9 @@ class _JigsawGameState extends State<_JigsawGame> {
         if (!mounted) return;
         setState(() {
           _loading = false;
-          _error = _text(
-            AppI18n(Localizations.localeOf(context).languageCode),
-            zh: '读取图片数据失败。',
-            en: 'Failed to read image bytes.',
-          );
+          _error = AppI18n(
+            Localizations.localeOf(context).languageCode,
+          ).t('toolbox.miniGames.jigsaw.failed_to_read_image_bytes.c7fa742f');
         });
         return;
       }
@@ -115,11 +109,9 @@ class _JigsawGameState extends State<_JigsawGame> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = _text(
-          AppI18n(Localizations.localeOf(context).languageCode),
-          zh: '导入图片失败。',
-          en: 'Failed to import image.',
-        );
+        _error = AppI18n(
+          Localizations.localeOf(context).languageCode,
+        ).t('toolbox.miniGames.jigsaw.failed_to_import_image.ce69cdfe');
       });
     }
   }
@@ -270,10 +262,12 @@ class _JigsawGameState extends State<_JigsawGame> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          _text(
-            i18n,
-            zh: '提示：该拼块应该移动到第 $correctRow 行第 $correctCol 列。',
-            en: 'Hint: this piece should go to row $correctRow, column $correctCol.',
+          i18n.t(
+            'toolbox.miniGames.jigsaw.hint_this_piece_should_go_to_row.1785b8ed',
+            params: <String, Object?>{
+              'correctRow': correctRow,
+              'correctCol': correctCol,
+            },
           ),
         ),
         duration: const Duration(seconds: 2),
@@ -289,25 +283,33 @@ class _JigsawGameState extends State<_JigsawGame> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(_text(i18n, zh: '恭喜完成', en: 'Congratulations')),
+          title: Text(
+            i18n.t('toolbox.miniGames.jigsaw.congratulations.ae0f3f63'),
+          ),
           content: Text(
-            _text(
-              i18n,
-              zh: '拼图已完成。\n网格：${_rows}x$_cols\n步数：$_moves\n用时：${_formatDuration(_elapsed)}',
-              en: 'Puzzle solved.\nGrid: ${_rows}x$_cols\nMoves: $_moves\nTime: ${_formatDuration(_elapsed)}',
+            i18n.t(
+              'toolbox.miniGames.jigsaw.puzzle_solved_grid_value_x_value_moves.8ca4bdad',
+              params: <String, Object?>{
+                'rows': _rows,
+                'cols': _cols,
+                'moves': _moves,
+                'elapsed': _formatDuration(_elapsed),
+              },
             ),
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(_text(i18n, zh: '关闭', en: 'Close')),
+              child: Text(i18n.t('toolbox.miniGames.jigsaw.close.f140ae02')),
             ),
             FilledButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 _shuffle();
               },
-              child: Text(_text(i18n, zh: '再来一局', en: 'Play again')),
+              child: Text(
+                i18n.t('toolbox.miniGames.jigsaw.play_again.34481f7e'),
+              ),
             ),
           ],
         );
@@ -440,7 +442,9 @@ class _JigsawGameState extends State<_JigsawGame> {
                       onPressed: () => _setFullscreen(false),
                       icon: const Icon(Icons.fullscreen_exit_rounded),
                       label: Text(
-                        _text(i18n, zh: '退出全屏', en: 'Exit fullscreen'),
+                        i18n.t(
+                          'toolbox.miniGames.jigsaw.exit_fullscreen.78f726f1',
+                        ),
                       ),
                     ),
                     FilledButton.tonalIcon(
@@ -448,14 +452,18 @@ class _JigsawGameState extends State<_JigsawGame> {
                           ? null
                           : _showHint,
                       icon: const Icon(Icons.lightbulb_outline_rounded),
-                      label: Text(_text(i18n, zh: '提示', en: 'Hint')),
+                      label: Text(
+                        i18n.t('toolbox.miniGames.jigsaw.hint.cbf269fa'),
+                      ),
                     ),
                     OutlinedButton.icon(
                       onPressed: _sourceImage == null || _loading
                           ? null
                           : _shuffle,
                       icon: const Icon(Icons.shuffle_rounded),
-                      label: Text(_text(i18n, zh: '打乱重排', en: 'Shuffle')),
+                      label: Text(
+                        i18n.t('toolbox.miniGames.jigsaw.shuffle.d2a26f06'),
+                      ),
                     ),
                   ],
                 ),
@@ -465,19 +473,19 @@ class _JigsawGameState extends State<_JigsawGame> {
                   runSpacing: 10,
                   children: <Widget>[
                     ToolboxMetricCard(
-                      label: _text(i18n, zh: '网格', en: 'Grid'),
+                      label: i18n.t('toolbox.miniGames.jigsaw.grid.4a0084d7'),
                       value: '${_rows}x$_cols',
                     ),
                     ToolboxMetricCard(
-                      label: _text(i18n, zh: '步数', en: 'Moves'),
+                      label: i18n.t('toolbox.miniGames.jigsaw.moves.8ed2d55c'),
                       value: '$_moves',
                     ),
                     ToolboxMetricCard(
-                      label: _text(i18n, zh: '用时', en: 'Time'),
+                      label: i18n.t('toolbox.miniGames.jigsaw.time.4017800c'),
                       value: _formatDuration(_elapsed),
                     ),
                     ToolboxMetricCard(
-                      label: _text(i18n, zh: '状态', en: 'Status'),
+                      label: i18n.t('toolbox.miniGames.jigsaw.status.0fba45f3'),
                       value: _statusLabel(i18n),
                     ),
                   ],
@@ -487,10 +495,8 @@ class _JigsawGameState extends State<_JigsawGame> {
                   child: _sourceImage == null
                       ? Center(
                           child: Text(
-                            _text(
-                              i18n,
-                              zh: '先导入一张图片再进入全屏拼图。',
-                              en: 'Import an image first to use fullscreen puzzle mode.',
+                            i18n.t(
+                              'toolbox.miniGames.jigsaw.import_an_image_first_to_use_fullscreen.0bbe1439',
                             ),
                           ),
                         )
@@ -517,8 +523,10 @@ class _JigsawGameState extends State<_JigsawGame> {
                   icon: const Icon(Icons.image_outlined),
                   label: Text(
                     _loading
-                        ? _text(i18n, zh: '导入中...', en: 'Importing...')
-                        : _text(i18n, zh: '导入图片', en: 'Import image'),
+                        ? i18n.t('toolbox.miniGames.jigsaw.importing.74d21110')
+                        : i18n.t(
+                            'toolbox.miniGames.jigsaw.import_image.713e2cfa',
+                          ),
                   ),
                 ),
                 FilledButton.tonalIcon(
@@ -526,19 +534,23 @@ class _JigsawGameState extends State<_JigsawGame> {
                       ? null
                       : _showHint,
                   icon: const Icon(Icons.lightbulb_outline_rounded),
-                  label: Text(_text(i18n, zh: '提示', en: 'Hint')),
+                  label: Text(i18n.t('toolbox.miniGames.jigsaw.hint.cbf269fa')),
                 ),
                 OutlinedButton.icon(
                   onPressed: _sourceImage == null || _loading ? null : _shuffle,
                   icon: const Icon(Icons.shuffle_rounded),
-                  label: Text(_text(i18n, zh: '打乱重排', en: 'Shuffle')),
+                  label: Text(
+                    i18n.t('toolbox.miniGames.jigsaw.shuffle.d2a26f06'),
+                  ),
                 ),
                 OutlinedButton.icon(
                   onPressed: _sourceImage == null || _loading
                       ? null
                       : () => _setFullscreen(true),
                   icon: const Icon(Icons.fullscreen_rounded),
-                  label: Text(_text(i18n, zh: '全屏拼图', en: 'Fullscreen')),
+                  label: Text(
+                    i18n.t('toolbox.miniGames.jigsaw.fullscreen.359d0c03'),
+                  ),
                 ),
                 for (final preset in const <(int, int)>[
                   (3, 3),
@@ -569,19 +581,19 @@ class _JigsawGameState extends State<_JigsawGame> {
               runSpacing: 10,
               children: <Widget>[
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '网格', en: 'Grid'),
+                  label: i18n.t('toolbox.miniGames.jigsaw.grid.4a0084d7'),
                   value: '${_rows}x$_cols',
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '步数', en: 'Moves'),
+                  label: i18n.t('toolbox.miniGames.jigsaw.moves.8ed2d55c'),
                   value: '$_moves',
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '用时', en: 'Time'),
+                  label: i18n.t('toolbox.miniGames.jigsaw.time.4017800c'),
                   value: _formatDuration(_elapsed),
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '状态', en: 'Status'),
+                  label: i18n.t('toolbox.miniGames.jigsaw.status.0fba45f3'),
                   value: _statusLabel(i18n),
                 ),
               ],
@@ -594,7 +606,9 @@ class _JigsawGameState extends State<_JigsawGame> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text('${_text(i18n, zh: '行数', en: 'Rows')}: $_rows'),
+                    Text(
+                      '${i18n.t('toolbox.miniGames.jigsaw.rows.961acfa9')}: $_rows',
+                    ),
                     Slider(
                       value: _rows.toDouble(),
                       min: 2,
@@ -603,7 +617,9 @@ class _JigsawGameState extends State<_JigsawGame> {
                       label: '$_rows',
                       onChanged: (value) => _changeRows(value.round()),
                     ),
-                    Text('${_text(i18n, zh: '列数', en: 'Columns')}: $_cols'),
+                    Text(
+                      '${i18n.t('toolbox.miniGames.jigsaw.columns.388cb95d')}: $_cols',
+                    ),
                     Slider(
                       value: _cols.toDouble(),
                       min: 2,
@@ -629,16 +645,14 @@ class _JigsawGameState extends State<_JigsawGame> {
                   ),
                 ),
                 child: Text(
-                  _text(
-                    i18n,
-                    zh: '导入一张图片后即可开始电子拼图。',
-                    en: 'Import an image to start the jigsaw.',
+                  i18n.t(
+                    'toolbox.miniGames.jigsaw.import_an_image_to_start_the_jigsaw.eefa63f8',
                   ),
                 ),
               )
             else ...<Widget>[
               Text(
-                _text(i18n, zh: '原图预览', en: 'Preview'),
+                i18n.t('toolbox.miniGames.jigsaw.preview.41e719d0'),
                 style: Theme.of(
                   context,
                 ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
@@ -659,7 +673,7 @@ class _JigsawGameState extends State<_JigsawGame> {
               ),
               const SizedBox(height: 12),
               Text(
-                _text(i18n, zh: '拼图棋盘', en: 'Puzzle board'),
+                i18n.t('toolbox.miniGames.jigsaw.puzzle_board.7a630340'),
                 style: Theme.of(
                   context,
                 ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),

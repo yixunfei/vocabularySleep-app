@@ -400,11 +400,12 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
       builder: (context) {
         return AlertDialog(
           title: Text(
-            i18n.t('toolbox.hub.edit.confirm_remove_title', params: <String, Object?>{'title': entry.title}),
+            i18n.t(
+              'toolbox.hub.edit.confirm_remove_title',
+              params: <String, Object?>{'title': entry.title},
+            ),
           ),
-          content: Text(
-            i18n.t('toolbox.hub.edit.confirm_remove_desc'),
-          ),
+          content: Text(i18n.t('toolbox.hub.edit.confirm_remove_desc')),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -432,7 +433,10 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
         behavior: SnackBarBehavior.floating,
         showCloseIcon: true,
         content: Text(
-          i18n.t('toolbox.hub.edit.snackbar_hidden', params: <String, Object?>{'title': entry.title}),
+          i18n.t(
+            'toolbox.hub.edit.snackbar_hidden',
+            params: <String, Object?>{'title': entry.title},
+          ),
         ),
         action: SnackBarAction(
           label: i18n.t('toolbox.hub.edit.snackbar_restore'),
@@ -724,7 +728,10 @@ class _EmptyToolboxLayoutPanel extends StatelessWidget {
           if (hiddenEntries.isNotEmpty) ...<Widget>[
             const SizedBox(height: 10),
             ToolboxInfoPill(
-              text: i18n.t('toolbox.hub.edit.empty_hidden_count', params: <String, Object?>{'count': '${hiddenEntries.length}'}),
+              text: i18n.t(
+                'toolbox.hub.edit.empty_hidden_count',
+                params: <String, Object?>{'count': '${hiddenEntries.length}'},
+              ),
               accent: colorScheme.tertiary,
               backgroundColor: colorScheme.tertiaryContainer.withValues(
                 alpha: 0.36,

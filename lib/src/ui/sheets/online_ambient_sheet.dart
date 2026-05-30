@@ -87,15 +87,11 @@ class _OnlineAmbientCatalogSheetState
         SnackBar(
           content: Text(
             path == null
-                ? pickUiText(
-                    i18n,
-                    zh: '下载失败，请稍后重试。',
-                    en: 'Download failed. Please try again later.',
+                ? i18n.t(
+                    'inline.ui.sheets.online_ambient_sheet.download_failed_please_try_again_later_85b773',
                   )
-                : pickUiText(
-                    i18n,
-                    zh: '已下载到本地：$localizedName',
-                    en: 'Downloaded locally: $localizedName',
+                : i18n.t(
+                    'inline.ui.sheets.online_ambient_sheet.downloaded_locally_localizedname_07c499',
                   ),
           ),
         ),
@@ -134,15 +130,11 @@ class _OnlineAmbientCatalogSheetState
         SnackBar(
           content: Text(
             deleted
-                ? pickUiText(
-                    i18n,
-                    zh: '已删除本地音频：$localizedName',
-                    en: 'Deleted local audio: $localizedName',
+                ? i18n.t(
+                    'inline.ui.sheets.online_ambient_sheet.deleted_local_audio_localizedname_7440f2',
                   )
-                : pickUiText(
-                    i18n,
-                    zh: '删除失败，请稍后重试。',
-                    en: 'Delete failed. Please try again later.',
+                : i18n.t(
+                    'inline.ui.sheets.online_ambient_sheet.delete_failed_please_try_again_later_ad76c3',
                   ),
           ),
         ),
@@ -178,19 +170,15 @@ class _OnlineAmbientCatalogSheetState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '环境音资源库',
-                        en: 'Ambient sound catalog',
+                      i18n.t(
+                        'inline.ui.sheets.online_ambient_sheet.ambient_sound_catalog_e70c2e',
                       ),
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '从远程资源库下载并缓存环境音，下载完成后可直接加入当前播放组合。',
-                        en: 'Download ambient sounds from the remote library and cache them locally for instant reuse.',
+                      i18n.t(
+                        'inline.ui.sheets.online_ambient_sheet.download_ambient_sounds_from_the_remote_library_and_cach_d33f2b',
                       ),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
@@ -310,16 +298,10 @@ class _OnlineAmbientCatalogSheetState
                                                   ),
                                                   label: Text(
                                                     deleting
-                                                        ? pickUiText(
-                                                            i18n,
-                                                            zh: '删除中',
-                                                            en: 'Deleting',
+                                                        ? i18n.t(
+                                                            'inline.ui.sheets.online_ambient_sheet.deleting_6581ab',
                                                           )
-                                                        : pickUiText(
-                                                            i18n,
-                                                            zh: '删除',
-                                                            en: 'Delete',
-                                                          ),
+                                                        : i18n.t('delete'),
                                                   ),
                                                 )
                                               : FilledButton.icon(
@@ -339,16 +321,10 @@ class _OnlineAmbientCatalogSheetState
                                                   ),
                                                   label: Text(
                                                     downloading
-                                                        ? pickUiText(
-                                                            i18n,
-                                                            zh: '下载中',
-                                                            en: 'Downloading',
+                                                        ? i18n.t(
+                                                            'inline.ui.sheets.online_ambient_sheet.downloading_ea6865',
                                                           )
-                                                        : pickUiText(
-                                                            i18n,
-                                                            zh: '下载',
-                                                            en: 'Download',
-                                                          ),
+                                                        : i18n.t('download'),
                                                   ),
                                                 ),
                                         ),

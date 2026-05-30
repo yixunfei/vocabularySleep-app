@@ -234,9 +234,7 @@ class ToolboxQuickEntryPanel extends StatelessWidget {
                                     setModalState(selected.clear);
                                   },
                             icon: const Icon(Icons.clear_rounded),
-                            label: Text(
-                              i18n.t('toolbox.hub.quick.clear'),
-                            ),
+                            label: Text(i18n.t('toolbox.hub.quick.clear')),
                           ),
                         ),
                         const SizedBox(width: 10),

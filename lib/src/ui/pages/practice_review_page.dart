@@ -69,7 +69,9 @@ class _PracticeReviewPageState extends ConsumerState<PracticeReviewPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(pickUiText(i18n, zh: '练习复盘', en: 'Practice review')),
+        title: Text(
+          i18n.t('inline.ui.pages.practice_review_page.practice_review_ba0771'),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -81,7 +83,9 @@ class _PracticeReviewPageState extends ConsumerState<PracticeReviewPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    pickUiText(i18n, zh: '时间范围', en: 'Time range'),
+                    i18n.t(
+                      'inline.ui.pages.practice_review_page.time_range_2b3399',
+                    ),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 12),
@@ -118,7 +122,9 @@ class _PracticeReviewPageState extends ConsumerState<PracticeReviewPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    pickUiText(i18n, zh: '练习总览', en: 'Practice overview'),
+                    i18n.t(
+                      'inline.ui.pages.practice_review_page.practice_overview_ea44fc',
+                    ),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 12),
@@ -129,29 +135,29 @@ class _PracticeReviewPageState extends ConsumerState<PracticeReviewPage> {
                       _StatChip(
                         icon: Icons.history_rounded,
                         value: '${filteredHistory.length}',
-                        label: pickUiText(
-                          i18n,
-                          zh: '范围内会话',
-                          en: 'Sessions in range',
+                        label: i18n.t(
+                          'inline.ui.pages.practice_review_page.sessions_in_range_65b2c4',
                         ),
                       ),
                       _StatChip(
                         icon: Icons.menu_book_rounded,
                         value: '$reviewed',
-                        label: pickUiText(i18n, zh: '复习词数', en: 'Reviewed'),
+                        label: i18n.t(
+                          'inline.ui.pages.practice_review_page.reviewed_1ba9b3',
+                        ),
                       ),
                       _StatChip(
                         icon: Icons.query_stats_rounded,
                         value: '$accuracy%',
-                        label: pickUiText(i18n, zh: '范围正确率', en: 'Accuracy'),
+                        label: i18n.t(
+                          'inline.ui.pages.practice_review_page.accuracy_8cf5a1',
+                        ),
                       ),
                       _StatChip(
                         icon: Icons.bookmarks_rounded,
                         value: '${filteredNotebook.length}',
-                        label: pickUiText(
-                          i18n,
-                          zh: '范围错题',
-                          en: 'Notebook words',
+                        label: i18n.t(
+                          'inline.ui.pages.practice_notebook_page.notebook_words_9adfda',
                         ),
                       ),
                     ],
@@ -178,7 +184,9 @@ class _PracticeReviewPageState extends ConsumerState<PracticeReviewPage> {
                         ),
                         icon: const Icon(Icons.data_object_rounded),
                         label: Text(
-                          pickUiText(i18n, zh: '导出 JSON', en: 'Export JSON'),
+                          i18n.t(
+                            'inline.ui.pages.practice_review_page.export_json_1a204d',
+                          ),
                         ),
                       ),
                       OutlinedButton.icon(
@@ -198,7 +206,9 @@ class _PracticeReviewPageState extends ConsumerState<PracticeReviewPage> {
                         ),
                         icon: const Icon(Icons.table_view_rounded),
                         label: Text(
-                          pickUiText(i18n, zh: '导出 CSV', en: 'Export CSV'),
+                          i18n.t(
+                            'inline.ui.pages.practice_review_page.export_csv_37a4f4',
+                          ),
                         ),
                       ),
                     ],
@@ -215,16 +225,16 @@ class _PracticeReviewPageState extends ConsumerState<PracticeReviewPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    pickUiText(i18n, zh: '薄弱原因分布', en: 'Weak reason breakdown'),
+                    i18n.t(
+                      'inline.ui.pages.practice_review_page.weak_reason_breakdown_8f3faf',
+                    ),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 12),
                   if (reasonCounts.isEmpty)
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '当前时间范围内还没有足够的会话数据。',
-                        en: 'There is not enough session data in the selected range yet.',
+                      i18n.t(
+                        'inline.ui.pages.practice_review_page.there_is_not_enough_session_data_in_the_selected_range_y_f63ddb',
                       ),
                     )
                   else
@@ -261,16 +271,16 @@ class _PracticeReviewPageState extends ConsumerState<PracticeReviewPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    pickUiText(i18n, zh: '范围内会话', en: 'Sessions in range'),
+                    i18n.t(
+                      'inline.ui.pages.practice_review_page.sessions_in_range_65b2c4',
+                    ),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 12),
                   if (filteredHistory.isEmpty)
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '当前时间范围内还没有练习记录。',
-                        en: 'No practice sessions in the selected range.',
+                      i18n.t(
+                        'inline.ui.pages.practice_review_page.no_practice_sessions_in_the_selected_range_398975',
                       ),
                     )
                   else
@@ -346,15 +356,13 @@ class _PracticeReviewPageState extends ConsumerState<PracticeReviewPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              pickUiText(i18n, zh: '趋势卡片', en: 'Trend card'),
+              i18n.t('inline.ui.pages.practice_review_page.trend_card_02fc31'),
               style: theme.textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
             Text(
-              pickUiText(
-                i18n,
-                zh: '支持多指标叠加和按会话/按周/按月聚合。点按节点或横向拖动可查看详细值。',
-                en: 'Supports multi-metric overlays and session/weekly/monthly aggregation. Tap points or drag horizontally to inspect details.',
+              i18n.t(
+                'inline.ui.pages.practice_review_page.supports_multi_metric_overlays_and_session_weekly_monthl_931ed5',
               ),
             ),
             const SizedBox(height: 12),
@@ -414,10 +422,8 @@ class _PracticeReviewPageState extends ConsumerState<PracticeReviewPage> {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '当前时间范围内没有可绘制的趋势数据。',
-                    en: 'There is no trend data to plot in this time range.',
+                  i18n.t(
+                    'inline.ui.pages.practice_review_page.there_is_no_trend_data_to_plot_in_this_time_range_0775f0',
                   ),
                 ),
               )
@@ -498,15 +504,19 @@ class _PracticeReviewPageState extends ConsumerState<PracticeReviewPage> {
                       runSpacing: 10,
                       children: <Widget>[
                         _MiniBadge(
-                          label: pickUiText(i18n, zh: '会话数', en: 'Sessions'),
+                          label: i18n.t('toolbox.breathing.sessions_completed'),
                           value: '${selectedBucket?.sessionCount ?? 0}',
                         ),
                         _MiniBadge(
-                          label: pickUiText(i18n, zh: '总词数', en: 'Reviewed'),
+                          label: i18n.t(
+                            'inline.ui.pages.practice_review_page.reviewed_1ba9b3',
+                          ),
                           value: '${selectedBucket?.total ?? 0}',
                         ),
                         _MiniBadge(
-                          label: pickUiText(i18n, zh: '错题', en: 'Weak'),
+                          label: i18n.t(
+                            'inline.ui.pages.practice_review_page.weak_19dbb1',
+                          ),
                           value: '${selectedBucket?.weakCount ?? 0}',
                         ),
                       ],
@@ -622,59 +632,49 @@ class _PracticeReviewPageState extends ConsumerState<PracticeReviewPage> {
     if (_grouping == _PracticeTrendGrouping.session) {
       return formatPracticeDateTime(i18n, bucket.startAt);
     }
-    return pickUiText(
-      i18n,
-      zh: '包含 ${bucket.sessionCount} 次会话',
-      en: '${bucket.sessionCount} sessions included',
+    return i18n.t(
+      'inline.ui.pages.practice_review_page.bucket_sessioncount_sessions_included_183ae5',
     );
   }
 
   String _rangeLabel(AppI18n i18n, _PracticeReviewRange range) {
     return switch (range) {
-      _PracticeReviewRange.today => pickUiText(i18n, zh: '今天', en: 'Today'),
-      _PracticeReviewRange.last7Days => pickUiText(
-        i18n,
-        zh: '近 7 天',
-        en: 'Last 7 days',
+      _PracticeReviewRange.today => i18n.t('inline.ui.app_shell.today_23dc4e'),
+      _PracticeReviewRange.last7Days => i18n.t(
+        'inline.ui.pages.practice_review_page.last_7_days_fe8754',
       ),
-      _PracticeReviewRange.last30Days => pickUiText(
-        i18n,
-        zh: '近 30 天',
-        en: 'Last 30 days',
+      _PracticeReviewRange.last30Days => i18n.t(
+        'inline.ui.pages.practice_review_page.last_30_days_d73e85',
       ),
-      _PracticeReviewRange.all => pickUiText(i18n, zh: '全部', en: 'All'),
+      _PracticeReviewRange.all => i18n.t('all'),
     };
   }
 
   String _groupingLabel(AppI18n i18n, _PracticeTrendGrouping grouping) {
     return switch (grouping) {
-      _PracticeTrendGrouping.session => pickUiText(
-        i18n,
-        zh: '按会话',
-        en: 'Per session',
+      _PracticeTrendGrouping.session => i18n.t(
+        'inline.ui.pages.practice_review_page.per_session_0128bb',
       ),
-      _PracticeTrendGrouping.weekly => pickUiText(i18n, zh: '按周', en: 'Weekly'),
-      _PracticeTrendGrouping.monthly => pickUiText(
-        i18n,
-        zh: '按月',
-        en: 'Monthly',
+      _PracticeTrendGrouping.weekly => i18n.t(
+        'inline.ui.pages.practice_review_page.weekly_da7d1e',
+      ),
+      _PracticeTrendGrouping.monthly => i18n.t(
+        'inline.ui.pages.practice_review_page.monthly_6d82a7',
       ),
     };
   }
 
   String _trendMetricLabel(AppI18n i18n, _PracticeTrendMetric metric) {
     return switch (metric) {
-      _PracticeTrendMetric.accuracy => pickUiText(
-        i18n,
-        zh: '正确率',
-        en: 'Accuracy',
+      _PracticeTrendMetric.accuracy => i18n.t(
+        'inline.ui.pages.practice_review_page.accuracy_8cf5a1',
       ),
-      _PracticeTrendMetric.reviewed => pickUiText(
-        i18n,
-        zh: '复习词数',
-        en: 'Reviewed',
+      _PracticeTrendMetric.reviewed => i18n.t(
+        'inline.ui.pages.practice_review_page.reviewed_1ba9b3',
       ),
-      _PracticeTrendMetric.weak => pickUiText(i18n, zh: '错题数', en: 'Weak'),
+      _PracticeTrendMetric.weak => i18n.t(
+        'inline.ui.pages.practice_review_page.weak_19dbb1',
+      ),
     };
   }
 
@@ -726,15 +726,17 @@ class _PracticeReviewPageState extends ConsumerState<PracticeReviewPage> {
     }
     final fileName = await showTextPromptDialog(
       context: context,
-      title: pickUiText(i18n, zh: '导出文件名', en: 'Export file name'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '文件会默认保存到：$defaultDirectory',
-        en: 'The file will be saved to: $defaultDirectory',
+      title: i18n.t(
+        'inline.ui.pages.practice_notebook_page_actions.export_file_name_518c5f',
+      ),
+      subtitle: i18n.t(
+        'inline.ui.pages.practice_notebook_page_actions.the_file_will_be_saved_to_defaultdirectory_682a9b',
       ),
       initialValue: 'xianyushengxi_practice_review.${format.extension}',
       hintText: 'practice_review.${format.extension}',
-      confirmText: pickUiText(i18n, zh: '导出', en: 'Export'),
+      confirmText: i18n.t(
+        'inline.ui.pages.practice_notebook_page_actions.export_bc626a',
+      ),
     );
     if (fileName == null || fileName.trim().isEmpty) {
       return;
@@ -752,10 +754,8 @@ class _PracticeReviewPageState extends ConsumerState<PracticeReviewPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          pickUiText(
-            i18n,
-            zh: '练习复盘已导出到：$path',
-            en: 'Practice review exported to: $path',
+          i18n.t(
+            'inline.ui.pages.practice_review_page.practice_review_exported_to_path_5d8841',
           ),
         ),
       ),
@@ -831,7 +831,9 @@ class _HistoryTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   record.title.isEmpty
-                      ? pickUiText(i18n, zh: '练习会话', en: 'Practice session')
+                      ? i18n.t(
+                          'inline.ui.pages.practice_page_sections.practice_session_562029',
+                        )
                       : record.title,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
@@ -844,10 +846,8 @@ class _HistoryTile extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            pickUiText(
-              i18n,
-              zh: '正确率 ${(record.accuracy * 100).round()}% · 记住 ${record.remembered}/${record.total} · 错题 ${record.weakCount}',
-              en: 'Accuracy ${(record.accuracy * 100).round()}% · ${record.remembered}/${record.total} remembered · ${record.weakCount} weak',
+            i18n.t(
+              'inline.ui.pages.practice_page_sections.accuracy_record_accuracy_100_round_record_remembered_rec_b4a3e4',
             ),
           ),
           if (reasonEntries.isNotEmpty) ...<Widget>[

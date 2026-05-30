@@ -159,7 +159,9 @@ class SleepReportPage extends StatelessWidget {
                           value: sleepScoreLabel(avgEnergy),
                         ),
                         ToolboxMetricCard(
-                          label: i18n.t('toolbox.sleep.report.daytimeSleepiness'),
+                          label: i18n.t(
+                            'toolbox.sleep.report.daytimeSleepiness',
+                          ),
                           value: sleepScoreLabel(avgSleepiness),
                         ),
                       ],

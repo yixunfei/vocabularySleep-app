@@ -11,37 +11,16 @@ class FineDragTrackingTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(
-        i18n,
-        zh: '精细拖拽追踪',
-        en: 'Fine drag tracking',
-        ja: 'Fine drag tracking',
-        de: 'Fine drag tracking',
-        fr: 'Traçage fin de la traînée',
-        es: 'Seguimiento de la arrastre',
-        ru: 'Отличное отслеживание сопротивления',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_drag_tracking.fine_drag_tracking_85aebd',
       ),
-      subtitle: pickUiText(
-        i18n,
-        zh: '手指稳住，沿窄轨从起点滑到终点——越慢越难。',
-        en: 'Drag a cursor along a narrow track for fine movement control.',
-        ja: 'Drag a cursor along a narrow track to train fine movement control and sustained tracking stability.',
-        de: 'Drag a cursor along a narrow track to train fine movement control and sustained tracking stability.',
-        fr: 'Faites glisser un curseur le long d\'une voie étroite pour entraîner un contrôle de mouvement fin et une stabilité de suivi soutenue.',
-        es: 'Arrastre un cursor a lo largo de una estrecha pista para entrenar el control de movimiento fino y la estabilidad de seguimiento sostenida.',
-        ru: 'Перетащите курсор по узкой дорожке, чтобы обучить тонкому контролю движения и устойчивой стабильности отслеживания.',
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_drag_tracking.drag_a_cursor_along_a_narrow_track_for_fine_movement_con_b64547',
       ),
       accent: _accent,
       icon: Icons.gesture_rounded,
-      status: pickUiText(
-        i18n,
-        zh: '稳住手指，沿着窄轨从起点滑到终点',
-        en: 'Next: hold the start point and drag along the track',
-        ja: 'Next: hold the start point and drag along the track',
-        de: 'Next: hold the start point and drag along the track',
-        fr: 'Suivant : maintenez le point de départ et faites glisser le long de la piste',
-        es: 'Siguiente: mantener el punto de inicio y arrastrar a lo largo de la pista',
-        ru: 'Далее: удерживайте точку старта и тащите по трассе',
+      status: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_drag_tracking.next_hold_the_start_point_and_drag_along_the_track_008c1d',
       ),
       child: const _FineDragTrackingCard(),
     );
@@ -353,55 +332,20 @@ class _FineDragTrackingCardState extends State<_FineDragTrackingCard> {
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
+            (i18n.t('progress'), '$_completed/$_roundCount'),
             (
-              pickUiText(
-                i18n,
-                zh: '进度',
-                en: 'Progress',
-                ja: 'Progress',
-                de: 'Progress',
-                fr: 'Progrès accomplis',
-                es: 'Progresos',
-                ru: 'Прогресс',
-              ),
-              '$_completed/$_roundCount',
-            ),
-            (
-              pickUiText(
-                i18n,
-                zh: '轨迹进度',
-                en: 'Track',
-                ja: 'Track',
-                de: 'Track',
-                fr: 'Voie',
-                es: 'Pista',
-                ru: 'трек',
-              ),
+              i18n.t('toolbox.sleep.assist.track'),
               '${(_progress * 100).round()}%',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '平均偏离',
-                en: 'Avg deviation',
-                ja: '平均偏差',
-                de: 'Avg deviation',
-                fr: 'Écart d\'Avg',
-                es: 'Avg deviation',
-                ru: 'отклонение',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_drag_tracking.avg_deviation_74a634',
               ),
               _samples == 0 ? '-' : '${_averageDeviation}px',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '离轨',
-                en: 'Off-track',
-                ja: 'Off-track',
-                de: 'Off-track',
-                fr: 'Hors piste',
-                es: 'Off-track',
-                ru: 'Вне трассы',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_drag_tracking.off_track_0fff30',
               ),
               '$_offTrackInRound',
             ),
@@ -409,25 +353,11 @@ class _FineDragTrackingCardState extends State<_FineDragTrackingCard> {
         ),
         const SizedBox(height: 12),
         _HumanSettingsSection(
-          title: pickUiText(
-            i18n,
-            zh: '拖拽设置',
-            en: 'Drag settings',
-            ja: 'Drag settings',
-            de: 'Drag settings',
-            fr: 'Paramètres de glisser',
-            es: 'Ajustes',
-            ru: 'Настройки перетаскивания',
+          title: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_drag_tracking.drag_settings_9539df',
           ),
-          subtitle: pickUiText(
-            i18n,
-            zh: '轨迹复杂度、宽度和轮数都在这里。',
-            en: 'Adjust track complexity, width, and round count.',
-            ja: 'トラックの複雑さ、幅、ラウンドカウントを調整します。',
-            de: 'Adjust track complexity, width, and round count.',
-            fr: 'Adjust track complexity, width, and round count.',
-            es: 'Ajuste la complejidad de la pista, el ancho y el recuento redondo.',
-            ru: 'Настройте сложность трека, ширину и количество раундов.',
+          subtitle: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_drag_tracking.adjust_track_complexity_width_and_round_count_48debf',
           ),
           child: _buildSettings(context, i18n),
         ),
@@ -447,69 +377,28 @@ class _FineDragTrackingCardState extends State<_FineDragTrackingCard> {
           children: <Widget>[
             _HumanActionButton(
               label: _running
-                  ? pickUiText(
-                      i18n,
-                      zh: '重新开始',
-                      en: 'Restart',
-                      ja: 'Restart',
-                      de: 'Restart',
-                      fr: 'Redémarrer',
-                      es: 'Restart',
-                      ru: 'Перезапустить',
+                  ? i18n.t(
+                      'inline.ui.pages.practice_session_page.restart_8b7fcc',
                     )
-                  : pickUiText(
-                      i18n,
-                      zh: '开始',
-                      en: 'Start',
-                      ja: 'Start',
-                      de: 'Start',
-                      fr: 'Démarrer',
-                      es: 'Comienzo',
-                      ru: 'Начинать',
-                    ),
+                  : i18n.t('toolbox.breathing.start'),
               icon: _running ? Icons.replay_rounded : Icons.play_arrow_rounded,
               onPressed: _start,
             ),
             OutlinedButton.icon(
               onPressed: _reset,
               icon: const Icon(Icons.refresh_rounded),
-              label: Text(
-                pickUiText(
-                  i18n,
-                  zh: '重置',
-                  en: 'Reset',
-                  ja: 'Reset',
-                  de: 'Reset',
-                  fr: 'Réinitialiser',
-                  es: 'Reset',
-                  ru: 'сброс',
-                ),
-              ),
+              label: Text(i18n.t('appearanceReset')),
             ),
           ],
         ),
         const SizedBox(height: 12),
         Text(
           _running
-              ? pickUiText(
-                  i18n,
-                  zh: '拖动光标沿轨迹前进，离轨会被记录。',
-                  en: 'Drag the cursor along the path; leaving the track is recorded.',
-                  ja: 'Drag the cursor along the path; leaving the track is recorded.',
-                  de: 'Drag the cursor along the path; leaving the track is recorded.',
-                  fr: 'Faites glisser le curseur le long du chemin; la sortie de la piste est enregistrée.',
-                  es: 'Arrastre el cursor a lo largo del camino; dejar la pista se registra.',
-                  ru: 'Перетащите курсор по траектории; выход из трека записывается.',
+              ? i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_drag_tracking.drag_the_cursor_along_the_path_leaving_the_track_is_reco_1c60d0',
                 )
-              : pickUiText(
-                  i18n,
-                  zh: '开始后从左侧起点沿线拖到右侧终点。',
-                  en: 'After starting, drag from the left start point to the right finish point.',
-                  ja: '開始後、左の開始点から右の終了点までドラッグします。',
-                  de: 'After starting, drag from the left start point to the right finish point.',
-                  fr: 'After starting, drag from the left start point to the right finish point.',
-                  es: 'Después de comenzar, arrastre desde el punto de inicio izquierdo hasta el punto de llegada derecho.',
-                  ru: 'После старта перетащите с левой точки старта на правую точку финиша.',
+              : i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_drag_tracking.after_starting_drag_from_the_left_start_point_to_the_rig_7c7f58',
                 ),
           style: Theme.of(
             context,
@@ -554,15 +443,8 @@ class _FineDragTrackingCardState extends State<_FineDragTrackingCard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          pickUiText(
-            i18n,
-            zh: '难度',
-            en: 'Difficulty',
-            ja: 'Difficulty',
-            de: 'Difficulty',
-            fr: 'Difficulté',
-            es: 'Dificultad',
-            ru: 'трудность',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_bimanual.difficulty_0f6c2f',
           ),
         ),
         Wrap(
@@ -587,15 +469,8 @@ class _FineDragTrackingCardState extends State<_FineDragTrackingCard> {
         ),
         const SizedBox(height: 12),
         Text(
-          pickUiText(
-            i18n,
-            zh: '轨道宽度',
-            en: 'Track width',
-            ja: 'Track width',
-            de: 'Track width',
-            fr: 'Largeur de la voie',
-            es: 'Ancho de pista',
-            ru: 'Ширина полосы движения',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_drag_tracking.track_width_7cdc94',
           ),
         ),
         Slider(
@@ -609,18 +484,7 @@ class _FineDragTrackingCardState extends State<_FineDragTrackingCard> {
               : (value) => setState(() => _trackWidth = value),
         ),
         const SizedBox(height: 12),
-        Text(
-          pickUiText(
-            i18n,
-            zh: '轮数',
-            en: 'Rounds',
-            ja: 'Rounds',
-            de: 'Rounds',
-            fr: 'Rondes',
-            es: 'Rondas',
-            ru: 'Круги',
-          ),
-        ),
+        Text(i18n.t('inline.plan294.breathing.rounds_06b0afec')),
         Wrap(
           spacing: 8,
           children: <int>[3, 4, 5, 6]
@@ -641,35 +505,14 @@ class _FineDragTrackingCardState extends State<_FineDragTrackingCard> {
 
   String _difficultyLabel(AppI18n i18n, _DragTrackDifficulty difficulty) {
     return switch (difficulty) {
-      _DragTrackDifficulty.gentle => pickUiText(
-        i18n,
-        zh: '舒缓',
-        en: 'Gentle',
-        ja: 'Gentle',
-        de: 'Gentle',
-        fr: 'Doucement',
-        es: 'Gentle',
-        ru: 'нежный',
+      _DragTrackDifficulty.gentle => i18n.t(
+        'inline.plan295.breathing.gentle.26bb0cd9fc59',
       ),
-      _DragTrackDifficulty.standard => pickUiText(
-        i18n,
-        zh: '标准',
-        en: 'Standard',
-        ja: 'Standard',
-        de: 'Standard',
-        fr: 'Norme',
-        es: 'Estándar',
-        ru: 'Стандарт',
+      _DragTrackDifficulty.standard => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.standard_b9acb5',
       ),
-      _DragTrackDifficulty.expert => pickUiText(
-        i18n,
-        zh: '精细',
-        en: 'Expert',
-        ja: 'Expert',
-        de: 'Expert',
-        fr: 'Expert',
-        es: 'Expert',
-        ru: 'эксперт',
+      _DragTrackDifficulty.expert => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.expert_35af53',
       ),
     };
   }
@@ -684,15 +527,8 @@ class _FineDragTrackingCardState extends State<_FineDragTrackingCard> {
       builder: (context) {
         return AlertDialog(
           title: Text(
-            pickUiText(
-              i18n,
-              zh: '拖拽追踪报告',
-              en: 'Drag tracking report',
-              ja: 'Drag tracking report',
-              de: 'Drag tracking report',
-              fr: 'Rapport de suivi du glissement',
-              es: 'Informe de seguimiento de los resultados',
-              ru: 'Отчет по отслеживанию бросков',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_drag_tracking.drag_tracking_report_1c3873',
             ),
           ),
           content: SingleChildScrollView(
@@ -703,54 +539,24 @@ class _FineDragTrackingCardState extends State<_FineDragTrackingCard> {
                 _HumanMetricWrap(
                   metrics: <(String, String)>[
                     (
-                      pickUiText(
-                        i18n,
-                        zh: '完成',
-                        en: 'Completed',
-                        ja: 'しました。完了しました',
-                        de: 'Completed',
-                        fr: 'Achevé',
-                        es: 'Completado',
-                        ru: 'завершенный',
-                      ),
+                      i18n.t('toolbox.sleep.rhythm.completed'),
                       '${_records.length}/$_roundCount',
                     ),
                     (
-                      pickUiText(
-                        i18n,
-                        zh: '最佳用时',
-                        en: 'Best time',
-                        ja: 'ベストタイム',
-                        de: 'Best time',
-                        fr: 'Meilleur moment',
-                        es: 'El mejor tiempo',
-                        ru: 'Лучшее время',
+                      i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_drag_tracking.best_time_1330b3',
                       ),
                       _formatMilliseconds(_bestMs),
                     ),
                     (
-                      pickUiText(
-                        i18n,
-                        zh: '平均偏离',
-                        en: 'Avg deviation',
-                        ja: '平均偏差',
-                        de: 'Avg deviation',
-                        fr: 'Écart d\'Avg',
-                        es: 'Avg deviation',
-                        ru: 'отклонение',
+                      i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_drag_tracking.avg_deviation_74a634',
                       ),
                       '${_sessionAverageDeviation}px',
                     ),
                     (
-                      pickUiText(
-                        i18n,
-                        zh: '总离轨',
-                        en: 'Off-track total',
-                        ja: 'Off-track total',
-                        de: 'Off-track total',
-                        fr: 'Total hors piste',
-                        es: 'Total desviado',
-                        ru: 'Вне трассы общее',
+                      i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_drag_tracking.off_track_total_1a308f',
                       ),
                       '${_records.fold<int>(0, (sum, item) => sum + item.offTrackEvents)}',
                     ),
@@ -760,25 +566,11 @@ class _FineDragTrackingCardState extends State<_FineDragTrackingCard> {
                 _HumanPanel(
                   child: Text(
                     _sessionAverageDeviation <= _trackWidth * 0.35
-                        ? pickUiText(
-                            i18n,
-                            zh: '控制稳定，可以尝试更窄轨道或更高难度。',
-                            en: 'Control is stable. Try a narrower track or higher difficulty.',
-                            ja: 'コントロールは安定しています。狭いトラック以上の難易度を試してみてください。',
-                            de: 'Control is stable. Try a narrower track or higher difficulty.',
-                            fr: 'Le contrôle est stable. Essayez une piste plus étroite ou plus difficile.',
-                            es: 'El control es estable. Pruebe una vía más estrecha o mayor dificultad.',
-                            ru: 'Контроль стабилен. Попробуйте более узкий путь или более высокую сложность.',
+                        ? i18n.t(
+                            'inline.ui.pages.toolbox_human_tests_drag_tracking.control_is_stable_try_a_narrower_track_or_higher_difficu_315e7f',
                           )
-                        : pickUiText(
-                            i18n,
-                            zh: '建议降低难度，先保持慢速连续移动，减少突然折返。',
-                            en: 'Lower the difficulty and focus on slow, continuous movement with fewer abrupt reversals.',
-                            ja: 'Lower the difficulty and focus on slow, continuous movement with fewer abrupt reversals.',
-                            de: 'Lower the difficulty and focus on slow, continuous movement with fewer abrupt reversals.',
-                            fr: 'Abaissez la difficulté et concentrez-vous sur le mouvement lent et continu avec moins de renversements brusques.',
-                            es: 'Bajar la dificultad y centrarse en el movimiento lento y continuo con menos reversales abruptos.',
-                            ru: 'Снизьте сложность и сосредоточьтесь на медленном, непрерывном движении с меньшим количеством резких разворотов.',
+                        : i18n.t(
+                            'inline.ui.pages.toolbox_human_tests_drag_tracking.lower_the_difficulty_and_focus_on_slow_continuous_moveme_c03585',
                           ),
                   ),
                 ),
@@ -788,18 +580,7 @@ class _FineDragTrackingCardState extends State<_FineDragTrackingCard> {
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                pickUiText(
-                  i18n,
-                  zh: '关闭',
-                  en: 'Close',
-                  ja: '閉じる',
-                  de: 'Close',
-                  fr: 'Fermer',
-                  es: 'Cerca',
-                  ru: 'Закрыть',
-                ),
-              ),
+              child: Text(i18n.t('inline.plan295.life.close.370fb8697deb')),
             ),
           ],
         );

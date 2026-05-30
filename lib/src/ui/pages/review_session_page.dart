@@ -51,11 +51,11 @@ class _ReviewSessionPageState extends ConsumerState<ReviewSessionPage> {
         appBar: AppBar(title: Text(widget.title)),
         body: EmptyStateView(
           icon: Icons.assignment_turned_in_outlined,
-          title: pickUiText(i18n, zh: '当前没有可复习词', en: 'No words to review'),
-          message: pickUiText(
-            i18n,
-            zh: '可以先在词库中加入任务词或收藏词，再回来开始会话。',
-            en: 'Add task or favorite words in Library, then come back here.',
+          title: i18n.t(
+            'inline.ui.pages.review_session_page.no_words_to_review_1ec348',
+          ),
+          message: i18n.t(
+            'inline.ui.pages.review_session_page.add_task_or_favorite_words_in_library_then_come_back_her_a8b755',
           ),
         ),
       );
@@ -80,14 +80,14 @@ class _ReviewSessionPageState extends ConsumerState<ReviewSessionPage> {
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: <Widget>[
           PageHeader(
-            eyebrow: pickUiText(i18n, zh: '复习会话', en: 'Review session'),
+            eyebrow: i18n.t(
+              'inline.ui.pages.review_session_page.review_session_85e4c7',
+            ),
             title: widget.title,
             subtitle:
                 widget.subtitle ??
-                pickUiText(
-                  i18n,
-                  zh: '共 ${widget.words.length} 个词，开始前可先预览一部分词条。',
-                  en: '${widget.words.length} words. Preview a subset before starting.',
+                i18n.t(
+                  'inline.ui.pages.review_session_page.widget_words_length_words_preview_a_subset_before_starti_cd41a7',
                 ),
           ),
           const SizedBox(height: 16),
@@ -98,7 +98,9 @@ class _ReviewSessionPageState extends ConsumerState<ReviewSessionPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    pickUiText(i18n, zh: '复习顺序', en: 'Review order'),
+                    i18n.t(
+                      'inline.ui.pages.practice_notebook_page.review_order_334a92',
+                    ),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 12),
@@ -129,19 +131,25 @@ class _ReviewSessionPageState extends ConsumerState<ReviewSessionPage> {
                         context,
                         icon: Icons.library_books_rounded,
                         value: '${orderedWords.length}',
-                        label: pickUiText(i18n, zh: '本次词数', en: 'Words'),
+                        label: i18n.t(
+                          'inline.ui.pages.review_session_page.words_ae56ab',
+                        ),
                       ),
                       _buildStatChip(
                         context,
                         icon: Icons.schedule_rounded,
                         value: '$dueCount',
-                        label: pickUiText(i18n, zh: '待复习', en: 'Due now'),
+                        label: i18n.t(
+                          'inline.ui.pages.practice_notebook_page.due_now_30a228',
+                        ),
                       ),
                       _buildStatChip(
                         context,
                         icon: Icons.query_stats_rounded,
                         value: '$trackedCount',
-                        label: pickUiText(i18n, zh: '已有记录', en: 'Tracked'),
+                        label: i18n.t(
+                          'inline.ui.pages.review_session_page.tracked_304668',
+                        ),
                       ),
                     ],
                   ),
@@ -160,7 +168,9 @@ class _ReviewSessionPageState extends ConsumerState<ReviewSessionPage> {
                         ),
                         icon: const Icon(Icons.play_arrow_rounded),
                         label: Text(
-                          pickUiText(i18n, zh: '按当前顺序开始', en: 'Start review'),
+                          i18n.t(
+                            'inline.ui.pages.practice_notebook_page.start_review_36dd6d',
+                          ),
                         ),
                       ),
                       OutlinedButton.icon(
@@ -173,7 +183,9 @@ class _ReviewSessionPageState extends ConsumerState<ReviewSessionPage> {
                         ),
                         icon: const Icon(Icons.shuffle_rounded),
                         label: Text(
-                          pickUiText(i18n, zh: '随机练习', en: 'Shuffle start'),
+                          i18n.t(
+                            'inline.ui.pages.review_session_page.shuffle_start_cb2da0',
+                          ),
                         ),
                       ),
                     ],
@@ -204,10 +216,8 @@ class _ReviewSessionPageState extends ConsumerState<ReviewSessionPage> {
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
-                pickUiText(
-                  i18n,
-                  zh: '仅预览前 ${previewWords.length} 个词，开始会话可覆盖全部。',
-                  en: 'Showing first ${previewWords.length} words. The session covers all.',
+                i18n.t(
+                  'inline.ui.pages.review_session_page.showing_first_previewwords_length_words_the_session_cove_b1d4f3',
                 ),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
@@ -335,10 +345,18 @@ class _ReviewSessionPageState extends ConsumerState<ReviewSessionPage> {
 
   String _orderLabel(AppI18n i18n, _ReviewOrder order) {
     return switch (order) {
-      _ReviewOrder.source => pickUiText(i18n, zh: '原始顺序', en: 'Source order'),
-      _ReviewOrder.dueFirst => pickUiText(i18n, zh: '到期优先', en: 'Due first'),
-      _ReviewOrder.weakFirst => pickUiText(i18n, zh: '薄弱优先', en: 'Weak first'),
-      _ReviewOrder.alphabetical => pickUiText(i18n, zh: '字母顺序', en: 'A-Z'),
+      _ReviewOrder.source => i18n.t(
+        'inline.ui.pages.review_session_page.source_order_ac6f03',
+      ),
+      _ReviewOrder.dueFirst => i18n.t(
+        'inline.ui.pages.practice_notebook_page.due_first_f4f1fa',
+      ),
+      _ReviewOrder.weakFirst => i18n.t(
+        'inline.ui.pages.practice_notebook_page.weak_first_220485',
+      ),
+      _ReviewOrder.alphabetical => i18n.t(
+        'inline.ui.pages.practice_notebook_page.a_z_db02f0',
+      ),
     };
   }
 

@@ -32,15 +32,13 @@ class _TimelinePeriodicToolPageState extends State<_TimelinePeriodicToolPage> {
   @override
   Widget build(BuildContext context) {
     return ToolboxToolPage(
-      title: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '历史年表/元素周期表',
-        en: 'Timeline and periodic table',
+        'inline.plan295.life.timeline_and_periodic_table.a8ffb824aa25',
       ),
-      subtitle: _lifeText(
+      subtitle: _lifeI18nText(
         context,
-        zh: '按可信资料整理的宏观历史轴与 118 元素动态表。',
-        en: 'Consensus timeline anchors and a dynamic 118-element table.',
+        'inline.plan295.life.consensus_timeline_anchors_and_a_dyn.50984080c376',
       ),
       child: Column(
         key: const ValueKey<String>('timeline-periodic-page'),
@@ -71,13 +69,17 @@ class _TimelinePeriodicToolPageState extends State<_TimelinePeriodicToolPage> {
         ChoiceChip(
           selected: _view == 'timeline',
           avatar: const Icon(Icons.view_timeline_rounded, size: 18),
-          label: Text(_lifeText(context, zh: '历史年表', en: 'Timeline')),
+          label: Text(
+            _lifeI18nText(context, 'inline.plan295.life.timeline.cad2ba3451bc'),
+          ),
           onSelected: (_) => setState(() => _view = 'timeline'),
         ),
         ChoiceChip(
           selected: _view == 'elements',
           avatar: const Icon(Icons.grid_view_rounded, size: 18),
-          label: Text(_lifeText(context, zh: '元素周期表', en: 'Elements')),
+          label: Text(
+            _lifeI18nText(context, 'inline.plan295.life.elements.97f277a13835'),
+          ),
           onSelected: (_) => setState(() => _view = 'elements'),
         ),
       ],
@@ -97,41 +99,63 @@ class _TimelinePeriodicToolPageState extends State<_TimelinePeriodicToolPage> {
           runSpacing: 8,
           children: <Widget>[
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '节点', en: 'Events'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.events.2ad3706e321a',
+              ),
               value: '${visibleFacts.length}',
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '跨度', en: 'Span'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.span.0f8669223b11',
+              ),
               value: _timelineRangeLabel(context, _timelineRange),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '来源', en: 'Sources'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.sources.eef3aeb8724b',
+              ),
               value: '${_timelinePeriodicSources.length}',
             ),
           ],
         ),
         const SizedBox(height: 12),
         _LifeSettingsPanel(
-          title: _lifeText(context, zh: '年表筛选', en: 'Timeline filters'),
-          subtitle: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '时间采用对数轴，近现代节点会自然拉开。',
-            en: 'A logarithmic time axis keeps recent events readable.',
+            'inline.plan295.life.timeline_filters.3c402383b010',
+          ),
+          subtitle: _lifeI18nText(
+            context,
+            'inline.plan295.life.a_logarithmic_time_axis_keeps_recent.59130a40553d',
           ),
           children: <Widget>[
             _LifeSegmentedField<String>(
-              label: _lifeText(context, zh: '时间范围', en: 'Time range'),
+              label: _lifeI18nText(
+                context,
+                'inline.ui.pages.practice_review_page.time_range_2b3399',
+              ),
               value: _timelineRange,
               options: const <_LifeOption<String>>[
-                _LifeOption(value: 'all', labelZh: '全部', labelEn: 'All'),
-                _LifeOption(value: 'earth', labelZh: '地球', labelEn: 'Earth'),
-                _LifeOption(value: 'human', labelZh: '人类', labelEn: 'Human'),
+                _LifeOption(value: 'all', labelKey: 'all'),
+                _LifeOption(
+                  value: 'earth',
+                  labelKey: 'inline.plan295.life.earth.e77b1debf5ac',
+                ),
+                _LifeOption(
+                  value: 'human',
+                  labelKey: 'inline.plan295.life.human.7ac93bc8501f',
+                ),
                 _LifeOption(
                   value: 'civilization',
-                  labelZh: '文明',
-                  labelEn: 'Civilization',
+                  labelKey: 'inline.plan295.life.civilization.b553343bf1f6',
                 ),
-                _LifeOption(value: 'modern', labelZh: '近现代', labelEn: 'Modern'),
+                _LifeOption(
+                  value: 'modern',
+                  labelKey: 'inline.plan295.life.modern.0eb29c68f83b',
+                ),
               ],
               onChanged: (value) {
                 setState(() {
@@ -145,24 +169,34 @@ class _TimelinePeriodicToolPageState extends State<_TimelinePeriodicToolPage> {
             ),
             const SizedBox(height: 12),
             _LifeSegmentedField<String>(
-              label: _lifeText(context, zh: '主题', en: 'Theme'),
+              label: _lifeI18nText(context, 'appearanceThemeTitle'),
               value: _timelineCategory,
               options: const <_LifeOption<String>>[
-                _LifeOption(value: 'all', labelZh: '全部', labelEn: 'All'),
-                _LifeOption(value: 'cosmic', labelZh: '宇宙', labelEn: 'Cosmic'),
-                _LifeOption(value: 'earth', labelZh: '地球', labelEn: 'Earth'),
-                _LifeOption(value: 'human', labelZh: '人类', labelEn: 'Human'),
+                _LifeOption(value: 'all', labelKey: 'all'),
+                _LifeOption(
+                  value: 'cosmic',
+                  labelKey: 'inline.plan295.life.cosmic.9faf20d9169e',
+                ),
+                _LifeOption(
+                  value: 'earth',
+                  labelKey: 'inline.plan295.life.earth.e77b1debf5ac',
+                ),
+                _LifeOption(
+                  value: 'human',
+                  labelKey: 'inline.plan295.life.human.7ac93bc8501f',
+                ),
                 _LifeOption(
                   value: 'civilization',
-                  labelZh: '文明',
-                  labelEn: 'Civilization',
+                  labelKey: 'inline.plan295.life.civilization.b553343bf1f6',
                 ),
                 _LifeOption(
                   value: 'science',
-                  labelZh: '科学',
-                  labelEn: 'Science',
+                  labelKey: 'ref.toolbox.sleep.assist.scienceCard',
                 ),
-                _LifeOption(value: 'modern', labelZh: '近现代', labelEn: 'Modern'),
+                _LifeOption(
+                  value: 'modern',
+                  labelKey: 'inline.plan295.life.modern.0eb29c68f83b',
+                ),
               ],
               onChanged: (value) {
                 setState(() {
@@ -176,11 +210,20 @@ class _TimelinePeriodicToolPageState extends State<_TimelinePeriodicToolPage> {
             ),
             const SizedBox(height: 12),
             _LifeSegmentedField<String>(
-              label: _lifeText(context, zh: '浏览方式', en: 'View mode'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.view_mode.742241a6e6c8',
+              ),
               value: _timelineMode,
               options: const <_LifeOption<String>>[
-                _LifeOption(value: 'story', labelZh: '纵向故事轴', labelEn: 'Story'),
-                _LifeOption(value: 'map', labelZh: '全景地图轴', labelEn: 'Map'),
+                _LifeOption(
+                  value: 'story',
+                  labelKey: 'inline.plan297.life.story.12fe95c32544',
+                ),
+                _LifeOption(
+                  value: 'map',
+                  labelKey: 'inline.plan297.life.map.33e80edb7f22',
+                ),
               ],
               onChanged: (value) => setState(() => _timelineMode = value),
             ),
@@ -193,7 +236,12 @@ class _TimelinePeriodicToolPageState extends State<_TimelinePeriodicToolPage> {
                     ? null
                     : () => _openTimelineImmersive(context, visibleFacts),
                 icon: const Icon(Icons.fullscreen_rounded),
-                label: Text(_lifeText(context, zh: '沉浸全屏', en: 'Immersive')),
+                label: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.immersive.0393a95a7382',
+                  ),
+                ),
               ),
             ),
           ],
@@ -246,47 +294,72 @@ class _TimelinePeriodicToolPageState extends State<_TimelinePeriodicToolPage> {
           runSpacing: 8,
           children: <Widget>[
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '元素', en: 'Elements'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.elements.47ce1b5fdded',
+              ),
               value: '${_elementFacts.length}',
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '当前显示', en: 'Visible'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.visible.6b72a25d999d',
+              ),
               value: '${visibleElements.length}',
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '数据', en: 'Data'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.data.79398b2fc733',
+              ),
               value: 'PubChem',
             ),
           ],
         ),
         const SizedBox(height: 12),
         _LifeSettingsPanel(
-          title: _lifeText(context, zh: '元素筛选', en: 'Element filters'),
-          subtitle: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '分类来自 PubChem group block；原子量按来源表展示。',
-            en: 'Group blocks come from PubChem; atomic masses follow the source table.',
+            'inline.plan295.life.element_filters.dcdc1b326708',
+          ),
+          subtitle: _lifeI18nText(
+            context,
+            'inline.plan295.life.group_blocks_come_from_pubchem_atomi.b5efdfae23bb',
           ),
           children: <Widget>[
             _LifeSegmentedField<String>(
-              label: _lifeText(context, zh: '族块', en: 'Group block'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.group_block.f1256811edda',
+              ),
               value: _elementCategory,
               options: _elementCategoryOptions,
               onChanged: (value) => setState(() => _elementCategory = value),
             ),
             const SizedBox(height: 12),
             _LifeSegmentedField<String>(
-              label: _lifeText(context, zh: '状态', en: 'State'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.state.b8b2e03cadea',
+              ),
               value: _elementState,
               options: const <_LifeOption<String>>[
-                _LifeOption(value: 'all', labelZh: '全部', labelEn: 'All'),
-                _LifeOption(value: 'solid', labelZh: '固体', labelEn: 'Solid'),
-                _LifeOption(value: 'liquid', labelZh: '液体', labelEn: 'Liquid'),
-                _LifeOption(value: 'gas', labelZh: '气体', labelEn: 'Gas'),
+                _LifeOption(value: 'all', labelKey: 'all'),
+                _LifeOption(
+                  value: 'solid',
+                  labelKey: 'inline.plan295.life.solid.edf5c04808b9',
+                ),
+                _LifeOption(
+                  value: 'liquid',
+                  labelKey: 'inline.plan295.life.liquid.faca6f8190f7',
+                ),
+                _LifeOption(
+                  value: 'gas',
+                  labelKey: 'inline.plan295.life.gas.26a1b9794e2a',
+                ),
                 _LifeOption(
                   value: 'expected',
-                  labelZh: '预测',
-                  labelEn: 'Expected',
+                  labelKey: 'inline.plan295.life.expected.46e4595f7ecd',
                 ),
               ],
               onChanged: (value) => setState(() => _elementState = value),
@@ -311,11 +384,10 @@ class _TimelinePeriodicToolPageState extends State<_TimelinePeriodicToolPage> {
 
   Widget _buildSourcesPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '资料来源', en: 'Sources'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(context, 'inline.plan295.life.sources.26517c8ed67c'),
+      subtitle: _lifeI18nText(
         context,
-        zh: '本模块只内置共识性节点和可核验元素数据。',
-        en: 'This module embeds consensus anchors and verifiable element data.',
+        'inline.plan295.life.this_module_embeds_consensus_anchors.d5223f1cfa2c',
       ),
       children: <Widget>[
         for (final source in _timelinePeriodicSources)
@@ -408,10 +480,9 @@ class _TimelineEmptyState extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              _lifeText(
+              _lifeI18nText(
                 context,
-                zh: '当前筛选下暂无节点，请切换时间范围或主题。',
-                en: 'No events match these filters. Try another range or theme.',
+                'inline.plan295.life.no_events_match_these_filters_try_an.99218a4c2e57',
               ),
             ),
           ),
@@ -523,21 +594,17 @@ class _TimelineStoryHeader extends StatelessWidget {
                     ),
                     _TimelinePeriodicPill(
                       color: theme.colorScheme.primary,
-                      label: _lifeText(
+                      label: _lifeI18nText(
                         context,
-                        zh: '$eventCount 个节点',
-                        en: '$eventCount events',
+                        'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.timeline.periodic.events.f1556d04a2',
+                        params: <String, Object?>{'eventCount': eventCount},
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  _lifeText(
-                    context,
-                    zh: selected.displayZh,
-                    en: selected.displayEn,
-                  ),
+                  _lifeI18nText(context, selected.displayKey),
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: Colors.white.withValues(alpha: 0.9),
                     fontWeight: FontWeight.w900,
@@ -545,11 +612,7 @@ class _TimelineStoryHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  _lifeText(
-                    context,
-                    zh: selected.titleZh,
-                    en: selected.titleEn,
-                  ),
+                  _lifeI18nText(context, selected.titleKey),
                   maxLines: immersive ? 3 : 2,
                   overflow: TextOverflow.ellipsis,
                   style:
@@ -564,11 +627,7 @@ class _TimelineStoryHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  _lifeText(
-                    context,
-                    zh: selected.detailZh,
-                    en: selected.detailEn,
-                  ),
+                  _lifeI18nText(context, selected.detailKey),
                   maxLines: immersive ? 3 : 2,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -731,11 +790,7 @@ class _TimelineStoryTile extends StatelessWidget {
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: <Widget>[
                             Text(
-                              _lifeText(
-                                context,
-                                zh: fact.displayZh,
-                                en: fact.displayEn,
-                              ),
+                              _lifeI18nText(context, fact.displayKey),
                               style: theme.textTheme.labelLarge?.copyWith(
                                 color: color,
                                 fontWeight: FontWeight.w900,
@@ -752,11 +807,7 @@ class _TimelineStoryTile extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          _lifeText(
-                            context,
-                            zh: fact.titleZh,
-                            en: fact.titleEn,
-                          ),
+                          _lifeI18nText(context, fact.titleKey),
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w900,
                             height: 1.12,
@@ -764,11 +815,7 @@ class _TimelineStoryTile extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          _lifeText(
-                            context,
-                            zh: fact.detailZh,
-                            en: fact.detailEn,
-                          ),
+                          _lifeI18nText(context, fact.detailKey),
                           maxLines: selected || immersive ? 4 : 2,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodyMedium?.copyWith(
@@ -989,10 +1036,9 @@ class _TimelineImmersivePageState extends State<_TimelineImmersivePage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: <Widget>[
                                 Text(
-                                  _lifeText(
+                                  _lifeI18nText(
                                     context,
-                                    zh: '沉浸历史年表',
-                                    en: 'Immersive timeline',
+                                    'inline.plan295.life.immersive_timeline.00ecc3033af3',
                                   ),
                                   style: Theme.of(context)
                                       .textTheme
@@ -1001,7 +1047,7 @@ class _TimelineImmersivePageState extends State<_TimelineImmersivePage> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  '${widget.rangeLabel} · ${widget.facts.length} ${_lifeText(context, zh: '个节点', en: 'events')}',
+                                  '${widget.rangeLabel} · ${widget.facts.length} ${_lifeI18nText(context, 'inline.plan295.life.events.ecacdaf99023')}',
                                   style: Theme.of(context).textTheme.bodyMedium
                                       ?.copyWith(
                                         color: Colors.white.withValues(
@@ -1016,10 +1062,9 @@ class _TimelineImmersivePageState extends State<_TimelineImmersivePage> {
                             key: const ValueKey<String>(
                               'timeline-immersive-close',
                             ),
-                            tooltip: _lifeText(
+                            tooltip: _lifeI18nText(
                               context,
-                              zh: '退出全屏',
-                              en: 'Exit fullscreen',
+                              'inline.plan295.life.exit_fullscreen.9afc176b038f',
                             ),
                             onPressed: () => Navigator.of(context).pop(),
                             icon: const Icon(Icons.close_fullscreen_rounded),
@@ -1119,13 +1164,19 @@ class _TimelineViewport extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 IconButton.filledTonal(
-                  tooltip: _lifeText(context, zh: '沉浸全屏', en: 'Immersive'),
+                  tooltip: _lifeI18nText(
+                    context,
+                    'inline.plan295.life.immersive.0393a95a7382',
+                  ),
                   onPressed: onFullscreen,
                   icon: const Icon(Icons.fullscreen_rounded),
                 ),
                 const SizedBox(width: 8),
                 IconButton.filledTonal(
-                  tooltip: _lifeText(context, zh: '重置视图', en: 'Reset view'),
+                  tooltip: _lifeI18nText(
+                    context,
+                    'inline.plan295.life.reset_view.4eac02008da8',
+                  ),
                   onPressed: onReset,
                   icon: const Icon(Icons.center_focus_strong_rounded),
                 ),
@@ -1345,7 +1396,7 @@ class _TimelineMarker extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Text(
-                _lifeText(context, zh: fact.displayZh, en: fact.displayEn),
+                _lifeI18nText(context, fact.displayKey),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.labelSmall?.copyWith(
@@ -1355,7 +1406,7 @@ class _TimelineMarker extends StatelessWidget {
               ),
               const SizedBox(height: 3),
               Text(
-                _lifeText(context, zh: fact.titleZh, en: fact.titleEn),
+                _lifeI18nText(context, fact.titleKey),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.labelMedium?.copyWith(
@@ -1380,11 +1431,11 @@ class _TimelineFactCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _timelineCategoryColor(fact.category);
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: fact.titleZh, en: fact.titleEn),
+      title: _lifeI18nText(context, fact.titleKey),
       subtitle:
-          '${_lifeText(context, zh: fact.displayZh, en: fact.displayEn)} · ${_timelineCategoryLabel(context, fact.category)}',
+          '${_lifeI18nText(context, fact.displayKey)} · ${_timelineCategoryLabel(context, fact.category)}',
       children: <Widget>[
-        Text(_lifeText(context, zh: fact.detailZh, en: fact.detailEn)),
+        Text(_lifeI18nText(context, fact.detailKey)),
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
@@ -1484,7 +1535,10 @@ class _PeriodicViewport extends StatelessWidget {
             top: 10,
             right: 10,
             child: IconButton.filledTonal(
-              tooltip: _lifeText(context, zh: '重置视图', en: 'Reset view'),
+              tooltip: _lifeI18nText(
+                context,
+                'inline.plan295.life.reset_view.4eac02008da8',
+              ),
               onPressed: onReset,
               icon: const Icon(Icons.center_focus_strong_rounded),
             ),
@@ -1593,10 +1647,14 @@ class _ElementFactCard extends StatelessWidget {
     final color = _elementBlockColor(element.groupBlock);
     return _LifeSettingsPanel(
       title: '${element.symbol} · ${element.nameEn}',
-      subtitle: _lifeText(
+      subtitle: _lifeI18nText(
         context,
-        zh: '原子序数 ${element.atomicNumber} · 第 ${element.period} 周期 · 第 ${element.group} 族',
-        en: 'Atomic number ${element.atomicNumber} · Period ${element.period} · Group ${element.group}',
+        'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.timeline.periodic.atomic_number_period_group.5c824123ee',
+        params: <String, Object?>{
+          'atomicNumber': element.atomicNumber,
+          'period': element.period,
+          'group': element.group,
+        },
       ),
       children: <Widget>[
         Wrap(
@@ -1612,21 +1670,36 @@ class _ElementFactCard extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         _ElementInfoRow(
-          label: _lifeText(context, zh: '相对原子质量', en: 'Atomic mass'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.atomic_mass.9373eaddb57f',
+          ),
           value: element.atomicMass,
         ),
         _ElementInfoRow(
-          label: _lifeText(context, zh: '电负性', en: 'Electronegativity'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.electronegativity.374500c8831c',
+          ),
           value: element.electronegativity.isEmpty
-              ? _lifeText(context, zh: '未列出', en: 'Not listed')
+              ? _lifeI18nText(
+                  context,
+                  'inline.plan295.life.not_listed.85a35667dcc8',
+                )
               : element.electronegativity,
         ),
         _ElementInfoRow(
-          label: _lifeText(context, zh: '电子排布', en: 'Configuration'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.configuration.6ff9f99decac',
+          ),
           value: element.electronConfiguration,
         ),
         _ElementInfoRow(
-          label: _lifeText(context, zh: '发现年份', en: 'Discovered'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.discovered.8e57bb3f710c',
+          ),
           value: element.yearDiscovered,
         ),
       ],
@@ -1708,9 +1781,8 @@ List<_LifeOption<String>> get _elementCategoryOptions {
       _elementFacts.map((element) => element.groupBlock).toSet().toList()
         ..sort();
   return <_LifeOption<String>>[
-    const _LifeOption(value: 'all', labelZh: '全部', labelEn: 'All'),
-    for (final block in blocks)
-      _LifeOption(value: block, labelZh: block, labelEn: block),
+    const _LifeOption(value: 'all', labelKey: 'all'),
+    for (final block in blocks) _LifeOption(value: block, labelText: block),
   ];
 }
 
@@ -1802,22 +1874,37 @@ List<String> _timelineLanes(BuildContext context) {
 
 String _timelineRangeLabel(BuildContext context, String range) {
   return switch (range) {
-    'earth' => _lifeText(context, zh: '地球以来', en: 'Earth'),
-    'human' => _lifeText(context, zh: '人类尺度', en: 'Human'),
-    'civilization' => _lifeText(context, zh: '文明尺度', en: 'Civilization'),
-    'modern' => _lifeText(context, zh: '近现代', en: 'Modern'),
-    _ => _lifeText(context, zh: '宇宙尺度', en: 'All'),
+    'earth' => _lifeI18nText(context, 'inline.plan295.life.earth.6df570a637a2'),
+    'human' => _lifeI18nText(context, 'inline.plan295.life.human.a1b92326ad0f'),
+    'civilization' => _lifeI18nText(
+      context,
+      'inline.plan295.life.civilization.45ac9d02e075',
+    ),
+    'modern' => _lifeI18nText(
+      context,
+      'inline.plan295.life.modern.0eb29c68f83b',
+    ),
+    _ => _lifeI18nText(context, 'inline.plan295.life.all.9a806456c3db'),
   };
 }
 
 String _timelineCategoryLabel(BuildContext context, String category) {
   return switch (category) {
-    'cosmic' => _lifeText(context, zh: '宇宙', en: 'Cosmic'),
-    'earth' => _lifeText(context, zh: '地球', en: 'Earth'),
-    'human' => _lifeText(context, zh: '人类', en: 'Human'),
-    'civilization' => _lifeText(context, zh: '文明', en: 'Civilization'),
-    'science' => _lifeText(context, zh: '科学', en: 'Science'),
-    'modern' => _lifeText(context, zh: '近现代', en: 'Modern'),
+    'cosmic' => _lifeI18nText(
+      context,
+      'inline.plan295.life.cosmic.9faf20d9169e',
+    ),
+    'earth' => _lifeI18nText(context, 'inline.plan295.life.earth.e77b1debf5ac'),
+    'human' => _lifeI18nText(context, 'inline.plan295.life.human.7ac93bc8501f'),
+    'civilization' => _lifeI18nText(
+      context,
+      'inline.plan295.life.civilization.b553343bf1f6',
+    ),
+    'science' => _lifeI18nText(context, 'ref.toolbox.sleep.assist.scienceCard'),
+    'modern' => _lifeI18nText(
+      context,
+      'inline.plan295.life.modern.0eb29c68f83b',
+    ),
     _ => category,
   };
 }
@@ -1878,10 +1965,16 @@ String _elementStateKey(_ElementFact element) {
 
 String _elementStateLabel(BuildContext context, _ElementFact element) {
   return switch (_elementStateKey(element)) {
-    'liquid' => _lifeText(context, zh: '液体', en: 'Liquid'),
-    'gas' => _lifeText(context, zh: '气体', en: 'Gas'),
-    'expected' => _lifeText(context, zh: '预测状态', en: 'Expected state'),
-    _ => _lifeText(context, zh: '固体', en: 'Solid'),
+    'liquid' => _lifeI18nText(
+      context,
+      'inline.plan295.life.liquid.faca6f8190f7',
+    ),
+    'gas' => _lifeI18nText(context, 'inline.plan295.life.gas.26a1b9794e2a'),
+    'expected' => _lifeI18nText(
+      context,
+      'inline.plan295.life.expected_state.68e191e25b5b',
+    ),
+    _ => _lifeI18nText(context, 'inline.plan295.life.solid.edf5c04808b9'),
   };
 }
 

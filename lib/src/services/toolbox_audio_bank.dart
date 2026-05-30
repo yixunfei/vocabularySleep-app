@@ -4,9 +4,8 @@ class _ToolboxAudioLruCache {
   _ToolboxAudioLruCache({
     int capacity = _defaultCapacity,
     int maxBytes = _defaultMaxBytes,
-  })
-    : _capacity = capacity.clamp(_minCapacity, _maxCapacity).toInt(),
-      _maxBytes = maxBytes.clamp(_minMaxBytes, _maxMaxBytes).toInt();
+  }) : _capacity = capacity.clamp(_minCapacity, _maxCapacity).toInt(),
+       _maxBytes = maxBytes.clamp(_minMaxBytes, _maxMaxBytes).toInt();
 
   static const int _defaultCapacity = 320;
   static const int _minCapacity = 1;

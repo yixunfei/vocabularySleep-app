@@ -80,11 +80,13 @@ class _WorldClockToolPageState extends State<_WorldClockToolPage> {
         .map((city) => _service.snapshotForCity(city, utcNow: _utcNow))
         .toList(growable: false);
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '世界时钟', en: 'World clock'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '常用城市当前时间、本地时差、办公时段与昼夜状态速查。',
-        en: 'Check current time, local difference, business hours, and day state across common cities.',
+        'inline.plan295.life.world_clock.8c72a17e8d79',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.check_current_time_local_difference.e2f74ff27472',
       ),
       child: Column(
         key: const ValueKey<String>('life-world-clock-page'),
@@ -112,18 +114,19 @@ class _WorldClockToolPageState extends State<_WorldClockToolPage> {
           ),
           const SizedBox(height: 12),
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '使用边界', en: 'Boundary'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '内置常见城市与基础夏令时规则，适合当前时间速查；政策变化、历史时间和极端切换边界请以系统时区或权威时区库为准。',
-              en: 'Uses built-in common cities and basic daylight-saving rules for current-time lookup; policy changes, historical dates, and edge transitions should be checked with system time zones or an authoritative timezone database.',
+              'inline.plan295.life.boundary.b72c98dd2a1f',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.uses_built_in_common_cities_and_basi.ca8812c434a2',
             ),
             children: <Widget>[
               Text(
-                _lifeText(
+                _lifeI18nText(
                   context,
-                  zh: '无需网络请求，不上传位置信息；本地时差按当前设备时区与城市 UTC 偏移计算。',
-                  en: 'No network request or location upload; local difference is calculated from the current device timezone and each city UTC offset.',
+                  'inline.plan295.life.no_network_request_or_location_uploa.1dec2ab0339c',
                 ),
               ),
             ],
@@ -135,11 +138,13 @@ class _WorldClockToolPageState extends State<_WorldClockToolPage> {
 
   Widget _filtersPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '查找城市', en: 'Find a city'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '搜索城市、国家、机场缩写或按地区缩小范围。',
-        en: 'Search by city, country, airport hint, or narrow by region.',
+        'inline.plan295.life.find_a_city.6dda086b6207',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.search_by_city_country_airport_hint.fcad6fc705e1',
       ),
       children: <Widget>[
         TextField(
@@ -151,14 +156,20 @@ class _WorldClockToolPageState extends State<_WorldClockToolPage> {
             suffixIcon: _query.isEmpty
                 ? null
                 : IconButton(
-                    tooltip: _lifeText(context, zh: '清空搜索', en: 'Clear search'),
+                    tooltip: _lifeI18nText(
+                      context,
+                      'inline.plan295.life.clear_search.afdf6389103c',
+                    ),
                     onPressed: () {
                       _queryController.clear();
                       setState(() {});
                     },
                     icon: const Icon(Icons.close_rounded),
                   ),
-            labelText: _lifeText(context, zh: '城市或国家', en: 'City or country'),
+            labelText: _lifeI18nText(
+              context,
+              'inline.plan295.life.city_or_country.b004d6e3e852',
+            ),
             border: const OutlineInputBorder(),
           ),
         ),
@@ -172,7 +183,10 @@ class _WorldClockToolPageState extends State<_WorldClockToolPage> {
               selected: _businessHoursOnly,
               avatar: const Icon(Icons.work_outline_rounded, size: 18),
               label: Text(
-                _lifeText(context, zh: '仅看办公时间', en: 'Business hours now'),
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.business_hours_now.916721469825',
+                ),
               ),
               onSelected: (value) => setState(() => _businessHoursOnly = value),
             ),
@@ -190,7 +204,10 @@ class _WorldClockToolPageState extends State<_WorldClockToolPage> {
 
   String _regionLabel(BuildContext context, String region) {
     if (region == 'all') {
-      return _lifeText(context, zh: '全部地区', en: 'All regions');
+      return _lifeI18nText(
+        context,
+        'inline.plan295.life.all_regions.c95eb6e0156f',
+      );
     }
     final match = ToolboxWorldClockService.cities.firstWhere(
       (city) => city.regionEn == region,
@@ -265,7 +282,10 @@ class _WorldClockHero extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      _lifeText(context, zh: '本地时间', en: 'Local time'),
+                      _lifeI18nText(
+                        context,
+                        'inline.plan295.life.local_time.a53e57e80438',
+                      ),
                       style: theme.textTheme.labelLarge?.copyWith(
                         color: Colors.white.withValues(alpha: 0.78),
                       ),
@@ -299,7 +319,7 @@ class _WorldClockHero extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${_lifeText(context, zh: 'UTC 时间', en: 'UTC time')} ${ToolboxWorldClockService.formatTime(utcNow)}',
+            '${_lifeI18nText(context, 'inline.plan295.life.utc_time.282387cfabc7')} ${ToolboxWorldClockService.formatTime(utcNow)}',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: Colors.white.withValues(alpha: 0.76),
             ),
@@ -310,11 +330,17 @@ class _WorldClockHero extends StatelessWidget {
             runSpacing: 10,
             children: <Widget>[
               _WorldClockHeroPill(
-                label: _lifeText(context, zh: '收藏城市', en: 'Pinned'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.pinned.ca214f5a2ecd',
+                ),
                 value: '$pinnedCount',
               ),
               _WorldClockHeroPill(
-                label: _lifeText(context, zh: '办公中', en: 'Open now'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.open_now.1fdbe663a06b',
+                ),
                 value: '$businessOpenCount',
               ),
             ],
@@ -378,11 +404,13 @@ class _PinnedWorldClocksPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '收藏时钟', en: 'Pinned clocks'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '按当地时间排序，适合快速判断今天/明天和是否还能联系。',
-        en: 'Sorted by local time for quick day-shift and contact timing checks.',
+        'inline.plan295.life.pinned_clocks.27501daa7cac',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.sorted_by_local_time_for_quick_day_s.ef82ef26c931',
       ),
       children: <Widget>[
         for (final snapshot in snapshots) ...<Widget>[
@@ -413,19 +441,21 @@ class _WorldClockResultsPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '城市列表', en: 'City list'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '${snapshots.length} 个城市符合当前条件。',
-        en: '${snapshots.length} cities match the current filters.',
+        'inline.plan295.life.city_list.f7a5ef854f96',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.world.clock.cities_match_the_current_filters.fe05b6b405',
+        params: <String, Object?>{'length': snapshots.length},
       ),
       children: <Widget>[
         if (snapshots.isEmpty)
           Text(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '没有匹配城市，试试清空搜索或关闭办公时间筛选。',
-              en: 'No matching city. Try clearing search or turning off the business-hours filter.',
+              'inline.plan295.life.no_matching_city_try_clearing_search.cac93f829feb',
             ),
           )
         else
@@ -508,11 +538,17 @@ class _WorldClockCityTile extends StatelessWidget {
                     runSpacing: 8,
                     children: <Widget>[
                       _WorldClockInfoChip(
-                        label: _lifeText(context, zh: '本地时差', en: 'Local diff'),
+                        label: _lifeI18nText(
+                          context,
+                          'inline.plan295.life.local_diff.5b989005a681',
+                        ),
                         value: _differenceLabel(context, snapshot),
                       ),
                       _WorldClockInfoChip(
-                        label: _lifeText(context, zh: '日期', en: 'Date'),
+                        label: _lifeI18nText(
+                          context,
+                          'inline.plan295.life.date.34223a7b8531',
+                        ),
                         value: _dayShiftLabel(context, snapshot.dayShift),
                       ),
                     ],
@@ -538,8 +574,14 @@ class _WorldClockCityTile extends StatelessWidget {
                 ),
               IconButton(
                 tooltip: pinned
-                    ? _lifeText(context, zh: '取消收藏', en: 'Unpin')
-                    : _lifeText(context, zh: '收藏城市', en: 'Pin city'),
+                    ? _lifeI18nText(
+                        context,
+                        'inline.plan295.life.unpin.dcc8cc39eb3e',
+                      )
+                    : _lifeI18nText(
+                        context,
+                        'inline.plan295.life.pin_city.3d808c7f483f',
+                      ),
                 onPressed: onTogglePinned,
                 icon: Icon(
                   pinned ? Icons.star_rounded : Icons.star_border_rounded,
@@ -568,30 +610,25 @@ class _WorldClockCityTile extends StatelessWidget {
     ToolboxWorldClockPeriod period,
   ) {
     return switch (period) {
-      ToolboxWorldClockPeriod.businessHours => _lifeText(
+      ToolboxWorldClockPeriod.businessHours => _lifeI18nText(
         context,
-        zh: '办公中',
-        en: 'Business',
+        'inline.plan295.life.business.b6ddd7c93b0c',
       ),
-      ToolboxWorldClockPeriod.earlyMorning => _lifeText(
+      ToolboxWorldClockPeriod.earlyMorning => _lifeI18nText(
         context,
-        zh: '清晨',
-        en: 'Morning',
+        'inline.plan295.life.morning.070973083b20',
       ),
-      ToolboxWorldClockPeriod.evening => _lifeText(
+      ToolboxWorldClockPeriod.evening => _lifeI18nText(
         context,
-        zh: '夜间前',
-        en: 'Evening',
+        'inline.plan295.life.evening.c0c0733d1477',
       ),
-      ToolboxWorldClockPeriod.night => _lifeText(
+      ToolboxWorldClockPeriod.night => _lifeI18nText(
         context,
-        zh: '夜间',
-        en: 'Night',
+        'inline.plan295.life.night.53265923b309',
       ),
-      ToolboxWorldClockPeriod.weekend => _lifeText(
+      ToolboxWorldClockPeriod.weekend => _lifeI18nText(
         context,
-        zh: '周末',
-        en: 'Weekend',
+        'inline.plan295.life.weekend.5197393b58df',
       ),
     };
   }
@@ -602,7 +639,10 @@ class _WorldClockCityTile extends StatelessWidget {
   ) {
     final minutes = snapshot.differenceFromDeviceMinutes;
     if (minutes == 0) {
-      return _lifeText(context, zh: '同一时区', en: 'Same zone');
+      return _lifeI18nText(
+        context,
+        'inline.plan295.life.same_zone.6343714c8b95',
+      );
     }
     final sign = minutes > 0 ? '+' : '-';
     final absMinutes = minutes.abs();
@@ -614,17 +654,28 @@ class _WorldClockCityTile extends StatelessWidget {
 
   static String _dayShiftLabel(BuildContext context, int dayShift) {
     if (dayShift == 0) {
-      return _lifeText(context, zh: '今天', en: 'Today');
+      return _lifeI18nText(context, 'inline.ui.app_shell.today_23dc4e');
     }
     if (dayShift == 1) {
-      return _lifeText(context, zh: '明天', en: 'Tomorrow');
+      return _lifeI18nText(context, 'inline.ui.app_shell.tomorrow_08dc97');
     }
     if (dayShift == -1) {
-      return _lifeText(context, zh: '昨天', en: 'Yesterday');
+      return _lifeI18nText(
+        context,
+        'inline.plan295.life.yesterday.fc45d33ddec9',
+      );
     }
     return dayShift > 0
-        ? _lifeText(context, zh: '+$dayShift 天', en: '+$dayShift days')
-        : _lifeText(context, zh: '$dayShift 天', en: '$dayShift days');
+        ? _lifeI18nText(
+            context,
+            'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.world.clock.days.a1d8e337fe',
+            params: <String, Object?>{'dayShift': dayShift},
+          )
+        : _lifeI18nText(
+            context,
+            'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.world.clock.days.f9d76126a1',
+            params: <String, Object?>{'dayShift': dayShift},
+          );
   }
 }
 

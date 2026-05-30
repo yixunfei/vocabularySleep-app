@@ -38,31 +38,33 @@ class _AiInterviewToolPageState extends State<_AiInterviewToolPage> {
     super.dispose();
   }
 
-  ToolboxAiInterviewResult get _result => _service.build(
-    ToolboxAiInterviewInput(
-      question: _question.text,
-      role: _role.text,
-      company: _company.text,
-      resumeHighlights: _highlights.text,
-      answerDraft: _draft.text,
-      type: _type,
-      depth: _depth,
-      language: _language,
-      tone: _tone,
-      strictness: _strictness,
-      includeFollowUps: _includeFollowUps,
-    ),
+  ToolboxAiInterviewInput get _input => ToolboxAiInterviewInput(
+    question: _question.text,
+    role: _role.text,
+    company: _company.text,
+    resumeHighlights: _highlights.text,
+    answerDraft: _draft.text,
+    type: _type,
+    depth: _depth,
+    language: _language,
+    tone: _tone,
+    strictness: _strictness,
+    includeFollowUps: _includeFollowUps,
   );
+
+  ToolboxAiInterviewResult get _result => _service.build(_input);
 
   @override
   Widget build(BuildContext context) {
     final result = _result;
     return ToolboxToolPage(
-      title: _lifeText(context, zh: 'AI 面试', en: 'AI interview'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '参考 Snap-Solver 的题目拆解与提示词配置思路，落地为本地面试练习工作台。',
-        en: 'A local interview practice desk inspired by Snap-Solver style prompt setup.',
+        'inline.plan295.life.ai_interview.0618cad69887',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.a_local_interview_practice_desk_insp.555e7611f874',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,11 +77,13 @@ class _AiInterviewToolPageState extends State<_AiInterviewToolPage> {
           const SizedBox(height: 12),
           _outputPanel(
             context,
-            title: _lifeText(context, zh: '回答框架', en: 'Answer frame'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '先拿这份骨架口述一遍，再补真实证据。',
-              en: 'Rehearse this frame first, then add real evidence.',
+              'inline.plan295.life.answer_frame.11e30d1bc06f',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.rehearse_this_frame_first_then_add_r.4b176680784f',
             ),
             items: result.answerOutline,
             icon: Icons.account_tree_rounded,
@@ -87,11 +91,13 @@ class _AiInterviewToolPageState extends State<_AiInterviewToolPage> {
           const SizedBox(height: 12),
           _outputPanel(
             context,
-            title: _lifeText(context, zh: '草稿体检', en: 'Draft check'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '根据结构、证据和岗位迁移性给出轻量反馈。',
-              en: 'Lightweight feedback on structure, evidence, and fit.',
+              'inline.plan295.life.draft_check.127a681fa646',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.lightweight_feedback_on_structure_ev.77e6ed19f44c',
             ),
             items: result.evaluationNotes,
             icon: Icons.fact_check_rounded,
@@ -100,26 +106,30 @@ class _AiInterviewToolPageState extends State<_AiInterviewToolPage> {
             const SizedBox(height: 12),
             _outputPanel(
               context,
-              title: _lifeText(context, zh: '模拟追问', en: 'Follow-ups'),
-              subtitle: _lifeText(
+              title: _lifeI18nText(
                 context,
-                zh: '用这些问题检查答案是否经得起继续追问。',
-                en: 'Use these to test whether the answer holds up.',
+                'inline.plan295.life.follow_ups.37bc56ab7358',
+              ),
+              subtitle: _lifeI18nText(
+                context,
+                'inline.plan295.life.use_these_to_test_whether_the_answer.41c72b0c6116',
               ),
               items: result.followUpQuestions,
               icon: Icons.question_answer_rounded,
             ),
           ],
           const SizedBox(height: 12),
-          _promptPanel(context, result),
+          _promptPanel(context, _input),
           const SizedBox(height: 12),
           _outputPanel(
             context,
-            title: _lifeText(context, zh: '下一步清单', en: 'Next steps'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '训练时按顺序完成，避免越改越散。',
-              en: 'Follow in order so the answer gets tighter.',
+              'inline.plan295.life.next_steps.843b4e1ff867',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.follow_in_order_so_the_answer_gets_t.950a704a018f',
             ),
             items: result.actionChecklist,
             icon: Icons.playlist_add_check_rounded,
@@ -127,11 +137,13 @@ class _AiInterviewToolPageState extends State<_AiInterviewToolPage> {
           const SizedBox(height: 12),
           _outputPanel(
             context,
-            title: _lifeText(context, zh: '使用边界', en: 'Boundaries'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '本工具定位为准备和复盘，不是实时作弊辅助。',
-              en: 'This is for practice and review, not real-time cheating.',
+              'inline.plan295.life.boundaries.27272eb15461',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.this_is_for_practice_and_review_not.822856a18756',
             ),
             items: result.boundaryNotes,
             icon: Icons.privacy_tip_rounded,
@@ -143,11 +155,13 @@ class _AiInterviewToolPageState extends State<_AiInterviewToolPage> {
 
   Widget _questionPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '题目与素材', en: 'Question and material'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '题目、岗位和经历亮点都在本地处理，不会上传。',
-        en: 'Question, role, and notes stay local on this page.',
+        'inline.plan295.life.question_and_material.19aa4cd99e6c',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.question_role_and_notes_stay_local_o.e38c51551804',
       ),
       children: <Widget>[
         TextField(
@@ -156,7 +170,10 @@ class _AiInterviewToolPageState extends State<_AiInterviewToolPage> {
           maxLines: 5,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
-            labelText: _lifeText(context, zh: '面试题', en: 'Interview question'),
+            labelText: _lifeI18nText(
+              context,
+              'inline.plan295.life.interview_question.1d6f5637e7f0',
+            ),
             prefixIcon: const Icon(Icons.help_outline_rounded),
           ),
           onChanged: (_) => setState(() {}),
@@ -168,7 +185,10 @@ class _AiInterviewToolPageState extends State<_AiInterviewToolPage> {
               controller: _role,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
-                labelText: _lifeText(context, zh: '目标岗位', en: 'Target role'),
+                labelText: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.target_role.2e86f73363ba',
+                ),
                 prefixIcon: const Icon(Icons.work_outline_rounded),
               ),
               onChanged: (_) => setState(() {}),
@@ -177,10 +197,9 @@ class _AiInterviewToolPageState extends State<_AiInterviewToolPage> {
               controller: _company,
               decoration: InputDecoration(
                 border: const OutlineInputBorder(),
-                labelText: _lifeText(
+                labelText: _lifeI18nText(
                   context,
-                  zh: '公司/团队（可选）',
-                  en: 'Company/team (optional)',
+                  'inline.plan295.life.company_team_optional.5ef561faaa31',
                 ),
                 prefixIcon: const Icon(Icons.business_rounded),
               ),
@@ -195,15 +214,13 @@ class _AiInterviewToolPageState extends State<_AiInterviewToolPage> {
           maxLines: 4,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
-            labelText: _lifeText(
+            labelText: _lifeI18nText(
               context,
-              zh: '简历亮点 / 可用经历',
-              en: 'Resume highlights',
+              'inline.plan295.life.resume_highlights.ce168080e762',
             ),
-            helperText: _lifeText(
+            helperText: _lifeI18nText(
               context,
-              zh: '用逗号或换行分隔',
-              en: 'Separate with commas or new lines',
+              'inline.plan295.life.separate_with_commas_or_new_lines.eb0922209dc9',
             ),
             prefixIcon: const Icon(Icons.stars_rounded),
           ),
@@ -216,10 +233,9 @@ class _AiInterviewToolPageState extends State<_AiInterviewToolPage> {
           maxLines: 8,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
-            labelText: _lifeText(
+            labelText: _lifeI18nText(
               context,
-              zh: '我的回答草稿（可选）',
-              en: 'My answer draft (optional)',
+              'inline.plan295.life.my_answer_draft_optional.e20a9654f0ac',
             ),
             prefixIcon: const Icon(Icons.edit_note_rounded),
           ),
@@ -231,115 +247,119 @@ class _AiInterviewToolPageState extends State<_AiInterviewToolPage> {
 
   Widget _settingsPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '面试参数', en: 'Interview setup'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '题型可自动识别，也可以手动指定；严格度只影响本地草稿评分。',
-        en: 'Let the type auto-detect or set it manually; strictness only affects local scoring.',
+        'inline.plan295.life.interview_setup.33df48ba6133',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.let_the_type_auto_detect_or_set_it_m.3fa09a697e5b',
       ),
       children: <Widget>[
         _LifeSegmentedField<ToolboxAiInterviewType>(
-          label: _lifeText(context, zh: '题型', en: 'Question type'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.question_type.507405c959f8',
+          ),
           value: _type,
           options: const <_LifeOption<ToolboxAiInterviewType>>[
             _LifeOption(
               value: ToolboxAiInterviewType.auto,
-              labelZh: '自动',
-              labelEn: 'Auto',
+              labelKey: 'asrLanguageAuto',
             ),
             _LifeOption(
               value: ToolboxAiInterviewType.behavioral,
-              labelZh: '行为',
-              labelEn: 'Behavioral',
+              labelKey: 'inline.plan295.life.behavioral.8d103487c5ea',
             ),
             _LifeOption(
               value: ToolboxAiInterviewType.technical,
-              labelZh: '技术',
-              labelEn: 'Technical',
+              labelKey: 'inline.plan295.life.technical.c8e75e76815f',
             ),
             _LifeOption(
               value: ToolboxAiInterviewType.systemDesign,
-              labelZh: '系统设计',
-              labelEn: 'System',
+              labelKey: 'inline.plan295.life.system.5cf8ce77e6ba',
             ),
             _LifeOption(
               value: ToolboxAiInterviewType.productCase,
-              labelZh: 'Case',
-              labelEn: 'Case',
+              labelKey:
+                  'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_ai_interview.case_95caaf',
             ),
             _LifeOption(
               value: ToolboxAiInterviewType.hr,
-              labelZh: 'HR',
-              labelEn: 'HR',
+              labelKey:
+                  'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_ai_interview.hr_252053',
             ),
           ],
           onChanged: (value) => setState(() => _type = value),
         ),
         const SizedBox(height: 14),
         _LifeSegmentedField<ToolboxAiInterviewDepth>(
-          label: _lifeText(context, zh: '分析深度', en: 'Depth'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.depth.7070c6c3112e',
+          ),
           value: _depth,
           options: const <_LifeOption<ToolboxAiInterviewDepth>>[
             _LifeOption(
               value: ToolboxAiInterviewDepth.quick,
-              labelZh: '快速',
-              labelEn: 'Quick',
+              labelKey: 'inline.plan295.life.quick.a2907af9f021',
             ),
             _LifeOption(
               value: ToolboxAiInterviewDepth.standard,
-              labelZh: '标准',
-              labelEn: 'Standard',
+              labelKey:
+                  'inline.ui.pages.toolbox_human_tests_bimanual.standard_b9acb5',
             ),
             _LifeOption(
               value: ToolboxAiInterviewDepth.deep,
-              labelZh: '深度',
-              labelEn: 'Deep',
+              labelKey: 'inline.plan295.life.deep.4e216b0b95cb',
             ),
           ],
           onChanged: (value) => setState(() => _depth = value),
         ),
         const SizedBox(height: 14),
         _LifeSegmentedField<ToolboxAiInterviewLanguage>(
-          label: _lifeText(context, zh: '输出语言', en: 'Language'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.language.11cf1287ab3a',
+          ),
           value: _language,
           options: const <_LifeOption<ToolboxAiInterviewLanguage>>[
             _LifeOption(
               value: ToolboxAiInterviewLanguage.zh,
-              labelZh: '中文',
-              labelEn: 'Chinese',
+              labelKey:
+                  'inline.ui.pages.toolbox_human_tests_typing_copy.chinese_7d55e9',
             ),
             _LifeOption(
               value: ToolboxAiInterviewLanguage.en,
-              labelZh: '英文',
-              labelEn: 'English',
+              labelKey: 'inline.plan295.life.english.0f5a12198399',
             ),
             _LifeOption(
               value: ToolboxAiInterviewLanguage.bilingual,
-              labelZh: '双语',
-              labelEn: 'Bilingual',
+              labelKey: 'inline.plan295.life.bilingual.1f0a85217a23',
             ),
           ],
           onChanged: (value) => setState(() => _language = value),
         ),
         const SizedBox(height: 14),
         _LifeSegmentedField<ToolboxAiInterviewTone>(
-          label: _lifeText(context, zh: '表达风格', en: 'Tone'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.tone.f5d526aa4471',
+          ),
           value: _tone,
           options: const <_LifeOption<ToolboxAiInterviewTone>>[
             _LifeOption(
               value: ToolboxAiInterviewTone.concise,
-              labelZh: '简洁',
-              labelEn: 'Concise',
+              labelKey: 'inline.plan295.life.concise.99dea537a1cb',
             ),
             _LifeOption(
               value: ToolboxAiInterviewTone.balanced,
-              labelZh: '平衡',
-              labelEn: 'Balanced',
+              labelKey:
+                  'inline.ui.pages.toolbox_daily_choice.daily_choice_decision_interaction.balanced_389852',
             ),
             _LifeOption(
               value: ToolboxAiInterviewTone.coaching,
-              labelZh: '复盘',
-              labelEn: 'Coaching',
+              labelKey: 'inline.plan295.life.coaching.f86059a5a3ce',
             ),
           ],
           onChanged: (value) => setState(() => _tone = value),
@@ -349,12 +369,18 @@ class _AiInterviewToolPageState extends State<_AiInterviewToolPage> {
           contentPadding: EdgeInsets.zero,
           value: _includeFollowUps,
           title: Text(
-            _lifeText(context, zh: '生成模拟追问', en: 'Generate follow-ups'),
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.generate_follow_ups.bf74d0e9d795',
+            ),
           ),
           onChanged: (value) => setState(() => _includeFollowUps = value),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '草稿评分严格度', en: 'Scoring strictness'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.scoring_strictness.5a0063344aca',
+          ),
           valueText: '${(_strictness * 100).round()}%',
           value: _strictness,
           min: 0,
@@ -370,7 +396,7 @@ class _AiInterviewToolPageState extends State<_AiInterviewToolPage> {
     BuildContext context, {
     required String title,
     required String subtitle,
-    required List<String> items,
+    required List<ToolboxI18nTextRef> items,
     required IconData icon,
   }) {
     final theme = Theme.of(context);
@@ -405,7 +431,7 @@ class _AiInterviewToolPageState extends State<_AiInterviewToolPage> {
                       ),
               ),
               const SizedBox(width: 10),
-              Expanded(child: Text(items[i])),
+              Expanded(child: Text(_lifeI18nRefText(context, items[i]))),
             ],
           ),
           if (i != items.length - 1) const SizedBox(height: 10),
@@ -414,13 +440,20 @@ class _AiInterviewToolPageState extends State<_AiInterviewToolPage> {
     );
   }
 
-  Widget _promptPanel(BuildContext context, ToolboxAiInterviewResult result) {
+  Widget _promptPanel(BuildContext context, ToolboxAiInterviewInput input) {
+    final promptDraft = _service.renderPromptDraft(
+      input,
+      (key, {params = const <String, Object?>{}}) =>
+          _lifeI18nText(context, key, params: params),
+    );
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '提示词草稿', en: 'Prompt draft'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '需要接入外部 AI 时，可复制这份练习提示词；请先移除敏感信息。',
-        en: 'Copy this prompt to an external AI only after removing sensitive details.',
+        'inline.plan295.life.prompt_draft.1f68eb72fe86',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.copy_this_prompt_to_an_external_ai_o.29cfa4e03574',
       ),
       children: <Widget>[
         Container(
@@ -436,7 +469,7 @@ class _AiInterviewToolPageState extends State<_AiInterviewToolPage> {
           ),
           child: SingleChildScrollView(
             child: SelectableText(
-              result.promptDraft,
+              promptDraft,
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
@@ -446,19 +479,22 @@ class _AiInterviewToolPageState extends State<_AiInterviewToolPage> {
           alignment: Alignment.centerRight,
           child: FilledButton.icon(
             onPressed: () async {
-              await Clipboard.setData(ClipboardData(text: result.promptDraft));
+              await Clipboard.setData(ClipboardData(text: promptDraft));
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      _lifeText(context, zh: '已复制提示词', en: 'Prompt copied'),
+                      _lifeI18nText(
+                        context,
+                        'inline.plan295.life.prompt_copied.13eaefd85164',
+                      ),
                     ),
                   ),
                 );
               }
             },
             icon: const Icon(Icons.copy_rounded),
-            label: Text(_lifeText(context, zh: '复制', en: 'Copy')),
+            label: Text(_lifeI18nText(context, 'copyField')),
           ),
         ),
       ],
@@ -509,25 +545,20 @@ class _AiInterviewStage extends StatelessWidget {
             children: <Widget>[
               _AiInterviewPill(
                 icon: Icons.category_rounded,
-                label: _lifeText(
-                  context,
-                  zh: result.typeLabelZh,
-                  en: result.typeLabelEn,
-                ),
+                label: _lifeI18nText(context, result.typeLabelKey),
               ),
               _AiInterviewPill(
                 icon: Icons.verified_rounded,
-                label: _lifeText(
-                  context,
-                  zh: result.readinessLabelZh,
-                  en: result.readinessLabelEn,
-                ),
+                label: _lifeI18nText(context, result.readinessLabelKey),
               ),
             ],
           ),
           const SizedBox(height: 14),
           Text(
-            _lifeText(context, zh: '面试准备度', en: 'Interview readiness'),
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.interview_readiness.c754ee1aea6f',
+            ),
             style: theme.textTheme.labelLarge?.copyWith(
               color: theme.colorScheme.onPrimaryContainer.withValues(
                 alpha: 0.72,
@@ -571,7 +602,9 @@ class _AiInterviewStage extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            result.normalizedQuestion,
+            result.normalizedQuestion.isEmpty
+                ? _lifeI18nText(context, result.fallbackQuestionKey)
+                : result.normalizedQuestion,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
               color: theme.colorScheme.onPrimaryContainer,

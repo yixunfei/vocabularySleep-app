@@ -11,37 +11,16 @@ class VisualSearchTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(
-        i18n,
-        zh: '视觉搜索',
-        en: 'Visual search',
-        ja: 'Visual search',
-        de: 'Visual search',
-        fr: 'Recherche visuelle',
-        es: 'Búsqueda visual',
-        ru: 'Визуальный поиск',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_visual_search.visual_search_71d706',
       ),
-      subtitle: pickUiText(
-        i18n,
-        zh: '在密密麻麻的格子里快速找出那个不同的——像在人群里找人。',
-        en: 'Find targets in dense grids with search, difference, and link-match modes.',
-        ja: 'Find the target in dense grids, or compare two panels to locate the subtle difference.',
-        de: 'Find the target in dense grids, or compare two panels to locate the subtle difference.',
-        fr: 'Trouvez la cible dans des grilles denses, ou comparez deux panneaux pour localiser la différence subtile.',
-        es: 'Encuentra el objetivo en redes densas, o compara dos paneles para localizar la diferencia sutil.',
-        ru: 'Найдите цель в плотных сетках или сравните две панели, чтобы найти тонкую разницу.',
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_visual_search.find_targets_in_dense_grids_with_search_difference_and_l_273514',
       ),
       accent: _accent,
       icon: Icons.manage_search_rounded,
-      status: pickUiText(
-        i18n,
-        zh: '在密集网格里快速找到那个不同的目标',
-        en: 'Next: choose a mode and start scanning',
-        ja: 'Next: choose a mode and start scanning',
-        de: 'Next: choose a mode and start scanning',
-        fr: 'Suivant : choisissez un mode et commencez la numérisation',
-        es: 'Siguiente: elegir un modo y comenzar a escanear',
-        ru: 'Далее: выберите режим и начните сканирование',
+      status: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_visual_search.next_choose_a_mode_and_start_scanning_e6488b',
       ),
       child: const _VisualSearchCard(),
     );
@@ -999,25 +978,11 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
         _HumanMetricWrap(metrics: _metricItems(i18n)),
         const SizedBox(height: 12),
         _HumanSettingsSection(
-          title: pickUiText(
-            i18n,
-            zh: '视觉搜索设置',
-            en: 'Visual search settings',
-            ja: 'Visual search settings',
-            de: 'Visual search settings',
-            fr: 'Paramètres de recherche visuelle',
-            es: 'Ajustes de búsqueda visual',
-            ru: 'Визуальные параметры поиска',
+          title: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_visual_search.visual_search_settings_fb0e87',
           ),
-          subtitle: pickUiText(
-            i18n,
-            zh: '切换搜索、找不同或连连看，网格密度和轮数也在这里调。',
-            en: 'Switch search, difference, or matching mode and adjust board density.',
-            ja: 'Switch search, difference, or matching mode and adjust board density.',
-            de: 'Switch search, difference, or matching mode and adjust board density.',
-            fr: 'Changer la recherche, la différence ou le mode correspondant et ajuster la densité du tableau.',
-            es: 'Cambiar la búsqueda, la diferencia o el modo de ajuste y ajustar la densidad de la tabla.',
-            ru: 'Переключите поиск, разницу или режим сопоставления и настройте плотность платы.',
+          subtitle: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_visual_search.switch_search_difference_or_matching_mode_and_adjust_boa_329e00',
           ),
           child: _buildSettings(context, i18n),
         ),
@@ -1031,109 +996,38 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
     if (_linkMode) {
       return <(String, String)>[
         (
-          pickUiText(
-            i18n,
-            zh: '配对',
-            en: 'Pairs',
-            ja: 'Pairs',
-            de: 'Pairs',
-            fr: 'Paires',
-            es: 'Pares',
-            ru: 'Пары',
-          ),
+          i18n.t('inline.ui.pages.playback_advanced_page.pairs_65a1c7'),
           '$_matches/$_linkPairCount',
         ),
         (
-          pickUiText(
-            i18n,
-            zh: '剩余',
-            en: 'Left',
-            ja: 'Left',
-            de: 'Left',
-            fr: 'Gauche',
-            es: 'Izquierda',
-            ru: 'Левый',
-          ),
+          i18n.t('inline.plan294.breathing.left_a0d89e6f'),
           '$_linkRemainingPairs',
         ),
         (
-          pickUiText(
-            i18n,
-            zh: '步数',
-            en: 'Moves',
-            ja: 'Moves',
-            de: 'Moves',
-            fr: 'Déplacement',
-            es: 'Moveos',
-            ru: 'Двигаться',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_visual_search.moves_a2ac6c',
           ),
           '$_moves',
         ),
         (
-          pickUiText(
-            i18n,
-            zh: '用时',
-            en: 'Time',
-            ja: 'Time',
-            de: 'Time',
-            fr: 'Heure',
-            es: 'Hora',
-            ru: 'Время',
-          ),
+          i18n.t('inline.plan295.life.time.bf469a617001'),
           _elapsed == Duration.zero ? '-' : _formatLinkDuration(_elapsed),
         ),
       ];
     }
     return <(String, String)>[
+      (i18n.t('progress'), '$_roundIndex/$_roundCount'),
       (
-        pickUiText(
-          i18n,
-          zh: '进度',
-          en: 'Progress',
-          ja: 'Progress',
-          de: 'Progress',
-          fr: 'Progrès accomplis',
-          es: 'Progresos',
-          ru: 'Прогресс',
-        ),
-        '$_roundIndex/$_roundCount',
-      ),
-      (
-        pickUiText(
-          i18n,
-          zh: '准确率',
-          en: 'Accuracy',
-          ja: '精度',
-          de: 'Accuracy',
-          fr: 'Accuracy',
-          es: 'Precisión',
-          ru: 'точность',
-        ),
+        i18n.t('inline.ui.pages.practice_review_page.accuracy_8cf5a1'),
         '${(_accuracy * 100).round()}%',
       ),
       (
-        pickUiText(
-          i18n,
-          zh: '平均用时',
-          en: 'Avg time',
-          ja: '時間平均',
-          de: 'Avg time',
-          fr: 'Avg temps',
-          es: 'Tiempo de entrada',
-          ru: 'Время авг',
-        ),
+        i18n.t('inline.ui.pages.toolbox_human_tests_cognition.avg_time_a74bf4'),
         _records.isEmpty ? '-' : _formatMilliseconds(_averageMs),
       ),
       (
-        pickUiText(
-          i18n,
-          zh: '最佳连击',
-          en: 'Best streak',
-          ja: 'ベストストリーク',
-          de: 'Best streak',
-          fr: 'Meilleure série',
-          es: 'La mejor racha',
-          ru: 'Лучшая полоса',
+        i18n.t(
+          'inline.ui.pages.toolbox_human_tests_aim_widgets.best_streak_5a5a71',
         ),
         '$_bestStreak',
       ),
@@ -1160,44 +1054,17 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
             ),
             _HumanActionButton(
               label: _running
-                  ? pickUiText(
-                      i18n,
-                      zh: '重新开始',
-                      en: 'Restart',
-                      ja: 'Restart',
-                      de: 'Restart',
-                      fr: 'Redémarrer',
-                      es: 'Restart',
-                      ru: 'Перезапустить',
+                  ? i18n.t(
+                      'inline.ui.pages.practice_session_page.restart_8b7fcc',
                     )
-                  : pickUiText(
-                      i18n,
-                      zh: '开始',
-                      en: 'Start',
-                      ja: 'Start',
-                      de: 'Start',
-                      fr: 'Démarrer',
-                      es: 'Comienzo',
-                      ru: 'Начинать',
-                    ),
+                  : i18n.t('toolbox.breathing.start'),
               icon: _running ? Icons.replay_rounded : Icons.play_arrow_rounded,
               onPressed: _start,
             ),
             OutlinedButton.icon(
               onPressed: _reset,
               icon: const Icon(Icons.refresh_rounded),
-              label: Text(
-                pickUiText(
-                  i18n,
-                  zh: '重置',
-                  en: 'Reset',
-                  ja: 'Reset',
-                  de: 'Reset',
-                  fr: 'Réinitialiser',
-                  es: 'Reset',
-                  ru: 'сброс',
-                ),
-              ),
+              label: Text(i18n.t('appearanceReset')),
             ),
           ],
         ),
@@ -1231,35 +1098,14 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
 
   String _modeLabel(AppI18n i18n, _VisualSearchMode mode) {
     return switch (mode) {
-      _VisualSearchMode.search => pickUiText(
-        i18n,
-        zh: '找目标',
-        en: 'Search',
-        ja: 'Search',
-        de: 'Search',
-        fr: 'Recherche',
-        es: 'Búsqueda',
-        ru: 'Поиск',
+      _VisualSearchMode.search => i18n.t(
+        'inline.plan295.life.search.229b0d36efee',
       ),
-      _VisualSearchMode.difference => pickUiText(
-        i18n,
-        zh: '找不同',
-        en: 'Difference',
-        ja: 'Difference',
-        de: 'Difference',
-        fr: 'Différence',
-        es: 'Diferencia',
-        ru: 'Разница',
+      _VisualSearchMode.difference => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_visual_search.difference_9369e2',
       ),
-      _VisualSearchMode.linkMatch => pickUiText(
-        i18n,
-        zh: '连连看',
-        en: 'Link match',
-        ja: 'Link match',
-        de: 'Link match',
-        fr: 'Lien',
-        es: 'Enlace',
-        ru: 'Ссылочный матч',
+      _VisualSearchMode.linkMatch => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_visual_search.link_match_1f9036',
       ),
     };
   }
@@ -1268,93 +1114,32 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
     if (!_running && !_done) {
       return _linkMode
           ? _linkIgnorePath
-                ? pickUiText(
-                    i18n,
-                    zh: '只匹配图案已开启：开始后选择相同图案即可消除。',
-                    en: 'Icon-only match is on: identical tiles clear without route checks.',
-                    ja: 'Icon-only match is on: identical tiles clear without route checks.',
-                    de: 'Icon-only match is on: identical tiles clear without route checks.',
-                    fr: 'Le match Icon-only est activé : les tuiles identiques sont claires sans vérification de l\'itinéraire.',
-                    es: 'Icon-sólo juego está en: azulejos idénticos claros sin controles de ruta.',
-                    ru: 'Соответствие только по иконе: одинаковые плитки чистые без проверки маршрута.',
+                ? i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_visual_search.icon_only_match_is_on_identical_tiles_clear_without_rout_b79bfb',
                   )
-                : pickUiText(
-                    i18n,
-                    zh: '开始后选择相同图案，路径可直连、借边界或最多转两次弯即可消除。',
-                    en: 'After starting, match identical tiles when the route is open, can use the edge, and turns at most twice.',
-                    ja: '開始後、ルートが開いているときに同じタイルを一致させ、エッジを使用でき、最大2回ターンします。',
-                    de: 'After starting, match identical tiles when the route is open, can use the edge, and turns at most twice.',
-                    fr: 'After starting, match identical tiles when the route is open, can use the edge, and turns at most twice.',
-                    es: 'Después de comenzar, coincida con los azulejos idénticos cuando la ruta está abierta, puede utilizar el borde y gira a la mayoría dos veces.',
-                    ru: 'После старта сопоставьте идентичные плитки, когда маршрут открыт, можете использовать край и поворачивать максимум два раза.',
+                : i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_visual_search.after_starting_match_identical_tiles_when_the_route_is_o_5a42e3',
                   )
-          : pickUiText(
-              i18n,
-              zh: '开始后每轮只有一次作答机会。',
-              en: 'Each round gives you one answer after the session starts.',
-              ja: 'Each round gives you one answer after the session starts.',
-              de: 'Each round gives you one answer after the session starts.',
-              fr: 'Chaque tour vous donne une réponse après le début de la session.',
-              es: 'Cada ronda le da una respuesta después de que comience la sesión.',
-              ru: 'Каждый раунд дает один ответ после начала сеанса.',
+          : i18n.t(
+              'inline.ui.pages.toolbox_human_tests_visual_search.each_round_gives_you_one_answer_after_the_session_starts_803716',
             );
     }
     if (_done) {
-      return pickUiText(
-        i18n,
-        zh: '本轮完成，可重新开始。',
-        en: 'Session complete. Restart when ready.',
-        ja: 'Session complete. Restart when ready.',
-        de: 'Session complete. Restart when ready.',
-        fr: 'La séance est terminée. Recommence quand tu es prêt.',
-        es: 'Sesión completa. Reinicie cuando esté listo.',
-        ru: 'Заседание завершено. Перезагрузите, когда будете готовы.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_visual_search.session_complete_restart_when_ready_283af1',
       );
     }
     return switch (_mode) {
-      _VisualSearchMode.search => pickUiText(
-        i18n,
-        zh: '找出唯一的目标格。',
-        en: 'Find the unique target tile.',
-        ja: 'Find the unique target tile.',
-        de: 'Find the unique target tile.',
-        fr: 'Trouvez la tuile cible unique.',
-        es: 'Encuentra la ficha de destino única.',
-        ru: 'Найдите уникальную целевую плитку.',
+      _VisualSearchMode.search => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_visual_search.find_the_unique_target_tile_27e281',
       ),
-      _VisualSearchMode.difference => pickUiText(
-        i18n,
-        zh: '比较左右面板，点出差异所在位置。',
-        en: 'Compare both panels and tap the changed position.',
-        ja: '両方のパネルを比較し、変更された位置をタップします。',
-        de: 'Compare both panels and tap the changed position.',
-        fr: 'Comparez les deux panneaux et appuyez sur la position modifiée.',
-        es: 'Compare ambos paneles y toque la posición cambiada.',
-        ru: 'Сравните обе панели и нажмите на измененную позицию.',
+      _VisualSearchMode.difference => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_visual_search.compare_both_panels_and_tap_the_changed_position_0ef0cc',
       ),
-      _VisualSearchMode.linkMatch => pickUiText(
-        i18n,
-        zh: _linkIgnorePath
-            ? '点击两个相同图案即可配对；路线仅作为连接反馈显示。'
-            : '点击两个相同图案；路径中无阻挡，可借边界并最多转两次弯即可配对消除。',
-        en: _linkIgnorePath
-            ? 'Tap two identical tiles to clear them; the line is feedback only.'
-            : 'Tap two identical tiles; clear them when the route is open, can use the edge, and turns at most twice.',
-        ja: _linkIgnorePath
-            ? '同じ絵柄を 2 つタップすると消えます。線はつながりの表示だけです。'
-            : '同じ絵柄を 2 つタップします。間に障害物がなく、外周を使えて、曲がりは 2 回までです。',
-        de: _linkIgnorePath
-            ? 'Tippe zwei gleiche Kacheln an. Die Linie zeigt nur die Verbindung.'
-            : 'Tippe zwei gleiche Kacheln an. Der Weg muss frei sein, darf den Rand nutzen und höchstens zweimal abbiegen.',
-        fr: _linkIgnorePath
-            ? 'Touchez deux tuiles identiques pour les retirer ; la ligne sert seulement de retour visuel.'
-            : 'Touchez deux tuiles identiques. Le chemin doit être libre, peut passer par le bord et tourner deux fois au maximum.',
-        es: _linkIgnorePath
-            ? 'Toca dos fichas iguales para quitarlas; la línea solo muestra la conexión.'
-            : 'Toca dos fichas iguales. La ruta debe estar libre, puede usar el borde y girar como máximo dos veces.',
-        ru: _linkIgnorePath
-            ? 'Нажмите две одинаковые плитки, чтобы убрать их; линия только показывает связь.'
-            : 'Нажмите две одинаковые плитки. Путь должен быть свободен, может идти по краю и иметь не больше двух поворотов.',
+      _VisualSearchMode.linkMatch => i18n.t(
+        _linkIgnorePath
+            ? 'inline.plan297.human_tests.visual_search.link_match.ignore_path'
+            : 'inline.plan297.human_tests.visual_search.link_match.path_rule',
       ),
     };
   }
@@ -1389,30 +1174,12 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
         final boards = <Widget>[
           _buildDifferenceBoard(
             context,
-            label: pickUiText(
-              i18n,
-              zh: '左图',
-              en: 'Left',
-              ja: 'Left',
-              de: 'Left',
-              fr: 'Gauche',
-              es: 'Izquierda',
-              ru: 'Левый',
-            ),
+            label: i18n.t('toolbox.breathing.left'),
             cells: _leftCells,
           ),
           _buildDifferenceBoard(
             context,
-            label: pickUiText(
-              i18n,
-              zh: '右图',
-              en: 'Right',
-              ja: 'Right',
-              de: 'Right',
-              fr: 'Droite',
-              es: 'Bien.',
-              ru: 'Правильно.',
-            ),
+            label: i18n.t('toolbox.sound.locator.cue_label_right'),
             cells: _rightCells,
           ),
         ];
@@ -1488,28 +1255,14 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
           runSpacing: 8,
           children: <Widget>[
             _HumanPill(
-              text: pickUiText(
-                i18n,
-                zh: '剩余 $_linkRemainingPairs 对',
-                en: '$_linkRemainingPairs pairs left',
-                ja: '残り$_linkRemainingPairs ペア',
-                de: '$_linkRemainingPairs pairs left',
-                fr: '$_linkRemainingPairs pairs left',
-                es: '################################################################################################################################################################################################################################################################',
-                ru: '$_linkRemainingPairs Оставшиеся пары',
+              text: i18n.t(
+                'inline.ui.pages.toolbox_human_tests_visual_search.linkremainingpairs_pairs_left_77ac2d',
               ),
               accent: VisualSearchTestPage._accent,
             ),
             _HumanPill(
-              text: pickUiText(
-                i18n,
-                zh: '步数 $_moves',
-                en: '$_moves moves',
-                ja: 'ムーブ',
-                de: '$_moves moves',
-                fr: '$_moves moves',
-                es: 'Movimientos de contacto',
-                ru: '$_moves ходы',
+              text: i18n.t(
+                'inline.ui.pages.toolbox_human_tests_visual_search.moves_moves_833828',
               ),
               accent: theme.colorScheme.tertiary,
             ),
@@ -1744,18 +1497,7 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         if (!_linkMode) ...<Widget>[
-          Text(
-            pickUiText(
-              i18n,
-              zh: '轮数',
-              en: 'Rounds',
-              ja: 'Rounds',
-              de: 'Rounds',
-              fr: 'Rondes',
-              es: 'Rondas',
-              ru: 'Круги',
-            ),
-          ),
+          Text(i18n.t('inline.plan294.breathing.rounds_06b0afec')),
           Wrap(
             spacing: 8,
             children: <int>[8, 10, 12, 16]
@@ -1774,25 +1516,11 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
         ],
         Text(
           _linkMode
-              ? pickUiText(
-                  i18n,
-                  zh: '连连看尺寸',
-                  en: 'Link board size',
-                  ja: 'Link board size',
-                  de: 'Link board size',
-                  fr: 'Taille du tableau de liaison',
-                  es: 'Tamaño de la tabla de enlace',
-                  ru: 'Размер платы Link',
+              ? i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_visual_search.link_board_size_4fbdbb',
                 )
-              : pickUiText(
-                  i18n,
-                  zh: '网格密度',
-                  en: 'Grid density',
-                  ja: 'Grid density',
-                  de: 'Grid density',
-                  fr: 'Densité du réseau',
-                  es: 'Densidad de agarre',
-                  ru: 'Плотность сети',
+              : i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_visual_search.grid_density_0c732c',
                 ),
         ),
         Slider(
@@ -1823,27 +1551,13 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
             key: const ValueKey<String>('visual-link-ignore-path-switch'),
             contentPadding: EdgeInsets.zero,
             title: Text(
-              pickUiText(
-                i18n,
-                zh: '只匹配图案',
-                en: 'Icon-only match',
-                ja: 'Icon-only match',
-                de: 'Icon-only match',
-                fr: 'Icône seulement',
-                es: 'Icon-only match',
-                ru: 'Иконоборческий матч',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_visual_search.icon_only_match_c57844',
               ),
             ),
             subtitle: Text(
-              pickUiText(
-                i18n,
-                zh: '开启后，相同图案无需路径连通也能消除。',
-                en: 'Ignore route blocking for identical tiles.',
-                ja: 'Ignore route blocking for identical tiles.',
-                de: 'Ignore route blocking for identical tiles.',
-                fr: 'Ignorer le blocage de la route pour les tuiles identiques.',
-                es: 'Ignora el bloqueo de la ruta para las fichas idénticas.',
-                ru: 'Игнорируйте блокировку маршрута для идентичных плиток.',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_visual_search.ignore_route_blocking_for_identical_tiles_838434',
               ),
             ),
             value: _linkIgnorePath,
@@ -1858,15 +1572,8 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
           ),
           const SizedBox(height: 8),
           Text(
-            pickUiText(
-              i18n,
-              zh: '这个开关只影响本页。关闭后，相同图案还需要直线、借边界或最多两次转弯的路径才能消除。',
-              en: 'This mode stays inside visual search; when icon-only match is off, identical tiles need a straight, edge, or two-turn route.',
-              ja: 'This mode stays inside visual search; when icon-only match is off, identical tiles need a straight, edge, or two-turn route.',
-              de: 'This mode stays inside visual search; when icon-only match is off, identical tiles need a straight, edge, or two-turn route.',
-              fr: 'Ce mode reste à l\'intérieur de la recherche visuelle ; lorsque la correspondance avec les icônes est désactivée, les tuiles identiques ont besoin d\'un itinéraire droit, bord ou à deux tours.',
-              es: 'Este modo se mantiene dentro de la búsqueda visual; cuando el único icono está apagado, los azulejos idénticos necesitan una ruta recta, borde o de dos vueltas.',
-              ru: 'Этот режим остается в визуальном поиске; когда совпадение только с иконкой отключено, идентичные плитки нуждаются в прямом, краевом или двухповоротном маршруте.',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_visual_search.this_mode_stays_inside_visual_search_when_icon_only_matc_0ed5dd',
             ),
             style: Theme.of(context).textTheme.bodySmall,
           ),
@@ -1886,15 +1593,8 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
       builder: (context) {
         return AlertDialog(
           title: Text(
-            pickUiText(
-              i18n,
-              zh: '视觉搜索报告',
-              en: 'Visual search report',
-              ja: 'Visual search report',
-              de: 'Visual search report',
-              fr: 'Rapport de recherche visuelle',
-              es: 'Informe de búsqueda visual',
-              ru: 'Отчет о визуальном поиске',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_visual_search.visual_search_report_4b9d2b',
             ),
           ),
           content: SingleChildScrollView(
@@ -1906,110 +1606,52 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
                   metrics: linkMode
                       ? <(String, String)>[
                           (
-                            pickUiText(
-                              i18n,
-                              zh: '完成配对',
-                              en: 'Pairs cleared',
-                              ja: 'Pairs cleared',
-                              de: 'Pairs cleared',
-                              fr: 'Paires nettoyées',
-                              es: 'Parejas despejadas',
-                              ru: 'Пары расчищены',
+                            i18n.t(
+                              'inline.ui.pages.toolbox_human_tests_visual_search.pairs_cleared_2d5ac4',
                             ),
                             '$_matches/$_linkPairCount',
                           ),
                           (
-                            pickUiText(
-                              i18n,
-                              zh: '步数',
-                              en: 'Moves',
-                              ja: 'Moves',
-                              de: 'Moves',
-                              fr: 'Déplacement',
-                              es: 'Moveos',
-                              ru: 'Двигаться',
+                            i18n.t(
+                              'inline.ui.pages.toolbox_human_tests_visual_search.moves_a2ac6c',
                             ),
                             '$_moves',
                           ),
                           (
-                            pickUiText(
-                              i18n,
-                              zh: '用时',
-                              en: 'Time',
-                              ja: 'Time',
-                              de: 'Time',
-                              fr: 'Heure',
-                              es: 'Hora',
-                              ru: 'Время',
-                            ),
+                            i18n.t('inline.plan295.life.time.bf469a617001'),
                             _formatLinkDuration(_elapsed),
                           ),
                           (
-                            pickUiText(
-                              i18n,
-                              zh: '最佳连击',
-                              en: 'Best streak',
-                              ja: 'ベストストリーク',
-                              de: 'Best streak',
-                              fr: 'Meilleure série',
-                              es: 'La mejor racha',
-                              ru: 'Лучшая полоса',
+                            i18n.t(
+                              'inline.ui.pages.toolbox_human_tests_aim_widgets.best_streak_5a5a71',
                             ),
                             '$_bestStreak',
                           ),
                         ]
                       : <(String, String)>[
                           (
-                            pickUiText(
-                              i18n,
-                              zh: '准确率',
-                              en: 'Accuracy',
-                              ja: '精度',
-                              de: 'Accuracy',
-                              fr: 'Accuracy',
-                              es: 'Precisión',
-                              ru: 'точность',
+                            i18n.t(
+                              'inline.ui.pages.practice_review_page.accuracy_8cf5a1',
                             ),
                             '${(_accuracy * 100).round()}%',
                           ),
                           (
-                            pickUiText(
-                              i18n,
-                              zh: '平均用时',
-                              en: 'Avg time',
-                              ja: '時間平均',
-                              de: 'Avg time',
-                              fr: 'Avg temps',
-                              es: 'Tiempo de entrada',
-                              ru: 'Время авг',
+                            i18n.t(
+                              'inline.ui.pages.toolbox_human_tests_cognition.avg_time_a74bf4',
                             ),
                             _records.isEmpty
                                 ? '-'
                                 : _formatMilliseconds(_averageMs),
                           ),
                           (
-                            pickUiText(
-                              i18n,
-                              zh: '最佳连击',
-                              en: 'Best streak',
-                              ja: 'ベストストリーク',
-                              de: 'Best streak',
-                              fr: 'Meilleure série',
-                              es: 'La mejor racha',
-                              ru: 'Лучшая полоса',
+                            i18n.t(
+                              'inline.ui.pages.toolbox_human_tests_aim_widgets.best_streak_5a5a71',
                             ),
                             '$_bestStreak',
                           ),
                           (
-                            pickUiText(
-                              i18n,
-                              zh: '网格',
-                              en: 'Grid',
-                              ja: 'Grid',
-                              de: 'Grid',
-                              fr: 'Grille',
-                              es: 'Grid',
-                              ru: 'Сетка',
+                            i18n.t(
+                              'inline.ui.pages.toolbox_human_tests_visual_memory.grid_39884f',
                             ),
                             '${_activeGridSize}x$_activeGridSize',
                           ),
@@ -2020,46 +1662,18 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
                   child: Text(
                     linkMode
                         ? _linkIgnorePath
-                              ? pickUiText(
-                                  i18n,
-                                  zh: '当前已开启只匹配图案，关闭后可练习路径预判与短程扫描。',
-                                  en: 'Icon-only match is on. Turn it off next to keep training route planning and short-range scanning.',
-                                  ja: 'Icon-only match is on. Turn it off next to keep training route planning and short-range scanning.',
-                                  de: 'Icon-only match is on. Turn it off next to keep training route planning and short-range scanning.',
-                                  fr: 'Le match avec les icônes est allumé. Éteignez-le à côté pour continuer la planification de l\'itinéraire d\'entraînement et le balayage à courte portée.',
-                                  es: 'El único partido de Icon está encendido. Apágalo junto a mantener la planificación de la ruta de entrenamiento y el escaneo de corto alcance.',
-                                  ru: 'Игра только по иконе. Выключите его, чтобы продолжить планирование маршрута обучения и сканирование на короткие расстояния.',
+                              ? i18n.t(
+                                  'inline.ui.pages.toolbox_human_tests_visual_search.icon_only_match_is_on_turn_it_off_next_to_keep_training_b5a8b9',
                                 )
-                              : pickUiText(
-                                  i18n,
-                                  zh: '连连看更考验图案分组、路径预判和短程扫描。下一轮可以提高棋盘尺寸，或先从边角可连的对子开始。',
-                                  en: 'Link match trains grouping, route planning, and short-range scanning. Raise the board size next, or start from edge pairs first.',
-                                  ja: 'Link match trains grouping, route planning, and short-range scanning. Raise the board size next, or start from edge pairs first.',
-                                  de: 'Link match trains grouping, route planning, and short-range scanning. Raise the board size next, or start from edge pairs first.',
-                                  fr: 'Les trains de correspondance, la planification de l\'itinéraire et le balayage à courte distance. Levez la taille de la planche à côté, ou commencez par les paires de bord d\'abord.',
-                                  es: 'Los trenes de enlace se agrupan, planean rutas y escanean a corto plazo. Aumente el tamaño de la tabla siguiente, o comience primero desde pares de bordes.',
-                                  ru: 'Связь матч поездов группировки, планирования маршрута и краткосрочного сканирования. Затем поднимите размер доски или начните с краевых пар.',
+                              : i18n.t(
+                                  'inline.ui.pages.toolbox_human_tests_visual_search.link_match_trains_grouping_route_planning_and_short_rang_fb5a09',
                                 )
                         : _accuracy >= 0.85
-                        ? pickUiText(
-                            i18n,
-                            zh: '扫描稳定，下一轮可以提高网格密度或切换到找不同模式。',
-                            en: 'Scanning is stable. Increase grid density or switch into difference mode next.',
-                            ja: 'Scanning is stable. Increase grid density or switch into difference mode next.',
-                            de: 'Scanning is stable. Increase grid density or switch into difference mode next.',
-                            fr: 'Le balayage est stable. Augmenter la densité du réseau ou passer en mode différence.',
-                            es: 'Escanear es estable. Aumente la densidad de la red o cambie al modo de diferencia después.',
-                            ru: 'Сканирование стабильное. Увеличьте плотность сетки или переключитесь в режим разницы.',
+                        ? i18n.t(
+                            'inline.ui.pages.toolbox_human_tests_visual_search.scanning_is_stable_increase_grid_density_or_switch_into_897f5b',
                           )
-                        : pickUiText(
-                            i18n,
-                            zh: '建议先降低网格密度，保持从左到右、从上到下的固定搜索节奏。',
-                            en: 'Lower the density and keep a fixed left-to-right, top-to-bottom scan rhythm.',
-                            ja: 'Lower the density and keep a fixed left-to-right, top-to-bottom scan rhythm.',
-                            de: 'Lower the density and keep a fixed left-to-right, top-to-bottom scan rhythm.',
-                            fr: 'Baisser la densité et maintenir un rythme fixe de gauche à droite, de haut en bas.',
-                            es: 'Baja la densidad y mantiene un ritmo de escaneo fijo de izquierda a derecha.',
-                            ru: 'Снизьте плотность и сохраните фиксированный ритм сканирования слева направо сверху вниз.',
+                        : i18n.t(
+                            'inline.ui.pages.toolbox_human_tests_visual_search.lower_the_density_and_keep_a_fixed_left_to_right_top_to_7b4316',
                           ),
                   ),
                 ),
@@ -2069,18 +1683,7 @@ class _VisualSearchCardState extends State<_VisualSearchCard> {
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                pickUiText(
-                  i18n,
-                  zh: '关闭',
-                  en: 'Close',
-                  ja: '閉じる',
-                  de: 'Close',
-                  fr: 'Fermer',
-                  es: 'Cerca',
-                  ru: 'Закрыть',
-                ),
-              ),
+              child: Text(i18n.t('inline.plan295.life.close.370fb8697deb')),
             ),
           ],
         );

@@ -12,28 +12,23 @@ class _RelativesToolPageState extends State<_RelativesToolPage> {
 
   static const List<_RelativesKeyGroup> _keyGroups = <_RelativesKeyGroup>[
     _RelativesKeyGroup(
-      titleZh: '直系亲属',
-      titleEn: 'Direct family',
+      titleKey: 'inline.plan295.life.direct_family.fe1cd48bc357',
       tokens: <String>['爸爸', '妈妈', '儿子', '女儿'],
     ),
     _RelativesKeyGroup(
-      titleZh: '伴侣与手足',
-      titleEn: 'Partner and siblings',
+      titleKey: 'inline.plan295.life.partner_and_siblings.dc4288d22d65',
       tokens: <String>['老公', '老婆', '哥哥', '弟弟', '姐姐', '妹妹'],
     ),
     _RelativesKeyGroup(
-      titleZh: '祖辈与孙辈',
-      titleEn: 'Grand family',
+      titleKey: 'inline.plan295.life.grand_family.0fa7524af838',
       tokens: <String>['爷爷', '奶奶', '外公', '外婆', '孙子', '孙女'],
     ),
     _RelativesKeyGroup(
-      titleZh: '叔伯姑舅姨',
-      titleEn: 'Uncles and aunts',
+      titleKey: 'inline.plan295.life.uncles_and_aunts.92c050abad60',
       tokens: <String>['伯伯', '叔叔', '姑妈', '舅舅', '姨妈'],
     ),
     _RelativesKeyGroup(
-      titleZh: '姻亲常用',
-      titleEn: 'In-laws',
+      titleKey: 'inline.plan295.life.in_laws.5ea52b1de6c9',
       tokens: <String>['公公', '婆婆', '岳父', '岳母', '姐夫', '嫂子'],
     ),
   ];
@@ -103,11 +98,13 @@ class _RelativesToolPageState extends State<_RelativesToolPage> {
   @override
   Widget build(BuildContext context) {
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '亲戚关系计算器', en: 'Relative calculator'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '点选关联关系，称呼会自动算出来。',
-        en: 'Tap relations and see the title instantly.',
+        'inline.plan295.life.relative_calculator.fc170b634aa5',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.tap_relations_and_see_the_title_inst.212887e787a8',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,42 +130,48 @@ class _RelativesToolPageState extends State<_RelativesToolPage> {
     final chainText = _chainText;
     final hasInput = _chainTokens.isNotEmpty;
     final statusText = _busy
-        ? _lifeText(context, zh: '计算中', en: 'Calculating')
+        ? _lifeI18nText(context, 'inline.plan295.life.calculating.e7c27f6df9fe')
         : hasInput
-        ? _lifeText(context, zh: '实时结果', en: 'Live result')
-        : _lifeText(context, zh: '等待输入', en: 'Waiting');
+        ? _lifeI18nText(context, 'inline.plan295.life.live_result.6771d502ab2c')
+        : _lifeI18nText(context, 'inline.plan295.life.waiting.aafbc3b0351c');
     final primaryResult = _results.isEmpty ? null : _results.first;
     final expressionText = chainText.isEmpty
-        ? _lifeText(context, zh: '点击下方关联关系开始', en: 'Tap relations below')
+        ? _lifeI18nText(
+            context,
+            'inline.plan295.life.tap_relations_below.43afa36c0926',
+          )
         : primaryResult == null
         ? chainText
         : '$chainText = $primaryResult';
     final resultHint = chainText.isEmpty
-        ? _lifeText(
+        ? _lifeI18nText(
             context,
-            zh: '结果会在这里实时显示',
-            en: 'Result appears here instantly',
+            'inline.plan295.life.result_appears_here_instantly.7bbf022f5b77',
           )
         : primaryResult == null
-        ? _lifeText(
+        ? _lifeI18nText(
             context,
-            zh: '暂时没有匹配称呼，可以换一条关系试试',
-            en: 'No title matched yet. Try another relation.',
+            'inline.plan295.life.no_title_matched_yet_try_another_rel.4c58128a81c3',
           )
         : _results.length == 1
-        ? _lifeText(context, zh: '已自动算出称呼', en: 'Calculated instantly')
-        : _lifeText(
+        ? _lifeI18nText(
             context,
-            zh: '另有 ${_results.length - 1} 个候选称呼',
-            en: '${_results.length - 1} more candidate(s)',
+            'inline.plan295.life.calculated_instantly.a22dca98c5f1',
+          )
+        : _lifeI18nText(
+            context,
+            'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.relatives.more_candidate_s.70dc288504',
+            params: <String, Object?>{'p0': _results.length - 1},
           );
 
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '计算器', en: 'Calculator'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '上方看链路和结果，下方可退格、清空或套用示例。',
-        en: 'View the chain and result, then backspace, clear, or try an example.',
+        'inline.plan295.life.calculator.0066b8cbdbd4',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.view_the_chain_and_result_then_backs.5e928ab9e266',
       ),
       children: <Widget>[
         Container(
@@ -206,7 +209,10 @@ class _RelativesToolPageState extends State<_RelativesToolPage> {
                 children: <Widget>[
                   _RelativesStatusPill(
                     icon: Icons.calculate_rounded,
-                    label: _lifeText(context, zh: '本地计算', en: 'Local'),
+                    label: _lifeI18nText(
+                      context,
+                      'inline.plan295.life.local.630f841bce28',
+                    ),
                   ),
                   _RelativesStatusPill(
                     icon: Icons.account_circle_outlined,
@@ -217,8 +223,14 @@ class _RelativesToolPageState extends State<_RelativesToolPage> {
                         ? Icons.compare_arrows_rounded
                         : Icons.east_rounded,
                     label: _reverse
-                        ? _lifeText(context, zh: '反向称呼', en: 'Reverse')
-                        : _lifeText(context, zh: '我称呼对方', en: 'Forward'),
+                        ? _lifeI18nText(
+                            context,
+                            'inline.plan295.life.reverse.deb3a605a30a',
+                          )
+                        : _lifeI18nText(
+                            context,
+                            'inline.plan295.life.forward.517f5a77aa07',
+                          ),
                   ),
                 ],
               ),
@@ -244,7 +256,10 @@ class _RelativesToolPageState extends State<_RelativesToolPage> {
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            _lifeText(context, zh: '当前计算', en: 'Current input'),
+                            _lifeI18nText(
+                              context,
+                              'inline.plan295.life.current_input.70974806f007',
+                            ),
                             style: theme.textTheme.labelMedium?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                               fontWeight: FontWeight.w700,
@@ -299,24 +314,39 @@ class _RelativesToolPageState extends State<_RelativesToolPage> {
                 children: <Widget>[
                   Expanded(
                     child: _RelativesMetric(
-                      label: _lifeText(context, zh: '层级', en: 'Steps'),
+                      label: _lifeI18nText(
+                        context,
+                        'inline.plan295.life.steps.586e60bb76b9',
+                      ),
                       value: '${_chainTokens.length}',
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: _RelativesMetric(
-                      label: _lifeText(context, zh: '结果', en: 'Results'),
+                      label: _lifeI18nText(
+                        context,
+                        'inline.plan295.life.results.e0c949993d61',
+                      ),
                       value: '${_results.length}',
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: _RelativesMetric(
-                      label: _lifeText(context, zh: '模式', en: 'Mode'),
+                      label: _lifeI18nText(
+                        context,
+                        'inline.ui.pages.toolbox_human_tests_aim.mode_35c458',
+                      ),
                       value: _optimal
-                          ? _lifeText(context, zh: '最短', en: 'Short')
-                          : _lifeText(context, zh: '完整', en: 'Full'),
+                          ? _lifeI18nText(
+                              context,
+                              'inline.plan295.life.short.6b4c0a54fccb',
+                            )
+                          : _lifeI18nText(
+                              context,
+                              'inline.plan295.life.full.224e76bbfc14',
+                            ),
                     ),
                   ),
                 ],
@@ -332,11 +362,13 @@ class _RelativesToolPageState extends State<_RelativesToolPage> {
 
   Widget _buildTokenPad(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '关联关系', en: 'Relations'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '常用关系放前面，点一下就加入计算器。',
-        en: 'Common relations are first; one tap adds them.',
+        'inline.plan295.life.relations.4e65b39cf8ce',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.common_relations_are_first_one_tap_a.07dfc9f38e25',
       ),
       children: <Widget>[
         _buildFrontKeyRow(context),
@@ -362,7 +394,7 @@ class _RelativesToolPageState extends State<_RelativesToolPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          _lifeText(context, zh: '常用快捷键', en: 'Quick keys'),
+          _lifeI18nText(context, 'inline.plan295.life.quick_keys.5f11cb0c605e'),
           style: theme.textTheme.labelMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w800,
@@ -441,11 +473,13 @@ class _RelativesToolPageState extends State<_RelativesToolPage> {
 
   Widget _buildTopologyPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '家族图谱', en: 'Family map'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '用树状节点看清“我”到当前称呼的路径。',
-        en: 'See the path from me as a compact family tree.',
+        'inline.plan295.life.family_map.a4d2c273bab4',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.see_the_path_from_me_as_a_compact_fa.d5ef0bcedee4',
       ),
       children: <Widget>[_RelativesTopologyView(tokens: _chainTokens)],
     );
@@ -453,19 +487,30 @@ class _RelativesToolPageState extends State<_RelativesToolPage> {
 
   Widget _buildOptionsPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '计算设置', en: 'Calculation options'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '性别、反向称呼和常用称呼偏好会影响部分结果。',
-        en: 'Gender, reverse mode, and common-title preference affect some results.',
+        'inline.plan295.life.calculation_options.4a6312362585',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.gender_reverse_mode_and_common_title.f3def3e3ac1f',
       ),
       children: <Widget>[
         _LifeSegmentedField<int>(
-          label: _lifeText(context, zh: '我的性别', en: 'My gender'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.my_gender.e1e7a00505fd',
+          ),
           value: _sex,
           options: const <_LifeOption<int>>[
-            _LifeOption<int>(value: 1, labelZh: '男', labelEn: 'Male'),
-            _LifeOption<int>(value: 0, labelZh: '女', labelEn: 'Female'),
+            _LifeOption<int>(
+              value: 1,
+              labelKey: 'inline.plan295.life.male.0097f611883d',
+            ),
+            _LifeOption<int>(
+              value: 0,
+              labelKey: 'inline.plan297.life.female.24691320c57e',
+            ),
           ],
           onChanged: (value) => _updateAndRecalculate(() => _sex = value),
         ),
@@ -475,15 +520,13 @@ class _RelativesToolPageState extends State<_RelativesToolPage> {
           controller: _targetController,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
-            labelText: _lifeText(
+            labelText: _lifeI18nText(
               context,
-              zh: '从谁的角度算（可选）',
-              en: 'Target person (optional)',
+              'inline.plan295.life.target_person_optional.3f9dfb4a6d3c',
             ),
-            hintText: _lifeText(
+            hintText: _lifeI18nText(
               context,
-              zh: '例如：老婆，用来算“老婆的亲戚”',
-              en: 'Example: wife, for relation-to-target scenarios',
+              'inline.plan295.life.example_wife_for_relation_to_target.3280f616f379',
             ),
           ),
         ),
@@ -491,11 +534,13 @@ class _RelativesToolPageState extends State<_RelativesToolPage> {
         _RelativesSwitchTile(
           key: const ValueKey<String>('life_relatives_reverse_switch'),
           icon: Icons.compare_arrows_rounded,
-          title: _lifeText(context, zh: '对方如何称呼我', en: 'How they call me'),
-          subtitle: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '开启后按反向关系推算称谓。',
-            en: 'Resolve the chain in reverse direction.',
+            'inline.plan295.life.how_they_call_me.689fc7fbb406',
+          ),
+          subtitle: _lifeI18nText(
+            context,
+            'inline.plan295.life.resolve_the_chain_in_reverse_directi.c7780de7fb64',
           ),
           value: _reverse,
           onChanged: (value) => _updateAndRecalculate(() => _reverse = value),
@@ -504,11 +549,13 @@ class _RelativesToolPageState extends State<_RelativesToolPage> {
         _RelativesSwitchTile(
           key: const ValueKey<String>('life_relatives_optimal_switch'),
           icon: Icons.alt_route_rounded,
-          title: _lifeText(context, zh: '最短路径优先', en: 'Prefer shortest path'),
-          subtitle: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '优先展示更日常、更短的称呼。',
-            en: 'Prefer shorter, everyday titles.',
+            'inline.plan295.life.prefer_shortest_path.a36351855d3c',
+          ),
+          subtitle: _lifeI18nText(
+            context,
+            'inline.plan295.life.prefer_shorter_everyday_titles.f04e746fb475',
           ),
           value: _optimal,
           onChanged: (value) => _updateAndRecalculate(() => _optimal = value),
@@ -526,19 +573,28 @@ class _RelativesToolPageState extends State<_RelativesToolPage> {
           key: const ValueKey<String>('life_relatives_undo_button'),
           onPressed: _chainTokens.isEmpty ? null : _undoLast,
           icon: const Icon(Icons.backspace_outlined),
-          label: Text(_lifeText(context, zh: '退格', en: 'Backspace')),
+          label: Text(
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.backspace.ec2911897993',
+            ),
+          ),
         ),
         OutlinedButton.icon(
           key: const ValueKey<String>('life_relatives_clear_button'),
           onPressed: _chainTokens.isEmpty ? null : _clearChain,
           icon: const Icon(Icons.clear_all_rounded),
-          label: Text(_lifeText(context, zh: '清空', en: 'Clear')),
+          label: Text(
+            _lifeI18nText(context, 'inline.plan294.zen_sand.clear_ea17218b'),
+          ),
         ),
         FilledButton.tonalIcon(
           key: const ValueKey<String>('life_relatives_example_button'),
           onPressed: _applyNextExample,
           icon: const Icon(Icons.auto_fix_high_rounded),
-          label: Text(_lifeText(context, zh: '示例', en: 'Example')),
+          label: Text(
+            _lifeI18nText(context, 'inline.plan295.life.example.848c52eede84'),
+          ),
         ),
         FilledButton.icon(
           key: const ValueKey<String>('life_relatives_calculate_button'),
@@ -551,8 +607,14 @@ class _RelativesToolPageState extends State<_RelativesToolPage> {
               : const Icon(Icons.done_rounded),
           label: Text(
             _busy
-                ? _lifeText(context, zh: '计算中', en: 'Calculating')
-                : _lifeText(context, zh: '刷新结果', en: 'Refresh'),
+                ? _lifeI18nText(
+                    context,
+                    'inline.plan295.life.calculating.e7c27f6df9fe',
+                  )
+                : _lifeI18nText(
+                    context,
+                    'inline.plan295.life.refresh.bea0dc8c1c92',
+                  ),
           ),
         ),
       ],
@@ -639,10 +701,9 @@ class _RelativesToolPageState extends State<_RelativesToolPage> {
         _results = const <String>[];
         _busy = false;
         _errorMessage = showErrors
-            ? _lifeText(
+            ? _lifeI18nText(
                 context,
-                zh: '先选择一个关联关系再计算。',
-                en: 'Select at least one relation first.',
+                'inline.plan295.life.select_at_least_one_relation_first.f9307376c67f',
               )
             : null;
       });
@@ -666,10 +727,9 @@ class _RelativesToolPageState extends State<_RelativesToolPage> {
         _results = results;
         if (_results.isEmpty) {
           _errorMessage = showErrors
-              ? _lifeText(
+              ? _lifeI18nText(
                   context,
-                  zh: '未找到可用称呼，请换一条关系试试。',
-                  en: 'No matched title. Try another relation.',
+                  'inline.plan295.life.no_matched_title_try_another_relatio.530684426615',
                 )
               : null;
         } else {
@@ -681,10 +741,9 @@ class _RelativesToolPageState extends State<_RelativesToolPage> {
         _busy = false;
         _results = const <String>[];
         _errorMessage = showErrors
-            ? _lifeText(
+            ? _lifeI18nText(
                 context,
-                zh: '计算失败，请检查关系链是否合法。',
-                en: 'Calculation failed, please check relationship chain.',
+                'inline.plan295.life.calculation_failed_please_check_rela.473f4fc047e2',
               )
             : null;
       });
@@ -693,9 +752,9 @@ class _RelativesToolPageState extends State<_RelativesToolPage> {
 
   String _sexLabel(BuildContext context) {
     return switch (_sex) {
-      1 => _lifeText(context, zh: '我是男', en: 'Male'),
-      0 => _lifeText(context, zh: '我是女', en: 'Female'),
-      _ => _lifeText(context, zh: '我是男', en: 'Male'),
+      1 => _lifeI18nText(context, 'inline.plan295.life.male.2574d993fc99'),
+      0 => _lifeI18nText(context, 'inline.plan295.life.female.ebe9eeee9267'),
+      _ => _lifeI18nText(context, 'inline.plan295.life.male.2574d993fc99'),
     };
   }
 
@@ -752,18 +811,13 @@ class _RelativesToolPageState extends State<_RelativesToolPage> {
 }
 
 class _RelativesKeyGroup {
-  const _RelativesKeyGroup({
-    required this.titleZh,
-    required this.titleEn,
-    required this.tokens,
-  });
+  const _RelativesKeyGroup({required this.titleKey, required this.tokens});
 
-  final String titleZh;
-  final String titleEn;
+  final String titleKey;
   final List<String> tokens;
 
   String label(BuildContext context) {
-    return _lifeText(context, zh: titleZh, en: titleEn);
+    return _lifeI18nText(context, titleKey);
   }
 }
 
@@ -955,10 +1009,9 @@ class _RelativesTopologyView extends StatelessWidget {
           border: Border.all(color: theme.colorScheme.outlineVariant),
         ),
         child: Text(
-          _lifeText(
+          _lifeI18nText(
             context,
-            zh: '暂无链路。先点击关联关系，家族图谱会在这里同步更新。',
-            en: 'No chain yet. Tap relations and the family map updates here.',
+            'inline.plan295.life.no_chain_yet_tap_relations_and_the_f.7edaffdb8778',
           ),
           style: theme.textTheme.bodySmall,
         ),
@@ -992,7 +1045,7 @@ class _RelativesFamilyTree extends StatelessWidget {
         ? <String>[...tokens.take(4), '...${tokens.length - 4}']
         : tokens;
     final nodes = <String>[
-      _lifeText(context, zh: '我', en: 'Me'),
+      _lifeI18nText(context, 'inline.plan295.life.me.c954fcdf0672'),
       ...visibleTokens,
     ];
     final height = (86.0 + (nodes.length - 1) * 54).clamp(150.0, 360.0);

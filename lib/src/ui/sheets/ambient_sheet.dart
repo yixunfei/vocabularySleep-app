@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../i18n/app_i18n.dart';
@@ -90,21 +90,18 @@ class _AmbientSheetState extends State<AmbientSheet> {
                     width: 42,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .outline
-                          .withValues(alpha: 0.6),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.outline.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 SectionHeader(
-                  title: pickUiText(i18n, zh: '环境音', en: 'Ambient sound'),
-                  subtitle: pickUiText(
-                    i18n,
-                    zh: '把常用环境音、下载资源和预设放在一起，切换更顺手。',
-                    en: 'Keep local sounds, downloads, and presets together for faster switching.',
+                  title: i18n.t('toolbox.sleep.tools.ambientNoise'),
+                  subtitle: i18n.t(
+                    'inline.ui.sheets.ambient_sheet.keep_local_sounds_downloads_and_presets_together_for_fas_183b1e',
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -122,12 +119,18 @@ class _AmbientSheetState extends State<AmbientSheet> {
                     OutlinedButton.icon(
                       onPressed: liveState.addAmbientFileSource,
                       icon: const Icon(Icons.library_music_rounded, size: 18),
-                      label: Text(pickUiText(i18n, zh: '导入音频', en: 'Add audio')),
+                      label: Text(
+                        i18n.t(
+                          'inline.ui.sheets.ambient_sheet.add_audio_cbeee3',
+                        ),
+                      ),
                     ),
                     OutlinedButton.icon(
                       onPressed: () => showOnlineAmbientCatalogSheet(context),
                       icon: const Icon(Icons.cloud_download_rounded, size: 18),
-                      label: Text(pickUiText(i18n, zh: '资源库', en: 'Catalog')),
+                      label: Text(
+                        i18n.t('inline.ui.sheets.ambient_sheet.catalog_3c8ace'),
+                      ),
                     ),
                     OutlinedButton.icon(
                       onPressed: () {
@@ -138,22 +141,22 @@ class _AmbientSheetState extends State<AmbientSheet> {
                         );
                       },
                       icon: const Icon(Icons.bookmarks_rounded, size: 18),
-                      label: Text(pickUiText(i18n, zh: '预设管理', en: 'Presets')),
+                      label: Text(
+                        i18n.t('inline.ui.sheets.ambient_sheet.presets_eff436'),
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '当前已启用 $enabledCount 个环境音，可在预设里保存这一组组合。',
-                    en: '$enabledCount ambient sounds enabled. Save this mix as a preset for quick recall.',
+                  i18n.t(
+                    'inline.ui.sheets.ambient_sheet.enabledcount_ambient_sounds_enabled_save_this_mix_as_a_p_99b2a9',
                   ),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  pickUiText(i18n, zh: '总音量', en: 'Master volume'),
+                  i18n.t('inline.ui.sheets.ambient_sheet.master_volume_8b03d7'),
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
                 Slider(
@@ -175,7 +178,9 @@ class _AmbientSheetState extends State<AmbientSheet> {
                       if (onlineSources.isNotEmpty) ...<Widget>[
                         const SizedBox(height: 10),
                         Text(
-                          pickUiText(i18n, zh: '在线资源', en: 'Online sources'),
+                          i18n.t(
+                            'inline.ui.sheets.ambient_sheet.online_sources_02ac8e',
+                          ),
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 8),
@@ -193,10 +198,8 @@ class _AmbientSheetState extends State<AmbientSheet> {
                       if (localSources.isNotEmpty) ...<Widget>[
                         const SizedBox(height: 10),
                         Text(
-                          pickUiText(
-                            i18n,
-                            zh: '已下载 / 本地音频',
-                            en: 'Downloaded / local audio',
+                          i18n.t(
+                            'inline.ui.sheets.ambient_sheet.downloaded_local_audio_4fe16a',
                           ),
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
@@ -276,7 +279,8 @@ class _AmbientSheetState extends State<AmbientSheet> {
               Slider(
                 value: source.volume,
                 onChanged: (source.enabled && !isToggling)
-                    ? (value) => liveState.setAmbientSourceVolume(source.id, value)
+                    ? (value) =>
+                          liveState.setAmbientSourceVolume(source.id, value)
                     : null,
               ),
             ],
@@ -303,22 +307,17 @@ class _AmbientMasterCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusText = ambientEnabled
-        ? pickUiText(
-            i18n,
-            zh: '已开启，可一键静音全部环境音。',
-            en: 'On. Mute every ambient source at once.',
+        ? i18n.t(
+            'inline.ui.sheets.ambient_sheet.on_mute_every_ambient_source_at_once_6d7d35',
           )
-        : pickUiText(
-            i18n,
-            zh: '已关闭，重新开启后恢复当前组合。',
-            en: 'Off. Restore the current mix when enabled.',
+        : i18n.t(
+            'inline.ui.sheets.ambient_sheet.off_restore_the_current_mix_when_enabled_7be4a4',
           );
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Theme.of(context)
-            .colorScheme
-            .surfaceContainerLow
-            .withValues(alpha: 0.88),
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerLow.withValues(alpha: 0.88),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
@@ -327,7 +326,9 @@ class _AmbientMasterCard extends StatelessWidget {
         child: Row(
           children: <Widget>[
             Icon(
-              ambientEnabled ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+              ambientEnabled
+                  ? Icons.volume_up_rounded
+                  : Icons.volume_off_rounded,
               size: 20,
               color: Theme.of(context).colorScheme.primary,
             ),
@@ -337,7 +338,7 @@ class _AmbientMasterCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    pickUiText(i18n, zh: '总开关', en: 'Master switch'),
+                    i18n.t('toolbox.sleep.tools.masterSwitch'),
                     style: Theme.of(context).textTheme.labelLarge,
                   ),
                   const SizedBox(height: 2),

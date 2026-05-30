@@ -177,7 +177,10 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
       _showSnack(
-        _lifeText(context, zh: '请先输入提醒标题', en: 'Enter a reminder title first'),
+        _lifeI18nText(
+          context,
+          'inline.plan295.life.enter_a_reminder_title_first.d621bb4c9d5b',
+        ),
       );
       return;
     }
@@ -187,20 +190,18 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
     final now = DateTime.now();
     if (!dueAt.isAfter(now)) {
       _showSnack(
-        _lifeText(
+        _lifeI18nText(
           context,
-          zh: '提醒时间需要晚于当前时间',
-          en: 'Reminder time must be in the future',
+          'inline.plan295.life.reminder_time_must_be_in_the_future.59555dd13b04',
         ),
       );
       return;
     }
     if (!alertAt.isAfter(now)) {
       _showSnack(
-        _lifeText(
+        _lifeI18nText(
           context,
-          zh: '提前提醒已经早于当前时间，请缩短提前时间或改晚提醒时间',
-          en: 'The lead time would fire in the past. Shorten it or choose a later reminder time.',
+          'inline.plan295.life.the_lead_time_would_fire_in_the_past.0e5a6cbb5f8e',
         ),
       );
       return;
@@ -223,7 +224,12 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
         systemCalendarAlarmMinutesBefore: useAlarm ? _minutesBefore : 0,
       );
       _resetForm();
-      _showSnack(_lifeText(context, zh: '提醒已创建', en: 'Reminder created'));
+      _showSnack(
+        _lifeI18nText(
+          context,
+          'inline.plan295.life.reminder_created.e79dfe086bd9',
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _creating = false);
@@ -278,7 +284,10 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
       _countdownController.text = '$_countdownMinutes';
     });
     _showSnack(
-      _lifeText(context, zh: '已套用这条提醒的配置', en: 'Reminder settings copied'),
+      _lifeI18nText(
+        context,
+        'inline.plan295.life.reminder_settings_copied.0f8bd7b9d2c2',
+      ),
     );
   }
 
@@ -345,67 +354,81 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
 
   String _presentationLabel(LifeNotifyPresentationType type) {
     return switch (type) {
-      LifeNotifyPresentationType.notification => _lifeText(
+      LifeNotifyPresentationType.notification => _lifeI18nText(
         context,
-        zh: '状态栏通知',
-        en: 'Status-bar notification',
+        'inline.plan295.life.status_bar_notification.18388d7086db',
       ),
-      LifeNotifyPresentationType.alarm => _lifeText(
+      LifeNotifyPresentationType.alarm => _lifeI18nText(
         context,
-        zh: '锁屏提醒',
-        en: 'Lock-screen alert',
+        'inline.plan295.life.lock_screen_alert.9925aa5a6e36',
       ),
-      LifeNotifyPresentationType.fakeCall => _lifeText(
+      LifeNotifyPresentationType.fakeCall => _lifeI18nText(
         context,
-        zh: '模拟来电',
-        en: 'Fake incoming call',
+        'inline.plan295.life.fake_incoming_call.a3cd1b946f9f',
       ),
     };
   }
 
   String _scheduleLabel(LifeNotifyScheduleType type) {
     return switch (type) {
-      LifeNotifyScheduleType.dateTime => _lifeText(
+      LifeNotifyScheduleType.dateTime => _lifeI18nText(
         context,
-        zh: '指定时间',
-        en: 'Fixed time',
+        'inline.plan295.life.fixed_time.6fd29885b880',
       ),
-      LifeNotifyScheduleType.countdown => _lifeText(
+      LifeNotifyScheduleType.countdown => _lifeI18nText(
         context,
-        zh: '倒计时',
-        en: 'Countdown',
+        'inline.ui.pages.toolbox_human_tests_time_perception.countdown_da672d',
       ),
     };
   }
 
   String _leadLabel(int value) {
     if (value <= 0) {
-      return _lifeText(context, zh: '准时', en: 'On time');
+      return _lifeI18nText(context, 'inline.plan295.life.on_time.7d3451c72e34');
     }
     if (value < 60) {
-      return _lifeText(context, zh: '提前 $value 分钟', en: '$value min earlier');
+      return _lifeI18nText(
+        context,
+        'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.notify.me.min_earlier.2126919029',
+        params: <String, Object?>{'value': value},
+      );
     }
     final hours = (value / 60).toStringAsFixed(value % 60 == 0 ? 0 : 1);
-    return _lifeText(context, zh: '提前 $hours 小时', en: '$hours h earlier');
+    return _lifeI18nText(
+      context,
+      'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.notify.me.h_earlier.d373fb6390',
+      params: <String, Object?>{'hours': hours},
+    );
   }
 
   String _countdownLabel(int value) {
     if (value < 60) {
-      return _lifeText(context, zh: '$value 分钟后', en: 'In $value min');
+      return _lifeI18nText(
+        context,
+        'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.notify.me.in_min.d14647b3ba',
+        params: <String, Object?>{'value': value},
+      );
     }
     final hours = (value / 60).toStringAsFixed(value % 60 == 0 ? 0 : 1);
-    return _lifeText(context, zh: '$hours 小时后', en: 'In $hours h');
+    return _lifeI18nText(
+      context,
+      'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.notify.me.in_h.5b681a51ba',
+      params: <String, Object?>{'hours': hours},
+    );
   }
 
   String _reminderStateLabel(TodoItem item) {
     final dueAt = item.dueAt;
     if (dueAt == null) {
-      return _lifeText(context, zh: '未设置时间', en: 'No time');
+      return _lifeI18nText(context, 'inline.plan295.life.no_time.f065e511c569');
     }
     if (dueAt.isBefore(DateTime.now())) {
-      return _lifeText(context, zh: '已触发，等待处理', en: 'Triggered');
+      return _lifeI18nText(
+        context,
+        'inline.plan295.life.triggered.7f04e3959161',
+      );
     }
-    return _lifeText(context, zh: '待触发', en: 'Scheduled');
+    return _lifeI18nText(context, 'inline.plan295.life.scheduled.7f0c64868b4e');
   }
 
   @override
@@ -417,23 +440,27 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
     final dueAt = _resolveDueTime();
     final alertAt = _resolveAlertTime(dueAt);
     final previewTitle = _titleController.text.trim().isEmpty
-        ? _lifeText(context, zh: '提醒标题会显示在这里', en: 'Title preview appears here')
+        ? _lifeI18nText(
+            context,
+            'inline.plan295.life.title_preview_appears_here.c49155e0eed5',
+          )
         : _titleController.text.trim();
     final previewBody = metadata.note.trim().isEmpty
-        ? _lifeText(
+        ? _lifeI18nText(
             context,
-            zh: '说明、待办细节或给自己的短句会显示在这里',
-            en: 'Description, action hint, or a short note appears here',
+            'inline.plan295.life.description_action_hint_or_a_short_n.f2dcb7e7d691',
           )
         : metadata.note.trim();
     final nextReminder = reminders.isEmpty ? null : reminders.first;
 
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '通知自己', en: 'Notify me'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '用状态栏、锁屏提醒和系统日历给自己留下一条可执行的提示。',
-        en: 'Leave yourself actionable prompts through notifications, lock-screen alerts, and calendar mirroring.',
+        'inline.plan295.life.notify_me.a1cb3fafbdd1',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.leave_yourself_actionable_prompts_th.f6bcb002e8ec',
       ),
       child: Column(
         key: const ValueKey<String>('life-notify-page'),
@@ -447,7 +474,10 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
             dueLabel: _formatDateTime(dueAt),
             alertLabel: _formatDateTime(alertAt),
             nextLabel: nextReminder == null
-                ? _lifeText(context, zh: '暂无已创建提醒', en: 'No reminder created')
+                ? _lifeI18nText(
+                    context,
+                    'inline.plan295.life.no_reminder_created.84fd806c0af4',
+                  )
                 : '${nextReminder.content} · ${_formatDateTime(nextReminder.dueAt!)}',
             nativeReady:
                 state.todoSystemRemindersEnabled &&
@@ -458,30 +488,33 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
           ),
           const SizedBox(height: 12),
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '投递能力', en: 'Delivery capability'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '先确认提醒链路是否可用；不支持完整原生提醒的平台仍会保留页面列表和日历镜像。',
-              en: 'Check the delivery path first. Platforms without native reminders still keep the in-app list and calendar mirror.',
+              'inline.plan295.life.delivery_capability.d0f091f20879',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.check_the_delivery_path_first_platfo.823a85407299',
             ),
             children: <Widget>[
               SwitchListTile(
                 value: state.todoSystemRemindersEnabled,
                 contentPadding: EdgeInsets.zero,
                 title: Text(
-                  _lifeText(context, zh: '启用应用提醒', en: 'Enable app reminders'),
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.enable_app_reminders.a0096ea88257',
+                  ),
                 ),
                 subtitle: Text(
                   _supportsNativeReminder
-                      ? _lifeText(
+                      ? _lifeI18nText(
                           context,
-                          zh: '开启后会调度 Android 状态栏与锁屏提醒。',
-                          en: 'When enabled, Android status-bar and lock-screen reminders are scheduled.',
+                          'inline.plan295.life.when_enabled_android_status_bar_and.a5e996081f38',
                         )
-                      : _lifeText(
+                      : _lifeI18nText(
                           context,
-                          zh: '当前平台以页面管理和系统日历镜像为主。',
-                          en: 'This platform mainly supports page-side management and calendar mirroring.',
+                          'inline.plan295.life.this_platform_mainly_supports_page_s.74b759bb14b8',
                         ),
                 ),
                 onChanged: (value) =>
@@ -495,21 +528,18 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
                   _NotifyStatusChip(
                     icon: Icons.notifications_active_rounded,
                     label: _loadingCapability
-                        ? _lifeText(
+                        ? _lifeI18nText(
                             context,
-                            zh: '通知权限检查中',
-                            en: 'Checking permission',
+                            'inline.plan295.life.checking_permission.af8208aa7018',
                           )
                         : _capability.notificationsGranted
-                        ? _lifeText(
+                        ? _lifeI18nText(
                             context,
-                            zh: '通知权限已允许',
-                            en: 'Notification granted',
+                            'inline.plan295.life.notification_granted.9111301ce719',
                           )
-                        : _lifeText(
+                        : _lifeI18nText(
                             context,
-                            zh: '通知权限待开启',
-                            en: 'Notification needed',
+                            'inline.plan295.life.notification_needed.2594b2c1b13f',
                           ),
                     active:
                         _loadingCapability || _capability.notificationsGranted,
@@ -517,21 +547,18 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
                   _NotifyStatusChip(
                     icon: Icons.alarm_on_rounded,
                     label: _loadingCapability
-                        ? _lifeText(
+                        ? _lifeI18nText(
                             context,
-                            zh: '精确闹钟检查中',
-                            en: 'Checking alarm access',
+                            'inline.plan295.life.checking_alarm_access.43ca96e166bb',
                           )
                         : _capability.exactAlarmGranted
-                        ? _lifeText(
+                        ? _lifeI18nText(
                             context,
-                            zh: '精确闹钟可用',
-                            en: 'Exact alarm ready',
+                            'inline.plan295.life.exact_alarm_ready.42eeee18df29',
                           )
-                        : _lifeText(
+                        : _lifeI18nText(
                             context,
-                            zh: '精确闹钟待确认',
-                            en: 'Exact alarm needed',
+                            'inline.plan295.life.exact_alarm_needed.59c42ae6c48f',
                           ),
                     active: _loadingCapability || _capability.exactAlarmGranted,
                   ),
@@ -543,10 +570,9 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
                   onPressed: _requestNotificationPermission,
                   icon: const Icon(Icons.notification_add_rounded),
                   label: Text(
-                    _lifeText(
+                    _lifeI18nText(
                       context,
-                      zh: '请求通知权限',
-                      en: 'Request notification access',
+                      'inline.plan295.life.request_notification_access.b9d2d4deca63',
                     ),
                   ),
                 ),
@@ -557,10 +583,9 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
                   onPressed: _openExactAlarmSettings,
                   icon: const Icon(Icons.settings_rounded),
                   label: Text(
-                    _lifeText(
+                    _lifeI18nText(
                       context,
-                      zh: '打开精确闹钟设置',
-                      en: 'Open exact-alarm settings',
+                      'inline.plan295.life.open_exact_alarm_settings.0aca6c182c5d',
                     ),
                   ),
                 ),
@@ -569,11 +594,13 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
           ),
           const SizedBox(height: 12),
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '新建提醒', en: 'Create reminder'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '先写清楚要提醒什么，再决定何时触发、用哪种提醒强度以及是否同步到日历。',
-              en: 'Write what to remember, then choose when it fires, how strong it appears, and whether it mirrors to calendar.',
+              'inline.plan295.life.create_reminder.beecee4bca34',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.write_what_to_remember_then_choose_w.069868c9cd66',
             ),
             children: <Widget>[
               TextField(
@@ -581,10 +608,9 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
                 controller: _titleController,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
-                  labelText: _lifeText(
+                  labelText: _lifeI18nText(
                     context,
-                    zh: '提醒标题',
-                    en: 'Reminder title',
+                    'inline.plan295.life.reminder_title.986b25c09cf7',
                   ),
                   prefixIcon: const Icon(Icons.title_rounded),
                 ),
@@ -599,10 +625,9 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
                 maxLines: 4,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
-                  labelText: _lifeText(
+                  labelText: _lifeI18nText(
                     context,
-                    zh: '提醒说明',
-                    en: 'Reminder note',
+                    'inline.plan295.life.reminder_note.04c5ea64f83b',
                   ),
                   prefixIcon: const Icon(Icons.notes_rounded),
                 ),
@@ -610,18 +635,19 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
               ),
               const SizedBox(height: 14),
               _LifeSegmentedField<LifeNotifyPresentationType>(
-                label: _lifeText(context, zh: '提醒强度', en: 'Presentation'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.presentation.ac3dd7df99b5',
+                ),
                 value: _presentationType,
                 options: const <_LifeOption<LifeNotifyPresentationType>>[
                   _LifeOption<LifeNotifyPresentationType>(
                     value: LifeNotifyPresentationType.notification,
-                    labelZh: '状态栏通知',
-                    labelEn: 'Notification',
+                    labelKey: 'inline.plan295.life.notification.a590187ec684',
                   ),
                   _LifeOption<LifeNotifyPresentationType>(
                     value: LifeNotifyPresentationType.alarm,
-                    labelZh: '锁屏提醒',
-                    labelEn: 'Lock-screen',
+                    labelKey: 'inline.plan295.life.lock_screen.48f2558ba470',
                   ),
                 ],
                 onChanged: (value) {
@@ -635,18 +661,20 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
               ),
               const SizedBox(height: 14),
               _LifeSegmentedField<LifeNotifyScheduleType>(
-                label: _lifeText(context, zh: '触发方式', en: 'Schedule'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.schedule.f2b78149b790',
+                ),
                 value: _scheduleType,
                 options: const <_LifeOption<LifeNotifyScheduleType>>[
                   _LifeOption<LifeNotifyScheduleType>(
                     value: LifeNotifyScheduleType.dateTime,
-                    labelZh: '指定时间',
-                    labelEn: 'Fixed time',
+                    labelKey: 'inline.plan295.life.fixed_time.6fd29885b880',
                   ),
                   _LifeOption<LifeNotifyScheduleType>(
                     value: LifeNotifyScheduleType.countdown,
-                    labelZh: '倒计时',
-                    labelEn: 'Countdown',
+                    labelKey:
+                        'inline.ui.pages.toolbox_human_tests_time_perception.countdown_da672d',
                   ),
                 ],
                 onChanged: (value) => setState(() => _scheduleType = value),
@@ -678,8 +706,14 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
                   icon: const Icon(Icons.add_alert_rounded),
                   label: Text(
                     _creating
-                        ? _lifeText(context, zh: '创建中...', en: 'Creating...')
-                        : _lifeText(context, zh: '创建提醒', en: 'Create reminder'),
+                        ? _lifeI18nText(
+                            context,
+                            'inline.plan295.life.creating.a424312477e4',
+                          )
+                        : _lifeI18nText(
+                            context,
+                            'inline.plan295.life.create_reminder.7d32ca9b5129',
+                          ),
                   ),
                 ),
               ),
@@ -687,19 +721,20 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
           ),
           const SizedBox(height: 12),
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '已创建提醒', en: 'Created reminders'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '这里集中处理未完成提醒；过期提醒会保留，方便完成、删除或稍后提醒。',
-              en: 'Unfinished reminders stay here, including triggered ones, so you can complete, delete, or snooze them.',
+              'inline.plan295.life.created_reminders.21beeb8a0bbd',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.unfinished_reminders_stay_here_inclu.55ecc9316296',
             ),
             children: <Widget>[
               if (reminders.isEmpty)
                 Text(
-                  _lifeText(
+                  _lifeI18nText(
                     context,
-                    zh: '还没有提醒。先在上方创建一个给自己的提醒。',
-                    en: 'No reminders yet. Create one for yourself above.',
+                    'inline.plan295.life.no_reminders_yet_create_one_for_your.3cbd0f1bd134',
                   ),
                   key: const ValueKey<String>('life-notify-empty'),
                 )
@@ -725,10 +760,9 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
                           onComplete: () {
                             focus.completeTodo(todoId);
                             _showSnack(
-                              _lifeText(
+                              _lifeI18nText(
                                 context,
-                                zh: '提醒已完成',
-                                en: 'Reminder completed',
+                                'inline.plan295.life.reminder_completed.514f4213b202',
                               ),
                             );
                           },
@@ -738,10 +772,9 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
                               const Duration(minutes: 10),
                             );
                             _showSnack(
-                              _lifeText(
+                              _lifeI18nText(
                                 context,
-                                zh: '已稍后 10 分钟',
-                                en: 'Snoozed for 10 min',
+                                'inline.plan295.life.snoozed_for_10_min.80902e7300ea',
                               ),
                             );
                           },
@@ -751,10 +784,9 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
                               const Duration(hours: 1),
                             );
                             _showSnack(
-                              _lifeText(
+                              _lifeI18nText(
                                 context,
-                                zh: '已稍后 1 小时',
-                                en: 'Snoozed for 1 hour',
+                                'inline.plan295.life.snoozed_for_1_hour.9547271b8a0f',
                               ),
                             );
                           },
@@ -762,10 +794,9 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
                           onDelete: () {
                             focus.deleteTodo(todoId);
                             _showSnack(
-                              _lifeText(
+                              _lifeI18nText(
                                 context,
-                                zh: '提醒已删除',
-                                en: 'Reminder deleted',
+                                'inline.plan295.life.reminder_deleted.4c7b08816cf3',
                               ),
                             );
                           },
@@ -807,7 +838,7 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
         ),
         const SizedBox(height: 12),
         Text(
-          _lifeText(context, zh: '提前提醒', en: 'Lead time'),
+          _lifeI18nText(context, 'inline.plan295.life.lead_time.ba1f6a261083'),
           style: Theme.of(context).textTheme.labelLarge,
         ),
         const SizedBox(height: 8),
@@ -827,7 +858,10 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
         const SizedBox(height: 10),
         _NotifyMinuteInput(
           controller: _leadController,
-          label: _lifeText(context, zh: '自定义提前分钟', en: 'Custom lead minutes'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.custom_lead_minutes.755573a9fbcc',
+          ),
           min: 0,
           max: _maxMinutes,
           onChanged: _setLeadMinutes,
@@ -841,7 +875,10 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          _lifeText(context, zh: '倒计时长度', en: 'Countdown length'),
+          _lifeI18nText(
+            context,
+            'inline.plan295.life.countdown_length.53382bdbee24',
+          ),
           style: Theme.of(context).textTheme.labelLarge,
         ),
         const SizedBox(height: 8),
@@ -861,10 +898,9 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
         const SizedBox(height: 10),
         _NotifyMinuteInput(
           controller: _countdownController,
-          label: _lifeText(
+          label: _lifeI18nText(
             context,
-            zh: '自定义倒计时分钟',
-            en: 'Custom countdown minutes',
+            'inline.plan295.life.custom_countdown_minutes.2696b990b3a6',
           ),
           min: 1,
           max: _maxMinutes,
@@ -881,13 +917,15 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
           value: _stickyNotification,
           contentPadding: EdgeInsets.zero,
           title: Text(
-            _lifeText(context, zh: '状态栏常驻', en: 'Sticky status-bar reminder'),
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.sticky_status_bar_reminder.95c309f042c4',
+            ),
           ),
           subtitle: Text(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '触发后保持在通知栏，直到完成、稍后提醒、删除或按设置进入应用取消。',
-              en: 'Keep it in the notification shade until completed, snoozed, deleted, or dismissed by open-app behavior.',
+              'inline.plan295.life.keep_it_in_the_notification_shade_un.456ed5c02dab',
             ),
           ),
           onChanged:
@@ -899,17 +937,15 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
           value: _cancelOnOpen,
           contentPadding: EdgeInsets.zero,
           title: Text(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '进入应用后取消提醒',
-              en: 'Cancel when opening the app',
+              'inline.plan295.life.cancel_when_opening_the_app.a6c4e7c0a317',
             ),
           ),
           subtitle: Text(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '关闭后，点击通知进入应用不会自动移除常驻通知，适合需要反复看到的提醒。',
-              en: 'When off, tapping the reminder opens the app without dismissing a sticky notification.',
+              'inline.plan295.life.when_off_tapping_the_reminder_opens.eca06e03c62f',
             ),
           ),
           onChanged: (value) => setState(() => _cancelOnOpen = value),
@@ -918,13 +954,15 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
           value: _syncToSystemCalendar,
           contentPadding: EdgeInsets.zero,
           title: Text(
-            _lifeText(context, zh: '同步到系统日历', en: 'Sync to system calendar'),
+            _lifeI18nText(
+              context,
+              'inline.ui.pages.focus_page_workspace_editor.sync_to_system_calendar_488722',
+            ),
           ),
           subtitle: Text(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '支持时会写入系统日历事件，并保留备注与提醒时间。',
-              en: 'When supported, a mirrored calendar event is written with the note and reminder timing.',
+              'inline.plan295.life.when_supported_a_mirrored_calendar_e.c857b55e1e39',
             ),
           ),
           onChanged: (value) => setState(() => _syncToSystemCalendar = value),

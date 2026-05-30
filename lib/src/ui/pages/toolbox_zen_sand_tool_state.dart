@@ -71,10 +71,7 @@ class _ZenSandCanvasStore {
     brushSize = value.clamp(14.0, 96.0);
   }
 
-  void startTransform({
-    required Offset focalPoint,
-    required Size size,
-  }) {
+  void startTransform({required Offset focalPoint, required Size size}) {
     gestureMode = _ZenGestureMode.transform;
     gestureScaleStart = viewportScale;
     final worldFocal = (focalPoint - viewportOffset) / viewportScale;

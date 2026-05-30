@@ -183,9 +183,7 @@ class _SleepRoutineEditorPageState extends State<SleepRoutineEditorPage> {
                 FilledButton.icon(
                   onPressed: _steps.isEmpty ? null : _save,
                   icon: const Icon(Icons.save_rounded),
-                  label: Text(
-                    i18n.t('toolbox.sleep.routine.saveTemplate'),
-                  ),
+                  label: Text(i18n.t('toolbox.sleep.routine.saveTemplate')),
                 ),
                 const SizedBox(width: 12),
                 if (_editingCustom)

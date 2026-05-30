@@ -139,16 +139,7 @@ class _HandEyePlayStage extends StatelessWidget {
                           key: const ValueKey<String>(
                             'hand_eye_stage_start_button',
                           ),
-                          label: pickUiText(
-                            i18n,
-                            zh: '开始',
-                            en: 'Start',
-                            ja: 'Start',
-                            de: 'Start',
-                            fr: 'Démarrer',
-                            es: 'Comienzo',
-                            ru: 'Начинать',
-                          ),
+                          label: i18n.t('toolbox.breathing.start'),
                           icon: Icons.play_arrow_rounded,
                           onPressed: state._start,
                         ),
@@ -412,15 +403,8 @@ class _HandEyeFullscreenViewState extends State<_HandEyeFullscreenView>
                             icon: _settingsOpen
                                 ? Icons.tune_rounded
                                 : Icons.settings_rounded,
-                            tooltip: pickUiText(
-                              i18n,
-                              zh: '全屏设置',
-                              en: 'Fullscreen settings',
-                              ja: 'Fullscreen settings',
-                              de: 'Fullscreen settings',
-                              fr: 'Paramètres en plein écran',
-                              es: 'Ajustes de pantalla completa',
-                              ru: 'Полноэкранные настройки',
+                            tooltip: i18n.t(
+                              'inline.ui.pages.toolbox_human_tests_hand_eye_parts.fullscreen_settings_c69bba',
                             ),
                           ),
                         ],
@@ -450,59 +434,29 @@ class _HandEyeFullscreenViewState extends State<_HandEyeFullscreenView>
                               crossAxisAlignment: WrapCrossAlignment.center,
                               children: <Widget>[
                                 _HumanTestFullscreenMetric(
-                                  label: pickUiText(
-                                    i18n,
-                                    zh: '轮次',
-                                    en: 'Rounds',
-                                    ja: 'Rounds',
-                                    de: 'Rounds',
-                                    fr: 'Rondes',
-                                    es: 'Rondas',
-                                    ru: 'Круги',
-                                  ),
+                                  label: i18n.t('rounds'),
                                   value:
                                       '${state._results.length}/${state._roundCount}',
                                   accent: _HandEyeCoordinationCardState._accent,
                                 ),
                                 _HumanTestFullscreenMetric(
-                                  label: pickUiText(
-                                    i18n,
-                                    zh: '命中',
-                                    en: 'Hits',
-                                    ja: 'Hits',
-                                    de: 'Hits',
-                                    fr: 'Coups',
-                                    es: 'Golpes',
-                                    ru: 'Хиты',
+                                  label: i18n.t(
+                                    'inline.ui.pages.toolbox_human_tests_action.hits_fe10b3',
                                   ),
                                   value: '${state._successes}',
                                   accent: _HandEyeCoordinationCardState._accent,
                                 ),
                                 _HumanTestFullscreenMetric(
-                                  label: pickUiText(
-                                    i18n,
-                                    zh: '点空',
-                                    en: 'Blanks',
-                                    ja: 'ブランク',
-                                    de: 'Blanks',
-                                    fr: 'Blancs',
-                                    es: 'Blanks',
-                                    ru: 'бланки',
+                                  label: i18n.t(
+                                    'inline.ui.pages.toolbox_human_tests_hand_eye_parts.blanks_84a873',
                                   ),
                                   value: '${state._totalBlankTaps}',
                                   accent: _HandEyeCoordinationCardState._accent,
                                 ),
                                 if (!compact)
                                   _HumanTestFullscreenMetric(
-                                    label: pickUiText(
-                                      i18n,
-                                      zh: '均值',
-                                      en: 'Avg',
-                                      ja: '平均',
-                                      de: 'Avg',
-                                      fr: 'Pays',
-                                      es: 'Avg',
-                                      ru: 'Авг',
+                                    label: i18n.t(
+                                      'inline.ui.pages.toolbox_human_tests_hand_eye_parts.avg_d1da1a',
                                     ),
                                     value: averageReaction == null
                                         ? '-'
@@ -543,15 +497,8 @@ class _HandEyeFullscreenViewState extends State<_HandEyeFullscreenView>
                                       children: <Widget>[
                                         Expanded(
                                           child: Text(
-                                            pickUiText(
-                                              i18n,
-                                              zh: '全屏设置',
-                                              en: 'Fullscreen settings',
-                                              ja: 'Fullscreen settings',
-                                              de: 'Fullscreen settings',
-                                              fr: 'Paramètres en plein écran',
-                                              es: 'Ajustes de pantalla completa',
-                                              ru: 'Полноэкранные настройки',
+                                            i18n.t(
+                                              'inline.ui.pages.toolbox_human_tests_hand_eye_parts.fullscreen_settings_c69bba',
                                             ),
                                             style: Theme.of(context)
                                                 .textTheme
@@ -572,15 +519,8 @@ class _HandEyeFullscreenViewState extends State<_HandEyeFullscreenView>
                                     ),
                                     const SizedBox(height: 6),
                                     Text(
-                                      pickUiText(
-                                        i18n,
-                                        zh: '未开始或完成后可直接调整；进行中会锁定测试参数。',
-                                        en: 'Adjust before starting or after finishing. Running tests lock these parameters.',
-                                        ja: '開始前または終了後に調整します。テストを実行すると、これらのパラメータがロックされます。',
-                                        de: 'Adjust before starting or after finishing. Running tests lock these parameters.',
-                                        fr: 'Adjust before starting or after finishing. Running tests lock these parameters.',
-                                        es: 'Ajuste antes de comenzar o después de terminar. Las pruebas de ejecución bloquean estos parámetros.',
-                                        ru: 'Настройка перед началом или после окончания. Тесты блокируют эти параметры.',
+                                      i18n.t(
+                                        'inline.ui.pages.toolbox_human_tests_hand_eye_parts.adjust_before_starting_or_after_finishing_running_tests_483ff6',
                                       ),
                                       style: Theme.of(context)
                                           .textTheme
@@ -589,15 +529,8 @@ class _HandEyeFullscreenViewState extends State<_HandEyeFullscreenView>
                                     ),
                                     const SizedBox(height: 12),
                                     Text(
-                                      pickUiText(
-                                        i18n,
-                                        zh: '目标设置',
-                                        en: 'Target settings',
-                                        ja: 'Target settings',
-                                        de: 'Target settings',
-                                        fr: 'Paramètres de la cible',
-                                        es: 'Ajustes de objetivos',
-                                        ru: 'Целевые настройки',
+                                      i18n.t(
+                                        'inline.ui.pages.toolbox_human_tests_hand_eye_parts.target_settings_7eb6ea',
                                       ),
                                       style: Theme.of(context)
                                           .textTheme
@@ -610,15 +543,8 @@ class _HandEyeFullscreenViewState extends State<_HandEyeFullscreenView>
                                     state._buildTargetSettings(i18n),
                                     const Divider(height: 24),
                                     Text(
-                                      pickUiText(
-                                        i18n,
-                                        zh: '高阶干扰设置',
-                                        en: 'Advanced interference',
-                                        ja: '高度な干渉',
-                                        de: 'Advanced interference',
-                                        fr: 'Advanced interference',
-                                        es: 'Interferencia avanzada',
-                                        ru: 'Расширенное вмешательство',
+                                      i18n.t(
+                                        'inline.ui.pages.toolbox_human_tests_hand_eye_fullscreen.advanced_interference_7d48f7',
                                       ),
                                       style: Theme.of(context)
                                           .textTheme
@@ -676,18 +602,7 @@ class _HandEyeFullscreenViewState extends State<_HandEyeFullscreenView>
                                 ),
                                 onPressed: state._reset,
                                 icon: const Icon(Icons.restart_alt_rounded),
-                                label: Text(
-                                  pickUiText(
-                                    i18n,
-                                    zh: '重置',
-                                    en: 'Reset',
-                                    ja: 'Reset',
-                                    de: 'Reset',
-                                    fr: 'Réinitialiser',
-                                    es: 'Reset',
-                                    ru: 'сброс',
-                                  ),
-                                ),
+                                label: Text(i18n.t('appearanceReset')),
                                 style: OutlinedButton.styleFrom(
                                   minimumSize: const Size(96, 48),
                                   textStyle: const TextStyle(
@@ -1218,16 +1133,7 @@ class _JoystickPlayStage extends StatelessWidget {
                   if (!state._running && showStartOverlay)
                     Center(
                       child: _HumanActionButton(
-                        label: pickUiText(
-                          i18n,
-                          zh: '开始',
-                          en: 'Start',
-                          ja: 'Start',
-                          de: 'Start',
-                          fr: 'Démarrer',
-                          es: 'Comienzo',
-                          ru: 'Начинать',
-                        ),
+                        label: i18n.t('toolbox.breathing.start'),
                         icon: Icons.play_arrow_rounded,
                         onPressed: state._start,
                       ),
@@ -1255,15 +1161,8 @@ class _JoystickControlDeck extends StatelessWidget {
       onPressed: state._running ? state._fire : null,
       icon: const Icon(Icons.my_location_rounded),
       label: Text(
-        pickUiText(
-          i18n,
-          zh: '射击',
-          en: 'Fire',
-          ja: 'Fire',
-          de: 'Fire',
-          fr: 'Feu',
-          es: 'Fuego',
-          ru: 'Огонь',
+        i18n.t(
+          'inline.ui.pages.toolbox_human_tests_hand_eye_fullscreen.fire_a0fc54',
         ),
       ),
       style: FilledButton.styleFrom(
@@ -1282,43 +1181,14 @@ class _JoystickControlDeck extends StatelessWidget {
           ),
           label: Text(
             state._running
-                ? pickUiText(
-                    i18n,
-                    zh: '结束',
-                    en: 'Finish',
-                    ja: 'Finish',
-                    de: 'Finish',
-                    fr: 'Finition',
-                    es: 'Acabado',
-                    ru: 'Закончить',
-                  )
-                : pickUiText(
-                    i18n,
-                    zh: '开始',
-                    en: 'Start',
-                    ja: 'Start',
-                    de: 'Start',
-                    fr: 'Démarrer',
-                    es: 'Comienzo',
-                    ru: 'Начинать',
-                  ),
+                ? i18n.t('inline.ui.pages.practice_session_page.finish_10bd36')
+                : i18n.t('toolbox.breathing.start'),
           ),
         ),
         OutlinedButton.icon(
           onPressed: state._reset,
           icon: const Icon(Icons.restart_alt_rounded),
-          label: Text(
-            pickUiText(
-              i18n,
-              zh: '重置',
-              en: 'Reset',
-              ja: 'Reset',
-              de: 'Reset',
-              fr: 'Réinitialiser',
-              es: 'Reset',
-              ru: 'сброс',
-            ),
-          ),
+          label: Text(i18n.t('appearanceReset')),
         ),
       ],
     );
@@ -1391,15 +1261,8 @@ class _HandEyeResultPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(
-              i18n,
-              zh: '详细统计',
-              en: 'Detailed results',
-              ja: 'Detailed results',
-              de: 'Detailed results',
-              fr: 'Résultats détaillés',
-              es: 'Resultados detallados',
-              ru: 'Подробные результаты',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_hand_eye_parts.detailed_results_e5e321',
             ),
             style: Theme.of(
               context,
@@ -1450,15 +1313,8 @@ class _HandEyeResultRow extends StatelessWidget {
         ? _formatMilliseconds(result.visibleFor.inMilliseconds)
         : _formatMilliseconds(result.completionLatency!.inMilliseconds);
     final falseHitText = result.distractorTaps > 0
-        ? pickUiText(
-            i18n,
-            zh: '；假目标 ${result.distractorTaps}',
-            en: '; false ${result.distractorTaps}',
-            ja: '偽',
-            de: '; false ${result.distractorTaps}',
-            fr: '; false ${result.distractorTaps}',
-            es: '; falsos',
-            ru: '; ложный ${result.distractorTaps}',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_human_tests_hand_eye_parts.false_result_distractortaps_4feb9e',
           )
         : '';
     return Container(
@@ -1478,15 +1334,8 @@ class _HandEyeResultRow extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              pickUiText(
-                i18n,
-                zh: '#$index  ${result.taps}/${result.requiredTaps} 次；点空 ${result.blankTaps}$falseHitText；反应 $reaction；窗口 $completion',
-                en: '#$index  ${result.taps}/${result.requiredTaps} taps; blanks ${result.blankTaps}$falseHitText; reaction $reaction; window $completion',
-                ja: '$index ${result.taps}#/${result.requiredTaps} taps; blanks${result.blankTaps}$falseHitText; reaction$reaction; window $completion',
-                de: '#$index  ${result.taps}/${result.requiredTaps} taps; blanks ${result.blankTaps}$falseHitText; reaction $reaction; window $completion',
-                fr: '#$index  ${result.taps}/${result.requiredTaps} taps; blanks ${result.blankTaps}$falseHitText; reaction $reaction; window $completion',
-                es: '#Secundación de los grifos; blancos; objetos en blanco; objetos en blanco; reacción; reacción;',
-                ru: '#$index ${result.taps}/${result.requiredTaps} краны; бланки ${result.blankTaps}$falseHitText; реакция $reaction; окно $completion',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_hand_eye_parts.index_result_taps_result_requiredtaps_taps_blanks_result_fa0fcf',
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -1519,15 +1368,8 @@ class _JoystickResultPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            pickUiText(
-              i18n,
-              zh: '命中延迟明细',
-              en: 'Hit latency details',
-              ja: 'Hit latency details',
-              de: 'Hit latency details',
-              fr: 'Affichage des détails de latence',
-              es: 'Datos de latencia',
-              ru: 'Детали задержки',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_hand_eye_parts.hit_latency_details_21ebbf',
             ),
             style: Theme.of(
               context,

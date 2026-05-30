@@ -14,10 +14,12 @@ const List<String> practiceWeakReasonIds = <String>[
 
 String practiceWeakReasonLabel(AppI18n i18n, String reasonId) {
   return switch (reasonId.trim()) {
-    'meaning' => pickUiText(i18n, zh: '词义模糊', en: 'Meaning'),
-    'pronunciation' => pickUiText(i18n, zh: '发音不稳', en: 'Pronunciation'),
-    'spelling' => pickUiText(i18n, zh: '拼写不稳', en: 'Spelling'),
-    _ => pickUiText(i18n, zh: '想不起来', en: 'Recall'),
+    'meaning' => i18n.t('fieldMeaning'),
+    'pronunciation' => i18n.t(
+      'inline.ui.pages.practice_support.pronunciation_47a756',
+    ),
+    'spelling' => i18n.t('spellingLabel'),
+    _ => i18n.t('inline.ui.pages.practice_support.recall_4e1a00'),
   };
 }
 
@@ -36,10 +38,8 @@ String formatPracticeDateTime(AppI18n i18n, DateTime value) {
   final day = local.day.toString().padLeft(2, '0');
   final hour = local.hour.toString().padLeft(2, '0');
   final minute = local.minute.toString().padLeft(2, '0');
-  return pickUiText(
-    i18n,
-    zh: '$month/$day $hour:$minute',
-    en: '$month/$day $hour:$minute',
+  return i18n.t(
+    'inline.ui.pages.practice_support.month_day_hour_minute_59dd3a',
   );
 }
 
@@ -48,22 +48,16 @@ String practiceQuestionTypeLabel(
   PracticeQuestionType questionType,
 ) {
   return switch (questionType) {
-    PracticeQuestionType.flashcard => pickUiText(
-      i18n,
-      zh: '自评卡片',
-      en: 'Flashcard',
+    PracticeQuestionType.flashcard => i18n.t(
+      'inline.ui.pages.practice_support.flashcard_53c373',
     ),
-    PracticeQuestionType.meaningChoice => pickUiText(
-      i18n,
-      zh: '词义选择',
-      en: 'Meaning choice',
+    PracticeQuestionType.meaningChoice => i18n.t(
+      'inline.ui.pages.practice_support.meaning_choice_9d17f5',
     ),
-    PracticeQuestionType.spelling => pickUiText(
-      i18n,
-      zh: '拼写输入',
-      en: 'Spelling',
+    PracticeQuestionType.spelling => i18n.t('spellingLabel'),
+    PracticeQuestionType.mixed => i18n.t(
+      'inline.plan295.daily_choice.mixed.2c9888bab620',
     ),
-    PracticeQuestionType.mixed => pickUiText(i18n, zh: '混合题型', en: 'Mixed'),
   };
 }
 

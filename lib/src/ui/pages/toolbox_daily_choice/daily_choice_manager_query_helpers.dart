@@ -52,51 +52,84 @@ String _builtInSectionSubtitle(
   bool isActivityModule = false,
 }) {
   if (!builtInExpanded) {
-    return pickUiText(
-      i18n,
-      zh: isWearModule
-          ? '展开后按当前搜索和筛选查看内置参考搭配。'
-          : (isActivityModule ? '展开后按当前搜索和筛选查看内置行动。' : '展开后按当前搜索和筛选查看内置菜谱。'),
-      en: 'Expand to show built-ins using the current search and filters.',
+    return i18n.t(
+      _managerModuleKey(
+        wearKey: 'toolbox.daily_choice.manager.builtin.subtitle.collapsed.wear',
+        activityKey:
+            'toolbox.daily_choice.manager.builtin.subtitle.collapsed.activity',
+        eatKey: 'toolbox.daily_choice.manager.builtin.subtitle.collapsed.eat',
+        isWearModule: isWearModule,
+        isActivityModule: isActivityModule,
+      ),
     );
   }
   if (loading && visible == 0) {
-    return pickUiText(
-      i18n,
-      zh: isWearModule
-          ? '正在按当前筛选读取内置参考搭配。'
-          : (isActivityModule ? '正在按当前筛选读取内置行动。' : '正在按当前筛选读取内置菜谱。'),
-      en: 'Loading built-ins for the current filters.',
+    return i18n.t(
+      _managerModuleKey(
+        wearKey: 'toolbox.daily_choice.manager.builtin.subtitle.loading.wear',
+        activityKey:
+            'toolbox.daily_choice.manager.builtin.subtitle.loading.activity',
+        eatKey: 'toolbox.daily_choice.manager.builtin.subtitle.loading.eat',
+        isWearModule: isWearModule,
+        isActivityModule: isActivityModule,
+      ),
     );
   }
   if (errorMessage != null) {
-    return pickUiText(
-      i18n,
-      zh: isWearModule
-          ? '读取内置参考搭配时遇到问题，可稍后重试。'
-          : (isActivityModule ? '读取内置行动时遇到问题，可稍后重试。' : '读取内置菜谱时遇到问题，可稍后重试。'),
-      en: 'Built-ins could not be loaded. Try again later.',
+    return i18n.t(
+      _managerModuleKey(
+        wearKey: 'toolbox.daily_choice.manager.builtin.subtitle.error.wear',
+        activityKey:
+            'toolbox.daily_choice.manager.builtin.subtitle.error.activity',
+        eatKey: 'toolbox.daily_choice.manager.builtin.subtitle.error.eat',
+        isWearModule: isWearModule,
+        isActivityModule: isActivityModule,
+      ),
     );
   }
-  return pickUiText(
-    i18n,
-    zh: total > visible
-        ? isWearModule
-              ? '已显示 $visible / $total 条；搜索和筛选仍作用于完整参考搭配库。'
-              : (isActivityModule
-                    ? '已显示 $visible / $total 条；搜索和筛选仍作用于完整行动库。'
-                    : '已显示 $visible / $total 条；搜索和筛选仍作用于完整菜谱库。')
-        : isWearModule
-        ? '可把内置搭配当模板，调整后另存为自己的真实衣柜搭配。'
-        : (isActivityModule
-              ? '可把内置行动加入行动集，也可隐藏不适合自己的行动。'
-              : '可隐藏不喜欢的条目，也可在原菜谱上做个人调整或另存为个人食谱。'),
-    en: total > visible
-        ? 'Showing $visible of $total; search and filters still cover the full library.'
-        : isActivityModule
-        ? 'Add built-ins to action sets or hide actions that do not fit you.'
-        : 'Hide unwanted items, save adjustments, or copy a built-in as your own ${isWearModule ? 'outfit' : 'recipe'}.',
+  if (total > visible) {
+    return i18n.t(
+      _managerModuleKey(
+        wearKey: 'toolbox.daily_choice.manager.builtin.subtitle.partial.wear',
+        activityKey:
+            'toolbox.daily_choice.manager.builtin.subtitle.partial.activity',
+        eatKey: 'toolbox.daily_choice.manager.builtin.subtitle.partial.eat',
+        isWearModule: isWearModule,
+        isActivityModule: isActivityModule,
+      ),
+      params: <String, Object?>{
+        'visible': visible,
+        'total': total,
+      },
+    );
+  }
+  return i18n.t(
+    _managerModuleKey(
+      wearKey: 'toolbox.daily_choice.manager.builtin.subtitle.ready.wear',
+      activityKey:
+          'toolbox.daily_choice.manager.builtin.subtitle.ready.activity',
+      eatKey: 'toolbox.daily_choice.manager.builtin.subtitle.ready.eat',
+      isWearModule: isWearModule,
+      isActivityModule: isActivityModule,
+    ),
   );
+}
+
+String _managerModuleKey({
+  required String wearKey,
+  required String activityKey,
+  required String eatKey,
+  String? defaultKey,
+  required bool isWearModule,
+  bool isActivityModule = false,
+}) {
+  if (isWearModule) {
+    return wearKey;
+  }
+  if (isActivityModule) {
+    return activityKey;
+  }
+  return defaultKey ?? eatKey;
 }
 
 String _managerBuiltInSqlQueryKey({
@@ -164,22 +197,15 @@ String _managerDescription(
   required bool isWearModule,
   bool isActivityModule = false,
 }) {
-  return pickUiText(
-    i18n,
-    zh: isWearModule
-        ? '内置条目适合作为参考模板；个人衣柜会保存在本机，并可按性别参考、年龄阶段、风格、版型和样式类型管理。'
-        : (isEatModule
-              ? '不喜欢会先确认再隐藏内置菜；个人调整会覆盖原菜谱参与随机；个人食谱保存在本机并参与高级筛选。'
-              : (isActivityModule
-                    ? '内置行动来自可下载事件库；行动集保存在本机，可把内置行动和个人行动整理成不同随机池。'
-                    : '删除内置条目会把它加入“不喜欢”隐藏列表；自定义条目会保存在本机。')),
-    en: isWearModule
-        ? 'Built-ins are reference templates. Your wardrobe stays local and can be managed by gender reference, age stage, style, silhouette, and key pieces.'
-        : (isEatModule
-              ? 'Disliked built-ins are hidden, personal adjustments override built-ins, and personal recipes stay local for filtering and random picks.'
-              : (isActivityModule
-                    ? 'Built-in actions come from a downloadable library. Action sets stay local and define random pools.'
-                    : 'Deleting a built-in item hides it. Custom items are saved locally.')),
+  return i18n.t(
+    _managerModuleKey(
+      wearKey: 'toolbox.daily_choice.manager.description.wear',
+      activityKey: 'toolbox.daily_choice.manager.description.activity',
+      eatKey: 'toolbox.daily_choice.manager.description.eat',
+      defaultKey: 'toolbox.daily_choice.manager.description.default',
+      isWearModule: isWearModule,
+      isActivityModule: isActivityModule,
+    ),
   );
 }
 
@@ -189,22 +215,16 @@ String _emptyCustomHint(
   required bool isWearModule,
   bool isActivityModule = false,
 }) {
-  return pickUiText(
-    i18n,
-    zh: isEatModule
-        ? '当前筛选下还没有个人食谱。可以补上你常做、爱吃、想长期保存的菜。'
-        : (isWearModule
-              ? '当前筛选下还没有个人衣柜搭配。可以从真实衣柜新建一套，也可以把内置参考另存后改成自己的单品。'
-              : (isActivityModule
-                    ? '当前筛选下还没有个人行动。可以新增一个低阻力动作，或先把内置行动加入行动集。'
-                    : '当前筛选下还没有自定义条目。可以补上自己的搭配、地点或行动。')),
-    en: isEatModule
-        ? 'No personal recipes in this filter yet. Add the dishes you actually make or want to keep.'
-        : (isWearModule
-              ? 'No personal wardrobe outfits in this filter yet.'
-              : (isActivityModule
-                    ? 'No personal actions in this filter yet.'
-                    : 'No custom items in this filter yet.')),
+  return i18n.t(
+    isEatModule
+        ? 'toolbox.daily_choice.manager.custom.empty.eat'
+        : _managerModuleKey(
+            wearKey: 'toolbox.daily_choice.manager.custom.empty.wear',
+            activityKey: 'toolbox.daily_choice.manager.custom.empty.activity',
+            eatKey: 'toolbox.daily_choice.manager.custom.empty.default',
+            isWearModule: isWearModule,
+            isActivityModule: isActivityModule,
+          ),
   );
 }
 
@@ -213,18 +233,14 @@ String _emptyBuiltInHint(
   required bool isWearModule,
   bool isActivityModule = false,
 }) {
-  return pickUiText(
-    i18n,
-    zh: isWearModule
-        ? '当前筛选下没有内置参考搭配。可以放宽气温、场景、性别年龄或风格筛选，也可以直接新建自己的衣柜搭配。'
-        : (isActivityModule
-              ? '当前筛选下没有内置行动。可以换一个行动方向，或先安装/刷新行动库。'
-              : '当前筛选下没有内置菜谱，换一个分类或上下文试试。'),
-    en: isWearModule
-        ? 'No built-in reference outfits match this filter.'
-        : (isActivityModule
-              ? 'No built-in actions match this filter.'
-              : 'No built-in recipes match this filter.'),
+  return i18n.t(
+    _managerModuleKey(
+      wearKey: 'toolbox.daily_choice.manager.builtin.empty.wear',
+      activityKey: 'toolbox.daily_choice.manager.builtin.empty.activity',
+      eatKey: 'toolbox.daily_choice.manager.builtin.empty.eat',
+      isWearModule: isWearModule,
+      isActivityModule: isActivityModule,
+    ),
   );
 }
 

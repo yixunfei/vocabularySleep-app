@@ -28,37 +28,16 @@ class TypingTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(
-        i18n,
-        zh: '打字测试',
-        en: 'Typing test',
-        ja: 'Typing test',
-        de: 'Typing test',
-        fr: 'Essai de dactylographie',
-        es: 'Prueba de clasificación',
-        ru: 'Тест на ввод текста',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_typing.typing_test_13f37f',
       ),
-      subtitle: pickUiText(
-        i18n,
-        zh: '换语言、换题材，看看速度和准确率能不能一起稳住。',
-        en: 'Choose language, topic, length, and mode while tracking speed, accuracy, errors, and rhythm.',
-        ja: 'スピード、正確さ、エラー、リズムを追跡しながら、言語、トピック、長さ、モードを選択します。',
-        de: 'Choose language, topic, length, and mode while tracking speed, accuracy, errors, and rhythm.',
-        fr: 'Choisissez la langue, le sujet, la longueur et le mode tout en suivant la vitesse, la précision, les erreurs et le rythme.',
-        es: 'Elija el idioma, el tema, la longitud y el modo mientras el seguimiento de velocidad, precisión, errores y ritmo.',
-        ru: 'Выберите язык, тему, длину и режим, отслеживая скорость, точность, ошибки и ритм.',
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_typing.choose_language_topic_length_and_mode_while_tracking_spe_4776ce',
       ),
       accent: _typingAccent,
       icon: Icons.keyboard_alt_rounded,
-      status: pickUiText(
-        i18n,
-        zh: '选好语言和题型，就可以开始输入',
-        en: 'Next: choose a drill setup and start typing',
-        ja: 'Next: choose a drill setup and start typing',
-        de: 'Next: choose a drill setup and start typing',
-        fr: 'Suivant : choisissez une configuration de foret et commencez à taper',
-        es: 'Siguiente: elegir una configuración de taladro y comenzar a escribir',
-        ru: 'Далее: выберите настройку дрели и начните печатать',
+      status: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_typing.next_choose_a_drill_setup_and_start_typing_54df18',
       ),
       child: const _TypingTestCard(),
     );
@@ -67,37 +46,22 @@ class TypingTestPage extends StatelessWidget {
 
 class _TypingPassage {
   const _TypingPassage({
-    required this.zh,
-    required this.en,
+    required this.textKey,
     required this.language,
     required this.topic,
-    this.ja,
-    this.es,
   });
 
-  final String zh;
-  final String en;
-  final String? ja;
-  final String? es;
+  final String textKey;
   final _TypingLanguage language;
   final _TypingTopic topic;
 
   String text(AppI18n i18n) {
     return switch (language) {
-      _TypingLanguage.zh => zh,
-      _TypingLanguage.en => en,
-      _TypingLanguage.ja => ja ?? en,
-      _TypingLanguage.es => es ?? en,
-      _TypingLanguage.mixed => pickUiText(
-        i18n,
-        zh: zh,
-        en: en,
-        ja: ja ?? en,
-        de: en,
-        fr: en,
-        es: es ?? en,
-        ru: en,
-      ),
+      _TypingLanguage.zh => AppI18n('zh').t(textKey),
+      _TypingLanguage.en => AppI18n('en').t(textKey),
+      _TypingLanguage.ja => AppI18n('ja').t(textKey),
+      _TypingLanguage.es => AppI18n('es').t(textKey),
+      _TypingLanguage.mixed => i18n.t(textKey),
     };
   }
 }
@@ -292,35 +256,14 @@ class _TypingTestCardState extends State<_TypingTestCard> {
   String? _challengePrompt(AppI18n i18n, String target) {
     return switch (_mode) {
       _TypingMode.fixErrors => _makeFixErrorsText(target),
-      _TypingMode.code => pickUiText(
-        i18n,
-        zh: '代码专项：注意大小写、括号、引号和换行。',
-        en: 'Code drill: preserve case, brackets, quotes, and line breaks.',
-        ja: 'Code drill: preserve case, brackets, quotes, and line breaks.',
-        de: 'Code drill: preserve case, brackets, quotes, and line breaks.',
-        fr: 'Perceuse de format : conservez le boîtier, les crochets, les guillemets et les sauts de ligne.',
-        es: 'Taladro de formato: caja de conservación, corchetes, citas y roturas de línea.',
-        ru: 'Формат сверла: сохранение корпуса, скобки, котировки и разрывы линий.',
+      _TypingMode.code => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_typing.code_drill_preserve_case_brackets_quotes_and_line_breaks_977c91',
       ),
-      _TypingMode.numbers => pickUiText(
-        i18n,
-        zh: '数字专项：注意空格、分隔符、时间和百分号。',
-        en: 'Number drill: watch spaces, separators, time, and percent signs.',
-        ja: 'Number drill: watch spaces, separators, time, and percent signs.',
-        de: 'Number drill: watch spaces, separators, time, and percent signs.',
-        fr: 'Perceuse numérique : espaces de montre, séparateurs, temps et pourcentage de panneaux.',
-        es: 'Número de perforación: ver espacios, separadores, tiempo y por ciento de signos.',
-        ru: 'Численность дрели: часовые пространства, разделители, время и процентные знаки.',
+      _TypingMode.numbers => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_typing.number_drill_watch_spaces_separators_time_and_percent_si_8fa15a',
       ),
-      _TypingMode.symbols => pickUiText(
-        i18n,
-        zh: '符号专项：句尾会加入真实键盘切换组合。',
-        en: 'Symbol drill: the ending adds realistic keyboard switching.',
-        ja: 'Symbol drill: the ending adds realistic keyboard switching.',
-        de: 'Symbol drill: the ending adds realistic keyboard switching.',
-        fr: 'Perceuse symbolique : la fin ajoute un changement de clavier réaliste.',
-        es: 'Perforación de símbolo: el final añade conmutación de teclado realista.',
-        ru: 'Символьная дрель: окончание добавляет реалистичное переключение клавиатуры.',
+      _TypingMode.symbols => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_typing.symbol_drill_the_ending_adds_realistic_keyboard_switchin_03817e',
       ),
       _ => null,
     };
@@ -767,132 +710,54 @@ class _TypingTestCardState extends State<_TypingTestCard> {
         _HumanMetricWrap(
           metrics: <(String, String)>[
             (
-              pickUiText(
-                i18n,
-                zh: '速度',
-                en: 'Speed',
-                ja: 'Speed',
-                de: 'Speed',
-                fr: 'Vitesse',
-                es: 'Speed',
-                ru: 'Скорость',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_hand_eye_settings.speed_29ca97',
               ),
               '${liveWpm.round()} WPM',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '净速',
-                en: 'Net',
-                ja: 'Net',
-                de: 'Net',
-                fr: 'Montant net',
-                es: 'Net',
-                ru: 'нет',
-              ),
+              i18n.t('inline.plan295.life.net.cd65c198c7ff'),
               '${liveNetWpm.round()} WPM',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '字符',
-                en: 'Chars',
-                ja: '文字',
-                de: 'Chars',
-                fr: 'Chars',
-                es: 'Chars',
-                ru: 'Чары',
-              ),
+              i18n.t('inline.ui.pages.toolbox_human_tests_typing.chars_23f3d7'),
               '${liveCpm.round()} CPM',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '准确率',
-                en: 'Accuracy',
-                ja: '精度',
-                de: 'Accuracy',
-                fr: 'Accuracy',
-                es: 'Precisión',
-                ru: 'точность',
-              ),
+              i18n.t('inline.ui.pages.practice_review_page.accuracy_8cf5a1'),
               input.isEmpty ? '-' : '${accuracy.round()}%',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '错误',
-                en: 'Errors',
-                ja: 'Errors',
-                de: 'Errors',
-                fr: 'Erreurs',
-                es: 'Errores',
-                ru: 'ошибки',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_cognition.errors_a52a38',
               ),
               '${stats.errors}',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '稳定性',
-                en: 'Stability',
-                ja: 'Stability',
-                de: 'Stability',
-                fr: 'Stabilité',
-                es: 'Estabilidad',
-                ru: 'Стабильность',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_auditory_lab.stability_c45fda',
               ),
               input.isEmpty ? '-' : '${consistency.round()}%',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '回退',
-                en: 'Backspaces',
-                ja: 'バックス',
-                de: 'Backspaces',
-                fr: 'Espaces arrière',
-                es: 'Backspaces',
-                ru: 'Задние пространства',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_typing.backspaces_b0e5b5',
               ),
               '$_backspaces',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '用时',
-                en: 'Time',
-                ja: 'Time',
-                de: 'Time',
-                fr: 'Heure',
-                es: 'Hora',
-                ru: 'Время',
-              ),
+              i18n.t('inline.plan295.life.time.bf469a617001'),
               elapsed == Duration.zero ? '-' : _formatDuration(elapsed),
             ),
           ],
         ),
         const SizedBox(height: 12),
         _HumanSettingsSection(
-          title: pickUiText(
-            i18n,
-            zh: '打字设置',
-            en: 'Typing settings',
-            ja: 'Typing settings',
-            de: 'Typing settings',
-            fr: 'Paramètres de dactylographie',
-            es: 'Ajustes de clasificación',
-            ru: 'Настройки для печатания',
+          title: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_typing.typing_settings_537bf6',
           ),
-          subtitle: pickUiText(
-            i18n,
-            zh: '模式、语言、题材和长度都在这里，展开后慢慢调。',
-            en: 'Mode, language, topic, and length settings fold away to save space.',
-            ja: 'Mode, language, topic, and length settings fold away to save space.',
-            de: 'Mode, language, topic, and length settings fold away to save space.',
-            fr: 'Mode, langue, sujet et paramètres de longueur se replient pour économiser de l\'espace.',
-            es: 'Modo, lenguaje, tema y configuración de longitud se doblan para guardar espacio.',
-            ru: 'Режим, язык, тема и параметры длины складываются, чтобы сэкономить место.',
+          subtitle: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_typing.mode_language_topic_and_length_settings_fold_away_to_sav_5c731e',
           ),
           child: _typingBuildSettings(this, context, i18n),
         ),
@@ -924,15 +789,8 @@ class _TypingTestCardState extends State<_TypingTestCard> {
                 keyboardType: TextInputType.multiline,
                 textInputAction: TextInputAction.newline,
                 decoration: InputDecoration(
-                  labelText: pickUiText(
-                    i18n,
-                    zh: '输入上方内容',
-                    en: 'Type the content above',
-                    ja: 'Type the content above',
-                    de: 'Type the content above',
-                    fr: 'Tapez le contenu ci-dessus',
-                    es: 'Escriba el contenido anterior',
-                    ru: 'Введите содержимое выше',
+                  labelText: i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_typing.type_the_content_above_104374',
                   ),
                   helperText: _typingModeHint(i18n, _mode),
                   border: const OutlineInputBorder(),
@@ -945,15 +803,8 @@ class _TypingTestCardState extends State<_TypingTestCard> {
                 runSpacing: 10,
                 children: <Widget>[
                   _HumanActionButton(
-                    label: pickUiText(
-                      i18n,
-                      zh: '重新开始',
-                      en: 'Restart',
-                      ja: 'Restart',
-                      de: 'Restart',
-                      fr: 'Redémarrer',
-                      es: 'Restart',
-                      ru: 'Перезапустить',
+                    label: i18n.t(
+                      'inline.ui.pages.practice_session_page.restart_8b7fcc',
                     ),
                     icon: Icons.restart_alt_rounded,
                     onPressed: () => _reset(pickNew: false),
@@ -962,15 +813,8 @@ class _TypingTestCardState extends State<_TypingTestCard> {
                     onPressed: _reset,
                     icon: const Icon(Icons.refresh_rounded),
                     label: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '换一段',
-                        en: 'New passage',
-                        ja: 'New passage',
-                        de: 'New passage',
-                        fr: 'Nouveau passage',
-                        es: 'Nuevo pasaje',
-                        ru: 'Новый проход',
+                      i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_typing.new_passage_0882a0',
                       ),
                     ),
                   ),
@@ -978,15 +822,8 @@ class _TypingTestCardState extends State<_TypingTestCard> {
                     onPressed: () => _focusNode.requestFocus(),
                     icon: const Icon(Icons.keyboard_rounded),
                     label: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '聚焦输入',
-                        en: 'Focus input',
-                        ja: 'Focus input',
-                        de: 'Focus input',
-                        fr: 'Élément central',
-                        es: 'Introducción focal',
-                        ru: 'Внимание',
+                      i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_typing.focus_input_25f04e',
                       ),
                     ),
                   ),
@@ -1005,36 +842,15 @@ class _TypingTestCardState extends State<_TypingTestCard> {
         ],
         const SizedBox(height: 12),
         _HumanSettingsSection(
-          title: pickUiText(
-            i18n,
-            zh: '小提示',
-            en: 'Training boundary',
-            ja: 'Training boundary',
-            de: 'Training boundary',
-            fr: 'Limite de la formation',
-            es: 'Límite de capacitación',
-            ru: 'Граница подготовки',
+          title: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_typing.training_boundary_475634',
           ),
-          subtitle: pickUiText(
-            i18n,
-            zh: '这些设置只影响这一轮练习。',
-            en: 'Mode, language, topic, and length only affect this practice page.',
-            ja: 'Mode, language, topic, and length only affect this practice page.',
-            de: 'Mode, language, topic, and length only affect this practice page.',
-            fr: 'Mode, language, topic, and length only affect this practice page.',
-            es: 'Mode, language, topic, and length only affect this practice page.',
-            ru: 'Mode, language, topic, and length only affect this practice page.',
+          subtitle: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_typing.mode_language_topic_and_length_only_affect_this_practice_163d3b',
           ),
           child: Text(
-            pickUiText(
-              i18n,
-              zh: '报告只用来复盘这次输入。可以先用经典模式热身，再切换冲刺、精准、盲打、符号、代码或数字练弱项。',
-              en: 'Reports are not saved to study history. Start with Classic, then use Sprint, Precision, Blind, Symbols, Format, and Numbers for focused practice.',
-              ja: 'Reports are not saved to study history. Start with Classic, then use Sprint, Precision, Blind, Symbols, Format, and Numbers for focused practice.',
-              de: 'Reports are not saved to study history. Start with Classic, then use Sprint, Precision, Blind, Symbols, Format, and Numbers for focused practice.',
-              fr: 'Reports are not saved to study history. Start with Classic, then use Sprint, Precision, Blind, Symbols, Format, and Numbers for focused practice.',
-              es: 'Reports are not saved to study history. Start with Classic, then use Sprint, Precision, Blind, Symbols, Format, and Numbers for focused practice.',
-              ru: 'Reports are not saved to study history. Start with Classic, then use Sprint, Precision, Blind, Symbols, Format, and Numbers for focused practice.',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_typing.reports_are_not_saved_to_study_history_start_with_classi_5cd122',
             ),
             style: Theme.of(
               context,

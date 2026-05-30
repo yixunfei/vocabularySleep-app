@@ -59,11 +59,13 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
   Widget build(BuildContext context) {
     final result = _result;
     return ToolboxToolPage(
-      title: _lifeText(context, zh: 'Offer 选择助手', en: 'Offer selector'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '参考 OfferSelect 的机会录入形态，在本地完成多 Offer 评分、风险拆解和谈薪锚点。',
-        en: 'Local multi-offer scoring, risk breakdown, and negotiation anchors inspired by OfferSelect.',
+        'inline.plan295.life.offer_selector.f837d5d3336b',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.local_multi_offer_scoring_risk_break.a820cddf9d5c',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,11 +92,10 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
 
   Widget _profilePanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '个人履历', en: 'Profile'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(context, 'inline.plan295.life.profile.c64fca252d00'),
+      subtitle: _lifeI18nText(
         context,
-        zh: '保留参考页的标题、背景、专业和经历字段，用于生成可复制的决策摘要。',
-        en: 'Keeps the reference page profile fields for the shareable decision summary.',
+        'inline.plan295.life.keeps_the_reference_page_profile_fie.2ad4a62a7ae5',
       ),
       children: <Widget>[
         _WorkWorthFieldGrid(
@@ -103,29 +104,25 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               context,
               controller: _title,
               keyName: 'title',
-              zh: '标题',
-              en: 'Title',
+              labelKey: 'life.offer_select.field.title',
             ),
             _profileField(
               context,
               controller: _background,
               keyName: 'background',
-              zh: '背景',
-              en: 'Background',
+              labelKey: 'life.offer_select.field.background',
             ),
             _profileField(
               context,
               controller: _major,
               keyName: 'major',
-              zh: '专业',
-              en: 'Major',
+              labelKey: 'life.offer_select.field.major',
             ),
             _profileField(
               context,
               controller: _experience,
               keyName: 'experience',
-              zh: '经历',
-              en: 'Experience',
+              labelKey: 'life.offer_select.field.experience',
             ),
           ],
         ),
@@ -135,11 +132,10 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
 
   Widget _offerSelectorPanel(BuildContext context, OfferSelectResult result) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '工作机会', en: 'Offers'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(context, 'inline.plan295.life.offers.02524fb1c5d5'),
+      subtitle: _lifeI18nText(
         context,
-        zh: '已婉拒的机会会保留作对照，但不参与首选排序。',
-        en: 'Rejected offers remain visible for reference but are excluded from the leader ranking.',
+        'inline.plan295.life.rejected_offers_remain_visible_for_r.2acec057de23',
       ),
       children: <Widget>[
         Wrap(
@@ -151,7 +147,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
                 selected: index == _selectedIndex,
                 label: Text(
                   _candidates[index].rejected
-                      ? '${_candidates[index].company} · ${_lifeText(context, zh: '已婉拒', en: 'Rejected')}'
+                      ? '${_candidates[index].company} · ${_lifeI18nText(context, 'inline.plan295.life.rejected.27e29e9e26de')}'
                       : _candidates[index].company,
                 ),
                 onSelected: (_) => setState(() => _selectedIndex = index),
@@ -167,7 +163,9 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               key: const ValueKey<String>('offer-select-add-offer'),
               onPressed: _addOffer,
               icon: const Icon(Icons.add_rounded),
-              label: Text(_lifeText(context, zh: '添加', en: 'Add')),
+              label: Text(
+                _lifeI18nText(context, 'inline.plan295.life.add.d800ae076568'),
+              ),
             ),
             OutlinedButton.icon(
               onPressed: _toggleRejected,
@@ -178,29 +176,42 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               ),
               label: Text(
                 _selectedCandidate.rejected
-                    ? _lifeText(context, zh: '取消婉拒', en: 'Un-reject')
-                    : _lifeText(context, zh: '标记婉拒', en: 'Reject'),
+                    ? _lifeI18nText(
+                        context,
+                        'inline.plan295.life.un_reject.4e0373513b3e',
+                      )
+                    : _lifeI18nText(
+                        context,
+                        'inline.plan295.life.reject.5e08baa15c65',
+                      ),
               ),
             ),
             OutlinedButton.icon(
               onPressed: _candidates.length <= 1 ? null : _removeSelectedOffer,
               icon: const Icon(Icons.delete_outline_rounded),
-              label: Text(_lifeText(context, zh: '删除', en: 'Delete')),
+              label: Text(_lifeI18nText(context, 'delete')),
             ),
             OutlinedButton.icon(
               onPressed: _resetOffers,
               icon: const Icon(Icons.refresh_rounded),
-              label: Text(_lifeText(context, zh: '重置示例', en: 'Reset sample')),
+              label: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.reset_sample.da2f6b5e893c',
+                ),
+              ),
             ),
           ],
         ),
         if (result.rejectedEvaluations.isNotEmpty) ...<Widget>[
           const SizedBox(height: 12),
           Text(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '已婉拒: ${result.rejectedEvaluations.length}',
-              en: 'Rejected: ${result.rejectedEvaluations.length}',
+              'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.offer.select.rejected.2af7780d38',
+              params: <String, Object?>{
+                'length': result.rejectedEvaluations.length,
+              },
             ),
             style: Theme.of(context).textTheme.bodySmall,
           ),
@@ -212,11 +223,13 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
   Widget _candidateEditorPanel(BuildContext context) {
     final candidate = _selectedCandidate;
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '当前机会编辑', en: 'Edit selected offer'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '字段对应参考页里的公司、薪资、福利、社保、强度、地点、优缺点，并补充本地评分所需的扣款和成本。',
-        en: 'Fields map to company, salary, benefits, insurance, intensity, location, pros, and cons, with extra local scoring inputs.',
+        'inline.plan295.life.edit_selected_offer.660ee8a8a879',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.fields_map_to_company_salary_benefit.901a292c7b78',
       ),
       children: <Widget>[
         _WorkWorthFieldGrid(
@@ -226,8 +239,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'company',
               value: candidate.company,
-              zh: '公司名称',
-              en: 'Company',
+              labelKey: 'life.offer_select.field.company',
               onChanged: (value) =>
                   _updateSelected((item) => item.copyWith(company: value)),
             ),
@@ -236,8 +248,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'role',
               value: candidate.role,
-              zh: '岗位方向',
-              en: 'Role',
+              labelKey: 'life.offer_select.field.role',
               onChanged: (value) =>
                   _updateSelected((item) => item.copyWith(role: value)),
             ),
@@ -246,8 +257,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'city',
               value: candidate.city,
-              zh: '工作地点',
-              en: 'Location',
+              labelKey: 'life.offer_select.field.location',
               onChanged: (value) =>
                   _updateSelected((item) => item.copyWith(city: value)),
             ),
@@ -256,8 +266,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'schedule',
               value: candidate.workSchedule,
-              zh: '工作强度',
-              en: 'Schedule',
+              labelKey: 'life.offer_select.field.schedule',
               onChanged: (value) =>
                   _updateSelected((item) => item.copyWith(workSchedule: value)),
             ),
@@ -265,7 +274,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
         ),
         const SizedBox(height: 14),
         Text(
-          _lifeText(context, zh: '薪资信息', en: 'Salary'),
+          _lifeI18nText(context, 'inline.plan295.life.salary.5e92cc278c7f'),
           style: Theme.of(
             context,
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
@@ -278,8 +287,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'monthly-base',
               value: candidate.monthlyBase,
-              zh: '月基本工资',
-              en: 'Monthly base',
+              labelKey: 'life.offer_select.field.monthly_base',
               prefixText: '¥ ',
               onChanged: (value) =>
                   _updateSelected((item) => item.copyWith(monthlyBase: value)),
@@ -289,8 +297,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'months',
               value: candidate.salaryMonths,
-              zh: '发薪月数',
-              en: 'Months/year',
+              labelKey: 'life.offer_select.field.salary_months',
               onChanged: (value) =>
                   _updateSelected((item) => item.copyWith(salaryMonths: value)),
             ),
@@ -299,8 +306,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'bonus',
               value: candidate.otherBonus,
-              zh: '其他奖金/股票',
-              en: 'Other bonus/equity',
+              labelKey: 'life.offer_select.field.other_bonus_equity',
               prefixText: '¥ ',
               onChanged: (value) =>
                   _updateSelected((item) => item.copyWith(otherBonus: value)),
@@ -310,8 +316,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'tax',
               value: candidate.monthlyTax,
-              zh: '月税费',
-              en: 'Monthly tax',
+              labelKey: 'life.work_worth.field.monthly_tax',
               prefixText: '¥ ',
               onChanged: (value) =>
                   _updateSelected((item) => item.copyWith(monthlyTax: value)),
@@ -321,8 +326,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'insurance-fund',
               value: candidate.monthlyInsuranceFund,
-              zh: '五险一金/月',
-              en: 'Insurance and fund',
+              labelKey: 'life.work_worth.field.insurance_fund',
               prefixText: '¥ ',
               onChanged: (value) => _updateSelected(
                 (item) => item.copyWith(monthlyInsuranceFund: value),
@@ -333,8 +337,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'benefit',
               value: candidate.monthlyBenefitValue,
-              zh: '福利现金值/月',
-              en: 'Monthly benefits',
+              labelKey: 'life.work_worth.field.monthly_benefits',
               prefixText: '¥ ',
               onChanged: (value) => _updateSelected(
                 (item) => item.copyWith(monthlyBenefitValue: value),
@@ -345,8 +348,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'housing',
               value: candidate.monthlyHousingCost,
-              zh: '住房成本/月',
-              en: 'Housing cost',
+              labelKey: 'life.offer_select.field.housing_cost',
               prefixText: '¥ ',
               onChanged: (value) => _updateSelected(
                 (item) => item.copyWith(monthlyHousingCost: value),
@@ -357,8 +359,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'living',
               value: candidate.monthlyLivingCost,
-              zh: '生活开销/月',
-              en: 'Living cost',
+              labelKey: 'life.work_worth.field.living_cost',
               prefixText: '¥ ',
               onChanged: (value) => _updateSelected(
                 (item) => item.copyWith(monthlyLivingCost: value),
@@ -368,7 +369,10 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
         ),
         const SizedBox(height: 10),
         _LifeSliderField(
-          label: _lifeText(context, zh: '奖金兑现概率', en: 'Bonus certainty'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.bonus_certainty.af7ff432a0d1',
+          ),
           valueText: '${(candidate.bonusCertainty * 100).round()}%',
           value: candidate.bonusCertainty,
           min: 0,
@@ -378,7 +382,10 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               _updateSelected((item) => item.copyWith(bonusCertainty: value)),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '薪资评级', en: 'Salary rating'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.salary_rating.360649d132d5',
+          ),
           valueText: candidate.salaryRating.toStringAsFixed(1),
           value: candidate.salaryRating,
           min: 1,
@@ -389,7 +396,10 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
         ),
         const SizedBox(height: 12),
         Text(
-          _lifeText(context, zh: '时间与生活', en: 'Time and WLB'),
+          _lifeI18nText(
+            context,
+            'inline.plan295.life.time_and_wlb.ba28354c6420',
+          ),
           style: Theme.of(
             context,
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
@@ -402,8 +412,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'work-days',
               value: candidate.workDaysPerWeek,
-              zh: '每周工作天',
-              en: 'Workdays/week',
+              labelKey: 'life.work_worth.field.workdays_week',
               onChanged: (value) => _updateSelected(
                 (item) => item.copyWith(workDaysPerWeek: value),
               ),
@@ -413,8 +422,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'wfh-days',
               value: candidate.workFromHomeDaysPerWeek,
-              zh: '每周居家天',
-              en: 'WFH days/week',
+              labelKey: 'life.work_worth.field.wfh_days_week',
               onChanged: (value) => _updateSelected(
                 (item) => item.copyWith(workFromHomeDaysPerWeek: value),
               ),
@@ -424,8 +432,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'work-hours',
               value: candidate.workHoursPerDay,
-              zh: '日工作小时',
-              en: 'Work hours/day',
+              labelKey: 'life.work_worth.field.work_hours_day',
               onChanged: (value) => _updateSelected(
                 (item) => item.copyWith(workHoursPerDay: value),
               ),
@@ -435,8 +442,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'commute-hours',
               value: candidate.commuteHoursPerDay,
-              zh: '日通勤小时',
-              en: 'Commute hours/day',
+              labelKey: 'life.work_worth.field.commute_hours_day',
               onChanged: (value) => _updateSelected(
                 (item) => item.copyWith(commuteHoursPerDay: value),
               ),
@@ -446,8 +452,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'rest-hours',
               value: candidate.restHoursPerDay,
-              zh: '可恢复休息小时',
-              en: 'Rest hours/day',
+              labelKey: 'life.work_worth.field.rest_hours_day',
               onChanged: (value) => _updateSelected(
                 (item) => item.copyWith(restHoursPerDay: value),
               ),
@@ -457,8 +462,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'unpaid-overtime',
               value: candidate.unpaidOvertimeHoursPerMonth,
-              zh: '无偿加班/月',
-              en: 'Unpaid overtime/month',
+              labelKey: 'life.work_worth.field.unpaid_overtime_month',
               onChanged: (value) => _updateSelected(
                 (item) => item.copyWith(unpaidOvertimeHoursPerMonth: value),
               ),
@@ -468,8 +472,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'annual-leave',
               value: candidate.annualLeaveDays,
-              zh: '年假天数',
-              en: 'Annual leave',
+              labelKey: 'life.work_worth.field.annual_leave',
               onChanged: (value) => _updateSelected(
                 (item) => item.copyWith(annualLeaveDays: value),
               ),
@@ -479,8 +482,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'paid-sick',
               value: candidate.paidSickLeaveDays,
-              zh: '带薪病假',
-              en: 'Paid sick leave',
+              labelKey: 'life.work_worth.field.paid_sick_leave',
               onChanged: (value) => _updateSelected(
                 (item) => item.copyWith(paidSickLeaveDays: value),
               ),
@@ -489,7 +491,10 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
         ),
         const SizedBox(height: 10),
         _LifeSliderField(
-          label: _lifeText(context, zh: '工作生活平衡度', en: 'WLB rating'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.wlb_rating.f377a58ecf55',
+          ),
           valueText: candidate.wlbRating.toStringAsFixed(1),
           value: candidate.wlbRating,
           min: 1,
@@ -508,8 +513,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'benefits',
               value: candidate.benefits,
-              zh: '福利',
-              en: 'Benefits',
+              labelKey: 'life.offer_select.field.benefits',
               maxLines: 2,
               onChanged: (value) =>
                   _updateSelected((item) => item.copyWith(benefits: value)),
@@ -519,8 +523,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'social-insurance',
               value: candidate.socialInsurance,
-              zh: '社保',
-              en: 'Social insurance',
+              labelKey: 'life.offer_select.field.social_insurance',
               maxLines: 2,
               onChanged: (value) => _updateSelected(
                 (item) => item.copyWith(socialInsurance: value),
@@ -531,8 +534,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'pros',
               value: candidate.pros,
-              zh: '优点',
-              en: 'Pros',
+              labelKey: 'life.offer_select.field.pros',
               maxLines: 3,
               onChanged: (value) =>
                   _updateSelected((item) => item.copyWith(pros: value)),
@@ -542,8 +544,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               candidate: candidate,
               field: 'cons',
               value: candidate.cons,
-              zh: '缺点',
-              en: 'Cons',
+              labelKey: 'life.offer_select.field.cons',
               maxLines: 3,
               onChanged: (value) =>
                   _updateSelected((item) => item.copyWith(cons: value)),
@@ -562,38 +563,35 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         _LifeSegmentedField<WorkWorthEnvironment>(
-          label: _lifeText(context, zh: '工作环境健康层级', en: 'Work environment'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.work_environment.f0cbd11a8ea6',
+          ),
           value: candidate.environment,
           options: const <_LifeOption<WorkWorthEnvironment>>[
             _LifeOption(
               value: WorkWorthEnvironment.lifeTrade,
-              labelZh: '拿命换',
-              labelEn: 'Life trade',
+              labelKey: 'inline.plan295.life.life_trade.64669d013a9d',
             ),
             _LifeOption(
               value: WorkWorthEnvironment.harmful,
-              labelZh: '有害健康',
-              labelEn: 'Harmful',
+              labelKey: 'inline.plan295.life.harmful.79cef6fb917c',
             ),
             _LifeOption(
               value: WorkWorthEnvironment.highPressure,
-              labelZh: '高压消耗',
-              labelEn: 'High pressure',
+              labelKey: 'inline.plan295.life.high_pressure.0751ff04e768',
             ),
             _LifeOption(
               value: WorkWorthEnvironment.normal,
-              labelZh: '普通办公',
-              labelEn: 'Normal',
+              labelKey: 'inline.plan295.life.normal.096e2aa2b20e',
             ),
             _LifeOption(
               value: WorkWorthEnvironment.balanced,
-              labelZh: '平衡友好',
-              labelEn: 'Balanced',
+              labelKey: 'inline.plan295.life.balanced.9036d445b5c7',
             ),
             _LifeOption(
               value: WorkWorthEnvironment.freeComfort,
-              labelZh: '自由舒适',
-              labelEn: 'Free comfort',
+              labelKey: 'inline.plan295.life.free_comfort.2614933074c1',
             ),
           ],
           onChanged: (value) =>
@@ -601,38 +599,35 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
         ),
         const SizedBox(height: 14),
         _LifeSegmentedField<WorkWorthJobStability>(
-          label: _lifeText(context, zh: '工作类型/稳定性', en: 'Job stability'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.job_stability.1f5a665df6e2',
+          ),
           value: candidate.stability,
           options: const <_LifeOption<WorkWorthJobStability>>[
             _LifeOption(
               value: WorkWorthJobStability.government,
-              labelZh: '体制内',
-              labelEn: 'Government',
+              labelKey: 'inline.plan295.life.government.1682260d37fe',
             ),
             _LifeOption(
               value: WorkWorthJobStability.stateOwned,
-              labelZh: '国企',
-              labelEn: 'State owned',
+              labelKey: 'inline.plan295.life.state_owned.ed86b04545aa',
             ),
             _LifeOption(
               value: WorkWorthJobStability.foreignCompany,
-              labelZh: '外企',
-              labelEn: 'Foreign',
+              labelKey: 'inline.plan295.life.foreign.e41f23231be2',
             ),
             _LifeOption(
               value: WorkWorthJobStability.privateCompany,
-              labelZh: '私企',
-              labelEn: 'Private',
+              labelKey: 'inline.plan295.life.private.ccfe9d14a5a2',
             ),
             _LifeOption(
               value: WorkWorthJobStability.dispatch,
-              labelZh: '外包派遣',
-              labelEn: 'Dispatch',
+              labelKey: 'inline.plan295.life.dispatch.ae175af20842',
             ),
             _LifeOption(
               value: WorkWorthJobStability.freelance,
-              labelZh: '自由职业',
-              labelEn: 'Freelance',
+              labelKey: 'inline.plan295.life.freelance.f782aea997c1',
             ),
           ],
           onChanged: (value) =>
@@ -640,7 +635,10 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
         ),
         const SizedBox(height: 10),
         _LifeSliderField(
-          label: _lifeText(context, zh: 'Offer 确定性', en: 'Offer certainty'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.offer_certainty.2d2abf45a9db',
+          ),
           valueText: '${(candidate.offerCertainty * 100).round()}%',
           value: candidate.offerCertainty,
           min: 0,
@@ -650,7 +648,10 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               _updateSelected((item) => item.copyWith(offerCertainty: value)),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '城市适配', en: 'City fit'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.city_fit.d501f6f05591',
+          ),
           valueText: candidate.cityFitFactor.toStringAsFixed(2),
           value: candidate.cityFitFactor,
           min: 0.7,
@@ -660,7 +661,10 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               _updateSelected((item) => item.copyWith(cityFitFactor: value)),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '岗位匹配', en: 'Role fit'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.role_fit.db0376021b71',
+          ),
           valueText: candidate.roleMatchFactor.toStringAsFixed(2),
           value: candidate.roleMatchFactor,
           min: 0.75,
@@ -670,7 +674,10 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               _updateSelected((item) => item.copyWith(roleMatchFactor: value)),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '成长性/技能复利', en: 'Growth potential'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.growth_potential.88b829804ac5',
+          ),
           valueText: candidate.growthFactor.toStringAsFixed(2),
           value: candidate.growthFactor,
           min: 0.75,
@@ -680,7 +687,10 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               _updateSelected((item) => item.copyWith(growthFactor: value)),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '下班边界', en: 'Boundary quality'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.boundary_quality.ab74932885fc',
+          ),
           valueText: candidate.boundaryFactor.toStringAsFixed(2),
           value: candidate.boundaryFactor,
           min: 0.7,
@@ -690,7 +700,10 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
               _updateSelected((item) => item.copyWith(boundaryFactor: value)),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '心理安全感', en: 'Psychological safety'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.psychological_safety.10a0bcbdc985',
+          ),
           valueText: candidate.psychologicalSafetyFactor.toStringAsFixed(2),
           value: candidate.psychologicalSafetyFactor,
           min: 0.7,
@@ -701,7 +714,10 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
           ),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '自主权/灵活度', en: 'Autonomy'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.autonomy.a46fa9b788ab',
+          ),
           valueText: candidate.autonomyFactor.toStringAsFixed(2),
           value: candidate.autonomyFactor,
           min: 0.75,
@@ -716,57 +732,53 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
 
   Widget _weightsPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '决策权重', en: 'Decision weights'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '权重越高，该维度越能影响排序；适合模拟“缺钱优先”“健康优先”“成长优先”等场景。',
-        en: 'Higher weight means that dimension affects ranking more.',
+        'inline.plan295.life.decision_weights.7255c60ea566',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.higher_weight_means_that_dimension_a.2bc7c82cb979',
       ),
       children: <Widget>[
         _weightSlider(
           context,
-          zh: '现金流',
-          en: 'Cashflow',
+          labelKey: 'life.offer_select.weight.cashflow',
           value: _weights.cashflow,
           onChanged: (value) =>
               setState(() => _weights = _weights.copyWith(cashflow: value)),
         ),
         _weightSlider(
           context,
-          zh: '时间成本',
-          en: 'Time',
+          labelKey: 'life.offer_select.weight.time',
           value: _weights.time,
           onChanged: (value) =>
               setState(() => _weights = _weights.copyWith(time: value)),
         ),
         _weightSlider(
           context,
-          zh: '健康边界',
-          en: 'Health',
+          labelKey: 'life.offer_select.weight.health',
           value: _weights.health,
           onChanged: (value) =>
               setState(() => _weights = _weights.copyWith(health: value)),
         ),
         _weightSlider(
           context,
-          zh: '成长匹配',
-          en: 'Growth',
+          labelKey: 'life.offer_select.weight.growth',
           value: _weights.growth,
           onChanged: (value) =>
               setState(() => _weights = _weights.copyWith(growth: value)),
         ),
         _weightSlider(
           context,
-          zh: '稳定性',
-          en: 'Stability',
+          labelKey: 'life.offer_select.weight.stability',
           value: _weights.stability,
           onChanged: (value) =>
               setState(() => _weights = _weights.copyWith(stability: value)),
         ),
         _weightSlider(
           context,
-          zh: '城市适配',
-          en: 'City fit',
+          labelKey: 'life.offer_select.weight.city_fit',
           value: _weights.cityFit,
           onChanged: (value) =>
               setState(() => _weights = _weights.copyWith(cityFit: value)),
@@ -777,19 +789,20 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
 
   Widget _comparisonPanel(BuildContext context, OfferSelectResult result) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '排序与拆解', en: 'Ranking breakdown'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '分数来自现金、时间、健康、成长、稳定和城市适配六个维度，已婉拒项放在末尾。',
-        en: 'Scores combine cash, time, health, growth, stability, and city fit.',
+        'inline.plan295.life.ranking_breakdown.c320ef5aa9da',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.scores_combine_cash_time_health_grow.dd9b514e4aaf',
       ),
       children: <Widget>[
         if (result.activeEvaluations.isEmpty)
           Text(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '暂无未婉拒的 Offer。',
-              en: 'No active offers yet.',
+              'inline.plan295.life.no_active_offers_yet.b957efaee91e',
             ),
           )
         else
@@ -808,7 +821,10 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
         if (result.rejectedEvaluations.isNotEmpty) ...<Widget>[
           const SizedBox(height: 8),
           Text(
-            _lifeText(context, zh: '已婉拒对照', en: 'Rejected reference'),
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.rejected_reference.76e61b02beec',
+            ),
             style: Theme.of(
               context,
             ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
@@ -828,15 +844,17 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
     final leader = result.leader;
     final runnerUp = result.runnerUp;
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '决策报告', en: 'Decision report'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '把优势、风险和谈薪追平金额摊开看，避免只盯一个总分。',
-        en: 'Review strengths, risks, and negotiation anchors instead of only one score.',
+        'inline.plan295.life.decision_report.ae3d59cf851b',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.review_strengths_risks_and_negotiati.14f6fb01cff6',
       ),
       children: <Widget>[
         Text(
-          _lifeText(context, zh: result.summaryZh, en: result.summaryEn),
+          _lifeI18nRefText(context, result.summary),
           style: Theme.of(
             context,
           ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
@@ -844,44 +862,60 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
         if (leader != null) ...<Widget>[
           const SizedBox(height: 12),
           _WorkWorthBreakdownRow(
-            label: _lifeText(context, zh: '当前首选', en: 'Current leader'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.current_leader.09a39be74d8b',
+            ),
             value: leader.candidate.company,
           ),
           _WorkWorthBreakdownRow(
-            label: _lifeText(context, zh: '综合分', en: 'Weighted score'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.weighted_score.f1db81085d06',
+            ),
             value: leader.weightedScore.toStringAsFixed(1),
           ),
           _WorkWorthBreakdownRow(
-            label: _lifeText(context, zh: '月可支配', en: 'Monthly surplus'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.monthly_surplus.f916fcdabd72',
+            ),
             value: _money(leader.workWorth.monthlyDisposableIncome),
           ),
           _WorkWorthBreakdownRow(
-            label: _lifeText(context, zh: '工作性价比', en: 'Work value'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.work_value.ef23a7f39470',
+            ),
             value: leader.workWorth.valueScore.toStringAsFixed(2),
           ),
           if (runnerUp != null)
             _WorkWorthBreakdownRow(
-              label: _lifeText(
+              label: _lifeI18nText(
                 context,
-                zh: '${runnerUp.candidate.company} 追平需加',
-                en: '${runnerUp.candidate.company} raise to match',
+                'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.offer.select.raise_to_match.637a3c4320',
+                params: <String, Object?>{
+                  'company': runnerUp.candidate.company,
+                },
               ),
               value: runnerUp.monthlyBaseRaiseToLeader == null
-                  ? _lifeText(context, zh: '难以仅靠薪资追平', en: 'Not salary-only')
+                  ? _lifeI18nText(
+                      context,
+                      'inline.plan295.life.not_salary_only.6a8f4ba6a76f',
+                    )
                   : _money(runnerUp.monthlyBaseRaiseToLeader!),
             ),
           const SizedBox(height: 12),
           _OfferReportGroup(
-            title: _lifeText(context, zh: '主要优势', en: 'Strengths'),
+            title: _lifeI18nText(
+              context,
+              'inline.plan295.life.strengths.79a777f9f3f2',
+            ),
             children: leader.strengths
                 .map(
                   (item) => _OfferReportTile(
-                    title: _lifeText(
-                      context,
-                      zh: item.titleZh,
-                      en: item.titleEn,
-                    ),
-                    body: _lifeText(context, zh: item.bodyZh, en: item.bodyEn),
+                    title: _lifeI18nText(context, item.titleKey),
+                    body: _lifeI18nRefText(context, item.body),
                     icon: Icons.thumb_up_alt_rounded,
                     color: const Color(0xFF4F9D69),
                   ),
@@ -890,19 +924,20 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
           ),
           const SizedBox(height: 10),
           _OfferReportGroup(
-            title: _lifeText(context, zh: '需要核对', en: 'Risks to verify'),
+            title: _lifeI18nText(
+              context,
+              'inline.plan295.life.risks_to_verify.9dd36c544784',
+            ),
             children: leader.flags.isEmpty
                 ? <Widget>[
                     _OfferReportTile(
-                      title: _lifeText(
+                      title: _lifeI18nText(
                         context,
-                        zh: '暂无明显红旗',
-                        en: 'No major flag',
+                        'inline.plan295.life.no_major_flag.1aa15daef044',
                       ),
-                      body: _lifeText(
+                      body: _lifeI18nText(
                         context,
-                        zh: '仍建议核对合同主体、试用期、年终奖和社保缴纳口径。',
-                        en: 'Still verify contract entity, probation terms, bonus rules, and social insurance.',
+                        'inline.plan295.life.still_verify_contract_entity_probati.36981722a092',
                       ),
                       icon: Icons.fact_check_rounded,
                       color: const Color(0xFF5586A3),
@@ -911,16 +946,8 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
                 : leader.flags
                       .map(
                         (flag) => _OfferReportTile(
-                          title: _lifeText(
-                            context,
-                            zh: flag.titleZh,
-                            en: flag.titleEn,
-                          ),
-                          body: _lifeText(
-                            context,
-                            zh: flag.bodyZh,
-                            en: flag.bodyEn,
-                          ),
+                          title: _lifeI18nText(context, flag.titleKey),
+                          body: _lifeI18nRefText(context, flag.body),
                           icon: _flagIcon(flag.level),
                           color: _flagColor(flag.level),
                         ),
@@ -934,20 +961,24 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
 
   Widget _referencePanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '参考工具链', en: 'Reference toolchain'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '占位页底部保留了 Offer 打分、城市对比和 AI 笔试入口，本地页也保留外部来源和内部替代入口。',
-        en: 'The placeholder keeps Offer scoring, city comparison, and AI interview links; this page keeps external and local alternatives.',
+        'inline.plan295.life.reference_toolchain.518c3d00dd40',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.the_placeholder_keeps_offer_scoring.e8af46f5b68a',
       ),
       children: <Widget>[
         _OfferReferenceAction(
           icon: Icons.star_rounded,
-          title: _lifeText(context, zh: 'Offer 打分', en: 'Offer scoring'),
-          body: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '外部参考 worthjob；本地可进入工作性价比计算器继续细算。',
-            en: 'External worthjob reference; local work value calculator is available.',
+            'inline.plan295.life.offer_scoring.c8986066e42a',
+          ),
+          body: _lifeI18nText(
+            context,
+            'inline.plan295.life.external_worthjob_reference_local_wo.4423bfa88da8',
           ),
           externalLabel: 'worthjob.zippland.com',
           onOpenExternal: () =>
@@ -959,11 +990,13 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
         const SizedBox(height: 10),
         _OfferReferenceAction(
           icon: Icons.location_city_rounded,
-          title: _lifeText(context, zh: '城市对比', en: 'City comparison'),
-          body: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '外部参考 citycompare；本地可进入城市薪资对比工具核对生活成本。',
-            en: 'External citycompare reference; local city salary compare can verify costs.',
+            'inline.plan295.life.city_comparison.31f81b0fe684',
+          ),
+          body: _lifeI18nText(
+            context,
+            'inline.plan295.life.external_citycompare_reference_local.1d38526b411a',
           ),
           externalLabel: 'citycompare.zippland.com',
           onOpenExternal: () =>
@@ -977,11 +1010,13 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
         const SizedBox(height: 10),
         _OfferReferenceAction(
           icon: Icons.record_voice_over_rounded,
-          title: _lifeText(context, zh: 'AI 笔试/面试', en: 'AI interview'),
-          body: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '外部参考 Snap-Solver；面试或笔试风险需结合岗位流程单独判断。',
-            en: 'External Snap-Solver reference; interview or assessment risk should be judged separately.',
+            'inline.plan295.life.ai_interview.11548fe27ba1',
+          ),
+          body: _lifeI18nText(
+            context,
+            'inline.plan295.life.external_snap_solver_reference_inter.d1ea66d33a86',
           ),
           externalLabel: 'snapsolver.zippland.com',
           onOpenExternal: () =>
@@ -989,10 +1024,9 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
         ),
         const SizedBox(height: 12),
         Text(
-          _lifeText(
+          _lifeI18nText(
             context,
-            zh: '本页不上传 Offer 数据，也不替代职业、法律、税务或财务建议；请用合同、HR 书面口径和真实工资条继续核验。',
-            en: 'This page does not upload offer data and is not career, legal, tax, or financial advice. Verify with contracts, written HR terms, and real payroll details.',
+            'inline.plan295.life.this_page_does_not_upload_offer_data.8431099903fe',
           ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
@@ -1004,15 +1038,14 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
     BuildContext context, {
     required TextEditingController controller,
     required String keyName,
-    required String zh,
-    required String en,
+    required String labelKey,
   }) {
     return TextField(
       key: ValueKey<String>('offer-select-profile-$keyName'),
       controller: controller,
       onChanged: (_) => setState(() {}),
       decoration: InputDecoration(
-        labelText: _lifeText(context, zh: zh, en: en),
+        labelText: _lifeI18nText(context, labelKey),
         border: const OutlineInputBorder(),
       ),
     );
@@ -1023,8 +1056,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
     required OfferSelectCandidate candidate,
     required String field,
     required String value,
-    required String zh,
-    required String en,
+    required String labelKey,
     required ValueChanged<String> onChanged,
     int maxLines = 1,
   }) {
@@ -1034,7 +1066,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
       maxLines: maxLines,
       onChanged: onChanged,
       decoration: InputDecoration(
-        labelText: _lifeText(context, zh: zh, en: en),
+        labelText: _lifeI18nText(context, labelKey),
         border: const OutlineInputBorder(),
       ),
     );
@@ -1045,8 +1077,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
     required OfferSelectCandidate candidate,
     required String field,
     required double value,
-    required String zh,
-    required String en,
+    required String labelKey,
     required ValueChanged<double> onChanged,
     String? prefixText,
   }) {
@@ -1061,7 +1092,7 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
         }
       },
       decoration: InputDecoration(
-        labelText: _lifeText(context, zh: zh, en: en),
+        labelText: _lifeI18nText(context, labelKey),
         prefixText: prefixText,
         border: const OutlineInputBorder(),
       ),
@@ -1070,13 +1101,12 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
 
   Widget _weightSlider(
     BuildContext context, {
-    required String zh,
-    required String en,
+    required String labelKey,
     required double value,
     required ValueChanged<double> onChanged,
   }) {
     return _LifeSliderField(
-      label: _lifeText(context, zh: zh, en: en),
+      label: _lifeI18nText(context, labelKey),
       valueText: value.toStringAsFixed(2),
       value: value,
       min: 0,
@@ -1102,7 +1132,10 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
     final source = _selectedCandidate;
     final next = source.copyWith(
       id: 'offer_${DateTime.now().microsecondsSinceEpoch}',
-      company: _lifeText(context, zh: '新 Offer', en: 'New offer'),
+      company: _lifeI18nText(
+        context,
+        'inline.plan295.life.new_offer.fdb1f3970e7d',
+      ),
       role: '',
       city: '',
       rejected: false,
@@ -1147,12 +1180,46 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
     final leader = result.leader;
     final lines = <String>[
       result.profile.title,
-      result.summaryZh,
+      _lifeI18nRefText(context, result.summary),
       if (leader != null) ...<String>[
-        '首选: ${leader.candidate.company} / ${leader.candidate.role}',
-        '综合分: ${leader.weightedScore.toStringAsFixed(1)}',
-        '月可支配: ${_money(leader.workWorth.monthlyDisposableIncome)}',
-        '风险: ${leader.flags.isEmpty ? '暂无明显红旗' : leader.flags.map((flag) => flag.titleZh).join('、')}',
+        _lifeI18nText(
+          context,
+          'life.offer_select.copy.line_leader',
+          params: <String, Object?>{
+            'company': leader.candidate.company,
+            'role': leader.candidate.role,
+          },
+        ),
+        _lifeI18nText(
+          context,
+          'life.offer_select.copy.line_score',
+          params: <String, Object?>{
+            'score': leader.weightedScore.toStringAsFixed(1),
+          },
+        ),
+        _lifeI18nText(
+          context,
+          'life.offer_select.copy.line_surplus',
+          params: <String, Object?>{
+            'amount': _money(leader.workWorth.monthlyDisposableIncome),
+          },
+        ),
+        _lifeI18nText(
+          context,
+          'life.offer_select.copy.line_risks',
+          params: <String, Object?>{
+            'risks': leader.flags.isEmpty
+                ? _lifeI18nText(
+                    context,
+                    'life.offer_select.copy.no_major_flags',
+                  )
+                : leader.flags
+                      .map((flag) => _lifeI18nText(context, flag.titleKey))
+                      .join(
+                        _lifeI18nText(context, 'life.offer_select.copy.joiner'),
+                      ),
+          },
+        ),
       ],
     ];
     await Clipboard.setData(ClipboardData(text: lines.join('\n')));
@@ -1162,7 +1229,10 @@ class _OfferSelectToolPageState extends State<_OfferSelectToolPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          _lifeText(context, zh: '已复制 Offer 决策摘要', en: 'Offer summary copied'),
+          _lifeI18nText(
+            context,
+            'inline.plan295.life.offer_summary_copied.6410ba779412',
+          ),
         ),
       ),
     );
@@ -1221,7 +1291,10 @@ class _OfferSelectStage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      _lifeText(context, zh: '当前推荐', en: 'Current pick'),
+                      _lifeI18nText(
+                        context,
+                        'inline.plan295.life.current_pick.1b1b8383ca11',
+                      ),
                       style: theme.textTheme.labelLarge?.copyWith(
                         color: Colors.white.withValues(alpha: 0.78),
                         fontWeight: FontWeight.w800,
@@ -1230,7 +1303,10 @@ class _OfferSelectStage extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       leader?.candidate.company ??
-                          _lifeText(context, zh: '等待 Offer', en: 'Waiting'),
+                          _lifeI18nText(
+                            context,
+                            'inline.plan295.life.waiting.22b93486ae77',
+                          ),
                       style: theme.textTheme.headlineSmall?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
@@ -1239,10 +1315,9 @@ class _OfferSelectStage extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       leader == null
-                          ? _lifeText(
+                          ? _lifeI18nText(
                               context,
-                              zh: '添加或取消婉拒后开始比较。',
-                              en: 'Add or un-reject offers to compare.',
+                              'inline.plan295.life.add_or_un_reject_offers_to_compare.7b7d743789c4',
                             )
                           : '${leader.candidate.role} · ${leader.candidate.city}',
                       style: theme.textTheme.bodyMedium?.copyWith(
@@ -1253,7 +1328,10 @@ class _OfferSelectStage extends StatelessWidget {
                 ),
               ),
               IconButton.filledTonal(
-                tooltip: _lifeText(context, zh: '复制摘要', en: 'Copy summary'),
+                tooltip: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.copy_summary.ee52d3a03cb9',
+                ),
                 onPressed: leader == null ? null : onCopy,
                 icon: const Icon(Icons.copy_rounded),
               ),
@@ -1261,7 +1339,7 @@ class _OfferSelectStage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            _lifeText(context, zh: result.summaryZh, en: result.summaryEn),
+            _lifeI18nRefText(context, result.summary),
             style: theme.textTheme.bodyMedium?.copyWith(
               color: Colors.white.withValues(alpha: 0.9),
               height: 1.35,
@@ -1273,25 +1351,37 @@ class _OfferSelectStage extends StatelessWidget {
             runSpacing: 10,
             children: <Widget>[
               _OfferStagePill(
-                label: _lifeText(context, zh: '综合分', en: 'Score'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.score.e58eff17f23d',
+                ),
                 value: leader == null
                     ? '--'
                     : leader.weightedScore.toStringAsFixed(1),
               ),
               _OfferStagePill(
-                label: _lifeText(context, zh: '月可支配', en: 'Monthly surplus'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.monthly_surplus.f916fcdabd72',
+                ),
                 value: leader == null
                     ? '--'
                     : _money(leader.workWorth.monthlyDisposableIncome),
               ),
               _OfferStagePill(
-                label: _lifeText(context, zh: '工作性价比', en: 'Work value'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.work_value.ef23a7f39470',
+                ),
                 value: leader == null
                     ? '--'
                     : leader.workWorth.valueScore.toStringAsFixed(2),
               ),
               _OfferStagePill(
-                label: _lifeText(context, zh: '领先差距', en: 'Lead gap'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.lead_gap.9e841c691786',
+                ),
                 value: runnerUp == null
                     ? '--'
                     : result.leaderGap.toStringAsFixed(1),
@@ -1416,20 +1506,32 @@ class _OfferEvaluationCard extends StatelessWidget {
             runSpacing: 8,
             children: <Widget>[
               _OfferSmallPill(
-                label: _lifeText(context, zh: '年包', en: 'Annual'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.annual.d66f4216f8e5',
+                ),
                 value: _money(candidate.annualGrossIncome),
               ),
               _OfferSmallPill(
-                label: _lifeText(context, zh: '月可支配', en: 'Surplus'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.surplus.81af185157be',
+                ),
                 value: _money(evaluation.workWorth.monthlyDisposableIncome),
               ),
               _OfferSmallPill(
-                label: _lifeText(context, zh: '时间成本', en: 'Time'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.time.bf469a617001',
+                ),
                 value:
                     '${evaluation.workWorth.effectiveTimeCostHours.toStringAsFixed(1)}h',
               ),
               _OfferSmallPill(
-                label: _lifeText(context, zh: '追平加薪', en: 'Raise'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.raise.51399a81a759',
+                ),
                 value: evaluation.monthlyBaseRaiseToLeader == null
                     ? '--'
                     : _money(evaluation.monthlyBaseRaiseToLeader!),
@@ -1438,27 +1540,42 @@ class _OfferEvaluationCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _OfferDimensionBar(
-            label: _lifeText(context, zh: '现金', en: 'Cash'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.cash.66a79d2bb5cd',
+            ),
             score: evaluation.cashScore,
           ),
           _OfferDimensionBar(
-            label: _lifeText(context, zh: '时间', en: 'Time'),
+            label: _lifeI18nText(
+              context,
+              'inline.ui.pages.toolbox_human_tests_typing.time_b4685a',
+            ),
             score: evaluation.timeScore,
           ),
           _OfferDimensionBar(
-            label: _lifeText(context, zh: '健康', en: 'Health'),
+            label: _lifeI18nText(context, 'ref.toolbox.sleep.library.tag.risk'),
             score: evaluation.healthScore,
           ),
           _OfferDimensionBar(
-            label: _lifeText(context, zh: '成长', en: 'Growth'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.growth.724aea94f308',
+            ),
             score: evaluation.growthScore,
           ),
           _OfferDimensionBar(
-            label: _lifeText(context, zh: '稳定', en: 'Stable'),
+            label: _lifeI18nText(
+              context,
+              'inline.ui.pages.toolbox_human_tests_typing_copy.stable_a3445e',
+            ),
             score: evaluation.stabilityScore,
           ),
           _OfferDimensionBar(
-            label: _lifeText(context, zh: '城市', en: 'City'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.city.cf347ec437c3',
+            ),
             score: evaluation.cityFitScore,
           ),
           if (evaluation.flags.isNotEmpty) ...<Widget>[
@@ -1475,9 +1592,7 @@ class _OfferEvaluationCard extends StatelessWidget {
                         size: 16,
                         color: _flagColor(flag.level),
                       ),
-                      label: Text(
-                        _lifeText(context, zh: flag.titleZh, en: flag.titleEn),
-                      ),
+                      label: Text(_lifeI18nText(context, flag.titleKey)),
                     ),
                   )
                   .toList(growable: false),
@@ -1696,7 +1811,12 @@ class _OfferReferenceAction extends StatelessWidget {
                 FilledButton.tonalIcon(
                   onPressed: onOpenLocal,
                   icon: const Icon(Icons.arrow_forward_rounded),
-                  label: Text(_lifeText(context, zh: '本地工具', en: 'Local tool')),
+                  label: Text(
+                    _lifeI18nText(
+                      context,
+                      'inline.plan295.life.local_tool.f3ddb606921a',
+                    ),
+                  ),
                 ),
             ],
           ),

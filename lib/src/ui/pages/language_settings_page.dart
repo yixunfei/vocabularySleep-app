@@ -22,15 +22,8 @@ class LanguageSettingsPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          pickUiText(
-            i18n,
-            zh: '语言与通用',
-            en: 'Language settings',
-            ja: '言語設定',
-            de: 'Spracheinstellungen',
-            fr: 'Parametres de langue',
-            es: 'Ajustes de idioma',
-            ru: 'Настройки языка',
+          i18n.t(
+            'inline.ui.pages.language_settings_page.language_settings_93b127',
           ),
         ),
       ),
@@ -44,55 +37,23 @@ class LanguageSettingsPage extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   SectionHeader(
-                    title: pickUiText(
-                      i18n,
-                      zh: '界面语言',
-                      en: 'Interface language',
-                      ja: '表示言語',
-                      de: 'Oberflachensprache',
-                      fr: 'Langue de l interface',
-                      es: 'Idioma de la interfaz',
-                      ru: 'Язык интерфейса',
+                    title: i18n.t(
+                      'inline.ui.pages.language_settings_page.interface_language_6f4732',
                     ),
-                    subtitle: pickUiText(
-                      i18n,
-                      zh: '立即生效，覆盖导航、设置和练习页面。',
-                      en: 'Applies immediately across navigation and settings.',
-                      ja: 'ナビゲーションや設定画面を含め、すぐに反映されます。',
-                      de: 'Wird sofort in Navigation und Einstellungen angewendet.',
-                      fr: 'S applique immediatement a la navigation et aux reglages.',
-                      es: 'Se aplica de inmediato en navegacion y ajustes.',
-                      ru: 'Применяется сразу во всей навигации и настройках.',
+                    subtitle: i18n.t(
+                      'inline.ui.pages.language_settings_page.applies_immediately_across_navigation_and_settings_2fb1f7',
                     ),
                   ),
                   const SizedBox(height: 14),
                   DropdownButtonFormField<String>(
                     initialValue: state.uiLanguageSelection,
-                    decoration: InputDecoration(
-                      labelText: pickUiText(
-                        i18n,
-                        zh: '语言',
-                        en: 'Language',
-                        ja: '言語',
-                        de: 'Sprache',
-                        fr: 'Langue',
-                        es: 'Idioma',
-                        ru: 'Язык',
-                      ),
-                    ),
+                    decoration: InputDecoration(labelText: i18n.t('language')),
                     items: <DropdownMenuItem<String>>[
                       DropdownMenuItem<String>(
                         value: SettingsService.uiLanguageSystem,
                         child: Text(
-                          pickUiText(
-                            i18n,
-                            zh: '跟随系统',
-                            en: 'Follow system',
-                            ja: 'システムに従う',
-                            de: 'Systemsprache folgen',
-                            fr: 'Suivre le systeme',
-                            es: 'Seguir al sistema',
-                            ru: 'Следовать системе',
+                          i18n.t(
+                            'inline.ui.pages.language_settings_page.follow_system_ef2221',
                           ),
                         ),
                       ),
@@ -115,25 +76,11 @@ class LanguageSettingsPage extends ConsumerWidget {
                   const SizedBox(height: 10),
                   Text(
                     state.uiLanguageFollowsSystem
-                        ? pickUiText(
-                            i18n,
-                            zh: '当前正在跟随系统语言：$currentLanguageName',
-                            en: 'Currently following system language: $currentLanguageName',
-                            ja: '現在はシステム言語に従っています: $currentLanguageName',
-                            de: 'Aktuell wird die Systemsprache verwendet: $currentLanguageName',
-                            fr: 'Langue systeme actuellement utilisee : $currentLanguageName',
-                            es: 'Actualmente sigue el idioma del sistema: $currentLanguageName',
-                            ru: 'Сейчас используется язык системы: $currentLanguageName',
+                        ? i18n.t(
+                            'inline.ui.pages.language_settings_page.currently_following_system_language_currentlanguagename_c8b46b',
                           )
-                        : pickUiText(
-                            i18n,
-                            zh: '当前已固定为手动语言：$currentLanguageName',
-                            en: 'Manual language is fixed to: $currentLanguageName',
-                            ja: '現在は手動で次の言語に固定されています: $currentLanguageName',
-                            de: 'Manuell ausgewahlte Sprache: $currentLanguageName',
-                            fr: 'Langue manuelle actuellement definie : $currentLanguageName',
-                            es: 'Idioma manual fijado actualmente: $currentLanguageName',
-                            ru: 'Сейчас вручную выбран язык: $currentLanguageName',
+                        : i18n.t(
+                            'inline.ui.pages.language_settings_page.manual_language_is_fixed_to_currentlanguagename_e6aac4',
                           ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
@@ -149,11 +96,11 @@ class LanguageSettingsPage extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   SectionHeader(
-                    title: pickUiText(i18n, zh: '天气概览', en: 'Weather glance'),
-                    subtitle: pickUiText(
-                      i18n,
-                      zh: '在播放页右上角显示当前城市级天气，不申请定位权限。',
-                      en: 'Show approximate city weather on the Play page without requesting GPS permission.',
+                    title: i18n.t(
+                      'inline.ui.pages.language_settings_page.weather_glance_d36e35',
+                    ),
+                    subtitle: i18n.t(
+                      'inline.ui.pages.language_settings_page.show_approximate_city_weather_on_the_play_page_without_r_6a934a',
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -161,19 +108,17 @@ class LanguageSettingsPage extends ConsumerWidget {
                     contentPadding: EdgeInsets.zero,
                     value: state.weatherEnabled,
                     title: Text(
-                      pickUiText(i18n, zh: '显示天气', en: 'Show weather'),
+                      i18n.t(
+                        'inline.ui.pages.language_settings_page.show_weather_b2a20b',
+                      ),
                     ),
                     subtitle: Text(
                       state.weatherEnabled
-                          ? pickUiText(
-                              i18n,
-                              zh: '已启用，点击天气图标可查看详情并刷新。',
-                              en: 'Enabled. Tap the weather icon for details or refresh.',
+                          ? i18n.t(
+                              'inline.ui.pages.language_settings_page.enabled_tap_the_weather_icon_for_details_or_refresh_989e91',
                             )
-                          : pickUiText(
-                              i18n,
-                              zh: '关闭后不会发起城市与天气请求。',
-                              en: 'When off, the app skips city and weather requests.',
+                          : i18n.t(
+                              'inline.ui.pages.language_settings_page.when_off_the_app_skips_city_and_weather_requests_93bf84',
                             ),
                     ),
                     onChanged: state.setWeatherEnabled,
@@ -190,21 +135,19 @@ class LanguageSettingsPage extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   SectionHeader(
-                    title: pickUiText(i18n, zh: '启动主页', en: 'Startup page'),
-                    subtitle: pickUiText(
-                      i18n,
-                      zh: '设置应用启动后默认打开的主页面。',
-                      en: 'Choose which main tab opens after the app launches.',
+                    title: i18n.t(
+                      'inline.ui.pages.language_settings_page.startup_page_2f0ef5',
+                    ),
+                    subtitle: i18n.t(
+                      'inline.ui.pages.language_settings_page.choose_which_main_tab_opens_after_the_app_launches_94fbec',
                     ),
                   ),
                   const SizedBox(height: 14),
                   DropdownButtonFormField<AppHomeTab>(
                     initialValue: state.startupPage,
                     decoration: InputDecoration(
-                      labelText: pickUiText(
-                        i18n,
-                        zh: '默认页面',
-                        en: 'Default page',
+                      labelText: i18n.t(
+                        'inline.ui.pages.language_settings_page.default_page_28fa07',
                       ),
                     ),
                     items: AppHomeTab.values
@@ -222,10 +165,8 @@ class LanguageSettingsPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '当前默认进入：${appHomeTabLabel(i18n, state.startupPage)}',
-                      en: 'Current startup tab: ${appHomeTabLabel(i18n, state.startupPage)}',
+                    i18n.t(
+                      'inline.ui.pages.language_settings_page.current_startup_tab_apphometablabel_i18n_state_startuppa_3dfb72',
                     ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
@@ -234,10 +175,8 @@ class LanguageSettingsPage extends ConsumerWidget {
                     DropdownButtonFormField<StudyStartupTab>(
                       initialValue: state.studyStartupTab,
                       decoration: InputDecoration(
-                        labelText: pickUiText(
-                          i18n,
-                          zh: '学习页默认子页',
-                          en: 'Study default section',
+                        labelText: i18n.t(
+                          'inline.ui.pages.language_settings_page.study_default_section_5f732c',
                         ),
                       ),
                       items: StudyStartupTab.values
@@ -255,10 +194,8 @@ class LanguageSettingsPage extends ConsumerWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '当启动页为学习时，将优先打开：${studyStartupTabLabel(i18n, state.studyStartupTab)}',
-                        en: 'When Study is the startup page, it will open ${studyStartupTabLabel(i18n, state.studyStartupTab)} first.',
+                      i18n.t(
+                        'inline.ui.pages.language_settings_page.when_study_is_the_startup_page_it_will_open_studystartup_6c240e',
                       ),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
@@ -268,10 +205,8 @@ class LanguageSettingsPage extends ConsumerWidget {
                     DropdownButtonFormField<FocusStartupTab>(
                       initialValue: state.focusStartupTab,
                       decoration: InputDecoration(
-                        labelText: pickUiText(
-                          i18n,
-                          zh: '专注默认子页签',
-                          en: 'Focus default section',
+                        labelText: i18n.t(
+                          'inline.ui.pages.language_settings_page.focus_default_section_ec0f69',
                         ),
                       ),
                       items: FocusStartupTab.values
@@ -289,10 +224,8 @@ class LanguageSettingsPage extends ConsumerWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '当主入口为专注/放松时，将优先打开：${focusStartupTabLabel(i18n, state.focusStartupTab)}',
-                        en: 'When Focus is the startup page, it will open ${focusStartupTabLabel(i18n, state.focusStartupTab)} first.',
+                      i18n.t(
+                        'inline.ui.pages.language_settings_page.when_focus_is_the_startup_page_it_will_open_focusstartup_fb217c',
                       ),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),

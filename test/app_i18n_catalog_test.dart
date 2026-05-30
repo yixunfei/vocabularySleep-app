@@ -6,27 +6,46 @@ import 'package:vocabulary_sleep_app/src/i18n/app_i18n_catalog.dart';
 void main() {
   tearDown(AppI18nCatalog.resetForTesting);
 
-  test('uses loaded JSON catalog before built-in maps', () {
+  test('reads text from the installed catalog table', () {
     AppI18nCatalog.installForTesting(<String, Map<String, String>>{
-      'en': <String, String>{'play': 'JSON Play'},
+      'en': <String, String>{'screen.title': 'JSON title'},
     });
 
-    expect(AppI18n('en').t('play'), 'JSON Play');
+    expect(AppI18n('en').t('screen.title'), 'JSON title');
   });
 
-  test('falls back through catalog locales and keeps placeholders', () {
+  test('falls back from requested language to English then Chinese', () {
     AppI18nCatalog.installForTesting(<String, Map<String, String>>{
-      'en': <String, String>{'greeting': 'Hello {name}'},
-      'zh': <String, String>{'fallbackOnly': '备用 {name}'},
+      'en': <String, String>{'englishOnly': 'English fallback'},
+      'zh': <String, String>{'chineseOnly': '中文兜底'},
+    });
+
+    expect(AppI18n('ja').t('englishOnly'), 'English fallback');
+    expect(AppI18n('de').t('chineseOnly'), '中文兜底');
+  });
+
+  test('substitutes named placeholders without source-text lookup', () {
+    AppI18nCatalog.installForTesting(<String, Map<String, String>>{
+      'en': <String, String>{'message.saved': 'Saved {count} items for {name}'},
     });
 
     expect(
-      AppI18n('ja').t('greeting', params: <String, Object?>{'name': 'Mina'}),
-      'Hello Mina',
+      AppI18n('en').t(
+        'message.saved',
+        params: <String, Object?>{'count': 3, 'name': 'Mina'},
+      ),
+      'Saved 3 items for Mina',
     );
-    expect(
-      AppI18n('de').t('fallbackOnly', params: <String, Object?>{'name': '阿鱼'}),
-      '备用 阿鱼',
-    );
+  });
+
+  test('reset clears test catalog tables', () {
+    AppI18nCatalog.installForTesting(<String, Map<String, String>>{
+      'en': <String, String>{'temporary.key': 'Temporary'},
+    });
+    expect(AppI18n('en').t('temporary.key'), 'Temporary');
+
+    AppI18nCatalog.resetForTesting();
+
+    expect(AppI18n('en').t('temporary.key'), 'Key');
   });
 }

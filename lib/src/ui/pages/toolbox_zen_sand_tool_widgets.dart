@@ -471,13 +471,13 @@ class _ZenDockButton extends StatelessWidget {
 class _ZenCompactToolChip extends StatelessWidget {
   const _ZenCompactToolChip({
     required this.tool,
-    required this.isZh,
+    required this.i18n,
     required this.selected,
     required this.onTap,
   });
 
   final _ZenToolSpec tool;
-  final bool isZh;
+  final AppI18n i18n;
   final bool selected;
   final VoidCallback onTap;
 
@@ -508,7 +508,7 @@ class _ZenCompactToolChip extends StatelessWidget {
               Icon(tool.icon, size: 18, color: tool.tint),
               const SizedBox(width: 8),
               Text(
-                tool.label(isZh),
+                tool.label(i18n),
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF2A2118),
@@ -576,13 +576,13 @@ class _ZenCompactActionChip extends StatelessWidget {
 class _ZenRitualQuickChip extends StatelessWidget {
   const _ZenRitualQuickChip({
     required this.preset,
-    required this.isZh,
+    required this.i18n,
     required this.selected,
     required this.onTap,
   });
 
   final _ZenRitualPresetSpec preset;
-  final bool isZh;
+  final AppI18n i18n;
   final bool selected;
   final VoidCallback onTap;
 
@@ -626,7 +626,7 @@ class _ZenRitualQuickChip extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    preset.title(isZh),
+                    preset.title(i18n),
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: const Color(0xFF2A2118),
@@ -635,8 +635,10 @@ class _ZenRitualQuickChip extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     selected
-                        ? (isZh ? '正在使用' : 'Active base')
-                        : (isZh ? '点按套用' : 'Tap to apply'),
+                        ? i18n.t('inline.plan294.zen_sand.active_base_ebed3cc3')
+                        : i18n.t(
+                            'inline.plan294.zen_sand.tap_to_apply_3f759576',
+                          ),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: const Color(0xFF6B5D4F),
                     ),
@@ -716,13 +718,13 @@ class _ZenColorChip extends StatelessWidget {
 class _ZenToolCard extends StatelessWidget {
   const _ZenToolCard({
     required this.tool,
-    required this.isZh,
+    required this.i18n,
     required this.selected,
     required this.onTap,
   });
 
   final _ZenToolSpec tool;
-  final bool isZh;
+  final AppI18n i18n;
   final bool selected;
   final VoidCallback onTap;
 
@@ -771,7 +773,7 @@ class _ZenToolCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  tool.label(isZh),
+                  tool.label(i18n),
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: const Color(0xFF2A2118),
@@ -779,7 +781,7 @@ class _ZenToolCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  tool.help(isZh),
+                  tool.help(i18n),
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -799,13 +801,13 @@ class _ZenToolCard extends StatelessWidget {
 class _ZenBackgroundCard extends StatelessWidget {
   const _ZenBackgroundCard({
     required this.background,
-    required this.isZh,
+    required this.i18n,
     required this.selected,
     required this.onTap,
   });
 
   final _ZenBackgroundSpec background;
-  final bool isZh;
+  final AppI18n i18n;
   final bool selected;
   final VoidCallback onTap;
 
@@ -846,7 +848,7 @@ class _ZenBackgroundCard extends StatelessWidget {
                 children: <Widget>[
                   Expanded(
                     child: Text(
-                      background.label(isZh),
+                      background.label(i18n),
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: const Color(0xFF2A2118),
@@ -863,7 +865,7 @@ class _ZenBackgroundCard extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                background.description(isZh),
+                background.description(i18n),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -882,13 +884,13 @@ class _ZenBackgroundCard extends StatelessWidget {
 class _ZenRitualCard extends StatelessWidget {
   const _ZenRitualCard({
     required this.preset,
-    required this.isZh,
+    required this.i18n,
     required this.selected,
     required this.onTap,
   });
 
   final _ZenRitualPresetSpec preset;
-  final bool isZh;
+  final AppI18n i18n;
   final bool selected;
   final VoidCallback onTap;
 
@@ -940,7 +942,7 @@ class _ZenRitualCard extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      preset.title(isZh),
+                      preset.title(i18n),
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: const Color(0xFF2A2118),
@@ -957,7 +959,7 @@ class _ZenRitualCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                preset.description(isZh),
+                preset.description(i18n),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -967,7 +969,9 @@ class _ZenRitualCard extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                isZh ? '点击套用，可替换或叠加。' : 'Tap to apply, replace, or layer.',
+                i18n.t(
+                  'inline.plan294.zen_sand.tap_to_apply_replace_or_layer_e204f7b8',
+                ),
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: preset.accent,
                   fontWeight: FontWeight.w700,

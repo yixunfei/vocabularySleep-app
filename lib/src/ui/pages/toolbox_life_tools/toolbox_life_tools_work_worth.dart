@@ -141,11 +141,13 @@ class _WorkWorthPageState extends State<_WorkWorthPage> {
   Widget build(BuildContext context) {
     final result = _result;
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '工作性价比计算器', en: 'Work value calculator'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '综合工时、环境、收入与生活开销的工作性价比评估。',
-        en: 'A work value assessment combining hours, environment, income, and living costs.',
+        'inline.plan295.life.work_value_calculator.766dbe3047f2',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.a_work_value_assessment_combining_ho.4695d057b1e2',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,43 +170,69 @@ class _WorkWorthPageState extends State<_WorkWorthPage> {
 
   Widget _incomePanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '收入、开销与扣款', en: 'Income and costs'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '先估算每月真实能留下多少钱，再把它放回工作分数里。',
-        en: 'Estimate real monthly surplus, then feed it into the score.',
+        'inline.plan295.life.income_and_costs.d2bf617045e2',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.estimate_real_monthly_surplus_then_f.5685c2154221',
       ),
       children: <Widget>[
         _WorkWorthFieldGrid(
           children: <Widget>[
-            _moneyField(context, _monthlySalary, '月薪税前', 'Monthly salary'),
-            _moneyField(context, _salaryMonths, '薪资月数', 'Salary months'),
-            _moneyField(context, _annualBonus, '年终/其他奖金', 'Annual bonus'),
+            _moneyField(
+              context,
+              _monthlySalary,
+              'life.work_worth.field.monthly_salary',
+            ),
+            _moneyField(
+              context,
+              _salaryMonths,
+              'life.work_worth.field.salary_months',
+            ),
+            _moneyField(
+              context,
+              _annualBonus,
+              'life.work_worth.field.annual_bonus',
+            ),
             _moneyField(
               context,
               _monthlyBenefit,
-              '福利现金值/月',
-              'Monthly benefits',
+              'life.work_worth.field.monthly_benefits',
             ),
             _moneyField(
               context,
               _monthlyOvertimePay,
-              '加班补偿/月',
-              'Overtime pay/month',
+              'life.work_worth.field.overtime_pay_month',
             ),
-            _moneyField(context, _monthlyTax, '月税费', 'Monthly tax'),
+            _moneyField(
+              context,
+              _monthlyTax,
+              'life.work_worth.field.monthly_tax',
+            ),
             _moneyField(
               context,
               _insuranceFund,
-              '五险一金/月',
-              'Insurance and fund',
+              'life.work_worth.field.insurance_fund',
             ),
-            _moneyField(context, _housingCost, '房租房贷/月', 'Housing cost'),
-            _moneyField(context, _livingCost, '生活开销/月', 'Living cost'),
+            _moneyField(
+              context,
+              _housingCost,
+              'life.work_worth.field.housing_cost',
+            ),
+            _moneyField(
+              context,
+              _livingCost,
+              'life.work_worth.field.living_cost',
+            ),
             DropdownButtonFormField<String>(
               initialValue: _country,
               decoration: InputDecoration(
-                labelText: _lifeText(context, zh: 'PPP 地区', en: 'PPP region'),
+                labelText: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.ppp_region.25efb6f4975b',
+                ),
                 border: const OutlineInputBorder(),
               ),
               items: const <DropdownMenuItem<String>>[
@@ -222,7 +250,10 @@ class _WorkWorthPageState extends State<_WorkWorthPage> {
         ),
         const SizedBox(height: 12),
         _LifeSliderField(
-          label: _lifeText(context, zh: '奖金确定性', en: 'Bonus certainty'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.bonus_certainty.1157e6e932eb',
+          ),
           valueText: '${(_bonusCertainty * 100).round()}%',
           value: _bonusCertainty,
           min: 0,
@@ -236,29 +267,62 @@ class _WorkWorthPageState extends State<_WorkWorthPage> {
 
   Widget _timePanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '时间成本', en: 'Time cost'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '工作日越少、通勤越短、休息越可恢复，分母越轻。',
-        en: 'Fewer workdays, shorter commute, and recoverable breaks reduce the denominator.',
+        'inline.plan295.life.time_cost.d513fb2830b5',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.fewer_workdays_shorter_commute_and_r.c936196c1388',
       ),
       children: <Widget>[
         _WorkWorthFieldGrid(
           children: <Widget>[
-            _numberField(context, _workDaysPerWeek, '每周工作天', 'Workdays/week'),
-            _numberField(context, _wfhDaysPerWeek, '每周居家天', 'WFH days/week'),
-            _numberField(context, _workHours, '日工作小时', 'Work hours/day'),
-            _numberField(context, _commuteHours, '日通勤小时', 'Commute hours/day'),
-            _numberField(context, _restHours, '可恢复休息小时', 'Rest hours/day'),
+            _numberField(
+              context,
+              _workDaysPerWeek,
+              'life.work_worth.field.workdays_week',
+            ),
+            _numberField(
+              context,
+              _wfhDaysPerWeek,
+              'life.work_worth.field.wfh_days_week',
+            ),
+            _numberField(
+              context,
+              _workHours,
+              'life.work_worth.field.work_hours_day',
+            ),
+            _numberField(
+              context,
+              _commuteHours,
+              'life.work_worth.field.commute_hours_day',
+            ),
+            _numberField(
+              context,
+              _restHours,
+              'life.work_worth.field.rest_hours_day',
+            ),
             _numberField(
               context,
               _unpaidOvertimeHours,
-              '无偿加班/月',
-              'Unpaid overtime/month',
+              'life.work_worth.field.unpaid_overtime_month',
             ),
-            _numberField(context, _annualLeave, '年假天数', 'Annual leave'),
-            _numberField(context, _publicHolidays, '公共假期', 'Public holidays'),
-            _numberField(context, _paidSickLeave, '带薪病假', 'Paid sick leave'),
+            _numberField(
+              context,
+              _annualLeave,
+              'life.work_worth.field.annual_leave',
+            ),
+            _numberField(
+              context,
+              _publicHolidays,
+              'life.work_worth.field.public_holidays',
+            ),
+            _numberField(
+              context,
+              _paidSickLeave,
+              'life.work_worth.field.paid_sick_leave',
+            ),
           ],
         ),
       ],
@@ -267,53 +331,55 @@ class _WorkWorthPageState extends State<_WorkWorthPage> {
 
   Widget _environmentPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '环境、稳定性与背景', en: 'Environment and context'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '它们会影响健康损耗、环境系数，以及不同职业阶段的薪资预期。',
-        en: 'These affect health reserve, environment multiplier, and career-stage salary expectations.',
+        'inline.plan295.life.environment_and_context.d9acf4c1f1e0',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.these_affect_health_reserve_environm.2fbd524d030c',
       ),
       children: <Widget>[
         _LifeSegmentedField<WorkWorthEnvironment>(
-          label: _lifeText(context, zh: '工作环境健康层级', en: 'Work environment'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.work_environment.f0cbd11a8ea6',
+          ),
           value: _environment,
           options: const <_LifeOption<WorkWorthEnvironment>>[
             _LifeOption(
               value: WorkWorthEnvironment.lifeTrade,
-              labelZh: '拿命换',
-              labelEn: 'Life trade',
+              labelKey: 'inline.plan295.life.life_trade.64669d013a9d',
             ),
             _LifeOption(
               value: WorkWorthEnvironment.harmful,
-              labelZh: '有害健康',
-              labelEn: 'Harmful',
+              labelKey: 'inline.plan295.life.harmful.79cef6fb917c',
             ),
             _LifeOption(
               value: WorkWorthEnvironment.highPressure,
-              labelZh: '高压消耗',
-              labelEn: 'High pressure',
+              labelKey: 'inline.plan295.life.high_pressure.0751ff04e768',
             ),
             _LifeOption(
               value: WorkWorthEnvironment.normal,
-              labelZh: '普通办公',
-              labelEn: 'Normal',
+              labelKey: 'inline.plan295.life.normal.096e2aa2b20e',
             ),
             _LifeOption(
               value: WorkWorthEnvironment.balanced,
-              labelZh: '平衡友好',
-              labelEn: 'Balanced',
+              labelKey: 'inline.plan295.life.balanced.9036d445b5c7',
             ),
             _LifeOption(
               value: WorkWorthEnvironment.freeComfort,
-              labelZh: '自由舒适',
-              labelEn: 'Free comfort',
+              labelKey: 'inline.plan295.life.free_comfort.2614933074c1',
             ),
           ],
           onChanged: (value) => setState(() => _environment = value),
         ),
         const SizedBox(height: 14),
         _LifeSliderField(
-          label: _lifeText(context, zh: '城市成本系数', en: 'City factor'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.city_factor.bebcbffac27a',
+          ),
           valueText: _cityFactor.toStringAsFixed(2),
           value: _cityFactor,
           min: 0.7,
@@ -322,7 +388,10 @@ class _WorkWorthPageState extends State<_WorkWorthPage> {
           onChanged: (value) => setState(() => _cityFactor = value),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '领导/管理体验', en: 'Leadership'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.leadership.ae08c6cda8f4',
+          ),
           valueText: _leadershipFactor.toStringAsFixed(2),
           value: _leadershipFactor,
           min: 0.7,
@@ -331,7 +400,10 @@ class _WorkWorthPageState extends State<_WorkWorthPage> {
           onChanged: (value) => setState(() => _leadershipFactor = value),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '团队协作体验', en: 'Teamwork'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.teamwork.0efdaa1a4633',
+          ),
           valueText: _teamworkFactor.toStringAsFixed(2),
           value: _teamworkFactor,
           min: 0.8,
@@ -340,7 +412,10 @@ class _WorkWorthPageState extends State<_WorkWorthPage> {
           onChanged: (value) => setState(() => _teamworkFactor = value),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '成长性/技能复利', en: 'Growth potential'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.growth_potential.88b829804ac5',
+          ),
           valueText: _growthFactor.toStringAsFixed(2),
           value: _growthFactor,
           min: 0.8,
@@ -349,7 +424,10 @@ class _WorkWorthPageState extends State<_WorkWorthPage> {
           onChanged: (value) => setState(() => _growthFactor = value),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '下班边界/待命压力', en: 'Boundary quality'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.boundary_quality.670aa3c5f776',
+          ),
           valueText: _boundaryFactor.toStringAsFixed(2),
           value: _boundaryFactor,
           min: 0.7,
@@ -358,7 +436,10 @@ class _WorkWorthPageState extends State<_WorkWorthPage> {
           onChanged: (value) => setState(() => _boundaryFactor = value),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '心理安全感', en: 'Psychological safety'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.psychological_safety.10a0bcbdc985',
+          ),
           valueText: _psychologicalSafetyFactor.toStringAsFixed(2),
           value: _psychologicalSafetyFactor,
           min: 0.75,
@@ -368,7 +449,10 @@ class _WorkWorthPageState extends State<_WorkWorthPage> {
               setState(() => _psychologicalSafetyFactor = value),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '自主权/灵活度', en: 'Autonomy'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.autonomy.a46fa9b788ab',
+          ),
           valueText: _autonomyFactor.toStringAsFixed(2),
           value: _autonomyFactor,
           min: 0.85,
@@ -378,68 +462,85 @@ class _WorkWorthPageState extends State<_WorkWorthPage> {
         ),
         const SizedBox(height: 8),
         _LifeSegmentedField<WorkWorthJobStability>(
-          label: _lifeText(context, zh: '工作类型/稳定性', en: 'Job stability'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.job_stability.1f5a665df6e2',
+          ),
           value: _stability,
           options: const <_LifeOption<WorkWorthJobStability>>[
             _LifeOption(
               value: WorkWorthJobStability.government,
-              labelZh: '体制内',
-              labelEn: 'Government',
+              labelKey: 'inline.plan295.life.government.1682260d37fe',
             ),
             _LifeOption(
               value: WorkWorthJobStability.stateOwned,
-              labelZh: '国企',
-              labelEn: 'State owned',
+              labelKey: 'inline.plan295.life.state_owned.ed86b04545aa',
             ),
             _LifeOption(
               value: WorkWorthJobStability.foreignCompany,
-              labelZh: '外企',
-              labelEn: 'Foreign',
+              labelKey: 'inline.plan295.life.foreign.e41f23231be2',
             ),
             _LifeOption(
               value: WorkWorthJobStability.privateCompany,
-              labelZh: '私企',
-              labelEn: 'Private',
+              labelKey: 'inline.plan295.life.private.ccfe9d14a5a2',
             ),
             _LifeOption(
               value: WorkWorthJobStability.dispatch,
-              labelZh: '外包派遣',
-              labelEn: 'Dispatch',
+              labelKey: 'inline.plan295.life.dispatch.ae175af20842',
             ),
             _LifeOption(
               value: WorkWorthJobStability.freelance,
-              labelZh: '自由职业',
-              labelEn: 'Freelance',
+              labelKey: 'inline.plan295.life.freelance.f782aea997c1',
             ),
           ],
           onChanged: (value) => setState(() => _stability = value),
         ),
         const SizedBox(height: 14),
-        _numberField(context, _workYears, '工作年限', 'Work years'),
+        _numberField(context, _workYears, 'life.work_worth.field.work_years'),
         const SizedBox(height: 10),
         DropdownButtonFormField<WorkWorthEducation>(
           initialValue: _education,
           isExpanded: true,
           decoration: InputDecoration(
-            labelText: _lifeText(context, zh: '学历背景', en: 'Education'),
+            labelText: _lifeI18nText(
+              context,
+              'inline.plan295.life.education.5d1bfebdb214',
+            ),
             border: const OutlineInputBorder(),
           ),
           items: <DropdownMenuItem<WorkWorthEducation>>[
             DropdownMenuItem(
               value: WorkWorthEducation.belowBachelor,
-              child: Text(_lifeText(context, zh: '本科以下', en: 'Below bachelor')),
+              child: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.below_bachelor.0594789fbfde',
+                ),
+              ),
             ),
             DropdownMenuItem(
               value: WorkWorthEducation.bachelor,
-              child: Text(_lifeText(context, zh: '本科', en: 'Bachelor')),
+              child: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.bachelor.036cd0992772',
+                ),
+              ),
             ),
             DropdownMenuItem(
               value: WorkWorthEducation.master,
-              child: Text(_lifeText(context, zh: '硕士', en: 'Master')),
+              child: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.master.d7f487b2dd00',
+                ),
+              ),
             ),
             DropdownMenuItem(
               value: WorkWorthEducation.phd,
-              child: Text(_lifeText(context, zh: '博士', en: 'PhD')),
+              child: Text(
+                _lifeI18nText(context, 'inline.plan295.life.phd.80c592fa8eea'),
+              ),
             ),
           ],
           onChanged: (value) =>
@@ -450,13 +551,19 @@ class _WorkWorthPageState extends State<_WorkWorthPage> {
           value: _hasShuttle,
           contentPadding: EdgeInsets.zero,
           title: Text(
-            _lifeText(context, zh: '有班车/通勤减压', en: 'Shuttle or commute relief'),
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.shuttle_or_commute_relief.812be1f767ee',
+            ),
           ),
           onChanged: (value) => setState(() => _hasShuttle = value),
         ),
         if (_hasShuttle)
           _LifeSliderField(
-            label: _lifeText(context, zh: '通勤折减系数', en: 'Commute multiplier'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.commute_multiplier.a0395287010a',
+            ),
             valueText: _shuttleFactor.toStringAsFixed(2),
             value: _shuttleFactor,
             min: 0.5,
@@ -468,13 +575,19 @@ class _WorkWorthPageState extends State<_WorkWorthPage> {
           value: _hasCanteen,
           contentPadding: EdgeInsets.zero,
           title: Text(
-            _lifeText(context, zh: '食堂/餐补体验加成', en: 'Canteen or meal benefit'),
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.canteen_or_meal_benefit.64667bc7e6a0',
+            ),
           ),
           onChanged: (value) => setState(() => _hasCanteen = value),
         ),
         if (_hasCanteen)
           _LifeSliderField(
-            label: _lifeText(context, zh: '餐食体验系数', en: 'Meal multiplier'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.meal_multiplier.5bbe1b824219',
+            ),
             valueText: _canteenFactor.toStringAsFixed(2),
             value: _canteenFactor,
             min: 1.0,
@@ -488,55 +601,83 @@ class _WorkWorthPageState extends State<_WorkWorthPage> {
 
   Widget _explainPanel(BuildContext context, WorkWorthResult result) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '口径说明', en: 'Formula notes'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '分数适合横向比较 offer，不是财务、医疗或职业建议。',
-        en: 'Use the score to compare offers, not as financial, medical, or career advice.',
+        'inline.plan295.life.formula_notes.50d7356750aa',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.use_the_score_to_compare_offers_not.4fba53d843a2',
       ),
       children: <Widget>[
         _WorkWorthBreakdownRow(
-          label: _lifeText(context, zh: '工作日/年', en: 'Workdays/year'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.workdays_year.168de532d1a2',
+          ),
           value: '${result.workingDaysPerYear.toStringAsFixed(1)} d',
         ),
         _WorkWorthBreakdownRow(
-          label: _lifeText(context, zh: '有效通勤/天', en: 'Effective commute/day'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.effective_commute_day.af728bd954d8',
+          ),
           value: '${result.effectiveCommuteHours.toStringAsFixed(1)} h',
         ),
         _WorkWorthBreakdownRow(
-          label: _lifeText(context, zh: '时间成本/天', en: 'Time cost/day'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.time_cost_day.784315e0a8df',
+          ),
           value: '${result.effectiveTimeCostHours.toStringAsFixed(1)} h',
         ),
         _WorkWorthBreakdownRow(
-          label: _lifeText(context, zh: '环境综合系数', en: 'Environment factor'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.environment_factor.4830f8519133',
+          ),
           value: result.environmentFactor.toStringAsFixed(2),
         ),
         _WorkWorthBreakdownRow(
-          label: _lifeText(context, zh: '生活现金系数', en: 'Cashflow factor'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.cashflow_factor.b4659c3bc197',
+          ),
           value: result.costFactor.toStringAsFixed(2),
         ),
         _WorkWorthBreakdownRow(
-          label: _lifeText(context, zh: '成长/边界综合', en: 'Context factor'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.context_factor.05d823146a3c',
+          ),
           value: result.contextFactor.toStringAsFixed(2),
         ),
         _WorkWorthBreakdownRow(
-          label: _lifeText(context, zh: '期望年终奖', en: 'Expected bonus'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.expected_bonus.0cd0318d3511',
+          ),
           value: _money(result.expectedAnnualBonus),
         ),
         _WorkWorthBreakdownRow(
-          label: _lifeText(context, zh: '福利现金值/年', en: 'Benefits/year'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.benefits_year.be09978e28a6',
+          ),
           value: _money(result.annualBenefitValue),
         ),
         _WorkWorthBreakdownRow(
-          label: _lifeText(context, zh: '加班补偿/年', en: 'Overtime pay/year'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.overtime_pay_year.069d43b67739',
+          ),
           value: _money(result.annualOvertimePay),
         ),
         const SizedBox(height: 10),
         Text(
-          _lifeText(
+          _lifeI18nText(
             context,
-            zh: '核心口径：标准化日薪 × 环境系数 × 生活现金系数 ÷（35 × 时间成本 × 学历/经验预期）。健康层级会额外估算每月健康损耗预算。',
-            en: 'Core formula: standardized daily income x environment x cashflow factor / (35 x time cost x education/career expectation). Health tier also reserves monthly health load.',
+            'inline.plan295.life.core_formula_standardized_daily_inco.4fd49607e310',
           ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
@@ -547,17 +688,15 @@ class _WorkWorthPageState extends State<_WorkWorthPage> {
   Widget _moneyField(
     BuildContext context,
     TextEditingController controller,
-    String zh,
-    String en,
+    String labelKey,
   ) {
-    return _numberField(context, controller, zh, en, prefixText: '¥ ');
+    return _numberField(context, controller, labelKey, prefixText: '¥ ');
   }
 
   Widget _numberField(
     BuildContext context,
     TextEditingController controller,
-    String zh,
-    String en, {
+    String labelKey, {
     String? prefixText,
   }) {
     return TextField(
@@ -565,7 +704,7 @@ class _WorkWorthPageState extends State<_WorkWorthPage> {
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       onChanged: (_) => setState(() {}),
       decoration: InputDecoration(
-        labelText: _lifeText(context, zh: zh, en: en),
+        labelText: _lifeI18nText(context, labelKey),
         prefixText: prefixText,
         border: const OutlineInputBorder(),
       ),
@@ -575,11 +714,13 @@ class _WorkWorthPageState extends State<_WorkWorthPage> {
 
 Widget _referencePanel(BuildContext context) {
   return _LifeSettingsPanel(
-    title: _lifeText(context, zh: '参考标准值', en: 'Reference standards'),
-    subtitle: _lifeText(
+    title: _lifeI18nText(
       context,
-      zh: '这些值不是强制标准，只是帮助你快速校准输入。',
-      en: 'These are calibration hints, not mandatory standards.',
+      'inline.plan295.life.reference_standards.12ad97b8f16d',
+    ),
+    subtitle: _lifeI18nText(
+      context,
+      'inline.plan295.life.these_are_calibration_hints_not_mand.5baa19b2a903',
     ),
     children: <Widget>[
       for (final standard in ToolboxWorkWorthService.referenceStandards)
@@ -638,7 +779,10 @@ class _WorkWorthStage extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  _lifeText(context, zh: '综合价值分', en: 'Job value score'),
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.job_value_score.9feff7d90a06',
+                  ),
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
@@ -670,7 +814,7 @@ class _WorkWorthStage extends StatelessWidget {
               border: Border.all(color: scoreColor.withValues(alpha: 0.45)),
             ),
             child: Text(
-              _lifeText(context, zh: result.rating.zh, en: result.rating.en),
+              _lifeI18nText(context, result.rating.labelKey),
               style: theme.textTheme.titleSmall?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w900,
@@ -683,15 +827,24 @@ class _WorkWorthStage extends StatelessWidget {
             runSpacing: 10,
             children: <Widget>[
               _WorkWorthMetricPill(
-                label: _lifeText(context, zh: '月可支配', en: 'Monthly surplus'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.monthly_surplus.f916fcdabd72',
+                ),
                 value: _money(result.monthlyDisposableIncome),
               ),
               _WorkWorthMetricPill(
-                label: _lifeText(context, zh: '标准化日薪', en: 'PPP daily'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.ppp_daily.85d3b4e88be7',
+                ),
                 value: _money(result.standardizedDailyIncome),
               ),
               _WorkWorthMetricPill(
-                label: _lifeText(context, zh: '健康损耗/月', en: 'Health reserve'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.health_reserve.d6773977782d',
+                ),
                 value: _money(result.monthlyHealthReserve),
               ),
             ],
@@ -837,7 +990,7 @@ class _WorkWorthReferenceTile extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: Text(
-                  _lifeText(context, zh: standard.zh, en: standard.en),
+                  _lifeI18nText(context, standard.titleKey),
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
@@ -854,7 +1007,7 @@ class _WorkWorthReferenceTile extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            _lifeText(context, zh: standard.noteZh, en: standard.noteEn),
+            _lifeI18nText(context, standard.noteKey),
             style: theme.textTheme.bodySmall,
           ),
         ],

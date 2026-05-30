@@ -18,18 +18,15 @@ List<_LifeOption<_FakeCallBackgroundStyle>> _fakeCallBackgroundStyleOptions() {
   return const <_LifeOption<_FakeCallBackgroundStyle>>[
     _LifeOption<_FakeCallBackgroundStyle>(
       value: _FakeCallBackgroundStyle.cover,
-      labelZh: '原图',
-      labelEn: 'Cover',
+      labelKey: 'inline.plan295.life.cover.0c7bc09ae261',
     ),
     _LifeOption<_FakeCallBackgroundStyle>(
       value: _FakeCallBackgroundStyle.dim,
-      labelZh: '压暗',
-      labelEn: 'Dim',
+      labelKey: 'inline.plan295.life.dim.e92a1296aeeb',
     ),
     _LifeOption<_FakeCallBackgroundStyle>(
       value: _FakeCallBackgroundStyle.blur,
-      labelZh: '模糊',
-      labelEn: 'Blur',
+      labelKey: 'inline.plan295.life.blur.8c66643e012d',
     ),
   ];
 }
@@ -243,20 +240,18 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
     final triggerAt = _resolveTriggerAt();
     if (triggerAt == null) {
       _showSnack(
-        _lifeText(
+        _lifeI18nText(
           context,
-          zh: '请输入大于 0 的倒计时时长',
-          en: 'Enter a countdown longer than 0',
+          'inline.plan295.life.enter_a_countdown_longer_than_0.414b324b31bc',
         ),
       );
       return;
     }
     if (!triggerAt.isAfter(DateTime.now())) {
       _showSnack(
-        _lifeText(
+        _lifeI18nText(
           context,
-          zh: '触发时间需要晚于当前时间',
-          en: 'Trigger time must be in the future',
+          'inline.plan295.life.trigger_time_must_be_in_the_future.c3540c590abc',
         ),
       );
       return;
@@ -264,10 +259,9 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
     final remaining = triggerAt.difference(DateTime.now());
     if (remaining > const Duration(days: 30)) {
       _showSnack(
-        _lifeText(
+        _lifeI18nText(
           context,
-          zh: '模拟来电最长支持 30 天内触发',
-          en: 'Fake calls can be scheduled up to 30 days ahead',
+          'inline.plan295.life.fake_calls_can_be_scheduled_up_to_30.c3ab8af0c165',
         ),
       );
       return;
@@ -275,10 +269,9 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
     final callerLabel = _callerLabel();
     if (callerLabel.trim().isEmpty) {
       _showSnack(
-        _lifeText(
+        _lifeI18nText(
           context,
-          zh: '请至少填写来电姓名或号码',
-          en: 'Enter at least a caller name or number',
+          'inline.plan295.life.enter_at_least_a_caller_name_or_numb.143dc25c79aa',
         ),
       );
       return;
@@ -314,15 +307,13 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
       });
       _showSnack(
         result.nativeScheduled
-            ? _lifeText(
+            ? _lifeI18nText(
                 context,
-                zh: '已开始等待，到点将全屏播放模拟来电',
-                en: 'Started. The fake call will play full-screen at the trigger time',
+                'inline.plan295.life.started_the_fake_call_will_play_full.1958ef8375fe',
               )
-            : _lifeText(
+            : _lifeI18nText(
                 context,
-                zh: '已开始前台等待，到点会在应用内全屏播放',
-                en: 'Started with in-app fallback. Keep this page open for full-screen playback',
+                'inline.plan295.life.started_with_in_app_fallback_keep_th.8e33942dd716',
               ),
       );
     } finally {
@@ -358,7 +349,10 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
     });
     if (showMessage) {
       _showSnack(
-        _lifeText(context, zh: '已取消本次模拟来电', en: 'Fake call cancelled'),
+        _lifeI18nText(
+          context,
+          'inline.plan295.life.fake_call_cancelled.24a0a6c2c49a',
+        ),
       );
     }
     if (callId != null) {
@@ -426,7 +420,10 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
     if (number.isNotEmpty) {
       return number;
     }
-    return _lifeText(context, zh: '未知号码', en: 'Unknown number');
+    return _lifeI18nText(
+      context,
+      'inline.plan295.life.unknown_number.7dbbf2677793',
+    );
   }
 
   String _formatDate(DateTime value) {
@@ -456,17 +453,15 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
 
   String _countdownUnitLabel(_FakeCallCountdownUnit unit) {
     return switch (unit) {
-      _FakeCallCountdownUnit.seconds => _lifeText(
+      _FakeCallCountdownUnit.seconds => _lifeI18nText(
         context,
-        zh: '秒',
-        en: 'Seconds',
+        'inline.ui.pages.toolbox_human_tests_time_perception.seconds_0e29e9',
       ),
-      _FakeCallCountdownUnit.minutes => _lifeText(
+      _FakeCallCountdownUnit.minutes => _lifeI18nText(
         context,
-        zh: '分钟',
-        en: 'Minutes',
+        'inline.ui.pages.toolbox_human_tests_time_perception.minutes_fe0616',
       ),
-      _FakeCallCountdownUnit.hours => _lifeText(context, zh: '小时', en: 'Hours'),
+      _FakeCallCountdownUnit.hours => _lifeI18nText(context, 'hoursLabel'),
     };
   }
 
@@ -476,11 +471,13 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
     final theme = Theme.of(context);
 
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '模拟来电', en: 'Fake incoming call'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '点击开始后等待指定时间，到点全屏播放模拟来电、铃声和震动。',
-        en: 'Tap start, wait for the selected time, then play a full-screen fake incoming call with ringtone and vibration.',
+        'inline.plan295.life.fake_incoming_call.a3cd1b946f9f',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.tap_start_wait_for_the_selected_time.26172885ad1b',
       ),
       child: Column(
         key: const ValueKey<String>('life-fake-call-page'),
@@ -488,7 +485,10 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
         children: <Widget>[
           _FakeCallStage(
             callerName: _callerLabel().isEmpty
-                ? _lifeText(context, zh: '模拟来电', en: 'Fake incoming call')
+                ? _lifeI18nText(
+                    context,
+                    'inline.plan295.life.fake_incoming_call.a3cd1b946f9f',
+                  )
                 : _callerLabel(),
             callerNumber: _callerNumberLabel(),
             callerLocation: _callerLocationController.text.trim(),
@@ -503,26 +503,26 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
           ),
           const SizedBox(height: 12),
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '背景样式', en: 'Background style'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '来电触发和接听后的通话界面可以使用不同背景。',
-              en: 'Incoming and accepted-call screens can use different backgrounds.',
+              'inline.plan295.life.background_style.38610039d819',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.incoming_and_accepted_call_screens_c.e4a542d60eae',
             ),
             children: <Widget>[
               _FakeCallBackgroundPicker(
                 key: const ValueKey<String>(
                   'life-fake-call-incoming-background',
                 ),
-                title: _lifeText(
+                title: _lifeI18nText(
                   context,
-                  zh: '来电背景',
-                  en: 'Incoming background',
+                  'inline.plan295.life.incoming_background.c0d0603d0175',
                 ),
-                subtitle: _lifeText(
+                subtitle: _lifeI18nText(
                   context,
-                  zh: '用于全屏来电响铃界面。',
-                  en: 'Used on the full-screen ringing interface.',
+                  'inline.plan295.life.used_on_the_full_screen_ringing_inte.c6d4784e7211',
                 ),
                 imagePath: _incomingBackgroundPath,
                 style: _incomingBackgroundStyle,
@@ -540,11 +540,13 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
               const SizedBox(height: 12),
               _FakeCallBackgroundPicker(
                 key: const ValueKey<String>('life-fake-call-incall-background'),
-                title: _lifeText(context, zh: '通话背景', en: 'In-call background'),
-                subtitle: _lifeText(
+                title: _lifeI18nText(
                   context,
-                  zh: '接听后进入通话计时界面使用。',
-                  en: 'Used after accepting the call.',
+                  'inline.plan295.life.in_call_background.2d1f81165de9',
+                ),
+                subtitle: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.used_after_accepting_the_call.cf16b3bad2ab',
                 ),
                 imagePath: _inCallBackgroundPath,
                 style: _inCallBackgroundStyle,
@@ -563,11 +565,13 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
           ),
           const SizedBox(height: 12),
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '来电信息', en: 'Caller details'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '这些内容会显示在全屏来电界面上。',
-              en: 'These details appear on the full-screen call UI.',
+              'inline.plan295.life.caller_details.b181e7ee93ce',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.these_details_appear_on_the_full_scr.a4d2e28f5fc5',
             ),
             children: <Widget>[
               TextField(
@@ -575,7 +579,10 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
                 controller: _callerNameController,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
-                  labelText: _lifeText(context, zh: '来电姓名', en: 'Caller name'),
+                  labelText: _lifeI18nText(
+                    context,
+                    'inline.plan295.life.caller_name.73cb5c6bf124',
+                  ),
                 ),
                 onChanged: (_) => setState(() {}),
               ),
@@ -585,10 +592,9 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
                 controller: _callerNumberController,
                 decoration: InputDecoration(
                   border: const OutlineInputBorder(),
-                  labelText: _lifeText(
+                  labelText: _lifeI18nText(
                     context,
-                    zh: '来电号码',
-                    en: 'Caller number',
+                    'inline.plan295.life.caller_number.271d90810358',
                   ),
                 ),
                 keyboardType: TextInputType.phone,
@@ -605,10 +611,9 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
                       controller: _callerLocationController,
                       decoration: InputDecoration(
                         border: const OutlineInputBorder(),
-                        labelText: _lifeText(
+                        labelText: _lifeI18nText(
                           context,
-                          zh: '归属地',
-                          en: 'Location',
+                          'inline.plan295.life.location.aa7c92ed67ce',
                         ),
                       ),
                       onChanged: (_) => setState(() {}),
@@ -621,7 +626,10 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
                       controller: _callerTagController,
                       decoration: InputDecoration(
                         border: const OutlineInputBorder(),
-                        labelText: _lifeText(context, zh: '标签', en: 'Label'),
+                        labelText: _lifeI18nText(
+                          context,
+                          'inline.plan295.life.label.560cfe12f3b7',
+                        ),
                       ),
                       onChanged: (_) => setState(() {}),
                     ),
@@ -632,26 +640,30 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
           ),
           const SizedBox(height: 12),
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '触发时间', en: 'Trigger time'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '选择倒计时或指定时间。开始后到点直接进入全屏来电。',
-              en: 'Choose a countdown or fixed time. Once started, the call screen appears at the trigger time.',
+              'inline.plan295.life.trigger_time.78a4f291eb11',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.choose_a_countdown_or_fixed_time_onc.5a19d1ca7271',
             ),
             children: <Widget>[
               _LifeSegmentedField<_FakeCallScheduleMode>(
-                label: _lifeText(context, zh: '启动方式', en: 'Start mode'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.start_mode.ee3cbf0aba12',
+                ),
                 value: _scheduleMode,
                 options: const <_LifeOption<_FakeCallScheduleMode>>[
                   _LifeOption<_FakeCallScheduleMode>(
                     value: _FakeCallScheduleMode.countdown,
-                    labelZh: '倒计时',
-                    labelEn: 'Countdown',
+                    labelKey:
+                        'inline.ui.pages.toolbox_human_tests_time_perception.countdown_da672d',
                   ),
                   _LifeOption<_FakeCallScheduleMode>(
                     value: _FakeCallScheduleMode.fixedTime,
-                    labelZh: '指定时间',
-                    labelEn: 'Fixed time',
+                    labelKey: 'inline.plan295.life.fixed_time.6fd29885b880',
                   ),
                 ],
                 onChanged: _hasActiveCall
@@ -677,10 +689,9 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
                         ],
                         decoration: InputDecoration(
                           border: const OutlineInputBorder(),
-                          labelText: _lifeText(
+                          labelText: _lifeI18nText(
                             context,
-                            zh: '倒计时时长',
-                            en: 'Countdown length',
+                            'inline.plan295.life.countdown_length.76e44403759c',
                           ),
                         ),
                         onChanged: (_) => setState(() {}),
@@ -696,7 +707,10 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
                         initialValue: _countdownUnit,
                         decoration: InputDecoration(
                           border: const OutlineInputBorder(),
-                          labelText: _lifeText(context, zh: '单位', en: 'Unit'),
+                          labelText: _lifeI18nText(
+                            context,
+                            'inline.plan295.life.unit.56e8aefdd46b',
+                          ),
                         ),
                         items: _FakeCallCountdownUnit.values
                             .map(
@@ -749,13 +763,19 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
           ),
           const SizedBox(height: 12),
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '来电效果', en: 'Call effects'),
+            title: _lifeI18nText(
+              context,
+              'inline.plan295.life.call_effects.6a69133faa5f',
+            ),
             children: <Widget>[
               SwitchListTile(
                 value: _ringtoneEnabled,
                 contentPadding: EdgeInsets.zero,
                 title: Text(
-                  _lifeText(context, zh: '播放系统铃声', en: 'Play ringtone'),
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.play_ringtone.ab585813996a',
+                  ),
                 ),
                 onChanged: _hasActiveCall
                     ? null
@@ -764,7 +784,12 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
               SwitchListTile(
                 value: _vibrationEnabled,
                 contentPadding: EdgeInsets.zero,
-                title: Text(_lifeText(context, zh: '震动', en: 'Vibration')),
+                title: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.vibration.9be36b35f3a7',
+                  ),
+                ),
                 onChanged: _hasActiveCall
                     ? null
                     : (value) => setState(() => _vibrationEnabled = value),
@@ -789,18 +814,19 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
                       ),
                       label: Text(
                         _starting
-                            ? _lifeText(
+                            ? _lifeI18nText(
                                 context,
-                                zh: '启动中...',
-                                en: 'Starting...',
+                                'inline.plan295.life.starting.97f31fe92343',
                               )
                             : _hasActiveCall
-                            ? _lifeText(
+                            ? _lifeI18nText(
                                 context,
-                                zh: '取消本次来电',
-                                en: 'Cancel call',
+                                'inline.plan295.life.cancel_call.8e050625b40a',
                               )
-                            : _lifeText(context, zh: '开始', en: 'Start'),
+                            : _lifeI18nText(
+                                context,
+                                'inline.ui.pages.toolbox_breathing_tool.start_28545d',
+                              ),
                       ),
                     ),
                   ),
@@ -809,7 +835,10 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
                     key: const ValueKey<String>(
                       'life-fake-call-preview-button',
                     ),
-                    tooltip: _lifeText(context, zh: '立即预览', en: 'Preview now'),
+                    tooltip: _lifeI18nText(
+                      context,
+                      'inline.plan295.life.preview_now.ba42463f0bb6',
+                    ),
                     onPressed: _previewNow,
                     icon: const Icon(Icons.phone_in_talk_rounded),
                   ),
@@ -819,11 +848,13 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
           ),
           const SizedBox(height: 12),
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '触发能力', en: 'Delivery capability'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: 'Android 可在锁屏或后台尝试全屏唤起来电；其他平台使用应用内前台触发。',
-              en: 'Android can try to launch full-screen from lock screen or background. Other platforms use the in-app foreground fallback.',
+              'inline.plan295.life.delivery_capability.152743dc59f8',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.android_can_try_to_launch_full_scree.704f861f6260',
             ),
             children: <Widget>[
               Wrap(
@@ -833,47 +864,44 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
                   Chip(
                     label: Text(
                       _loadingCapability
-                          ? _lifeText(context, zh: '能力检查中', en: 'Checking')
-                          : _capability.nativeFullScreenSupported
-                          ? _lifeText(
+                          ? _lifeI18nText(
                               context,
-                              zh: '原生全屏可用',
-                              en: 'Native full-screen ready',
+                              'inline.plan295.life.checking.76454f20ef86',
                             )
-                          : _lifeText(
+                          : _capability.nativeFullScreenSupported
+                          ? _lifeI18nText(
                               context,
-                              zh: '应用内前台触发',
-                              en: 'In-app foreground fallback',
+                              'inline.plan295.life.native_full_screen_ready.7f967916be7c',
+                            )
+                          : _lifeI18nText(
+                              context,
+                              'inline.plan295.life.in_app_foreground_fallback.cc1748a4b198',
                             ),
                     ),
                   ),
                   Chip(
                     label: Text(
                       _capability.notificationsGranted
-                          ? _lifeText(
+                          ? _lifeI18nText(
                               context,
-                              zh: '通知权限已允许',
-                              en: 'Notification granted',
+                              'inline.plan295.life.notification_granted.9111301ce719',
                             )
-                          : _lifeText(
+                          : _lifeI18nText(
                               context,
-                              zh: '通知权限待开启',
-                              en: 'Notification needed',
+                              'inline.plan295.life.notification_needed.2594b2c1b13f',
                             ),
                     ),
                   ),
                   Chip(
                     label: Text(
                       _capability.exactAlarmGranted
-                          ? _lifeText(
+                          ? _lifeI18nText(
                               context,
-                              zh: '准点触发可用',
-                              en: 'Exact trigger ready',
+                              'inline.plan295.life.exact_trigger_ready.4608f980dc3e',
                             )
-                          : _lifeText(
+                          : _lifeI18nText(
                               context,
-                              zh: '准点触发待确认',
-                              en: 'Exact trigger needed',
+                              'inline.plan295.life.exact_trigger_needed.1d7607301f92',
                             ),
                     ),
                   ),
@@ -884,10 +912,9 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
                 FilledButton.tonal(
                   onPressed: _requestNotificationPermission,
                   child: Text(
-                    _lifeText(
+                    _lifeI18nText(
                       context,
-                      zh: '请求通知权限',
-                      en: 'Request notification access',
+                      'inline.plan295.life.request_notification_access.b9d2d4deca63',
                     ),
                   ),
                 ),
@@ -897,10 +924,9 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
                 OutlinedButton(
                   onPressed: _openExactAlarmSettings,
                   child: Text(
-                    _lifeText(
+                    _lifeI18nText(
                       context,
-                      zh: '打开精确闹钟设置',
-                      en: 'Open exact-alarm settings',
+                      'inline.plan295.life.open_exact_alarm_settings.0aca6c182c5d',
                     ),
                   ),
                 ),
@@ -909,15 +935,13 @@ class _FakeCallToolPageState extends State<_FakeCallToolPage> {
                 const SizedBox(height: 12),
                 Text(
                   _nativeScheduled
-                      ? _lifeText(
+                      ? _lifeI18nText(
                           context,
-                          zh: '已交给系统调度；页面保持打开时也会有应用内兜底。',
-                          en: 'Scheduled natively; this page also keeps an in-app fallback while open.',
+                          'inline.plan295.life.scheduled_natively_this_page_also_ke.b0c3a8b1f37c',
                         )
-                      : _lifeText(
+                      : _lifeI18nText(
                           context,
-                          zh: '当前使用应用内兜底，请保持页面打开。',
-                          en: 'Using in-app fallback. Keep this page open.',
+                          'inline.plan295.life.using_in_app_fallback_keep_this_page.7b6cd0f4d36a',
                         ),
                   style: theme.textTheme.bodySmall,
                 ),
@@ -990,12 +1014,14 @@ class _FakeCallStage extends StatelessWidget {
               Expanded(
                 child: Text(
                   active
-                      ? _lifeText(
+                      ? _lifeI18nText(
                           context,
-                          zh: '等待来电触发',
-                          en: 'Waiting for trigger',
+                          'inline.plan295.life.waiting_for_trigger.4c3268b3b4be',
                         )
-                      : _lifeText(context, zh: '来电预览', en: 'Call preview'),
+                      : _lifeI18nText(
+                          context,
+                          'inline.plan295.life.call_preview.7d797dcd02d4',
+                        ),
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: const Color(0xFFD8E4F0),
                     fontWeight: FontWeight.w800,
@@ -1006,8 +1032,14 @@ class _FakeCallStage extends StatelessWidget {
                 visualDensity: VisualDensity.compact,
                 label: Text(
                   nativeScheduled
-                      ? _lifeText(context, zh: '系统调度', en: 'Native')
-                      : _lifeText(context, zh: '前台兜底', en: 'Fallback'),
+                      ? _lifeI18nText(
+                          context,
+                          'inline.plan295.life.native.584e194f8414',
+                        )
+                      : _lifeI18nText(
+                          context,
+                          'inline.plan295.life.fallback.acf7de36ca17',
+                        ),
                 ),
               ),
             ],
@@ -1174,7 +1206,10 @@ class _FakeCallBackgroundPicker extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _LifeSegmentedField<_FakeCallBackgroundStyle>(
-            label: _lifeText(context, zh: '显示样式', en: 'Display style'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.display_style.45fa44faea34',
+            ),
             value: style,
             options: _fakeCallBackgroundStyleOptions(),
             onChanged: onStyleChanged,
@@ -1190,8 +1225,14 @@ class _FakeCallBackgroundPicker extends StatelessWidget {
                 icon: const Icon(Icons.image_rounded),
                 label: Text(
                   hasImage
-                      ? _lifeText(context, zh: '更换图片', en: 'Change image')
-                      : _lifeText(context, zh: '选择图片', en: 'Choose image'),
+                      ? _lifeI18nText(
+                          context,
+                          'inline.plan295.life.change_image.cfedd1018cfd',
+                        )
+                      : _lifeI18nText(
+                          context,
+                          'inline.plan295.life.choose_image.9e5b3a338cc7',
+                        ),
                 ),
               ),
               if (hasImage)
@@ -1199,7 +1240,7 @@ class _FakeCallBackgroundPicker extends StatelessWidget {
                   key: clearButtonKey,
                   onPressed: onClear,
                   icon: const Icon(Icons.close_rounded),
-                  label: Text(_lifeText(context, zh: '清除', en: 'Clear')),
+                  label: Text(_lifeI18nText(context, 'clearValue')),
                 ),
             ],
           ),
@@ -1346,10 +1387,16 @@ class _FakeCallInAppScreenState extends State<_FakeCallInAppScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final callerName = widget.callerName.trim().isEmpty
-        ? _lifeText(context, zh: '模拟来电', en: 'Fake incoming call')
+        ? _lifeI18nText(
+            context,
+            'inline.plan295.life.fake_incoming_call.a3cd1b946f9f',
+          )
         : widget.callerName.trim();
     final callerNumber = widget.callerNumber.trim().isEmpty
-        ? _lifeText(context, zh: '未知号码', en: 'Unknown number')
+        ? _lifeI18nText(
+            context,
+            'inline.plan295.life.unknown_number.7dbbf2677793',
+          )
         : widget.callerNumber.trim();
     final meta = <String>[
       if (widget.callerLocation.trim().isNotEmpty) widget.callerLocation.trim(),
@@ -1403,7 +1450,10 @@ class _FakeCallInAppScreenState extends State<_FakeCallInAppScreen>
       key: const ValueKey<String>('life-fake-call-incoming-screen'),
       children: <Widget>[
         Text(
-          _lifeText(context, zh: '来电中', en: 'Incoming call'),
+          _lifeI18nText(
+            context,
+            'inline.plan295.life.incoming_call.16c310f2092f',
+          ),
           style: theme.textTheme.titleMedium?.copyWith(
             color: const Color(0xFFCBD5E1),
             fontWeight: FontWeight.w700,
@@ -1433,7 +1483,10 @@ class _FakeCallInAppScreenState extends State<_FakeCallInAppScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             _FakeCallActionButton(
-              label: _lifeText(context, zh: '拒绝', en: 'Decline'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.decline.2ecde7e33a3b',
+              ),
               icon: Icons.call_end_rounded,
               color: const Color(0xFFC24141),
               onPressed: _finish,
@@ -1441,7 +1494,10 @@ class _FakeCallInAppScreenState extends State<_FakeCallInAppScreen>
             const SizedBox(width: 26),
             _FakeCallActionButton(
               key: const ValueKey<String>('life-fake-call-accept-button'),
-              label: _lifeText(context, zh: '接听', en: 'Accept'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.accept.3b0a51deebd3',
+              ),
               icon: Icons.call_rounded,
               color: const Color(0xFF2E9C67),
               onPressed: _accept,
@@ -1462,7 +1518,7 @@ class _FakeCallInAppScreenState extends State<_FakeCallInAppScreen>
       key: const ValueKey<String>('life-fake-call-incall-screen'),
       children: <Widget>[
         Text(
-          _lifeText(context, zh: '通话中', en: 'In call'),
+          _lifeI18nText(context, 'inline.plan295.life.in_call.68e90e7d4771'),
           style: theme.textTheme.titleMedium?.copyWith(
             color: const Color(0xFFCBD5E1),
             fontWeight: FontWeight.w700,
@@ -1490,7 +1546,10 @@ class _FakeCallInAppScreenState extends State<_FakeCallInAppScreen>
         ),
         _FakeCallActionButton(
           key: const ValueKey<String>('life-fake-call-hangup-button'),
-          label: _lifeText(context, zh: '挂断', en: 'Hang up'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.hang_up.bfc2690bc30a',
+          ),
           icon: Icons.call_end_rounded,
           color: const Color(0xFFC24141),
           onPressed: _finish,

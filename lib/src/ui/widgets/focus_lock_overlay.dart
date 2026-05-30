@@ -77,17 +77,17 @@ class _FocusLockOverlayState extends ConsumerState<FocusLockOverlay> {
 
   String _phaseLabel(AppI18n i18n, TomatoTimerPhase phase) {
     return switch (phase) {
-      TomatoTimerPhase.focus => pickUiText(i18n, zh: '专注中', en: 'Focusing'),
-      TomatoTimerPhase.breakTime => pickUiText(i18n, zh: '休息中', en: 'Break'),
-      TomatoTimerPhase.breakReady => pickUiText(
-        i18n,
-        zh: '准备休息',
-        en: 'Break ready',
+      TomatoTimerPhase.focus => i18n.t(
+        'inline.ui.widgets.focus_lock_overlay.focusing_931a45',
       ),
-      TomatoTimerPhase.focusReady => pickUiText(
-        i18n,
-        zh: '准备专注',
-        en: 'Focus ready',
+      TomatoTimerPhase.breakTime => i18n.t(
+        'inline.ui.widgets.focus_lock_overlay.break_8cc402',
+      ),
+      TomatoTimerPhase.breakReady => i18n.t(
+        'inline.ui.widgets.focus_lock_overlay.break_ready_7d193f',
+      ),
+      TomatoTimerPhase.focusReady => i18n.t(
+        'inline.ui.widgets.focus_lock_overlay.focus_ready_5cb252',
       ),
       TomatoTimerPhase.idle => '',
     };
@@ -146,10 +146,8 @@ class _FocusLockOverlayState extends ConsumerState<FocusLockOverlay> {
                     const SizedBox(height: 8),
                     // Round indicator
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '第 ${timerState.currentRound} / ${config.rounds} 轮',
-                        en: 'Round ${timerState.currentRound} / ${config.rounds}',
+                      i18n.t(
+                        'inline.ui.widgets.focus_lock_overlay.round_timerstate_currentround_config_rounds_51f88a',
                       ),
                       style: const TextStyle(
                         color: Colors.white38,
@@ -267,15 +265,11 @@ class _FocusLockOverlayState extends ConsumerState<FocusLockOverlay> {
                           const SizedBox(height: 8),
                           Text(
                             _unlockConfirming
-                                ? pickUiText(
-                                    i18n,
-                                    zh: '松开取消',
-                                    en: 'Release to cancel',
+                                ? i18n.t(
+                                    'inline.ui.widgets.focus_lock_overlay.release_to_cancel_02bbdb',
                                   )
-                                : pickUiText(
-                                    i18n,
-                                    zh: '长按退出专注',
-                                    en: 'Long press to exit focus',
+                                : i18n.t(
+                                    'inline.ui.widgets.focus_lock_overlay.long_press_to_exit_focus_b139cf',
                                   ),
                             style: const TextStyle(
                               color: Colors.white38,

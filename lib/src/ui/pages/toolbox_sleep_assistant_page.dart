@@ -230,8 +230,12 @@ class _ToolboxSleepAssistantPageState
     };
     final quickNote = switch (mood) {
       SleepMorningQuickMood.same => i18n.t('toolbox.sleep.assist.morningSame'),
-      SleepMorningQuickMood.worse => i18n.t('toolbox.sleep.assist.morningWorse'),
-      SleepMorningQuickMood.better => i18n.t('toolbox.sleep.assist.morningBetter'),
+      SleepMorningQuickMood.worse => i18n.t(
+        'toolbox.sleep.assist.morningWorse',
+      ),
+      SleepMorningQuickMood.better => i18n.t(
+        'toolbox.sleep.assist.morningBetter',
+      ),
     };
     final updated = base.copyWith(
       morningEnergy: energy,
@@ -246,9 +250,15 @@ class _ToolboxSleepAssistantPageState
     );
     appState.saveSleepDailyLog(updated);
     final message = switch (mood) {
-      SleepMorningQuickMood.same => i18n.t('toolbox.sleep.assist.morningSavedSame'),
-      SleepMorningQuickMood.worse => i18n.t('toolbox.sleep.assist.morningSavedWorse'),
-      SleepMorningQuickMood.better => i18n.t('toolbox.sleep.assist.morningSavedBetter'),
+      SleepMorningQuickMood.same => i18n.t(
+        'toolbox.sleep.assist.morningSavedSame',
+      ),
+      SleepMorningQuickMood.worse => i18n.t(
+        'toolbox.sleep.assist.morningSavedWorse',
+      ),
+      SleepMorningQuickMood.better => i18n.t(
+        'toolbox.sleep.assist.morningSavedBetter',
+      ),
     };
     final messenger = ScaffoldMessenger.of(context);
     messenger.hideCurrentSnackBar();
@@ -264,9 +274,7 @@ class _ToolboxSleepAssistantPageState
         DateTime.now().subtract(const Duration(days: 1)),
       );
       if (event.dateKey == today || event.dateKey == yesterday) {
-        hints.add(
-          i18n.t('toolbox.sleep.assist.recentRescue'),
-        );
+        hints.add(i18n.t('toolbox.sleep.assist.recentRescue'));
         if (event.returnedToBedAt != null) {
           hints.add(i18n.t('toolbox.sleep.assist.leftBedRecorded'));
         }
@@ -345,7 +353,9 @@ class _ToolboxSleepAssistantPageState
                     step: nextStep,
                     supportGoal: SleepSupportGoalStrip(i18n: i18n),
                     onShortVersion: () => _showTiredModeSheet(appState, i18n),
-                    shortVersionLabel: i18n.t('toolbox.sleep.assist.shorterVersion'),
+                    shortVersionLabel: i18n.t(
+                      'toolbox.sleep.assist.shorterVersion',
+                    ),
                   ),
                 ),
               ),
@@ -416,12 +426,8 @@ class _ToolboxSleepAssistantPageState
               Card(
                 child: SwitchListTile(
                   secondary: const Icon(Icons.dark_mode_rounded),
-                  title: Text(
-                    i18n.t('toolbox.sleep.assist.darkMode'),
-                  ),
-                  subtitle: Text(
-                    i18n.t('toolbox.sleep.assist.darkModeHint'),
-                  ),
+                  title: Text(i18n.t('toolbox.sleep.assist.darkMode')),
+                  subtitle: Text(i18n.t('toolbox.sleep.assist.darkModeHint')),
                   value: appState.sleepDashboardState.sleepDarkModeEnabled,
                   onChanged: (value) => appState.updateSleepDashboardState(
                     appState.sleepDashboardState.copyWith(
@@ -791,8 +797,7 @@ class _ToolboxSleepAssistantPageState
         onSecondary: () => _open(context, appState, const SleepDailyLogPage()),
         signals: <String>[
           i18n.t('toolbox.sleep.assist.min10to20'),
-          if (!latestIsToday)
-            i18n.t('toolbox.sleep.assist.logPending'),
+          if (!latestIsToday) i18n.t('toolbox.sleep.assist.logPending'),
         ],
       );
     }
@@ -1152,16 +1157,12 @@ class _SleepHomeUtilityPanel extends StatelessWidget {
                 FilledButton.tonalIcon(
                   onPressed: onLocate,
                   icon: const Icon(Icons.menu_open_rounded),
-                  label: Text(
-                    i18n.t('toolbox.sleep.assist.openDrawer'),
-                  ),
+                  label: Text(i18n.t('toolbox.sleep.assist.openDrawer')),
                 ),
                 OutlinedButton.icon(
                   onPressed: onScience,
                   icon: const Icon(Icons.menu_book_rounded),
-                  label: Text(
-                    i18n.t('toolbox.sleep.assist.scienceCard'),
-                  ),
+                  label: Text(i18n.t('toolbox.sleep.assist.scienceCard')),
                 ),
               ],
             ),
@@ -1443,9 +1444,7 @@ class _SleepFrictionlessStartPanel extends StatelessWidget {
                       child: FilledButton.tonalIcon(
                         onPressed: onTiredMode,
                         icon: const Icon(Icons.battery_1_bar_rounded),
-                        label: Text(
-                          i18n.t('toolbox.sleep.assist.imTired'),
-                        ),
+                        label: Text(i18n.t('toolbox.sleep.assist.imTired')),
                       ),
                     ),
                     SizedBox(
@@ -1808,11 +1807,7 @@ class _SleepAssistantLoadingState extends ConsumerWidget {
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
           const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              i18n.t('toolbox.sleep.core.loading'),
-            ),
-          ),
+          Expanded(child: Text(i18n.t('toolbox.sleep.core.loading'))),
         ],
       ),
     );
@@ -1841,9 +1836,7 @@ class _CurrentPlanCard extends ConsumerWidget {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
-              Text(
-                i18n.t('toolbox.sleep.assist.noPlanHint'),
-              ),
+              Text(i18n.t('toolbox.sleep.assist.noPlanHint')),
               const SizedBox(height: 12),
               FilledButton.icon(
                 onPressed: () {
@@ -1854,9 +1847,7 @@ class _CurrentPlanCard extends ConsumerWidget {
                   );
                 },
                 icon: const Icon(Icons.fact_check_rounded),
-                label: Text(
-                  i18n.t('toolbox.sleep.assist.startAssessment'),
-                ),
+                label: Text(i18n.t('toolbox.sleep.assist.startAssessment')),
               ),
             ],
           ),

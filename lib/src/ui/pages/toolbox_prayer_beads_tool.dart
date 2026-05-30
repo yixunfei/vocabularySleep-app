@@ -8,7 +8,6 @@ import 'package:flutter/services.dart';
 import '../../i18n/app_i18n.dart';
 import '../../services/toolbox_audio_service.dart';
 import '../../services/toolbox_prayer_beads_prefs_service.dart';
-import '../ui_copy.dart';
 import 'toolbox/toolbox_ui_components.dart';
 import 'toolbox_tool_shell.dart';
 
@@ -513,7 +512,7 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
     });
     _interactionController.forward(from: 0);
     if (completesRound) {
-      _showMoment(_t(zh: '已完成一圈', en: 'Round complete'));
+      _showMoment(_i18n.t('toolbox.prayerBeads.round_complete.00bf2f4f'));
     }
     _schedulePersist();
     unawaited(_playAdvanceEffect(accent: completesRound));
@@ -703,45 +702,39 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
     _didAdvanceThisGesture = false;
   }
 
-  String _t({required String zh, required String en}) {
-    return pickUiText(
-      AppI18n(Localizations.localeOf(context).languageCode),
-      zh: zh,
-      en: en,
-    );
-  }
-
+  AppI18n get _i18n => AppI18n(Localizations.localeOf(context).languageCode);
   String _materialLabel(_PrayerBeadsMaterial material) {
     return switch (material) {
-      _PrayerBeadsMaterial.jade => _t(zh: '白玉', en: 'Jade'),
-      _PrayerBeadsMaterial.lapis => _t(zh: '青金', en: 'Lapis'),
-      _PrayerBeadsMaterial.bodhi => _t(zh: '菩提', en: 'Bodhi'),
-      _PrayerBeadsMaterial.obsidian => _t(zh: '黑曜', en: 'Obsidian'),
-      _ => _t(zh: '檀木', en: 'Sandalwood'),
+      _PrayerBeadsMaterial.jade => _i18n.t('toolbox.prayerBeads.jade.02a27cd1'),
+      _PrayerBeadsMaterial.lapis => _i18n.t(
+        'toolbox.prayerBeads.lapis.8488471f',
+      ),
+      _PrayerBeadsMaterial.bodhi => _i18n.t(
+        'toolbox.prayerBeads.bodhi.836c80af',
+      ),
+      _PrayerBeadsMaterial.obsidian => _i18n.t(
+        'toolbox.prayerBeads.obsidian.ba174e10',
+      ),
+      _ => _i18n.t('toolbox.prayerBeads.sandalwood.374daf0a'),
     };
   }
 
   String _materialHint(_PrayerBeadsMaterial material) {
     return switch (material) {
-      _PrayerBeadsMaterial.jade => _t(
-        zh: '更清润，回响更轻。',
-        en: 'Softer and cleaner with a lighter ring.',
+      _PrayerBeadsMaterial.jade => _i18n.t(
+        'toolbox.prayerBeads.softer_and_cleaner_with_a_lighter_ring.aa46536a',
       ),
-      _PrayerBeadsMaterial.lapis => _t(
-        zh: '更凝练，带一点石感。',
-        en: 'Denser and slightly stone-like.',
+      _PrayerBeadsMaterial.lapis => _i18n.t(
+        'toolbox.prayerBeads.denser_and_slightly_stone_like.92051fdc',
       ),
-      _PrayerBeadsMaterial.bodhi => _t(
-        zh: '更温暖，颗粒感更明显。',
-        en: 'Warmer with a more tactile seed feel.',
+      _PrayerBeadsMaterial.bodhi => _i18n.t(
+        'toolbox.prayerBeads.warmer_with_a_more_tactile_seed_feel.902f2040',
       ),
-      _PrayerBeadsMaterial.obsidian => _t(
-        zh: '更沉静，声音更收束。',
-        en: 'Darker and more contained in tone.',
+      _PrayerBeadsMaterial.obsidian => _i18n.t(
+        'toolbox.prayerBeads.darker_and_more_contained_in_tone.f690fe49',
       ),
-      _ => _t(
-        zh: '参考檀木材质，触感最自然。',
-        en: 'Warm wood character with a natural tactile feel.',
+      _ => _i18n.t(
+        'toolbox.prayerBeads.warm_wood_character_with_a_natural_tactile.deb04271',
       ),
     };
   }
@@ -778,19 +771,19 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
           runSpacing: 12,
           children: <Widget>[
             ToolboxMetricCard(
-              label: _t(zh: '本轮进度', en: 'Cycle'),
+              label: _i18n.t('toolbox.prayerBeads.cycle.8b1ba449'),
               value: '$_cycleCount / $_beadCount',
             ),
             ToolboxMetricCard(
-              label: _t(zh: '已完成圈数', en: 'Rounds'),
+              label: _i18n.t('toolbox.prayerBeads.rounds.880964a8'),
               value: '$_rounds',
             ),
             ToolboxMetricCard(
-              label: _t(zh: '累计拨动', en: 'All-time'),
+              label: _i18n.t('toolbox.prayerBeads.all_time.57b42900'),
               value: '$_allTimeCount',
             ),
             ToolboxMetricCard(
-              label: _t(zh: '本次时长', en: 'Session'),
+              label: _i18n.t('toolbox.prayerBeads.session.4e47bfe6'),
               value: _formatElapsed(_elapsed),
             ),
           ],
@@ -830,7 +823,7 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
           ),
           const SizedBox(height: 12),
           Text(
-            _t(zh: '静心念珠练习', en: 'Prayer bead practice'),
+            _i18n.t('toolbox.prayerBeads.prayer_bead_practice.900e39d0'),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w900,
               color: const Color(0xFF23180F),
@@ -838,9 +831,8 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
           ),
           const SizedBox(height: 8),
           Text(
-            _t(
-              zh: '轻点或向下拨动中位念珠，也可以向上推拨，让下一颗珠子自然滑入中位。',
-              en: 'Tap or pull the center bead downward. Upward strokes also work and the next bead will slide into center.',
+            _i18n.t(
+              'toolbox.prayerBeads.tap_or_pull_the_center_bead_downward.52c9b532',
             ),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               height: 1.4,
@@ -867,10 +859,13 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
           const SizedBox(height: 8),
           Text(
             _cycleCount == 0
-                ? _t(zh: '尚未开始', en: 'Not started yet')
-                : _t(
-                    zh: '当前已拨 $_cycleCount / $_beadCount 颗',
-                    en: '$_cycleCount of $_beadCount beads in this cycle',
+                ? _i18n.t('toolbox.prayerBeads.not_started_yet.315574a4')
+                : _i18n.t(
+                    'toolbox.prayerBeads.value_of_value_beads_in_this_cycle.7a5e7b46',
+                    params: <String, Object?>{
+                      'cycleCount': _cycleCount,
+                      'beadCount': _beadCount,
+                    },
                   ),
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
               color: const Color(0xFF4B3A2C),
@@ -1023,9 +1018,8 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      _t(
-                                        zh: '轻点或向下拨动中位念珠',
-                                        en: 'Tap or pull the center bead down',
+                                      _i18n.t(
+                                        'toolbox.prayerBeads.tap_or_pull_the_center_bead_down.38870ac4',
                                       ),
                                       style: Theme.of(context)
                                           .textTheme
@@ -1161,22 +1155,21 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            _t(zh: '练习设置', en: 'Practice settings'),
+            _i18n.t('toolbox.prayerBeads.practice_settings.b997429b'),
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 6),
           Text(
-            _t(
-              zh: '念珠颗数决定一圈长度，材质同时影响视觉和拨珠声的质感。',
-              en: 'Bead count changes the cycle length, and material changes both visuals and click character.',
+            _i18n.t(
+              'toolbox.prayerBeads.bead_count_changes_the_cycle_length_and.b4d96911',
             ),
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 16),
           Text(
-            _t(zh: '圈数规格', en: 'Cycle size'),
+            _i18n.t('toolbox.prayerBeads.cycle_size.9b5c0461'),
             style: Theme.of(
               context,
             ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -1191,7 +1184,7 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
           ),
           const SizedBox(height: 18),
           Text(
-            _t(zh: '材质主题', en: 'Material'),
+            _i18n.t('toolbox.prayerBeads.material.00e1672e'),
             style: Theme.of(
               context,
             ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
@@ -1207,11 +1200,10 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
             key: const Key('prayer-beads-sound-switch'),
             value: _soundEnabled,
             contentPadding: EdgeInsets.zero,
-            title: Text(_t(zh: '拨珠声音', en: 'Bead sound')),
+            title: Text(_i18n.t('toolbox.prayerBeads.bead_sound.169880f8')),
             subtitle: Text(
-              _t(
-                zh: '每次推进一颗时播放短促拨动声。',
-                en: 'Play a short tactile click on each advance.',
+              _i18n.t(
+                'toolbox.prayerBeads.play_a_short_tactile_click_on_each.f476c560',
               ),
             ),
             onChanged: _toggleSound,
@@ -1220,11 +1212,10 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
             key: const Key('prayer-beads-haptics-switch'),
             value: _hapticsEnabled,
             contentPadding: EdgeInsets.zero,
-            title: Text(_t(zh: '触觉反馈', en: 'Haptics')),
+            title: Text(_i18n.t('toolbox.prayerBeads.haptics.322c9c2f')),
             subtitle: Text(
-              _t(
-                zh: '完整一圈时会给更明显的完成反馈。',
-                en: 'A stronger haptic is used when a cycle completes.',
+              _i18n.t(
+                'toolbox.prayerBeads.a_stronger_haptic_is_used_when_a.aa817924',
               ),
             ),
             onChanged: _toggleHaptics,
@@ -1238,13 +1229,15 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
                 key: const Key('prayer-beads-undo'),
                 onPressed: _sessionCount == 0 ? null : _undo,
                 icon: const Icon(Icons.undo_rounded),
-                label: Text(_t(zh: '撤回一颗', en: 'Undo one')),
+                label: Text(_i18n.t('toolbox.prayerBeads.undo_one.4a8847ec')),
               ),
               OutlinedButton.icon(
                 key: const Key('prayer-beads-reset'),
                 onPressed: _sessionCount == 0 ? null : _resetSession,
                 icon: const Icon(Icons.refresh_rounded),
-                label: Text(_t(zh: '重置本轮', en: 'Reset session')),
+                label: Text(
+                  _i18n.t('toolbox.prayerBeads.reset_session.b86ad027'),
+                ),
               ),
             ],
           ),

@@ -60,10 +60,8 @@ class StudyPage extends ConsumerWidget {
                   selectedWordbookName: selectedWordbookName,
                   ultraCompact: ultraCompact,
                 ),
-                hint: pickUiText(
-                  i18n,
-                  zh: '进入连续播放、进度跳转与播放模式控制。',
-                  en: 'Open continuous playback, progress jump, and playback mode controls.',
+                hint: i18n.t(
+                  'inline.ui.pages.study_page.open_continuous_playback_progress_jump_and_playback_mode_cf6dc5',
                 ),
                 onTap: studyLocked
                     ? null
@@ -82,10 +80,8 @@ class StudyPage extends ConsumerWidget {
                   selectedWordbookName: selectedWordbookName,
                   ultraCompact: ultraCompact,
                 ),
-                hint: pickUiText(
-                  i18n,
-                  zh: '进入搜索、前缀跳转、加词和词条浏览。',
-                  en: 'Open search, prefix jump, add-word, and library browsing tools.',
+                hint: i18n.t(
+                  'inline.ui.pages.study_page.open_search_prefix_jump_add_word_and_library_browsing_to_c16875',
                 ),
                 onTap: studyLocked
                     ? null
@@ -130,25 +126,19 @@ class StudyPage extends ConsumerWidget {
   }) {
     if (ultraCompact) {
       if (state.selectedWordbook == null) {
-        return pickUiText(i18n, zh: '先选词库', en: 'Pick a book');
+        return i18n.t('inline.ui.pages.study_page.pick_a_book_ab7267');
       }
-      return pickUiText(
-        i18n,
-        zh: '${state.visibleWordCount} 词待播',
-        en: '${state.visibleWordCount} words',
+      return i18n.t(
+        'inline.ui.pages.study_page.state_visiblewordcount_words_9edc10',
       );
     }
     if (state.selectedWordbook == null) {
-      return pickUiText(
-        i18n,
-        zh: '先选择词库，再从这里直接开始播放和跟读。',
-        en: 'Choose a wordbook, then start playback and follow-along from here.',
+      return i18n.t(
+        'inline.ui.pages.study_page.choose_a_wordbook_then_start_playback_and_follow_along_f_a72207',
       );
     }
-    return pickUiText(
-      i18n,
-      zh: '$selectedWordbookName · ${state.visibleWordCount} 个词待播放',
-      en: '$selectedWordbookName · ${state.visibleWordCount} words ready to play',
+    return i18n.t(
+      'inline.ui.pages.study_page.selectedwordbookname_state_visiblewordcount_words_ready_3d99e5',
     );
   }
 
@@ -160,21 +150,17 @@ class StudyPage extends ConsumerWidget {
   }) {
     if (ultraCompact) {
       if (state.selectedWordbook == null) {
-        return pickUiText(i18n, zh: '导入词库', en: 'Import books');
+        return i18n.t('inline.ui.pages.study_page.import_books_4df67b');
       }
-      return pickUiText(i18n, zh: '搜索整理', en: 'Search & sort');
+      return i18n.t('inline.ui.pages.study_page.search_sort_e351d6');
     }
     if (state.selectedWordbook == null) {
-      return pickUiText(
-        i18n,
-        zh: '导入、创建并浏览词库，建立自己的学习范围。',
-        en: 'Import, create, and browse wordbooks to build your study scope.',
+      return i18n.t(
+        'inline.ui.pages.study_page.import_create_and_browse_wordbooks_to_build_your_study_s_724cbc',
       );
     }
-    return pickUiText(
-      i18n,
-      zh: '搜索、跳转并整理 $selectedWordbookName 的词条。',
-      en: 'Search, jump through, and organize entries in $selectedWordbookName.',
+    return i18n.t(
+      'inline.ui.pages.study_page.search_jump_through_and_organize_entries_in_selectedword_307e60',
     );
   }
 }
@@ -348,16 +334,8 @@ class _StudyImportLockPanel extends StatelessWidget {
     final processed = state.wordbookImportProcessedEntries;
     final total = state.wordbookImportTotalEntries;
     final detail = total == null || total <= 0
-        ? pickUiText(
-            i18n,
-            zh: '正在解析并导入，请稍候…',
-            en: 'Parsing and importing, please wait...',
-          )
-        : pickUiText(
-            i18n,
-            zh: '已处理 $processed / $total',
-            en: 'Processed $processed / $total',
-          );
+        ? i18n.t('inline.ui.app_shell.parsing_and_importing_please_wait_1b254d')
+        : i18n.t('inline.ui.app_shell.processed_processed_total_11a7cb');
 
     return Center(
       child: ConstrainedBox(
@@ -370,19 +348,15 @@ class _StudyImportLockPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '学习模块导入中',
-                    en: 'Study import in progress',
+                  i18n.t(
+                    'inline.ui.pages.study_page.study_import_in_progress_4938fd',
                   ),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '词本正在后台导入，导入完成后将自动启用学习模块。',
-                    en: 'Wordbook is importing in background. Study modules will auto-enable when complete.',
+                  i18n.t(
+                    'inline.ui.pages.study_page.wordbook_is_importing_in_background_study_modules_will_a_dbf110',
                   ),
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),

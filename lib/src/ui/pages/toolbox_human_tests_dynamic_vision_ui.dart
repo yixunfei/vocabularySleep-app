@@ -27,15 +27,8 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
           value: _DynamicVisionMode.symbol,
           icon: const Icon(Icons.text_fields_rounded),
           label: Text(
-            pickUiText(
-              i18n,
-              zh: '字符识别',
-              en: 'Moving symbol',
-              ja: 'Moving symbol',
-              de: 'Moving symbol',
-              fr: 'Symbole de déplacement',
-              es: 'símbolo de movimiento',
-              ru: 'Движущийся символ',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.moving_symbol_9705c3',
             ),
           ),
         ),
@@ -43,15 +36,8 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
           value: _DynamicVisionMode.ballCount,
           icon: const Icon(Icons.bubble_chart_rounded),
           label: Text(
-            pickUiText(
-              i18n,
-              zh: '小球数量',
-              en: 'Ball count',
-              ja: 'ボールカウント',
-              de: 'Ball count',
-              fr: 'Nombre de balles',
-              es: 'Conteo de bolas',
-              ru: 'Количество мячей',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_bimanual.ball_count_6464c6',
             ),
           ),
         ),
@@ -82,67 +68,32 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
         _HumanMetricWrap(
           metrics: <(String, String)>[
             (
-              pickUiText(
-                i18n,
-                zh: '轮次',
-                en: 'Round',
-                ja: 'Round',
-                de: 'Round',
-                fr: 'Cycle',
-                es: 'Ronda',
-                ru: 'Круглый',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_cognition.round_7f8e0d',
               ),
               '$symbolRound/$symbolRoundCount',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '正确',
-                en: 'Correct',
-                ja: '正解',
-                de: 'Correct',
-                fr: 'Corrigé',
-                es: 'Correcto.',
-                ru: 'Правильно',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_cognition.correct_465f00',
               ),
               '$symbolCorrect',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '下轮速度',
-                en: 'Next speed',
-                ja: 'Next speed',
-                de: 'Next speed',
-                fr: 'Vitesse suivante',
-                es: 'Siguiente velocidad',
-                ru: 'Следующая скорость',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.next_speed_147fb8',
               ),
               formatSpeed(symbolEffectiveSpeed),
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '显示时间',
-                en: 'Dwell',
-                ja: 'Dwell',
-                de: 'Dwell',
-                fr: 'Bien',
-                es: 'Dwell',
-                ru: 'Ужин',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.dwell_ab2a6f',
               ),
               _formatMilliseconds(nextDuration.inMilliseconds),
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '字符集',
-                en: 'Set',
-                ja: 'Set',
-                de: 'Set',
-                fr: 'Jeu',
-                es: 'Set',
-                ru: 'Настройка',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.set_7414d4',
               ),
               symbolSetLabel(i18n, symbolSet),
             ),
@@ -174,15 +125,8 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
           ),
         if (symbolDone) ...<Widget>[
           Text(
-            pickUiText(
-              i18n,
-              zh: '完成：$symbolCorrect / $symbolRoundCount',
-              en: 'Done: $symbolCorrect / $symbolRoundCount',
-              ja: 'Done: $symbolCorrect / $symbolRoundCount',
-              de: 'Done: $symbolCorrect / $symbolRoundCount',
-              fr: 'Fait: $symbolCorrect / $symbolRoundCount',
-              es: 'Hecho:',
-              ru: 'Выполнено: $symbolCorrect / $symbolRoundCount',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.done_symbolcorrect_symbolroundcount_f9f171',
             ),
             style: Theme.of(
               context,
@@ -190,18 +134,9 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
           ),
           const SizedBox(height: 10),
         ],
-        if (symbolFeedbackZh != null) ...<Widget>[
+        if (symbolFeedbackKey != null) ...<Widget>[
           Text(
-            pickUiText(
-              i18n,
-              zh: symbolFeedbackZh!,
-              en: symbolFeedbackEn!,
-              ja: symbolFeedbackJa!,
-              de: symbolFeedbackDe!,
-              fr: symbolFeedbackFr!,
-              es: symbolFeedbackEs!,
-              ru: symbolFeedbackRu!,
-            ),
+            i18n.t(symbolFeedbackKey!, params: symbolFeedbackParams),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: symbolLastCorrect == false
                   ? Theme.of(context).colorScheme.error
@@ -219,15 +154,8 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
               onPressed: symbolChoosing ? null : resetSymbol,
               icon: const Icon(Icons.restart_alt_rounded),
               label: Text(
-                pickUiText(
-                  i18n,
-                  zh: '重置开始',
-                  en: 'Reset start',
-                  ja: 'Reset start',
-                  de: 'Reset start',
-                  fr: 'Réinitialiser le début',
-                  es: 'Reset start',
-                  ru: 'Начало сброса',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.reset_start_099add',
                 ),
               ),
             ),
@@ -236,18 +164,7 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
                   ? null
                   : () => unawaited(showSymbolReport()),
               icon: const Icon(Icons.analytics_rounded),
-              label: Text(
-                pickUiText(
-                  i18n,
-                  zh: '查看报告',
-                  en: 'Report',
-                  ja: 'Report',
-                  de: 'Report',
-                  fr: 'Rapport annuel',
-                  es: 'Informe',
-                  ru: 'Доклад',
-                ),
-              ),
+              label: Text(i18n.t('toolbox.sleep.assist.reportCard')),
             ),
           ],
         ),
@@ -313,30 +230,12 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
                     Center(
                       child: symbolDone
                           ? Text(
-                              pickUiText(
-                                i18n,
-                                zh: '完成',
-                                en: 'Done',
-                                ja: 'Done',
-                                de: 'Done',
-                                fr: 'Fait',
-                                es: 'Hecho',
-                                ru: 'Сделано',
-                              ),
+                              i18n.t('toolbox.breathing.done'),
                               style: Theme.of(context).textTheme.headlineSmall
                                   ?.copyWith(fontWeight: FontWeight.w900),
                             )
                           : _HumanActionButton(
-                              label: pickUiText(
-                                i18n,
-                                zh: '开始',
-                                en: 'Start',
-                                ja: 'Start',
-                                de: 'Start',
-                                fr: 'Démarrer',
-                                es: 'Comienzo',
-                                ru: 'Начинать',
-                              ),
+                              label: i18n.t('toolbox.breathing.start'),
                               icon: Icons.play_arrow_rounded,
                               onPressed: startSymbolRound,
                             ),
@@ -352,39 +251,18 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
 
   Widget _buildSymbolSettings(BuildContext context, AppI18n i18n) {
     return _HumanSettingsSection(
-      title: pickUiText(
-        i18n,
-        zh: '字符识别设置',
-        en: 'Symbol settings',
-        ja: 'Symbol settings',
-        de: 'Symbol settings',
-        fr: 'Paramètres des symboles',
-        es: 'Ajustes de símbolo',
-        ru: 'Настройки символов',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.symbol_settings_21f1db',
       ),
-      subtitle: pickUiText(
-        i18n,
-        zh: '字符集、轮数、轨迹、速度、干扰和选项数量都在这里。',
-        en: 'Tune character set, rounds, path, speed, distractors, and option count',
-        ja: 'Tune character set, rounds, path, speed, distractors, and option count',
-        de: 'Tune character set, rounds, path, speed, distractors, and option count',
-        fr: 'Jeu de caractères Tune, tours, chemin, vitesse, disjoncteurs et nombre d\'options',
-        es: 'Tune conjunto de caracteres, rondas, camino, velocidad, distracciones y cuenta de opción',
-        ru: 'Настройка персонажа, раунды, путь, скорость, отвлекающие факторы и количество опций',
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.tune_character_set_rounds_path_speed_distractors_and_opt_c01567',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _DynamicSettingSlider(
-            label: pickUiText(
-              i18n,
-              zh: '测试轮次数',
-              en: 'Test rounds',
-              ja: 'Test rounds',
-              de: 'Test rounds',
-              fr: 'Cycles d \' essai',
-              es: 'Pruebas redondas',
-              ru: 'Тестовые раунды',
+            label: i18n.t(
+              'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.test_rounds_74da1b',
             ),
             valueText: '$symbolRoundCount',
             value: symbolRoundCount.toDouble(),
@@ -396,15 +274,8 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
             ),
           ),
           _DynamicSettingSlider(
-            label: pickUiText(
-              i18n,
-              zh: '选项数量',
-              en: 'Option count',
-              ja: 'Option count',
-              de: 'Option count',
-              fr: 'Nombre d\'options',
-              es: 'Conteo de opciones',
-              ru: 'Количество вариантов',
+            label: i18n.t(
+              'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.option_count_37d6de',
             ),
             valueText: '$symbolOptionCount',
             value: symbolOptionCount.toDouble(),
@@ -416,15 +287,8 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
             ),
           ),
           _DynamicSettingSlider(
-            label: pickUiText(
-              i18n,
-              zh: '字符组合长度',
-              en: 'Symbol group length',
-              ja: 'Symbol group length',
-              de: 'Symbol group length',
-              fr: 'Longueur du groupe symbole',
-              es: 'Duración del grupo de símbolos',
-              ru: 'Длина символьной группы',
+            label: i18n.t(
+              'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.symbol_group_length_809ff6',
             ),
             valueText: '$symbolGroupLength',
             value: symbolGroupLength.toDouble(),
@@ -436,15 +300,8 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
             ),
           ),
           _DynamicSettingSlider(
-            label: pickUiText(
-              i18n,
-              zh: '基础移动速度',
-              en: 'Base movement speed',
-              ja: '基本移動速度',
-              de: 'Base movement speed',
-              fr: 'Vitesse de déplacement de base',
-              es: 'Velocidad de movimiento de base',
-              ru: 'Скорость движения базы',
+            label: i18n.t(
+              'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.base_movement_speed_117a42',
             ),
             valueText: formatSpeed(symbolBaseSpeed),
             value: symbolBaseSpeed,
@@ -455,15 +312,8 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
                 unawaited(updateSymbolSetting(() => setSymbolBaseSpeed(value))),
           ),
           _DynamicSettingSlider(
-            label: pickUiText(
-              i18n,
-              zh: '上下摆动幅度',
-              en: 'Vertical path amplitude',
-              ja: 'Vertical path amplitude',
-              de: 'Vertical path amplitude',
-              fr: 'amplitude de trajectoire verticale',
-              es: 'Vía vertical amplitude',
-              ru: 'Амплитуда вертикального пути',
+            label: i18n.t(
+              'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.vertical_path_amplitude_551861',
             ),
             valueText: '${(symbolWaveAmplitude * 100).round()}%',
             value: symbolWaveAmplitude,
@@ -476,15 +326,8 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
           ),
           const SizedBox(height: 8),
           Text(
-            pickUiText(
-              i18n,
-              zh: '字符集',
-              en: 'Character set',
-              ja: 'キャラクターセット',
-              de: 'Character set',
-              fr: 'Jeu de caractères',
-              es: 'Conjunto de caracteres',
-              ru: 'Набор персонажей',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.character_set_e10997',
             ),
             style: Theme.of(
               context,
@@ -507,15 +350,8 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
           ),
           const SizedBox(height: 10),
           Text(
-            pickUiText(
-              i18n,
-              zh: '移动轨迹',
-              en: 'Movement path',
-              ja: 'Movement path',
-              de: 'Movement path',
-              fr: 'Voie de déplacement',
-              es: 'Camino del movimiento',
-              ru: 'Путь движения',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.movement_path_4690bd',
             ),
             style: Theme.of(
               context,
@@ -542,27 +378,13 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
             contentPadding: EdgeInsets.zero,
             value: symbolDistractorEnabled,
             title: Text(
-              pickUiText(
-                i18n,
-                zh: '显示弱干扰字符',
-                en: 'Show faint distractors',
-                ja: 'Show faint distractors',
-                de: 'Show faint distractors',
-                fr: 'Afficher les disjoncteurs faibles',
-                es: 'Mostrar distracciones débiles',
-                ru: 'Показать слабые отвлекающие факторы',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.show_faint_distractors_7ee025',
               ),
             ),
             subtitle: Text(
-              pickUiText(
-                i18n,
-                zh: '干扰只影响识别压力，不参与答案。',
-                en: 'Distractors add visual load but are never correct answers.',
-                ja: 'Distractors add visual load but are never correct answers.',
-                de: 'Distractors add visual load but are never correct answers.',
-                fr: 'Les disjoncteurs ajoutent une charge visuelle mais ne sont jamais des réponses correctes.',
-                es: 'Los Distractors agregan carga visual pero nunca son respuestas correctas.',
-                ru: 'Отвлекатели добавляют визуальную нагрузку, но никогда не дают правильных ответов.',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.distractors_add_visual_load_but_are_never_correct_answer_d4b87c',
               ),
             ),
             onChanged: (value) => unawaited(
@@ -573,15 +395,8 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
           TextField(
             controller: symbolCustomController,
             decoration: InputDecoration(
-              labelText: pickUiText(
-                i18n,
-                zh: '自定义组合（逗号分割）',
-                en: 'Custom groups (comma separated)',
-                ja: 'Custom groups (comma separated)',
-                de: 'Custom groups (comma separated)',
-                fr: 'Groupes personnalisés (comma séparés)',
-                es: 'Grupos aduaneros (comma separados)',
-                ru: 'Обычные группы (комма разделена)',
+              labelText: i18n.t(
+                'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.custom_groups_comma_separated_39e8a2',
               ),
               hintText: 'AB, 82, F9',
               border: const OutlineInputBorder(),
@@ -601,29 +416,15 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
             ),
             icon: const Icon(Icons.done_rounded),
             label: Text(
-              pickUiText(
-                i18n,
-                zh: '应用自定义组合',
-                en: 'Apply custom groups',
-                ja: 'カスタムグループ',
-                de: 'Apply custom groups',
-                fr: 'Appliquer des groupes personnalisés',
-                es: 'Aplicar grupos personalizados',
-                ru: 'Применять пользовательские группы',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.apply_custom_groups_6698da',
               ),
             ),
           ),
           const SizedBox(height: 8),
           _DynamicCurveSelector(
-            label: pickUiText(
-              i18n,
-              zh: '增长曲线',
-              en: 'Growth curve',
-              ja: 'Growth curve',
-              de: 'Growth curve',
-              fr: 'Courbe de croissance',
-              es: 'Curva de crecimiento',
-              ru: 'Кривая роста',
+            label: i18n.t(
+              'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.growth_curve_2663ad',
             ),
             value: symbolCurve,
             enabled: true,
@@ -650,15 +451,8 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
             ),
             icon: const Icon(Icons.settings_backup_restore_rounded),
             label: Text(
-              pickUiText(
-                i18n,
-                zh: '恢复默认',
-                en: 'Reset defaults',
-                ja: 'Reset defaults',
-                de: 'Reset defaults',
-                fr: 'Réinitialiser les valeurs par défaut',
-                es: 'Reset defaults',
-                ru: 'Сброс дефолтов',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.reset_defaults_4512fc',
               ),
             ),
           ),
@@ -674,55 +468,22 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
+            (i18n.t('toolbox.sound.pickup.level'), '$ballLevel'),
             (
-              pickUiText(
-                i18n,
-                zh: '等级',
-                en: 'Level',
-                ja: 'Level',
-                de: 'Level',
-                fr: 'Niveau',
-                es: 'Nivel',
-                ru: 'Уровень',
-              ),
-              '$ballLevel',
-            ),
-            (
-              pickUiText(
-                i18n,
-                zh: '数量范围',
-                en: 'Count range',
-                ja: 'カウント範囲',
-                de: 'Count range',
-                fr: 'Gamme de comptage',
-                es: 'Rango de cuenta',
-                ru: 'Диапазон значений',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.count_range_4f27cd',
               ),
               ballCountRangeLabel,
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '速度范围',
-                en: 'Speed range',
-                ja: 'Speed range',
-                de: 'Speed range',
-                fr: 'Plage de vitesse',
-                es: 'Rango de velocidad',
-                ru: 'Скорость',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.speed_range_4d26d2',
               ),
               ballSpeedRangeLabel,
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '失误',
-                en: 'Misses',
-                ja: 'Misses',
-                de: 'Misses',
-                fr: 'Mlle',
-                es: 'Misses',
-                ru: 'Мисс.',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_auditory.misses_bcc2a1',
               ),
               '$ballMisses/3',
             ),
@@ -752,7 +513,7 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
                 )
                 .toList(growable: false),
           ),
-        if (ballFeedbackZh != null) ...<Widget>[
+        if (ballFeedbackKey != null) ...<Widget>[
           _DynamicFeedbackStrip(
             accent: ballLastCorrect == true
                 ? const Color(0xFF3F9A6B)
@@ -760,16 +521,7 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
             icon: ballLastCorrect == true
                 ? Icons.check_circle_rounded
                 : Icons.info_rounded,
-            text: pickUiText(
-              i18n,
-              zh: ballFeedbackZh!,
-              en: ballFeedbackEn!,
-              ja: ballFeedbackJa!,
-              de: ballFeedbackDe!,
-              fr: ballFeedbackFr!,
-              es: ballFeedbackEs!,
-              ru: ballFeedbackRu!,
-            ),
+            text: i18n.t(ballFeedbackKey!, params: ballFeedbackParams),
           ),
           const SizedBox(height: 10),
         ],
@@ -780,36 +532,13 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
             if (!ballShowing && !ballAnswering)
               _HumanActionButton(
                 label: ballDone
-                    ? pickUiText(
-                        i18n,
-                        zh: '重新开始',
-                        en: 'Start over',
-                        ja: 'Start over',
-                        de: 'Start over',
-                        fr: 'Recommencer',
-                        es: 'Empieza de nuevo',
-                        ru: 'Начинай сначала.',
+                    ? i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.start_over_e567d3',
                       )
-                    : ballFeedbackZh == null
-                    ? pickUiText(
-                        i18n,
-                        zh: '开始',
-                        en: 'Start',
-                        ja: 'Start',
-                        de: 'Start',
-                        fr: 'Démarrer',
-                        es: 'Comienzo',
-                        ru: 'Начинать',
-                      )
-                    : pickUiText(
-                        i18n,
-                        zh: '下一轮',
-                        en: 'Next round',
-                        ja: 'Next round',
-                        de: 'Next round',
-                        fr: 'Prochain tour',
-                        es: 'Siguiente ronda',
-                        ru: 'Следующий раунд',
+                    : ballFeedbackKey == null
+                    ? i18n.t('toolbox.breathing.start')
+                    : i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.next_round_ad9935',
                       ),
                 icon: ballDone
                     ? Icons.restart_alt_rounded
@@ -819,18 +548,7 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
             OutlinedButton.icon(
               onPressed: ballShowing || ballAnswering ? null : resetBalls,
               icon: const Icon(Icons.restart_alt_rounded),
-              label: Text(
-                pickUiText(
-                  i18n,
-                  zh: '重置',
-                  en: 'Reset',
-                  ja: 'Reset',
-                  de: 'Reset',
-                  fr: 'Réinitialiser',
-                  es: 'Reset',
-                  ru: 'сброс',
-                ),
-              ),
+              label: Text(i18n.t('appearanceReset')),
             ),
           ],
         ),
@@ -838,41 +556,20 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
         _HumanMetricWrap(
           metrics: <(String, String)>[
             (
-              pickUiText(
-                i18n,
-                zh: '正确轮数',
-                en: 'Correct rounds',
-                ja: '正解ラウンド',
-                de: 'Correct rounds',
-                fr: 'Coups corrects',
-                es: 'Correcciones correctas',
-                ru: 'Правильные раунды',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.correct_rounds_ca1257',
               ),
               '$ballCorrect',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '最佳等级',
-                en: 'Best level',
-                ja: 'ベストレベル',
-                de: 'Best level',
-                fr: 'Meilleur niveau',
-                es: 'Mejor nivel',
-                ru: 'Лучший уровень',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.best_level_6b13a1',
               ),
               '$ballBestLevel',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '观察时长',
-                en: 'Observe time',
-                ja: 'Observe time',
-                de: 'Observe time',
-                fr: 'Observer le temps',
-                es: 'Observe el tiempo',
-                ru: 'Наблюдать время',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.observe_time_41406a',
               ),
               _formatSeconds(ballObservationMs / 1000),
             ),
@@ -910,36 +607,15 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
                     padding: const EdgeInsets.all(18),
                     child: Text(
                       ballAnswering
-                          ? pickUiText(
-                              i18n,
-                              zh: '刚才有多少个小球？',
-                              en: 'How many balls did you see?',
-                              ja: 'How many balls did you see?',
-                              de: 'How many balls did you see?',
-                              fr: 'Combien de couilles avez-vous vues ?',
-                              es: '¿Cuántas bolas viste?',
-                              ru: 'Сколько шаров ты видел?',
+                          ? i18n.t(
+                              'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.how_many_balls_did_you_see_6c4567',
                             )
                           : ballDone
-                          ? pickUiText(
-                              i18n,
-                              zh: '测试结束',
-                              en: 'Test over',
-                              ja: 'Test over',
-                              de: 'Test over',
-                              fr: 'Essai terminé',
-                              es: 'Pruebas sobre',
-                              ru: 'Проверка',
+                          ? i18n.t(
+                              'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.test_over_9eb707',
                             )
-                          : pickUiText(
-                              i18n,
-                              zh: '开始后快速数出移动小球数量',
-                              en: 'Start and count the moving balls quickly',
-                              ja: 'Start and count the moving balls quickly',
-                              de: 'Start and count the moving balls quickly',
-                              fr: 'Commencez et comptez les boules mobiles rapidement',
-                              es: 'Comienza y cuenta las bolas móviles rápidamente',
-                              ru: 'Начните и считайте быстро движущиеся шары.',
+                          : i18n.t(
+                              'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.start_and_count_the_moving_balls_quickly_1cef01',
                             ),
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -953,15 +629,8 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
                   left: 12,
                   top: 12,
                   child: _HumanPill(
-                    text: pickUiText(
-                      i18n,
-                      zh: '观察中',
-                      en: 'Watching',
-                      ja: 'Watching',
-                      de: 'Watching',
-                      fr: 'Regarder',
-                      es: 'Mirando',
-                      ru: 'смотреть',
+                    text: i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.watching_48a062',
                     ),
                     accent: accent,
                   ),
@@ -975,39 +644,18 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
 
   Widget _buildBallSettings(BuildContext context, AppI18n i18n) {
     return _HumanSettingsSection(
-      title: pickUiText(
-        i18n,
-        zh: '小球数量设置',
-        en: 'Ball count settings',
-        ja: 'ボールカウント設定',
-        de: 'Ball count settings',
-        fr: 'Paramètres de comptage des balles',
-        es: 'Ajustes del conteo de bolas',
-        ru: 'Параметры счета мяча',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.ball_count_settings_ce7333',
       ),
-      subtitle: pickUiText(
-        i18n,
-        zh: '起始数量、上限、速度、观察时长和增长曲线都在这里。',
-        en: 'Tune starting count, cap, speed, observe time, and growth curve',
-        ja: 'Tune starting count, cap, speed, observe time, and growth curve',
-        de: 'Tune starting count, cap, speed, observe time, and growth curve',
-        fr: 'Compte de départ, cap, vitesse, temps d\'observation et courbe de croissance',
-        es: 'Tune cuenta de inicio, tapa, velocidad, observar tiempo y curva de crecimiento',
-        ru: 'Тюнинг стартовый счет, кэп, скорость, наблюдать время и кривая роста',
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.tune_starting_count_cap_speed_observe_time_and_growth_cu_f918ef',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _DynamicSettingSlider(
-            label: pickUiText(
-              i18n,
-              zh: '起始小球数量',
-              en: 'Starting balls',
-              ja: 'Starting balls',
-              de: 'Starting balls',
-              fr: 'Balles de départ',
-              es: 'Comenzando bolas',
-              ru: 'Начинающие шары',
+            label: i18n.t(
+              'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.starting_balls_1dd555',
             ),
             valueText: '$ballStartCount',
             value: ballStartCount.toDouble(),
@@ -1019,15 +667,8 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
             ),
           ),
           _DynamicSettingSlider(
-            label: pickUiText(
-              i18n,
-              zh: '最大小球数量',
-              en: 'Maximum balls',
-              ja: 'Maximum balls',
-              de: 'Maximum balls',
-              fr: 'Balles maximales',
-              es: 'Bolas máximas',
-              ru: 'Максимальные шары',
+            label: i18n.t(
+              'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.maximum_balls_dc09b1',
             ),
             valueText: '$ballMaxCount',
             value: ballMaxCount.toDouble(),
@@ -1039,15 +680,8 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
             ),
           ),
           _DynamicSettingSlider(
-            label: pickUiText(
-              i18n,
-              zh: '基础移动速度',
-              en: 'Base movement speed',
-              ja: '基本移動速度',
-              de: 'Base movement speed',
-              fr: 'Vitesse de déplacement de base',
-              es: 'Velocidad de movimiento de base',
-              ru: 'Скорость движения базы',
+            label: i18n.t(
+              'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.base_movement_speed_117a42',
             ),
             valueText: formatSpeed(ballBaseSpeed),
             value: ballBaseSpeed,
@@ -1058,15 +692,8 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
                 unawaited(updateBallSetting(() => setBallBaseSpeed(value))),
           ),
           _DynamicSettingSlider(
-            label: pickUiText(
-              i18n,
-              zh: '观察时长',
-              en: 'Observe time',
-              ja: 'Observe time',
-              de: 'Observe time',
-              fr: 'Observer le temps',
-              es: 'Observe el tiempo',
-              ru: 'Наблюдать время',
+            label: i18n.t(
+              'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.observe_time_41406a',
             ),
             valueText: _formatSeconds(ballObservationMs / 1000),
             value: ballObservationMs.toDouble(),
@@ -1081,15 +708,8 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
             controller: ballObservationController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
-              labelText: pickUiText(
-                i18n,
-                zh: '观察时长输入（秒）',
-                en: 'Observe time input (seconds)',
-                ja: 'Observe time input (seconds)',
-                de: 'Observe time input (seconds)',
-                fr: 'Observer l\'entrée de temps (secondes)',
-                es: 'Observe el tiempo de entrada (segundos)',
-                ru: 'Время ввода (секунды)',
+              labelText: i18n.t(
+                'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.observe_time_input_seconds_1a66b4',
               ),
               border: const OutlineInputBorder(),
             ),
@@ -1108,38 +728,17 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
           ),
           const SizedBox(height: 8),
           _DynamicEnumChoice<_DynamicBallColorMode>(
-            label: pickUiText(
-              i18n,
-              zh: '小球颜色',
-              en: 'Ball color',
-              ja: 'ボールカラー',
-              de: 'Ball color',
-              fr: 'Couleur de la bille',
-              es: 'Color de bola',
-              ru: 'Цвет шара',
+            label: i18n.t(
+              'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.ball_color_55f5d1',
             ),
             value: ballColorMode,
             values: _DynamicBallColorMode.values,
             labelFor: (mode) => switch (mode) {
-              _DynamicBallColorMode.uniform => pickUiText(
-                i18n,
-                zh: '同色',
-                en: 'Uniform',
-                ja: 'Uniform',
-                de: 'Uniform',
-                fr: 'Uniforme',
-                es: 'Uniforme',
-                ru: 'униформа',
+              _DynamicBallColorMode.uniform => i18n.t(
+                'inline.ui.pages.toolbox_daily_choice.daily_choice_custom_random_widgets.uniform_4f21a2',
               ),
-              _DynamicBallColorMode.varied => pickUiText(
-                i18n,
-                zh: '多色',
-                en: 'Varied',
-                ja: 'Varied',
-                de: 'Varied',
-                fr: 'Varié',
-                es: 'Variado',
-                ru: 'разнообразный',
+              _DynamicBallColorMode.varied => i18n.t(
+                'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.varied_660d14',
               ),
             },
             onChanged: (mode) =>
@@ -1147,15 +746,8 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
           ),
           const SizedBox(height: 8),
           _DynamicCurveSelector(
-            label: pickUiText(
-              i18n,
-              zh: '增长曲线',
-              en: 'Growth curve',
-              ja: 'Growth curve',
-              de: 'Growth curve',
-              fr: 'Courbe de croissance',
-              es: 'Curva de crecimiento',
-              ru: 'Кривая роста',
+            label: i18n.t(
+              'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.growth_curve_2663ad',
             ),
             value: ballCurve,
             enabled: true,
@@ -1177,15 +769,8 @@ extension _DynamicVisionCardUi on _DynamicVisionCardState {
             ),
             icon: const Icon(Icons.settings_backup_restore_rounded),
             label: Text(
-              pickUiText(
-                i18n,
-                zh: '恢复默认',
-                en: 'Reset defaults',
-                ja: 'Reset defaults',
-                de: 'Reset defaults',
-                fr: 'Réinitialiser les valeurs par défaut',
-                es: 'Reset defaults',
-                ru: 'Сброс дефолтов',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_dynamic_vision_ui.reset_defaults_4512fc',
               ),
             ),
           ),

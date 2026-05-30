@@ -63,8 +63,7 @@ class _ClockStyleConfig {
 
 class _ClockThemeTokens {
   const _ClockThemeTokens({
-    required this.nameZh,
-    required this.nameEn,
+    required this.nameKey,
     required this.background,
     required this.panel,
     required this.panelAlt,
@@ -74,8 +73,7 @@ class _ClockThemeTokens {
     required this.shadow,
   });
 
-  final String nameZh;
-  final String nameEn;
+  final String nameKey;
   final Color background;
   final Color panel;
   final Color panelAlt;
@@ -85,15 +83,14 @@ class _ClockThemeTokens {
   final Color shadow;
 
   String name(BuildContext context) {
-    return _lifeText(context, zh: nameZh, en: nameEn);
+    return _lifeI18nText(context, nameKey);
   }
 }
 
 const Map<_ClockThemePreset, _ClockThemeTokens> _clockThemes =
     <_ClockThemePreset, _ClockThemeTokens>{
       _ClockThemePreset.ivory: _ClockThemeTokens(
-        nameZh: '柔白翻页',
-        nameEn: 'Ivory flip',
+        nameKey: 'inline.plan295.life.ivory_flip.d9c35948894d',
         background: Color(0xFFF7F4EE),
         panel: Color(0xFFFFFCF6),
         panelAlt: Color(0xFFF1ECE2),
@@ -103,8 +100,7 @@ const Map<_ClockThemePreset, _ClockThemeTokens> _clockThemes =
         shadow: Color(0x18000000),
       ),
       _ClockThemePreset.night: _ClockThemeTokens(
-        nameZh: '夜间黑钟',
-        nameEn: 'Night clock',
+        nameKey: 'inline.plan295.life.night_clock.067c947eca90',
         background: Color(0xFF050608),
         panel: Color(0xFF15171C),
         panelAlt: Color(0xFF0E1014),
@@ -114,8 +110,7 @@ const Map<_ClockThemePreset, _ClockThemeTokens> _clockThemes =
         shadow: Color(0x70000000),
       ),
       _ClockThemePreset.graphite: _ClockThemeTokens(
-        nameZh: '石墨灰',
-        nameEn: 'Graphite',
+        nameKey: 'inline.plan295.life.graphite.0c212911ff16',
         background: Color(0xFF1B1F23),
         panel: Color(0xFFE7E1D7),
         panelAlt: Color(0xFFD6CDC0),
@@ -125,8 +120,7 @@ const Map<_ClockThemePreset, _ClockThemeTokens> _clockThemes =
         shadow: Color(0x50000000),
       ),
       _ClockThemePreset.ember: _ClockThemeTokens(
-        nameZh: '暖橙夜色',
-        nameEn: 'Warm ember',
+        nameKey: 'inline.plan295.life.warm_ember.88d4fb8e9e64',
         background: Color(0xFF221512),
         panel: Color(0xFFF5D0A7),
         panelAlt: Color(0xFFE4B982),
@@ -136,8 +130,7 @@ const Map<_ClockThemePreset, _ClockThemeTokens> _clockThemes =
         shadow: Color(0x66000000),
       ),
       _ClockThemePreset.lagoon: _ClockThemeTokens(
-        nameZh: '湖蓝静夜',
-        nameEn: 'Quiet lagoon',
+        nameKey: 'inline.plan295.life.quiet_lagoon.dbd20e7d64b8',
         background: Color(0xFF09242F),
         panel: Color(0xFFE8F2EF),
         panelAlt: Color(0xFFC8DCD6),
@@ -148,71 +141,83 @@ const Map<_ClockThemePreset, _ClockThemeTokens> _clockThemes =
       ),
     };
 
-const List<_LifeOption<_ClockThemePreset>>
-_clockThemeOptions = <_LifeOption<_ClockThemePreset>>[
-  _LifeOption(value: _ClockThemePreset.ivory, labelZh: '柔白', labelEn: 'Ivory'),
-  _LifeOption(value: _ClockThemePreset.night, labelZh: '黑夜', labelEn: 'Night'),
-  _LifeOption(
-    value: _ClockThemePreset.graphite,
-    labelZh: '石墨',
-    labelEn: 'Graphite',
-  ),
-  _LifeOption(value: _ClockThemePreset.ember, labelZh: '暖橙', labelEn: 'Ember'),
-  _LifeOption(
-    value: _ClockThemePreset.lagoon,
-    labelZh: '湖蓝',
-    labelEn: 'Lagoon',
-  ),
-];
+const List<_LifeOption<_ClockThemePreset>> _clockThemeOptions =
+    <_LifeOption<_ClockThemePreset>>[
+      _LifeOption(
+        value: _ClockThemePreset.ivory,
+        labelKey: 'inline.plan295.life.ivory.56bc1d90ab23',
+      ),
+      _LifeOption(
+        value: _ClockThemePreset.night,
+        labelKey: 'inline.plan295.life.night.217935fe567a',
+      ),
+      _LifeOption(
+        value: _ClockThemePreset.graphite,
+        labelKey: 'inline.plan295.life.graphite.8dca072e3941',
+      ),
+      _LifeOption(
+        value: _ClockThemePreset.ember,
+        labelKey: 'inline.plan295.life.ember.53c5dc771822',
+      ),
+      _LifeOption(
+        value: _ClockThemePreset.lagoon,
+        labelKey: 'inline.plan295.life.lagoon.b8b42787f83c',
+      ),
+    ];
 
 const List<_LifeOption<_ClockFontStyle>> _clockFontOptions =
     <_LifeOption<_ClockFontStyle>>[
       _LifeOption(
         value: _ClockFontStyle.rounded,
-        labelZh: '圆体',
-        labelEn: 'Rounded',
+        labelKey: 'inline.plan295.life.rounded.467a787ced2f',
       ),
       _LifeOption(
         value: _ClockFontStyle.classic,
-        labelZh: '经典',
-        labelEn: 'Classic',
+        labelKey: 'inline.ui.pages.toolbox_human_tests_action.classic_3e1072',
       ),
-      _LifeOption(value: _ClockFontStyle.mono, labelZh: '等宽', labelEn: 'Mono'),
-      _LifeOption(value: _ClockFontStyle.slim, labelZh: '细长', labelEn: 'Slim'),
+      _LifeOption(
+        value: _ClockFontStyle.mono,
+        labelKey: 'inline.plan295.life.mono.6193ef478e21',
+      ),
+      _LifeOption(
+        value: _ClockFontStyle.slim,
+        labelKey: 'inline.plan295.life.slim.7fa259041d60',
+      ),
     ];
 
-const List<_LifeOption<_ClockTimeFormat>>
-_clockFormatOptions = <_LifeOption<_ClockTimeFormat>>[
-  _LifeOption(
-    value: _ClockTimeFormat.hms24,
-    labelZh: '24小时含秒',
-    labelEn: '24h with sec',
-  ),
-  _LifeOption(value: _ClockTimeFormat.hm24, labelZh: '24小时', labelEn: '24h'),
-  _LifeOption(
-    value: _ClockTimeFormat.hms12,
-    labelZh: '12小时含秒',
-    labelEn: '12h with sec',
-  ),
-  _LifeOption(value: _ClockTimeFormat.hm12, labelZh: '12小时', labelEn: '12h'),
-];
+const List<_LifeOption<_ClockTimeFormat>> _clockFormatOptions =
+    <_LifeOption<_ClockTimeFormat>>[
+      _LifeOption(
+        value: _ClockTimeFormat.hms24,
+        labelKey: 'inline.plan295.life.24h_with_sec.2f1213d35118',
+      ),
+      _LifeOption(
+        value: _ClockTimeFormat.hm24,
+        labelKey: 'inline.plan295.life.24h.d2c297503418',
+      ),
+      _LifeOption(
+        value: _ClockTimeFormat.hms12,
+        labelKey: 'inline.plan295.life.12h_with_sec.eb472ceb77f8',
+      ),
+      _LifeOption(
+        value: _ClockTimeFormat.hm12,
+        labelKey: 'inline.plan295.life.12h.c63a572fa9a9',
+      ),
+    ];
 
 const List<_LifeOption<_ClockBackgroundStyle>> _clockBackgroundOptions =
     <_LifeOption<_ClockBackgroundStyle>>[
       _LifeOption(
         value: _ClockBackgroundStyle.solid,
-        labelZh: '纯色',
-        labelEn: 'Solid',
+        labelKey: 'inline.plan295.life.solid.ab6af9a81131',
       ),
       _LifeOption(
         value: _ClockBackgroundStyle.soft,
-        labelZh: '柔光',
-        labelEn: 'Soft',
+        labelKey: 'inline.plan295.life.soft.d5fe26d4c3f6',
       ),
       _LifeOption(
         value: _ClockBackgroundStyle.radial,
-        labelZh: '中心光',
-        labelEn: 'Radial',
+        labelKey: 'inline.plan295.life.radial.a24cd5824cb2',
       ),
     ];
 
@@ -244,21 +249,25 @@ class _TimeScreenToolPageState extends State<_TimeScreenToolPage> {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '时间屏幕', en: 'Time screen'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '横屏全屏翻页时钟。轻触可显示设置按钮，3 秒无操作后自动隐藏。',
-        en: 'Landscape fullscreen flip clock. Tap to reveal a tiny settings button, hidden after 3 seconds.',
+        'inline.plan295.life.time_screen.62f5d9ae9d5d',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.landscape_fullscreen_flip_clock_tap.0d10d0a6e90f',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           SectionHeader(
-            title: _lifeText(context, zh: '时钟预览', en: 'Clock preview'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '进入全屏后会自动横屏、常亮并尽量保持简洁。',
-              en: 'Fullscreen keeps the screen awake, bright, and landscape.',
+              'inline.plan295.life.clock_preview.5c18f911f120',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.fullscreen_keeps_the_screen_awake_br.ad13f949928a',
             ),
           ),
           const SizedBox(height: 12),
@@ -288,7 +297,10 @@ class _TimeScreenToolPageState extends State<_TimeScreenToolPage> {
               },
               icon: const Icon(Icons.fullscreen_rounded),
               label: Text(
-                _lifeText(context, zh: '进入全屏时钟', en: 'Open fullscreen clock'),
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.open_fullscreen_clock.007d3fa1ad62',
+                ),
               ),
             ),
           ),
@@ -312,45 +324,56 @@ class _ClockSettingsPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '时钟设置', en: 'Clock settings'),
+      title: _lifeI18nText(
+        context,
+        'inline.plan295.life.clock_settings.9b3cc1d07d52',
+      ),
       subtitle: compact
-          ? _lifeText(
+          ? _lifeI18nText(
               context,
-              zh: '调整后立即生效，点空白处可返回时钟。',
-              en: 'Changes apply immediately. Tap empty space to return.',
+              'inline.plan295.life.changes_apply_immediately_tap_empty.31c315ec21bf',
             )
           : null,
       children: <Widget>[
         _LifeSegmentedField<_ClockThemePreset>(
-          label: _lifeText(context, zh: '主题', en: 'Theme'),
+          label: _lifeI18nText(context, 'appearanceThemeTitle'),
           value: config.themePreset,
           options: _clockThemeOptions,
           onChanged: (value) => onChanged(config.copyWith(themePreset: value)),
         ),
         const SizedBox(height: 14),
         _LifeSegmentedField<_ClockFontStyle>(
-          label: _lifeText(context, zh: '字体风格', en: 'Font style'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.font_style.2d97e13275d4',
+          ),
           value: config.fontStyle,
           options: _clockFontOptions,
           onChanged: (value) => onChanged(config.copyWith(fontStyle: value)),
         ),
         const SizedBox(height: 14),
         _LifeSegmentedField<_ClockTimeFormat>(
-          label: _lifeText(context, zh: '时间格式', en: 'Time format'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.time_format.da279813183a',
+          ),
           value: config.timeFormat,
           options: _clockFormatOptions,
           onChanged: (value) => onChanged(config.copyWith(timeFormat: value)),
         ),
         const SizedBox(height: 14),
         _LifeSegmentedField<_ClockFlipStyle>(
-          label: _lifeText(context, zh: '翻页动画', en: 'Flip animation'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.flip_animation.e944f2c54001',
+          ),
           value: config.flipStyle,
           options: _clockFlipOptions,
           onChanged: (value) => onChanged(config.copyWith(flipStyle: value)),
         ),
         const SizedBox(height: 14),
         _LifeSegmentedField<_ClockBackgroundStyle>(
-          label: _lifeText(context, zh: '背景', en: 'Background'),
+          label: _lifeI18nText(context, 'appearanceBackgroundTitle'),
           value: config.backgroundStyle,
           options: _clockBackgroundOptions,
           onChanged: (value) =>
@@ -358,7 +381,10 @@ class _ClockSettingsPanel extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         _LifeSliderField(
-          label: _lifeText(context, zh: '数字大小', en: 'Digit size'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.digit_size.6832c7b7bade',
+          ),
           valueText: '${(config.fontScale * 100).round()}%',
           value: config.fontScale,
           min: 0.82,
@@ -367,7 +393,10 @@ class _ClockSettingsPanel extends StatelessWidget {
           onChanged: (value) => onChanged(config.copyWith(fontScale: value)),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '卡片圆角', en: 'Card radius'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.card_radius.7b2651497a03',
+          ),
           valueText: config.cardRadius.round().toString(),
           value: config.cardRadius,
           min: 6,
@@ -378,13 +407,23 @@ class _ClockSettingsPanel extends StatelessWidget {
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           value: config.showDate,
-          title: Text(_lifeText(context, zh: '显示日期', en: 'Show date')),
+          title: Text(
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.show_date.af8164a6c9d2',
+            ),
+          ),
           onChanged: (value) => onChanged(config.copyWith(showDate: value)),
         ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           value: config.showWeekday,
-          title: Text(_lifeText(context, zh: '显示星期', en: 'Show weekday')),
+          title: Text(
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.show_weekday.d78253e7d478',
+            ),
+          ),
           onChanged: (value) => onChanged(config.copyWith(showWeekday: value)),
         ),
       ],
@@ -508,20 +547,18 @@ class _ClockImmersivePageState extends State<_ClockImmersivePage> {
                             mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
                               IconButton.filledTonal(
-                                tooltip: _lifeText(
+                                tooltip: _lifeI18nText(
                                   context,
-                                  zh: '时钟设置',
-                                  en: 'Settings',
+                                  'inline.plan295.life.settings.d2e7a37558b9',
                                 ),
                                 onPressed: _openSettingsSheet,
                                 icon: const Icon(Icons.tune_rounded),
                               ),
                               const SizedBox(width: 8),
                               IconButton.filledTonal(
-                                tooltip: _lifeText(
+                                tooltip: _lifeI18nText(
                                   context,
-                                  zh: '退出全屏',
-                                  en: 'Exit',
+                                  'inline.plan295.life.exit.a5965eb7937a',
                                 ),
                                 onPressed: () => Navigator.of(context).pop(),
                                 icon: const Icon(Icons.close_rounded),
@@ -738,23 +775,14 @@ String _clockDateLabel(
 }
 
 String _weekdayName(BuildContext context, int weekday) {
-  final zh = switch (weekday) {
-    DateTime.monday => '星期一',
-    DateTime.tuesday => '星期二',
-    DateTime.wednesday => '星期三',
-    DateTime.thursday => '星期四',
-    DateTime.friday => '星期五',
-    DateTime.saturday => '星期六',
-    _ => '星期日',
+  final key = switch (weekday) {
+    DateTime.monday => 'life.time_screen.weekday.monday',
+    DateTime.tuesday => 'life.time_screen.weekday.tuesday',
+    DateTime.wednesday => 'life.time_screen.weekday.wednesday',
+    DateTime.thursday => 'life.time_screen.weekday.thursday',
+    DateTime.friday => 'life.time_screen.weekday.friday',
+    DateTime.saturday => 'life.time_screen.weekday.saturday',
+    _ => 'life.time_screen.weekday.sunday',
   };
-  final en = switch (weekday) {
-    DateTime.monday => 'Monday',
-    DateTime.tuesday => 'Tuesday',
-    DateTime.wednesday => 'Wednesday',
-    DateTime.thursday => 'Thursday',
-    DateTime.friday => 'Friday',
-    DateTime.saturday => 'Saturday',
-    _ => 'Sunday',
-  };
-  return _lifeText(context, zh: zh, en: en);
+  return _lifeI18nText(context, key);
 }

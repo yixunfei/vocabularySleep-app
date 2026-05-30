@@ -19,7 +19,9 @@ class DataManagementPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(pickUiText(i18n, zh: '数据管理', en: 'Data management')),
+        title: Text(
+          i18n.t('inline.ui.pages.data_management_page.data_management_87880c'),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -31,15 +33,15 @@ class DataManagementPage extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    pickUiText(i18n, zh: '当前调整', en: 'Current status'),
+                    i18n.t(
+                      'inline.ui.pages.data_management_page.current_status_ed1d4c',
+                    ),
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    pickUiText(
-                      i18n,
-                      zh: '单词本导入、解析、迁移与导出恢复链路已临时下线，等待后续整体重写。这里暂时只保留安全备份、任务词导出和数据重置能力。',
-                      en: 'Wordbook import, parsing, migration, export, and restore flows are temporarily offline pending a full rewrite. This page currently keeps safety backups, task export, and reset tools only.',
+                    i18n.t(
+                      'inline.ui.pages.data_management_page.wordbook_import_parsing_migration_export_and_restore_flo_5715a0',
                     ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
@@ -50,17 +52,19 @@ class DataManagementPage extends ConsumerWidget {
           const SizedBox(height: 12),
           SettingTile(
             icon: Icons.outbox_outlined,
-            title: pickUiText(i18n, zh: '导出任务词本', en: 'Export task wordbook'),
-            subtitle: pickUiText(
-              i18n,
-              zh: '把任务词导出成一个新的普通词本。',
-              en: 'Export task words into a regular wordbook.',
+            title: i18n.t('exportTaskWordbook'),
+            subtitle: i18n.t(
+              'inline.ui.pages.data_management_page.export_task_words_into_a_regular_wordbook_18f492',
             ),
             onTap: () async {
               final name = await showTextPromptDialog(
                 context: context,
-                title: pickUiText(i18n, zh: '导出名称', en: 'Export name'),
-                initialValue: pickUiText(i18n, zh: '任务词导出', en: 'Task export'),
+                title: i18n.t(
+                  'inline.ui.pages.data_management_page.export_name_0da9da',
+                ),
+                initialValue: i18n.t(
+                  'inline.ui.pages.data_management_page.task_export_887b93',
+                ),
               );
               if (name == null || name.trim().isEmpty) return;
               await state.exportTaskWordbook(name.trim());
@@ -69,24 +73,16 @@ class DataManagementPage extends ConsumerWidget {
           const SizedBox(height: 12),
           SettingTile(
             icon: Icons.cleaning_services_outlined,
-            title: pickUiText(i18n, zh: '清空任务词本', en: 'Clear task wordbook'),
-            subtitle: pickUiText(
-              i18n,
-              zh: '只清空任务列表，不影响普通词本内容。',
-              en: 'This clears the task list without touching regular wordbooks.',
+            title: i18n.t('clearTaskWordbook'),
+            subtitle: i18n.t(
+              'inline.ui.pages.data_management_page.this_clears_the_task_list_without_touching_regular_wordb_dd7f85',
             ),
             onTap: () async {
               final confirmed = await showConfirmDialog(
                 context: context,
-                title: pickUiText(
-                  i18n,
-                  zh: '清空任务词本',
-                  en: 'Clear task wordbook',
-                ),
-                message: pickUiText(
-                  i18n,
-                  zh: '确定清空当前任务词本吗？',
-                  en: 'Clear the current task wordbook?',
+                title: i18n.t('clearTaskWordbook'),
+                message: i18n.t(
+                  'inline.ui.pages.data_management_page.clear_the_current_task_wordbook_4a34f0',
                 ),
                 danger: true,
               );
@@ -97,22 +93,22 @@ class DataManagementPage extends ConsumerWidget {
           const SizedBox(height: 12),
           SettingTile(
             icon: Icons.delete_forever_outlined,
-            title: pickUiText(i18n, zh: '删除用户数据', en: 'Delete user data'),
-            subtitle: pickUiText(
-              i18n,
-              zh: '清除自建词本、收藏、任务、界面配置与练习统计，并优先尝试创建安全备份。',
-              en: 'Clear custom wordbooks, favorites, tasks, appearance settings, and practice stats, while trying to create a safety backup first.',
+            title: i18n.t(
+              'inline.ui.pages.data_management_page.delete_user_data_0266ab',
+            ),
+            subtitle: i18n.t(
+              'inline.ui.pages.data_management_page.clear_custom_wordbooks_favorites_tasks_appearance_settin_f4c888',
             ),
             onTap: () async {
               final confirmed = await showConfirmDialog(
                 context: context,
-                title: pickUiText(i18n, zh: '删除用户数据', en: 'Delete user data'),
-                message: pickUiText(
-                  i18n,
-                  zh: '此操作会将应用恢复到初始状态，并会先尝试创建安全备份。确定继续吗？',
-                  en: 'This resets the app to its initial state and tries to create a safety backup first. Continue?',
+                title: i18n.t(
+                  'inline.ui.pages.data_management_page.delete_user_data_0266ab',
                 ),
-                confirmText: pickUiText(i18n, zh: '确认删除', en: 'Delete'),
+                message: i18n.t(
+                  'inline.ui.pages.data_management_page.this_resets_the_app_to_its_initial_state_and_tries_to_cr_e1cc79',
+                ),
+                confirmText: i18n.t('delete'),
                 danger: true,
               );
               if (!confirmed) return;
@@ -125,15 +121,11 @@ class DataManagementPage extends ConsumerWidget {
                 SnackBar(
                   content: Text(
                     backupPath.isEmpty
-                        ? pickUiText(
-                            i18n,
-                            zh: '用户数据已重置。',
-                            en: 'User data has been reset.',
+                        ? i18n.t(
+                            'inline.ui.pages.data_management_page.user_data_has_been_reset_ce467e',
                           )
-                        : pickUiText(
-                            i18n,
-                            zh: '用户数据已重置，并已创建安全备份。',
-                            en: 'User data has been reset and a safety backup was created.',
+                        : i18n.t(
+                            'inline.ui.pages.data_management_page.user_data_has_been_reset_and_a_safety_backup_was_created_0ddbe6',
                           ),
                   ),
                 ),
@@ -151,10 +143,8 @@ class DataManagementPage extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '最近一次安全备份',
-                        en: 'Latest safety backup',
+                      i18n.t(
+                        'inline.ui.pages.data_management_page.latest_safety_backup_7166aa',
                       ),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
@@ -182,15 +172,15 @@ class DataManagementPage extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              pickUiText(i18n, zh: '恢复备份', en: 'Restore backup'),
+              i18n.t(
+                'inline.ui.pages.data_management_page.restore_backup_9c7c0d',
+              ),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              pickUiText(
-                i18n,
-                zh: '可以查看最近备份、确认来源，并在恢复前自动为当前数据再创建一份安全备份。',
-                en: 'Review recent backups, confirm where they came from, and create one more safety backup before restoring current data.',
+              i18n.t(
+                'inline.ui.pages.data_management_page.review_recent_backups_confirm_where_they_came_from_and_c_dad97e',
               ),
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -207,10 +197,8 @@ class DataManagementPage extends ConsumerWidget {
 
                 if (snapshot.hasError) {
                   return Text(
-                    pickUiText(
-                      i18n,
-                      zh: '读取备份列表失败。',
-                      en: 'Failed to read backup list.',
+                    i18n.t(
+                      'inline.ui.pages.data_management_page.failed_to_read_backup_list_6177e8',
                     ),
                     style: Theme.of(context).textTheme.bodySmall,
                   );
@@ -219,10 +207,8 @@ class DataManagementPage extends ConsumerWidget {
                 final backups = snapshot.data ?? const <DatabaseBackupInfo>[];
                 if (backups.isEmpty) {
                   return Text(
-                    pickUiText(
-                      i18n,
-                      zh: '还没有可恢复的备份。',
-                      en: 'No backups are available yet.',
+                    i18n.t(
+                      'inline.ui.pages.data_management_page.no_backups_are_available_yet_14cacf',
                     ),
                     style: Theme.of(context).textTheme.bodySmall,
                   );
@@ -270,10 +256,8 @@ class DataManagementPage extends ConsumerWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            pickUiText(
-              i18n,
-              zh: '来源: ${backup.reasonLabel}  ·  大小: ${_formatFileSize(backup.sizeBytes)}',
-              en: 'Source: ${backup.reasonLabel}  ·  Size: ${_formatFileSize(backup.sizeBytes)}',
+            i18n.t(
+              'inline.ui.pages.data_management_page.source_backup_reasonlabel_size_formatfilesize_backup_siz_85229a',
             ),
             style: theme.textTheme.bodySmall,
           ),
@@ -291,14 +275,16 @@ class DataManagementPage extends ConsumerWidget {
               TextButton.icon(
                 onPressed: () => _deleteBackup(context, state, i18n, backup),
                 icon: const Icon(Icons.delete_outline_rounded),
-                label: Text(pickUiText(i18n, zh: '删除', en: 'Delete')),
+                label: Text(i18n.t('delete')),
               ),
               const SizedBox(width: 8),
               OutlinedButton.icon(
                 onPressed: () => _restoreBackup(context, state, i18n, backup),
                 icon: const Icon(Icons.restore_rounded),
                 label: Text(
-                  pickUiText(i18n, zh: '恢复这个备份', en: 'Restore this backup'),
+                  i18n.t(
+                    'inline.ui.pages.data_management_page.restore_this_backup_108e18',
+                  ),
                 ),
               ),
             ],
@@ -316,13 +302,13 @@ class DataManagementPage extends ConsumerWidget {
   ) async {
     final confirmed = await showConfirmDialog(
       context: context,
-      title: pickUiText(i18n, zh: '恢复备份', en: 'Restore backup'),
-      message: pickUiText(
-        i18n,
-        zh: '恢复后会用所选备份覆盖当前数据库内容。系统会先为当前状态再创建一份安全备份。确定继续吗？',
-        en: 'The selected backup will replace the current database contents. The app will create one more safety backup first. Continue?',
+      title: i18n.t(
+        'inline.ui.pages.data_management_page.restore_backup_9c7c0d',
       ),
-      confirmText: pickUiText(i18n, zh: '确认恢复', en: 'Restore'),
+      message: i18n.t(
+        'inline.ui.pages.data_management_page.the_selected_backup_will_replace_the_current_database_co_f0a532',
+      ),
+      confirmText: i18n.t('toolbox.hub.edit.restore_action'),
       danger: true,
     );
     if (!confirmed) return;
@@ -333,10 +319,8 @@ class DataManagementPage extends ConsumerWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          pickUiText(
-            i18n,
-            zh: '备份已恢复，当前数据已重新加载。',
-            en: 'Backup restored and app data reloaded.',
+          i18n.t(
+            'inline.ui.pages.data_management_page.backup_restored_and_app_data_reloaded_6d30b1',
           ),
         ),
       ),
@@ -351,13 +335,13 @@ class DataManagementPage extends ConsumerWidget {
   ) async {
     final confirmed = await showConfirmDialog(
       context: context,
-      title: pickUiText(i18n, zh: '删除备份', en: 'Delete backup'),
-      message: pickUiText(
-        i18n,
-        zh: '将永久删除这份安全备份。确认继续吗？',
-        en: 'This will permanently delete the selected safety backup. Continue?',
+      title: i18n.t(
+        'inline.ui.pages.data_management_page.delete_backup_317ea6',
       ),
-      confirmText: pickUiText(i18n, zh: '删除', en: 'Delete'),
+      message: i18n.t(
+        'inline.ui.pages.data_management_page.this_will_permanently_delete_the_selected_safety_backup_23ebc2',
+      ),
+      confirmText: i18n.t('delete'),
       danger: true,
     );
     if (!confirmed) return;
@@ -366,7 +350,9 @@ class DataManagementPage extends ConsumerWidget {
     if (!context.mounted || !success) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(pickUiText(i18n, zh: '备份已删除。', en: 'Backup deleted.')),
+        content: Text(
+          i18n.t('inline.ui.pages.data_management_page.backup_deleted_7f48c1'),
+        ),
       ),
     );
   }

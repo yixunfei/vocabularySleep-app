@@ -69,83 +69,122 @@ const List<_LifeOption<_BarrageOrientation>> _barrageOrientationOptions =
     <_LifeOption<_BarrageOrientation>>[
       _LifeOption(
         value: _BarrageOrientation.landscape,
-        labelZh: '横屏',
-        labelEn: 'Landscape',
+        labelKey: 'inline.plan295.life.landscape.e669e150f0b9',
       ),
       _LifeOption(
         value: _BarrageOrientation.portrait,
-        labelZh: '竖屏',
-        labelEn: 'Portrait',
+        labelKey: 'inline.plan295.life.portrait.c66aa09a292c',
       ),
     ];
 
-const List<_LifeOption<_BarrageMotion>>
-_barrageMotionOptions = <_LifeOption<_BarrageMotion>>[
-  _LifeOption(value: _BarrageMotion.still, labelZh: '静止弹幕', labelEn: 'Still'),
-  _LifeOption(value: _BarrageMotion.scroll, labelZh: '滚动弹幕', labelEn: 'Scroll'),
-  _LifeOption(value: _BarrageMotion.flash, labelZh: '文字闪烁', labelEn: 'Flash'),
-  _LifeOption(value: _BarrageMotion.shake, labelZh: '文字抖动', labelEn: 'Shake'),
-];
+const List<_LifeOption<_BarrageMotion>> _barrageMotionOptions =
+    <_LifeOption<_BarrageMotion>>[
+      _LifeOption(
+        value: _BarrageMotion.still,
+        labelKey: 'inline.plan295.life.still.05c1a3e01a9c',
+      ),
+      _LifeOption(
+        value: _BarrageMotion.scroll,
+        labelKey: 'inline.plan295.life.scroll.49c2c3013fb7',
+      ),
+      _LifeOption(
+        value: _BarrageMotion.flash,
+        labelKey: 'inline.plan295.life.flash.a481fa989277',
+      ),
+      _LifeOption(
+        value: _BarrageMotion.shake,
+        labelKey: 'inline.plan295.life.shake.58fc46e22813',
+      ),
+    ];
 
-const List<_LifeOption<_BarrageFontStyle>>
-_barrageFontOptions = <_LifeOption<_BarrageFontStyle>>[
-  _LifeOption(
-    value: _BarrageFontStyle.rounded,
-    labelZh: '圆体',
-    labelEn: 'Rounded',
-  ),
-  _LifeOption(value: _BarrageFontStyle.mono, labelZh: '等宽', labelEn: 'Mono'),
-  _LifeOption(value: _BarrageFontStyle.serif, labelZh: '海报', labelEn: 'Poster'),
-  _LifeOption(
-    value: _BarrageFontStyle.compact,
-    labelZh: '窄体',
-    labelEn: 'Compact',
-  ),
-];
+const List<_LifeOption<_BarrageFontStyle>> _barrageFontOptions =
+    <_LifeOption<_BarrageFontStyle>>[
+      _LifeOption(
+        value: _BarrageFontStyle.rounded,
+        labelKey: 'inline.plan295.life.rounded.467a787ced2f',
+      ),
+      _LifeOption(
+        value: _BarrageFontStyle.mono,
+        labelKey: 'inline.plan295.life.mono.6193ef478e21',
+      ),
+      _LifeOption(
+        value: _BarrageFontStyle.serif,
+        labelKey: 'inline.plan295.life.poster.bab0ae777f03',
+      ),
+      _LifeOption(
+        value: _BarrageFontStyle.compact,
+        labelKey: 'inline.plan295.life.compact.4ad0fccd6bf4',
+      ),
+    ];
 
 const List<_LifeOption<_BarrageBackgroundMode>> _barrageBackgroundOptions =
     <_LifeOption<_BarrageBackgroundMode>>[
       _LifeOption(
         value: _BarrageBackgroundMode.solid,
-        labelZh: '纯色',
-        labelEn: 'Solid',
+        labelKey: 'inline.plan295.life.solid.ab6af9a81131',
       ),
       _LifeOption(
         value: _BarrageBackgroundMode.gradient,
-        labelZh: '多彩渐变',
-        labelEn: 'Gradient',
+        labelKey: 'inline.plan295.life.gradient.a0eca7ff048c',
       ),
       _LifeOption(
         value: _BarrageBackgroundMode.spotlight,
-        labelZh: '舞台光',
-        labelEn: 'Spotlight',
+        labelKey: 'inline.plan295.life.spotlight.7e514c3f59f5',
       ),
     ];
 
 const List<_LifeColorOption> _barrageTextColors = <_LifeColorOption>[
-  _LifeColorOption(color: Colors.white, labelZh: '白色', labelEn: 'White'),
-  _LifeColorOption(color: Color(0xFFFFE45E), labelZh: '亮黄', labelEn: 'Yellow'),
-  _LifeColorOption(color: Color(0xFFFF4D8D), labelZh: '玫红', labelEn: 'Pink'),
-  _LifeColorOption(color: Color(0xFF5AF0FF), labelZh: '青蓝', labelEn: 'Cyan'),
-  _LifeColorOption(color: Color(0xFF46FF88), labelZh: '荧光绿', labelEn: 'Green'),
-  _LifeColorOption(color: Color(0xFF111111), labelZh: '黑色', labelEn: 'Black'),
+  _LifeColorOption(
+    color: Colors.white,
+    labelKey: 'inline.plan295.life.white.57bb2b2d89ca',
+  ),
+  _LifeColorOption(
+    color: Color(0xFFFFE45E),
+    labelKey: 'inline.plan295.life.yellow.d7182985d92a',
+  ),
+  _LifeColorOption(
+    color: Color(0xFFFF4D8D),
+    labelKey: 'inline.plan295.life.pink.b7bd3b21d347',
+  ),
+  _LifeColorOption(
+    color: Color(0xFF5AF0FF),
+    labelKey: 'inline.plan295.life.cyan.4455b90fad29',
+  ),
+  _LifeColorOption(
+    color: Color(0xFF46FF88),
+    labelKey: 'inline.plan295.life.green.b645407522f6',
+  ),
+  _LifeColorOption(
+    color: Color(0xFF111111),
+    labelKey: 'inline.plan295.life.black.d91732d1012f',
+  ),
 ];
 
 const List<_LifeColorOption> _barrageBackgroundColors = <_LifeColorOption>[
-  _LifeColorOption(color: Colors.black, labelZh: '黑色', labelEn: 'Black'),
+  _LifeColorOption(
+    color: Colors.black,
+    labelKey: 'inline.plan295.life.black.d91732d1012f',
+  ),
   _LifeColorOption(
     color: Color(0xFF09243F),
-    labelZh: '深蓝',
-    labelEn: 'Deep blue',
+    labelKey: 'inline.plan295.life.deep_blue.4524ee561be8',
   ),
-  _LifeColorOption(color: Color(0xFF321042), labelZh: '紫夜', labelEn: 'Violet'),
-  _LifeColorOption(color: Color(0xFF7A111D), labelZh: '红色', labelEn: 'Red'),
+  _LifeColorOption(
+    color: Color(0xFF321042),
+    labelKey: 'inline.plan295.life.violet.cdad5e1009e1',
+  ),
+  _LifeColorOption(
+    color: Color(0xFF7A111D),
+    labelKey: 'inline.plan297.human_tests.cognition.stroop.red.1e859a3d5f',
+  ),
   _LifeColorOption(
     color: Color(0xFFFFF3A3),
-    labelZh: '暖黄',
-    labelEn: 'Warm yellow',
+    labelKey: 'inline.plan295.life.warm_yellow.b2567b7c1c49',
   ),
-  _LifeColorOption(color: Colors.white, labelZh: '白色', labelEn: 'White'),
+  _LifeColorOption(
+    color: Colors.white,
+    labelKey: 'inline.plan295.life.white.57bb2b2d89ca',
+  ),
 ];
 
 class _BarrageToolPage extends StatefulWidget {
@@ -185,21 +224,25 @@ class _BarrageToolPageState extends State<_BarrageToolPage> {
   @override
   Widget build(BuildContext context) {
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '手持弹幕', en: 'Handheld barrage'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '设置内容、字体、滚动速度、颜色、横竖屏和动态效果，进入后全屏高亮显示。',
-        en: 'Configure content, typography, speed, colors, orientation, and motion before showing it fullscreen.',
+        'inline.plan295.life.handheld_barrage.eb37eeab9e11',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.configure_content_typography_speed_c.627e155aef47',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           SectionHeader(
-            title: _lifeText(context, zh: '弹幕预览', en: 'Barrage preview'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '全屏后会保持屏幕常亮，并按这里的效果展示。',
-              en: 'Fullscreen keeps the screen awake and matches these effects.',
+              'inline.plan295.life.barrage_preview.74203bd23132',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.fullscreen_keeps_the_screen_awake_an.2ffe395a0d99',
             ),
           ),
           const SizedBox(height: 12),
@@ -235,7 +278,12 @@ class _BarrageToolPageState extends State<_BarrageToolPage> {
                 );
               },
               icon: const Icon(Icons.play_arrow_rounded),
-              label: Text(_lifeText(context, zh: '显示弹幕', en: 'Show barrage')),
+              label: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.show_barrage.352ca5559877',
+                ),
+              ),
             ),
           ),
         ],
@@ -258,7 +306,10 @@ class _BarrageSettingsPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '弹幕设置', en: 'Barrage settings'),
+      title: _lifeI18nText(
+        context,
+        'inline.plan295.life.barrage_settings.5611134445c1',
+      ),
       children: <Widget>[
         TextField(
           controller: controller,
@@ -266,13 +317,19 @@ class _BarrageSettingsPanel extends StatelessWidget {
           minLines: 1,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
-            labelText: _lifeText(context, zh: '弹幕内容', en: 'Barrage text'),
+            labelText: _lifeI18nText(
+              context,
+              'inline.plan295.life.barrage_text.aab6b02e7e08',
+            ),
           ),
           onChanged: (value) => onChanged(config.copyWith(text: value)),
         ),
         const SizedBox(height: 14),
         _LifeSliderField(
-          label: _lifeText(context, zh: '字号', en: 'Font size'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.font_size.f1403f714084',
+          ),
           valueText: config.fontSize.round().toString(),
           value: config.fontSize,
           min: 28,
@@ -281,7 +338,10 @@ class _BarrageSettingsPanel extends StatelessWidget {
           onChanged: (value) => onChanged(config.copyWith(fontSize: value)),
         ),
         _LifeSliderField(
-          label: _lifeText(context, zh: '滚动速度', en: 'Scroll speed'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.scroll_speed.9950ae3a912f',
+          ),
           valueText: '${config.speed.toStringAsFixed(1)}x',
           value: config.speed,
           min: 0.4,
@@ -291,21 +351,30 @@ class _BarrageSettingsPanel extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         _LifeSegmentedField<_BarrageOrientation>(
-          label: _lifeText(context, zh: '展示方式', en: 'Display mode'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.display_mode.2d50ceb575c4',
+          ),
           value: config.orientation,
           options: _barrageOrientationOptions,
           onChanged: (value) => onChanged(config.copyWith(orientation: value)),
         ),
         const SizedBox(height: 14),
         _LifeSegmentedField<_BarrageMotion>(
-          label: _lifeText(context, zh: '动态', en: 'Motion'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.motion.a9861b2e7f86',
+          ),
           value: config.motion,
           options: _barrageMotionOptions,
           onChanged: (value) => onChanged(config.copyWith(motion: value)),
         ),
         const SizedBox(height: 14),
         _LifeSegmentedField<_BarrageFontStyle>(
-          label: _lifeText(context, zh: '字体样式', en: 'Font style'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.font_style.b0223210002e',
+          ),
           value: config.fontStyle,
           options: _barrageFontOptions,
           onChanged: (value) => onChanged(config.copyWith(fontStyle: value)),
@@ -313,12 +382,20 @@ class _BarrageSettingsPanel extends StatelessWidget {
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           value: config.bold,
-          title: Text(_lifeText(context, zh: '加粗字体', en: 'Bold text')),
+          title: Text(
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.bold_text.e7ea04645233',
+            ),
+          ),
           onChanged: (value) => onChanged(config.copyWith(bold: value)),
         ),
         const SizedBox(height: 8),
         _LifeSegmentedField<_BarrageBackgroundMode>(
-          label: _lifeText(context, zh: '背景效果', en: 'Background'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.background.50f7c5422844',
+          ),
           value: config.backgroundMode,
           options: _barrageBackgroundOptions,
           onChanged: (value) =>
@@ -326,14 +403,20 @@ class _BarrageSettingsPanel extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         _LifeColorField(
-          label: _lifeText(context, zh: '字体颜色', en: 'Text color'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.text_color.f15dfed1504d',
+          ),
           value: config.textColor,
           options: _barrageTextColors,
           onChanged: (value) => onChanged(config.copyWith(textColor: value)),
         ),
         const SizedBox(height: 14),
         _LifeColorField(
-          label: _lifeText(context, zh: '背景主色', en: 'Background color'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.background_color.de7a28cc0124',
+          ),
           value: config.backgroundColor,
           options: _barrageBackgroundColors,
           onChanged: (value) =>
@@ -341,7 +424,10 @@ class _BarrageSettingsPanel extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         _LifeColorField(
-          label: _lifeText(context, zh: '背景辅色', en: 'Secondary color'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.secondary_color.7184edaa9dc2',
+          ),
           value: config.secondaryBackgroundColor,
           options: _barrageBackgroundColors,
           onChanged: (value) =>
@@ -413,7 +499,10 @@ class _BarrageImmersivePageState extends State<_BarrageImmersivePage> {
               top: 16,
               child: SafeArea(
                 child: IconButton.filledTonal(
-                  tooltip: _lifeText(context, zh: '退出弹幕', en: 'Exit'),
+                  tooltip: _lifeI18nText(
+                    context,
+                    'inline.plan295.life.exit.e8b4f278b5e3',
+                  ),
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(Icons.close_rounded),
                 ),

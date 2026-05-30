@@ -215,8 +215,7 @@ class ZenSandPrefsState {
       hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
       guidanceEnabled: guidanceEnabled ?? this.guidanceEnabled,
       soundEnabled: soundEnabled ?? this.soundEnabled,
-      drawFromContactPoint:
-          drawFromContactPoint ?? this.drawFromContactPoint,
+      drawFromContactPoint: drawFromContactPoint ?? this.drawFromContactPoint,
       touchOffset: (touchOffset ?? this.touchOffset).clamp(0.0, 1.0),
       actions: actions ?? this.actions,
     );

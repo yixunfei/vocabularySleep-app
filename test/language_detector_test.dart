@@ -7,7 +7,9 @@ void main() {
       expect(LanguageDetector.detectLanguage('Hello world'), 'en');
       expect(LanguageDetector.detectLanguage('This is a test'), 'en');
       expect(
-        LanguageDetector.detectLanguage('The quick brown fox jumps over the lazy dog'),
+        LanguageDetector.detectLanguage(
+          'The quick brown fox jumps over the lazy dog',
+        ),
         'en',
       );
     });
@@ -33,7 +35,10 @@ void main() {
     test('detects German text', () {
       expect(LanguageDetector.detectLanguage('Hallo Welt'), 'de');
       expect(LanguageDetector.detectLanguage('Das ist ein Test'), 'de');
-      expect(LanguageDetector.detectLanguage('Ich möchte Deutsch lernen'), 'de');
+      expect(
+        LanguageDetector.detectLanguage('Ich möchte Deutsch lernen'),
+        'de',
+      );
       expect(LanguageDetector.detectLanguage('Der die das und für'), 'de');
     });
 
@@ -119,10 +124,7 @@ void main() {
     });
 
     test('handles empty voice list', () {
-      expect(
-        LanguageDetector.recommendVoiceForLanguage('en', []),
-        '',
-      );
+      expect(LanguageDetector.recommendVoiceForLanguage('en', []), '');
     });
   });
 }

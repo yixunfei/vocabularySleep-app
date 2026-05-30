@@ -14,12 +14,9 @@ class _SingingBowlFrequencySpec {
     required this.group,
     required this.note,
     required this.frequency,
-    required this.nameZh,
-    required this.nameEn,
-    required this.subtitleZh,
-    required this.subtitleEn,
-    required this.descriptionZh,
-    required this.descriptionEn,
+    required this.nameKey,
+    required this.subtitleKey,
+    required this.descriptionKey,
     required this.accent,
     required this.glow,
     required this.gradient,
@@ -29,45 +26,38 @@ class _SingingBowlFrequencySpec {
   final _SingingBowlGroup group;
   final String note;
   final double frequency;
-  final String nameZh;
-  final String nameEn;
-  final String subtitleZh;
-  final String subtitleEn;
-  final String descriptionZh;
-  final String descriptionEn;
+  final String nameKey;
+  final String subtitleKey;
+  final String descriptionKey;
   final Color accent;
   final Color glow;
   final List<Color> gradient;
 
-  String name(bool isZh) => isZh ? nameZh : nameEn;
+  String name(AppI18n i18n) => i18n.t(nameKey);
 
-  String subtitle(bool isZh) => isZh ? subtitleZh : subtitleEn;
+  String subtitle(AppI18n i18n) => i18n.t(subtitleKey);
 
-  String description(bool isZh) => isZh ? descriptionZh : descriptionEn;
+  String description(AppI18n i18n) => i18n.t(descriptionKey);
 }
 
 class _SingingBowlVoiceSpec {
   const _SingingBowlVoiceSpec({
     required this.id,
     required this.icon,
-    required this.nameZh,
-    required this.nameEn,
-    required this.descriptionZh,
-    required this.descriptionEn,
+    required this.nameKey,
+    required this.descriptionKey,
     required this.baseVolume,
   });
 
   final String id;
   final IconData icon;
-  final String nameZh;
-  final String nameEn;
-  final String descriptionZh;
-  final String descriptionEn;
+  final String nameKey;
+  final String descriptionKey;
   final double baseVolume;
 
-  String name(bool isZh) => isZh ? nameZh : nameEn;
+  String name(AppI18n i18n) => i18n.t(nameKey);
 
-  String description(bool isZh) => isZh ? descriptionZh : descriptionEn;
+  String description(AppI18n i18n) => i18n.t(descriptionKey);
 }
 
 class _SpectrumBurst {
@@ -84,13 +74,10 @@ _bowlFrequencySpecs = <_SingingBowlFrequencySpec>[
     group: _SingingBowlGroup.chakra,
     note: 'C',
     frequency: 396,
-    nameZh: '安定',
-    nameEn: 'Stability',
-    subtitleZh: '根轮共振',
-    subtitleEn: 'Root chakra',
-    descriptionZh: '释放焦虑与恐惧，让呼吸和身体重新落地，回到稳稳托住自己的根基。',
-    descriptionEn:
-        'Releases anxious tension and helps the body settle into grounded stability.',
+    nameKey: 'inline.plan294.singing_bowls.stability_9087ce97',
+    subtitleKey: 'inline.plan294.singing_bowls.root_chakra_6b362625',
+    descriptionKey:
+        'inline.plan294.singing_bowls.releases_anxious_tension_and_helps_the_body_sett_b2861c96',
     accent: Color(0xFFB87A6A),
     glow: Color(0xFFE1B0A0),
     gradient: <Color>[Color(0xFFF5ECE7), Color(0xFFEADAD0), Color(0xFFD8BCAD)],
@@ -100,13 +87,10 @@ _bowlFrequencySpecs = <_SingingBowlFrequencySpec>[
     group: _SingingBowlGroup.chakra,
     note: 'D',
     frequency: 417,
-    nameZh: '活力',
-    nameEn: 'Vitality',
-    subtitleZh: '脐轮流动',
-    subtitleEn: 'Sacral flow',
-    descriptionZh: '松开压抑的情绪结块，让能量重新流动，带回温暖、柔软和生机。',
-    descriptionEn:
-        'Loosens emotional heaviness and restores warmth, softness, and flow.',
+    nameKey: 'inline.plan294.singing_bowls.vitality_a5df012d',
+    subtitleKey: 'inline.plan294.singing_bowls.sacral_flow_0136acc4',
+    descriptionKey:
+        'inline.plan294.singing_bowls.loosens_emotional_heaviness_and_restores_warmth__d8433d85',
     accent: Color(0xFFC89070),
     glow: Color(0xFFE9BDA2),
     gradient: <Color>[Color(0xFFF7ECE3), Color(0xFFECD7C4), Color(0xFFDDBCA1)],
@@ -116,13 +100,10 @@ _bowlFrequencySpecs = <_SingingBowlFrequencySpec>[
     group: _SingingBowlGroup.chakra,
     note: 'E',
     frequency: 528,
-    nameZh: '自信',
-    nameEn: 'Confidence',
-    subtitleZh: '太阳神经丛',
-    subtitleEn: 'Solar plexus',
-    descriptionZh: '著名的"奇迹频率"，带来更清晰的内在中心感，扶起行动力与自信。',
-    descriptionEn:
-        'The well-known miracle tone that brightens the center and lifts confidence.',
+    nameKey: 'inline.plan294.singing_bowls.confidence_a1f3fb38',
+    subtitleKey: 'inline.plan294.singing_bowls.solar_plexus_db0f8860',
+    descriptionKey:
+        'inline.plan294.singing_bowls.the_well_known_miracle_tone_that_brightens_the_c_32a689b9',
     accent: Color(0xFFC9A668),
     glow: Color(0xFFE2CD96),
     gradient: <Color>[Color(0xFFF6EFDD), Color(0xFFEEDFB7), Color(0xFFE0CB96)],
@@ -132,13 +113,10 @@ _bowlFrequencySpecs = <_SingingBowlFrequencySpec>[
     group: _SingingBowlGroup.chakra,
     note: 'F',
     frequency: 639,
-    nameZh: '和谐',
-    nameEn: 'Harmony',
-    subtitleZh: '心轮开阔',
-    subtitleEn: 'Heart chakra',
-    descriptionZh: '促进人与自己、人与外界之间更柔和的联结，适合久听与沉静放松。',
-    descriptionEn:
-        'Softens inner and outer connection, making it especially suited to longer listening.',
+    nameKey: 'inline.plan294.singing_bowls.harmony_1e0b785d',
+    subtitleKey: 'inline.plan294.singing_bowls.heart_chakra_c20761fb',
+    descriptionKey:
+        'inline.plan294.singing_bowls.softens_inner_and_outer_connection_making_it_esp_8dd96ffa',
     accent: Color(0xFF7FA58A),
     glow: Color(0xFFB4D1B8),
     gradient: <Color>[Color(0xFFEEF3ED), Color(0xFFDFE9DF), Color(0xFFC9D9CA)],
@@ -148,13 +126,10 @@ _bowlFrequencySpecs = <_SingingBowlFrequencySpec>[
     group: _SingingBowlGroup.chakra,
     note: 'G',
     frequency: 741,
-    nameZh: '表达',
-    nameEn: 'Expression',
-    subtitleZh: '喉轮澄明',
-    subtitleEn: 'Throat chakra',
-    descriptionZh: '清理纷乱思绪，带来通透与轻盈，更自由地表达真实的感受与声音。',
-    descriptionEn:
-        'Clears mental noise and encourages a lighter, freer sense of expression.',
+    nameKey: 'inline.plan294.singing_bowls.expression_fdd7d139',
+    subtitleKey: 'inline.plan294.singing_bowls.throat_chakra_306d966f',
+    descriptionKey:
+        'inline.plan294.singing_bowls.clears_mental_noise_and_encourages_a_lighter_fre_f39f2b31',
     accent: Color(0xFF7BA1B0),
     glow: Color(0xFFB2CAD4),
     gradient: <Color>[Color(0xFFEDF2F5), Color(0xFFDCE6EC), Color(0xFFC6D5DE)],
@@ -164,13 +139,10 @@ _bowlFrequencySpecs = <_SingingBowlFrequencySpec>[
     group: _SingingBowlGroup.chakra,
     note: 'A',
     frequency: 852,
-    nameZh: '洞察',
-    nameEn: 'Insight',
-    subtitleZh: '眉心观照',
-    subtitleEn: 'Third eye',
-    descriptionZh: '让注意力从外界收回到内在，保持冷静、清澈的观察感与直觉。',
-    descriptionEn:
-        'Draws attention inward and supports calm, lucid observation and intuition.',
+    nameKey: 'inline.plan294.singing_bowls.insight_875905fc',
+    subtitleKey: 'inline.plan294.singing_bowls.third_eye_c766b186',
+    descriptionKey:
+        'inline.plan294.singing_bowls.draws_attention_inward_and_supports_calm_lucid_o_f26562cf',
     accent: Color(0xFF8A8AB4),
     glow: Color(0xFFBBBBD5),
     gradient: <Color>[Color(0xFFEFEFF5), Color(0xFFE0E0EC), Color(0xFFCCCDE1)],
@@ -180,13 +152,10 @@ _bowlFrequencySpecs = <_SingingBowlFrequencySpec>[
     group: _SingingBowlGroup.chakra,
     note: 'B',
     frequency: 963,
-    nameZh: '升华',
-    nameEn: 'Transcendence',
-    subtitleZh: '顶轮宁静',
-    subtitleEn: 'Crown chakra',
-    descriptionZh: '收束杂音、回到纯净的精神秩序，适合更冥想、更空灵的停留。',
-    descriptionEn:
-        'Invites a more spacious, meditative stillness with a lighter and more transcendental halo.',
+    nameKey: 'inline.plan294.singing_bowls.transcendence_51fa8018',
+    subtitleKey: 'inline.plan294.singing_bowls.crown_chakra_5dac3b43',
+    descriptionKey:
+        'inline.plan294.singing_bowls.invites_a_more_spacious_meditative_stillness_wit_236bc98a',
     accent: Color(0xFFA091B8),
     glow: Color(0xFFCCBCDA),
     gradient: <Color>[Color(0xFFF1EEF3), Color(0xFFE3DCE8), Color(0xFFCEC4DA)],
@@ -196,13 +165,10 @@ _bowlFrequencySpecs = <_SingingBowlFrequencySpec>[
     group: _SingingBowlGroup.resonance,
     note: 'F3',
     frequency: 174,
-    nameZh: '镇痛',
-    nameEn: 'Pain Relief',
-    subtitleZh: '低频安抚',
-    subtitleEn: 'Low resonance',
-    descriptionZh: '更低、更厚、更靠近身体感，适合夜里、疲惫时或压力沉重的时候。',
-    descriptionEn:
-        'A lower, denser resonance for heavy, tired moments that need deeper grounding.',
+    nameKey: 'inline.plan294.singing_bowls.pain_relief_afbac6b7',
+    subtitleKey: 'inline.plan294.singing_bowls.low_resonance_ce12f6d8',
+    descriptionKey:
+        'inline.plan294.singing_bowls.a_lower_denser_resonance_for_heavy_tired_moments_d81dcc49',
     accent: Color(0xFF8F8279),
     glow: Color(0xFFBFB4A8),
     gradient: <Color>[Color(0xFFF1EEE9), Color(0xFFE3DED5), Color(0xFFD0C9BC)],
@@ -212,13 +178,10 @@ _bowlFrequencySpecs = <_SingingBowlFrequencySpec>[
     group: _SingingBowlGroup.resonance,
     note: 'D4',
     frequency: 285,
-    nameZh: '修复',
-    nameEn: 'Restoration',
-    subtitleZh: '修复频带',
-    subtitleEn: 'Restoration',
-    descriptionZh: '像一条柔和的修复带，在低频和中心频率之间架起更平衡的过渡。',
-    descriptionEn:
-        'Feels like a restorative bridge between the lower field and the more centered tones.',
+    nameKey: 'inline.plan294.singing_bowls.restoration_d61d54f5',
+    subtitleKey: 'inline.plan294.singing_bowls.restoration_78c349d5',
+    descriptionKey:
+        'inline.plan294.singing_bowls.feels_like_a_restorative_bridge_between_the_lowe_95edb65f',
     accent: Color(0xFF7DA3A0),
     glow: Color(0xFFB2CDCA),
     gradient: <Color>[Color(0xFFEDF3F2), Color(0xFFDBE7E5), Color(0xFFC5D8D5)],
@@ -228,13 +191,10 @@ _bowlFrequencySpecs = <_SingingBowlFrequencySpec>[
     group: _SingingBowlGroup.resonance,
     note: 'C#',
     frequency: 136.1,
-    nameZh: '地球',
-    nameEn: 'Om / Earth',
-    subtitleZh: '地球原音',
-    subtitleEn: 'Earth tone',
-    descriptionZh: '像更慢、更深的一层冥想底床，接地、安静，带着沉稳的归属感。',
-    descriptionEn:
-        'A slower, deeper meditative bed that feels grounded, calm, and belonging.',
+    nameKey: 'inline.plan294.singing_bowls.om_earth_23ddf060',
+    subtitleKey: 'inline.plan294.singing_bowls.earth_tone_95754c2b',
+    descriptionKey:
+        'inline.plan294.singing_bowls.a_slower_deeper_meditative_bed_that_feels_ground_f0b6305a',
     accent: Color(0xFF6F9080),
     glow: Color(0xFFA4C3B2),
     gradient: <Color>[Color(0xFFEDF3EF), Color(0xFFDBE8DF), Color(0xFFC5D7C9)],
@@ -244,13 +204,10 @@ _bowlFrequencySpecs = <_SingingBowlFrequencySpec>[
     group: _SingingBowlGroup.resonance,
     note: 'A4',
     frequency: 432,
-    nameZh: '自然',
-    nameEn: 'Universal',
-    subtitleZh: '自然调谐',
-    subtitleEn: '432 Hz',
-    descriptionZh: '与更自然的呼吸和节律贴近，适合当作长时间背景共振慢慢陪伴。',
-    descriptionEn:
-        'A more natural-feeling tuning that settles into longer, softer background resonance.',
+    nameKey: 'inline.plan294.singing_bowls.universal_91f00e91',
+    subtitleKey: 'inline.plan294.singing_bowls.432_hz_6b386efd',
+    descriptionKey:
+        'inline.plan294.singing_bowls.a_more_natural_feeling_tuning_that_settles_into__735a05b6',
     accent: Color(0xFF7A9DB4),
     glow: Color(0xFFADC6D5),
     gradient: <Color>[Color(0xFFEDF2F5), Color(0xFFDBE6EC), Color(0xFFC4D5DF)],
@@ -261,39 +218,33 @@ const List<_SingingBowlVoiceSpec> _bowlVoiceSpecs = <_SingingBowlVoiceSpec>[
   _SingingBowlVoiceSpec(
     id: 'crystal',
     icon: Icons.auto_awesome_rounded,
-    nameZh: '水晶',
-    nameEn: 'Crystal',
-    descriptionZh: '空灵清脆，带着更明亮、更通透的泛音边缘。',
-    descriptionEn: 'Airy and bright, with a clearer crystalline overtone edge.',
+    nameKey: 'ref.toolbox.sound.harp.crystal',
+    descriptionKey:
+        'inline.plan294.singing_bowls.airy_and_bright_with_a_clearer_crystalline_overt_82d0cd4f',
     baseVolume: 0.76,
   ),
   _SingingBowlVoiceSpec(
     id: 'brass',
     icon: Icons.album_rounded,
-    nameZh: '铜钵',
-    nameEn: 'Brass',
-    descriptionZh: '泛音饱满，金属体感更厚，尾音更稳、更宽。',
-    descriptionEn: 'Fuller metallic overtones with a broader, steadier tail.',
+    nameKey: 'inline.plan294.singing_bowls.brass_aa2d6119',
+    descriptionKey:
+        'inline.plan294.singing_bowls.fuller_metallic_overtones_with_a_broader_steadie_3548be22',
     baseVolume: 0.84,
   ),
   _SingingBowlVoiceSpec(
     id: 'deep',
     icon: Icons.nights_stay_rounded,
-    nameZh: '深邃',
-    nameEn: 'Deep',
-    descriptionZh: '低沉厚重，下潜感更强，更适合夜晚与深度放松。',
-    descriptionEn:
-        'Lower and weightier, suited to night listening and deep unwinding.',
+    nameKey: 'inline.plan294.singing_bowls.deep_2de4c68c',
+    descriptionKey:
+        'inline.plan294.singing_bowls.lower_and_weightier_suited_to_night_listening_an_5eb4db07',
     baseVolume: 0.88,
   ),
   _SingingBowlVoiceSpec(
     id: 'pure',
     icon: Icons.circle_outlined,
-    nameZh: '纯净',
-    nameEn: 'Pure',
-    descriptionZh: '极简正弦，只保留最核心的频率与朴素的回响。',
-    descriptionEn:
-        'Minimal and pure, focused almost entirely on the core tone.',
+    nameKey: 'inline.plan294.singing_bowls.pure_2519936c',
+    descriptionKey:
+        'inline.plan294.singing_bowls.minimal_and_pure_focused_almost_entirely_on_the__cccd30be',
     baseVolume: 0.7,
   ),
 ];

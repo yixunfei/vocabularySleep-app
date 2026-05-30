@@ -126,10 +126,6 @@ class _RouletteGameState extends State<_RouletteGame>
     super.dispose();
   }
 
-  String _text(AppI18n i18n, {required String zh, required String en}) {
-    return pickUiText(i18n, zh: zh, en: en);
-  }
-
   List<bool> _buildSequence() {
     final next = <bool>[
       for (var index = 0; index < _chambers; index += 1) index < _bulletCount,
@@ -652,59 +648,55 @@ class _RouletteGameState extends State<_RouletteGame>
 
   String _phaseLabel(AppI18n i18n) {
     return switch (_phase) {
-      _RoulettePhase.idle => _text(i18n, zh: '待机', en: 'Idle'),
-      _RoulettePhase.spinning => _text(i18n, zh: '准备中', en: 'Preparing'),
-      _RoulettePhase.armed => _text(i18n, zh: '可击发', en: 'Armed'),
-      _RoulettePhase.firing => _text(i18n, zh: '撞针释放', en: 'Pin strike'),
-      _RoulettePhase.safeClick => _text(i18n, zh: '空膛', en: 'Empty click'),
-      _RoulettePhase.hit => _text(i18n, zh: '命中爆发', en: 'Direct hit'),
-      _RoulettePhase.exhausted => _text(i18n, zh: '本轮结束', en: 'Round over'),
+      _RoulettePhase.idle => i18n.t('toolbox.miniGames.roulette.idle.c59d4163'),
+      _RoulettePhase.spinning => i18n.t(
+        'toolbox.miniGames.roulette.preparing.fb8a1fd7',
+      ),
+      _RoulettePhase.armed => i18n.t(
+        'toolbox.miniGames.roulette.armed.8dc78d94',
+      ),
+      _RoulettePhase.firing => i18n.t(
+        'toolbox.miniGames.roulette.pin_strike.60dad60f',
+      ),
+      _RoulettePhase.safeClick => i18n.t(
+        'toolbox.miniGames.roulette.empty_click.f6df0499',
+      ),
+      _RoulettePhase.hit => i18n.t(
+        'toolbox.miniGames.roulette.direct_hit.2543ad50',
+      ),
+      _RoulettePhase.exhausted => i18n.t(
+        'toolbox.miniGames.roulette.round_over.3a866748',
+      ),
     };
   }
 
   String _stageCopy(AppI18n i18n) {
     return switch (_phase) {
-      _RoulettePhase.idle => _text(
-        i18n,
-        zh: '设定装填后点击旋转弹仓，先听到准备咔哒再进入待击发状态。',
-        en: 'Set load and spin. You hear a prep clack before arming.',
+      _RoulettePhase.idle => i18n.t(
+        'toolbox.miniGames.roulette.set_load_and_spin_you_hear_a.1aed8ffb',
       ),
-      _RoulettePhase.spinning => _text(
-        i18n,
-        zh: '弹仓高速旋转，棘轮回位；落位后即可扣动扳机。',
-        en: 'Cylinder spinning. Ratchet settles, then trigger is live.',
+      _RoulettePhase.spinning => i18n.t(
+        'toolbox.miniGames.roulette.cylinder_spinning_ratchet_settles_then_trigger_is.6ed51b53',
       ),
       _RoulettePhase.armed =>
         _safePullCount > 0
-            ? _text(
-                i18n,
-                zh: '空膛咔哒后已推进到下一膛位，继续扣动扳机。',
-                en: 'After the empty clack, chamber advanced. Pull again.',
+            ? i18n.t(
+                'toolbox.miniGames.roulette.after_the_empty_clack_chamber_advanced_pull.8db121cc',
               )
-            : _text(
-                i18n,
-                zh: '已上膛：先撞针咔嚓，再决定是否命中。',
-                en: 'Armed: firing pin snaps before the outcome.',
+            : i18n.t(
+                'toolbox.miniGames.roulette.armed_firing_pin_snaps_before_the_outcome.8f8bdfce',
               ),
-      _RoulettePhase.firing => _text(
-        i18n,
-        zh: '撞针前冲，扳机与击锤联动释放。',
-        en: 'Firing pin lunges as trigger and hammer release together.',
+      _RoulettePhase.firing => i18n.t(
+        'toolbox.miniGames.roulette.firing_pin_lunges_as_trigger_and_hammer.121a3d12',
       ),
-      _RoulettePhase.safeClick => _text(
-        i18n,
-        zh: '空膛反馈完成，弹仓步进落位。',
-        en: 'Empty click done. Cylinder steps into the next chamber.',
+      _RoulettePhase.safeClick => i18n.t(
+        'toolbox.miniGames.roulette.empty_click_done_cylinder_steps_into_the.efdcb16a',
       ),
-      _RoulettePhase.hit => _text(
-        i18n,
-        zh: '命中触发爆炸声、全屏闪烁与震动。',
-        en: 'Hit triggers blast sound, full-screen flash, and vibration.',
+      _RoulettePhase.hit => i18n.t(
+        'toolbox.miniGames.roulette.hit_triggers_blast_sound_full_screen_flash.c8804571',
       ),
-      _RoulettePhase.exhausted => _text(
-        i18n,
-        zh: '六个膛位已走完，重新旋转可开始下一轮。',
-        en: 'All chambers consumed. Spin again for a new round.',
+      _RoulettePhase.exhausted => i18n.t(
+        'toolbox.miniGames.roulette.all_chambers_consumed_spin_again_for_a.fbfae8b3',
       ),
     };
   }

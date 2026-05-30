@@ -48,10 +48,6 @@ class _SokobanGameState extends State<_SokobanGame> {
     _loadLevel(_generateLevel());
   }
 
-  String _text(AppI18n i18n, {required String zh, required String en}) {
-    return pickUiText(i18n, zh: zh, en: en);
-  }
-
   int _indexOf(int row, int col) => row * _cols + col;
 
   int _rowOf(int index) => index ~/ _cols;
@@ -119,9 +115,15 @@ class _SokobanGameState extends State<_SokobanGame> {
 
   String _difficultyLabel(AppI18n i18n, _SokobanDifficulty difficulty) {
     return switch (difficulty) {
-      _SokobanDifficulty.easy => _text(i18n, zh: '单箱', en: 'Single'),
-      _SokobanDifficulty.medium => _text(i18n, zh: '双箱', en: 'Double'),
-      _SokobanDifficulty.hard => _text(i18n, zh: '三箱', en: 'Triple'),
+      _SokobanDifficulty.easy => i18n.t(
+        'toolbox.miniGames.sokoban.single.b4b00fd6',
+      ),
+      _SokobanDifficulty.medium => i18n.t(
+        'toolbox.miniGames.sokoban.double.86266b27',
+      ),
+      _SokobanDifficulty.hard => i18n.t(
+        'toolbox.miniGames.sokoban.triple.f9908787',
+      ),
     };
   }
 
@@ -464,10 +466,16 @@ class _SokobanGameState extends State<_SokobanGame> {
 
   String _directionLabel(AppI18n i18n, _SokobanDirection direction) {
     return switch (direction) {
-      _SokobanDirection.up => _text(i18n, zh: '向上', en: 'up'),
-      _SokobanDirection.down => _text(i18n, zh: '向下', en: 'down'),
-      _SokobanDirection.left => _text(i18n, zh: '向左', en: 'left'),
-      _SokobanDirection.right => _text(i18n, zh: '向右', en: 'right'),
+      _SokobanDirection.up => i18n.t('toolbox.miniGames.sokoban.up.e7dd4105'),
+      _SokobanDirection.down => i18n.t(
+        'toolbox.miniGames.sokoban.down.f73397ee',
+      ),
+      _SokobanDirection.left => i18n.t(
+        'toolbox.miniGames.sokoban.left.8c384155',
+      ),
+      _SokobanDirection.right => i18n.t(
+        'toolbox.miniGames.sokoban.right.580a0ff9',
+      ),
     };
   }
 
@@ -482,26 +490,25 @@ class _SokobanGameState extends State<_SokobanGame> {
 
   String _hintText(AppI18n i18n) {
     if (_won) {
-      return _text(
-        i18n,
-        zh: '所有箱子已经到达目标点。',
-        en: 'All crates are already on goals.',
+      return i18n.t(
+        'toolbox.miniGames.sokoban.all_crates_are_already_on_goals.0289c7b5',
       );
     }
     final hint = _nextHint();
     if (hint != null) {
       final row = _rowOf(hint.box) + 1;
       final col = _colOf(hint.box) + 1;
-      return _text(
-        i18n,
-        zh: '建议推动第 $row 行第 $col 列的箱子：${_directionLabel(i18n, hint.direction)}。',
-        en: 'Push the crate at row $row, column $col ${_directionLabel(i18n, hint.direction)}.',
+      return i18n.t(
+        'toolbox.miniGames.sokoban.push_the_crate_at_row_value_column.652ef8e8',
+        params: <String, Object?>{
+          'row': row,
+          'col': col,
+          'direction': _directionLabel(i18n, hint.direction),
+        },
       );
     }
-    return _text(
-      i18n,
-      zh: '当前箱子已偏离生成路线，建议撤销或显示正确线路后调整。',
-      en: 'The crates have left the generated routes. Undo or reveal the correct routes.',
+    return i18n.t(
+      'toolbox.miniGames.sokoban.the_crates_have_left_the_generated_routes.27afd7c9',
     );
   }
 
@@ -517,12 +524,12 @@ class _SokobanGameState extends State<_SokobanGame> {
 
   String _statusLabel(AppI18n i18n) {
     if (_won) {
-      return _text(i18n, zh: '已完成', en: 'Solved');
+      return i18n.t('toolbox.miniGames.sokoban.solved.a79babd6');
     }
     if (_nextHint() == null) {
-      return _text(i18n, zh: '偏离路线', en: 'Off route');
+      return i18n.t('toolbox.miniGames.sokoban.off_route.7beec4c2');
     }
-    return _text(i18n, zh: '进行中', en: 'Playing');
+    return i18n.t('toolbox.miniGames.sokoban.playing.98d237d2');
   }
 
   int get _solvedBoxes => _boxes.where(_level.goals.contains).length;
@@ -682,27 +689,35 @@ class _SokobanGameState extends State<_SokobanGame> {
               runSpacing: 10,
               children: <Widget>[
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '难度', en: 'Difficulty'),
+                  label: i18n.t(
+                    'toolbox.miniGames.sokoban.difficulty.34905971',
+                  ),
                   value: _difficultyLabel(i18n, _difficulty),
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '箱子/目标', en: 'Crates/goals'),
+                  label: i18n.t(
+                    'toolbox.miniGames.sokoban.crates_goals.5e094e06',
+                  ),
                   value: '${_boxes.length} / ${_level.goals.length}',
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '完成', en: 'Solved'),
+                  label: i18n.t('toolbox.miniGames.sokoban.solved.adaf0bd4'),
                   value: '$_solvedBoxes / ${_level.goals.length}',
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '正确步数', en: 'Route steps'),
+                  label: i18n.t(
+                    'toolbox.miniGames.sokoban.route_steps.317b2ecb',
+                  ),
                   value: '${_level.difficultySteps}',
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '移动/推动', en: 'Moves/pushes'),
+                  label: i18n.t(
+                    'toolbox.miniGames.sokoban.moves_pushes.f00d7aa4',
+                  ),
                   value: '$_moves / $_pushes',
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '状态', en: 'Status'),
+                  label: i18n.t('toolbox.miniGames.sokoban.status.89987aa2'),
                   value: _statusLabel(i18n),
                 ),
               ],
@@ -765,11 +780,15 @@ class _SokobanGameState extends State<_SokobanGame> {
                 FilledButton.tonalIcon(
                   onPressed: _showHint,
                   icon: const Icon(Icons.lightbulb_outline_rounded),
-                  label: Text(_text(i18n, zh: '提示', en: 'Hint')),
+                  label: Text(
+                    i18n.t('toolbox.miniGames.sokoban.hint.f090a729'),
+                  ),
                 ),
                 FilterChip(
                   selected: _showRoute,
-                  label: Text(_text(i18n, zh: '显示正确线路', en: 'Show route')),
+                  label: Text(
+                    i18n.t('toolbox.miniGames.sokoban.show_route.983e4a6a'),
+                  ),
                   onSelected: (value) {
                     setState(() {
                       _showRoute = value;
@@ -779,12 +798,16 @@ class _SokobanGameState extends State<_SokobanGame> {
                 OutlinedButton.icon(
                   onPressed: _history.isEmpty ? null : _undo,
                   icon: const Icon(Icons.undo_rounded),
-                  label: Text(_text(i18n, zh: '撤销', en: 'Undo')),
+                  label: Text(
+                    i18n.t('toolbox.miniGames.sokoban.undo.458cc97f'),
+                  ),
                 ),
                 OutlinedButton.icon(
                   onPressed: _newLevel,
                   icon: const Icon(Icons.refresh_rounded),
-                  label: Text(_text(i18n, zh: '新关卡', en: 'New level')),
+                  label: Text(
+                    i18n.t('toolbox.miniGames.sokoban.new_level.d1e3d694'),
+                  ),
                 ),
               ],
             ),

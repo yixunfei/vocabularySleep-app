@@ -15,12 +15,12 @@ class _NumberMarksPageState extends State<_NumberMarksPage> {
   bool _reverse = false;
   late ToolboxNumberMarkTransformResult _result;
 
-  static const List<({String zh, String en, String value})> _examples =
-      <({String zh, String en, String value})>[
-        (zh: '化学式', en: 'Chemistry', value: 'H2O + CO2'),
-        (zh: '楼层', en: 'Floor', value: 'B2 12F'),
-        (zh: '章节', en: 'Section', value: 'Chapter 12'),
-        (zh: '数学', en: 'Math', value: 'x2 + y3 = z4'),
+  static const List<({String labelKey, String value})> _examples =
+      <({String labelKey, String value})>[
+        (labelKey: 'life.number_marks.example.chemistry', value: 'H2O + CO2'),
+        (labelKey: 'life.number_marks.example.floor', value: 'B2 12F'),
+        (labelKey: 'life.number_marks.example.section', value: 'Chapter 12'),
+        (labelKey: 'life.number_marks.example.math', value: 'x2 + y3 = z4'),
       ];
 
   @override
@@ -59,7 +59,12 @@ class _NumberMarksPageState extends State<_NumberMarksPage> {
     }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(_lifeText(context, zh: '结果已复制', en: 'Result copied')),
+        content: Text(
+          _lifeI18nText(
+            context,
+            'inline.plan295.life.result_copied.d244810fc073',
+          ),
+        ),
       ),
     );
   }
@@ -73,60 +78,50 @@ class _NumberMarksPageState extends State<_NumberMarksPage> {
 
   String _modeLabel(ToolboxNumberMarkMode mode) {
     return switch (mode) {
-      ToolboxNumberMarkMode.superscript => _lifeText(
+      ToolboxNumberMarkMode.superscript => _lifeI18nText(
         context,
-        zh: '上标',
-        en: 'Superscript',
+        'inline.plan295.life.superscript.e97ae592e1fd',
       ),
-      ToolboxNumberMarkMode.subscript => _lifeText(
+      ToolboxNumberMarkMode.subscript => _lifeI18nText(
         context,
-        zh: '下标',
-        en: 'Subscript',
+        'inline.plan295.life.subscript.e337109701da',
       ),
-      ToolboxNumberMarkMode.circled => _lifeText(
+      ToolboxNumberMarkMode.circled => _lifeI18nText(
         context,
-        zh: '带圈',
-        en: 'Circled',
+        'inline.plan295.life.circled.083a5fdb18c8',
       ),
-      ToolboxNumberMarkMode.parenthesized => _lifeText(
+      ToolboxNumberMarkMode.parenthesized => _lifeI18nText(
         context,
-        zh: '括号编号',
-        en: 'Bracketed',
+        'inline.plan295.life.bracketed.82cb7d9dd01d',
       ),
-      ToolboxNumberMarkMode.fullwidth => _lifeText(
+      ToolboxNumberMarkMode.fullwidth => _lifeI18nText(
         context,
-        zh: '全角',
-        en: 'Fullwidth',
+        'inline.plan295.life.fullwidth.689974e36768',
       ),
     };
   }
 
   String _modeSummary(ToolboxNumberMarkMode mode) {
     return switch (mode) {
-      ToolboxNumberMarkMode.superscript => _lifeText(
+      ToolboxNumberMarkMode.superscript => _lifeI18nText(
         context,
-        zh: '适合化学式、脚注、指数和小号标注。',
-        en: 'Great for formulas, footnotes, exponents, and small labels.',
+        'inline.plan295.life.great_for_formulas_footnotes_exponen.0b3ff80a123b',
       ),
-      ToolboxNumberMarkMode.subscript => _lifeText(
+      ToolboxNumberMarkMode.subscript => _lifeI18nText(
         context,
-        zh: '适合化学式下标、序号尾标和低位标注。',
-        en: 'Good for chemistry subscripts and lower-position markers.',
+        'inline.plan295.life.good_for_chemistry_subscripts_and_lo.819a95b56e8a',
       ),
-      ToolboxNumberMarkMode.circled => _lifeText(
+      ToolboxNumberMarkMode.circled => _lifeI18nText(
         context,
-        zh: '适合清单编号、重点序号和按钮样式文本。',
-        en: 'Useful for list markers, callouts, and numbered buttons.',
+        'inline.plan295.life.useful_for_list_markers_callouts_and.24096ee6e20d',
       ),
-      ToolboxNumberMarkMode.parenthesized => _lifeText(
+      ToolboxNumberMarkMode.parenthesized => _lifeI18nText(
         context,
-        zh: '适合试题序号、步骤编号和文档条目。',
-        en: 'Useful for quiz numbers, step markers, and document items.',
+        'inline.plan295.life.useful_for_quiz_numbers_step_markers.58db07f7783e',
       ),
-      ToolboxNumberMarkMode.fullwidth => _lifeText(
+      ToolboxNumberMarkMode.fullwidth => _lifeI18nText(
         context,
-        zh: '适合海报标题、视觉强调和统一排版宽度。',
-        en: 'Useful for poster-like emphasis and uniform text width.',
+        'inline.plan295.life.useful_for_poster_like_emphasis_and.8ab66803d402',
       ),
     };
   }
@@ -134,18 +129,23 @@ class _NumberMarksPageState extends State<_NumberMarksPage> {
   @override
   Widget build(BuildContext context) {
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '数字转标', en: 'Number marks'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '把数字和常用字符转换为上标、下标、带圈、括号编号或全角，并支持反向还原。',
-        en: 'Convert digits and common symbols into superscript, subscript, circled, bracketed, or fullwidth forms with reverse normalization.',
+        'inline.plan295.life.number_marks.b511f8d8fc42',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.convert_digits_and_common_symbols_in.4f97f1fc08a3',
       ),
       child: Column(
         key: const ValueKey<String>('life-number-marks-page'),
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '转换方式', en: 'Conversion mode'),
+            title: _lifeI18nText(
+              context,
+              'inline.plan295.life.conversion_mode.0c44b683c7d3',
+            ),
             subtitle: _modeSummary(_mode),
             children: <Widget>[
               Wrap(
@@ -171,13 +171,15 @@ class _NumberMarksPageState extends State<_NumberMarksPage> {
                 value: _reverse,
                 contentPadding: EdgeInsets.zero,
                 title: Text(
-                  _lifeText(context, zh: '反向还原', en: 'Normalize back'),
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.normalize_back.d3b4d073d189',
+                  ),
                 ),
                 subtitle: Text(
-                  _lifeText(
+                  _lifeI18nText(
                     context,
-                    zh: '开启后会把当前模式下的标记字符尽量还原回普通文本。',
-                    en: 'When enabled, marked characters are normalized back into plain text where possible.',
+                    'inline.plan295.life.when_enabled_marked_characters_are_n.1e0241957869',
                   ),
                 ),
                 onChanged: (value) {
@@ -191,7 +193,10 @@ class _NumberMarksPageState extends State<_NumberMarksPage> {
           ),
           const SizedBox(height: 12),
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '输入', en: 'Input'),
+            title: _lifeI18nText(
+              context,
+              'inline.ui.pages.toolbox_human_tests_auditory_lab.input_6e272b',
+            ),
             children: <Widget>[
               TextField(
                 key: const ValueKey<String>('life-number-marks-input'),
@@ -207,9 +212,7 @@ class _NumberMarksPageState extends State<_NumberMarksPage> {
                 children: _examples
                     .map((example) {
                       return ActionChip(
-                        label: Text(
-                          _lifeText(context, zh: example.zh, en: example.en),
-                        ),
+                        label: Text(_lifeI18nText(context, example.labelKey)),
                         onPressed: () {
                           _inputController.text = example.value;
                           _inputController
@@ -229,26 +232,34 @@ class _NumberMarksPageState extends State<_NumberMarksPage> {
             runSpacing: 10,
             children: <Widget>[
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '已转换片段', en: 'Changed'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.changed.8b0bf83a79f0',
+                ),
                 value: '${_result.changedCount}',
               ),
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '未覆盖字符', en: 'Unsupported'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.unsupported.d62d93292bcd',
+                ),
                 value: '${_result.unsupportedCount}',
               ),
             ],
           ),
           const SizedBox(height: 12),
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '输出结果', en: 'Output'),
+            title: _lifeI18nText(
+              context,
+              'inline.plan295.life.output.e0ba7997f58f',
+            ),
             children: <Widget>[
               _LifePreviewFrame(
                 child: SelectableText(
                   _result.output.isEmpty
-                      ? _lifeText(
+                      ? _lifeI18nText(
                           context,
-                          zh: '输入内容后会在这里实时显示转换结果。',
-                          en: 'Converted output appears here as you type.',
+                          'inline.plan295.life.converted_output_appears_here_as_you.538b4b1f3716',
                         )
                       : _result.output,
                   key: const ValueKey<String>('life-number-marks-output'),
@@ -266,7 +277,10 @@ class _NumberMarksPageState extends State<_NumberMarksPage> {
                     onPressed: _result.output.isEmpty ? null : _copyResult,
                     icon: const Icon(Icons.copy_rounded),
                     label: Text(
-                      _lifeText(context, zh: '复制结果', en: 'Copy result'),
+                      _lifeI18nText(
+                        context,
+                        'inline.plan295.life.copy_result.d4f7944c520b',
+                      ),
                     ),
                   ),
                   OutlinedButton.icon(
@@ -275,17 +289,19 @@ class _NumberMarksPageState extends State<_NumberMarksPage> {
                         : _useResultAsInput,
                     icon: const Icon(Icons.swap_horiz_rounded),
                     label: Text(
-                      _lifeText(context, zh: '结果回填', en: 'Use result as input'),
+                      _lifeI18nText(
+                        context,
+                        'inline.plan295.life.use_result_as_input.a1822752ba96',
+                      ),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 10),
               Text(
-                _lifeText(
+                _lifeI18nText(
                   context,
-                  zh: '提示: Unicode 上下标本身覆盖不完整，无法转换的字符会保留原样并计入“未覆盖字符”。',
-                  en: 'Tip: Unicode super/sub scripts are incomplete by nature, so unsupported characters stay unchanged and are counted above.',
+                  'inline.plan295.life.tip_unicode_super_sub_scripts_are_in.4dbf188b1324',
                 ),
                 style: Theme.of(context).textTheme.bodySmall,
               ),

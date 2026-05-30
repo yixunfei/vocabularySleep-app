@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../i18n/app_i18n.dart';
-import '../../ui_copy.dart';
 
 enum DailyChoiceModuleId {
   eat('eat'),
@@ -30,135 +29,109 @@ class DailyChoiceModuleConfig {
     required this.id,
     required this.icon,
     required this.accent,
-    required this.titleZh,
-    required this.titleEn,
-    required this.subtitleZh,
-    required this.subtitleEn,
+    required this.titleKey,
+    required this.subtitleKey,
   });
 
   final String id;
   final IconData icon;
   final Color accent;
-  final String titleZh;
-  final String titleEn;
-  final String subtitleZh;
-  final String subtitleEn;
+  final String titleKey;
+  final String subtitleKey;
 
-  String title(AppI18n i18n) => pickUiText(i18n, zh: titleZh, en: titleEn);
+  String title(AppI18n i18n) => i18n.t(titleKey);
 
-  String subtitle(AppI18n i18n) =>
-      pickUiText(i18n, zh: subtitleZh, en: subtitleEn);
+  String subtitle(AppI18n i18n) => i18n.t(subtitleKey);
 }
 
 class DailyChoiceCategory {
   const DailyChoiceCategory({
     required this.id,
     required this.icon,
-    required this.titleZh,
-    required this.titleEn,
-    required this.subtitleZh,
-    required this.subtitleEn,
+    required this.titleKey,
+    required this.subtitleKey,
   });
 
   final String id;
   final IconData icon;
-  final String titleZh;
-  final String titleEn;
-  final String subtitleZh;
-  final String subtitleEn;
+  final String titleKey;
+  final String subtitleKey;
 
-  String title(AppI18n i18n) => pickUiText(i18n, zh: titleZh, en: titleEn);
+  String title(AppI18n i18n) => i18n.t(titleKey);
 
-  String subtitle(AppI18n i18n) =>
-      pickUiText(i18n, zh: subtitleZh, en: subtitleEn);
+  String subtitle(AppI18n i18n) => i18n.t(subtitleKey);
 }
 
 class DailyChoiceTraitOption {
   const DailyChoiceTraitOption({
     required this.id,
-    required this.titleZh,
-    required this.titleEn,
+    required this.titleKey,
     this.icon = Icons.label_rounded,
   });
 
   final String id;
-  final String titleZh;
-  final String titleEn;
+  final String titleKey;
   final IconData icon;
 
-  String title(AppI18n i18n) => pickUiText(i18n, zh: titleZh, en: titleEn);
+  String title(AppI18n i18n) => i18n.t(titleKey);
 }
 
 class DailyChoiceTraitGroup {
   const DailyChoiceTraitGroup({
     required this.id,
-    required this.titleZh,
-    required this.titleEn,
-    required this.subtitleZh,
-    required this.subtitleEn,
+    required this.titleKey,
+    required this.subtitleKey,
     required this.options,
     this.icon = Icons.tune_rounded,
     this.multiSelect = true,
   });
 
   final String id;
-  final String titleZh;
-  final String titleEn;
-  final String subtitleZh;
-  final String subtitleEn;
+  final String titleKey;
+  final String subtitleKey;
   final List<DailyChoiceTraitOption> options;
   final IconData icon;
   final bool multiSelect;
 
-  String title(AppI18n i18n) => pickUiText(i18n, zh: titleZh, en: titleEn);
+  String title(AppI18n i18n) => i18n.t(titleKey);
 
-  String subtitle(AppI18n i18n) =>
-      pickUiText(i18n, zh: subtitleZh, en: subtitleEn);
+  String subtitle(AppI18n i18n) => i18n.t(subtitleKey);
 }
 
 class DailyChoiceGuideEntry {
   const DailyChoiceGuideEntry({
-    required this.titleZh,
-    required this.titleEn,
-    required this.bodyZh,
-    required this.bodyEn,
+    required this.titleKey,
+    required this.bodyKey,
     this.icon = Icons.tips_and_updates_rounded,
   });
 
-  final String titleZh;
-  final String titleEn;
-  final String bodyZh;
-  final String bodyEn;
+  final String titleKey;
+  final String bodyKey;
   final IconData icon;
 
-  String title(AppI18n i18n) => pickUiText(i18n, zh: titleZh, en: titleEn);
+  String title(AppI18n i18n) => i18n.t(titleKey);
 
-  String body(AppI18n i18n) => pickUiText(i18n, zh: bodyZh, en: bodyEn);
+  String body(AppI18n i18n) => i18n.t(bodyKey);
 }
 
 class DailyChoiceGuideModule {
   const DailyChoiceGuideModule({
     required this.id,
-    required this.titleZh,
-    required this.titleEn,
-    required this.subtitleZh,
-    required this.subtitleEn,
+    required this.titleKey,
+    required this.subtitleKey,
     required this.entries,
     this.icon = Icons.menu_book_rounded,
   });
 
   final String id;
-  final String titleZh;
-  final String titleEn;
-  final String subtitleZh;
-  final String subtitleEn;
+  final String titleKey;
+  final String subtitleKey;
   final List<DailyChoiceGuideEntry> entries;
   final IconData icon;
 
-  String title(AppI18n i18n) => pickUiText(i18n, zh: titleZh, en: titleEn);
+  String title(AppI18n i18n) => i18n.t(titleKey);
 
-  String subtitle(AppI18n i18n) =>
-      pickUiText(i18n, zh: subtitleZh, en: subtitleEn);
+  String subtitle(AppI18n i18n) => i18n.t(subtitleKey);
 }
 
 class DailyChoiceReferenceLink {
@@ -172,7 +145,8 @@ class DailyChoiceReferenceLink {
   final String labelEn;
   final String url;
 
-  String label(AppI18n i18n) => pickUiText(i18n, zh: labelZh, en: labelEn);
+  String label(AppI18n i18n) =>
+      _localizedDailyChoiceContent(i18n, zh: labelZh, en: labelEn);
 
   Map<String, Object?> toJson() {
     return <String, Object?>{
@@ -244,13 +218,14 @@ class DailyChoiceOption {
   final Map<String, List<String>> attributes;
   final bool custom;
 
-  String title(AppI18n i18n) => pickUiText(i18n, zh: titleZh, en: titleEn);
+  String title(AppI18n i18n) =>
+      _localizedDailyChoiceContent(i18n, zh: titleZh, en: titleEn);
 
   String subtitle(AppI18n i18n) =>
-      pickUiText(i18n, zh: subtitleZh, en: subtitleEn);
+      _localizedDailyChoiceContent(i18n, zh: subtitleZh, en: subtitleEn);
 
   String details(AppI18n i18n) =>
-      pickUiText(i18n, zh: detailsZh, en: detailsEn);
+      _localizedDailyChoiceContent(i18n, zh: detailsZh, en: detailsEn);
 
   List<String> materials(AppI18n i18n) {
     return AppI18n.normalizeLanguageCode(i18n.languageCode) == 'zh'
@@ -484,7 +459,8 @@ class DailyChoiceEatCollection {
   final String titleEn;
   final List<String> optionIds;
 
-  String title(AppI18n i18n) => pickUiText(i18n, zh: titleZh, en: titleEn);
+  String title(AppI18n i18n) =>
+      _localizedDailyChoiceContent(i18n, zh: titleZh, en: titleEn);
 
   bool containsOption(String optionId) => optionIds.contains(optionId);
 
@@ -559,7 +535,8 @@ class DailyChoiceWearCollection {
   final String titleEn;
   final List<String> optionIds;
 
-  String title(AppI18n i18n) => pickUiText(i18n, zh: titleZh, en: titleEn);
+  String title(AppI18n i18n) =>
+      _localizedDailyChoiceContent(i18n, zh: titleZh, en: titleEn);
 
   bool containsOption(String optionId) => optionIds.contains(optionId);
 
@@ -625,7 +602,8 @@ class DailyChoiceActivityCollection {
   final String titleEn;
   final List<String> optionIds;
 
-  String title(AppI18n i18n) => pickUiText(i18n, zh: titleZh, en: titleEn);
+  String title(AppI18n i18n) =>
+      _localizedDailyChoiceContent(i18n, zh: titleZh, en: titleEn);
 
   bool containsOption(String optionId) => optionIds.contains(optionId);
 
@@ -1479,4 +1457,15 @@ Map<String, List<String>> _stringListMap(Object? value) {
     }
   });
   return result;
+}
+
+String _localizedDailyChoiceContent(
+  AppI18n i18n, {
+  required String zh,
+  required String en,
+}) {
+  if (AppI18n.normalizeLanguageCode(i18n.languageCode) == 'zh') {
+    return zh;
+  }
+  return en.trim().isEmpty ? zh : en;
 }

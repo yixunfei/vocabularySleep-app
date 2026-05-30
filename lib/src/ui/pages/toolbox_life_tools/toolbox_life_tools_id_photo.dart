@@ -1,18 +1,25 @@
 part of '../toolbox_life_tools.dart';
 
 const List<_LifeColorOption> _idPhotoBackgroundOptions = <_LifeColorOption>[
-  _LifeColorOption(color: Colors.white, labelZh: '白底', labelEn: 'White'),
+  _LifeColorOption(
+    color: Colors.white,
+    labelKey: 'inline.plan295.life.white.ae2156d116df',
+  ),
   _LifeColorOption(
     color: Color(0xFFE8F3FF),
-    labelZh: '浅蓝',
-    labelEn: 'Light blue',
+    labelKey: 'inline.plan295.life.light_blue.81b2df2a904a',
   ),
-  _LifeColorOption(color: Color(0xFF438BFF), labelZh: '蓝底', labelEn: 'Blue'),
-  _LifeColorOption(color: Color(0xFFD94444), labelZh: '红底', labelEn: 'Red'),
+  _LifeColorOption(
+    color: Color(0xFF438BFF),
+    labelKey: 'inline.plan295.life.blue.e74cca65888f',
+  ),
+  _LifeColorOption(
+    color: Color(0xFFD94444),
+    labelKey: 'inline.plan295.life.red.a80dab852185',
+  ),
   _LifeColorOption(
     color: Color(0xFFF2F2F2),
-    labelZh: '浅灰',
-    labelEn: 'Light gray',
+    labelKey: 'inline.plan295.life.light_gray.df3b6c3322ea',
   ),
 ];
 
@@ -66,11 +73,13 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
   @override
   Widget build(BuildContext context) {
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '证件照生成', en: 'ID photo'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '离线裁切照片、替换纯色背景，并按常见证件照规格导出。',
-        en: 'Offline crop, plain background replacement, and common ID photo export.',
+        'inline.plan295.life.id_photo.0d7cf4d70985',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.offline_crop_plain_background_replac.e8312750b162',
       ),
       child: KeyedSubtree(
         key: const ValueKey<String>('life-id-photo-page'),
@@ -104,11 +113,13 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
 
   Widget _buildStagePanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '照片舞台', en: 'Photo stage'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '先选择头像照片，再按用途调整规格、裁切位置和底色。',
-        en: 'Pick a portrait first, then adjust preset, crop position, and background.',
+        'inline.plan295.life.photo_stage.65adec1d66ad',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.pick_a_portrait_first_then_adjust_pr.e34847c897b8',
       ),
       children: <Widget>[
         Wrap(
@@ -116,15 +127,24 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
           runSpacing: 10,
           children: <Widget>[
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '当前规格', en: 'Preset'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.preset.cb8aaa69c5fa',
+              ),
               value: _presetLabel(_preset, context),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '输出像素', en: 'Pixels'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.pixels.ccc640003b72',
+              ),
               value: _preset.pixelPair(_dpi),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '底色', en: 'Background'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.background.5c33667dd504',
+              ),
               value: _backgroundLabel(context),
             ),
           ],
@@ -137,12 +157,20 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
                 key: const ValueKey<String>('life_id_photo_pick_button'),
                 onPressed: _processing || _saving ? null : _pickImage,
                 icon: const Icon(Icons.photo_library_rounded),
-                label: Text(_lifeText(context, zh: '选择照片', en: 'Pick photo')),
+                label: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.pick_photo.8b755e2318a4',
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 10),
             IconButton.filledTonal(
-              tooltip: _lifeText(context, zh: '清空', en: 'Clear'),
+              tooltip: _lifeI18nText(
+                context,
+                'inline.plan294.zen_sand.clear_ea17218b',
+              ),
               onPressed: _processing || _saving ? null : _resetAll,
               icon: const Icon(Icons.clear_rounded),
             ),
@@ -152,10 +180,9 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
         _LifePreviewFrame(
           child: _sourcePreview == null
               ? Text(
-                  _lifeText(
+                  _lifeI18nText(
                     context,
-                    zh: '尚未选择照片。',
-                    en: 'No photo selected yet.',
+                    'inline.plan295.life.no_photo_selected_yet.7d1bc1c83968',
                   ),
                 )
               : Column(
@@ -163,7 +190,10 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
                   children: <Widget>[
                     Text(
                       _sourceName ??
-                          _lifeText(context, zh: '未命名照片', en: 'Unnamed photo'),
+                          _lifeI18nText(
+                            context,
+                            'inline.plan295.life.unnamed_photo.eef83605154c',
+                          ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -194,24 +224,28 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
 
   Widget _buildConfigPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '生成参数', en: 'Generation settings'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '尺寸按毫米和 DPI 换算，背景替换适合纯色或接近纯色背景的照片。',
-        en: 'Size is calculated from millimeters and DPI. Background replacement works best on plain backdrops.',
+        'inline.plan295.life.generation_settings.d8fbf36e255b',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.size_is_calculated_from_millimeters.38810f8f9302',
       ),
       children: <Widget>[
         KeyedSubtree(
           key: const ValueKey<String>('life_id_photo_preset_field'),
           child: _LifeSegmentedField<ToolboxIdPhotoPreset>(
-            label: _lifeText(context, zh: '证件照规格', en: 'Photo preset'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.photo_preset.69f15dc54716',
+            ),
             value: _preset,
             options: toolboxIdPhotoPresets
                 .map(
                   (preset) => _LifeOption<ToolboxIdPhotoPreset>(
                     value: preset,
-                    labelZh: preset.labelZh,
-                    labelEn: preset.labelEn,
+                    labelText: _presetLabel(preset, context),
                   ),
                 )
                 .toList(growable: false),
@@ -223,7 +257,10 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
         ),
         const SizedBox(height: 12),
         _LifeSliderField(
-          label: _lifeText(context, zh: 'DPI', en: 'DPI'),
+          label: _lifeI18nText(
+            context,
+            'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_id_photo.dpi_9c8856',
+          ),
           valueText: '${_dpi.round()} dpi · ${_preset.pixelPair(_dpi)}',
           value: _dpi,
           min: 150,
@@ -236,7 +273,10 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
         ),
         const SizedBox(height: 12),
         _LifeColorField(
-          label: _lifeText(context, zh: '证件照底色', en: 'Background color'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.background_color.5e5e51d81220',
+          ),
           value: _backgroundColor,
           options: _idPhotoBackgroundOptions,
           onChanged: (value) => setState(() {
@@ -248,18 +288,19 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
         KeyedSubtree(
           key: const ValueKey<String>('life_id_photo_format_field'),
           child: _LifeSegmentedField<ToolboxIdPhotoOutputFormat>(
-            label: _lifeText(context, zh: '导出格式', en: 'Export format'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.export_format.798da28c2095',
+            ),
             value: _format,
             options: const <_LifeOption<ToolboxIdPhotoOutputFormat>>[
               _LifeOption<ToolboxIdPhotoOutputFormat>(
                 value: ToolboxIdPhotoOutputFormat.png,
-                labelZh: 'PNG 清晰',
-                labelEn: 'PNG clear',
+                labelKey: 'inline.plan295.life.png_clear.a09b2479f3cc',
               ),
               _LifeOption<ToolboxIdPhotoOutputFormat>(
                 value: ToolboxIdPhotoOutputFormat.jpg,
-                labelZh: 'JPEG 较小',
-                labelEn: 'JPEG smaller',
+                labelKey: 'inline.plan295.life.jpeg_smaller.590d2284a5b8',
               ),
             ],
             onChanged: (value) => setState(() {
@@ -271,7 +312,10 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
         if (_format == ToolboxIdPhotoOutputFormat.jpg) ...<Widget>[
           const SizedBox(height: 12),
           _LifeSliderField(
-            label: _lifeText(context, zh: 'JPEG 质量', en: 'JPEG quality'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.jpeg_quality.6f509fde325f',
+            ),
             valueText: '${_jpegQuality.round()}',
             value: _jpegQuality,
             min: 60,
@@ -295,20 +339,25 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
             _clearResult();
           }),
           title: Text(
-            _lifeText(context, zh: '简易换底色', en: 'Plain background replace'),
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.plain_background_replace.a29b13e8f31b',
+            ),
           ),
           subtitle: Text(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '按照片四角取样替换相近背景，不会上传照片。',
-              en: 'Samples the four corners and replaces similar backdrop pixels without uploading.',
+              'inline.plan295.life.samples_the_four_corners_and_replace.bf76bcf79eba',
             ),
           ),
         ),
         if (_replaceBackground) ...<Widget>[
           const SizedBox(height: 12),
           _LifeSliderField(
-            label: _lifeText(context, zh: '背景容差', en: 'Background tolerance'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.background_tolerance.cb43388ba7c9',
+            ),
             valueText: '${(_backgroundTolerance * 100).round()}%',
             value: _backgroundTolerance,
             min: 0.05,
@@ -321,7 +370,10 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
           ),
           const SizedBox(height: 12),
           _LifeSliderField(
-            label: _lifeText(context, zh: '替换强度', en: 'Replace strength'),
+            label: _lifeI18nText(
+              context,
+              'inline.plan295.life.replace_strength.3a8863af64b7',
+            ),
             valueText: '${(_replacementStrength * 100).round()}%',
             value: _replacementStrength,
             min: 0.35,
@@ -335,7 +387,10 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
         ],
         const SizedBox(height: 12),
         _LifeSliderField(
-          label: _lifeText(context, zh: '裁切缩放', en: 'Crop zoom'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.crop_zoom.32dfd4a63e4d',
+          ),
           valueText: '${_zoom.toStringAsFixed(2)}x',
           value: _zoom,
           min: 1,
@@ -348,7 +403,10 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
         ),
         const SizedBox(height: 12),
         _LifeSliderField(
-          label: _lifeText(context, zh: '左右位置', en: 'Horizontal position'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.horizontal_position.7e36369b6aa6',
+          ),
           valueText: _signedPercent(_offsetX),
           value: _offsetX,
           min: -1,
@@ -361,7 +419,10 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
         ),
         const SizedBox(height: 12),
         _LifeSliderField(
-          label: _lifeText(context, zh: '上下位置', en: 'Vertical position'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.vertical_position.e809580ef58c',
+          ),
           valueText: _signedPercent(_offsetY),
           value: _offsetY,
           min: -1,
@@ -393,8 +454,14 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
                 : const Icon(Icons.badge_rounded),
             label: Text(
               _processing
-                  ? _lifeText(context, zh: '生成中...', en: 'Generating...')
-                  : _lifeText(context, zh: '生成证件照', en: 'Generate'),
+                  ? _lifeI18nText(
+                      context,
+                      'inline.plan295.life.generating.7a3fc9f68035',
+                    )
+                  : _lifeI18nText(
+                      context,
+                      'inline.plan295.life.generate.e140e9e0c26a',
+                    ),
             ),
           ),
         ),
@@ -413,8 +480,14 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
                 : const Icon(Icons.save_alt_rounded),
             label: Text(
               _saving
-                  ? _lifeText(context, zh: '保存中...', en: 'Saving...')
-                  : _lifeText(context, zh: '导出结果', en: 'Export'),
+                  ? _lifeI18nText(
+                      context,
+                      'inline.plan295.life.saving.2c9b4d88c6ff',
+                    )
+                  : _lifeI18nText(
+                      context,
+                      'inline.plan295.crypto.export.f7657dd92440',
+                    ),
             ),
           ),
         ),
@@ -425,11 +498,13 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
   Widget _buildResultPanel(BuildContext context) {
     final result = _result;
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '结果信息', en: 'Result metrics'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '生成后检查输出像素、裁切区域和换底色影响范围。',
-        en: 'After generation, review pixels, crop box, and replaced backdrop coverage.',
+        'inline.plan295.life.result_metrics.7fb4d460e8b5',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.after_generation_review_pixels_crop.07946a82a29e',
       ),
       children: <Widget>[
         Wrap(
@@ -437,23 +512,35 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
           runSpacing: 10,
           children: <Widget>[
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '目标像素', en: 'Target pixels'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.target_pixels.1e894d59f63e',
+              ),
               value: _preset.pixelPair(_dpi),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '结果体积', en: 'Output size'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.output_size.bbdae54e8de3',
+              ),
               value: _resultBytes == null
                   ? '--'
                   : _formatBytes(_resultBytes!.length),
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '裁切区域', en: 'Crop box'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.crop_box.44b6cfd294db',
+              ),
               value: result == null
                   ? '--'
                   : '${result.cropWidth}x${result.cropHeight}',
             ),
             ToolboxMetricCard(
-              label: _lifeText(context, zh: '换底像素', en: 'Replaced pixels'),
+              label: _lifeI18nText(
+                context,
+                'inline.plan295.life.replaced_pixels.6c0659750231',
+              ),
               value: result == null ? '--' : result.replacedPixels.toString(),
             ),
           ],
@@ -464,11 +551,10 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
 
   Widget _buildPreviewPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '预览对比', en: 'Preview'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(context, 'inline.plan295.life.preview.5f7afb14e386'),
+      subtitle: _lifeI18nText(
         context,
-        zh: '左侧原图，右侧生成结果；窄屏下自动上下排列。',
-        en: 'Source on the left, generated ID photo on the right. Narrow screens stack vertically.',
+        'inline.plan295.life.source_on_the_left_generated_id_phot.cf1e7df79351',
       ),
       children: <Widget>[
         LayoutBuilder(
@@ -479,15 +565,13 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
                 children: <Widget>[
                   _previewTile(
                     context: context,
-                    titleZh: '原图',
-                    titleEn: 'Source',
+                    titleKey: 'inline.plan295.life.source.bd1f1bbdfe8e',
                     image: _sourcePreview,
                   ),
                   const SizedBox(height: 10),
                   _previewTile(
                     context: context,
-                    titleZh: '证件照',
-                    titleEn: 'ID photo',
+                    titleKey: 'inline.plan295.life.id_photo.3756c1731762',
                     image: _resultPreview,
                     backgroundColor: _backgroundColor,
                     aspectRatio:
@@ -501,8 +585,7 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
                 Expanded(
                   child: _previewTile(
                     context: context,
-                    titleZh: '原图',
-                    titleEn: 'Source',
+                    titleKey: 'inline.plan295.life.source.bd1f1bbdfe8e',
                     image: _sourcePreview,
                   ),
                 ),
@@ -510,8 +593,7 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
                 Expanded(
                   child: _previewTile(
                     context: context,
-                    titleZh: '证件照',
-                    titleEn: 'ID photo',
+                    titleKey: 'inline.plan295.life.id_photo.3756c1731762',
                     image: _resultPreview,
                     backgroundColor: _backgroundColor,
                     aspectRatio:
@@ -528,8 +610,7 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
 
   Widget _previewTile({
     required BuildContext context,
-    required String titleZh,
-    required String titleEn,
+    required String titleKey,
     required ui.Image? image,
     Color? backgroundColor,
     double aspectRatio = 0.72,
@@ -546,7 +627,7 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            _lifeText(context, zh: titleZh, en: titleEn),
+            _lifeI18nText(context, titleKey),
             style: Theme.of(
               context,
             ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -564,7 +645,10 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
               child: image == null
                   ? Center(
                       child: Text(
-                        _lifeText(context, zh: '暂无预览', en: 'No preview'),
+                        _lifeI18nText(
+                          context,
+                          'inline.plan295.crypto.no_preview.b2c10e9d539d',
+                        ),
                       ),
                     )
                   : ClipRRect(
@@ -580,18 +664,19 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
 
   Widget _buildNoticePanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '使用边界', en: 'Usage limits'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '本工具在本地处理图片，适合日常报名、资料整理和尺寸核对。',
-        en: 'This tool processes images locally for everyday forms, profile prep, and size checks.',
+        'inline.plan295.life.usage_limits.3d3d70e341b3',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.this_tool_processes_images_locally_f.d276c0ffca54',
       ),
       children: <Widget>[
         Text(
-          _lifeText(
+          _lifeI18nText(
             context,
-            zh: '简易换底色依赖照片四角取样，复杂背景、头发边缘和阴影可能需要先在专业修图工具中抠图；证件照规格请以具体办事机构要求为准。',
-            en: 'Plain background replacement samples the four corners, so complex scenes, hair edges, and shadows may need a dedicated editor first. Always follow the target authority requirements.',
+            'inline.plan295.life.plain_background_replacement_samples.5faa5306dc0a',
           ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
@@ -625,7 +710,11 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        _lifeText(context, zh: '已保存: $_savedPath', en: 'Saved: $_savedPath'),
+        _lifeI18nText(
+          context,
+          'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.saved.7b5e2b53bc',
+          params: <String, Object?>{'_savedPath': _savedPath},
+        ),
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: Theme.of(context).colorScheme.onPrimaryContainer,
         ),
@@ -675,10 +764,10 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '选择照片失败: $error',
-          en: 'Failed to pick photo: $error',
+          'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.id.photo.failed_to_pick_photo.bf6cfec218',
+          params: <String, Object?>{'error': error},
         );
       });
     }
@@ -729,10 +818,10 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '生成失败: $error',
-          en: 'Generation failed: $error',
+          'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.id.photo.generation_failed.9cae90229b',
+          params: <String, Object?>{'error': error},
         );
       });
     } finally {
@@ -762,7 +851,10 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
       String? savedPath;
       try {
         savedPath = await FilePicker.platform.saveFile(
-          dialogTitle: _lifeText(context, zh: '保存证件照', en: 'Save ID photo'),
+          dialogTitle: _lifeI18nText(
+            context,
+            'inline.plan295.life.save_id_photo.7db851db140c',
+          ),
           fileName: fileName,
           type: FileType.custom,
           allowedExtensions: <String>[ext],
@@ -779,10 +871,9 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
       if (savedPath == null || savedPath.trim().isEmpty) {
         if (kIsWeb) {
           setState(() {
-            _savedPath = _lifeText(
+            _savedPath = _lifeI18nText(
               context,
-              zh: '浏览器下载已触发，请查看下载列表。',
-              en: 'Browser download started. Check your downloads.',
+              'inline.plan295.crypto.browser_download_started_check_your.b28d392515b4',
             );
           });
           return;
@@ -817,10 +908,10 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '保存失败: $error',
-          en: 'Save failed: $error',
+          'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.save_failed.733e2f2246',
+          params: <String, Object?>{'error': error},
         );
       });
     } finally {
@@ -837,7 +928,7 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
   }
 
   String _presetLabel(ToolboxIdPhotoPreset preset, BuildContext context) {
-    return _lifeText(context, zh: preset.labelZh, en: preset.labelEn);
+    return _lifeI18nText(context, preset.labelKey);
   }
 
   String _backgroundLabel(BuildContext context) {

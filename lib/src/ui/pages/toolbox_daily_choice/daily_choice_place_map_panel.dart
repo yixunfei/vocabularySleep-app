@@ -105,26 +105,26 @@ class _DailyChoicePlaceMapPanelState extends State<DailyChoicePlaceMapPanel> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    pickUiText(
-                      widget.i18n,
-                      zh: hasConsent ? '周边地图已启用' : '周边地图（可选扩展）',
-                      en: hasConsent
-                          ? 'Nearby map enabled'
-                          : 'Nearby map (optional)',
-                    ),
+                    hasConsent
+                        ? widget.i18n.t(
+                            'inline.plan295.daily_choice.nearby_map_enabled.e2a00215d3fb',
+                          )
+                        : widget.i18n.t(
+                            'inline.plan295.daily_choice.nearby_map_optional.f4aaf25e7822',
+                          ),
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
                 ToolboxInfoPill(
-                  text: pickUiText(
-                    widget.i18n,
-                    zh: settings.useApproximateLocation ? '模糊位置' : '精确定位',
-                    en: settings.useApproximateLocation
-                        ? 'Approximate'
-                        : 'Precise',
-                  ),
+                  text: settings.useApproximateLocation
+                      ? widget.i18n.t(
+                          'inline.plan295.daily_choice.approximate.94b122a7ed0b',
+                        )
+                      : widget.i18n.t(
+                          'inline.plan295.daily_choice.precise.bdf841ceed51',
+                        ),
                   accent: widget.accent,
                   backgroundColor: theme.colorScheme.surfaceContainerLow,
                 ),
@@ -204,23 +204,21 @@ class _DailyChoicePlaceMapPanelState extends State<DailyChoicePlaceMapPanel> {
                           : Icons.near_me_rounded,
                     ),
                     label: Text(
-                      pickUiText(
-                        widget.i18n,
-                        zh: _loading ? '正在获取周边...' : '获取周边场所',
-                        en: _loading
-                            ? 'Finding places...'
-                            : 'Find nearby places',
-                      ),
+                      _loading
+                          ? widget.i18n.t(
+                              'inline.plan295.daily_choice.finding_places.a1427b168b70',
+                            )
+                          : widget.i18n.t(
+                              'inline.plan295.daily_choice.find_nearby_places.10f5966c6db0',
+                            ),
                     ),
                   ),
                   OutlinedButton.icon(
                     onPressed: _loading ? null : _queryCoarseRangePlaces,
                     icon: const Icon(Icons.public_rounded),
                     label: Text(
-                      pickUiText(
-                        widget.i18n,
-                        zh: 'IP 粗略范围',
-                        en: 'IP coarse area',
+                      widget.i18n.t(
+                        'inline.plan295.daily_choice.ip_coarse_area.7365112560c5',
                       ),
                     ),
                   ),
@@ -230,10 +228,8 @@ class _DailyChoicePlaceMapPanelState extends State<DailyChoicePlaceMapPanel> {
                         : () => _pickRandomNearbyPlace(visiblePlaces),
                     icon: const Icon(Icons.shuffle_rounded),
                     label: Text(
-                      pickUiText(
-                        widget.i18n,
-                        zh: '随机周边地点',
-                        en: 'Random nearby place',
+                      widget.i18n.t(
+                        'inline.plan295.daily_choice.random_nearby_place.7f525631055e',
                       ),
                     ),
                   ),
@@ -253,7 +249,9 @@ class _DailyChoicePlaceMapPanelState extends State<DailyChoicePlaceMapPanel> {
                           }),
                     icon: const Icon(Icons.cleaning_services_rounded),
                     label: Text(
-                      pickUiText(widget.i18n, zh: '清空结果', en: 'Clear'),
+                      widget.i18n.t(
+                        'inline.plan295.daily_choice.clear.701f52dfdbc2',
+                      ),
                     ),
                   ),
                 ],
@@ -318,10 +316,8 @@ class _DailyChoicePlaceMapPanelState extends State<DailyChoicePlaceMapPanel> {
               ),
               const SizedBox(height: 10),
               Text(
-                pickUiText(
-                  widget.i18n,
-                  zh: '地图瓦片和场所数据按需查询；App 没有中间服务器收集或留存你的定位信息，也不会批量下载地图瓦片。IP 粗略范围只使用网络出口估算城市级中心点，不请求 GPS。',
-                  en: 'Map tiles and place data are queried on demand. The app does not collect or store your location through an intermediary server, and it does not bulk-download map tiles. IP coarse area only estimates a city-level center from the network exit and does not request GPS.',
+                widget.i18n.t(
+                  'inline.plan295.daily_choice.map_tiles_and_place_data_are_queried.6e1da86cd76c',
                 ),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
@@ -445,12 +441,8 @@ class _DailyChoicePlaceMapPanelState extends State<DailyChoicePlaceMapPanel> {
       location: location,
       radiusMeters: settings.normalizedRadiusMeters,
       focusCurrentFilters: true,
-      emptyMessageZh: '当前半径内没有找到可用场所。可以扩大范围，或稍后再试。',
-      emptyMessageEn:
-          'No usable places were found in this radius. Try a larger range or come back later.',
-      failureMessageZh: '周边场所查询失败。OpenStreetMap 公共服务可能繁忙，请稍后再试。',
-      failureMessageEn:
-          'Nearby place lookup failed. The public OpenStreetMap service may be busy; try again later.',
+      emptyMessageKey: 'daily_choice.place.map.empty.nearby',
+      failureMessageKey: 'daily_choice.place.map.lookup_failed.nearby',
     );
   }
 
@@ -477,12 +469,8 @@ class _DailyChoicePlaceMapPanelState extends State<DailyChoicePlaceMapPanel> {
       location: location,
       radiusMeters: DailyChoicePlaceMapSettings.coarseRangeRadiusMeters,
       focusCurrentFilters: false,
-      emptyMessageZh: 'IP 粗略范围内没有找到可用场所。可以稍后再试，或改用设备定位查询。',
-      emptyMessageEn:
-          'No usable places were found in the IP coarse area. Try again later or use device location.',
-      failureMessageZh: 'IP 粗略范围场所查询失败。公共地图服务可能繁忙，请稍后再试。',
-      failureMessageEn:
-          'IP coarse area lookup failed. The public map service may be busy; try again later.',
+      emptyMessageKey: 'daily_choice.place.map.empty.coarse',
+      failureMessageKey: 'daily_choice.place.map.lookup_failed.coarse',
     );
   }
 
@@ -490,10 +478,8 @@ class _DailyChoicePlaceMapPanelState extends State<DailyChoicePlaceMapPanel> {
     required DailyChoiceLocationReadResult location,
     required int radiusMeters,
     required bool focusCurrentFilters,
-    required String emptyMessageZh,
-    required String emptyMessageEn,
-    required String failureMessageZh,
-    required String failureMessageEn,
+    required String emptyMessageKey,
+    required String failureMessageKey,
   }) async {
     try {
       final places = await _overpassClient.fetchNearbyPlaces(
@@ -514,11 +500,7 @@ class _DailyChoicePlaceMapPanelState extends State<DailyChoicePlaceMapPanel> {
         _focusedPlaceId = places.isEmpty ? null : places.first.id;
         _loading = false;
         if (places.isEmpty) {
-          _errorMessage = pickUiText(
-            widget.i18n,
-            zh: emptyMessageZh,
-            en: emptyMessageEn,
-          );
+          _errorMessage = widget.i18n.t(emptyMessageKey);
         } else {
           _errorMessage = null;
         }
@@ -529,11 +511,7 @@ class _DailyChoicePlaceMapPanelState extends State<DailyChoicePlaceMapPanel> {
       }
       setState(() {
         _loading = false;
-        _errorMessage = pickUiText(
-          widget.i18n,
-          zh: failureMessageZh,
-          en: failureMessageEn,
-        );
+        _errorMessage = widget.i18n.t(failureMessageKey);
       });
     }
   }
@@ -555,34 +533,38 @@ class _DailyChoicePlaceMapPanelState extends State<DailyChoicePlaceMapPanel> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text(
-          pickUiText(
-            widget.i18n,
-            zh: appSettings ? '打开 App 定位权限' : '打开系统定位服务',
-            en: appSettings
-                ? 'Open app location permission'
-                : 'Open location settings',
-          ),
+          appSettings
+              ? widget.i18n.t(
+                  'inline.plan295.daily_choice.open_app_location_permission.740c859c351e',
+                )
+              : widget.i18n.t(
+                  'inline.plan295.daily_choice.open_location_settings.7f62b585b954',
+                ),
         ),
         content: Text(
-          pickUiText(
-            widget.i18n,
-            zh: appSettings
-                ? '系统已阻止本 App 使用定位。打开设置后，请为本 App 允许定位权限，再返回查询周边场所。'
-                : '系统定位服务尚未开启。打开设置后，请开启定位/GPS，再返回查询周边场所。',
-            en: appSettings
-                ? 'The system is blocking location for this app. Open settings, allow location permission, then return to find nearby places.'
-                : 'System location services are off. Open settings, enable location/GPS, then return to find nearby places.',
-          ),
+          appSettings
+              ? widget.i18n.t(
+                  'inline.plan295.daily_choice.the_system_is_blocking_location_for.5617e3076c9a',
+                )
+              : widget.i18n.t(
+                  'inline.plan295.daily_choice.system_location_services_are_off_ope.a89250038894',
+                ),
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(pickUiText(widget.i18n, zh: '稍后', en: 'Later')),
+            child: Text(
+              widget.i18n.t(
+                'inline.ui.pages.toolbox_daily_choice.daily_choice_place_map_panel.later_b5566f',
+              ),
+            ),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
             child: Text(
-              pickUiText(widget.i18n, zh: '打开设置', en: 'Open settings'),
+              widget.i18n.t(
+                'inline.ui.pages.help_center_page.open_settings_6ca4f9',
+              ),
             ),
           ),
         ],
@@ -600,36 +582,73 @@ class _DailyChoicePlaceMapPanelState extends State<DailyChoicePlaceMapPanel> {
 
   String _locationErrorText(DailyChoiceLocationReadResult result) {
     return switch (result.status) {
-      DailyChoiceLocationReadStatus.serviceDisabled => pickUiText(
-        widget.i18n,
-        zh: '系统定位服务未开启。开启定位后再获取周边场所。',
-        en: 'System location services are disabled. Enable location services and try again.',
+      DailyChoiceLocationReadStatus.serviceDisabled => widget.i18n.t(
+        'inline.plan295.daily_choice.system_location_services_are_disable.8d619d3b0361',
       ),
-      DailyChoiceLocationReadStatus.permissionDenied => pickUiText(
-        widget.i18n,
-        zh: '你尚未授予定位权限。授权后才能按当前位置查询周边场所。',
-        en: 'Location permission was not granted. Grant it to search near your current position.',
+      DailyChoiceLocationReadStatus.permissionDenied => widget.i18n.t(
+        'inline.plan295.daily_choice.location_permission_was_not_granted.24d7ab146470',
       ),
-      DailyChoiceLocationReadStatus.permissionDeniedForever => pickUiText(
-        widget.i18n,
-        zh: '定位权限已被系统设为拒绝。请到系统设置中为本 App 开启定位权限。',
-        en: 'Location permission is blocked. Enable it for this app in system settings.',
+      DailyChoiceLocationReadStatus.permissionDeniedForever => widget.i18n.t(
+        'inline.plan295.daily_choice.location_permission_is_blocked_enabl.d917bbd44e1f',
       ),
-      DailyChoiceLocationReadStatus.failed => pickUiText(
-        widget.i18n,
-        zh: '读取定位失败：${result.message ?? ''}',
-        en: 'Could not read location: ${result.message ?? ''}',
+      DailyChoiceLocationReadStatus.failed => widget.i18n.t(
+        'daily_choice.place.location_read_failed',
+        params: <String, Object?>{
+          'message': _localizedLocationDiagnostic(result.message),
+        },
       ),
       DailyChoiceLocationReadStatus.ready => '',
     };
   }
 
   String _coarseLocationErrorText(DailyChoiceLocationReadResult result) {
-    return pickUiText(
-      widget.i18n,
-      zh: '无法通过网络获取 IP 粗略范围：${result.message ?? '请稍后再试'}',
-      en: 'Could not read an IP coarse area: ${result.message ?? 'try again later'}',
+    return widget.i18n.t(
+      'daily_choice.place.ip_coarse_read_failed',
+      params: <String, Object?>{
+        'message': _localizedLocationDiagnostic(
+          result.message,
+          fallbackKey: 'daily_choice.place.location_diagnostic.try_again_later',
+        ),
+      },
     );
+  }
+
+  String _localizedLocationDiagnostic(
+    String? message, {
+    String fallbackKey = '',
+  }) {
+    final trimmed = message?.trim();
+    if (trimmed == null || trimmed.isEmpty) {
+      return fallbackKey.isEmpty ? '' : widget.i18n.t(fallbackKey);
+    }
+    final httpMatch = RegExp(
+      r'^IP coarse location failed \((\d+)\)\.$',
+    ).firstMatch(trimmed);
+    if (httpMatch != null) {
+      final statusCode = httpMatch.group(1) ?? '';
+      return widget.i18n.t(
+        'daily_choice.place.location_diagnostic.ip_failed',
+        params: <String, Object?>{'statusCode': statusCode},
+      );
+    }
+    return switch (trimmed) {
+      'Location services are disabled.' => widget.i18n.t(
+        'daily_choice.place.location_diagnostic.services_disabled',
+      ),
+      'Location permission was denied.' => widget.i18n.t(
+        'daily_choice.place.location_diagnostic.permission_denied',
+      ),
+      'Location permission is permanently denied.' => widget.i18n.t(
+        'daily_choice.place.location_diagnostic.permission_denied_forever',
+      ),
+      'IP coarse location returned an unexpected response.' => widget.i18n.t(
+        'daily_choice.place.location_diagnostic.ip_unexpected_response',
+      ),
+      'IP coarse location did not include coordinates.' => widget.i18n.t(
+        'daily_choice.place.location_diagnostic.ip_missing_coordinates',
+      ),
+      _ => trimmed,
+    };
   }
 
   Future<void> _savePlace(DailyChoiceOsmPlace place) async {
@@ -655,10 +674,8 @@ class _DailyChoicePlaceMapPanelState extends State<DailyChoicePlaceMapPanel> {
       }
       setState(() {
         _savingIds.remove(place.id);
-        _errorMessage = pickUiText(
-          widget.i18n,
-          zh: '保存场所失败，请稍后再试。',
-          en: 'Could not save this place. Try again later.',
+        _errorMessage = widget.i18n.t(
+          'inline.plan295.daily_choice.could_not_save_this_place_try_again.06bea2776075',
         );
       });
     }
@@ -697,10 +714,8 @@ class _DailyChoicePlaceMapPanelState extends State<DailyChoicePlaceMapPanel> {
       }
       setState(() {
         _openingMapIds.remove(place.id);
-        _errorMessage = pickUiText(
-          widget.i18n,
-          zh: '没有找到可用的地图应用或网页入口，请稍后再试。',
-          en: 'No available map app or web map entry was found. Try again later.',
+        _errorMessage = widget.i18n.t(
+          'inline.plan295.daily_choice.no_available_map_app_or_web_map_entr.200727240925',
         );
       });
     } catch (_) {
@@ -709,10 +724,8 @@ class _DailyChoicePlaceMapPanelState extends State<DailyChoicePlaceMapPanel> {
       }
       setState(() {
         _openingMapIds.remove(place.id);
-        _errorMessage = pickUiText(
-          widget.i18n,
-          zh: '拉起地图应用失败，请稍后再试。',
-          en: 'Could not open the map app. Try again later.',
+        _errorMessage = widget.i18n.t(
+          'inline.plan295.daily_choice.could_not_open_the_map_app_try_again.d3a96332a6ce',
         );
       });
     }
@@ -737,10 +750,8 @@ class _PlaceMapConsentPrompt extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          pickUiText(
-            i18n,
-            zh: '启用后，App 会在你点击查询时读取当前位置，用来计算附近半径、距离排序和真实场所候选。默认使用模糊位置；你也可以切换为精确定位。',
-            en: 'When enabled, the app reads your location only when you tap search. It uses it to calculate radius, distance order, and real nearby place candidates. Approximate location is used by default; precise location is optional.',
+          i18n.t(
+            'inline.plan295.daily_choice.when_enabled_the_app_reads_your_loca.b43a464fb7c0',
           ),
           style: theme.textTheme.bodyMedium?.copyWith(height: 1.42),
         ),
@@ -748,10 +759,8 @@ class _PlaceMapConsentPrompt extends StatelessWidget {
         _PlaceMapInlineMessage(
           icon: Icons.privacy_tip_rounded,
           color: accent,
-          text: pickUiText(
-            i18n,
-            zh: '查询只在你点击时由设备按需发起。App 没有中间服务器收集、留存或转卖你的定位数据；保存场所时也不会保存你的 GPS 坐标。',
-            en: 'Lookup starts from your device only when you tap. The app does not collect, store, or sell your location through an intermediary server; your GPS coordinates are not saved when you save a place.',
+          text: i18n.t(
+            'inline.plan295.daily_choice.lookup_starts_from_your_device_only.3ae7a022da68',
           ),
         ),
         const SizedBox(height: 12),
@@ -759,7 +768,9 @@ class _PlaceMapConsentPrompt extends StatelessWidget {
           onPressed: onAccept,
           icon: const Icon(Icons.check_circle_rounded),
           label: Text(
-            pickUiText(i18n, zh: '同意并启用周边地图', en: 'Agree and enable map'),
+            i18n.t(
+              'inline.plan295.daily_choice.agree_and_enable_map.ec73e79b9911',
+            ),
           ),
         ),
       ],
@@ -801,10 +812,8 @@ class _PlaceMapPrivacyNotice extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    pickUiText(
-                      i18n,
-                      zh: '位置只用于当前半径查询、距离排序和地图打开。App 不经中间服务器收集位置；模糊位置会把坐标归到约 500 米网格。也可以使用 IP 粗略范围，不请求 GPS，只按网络出口估算城市级位置。',
-                      en: 'Location is used only for this radius lookup, distance sorting, and opening maps. The app does not collect it through an intermediary server. Approximate mode snaps coordinates to an about 500 m grid. IP coarse area does not request GPS and only estimates a city-level center from the network exit.',
+                    i18n.t(
+                      'inline.plan295.daily_choice.location_is_used_only_for_this_radiu.aa6f24f4d72f',
                     ),
                     style: theme.textTheme.bodySmall?.copyWith(height: 1.35),
                   ),
@@ -816,10 +825,8 @@ class _PlaceMapPrivacyNotice extends StatelessWidget {
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    pickUiText(
-                      i18n,
-                      zh: '使用模糊位置',
-                      en: 'Use approximate location',
+                    i18n.t(
+                      'inline.plan295.daily_choice.use_approximate_location.a919c7870ea7',
                     ),
                     style: theme.textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w800,
@@ -861,7 +868,7 @@ class _PlaceMapRadiusSelector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          pickUiText(i18n, zh: '查询范围', en: 'Search radius'),
+          i18n.t('inline.plan295.daily_choice.search_radius.fd89d672a970'),
           style: theme.textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w900,
             color: theme.colorScheme.onSurfaceVariant,
@@ -944,10 +951,8 @@ class _PlaceMapFilterPanel extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    pickUiText(
-                      i18n,
-                      zh: '地图结果会与当前「去哪儿」筛选联动：$distanceTitle · $sceneTitle。',
-                      en: 'Map results can follow the current Where to go filters: $distanceTitle · $sceneTitle.',
+                    i18n.t(
+                      'inline.plan295.daily_choice.map_results_can_follow_the_current_w.5bb5586e60d5',
                     ),
                     style: theme.textTheme.bodySmall?.copyWith(height: 1.35),
                   ),
@@ -959,15 +964,17 @@ class _PlaceMapFilterPanel extends StatelessWidget {
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    pickUiText(
-                      i18n,
-                      zh: totalCount == 0
-                          ? '仅显示当前筛选'
-                          : '当前筛选 $visibleCount / 全部 $totalCount',
-                      en: totalCount == 0
-                          ? 'Show current filters only'
-                          : 'Current filters $visibleCount / all $totalCount',
-                    ),
+                    totalCount == 0
+                        ? i18n.t(
+                            'inline.plan295.daily_choice.show_current_filters_only.e51533b5aa97',
+                          )
+                        : i18n.t(
+                            'inline.plan295.daily_choice.current_filters_visiblecount_all_tot.07783e0f8a44',
+                            params: <String, Object?>{
+                              'visibleCount': visibleCount,
+                              'totalCount': totalCount,
+                            },
+                          ),
                     style: theme.textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -1044,10 +1051,8 @@ class _PlaceMapResourcePanelState extends State<_PlaceMapResourcePanel> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    pickUiText(
-                      widget.i18n,
-                      zh: '地图瓦片按视野动态加载；本地缓存只保存你看过的瓦片，不做区域批量下载。',
-                      en: 'Tiles load on demand for the visible area; local cache only stores tiles you have viewed and does not bulk-download regions.',
+                    widget.i18n.t(
+                      'inline.plan295.daily_choice.tiles_load_on_demand_for_the_visible.6623dfab72e4',
                     ),
                     style: theme.textTheme.bodySmall?.copyWith(height: 1.35),
                   ),
@@ -1056,7 +1061,9 @@ class _PlaceMapResourcePanelState extends State<_PlaceMapResourcePanel> {
             ),
             const SizedBox(height: 10),
             Text(
-              pickUiText(widget.i18n, zh: '地图源', en: 'Tile source'),
+              widget.i18n.t(
+                'inline.plan295.daily_choice.tile_source.20d609cf66f9',
+              ),
               style: theme.textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.w900,
                 color: theme.colorScheme.onSurfaceVariant,
@@ -1070,10 +1077,8 @@ class _PlaceMapResourcePanelState extends State<_PlaceMapResourcePanel> {
             ),
             const SizedBox(height: 10),
             Text(
-              pickUiText(
-                widget.i18n,
-                zh: '其他备用源通常需要国际网络环境；当前默认优先使用 OSM HOT。',
-                en: 'Other fallback sources usually require access to the international network; OSM HOT is the default.',
+              widget.i18n.t(
+                'inline.plan295.daily_choice.other_fallback_sources_usually_requi.d16fe4b1ad95',
               ),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -1091,11 +1096,7 @@ class _PlaceMapResourcePanelState extends State<_PlaceMapResourcePanel> {
             ),
             const SizedBox(height: 8),
             Text(
-              pickUiText(
-                widget.i18n,
-                zh: widget.selectedProvider.descriptionZh,
-                en: widget.selectedProvider.descriptionEn,
-              ),
+              widget.i18n.t(widget.selectedProvider.descriptionKey),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
                 height: 1.35,
@@ -1108,28 +1109,22 @@ class _PlaceMapResourcePanelState extends State<_PlaceMapResourcePanel> {
                 color: widget.selectedProvider.usesOsmPublicTileServer
                     ? theme.colorScheme.error
                     : widget.accent,
-                text: pickUiText(
-                  widget.i18n,
-                  zh: widget.selectedProvider.usesOsmPublicTileServer
-                      ? '这是 OpenStreetMap 官方公共瓦片源，可能触发公共服务限流或超时；建议只在需要核对标准样式时使用。'
-                      : '这是 OSM 社区公共瓦片源，App 会按视野加载并缓存已看过的瓦片；请避免批量预下载。连接不稳定时可切换其他源。',
-                  en: widget.selectedProvider.usesOsmPublicTileServer
-                      ? 'This is the official OpenStreetMap public tile server and may be rate-limited or time out; use it only when the standard style is needed.'
-                      : 'This is an OSM community public tile source. The app loads visible tiles on demand and caches viewed tiles; avoid bulk downloading and switch sources if the connection is unstable.',
-                ),
+                text: widget.selectedProvider.usesOsmPublicTileServer
+                    ? widget.i18n.t(
+                        'inline.plan295.daily_choice.this_is_the_official_openstreetmap_p.548ffae9b223',
+                      )
+                    : widget.i18n.t(
+                        'inline.plan295.daily_choice.this_is_an_osm_community_public_tile.aa7475333a43',
+                      ),
               ),
             ],
             const SizedBox(height: 10),
             _PlaceMapSwitchRow(
-              title: pickUiText(
-                widget.i18n,
-                zh: '本地缓存看过的瓦片',
-                en: 'Cache viewed tiles',
+              title: widget.i18n.t(
+                'inline.plan295.daily_choice.cache_viewed_tiles.1ac505c8bfbf',
               ),
-              subtitle: pickUiText(
-                widget.i18n,
-                zh: '减少重复加载和弱网下的白屏；可随时清空。',
-                en: 'Reduces repeated loading and blank tiles on weak networks; can be cleared anytime.',
+              subtitle: widget.i18n.t(
+                'inline.plan295.daily_choice.reduces_repeated_loading_and_blank_t.8ba486ddcf69',
               ),
               value: widget.settings.cacheTiles,
               onChanged: (value) => widget.onSettingsChanged(
@@ -1138,15 +1133,11 @@ class _PlaceMapResourcePanelState extends State<_PlaceMapResourcePanel> {
             ),
             const SizedBox(height: 8),
             _PlaceMapSwitchRow(
-              title: pickUiText(
-                widget.i18n,
-                zh: '结果变化后自动贴合地图',
-                en: 'Auto-fit results',
+              title: widget.i18n.t(
+                'inline.plan295.daily_choice.auto_fit_results.41a8fb16ad7f',
               ),
-              subtitle: pickUiText(
-                widget.i18n,
-                zh: '查询或切换筛选后，地图自动回到能看清当前位置和候选点的视野。',
-                en: 'After lookup or filter changes, the map returns to a view that includes your center and candidates.',
+              subtitle: widget.i18n.t(
+                'inline.plan295.daily_choice.after_lookup_or_filter_changes_the_m.e69f21fc7a88',
               ),
               value: widget.settings.autoFitResults,
               onChanged: (value) => widget.onSettingsChanged(
@@ -1163,17 +1154,15 @@ class _PlaceMapResourcePanelState extends State<_PlaceMapResourcePanel> {
                       final label = widget.settings.cacheTiles
                           ? (snapshot.hasData
                                 ? dailyChoiceFormatBytes(snapshot.data!)
-                                : pickUiText(
-                                    widget.i18n,
-                                    zh: '计算中',
-                                    en: 'Checking',
+                                : widget.i18n.t(
+                                    'inline.plan295.daily_choice.checking.c60614838eaf',
                                   ))
-                          : pickUiText(widget.i18n, zh: '未启用', en: 'Disabled');
+                          : widget.i18n.t(
+                              'inline.plan295.daily_choice.disabled.51ce114130f0',
+                            );
                       return Text(
-                        pickUiText(
-                          widget.i18n,
-                          zh: '瓦片缓存：$label',
-                          en: 'Tile cache: $label',
+                        widget.i18n.t(
+                          'inline.ui.pages.toolbox_daily_choice.daily_choice_place_map_panel.tile_cache_label_91a99d',
                         ),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
@@ -1192,11 +1181,13 @@ class _PlaceMapResourcePanelState extends State<_PlaceMapResourcePanel> {
                         : Icons.delete_sweep_rounded,
                   ),
                   label: Text(
-                    pickUiText(
-                      widget.i18n,
-                      zh: _clearingCache ? '清理中' : '清空',
-                      en: _clearingCache ? 'Clearing' : 'Clear',
-                    ),
+                    _clearingCache
+                        ? widget.i18n.t(
+                            'inline.plan295.daily_choice.clearing.bdb431f3231f',
+                          )
+                        : widget.i18n.t(
+                            'inline.plan294.zen_sand.clear_ea17218b',
+                          ),
                   ),
                 ),
               ],
@@ -1229,9 +1220,7 @@ class _PlaceMapResourcePanelState extends State<_PlaceMapResourcePanel> {
             : Icons.map_rounded,
         size: 16,
       ),
-      label: Text(
-        pickUiText(widget.i18n, zh: provider.titleZh, en: provider.titleEn),
-      ),
+      label: Text(widget.i18n.t(provider.titleKey)),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
     );
   }
@@ -1266,10 +1255,8 @@ class _PlaceMapResourcePanelState extends State<_PlaceMapResourcePanel> {
       }
       setState(() {
         _clearingCache = false;
-        _cacheError = pickUiText(
-          widget.i18n,
-          zh: '清空地图缓存失败，请稍后再试。',
-          en: 'Could not clear the map cache. Try again later.',
+        _cacheError = widget.i18n.t(
+          'inline.plan295.daily_choice.could_not_clear_the_map_cache_try_ag.a08a5fc2a884',
         );
         _cacheSizeFuture = dailyChoicePlaceMapCacheSizeBytes();
       });
@@ -1433,7 +1420,9 @@ class _PlaceMapFullscreenPageState extends State<_PlaceMapFullscreenPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(pickUiText(widget.i18n, zh: '周边地图', en: 'Nearby map')),
+        title: Text(
+          widget.i18n.t('inline.plan295.daily_choice.nearby_map.983ec028b5e4'),
+        ),
       ),
       body: SafeArea(
         child: _PlaceMapCanvas(
@@ -1676,10 +1665,8 @@ class _PlaceMapCanvasState extends State<_PlaceMapCanvas> {
                 child: _PlaceMapToolSurface(
                   accent: widget.accent,
                   child: _PlaceMapToolButton(
-                    tooltip: pickUiText(
-                      widget.i18n,
-                      zh: '全屏查看',
-                      en: 'Fullscreen',
+                    tooltip: widget.i18n.t(
+                      'inline.plan295.daily_choice.fullscreen.d9ff7c0308b7',
                     ),
                     icon: Icons.fullscreen_rounded,
                     onPressed: widget.onFullscreen!,
@@ -1855,7 +1842,9 @@ class _PlaceMapLoadingSurface extends StatelessWidget {
             CircularProgressIndicator(color: accent),
             const SizedBox(height: 10),
             Text(
-              pickUiText(i18n, zh: '正在准备地图资源', en: 'Preparing map resources'),
+              i18n.t(
+                'inline.plan295.daily_choice.preparing_map_resources.e027e61f7dc6',
+              ),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -1892,22 +1881,30 @@ class _PlaceMapControls extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           _PlaceMapToolButton(
-            tooltip: pickUiText(i18n, zh: '放大', en: 'Zoom in'),
+            tooltip: i18n.t(
+              'inline.ui.pages.toolbox_daily_choice.daily_choice_place_map_panel.zoom_in_9c7778',
+            ),
             icon: Icons.add_rounded,
             onPressed: onZoomIn,
           ),
           _PlaceMapToolButton(
-            tooltip: pickUiText(i18n, zh: '缩小', en: 'Zoom out'),
+            tooltip: i18n.t(
+              'inline.plan295.daily_choice.zoom_out.bf354c0e0864',
+            ),
             icon: Icons.remove_rounded,
             onPressed: onZoomOut,
           ),
           _PlaceMapToolButton(
-            tooltip: pickUiText(i18n, zh: '贴合结果', en: 'Fit results'),
+            tooltip: i18n.t(
+              'inline.plan295.daily_choice.fit_results.ada09913a44f',
+            ),
             icon: Icons.fit_screen_rounded,
             onPressed: onFit,
           ),
           _PlaceMapToolButton(
-            tooltip: pickUiText(i18n, zh: '回到定位中心', en: 'Center location'),
+            tooltip: i18n.t(
+              'inline.plan295.daily_choice.center_location.20de0f8612e6',
+            ),
             icon: Icons.my_location_rounded,
             onPressed: onCenter,
           ),
@@ -2009,42 +2006,33 @@ class _PlaceMapStatusOverlay extends StatelessWidget {
           children: <Widget>[
             _PlaceMapMiniPill(
               icon: Icons.place_rounded,
-              text: pickUiText(
-                i18n,
-                zh: totalCount == visibleCount
-                    ? '$visibleCount 个地点'
-                    : '$visibleCount / $totalCount 个地点',
-                en: totalCount == visibleCount
-                    ? '$visibleCount places'
-                    : '$visibleCount / $totalCount places',
-              ),
+              text: totalCount == visibleCount
+                  ? i18n.t(
+                      'inline.plan295.daily_choice.visiblecount_places.8546b2e7c659',
+                      params: <String, Object?>{'visibleCount': visibleCount},
+                    )
+                  : i18n.t(
+                      'inline.plan295.daily_choice.visiblecount_totalcount_places.c6ab7ec30dd3',
+                      params: <String, Object?>{
+                        'visibleCount': visibleCount,
+                        'totalCount': totalCount,
+                      },
+                    ),
               accent: accent,
             ),
             _PlaceMapMiniPill(
               icon: Icons.layers_rounded,
-              text: pickUiText(
-                i18n,
-                zh: tileProvider.titleZh,
-                en: tileProvider.titleEn,
-              ),
+              text: i18n.t(tileProvider.titleKey),
               accent: accent,
             ),
             _PlaceMapMiniPill(
               icon: locationSource == DailyChoiceLocationReadSource.ipCoarse
                   ? Icons.public_rounded
                   : Icons.location_searching_rounded,
-              text: pickUiText(
+              text: _locationSourceLabel(
                 i18n,
-                zh: locationSource == DailyChoiceLocationReadSource.ipCoarse
-                    ? (areaLabel == null || areaLabel!.isEmpty
-                          ? 'IP 粗略范围'
-                          : 'IP 粗略：$areaLabel')
-                    : '设备定位',
-                en: locationSource == DailyChoiceLocationReadSource.ipCoarse
-                    ? (areaLabel == null || areaLabel!.isEmpty
-                          ? 'IP coarse area'
-                          : 'IP coarse: $areaLabel')
-                    : 'Device location',
+                locationSource: locationSource,
+                areaLabel: areaLabel,
               ),
               accent: accent,
             ),
@@ -2052,20 +2040,18 @@ class _PlaceMapStatusOverlay extends StatelessWidget {
               icon: cacheEnabled
                   ? Icons.offline_pin_rounded
                   : Icons.cloud_queue_rounded,
-              text: pickUiText(
-                i18n,
-                zh: cacheEnabled ? '缓存开启' : '仅在线',
-                en: cacheEnabled ? 'Cache on' : 'Online only',
-              ),
+              text: cacheEnabled
+                  ? i18n.t('inline.plan295.daily_choice.cache_on.faf6afd21de4')
+                  : i18n.t(
+                      'inline.plan295.daily_choice.online_only.3077b2708c14',
+                    ),
               accent: accent,
             ),
             if (tileErrorCount > 0)
               _PlaceMapMiniPill(
                 icon: Icons.warning_amber_rounded,
-                text: pickUiText(
-                  i18n,
-                  zh: '瓦片重试 $tileErrorCount',
-                  en: 'Tile retries $tileErrorCount',
+                text: i18n.t(
+                  'inline.ui.pages.toolbox_daily_choice.daily_choice_place_map_panel.tile_retries_tileerrorcount_49449b',
                 ),
                 accent: theme.colorScheme.error,
               ),
@@ -2105,6 +2091,34 @@ class _PlaceMapMiniPill extends StatelessWidget {
       ],
     );
   }
+}
+
+String _locationSourceLabel(
+  AppI18n i18n, {
+  required DailyChoiceLocationReadSource locationSource,
+  required String? areaLabel,
+}) {
+  if (locationSource != DailyChoiceLocationReadSource.ipCoarse) {
+    return i18n.t('daily_choice.place.map.location.device');
+  }
+  final area = areaLabel?.trim();
+  if (area == null || area.isEmpty) {
+    return i18n.t('daily_choice.place.map.location.ip_coarse_area');
+  }
+  return i18n.t(
+    'daily_choice.place.map.location.ip_coarse_area_named',
+    params: <String, Object?>{'area': area},
+  );
+}
+
+String _saveButtonKey({required bool saved, required bool saving}) {
+  if (saved) {
+    return 'daily_choice.place.map.saved';
+  }
+  if (saving) {
+    return 'daily_choice.place.map.saving';
+  }
+  return 'daily_choice.place.map.save';
 }
 
 double _zoomForRadius(int radiusMeters) {
@@ -2157,15 +2171,13 @@ class _PlaceMapResultList extends StatelessWidget {
     final theme = Theme.of(context);
     if (places.isEmpty) {
       return Text(
-        pickUiText(
-          i18n,
-          zh: totalPlaceCount > 0 && filterActive
-              ? '当前「去哪儿」筛选下没有匹配的周边场所，可关闭筛选联动查看全部结果。'
-              : '获取周边后，地图中的场所会显示在这里，可一键加入你的场所清单。',
-          en: totalPlaceCount > 0 && filterActive
-              ? 'No nearby places match the current Where to go filters. Turn off filter focus to view all results.'
-              : 'After lookup, nearby map places appear here and can be saved into your place list.',
-        ),
+        totalPlaceCount > 0 && filterActive
+            ? i18n.t(
+                'inline.plan295.daily_choice.no_nearby_places_match_the_current_w.57b2d19b6049',
+              )
+            : i18n.t(
+                'inline.plan295.daily_choice.after_lookup_nearby_map_places_appea.84b5c46aa43b',
+              ),
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
           height: 1.35,
@@ -2176,15 +2188,18 @@ class _PlaceMapResultList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          pickUiText(
-            i18n,
-            zh: totalPlaceCount == places.length
-                ? '周边场所（${places.length}）'
-                : '当前筛选场所（${places.length} / $totalPlaceCount）',
-            en: totalPlaceCount == places.length
-                ? 'Nearby places (${places.length})'
-                : 'Filtered places (${places.length} / $totalPlaceCount)',
-          ),
+          totalPlaceCount == places.length
+              ? i18n.t(
+                  'inline.plan295.daily_choice.nearby_places_places_length.7bca5e141f5a',
+                  params: <String, Object?>{'places.length': places.length},
+                )
+              : i18n.t(
+                  'inline.plan295.daily_choice.filtered_places_places_length_totalp.cae3c013d3c7',
+                  params: <String, Object?>{
+                    'places.length': places.length,
+                    'totalPlaceCount': totalPlaceCount,
+                  },
+                ),
           style: theme.textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w900,
             color: theme.colorScheme.onSurfaceVariant,
@@ -2238,10 +2253,8 @@ class _PlaceMapResultList extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              pickUiText(
-                                i18n,
-                                zh: '${place.kindZh} · 约 ${dailyChoiceDistanceLabelZh(place.distanceMeters)}',
-                                en: '${place.kindEn} · about ${dailyChoiceDistanceLabelEn(place.distanceMeters)}',
+                              i18n.t(
+                                'inline.plan295.daily_choice.place_kinden_about_dailychoicedistan.950e9d6994e3',
                               ),
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
@@ -2252,10 +2265,8 @@ class _PlaceMapResultList extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Tooltip(
-                        message: pickUiText(
-                          i18n,
-                          zh: '打开地图 App',
-                          en: 'Open in map app',
+                        message: i18n.t(
+                          'inline.plan295.daily_choice.open_in_map_app.41bd6c48156f',
                         ),
                         child: SizedBox(
                           width: 48,
@@ -2285,11 +2296,7 @@ class _PlaceMapResultList extends StatelessWidget {
                                     : Icons.bookmark_add_rounded),
                         ),
                         label: Text(
-                          pickUiText(
-                            i18n,
-                            zh: saved ? '已保存' : (saving ? '保存中' : '保存'),
-                            en: saved ? 'Saved' : (saving ? 'Saving' : 'Save'),
-                          ),
+                          i18n.t(_saveButtonKey(saved: saved, saving: saving)),
                         ),
                       ),
                     ],

@@ -43,7 +43,11 @@ class AppearanceStudioPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(pickUiText(i18n, zh: '外观工作室', en: 'Appearance studio')),
+        title: Text(
+          i18n.t(
+            'inline.ui.pages.appearance_studio_page.appearance_studio_9d4889',
+          ),
+        ),
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -64,15 +68,11 @@ class AppearanceStudioPage extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     SectionHeader(
-                      title: pickUiText(
-                        i18n,
-                        zh: '体验模式',
-                        en: 'Experience mode',
+                      title: i18n.t(
+                        'inline.ui.pages.appearance_studio_page.experience_mode_933582',
                       ),
-                      subtitle: pickUiText(
-                        i18n,
-                        zh: '快速切换助眠/专注视觉。',
-                        en: 'Quick switch between sleep and focus.',
+                      subtitle: i18n.t(
+                        'inline.ui.pages.appearance_studio_page.quick_switch_between_sleep_and_focus_9116eb',
                       ),
                     ),
                     SizedBox(height: compactWidth ? 10 : 12),
@@ -112,10 +112,8 @@ class AppearanceStudioPage extends ConsumerWidget {
                   children: <Widget>[
                     SectionHeader(
                       title: i18n.t('appearanceTypographyTitle'),
-                      subtitle: pickUiText(
-                        i18n,
-                        zh: '字体家族、字号缩放、字重。',
-                        en: 'Font family, scale, and weights.',
+                      subtitle: i18n.t(
+                        'inline.ui.pages.appearance_studio_page.font_family_scale_and_weights_a46fbf',
                       ),
                     ),
                     SizedBox(height: compactWidth ? 10 : 12),
@@ -273,10 +271,8 @@ class AppearanceStudioPage extends ConsumerWidget {
                   children: <Widget>[
                     SectionHeader(
                       title: i18n.t('appearanceColorsTitle'),
-                      subtitle: pickUiText(
-                        i18n,
-                        zh: '配色、透明度与面板材质。',
-                        en: 'Colors, opacity, and panel styles.',
+                      subtitle: i18n.t(
+                        'inline.ui.pages.appearance_studio_page.colors_opacity_and_panel_styles_c213b0',
                       ),
                     ),
                     SizedBox(height: controlSpacing),
@@ -433,10 +429,8 @@ class AppearanceStudioPage extends ConsumerWidget {
                   children: <Widget>[
                     SectionHeader(
                       title: i18n.t('appearanceEffectsTitle'),
-                      subtitle: pickUiText(
-                        i18n,
-                        zh: '随机颜色、彩虹字体与动态特效。',
-                        en: 'Random colors, rainbow text, and motion effects.',
+                      subtitle: i18n.t(
+                        'inline.ui.pages.appearance_studio_page.random_colors_rainbow_text_and_motion_effects_172183',
                       ),
                     ),
                     SizedBox(height: controlSpacing),
@@ -865,7 +859,9 @@ class AppearanceStudioPage extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
               IconButton(
-                tooltip: pickUiText(i18n, zh: '选择颜色', en: 'Pick color'),
+                tooltip: i18n.t(
+                  'inline.ui.pages.appearance_studio_page.pick_color_dd4439',
+                ),
                 onPressed: () async {
                   final picked = await _showColorPickerDialog(
                     context: context,
@@ -883,7 +879,9 @@ class AppearanceStudioPage extends ConsumerWidget {
               ),
               if (normalized.isNotEmpty)
                 IconButton(
-                  tooltip: pickUiText(i18n, zh: '清空颜色', en: 'Clear color'),
+                  tooltip: i18n.t(
+                    'inline.ui.pages.appearance_studio_page.clear_color_e60ed9',
+                  ),
                   onPressed: () => onChanged(''),
                   icon: const Icon(Icons.clear_rounded),
                 ),
@@ -948,7 +946,9 @@ class AppearanceStudioPage extends ConsumerWidget {
                     const SizedBox(height: 14),
                     _colorSlider(
                       context,
-                      label: pickUiText(i18n, zh: '色相', en: 'Hue'),
+                      label: i18n.t(
+                        'inline.ui.pages.appearance_studio_page.hue_ba0351',
+                      ),
                       value: hsl.hue,
                       min: 0,
                       max: 360,
@@ -960,7 +960,9 @@ class AppearanceStudioPage extends ConsumerWidget {
                     ),
                     _colorSlider(
                       context,
-                      label: pickUiText(i18n, zh: '饱和度', en: 'Saturation'),
+                      label: i18n.t(
+                        'inline.ui.pages.appearance_studio_page.saturation_99178f',
+                      ),
                       value: hsl.saturation,
                       min: 0,
                       max: 1,
@@ -972,7 +974,9 @@ class AppearanceStudioPage extends ConsumerWidget {
                     ),
                     _colorSlider(
                       context,
-                      label: pickUiText(i18n, zh: '明度', en: 'Lightness'),
+                      label: i18n.t(
+                        'inline.ui.pages.appearance_studio_page.lightness_dc0429',
+                      ),
                       value: hsl.lightness,
                       min: 0,
                       max: 1,
@@ -984,7 +988,9 @@ class AppearanceStudioPage extends ConsumerWidget {
                     ),
                     _colorSlider(
                       context,
-                      label: pickUiText(i18n, zh: '透明度', en: 'Alpha'),
+                      label: i18n.t(
+                        'inline.ui.pages.appearance_studio_page.alpha_8de50f',
+                      ),
                       value: alpha,
                       min: 0,
                       max: 1,

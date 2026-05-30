@@ -103,14 +103,12 @@ extension _PlayPageNavigation on _PlayPageState {
     }
     final raw = await showTextPromptDialog(
       context: context,
-      title: pickUiText(i18n, zh: '精确跳转', en: 'Exact jump'),
-      subtitle: pickUiText(
-        i18n,
-        zh: '输入 1 到 ${visibleWords.length} 之间的位置编号。',
-        en: 'Enter a position between 1 and ${visibleWords.length}.',
+      title: i18n.t('inline.ui.pages.play_page_navigation.exact_jump_8b53eb'),
+      subtitle: i18n.t(
+        'inline.ui.pages.play_page_navigation.enter_a_position_between_1_and_visiblewords_length_ed5abd',
       ),
-      hintText: pickUiText(i18n, zh: '例如 256', en: 'e.g. 256'),
-      confirmText: pickUiText(i18n, zh: '跳转', en: 'Jump'),
+      hintText: i18n.t('inline.ui.pages.play_page_navigation.e_g_256_226af0'),
+      confirmText: i18n.t('inline.ui.pages.play_page_navigation.jump_1534a4'),
     );
     if (!mounted || !context.mounted || raw == null) {
       return;
@@ -120,10 +118,8 @@ extension _PlayPageNavigation on _PlayPageState {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            pickUiText(
-              i18n,
-              zh: '请输入 1 到 ${visibleWords.length} 之间的编号。',
-              en: 'Enter a number between 1 and ${visibleWords.length}.',
+            i18n.t(
+              'inline.ui.pages.play_page_navigation.enter_a_number_between_1_and_visiblewords_length_01bc91',
             ),
           ),
         ),
@@ -167,7 +163,7 @@ extension _PlayPageNavigation on _PlayPageState {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
             children: <Widget>[
               Text(
-                pickUiText(i18n, zh: '切换词本', en: 'Switch wordbook'),
+                i18n.t('inline.ui.pages.library_page.switch_wordbook_40ff3b'),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 12),
@@ -177,10 +173,8 @@ extension _PlayPageNavigation on _PlayPageState {
                     selected: state.selectedWordbook?.id == book.id,
                     title: Text(localizedWordbookName(i18n, book)),
                     subtitle: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '${book.wordCount} 个词',
-                        en: '${book.wordCount} words',
+                      i18n.t(
+                        'inline.ui.pages.library_page.book_wordcount_words_d7e63b',
                       ),
                     ),
                     onTap: () async {
@@ -216,13 +210,11 @@ extension _PlayPageNavigation on _PlayPageState {
     }
     return showConfirmDialog(
       context: context,
-      title: pickUiText(i18n, zh: '初始化单词本', en: 'Initialize wordbook'),
-      message: pickUiText(
-        i18n,
-        zh: '${localizedWordbookName(i18n, book)} 可能较大，首次加载会初始化内容并需要一些时间。确认后继续，请耐心等待。',
-        en: '${localizedWordbookName(i18n, book)} may be large. The first load will initialize its contents and may take a while. Continue and please wait patiently.',
+      title: i18n.t('inline.ui.pages.library_page.initialize_wordbook_c30e1d'),
+      message: i18n.t(
+        'inline.ui.pages.library_page.localizedwordbookname_i18n_book_may_be_large_the_first_l_3b46f5',
       ),
-      confirmText: pickUiText(i18n, zh: '继续', en: 'Continue'),
+      confirmText: i18n.t('toolbox.breathing.continue_select'),
     );
   }
 }

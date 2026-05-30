@@ -86,7 +86,9 @@ class _MixedScoreModeState extends State<_MixedScoreMode> {
         FilledButton.tonalIcon(
           onPressed: _addEntry,
           icon: const Icon(Icons.add_rounded),
-          label: Text(_lifeText(context, zh: '新增队伍', en: 'Add team')),
+          label: Text(
+            _lifeI18nText(context, 'inline.plan295.life.add_team.af5283468117'),
+          ),
         ),
       ],
     );
@@ -97,7 +99,10 @@ class _MixedScoreModeState extends State<_MixedScoreMode> {
       children: <Widget>[
         Expanded(
           child: Text(
-            _lifeText(context, zh: '统计列项', en: 'Stat columns'),
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.stat_columns.19fd56b16eec',
+            ),
             style: theme.textTheme.labelLarge,
           ),
         ),
@@ -155,14 +160,14 @@ class _MixedScoreModeState extends State<_MixedScoreMode> {
       ),
       children: <Widget>[
         _headerCell(
-          _lifeText(context, zh: '队伍', en: 'Team'),
+          _lifeI18nText(context, 'inline.plan295.life.team.966b5089560c'),
           theme,
           height: 40,
         ),
         for (var c = 0; c < _columnDefs.length; c += 1)
           _headerCellWithEdit(theme, c),
         _headerCell(
-          _lifeText(context, zh: '总计', en: 'Total'),
+          _lifeI18nText(context, 'inline.plan295.life.total.082951dfc15e'),
           theme,
           height: 40,
         ),
@@ -197,13 +202,13 @@ class _MixedScoreModeState extends State<_MixedScoreMode> {
         controller: ctrl,
         textAlign: TextAlign.center,
         maxLength: 6,
-        buildCounter: (
-          BuildContext context, {
-          required int currentLength,
-          required bool isFocused,
-          required int? maxLength,
-        }) =>
-            null,
+        buildCounter:
+            (
+              BuildContext context, {
+              required int currentLength,
+              required bool isFocused,
+              required int? maxLength,
+            }) => null,
         style: theme.textTheme.labelMedium?.copyWith(
           fontWeight: FontWeight.w700,
         ),
@@ -260,19 +265,22 @@ class _MixedScoreModeState extends State<_MixedScoreMode> {
               controller: nameCtrl,
               textAlign: TextAlign.center,
               maxLength: 8,
-              buildCounter: (
-          BuildContext context, {
-          required int currentLength,
-          required bool isFocused,
-          required int? maxLength,
-        }) =>
-            null,
+              buildCounter:
+                  (
+                    BuildContext context, {
+                    required int currentLength,
+                    required bool isFocused,
+                    required int? maxLength,
+                  }) => null,
               style: theme.textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
               decoration: const InputDecoration(
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 2,
+                  vertical: 4,
+                ),
                 border: InputBorder.none,
               ),
               onChanged: (v) {
@@ -303,7 +311,8 @@ class _MixedScoreModeState extends State<_MixedScoreMode> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           InkWell(
-            onTap: () => setState(() => col.score = math.max(0, col.score - _step)),
+            onTap: () =>
+                setState(() => col.score = math.max(0, col.score - _step)),
             borderRadius: BorderRadius.circular(8),
             child: const Padding(
               padding: EdgeInsets.all(2),
@@ -358,7 +367,10 @@ class _MixedScoreModeState extends State<_MixedScoreMode> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Text(
-                _lifeText(context, zh: '选择颜色', en: 'Pick color'),
+                _lifeI18nText(
+                  context,
+                  'inline.ui.pages.appearance_studio_page.pick_color_dd4439',
+                ),
                 style: Theme.of(ctx).textTheme.titleMedium,
               ),
               const SizedBox(height: 14),

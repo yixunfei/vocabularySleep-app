@@ -55,15 +55,8 @@ extension _FocusPageWorkspaceTodoExtension on _FocusPageState {
                   isDense: true,
                   filled: true,
                   fillColor: theme.colorScheme.surfaceContainerLowest,
-                  hintText: pickUiText(
-                    i18n,
-                    zh: '\u70b9\u51fb\u6dfb\u52a0\u5f85\u529e\u4e8b\u9879',
-                    en: 'Tap to add a task',
-                    ja: 'タップしてタスクを追加',
-                    de: 'Tippen, um eine Aufgabe hinzuzufuegen',
-                    fr: 'Touchez pour ajouter une tache',
-                    es: 'Toca para anadir una tarea',
-                    ru: 'Нажмите, чтобы добавить задачу',
+                  hintText: i18n.t(
+                    'inline.ui.pages.focus_page_workspace_todo.tap_to_add_a_task_44eadb',
                   ),
                   prefixIcon: const Icon(Icons.add_task_rounded),
                   suffixIcon: const Icon(Icons.edit_note_rounded),
@@ -169,7 +162,9 @@ extension _FocusPageWorkspaceTodoExtension on _FocusPageState {
             isDense: true,
             filled: true,
             fillColor: theme.colorScheme.surfaceContainerLowest,
-            hintText: pickUiText(i18n, zh: '快速添加待办', en: 'Quick add a task'),
+            hintText: i18n.t(
+              'inline.ui.pages.focus_page_workspace_todo.quick_add_a_task_2a6942',
+            ),
             prefixIcon: const Icon(Icons.add_task_rounded),
             suffixIcon: const Icon(Icons.edit_note_rounded),
             contentPadding: const EdgeInsets.symmetric(
@@ -226,10 +221,8 @@ extension _FocusPageWorkspaceTodoExtension on _FocusPageState {
                 isDense: true,
                 filled: true,
                 fillColor: theme.colorScheme.surfaceContainerLowest,
-                hintText: pickUiText(
-                  i18n,
-                  zh: '快速添加待办',
-                  en: 'Quick add a task',
+                hintText: i18n.t(
+                  'inline.ui.pages.focus_page_workspace_todo.quick_add_a_task_2a6942',
                 ),
                 prefixIcon: const Icon(Icons.add_task_rounded),
                 suffixIcon: const Icon(Icons.edit_note_rounded),
@@ -423,8 +416,12 @@ extension _FocusPageWorkspaceTodoExtension on _FocusPageState {
     return IconButton(
       key: const ValueKey<String>('todo-metrics-toggle'),
       tooltip: _todoMetricsExpanded
-          ? pickUiText(i18n, zh: '收起统计', en: 'Collapse stats')
-          : pickUiText(i18n, zh: '展开统计', en: 'Expand stats'),
+          ? i18n.t(
+              'inline.ui.pages.focus_page_workspace_todo.collapse_stats_dfecdb',
+            )
+          : i18n.t(
+              'inline.ui.pages.focus_page_workspace_todo.expand_stats_b0b441',
+            ),
       visualDensity: VisualDensity.compact,
       onPressed: () {
         _setViewState(() {
@@ -667,47 +664,29 @@ extension _FocusPageWorkspaceTodoExtension on _FocusPageState {
 
   String _todoViewModeLabel(AppI18n i18n, _TodoViewMode mode) {
     return switch (mode) {
-      _TodoViewMode.plan => pickUiText(
-        i18n,
-        zh: '\u8ba1\u5212\u89c6\u56fe',
-        en: 'Plan view',
+      _TodoViewMode.plan => i18n.t(
+        'inline.ui.pages.focus_page_workspace_todo.plan_view_c0f8fb',
       ),
-      _TodoViewMode.list => pickUiText(
-        i18n,
-        zh: '\u5217\u8868\u89c6\u56fe',
-        en: 'List view',
+      _TodoViewMode.list => i18n.t(
+        'inline.ui.pages.focus_page_workspace_todo.list_view_59c01d',
       ),
     };
   }
 
   String _todoFilterModeLabel(AppI18n i18n, _TodoFilterMode mode) {
     return switch (mode) {
-      _TodoFilterMode.all => pickUiText(i18n, zh: '\u5168\u90e8', en: 'All'),
-      _TodoFilterMode.active => pickUiText(
-        i18n,
-        zh: '\u8fdb\u884c\u4e2d',
-        en: 'Active',
+      _TodoFilterMode.all => i18n.t('all'),
+      _TodoFilterMode.active => i18n.t('toolbox.sleep.rhythm.active'),
+      _TodoFilterMode.today => i18n.t(
+        'inline.ui.pages.focus_page_workspace_todo.due_today_71b490',
       ),
-      _TodoFilterMode.today => pickUiText(
-        i18n,
-        zh: '\u4eca\u5929\u5230\u671f',
-        en: 'Due today',
+      _TodoFilterMode.overdue => i18n.t(
+        'inline.ui.pages.focus_page_workspace_todo.overdue_1c2291',
       ),
-      _TodoFilterMode.overdue => pickUiText(
-        i18n,
-        zh: '\u5df2\u903e\u671f',
-        en: 'Overdue',
+      _TodoFilterMode.deferred => i18n.t(
+        'inline.ui.pages.focus_page_workspace_editor.deferred_80bb3d',
       ),
-      _TodoFilterMode.deferred => pickUiText(
-        i18n,
-        zh: '\u5ef6\u540e\u6401\u7f6e',
-        en: 'Deferred',
-      ),
-      _TodoFilterMode.completed => pickUiText(
-        i18n,
-        zh: '\u5df2\u5b8c\u6210',
-        en: 'Completed',
-      ),
+      _TodoFilterMode.completed => i18n.t('toolbox.sleep.rhythm.completed'),
     };
   }
 
@@ -828,7 +807,9 @@ extension _FocusPageWorkspaceTodoExtension on _FocusPageState {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _buildTodoControlSection(
-            label: pickUiText(i18n, zh: '\u89c6\u56fe', en: 'View'),
+            label: i18n.t(
+              'inline.ui.pages.focus_page_workspace_todo.view_fd5d14',
+            ),
             children: <Widget>[
               _buildTodoChoiceChip(
                 key: const ValueKey<String>('todo-view-plan'),
@@ -855,7 +836,9 @@ extension _FocusPageWorkspaceTodoExtension on _FocusPageState {
           if (_todoViewMode == _TodoViewMode.list) ...<Widget>[
             const SizedBox(height: 8),
             _buildTodoControlSection(
-              label: pickUiText(i18n, zh: '\u6392\u5e8f', en: 'Sort'),
+              label: i18n.t(
+                'inline.ui.pages.focus_page_workspace_todo.sort_0448dd',
+              ),
               children: <Widget>[
                 _buildTodoChoiceChip(
                   key: const ValueKey<String>('todo-sort-manual'),
@@ -1118,15 +1101,8 @@ extension _FocusPageWorkspaceTodoExtension on _FocusPageState {
     final sections = <_TodoPlanSection>[
       _TodoPlanSection(
         key: 'todo-plan-overdue',
-        title: pickUiText(
-          i18n,
-          zh: '逾期待处理',
-          en: 'Overdue',
-          ja: '期限超過',
-          de: 'Ueberfaellig',
-          fr: 'En retard',
-          es: 'Vencidas',
-          ru: 'Просрочено',
+        title: i18n.t(
+          'inline.ui.pages.focus_page_workspace_todo.overdue_1c2291',
         ),
         icon: Icons.warning_amber_rounded,
         items: _sortedTodos(overdue),
@@ -1134,61 +1110,29 @@ extension _FocusPageWorkspaceTodoExtension on _FocusPageState {
       ),
       _TodoPlanSection(
         key: 'todo-plan-today',
-        title: pickUiText(
-          i18n,
-          zh: '今天计划',
-          en: 'Today',
-          ja: '今日',
-          de: 'Heute',
-          fr: 'Aujourd’hui',
-          es: 'Hoy',
-          ru: 'Сегодня',
-        ),
+        title: i18n.t('inline.ui.app_shell.today_23dc4e'),
         icon: Icons.today_rounded,
         items: _sortedTodos(today),
       ),
       _TodoPlanSection(
         key: 'todo-plan-upcoming',
-        title: pickUiText(
-          i18n,
-          zh: '接下来',
-          en: 'Upcoming',
-          ja: 'これから',
-          de: 'Als naechstes',
-          fr: 'A venir',
-          es: 'Proximas',
-          ru: 'Дальше',
+        title: i18n.t(
+          'inline.ui.pages.focus_page_workspace_todo.upcoming_df745d',
         ),
         icon: Icons.upcoming_rounded,
         items: _sortedTodos(upcoming),
       ),
       _TodoPlanSection(
         key: 'todo-plan-deferred',
-        title: pickUiText(
-          i18n,
-          zh: '延后搁置',
-          en: 'Deferred',
-          ja: '保留中',
-          de: 'Zurueckgestellt',
-          fr: 'Reporte',
-          es: 'Pospuestas',
-          ru: 'Отложено',
+        title: i18n.t(
+          'inline.ui.pages.focus_page_workspace_editor.deferred_80bb3d',
         ),
         icon: Icons.snooze_rounded,
         items: _sortedTodos(deferred),
       ),
       _TodoPlanSection(
         key: 'todo-plan-inbox',
-        title: pickUiText(
-          i18n,
-          zh: '收件箱',
-          en: 'Inbox',
-          ja: '受信箱',
-          de: 'Inbox',
-          fr: 'Boite de reception',
-          es: 'Bandeja',
-          ru: 'Входящие',
-        ),
+        title: i18n.t('inline.ui.pages.focus_page_workspace_todo.inbox_314fc3'),
         icon: Icons.inbox_rounded,
         items: _sortedTodos(inbox),
       ),
@@ -1198,15 +1142,8 @@ extension _FocusPageWorkspaceTodoExtension on _FocusPageState {
       return <_TodoPlanSection>[
         _TodoPlanSection(
           key: 'todo-plan-deferred',
-          title: pickUiText(
-            i18n,
-            zh: '延后搁置',
-            en: 'Deferred',
-            ja: '保留中',
-            de: 'Zurueckgestellt',
-            fr: 'Reporte',
-            es: 'Pospuestas',
-            ru: 'Отложено',
+          title: i18n.t(
+            'inline.ui.pages.focus_page_workspace_editor.deferred_80bb3d',
           ),
           icon: Icons.snooze_rounded,
           items: _sortedTodos(deferred),
@@ -1218,16 +1155,7 @@ extension _FocusPageWorkspaceTodoExtension on _FocusPageState {
       return <_TodoPlanSection>[
         _TodoPlanSection(
           key: 'todo-plan-completed',
-          title: pickUiText(
-            i18n,
-            zh: '已完成',
-            en: 'Completed',
-            ja: '完了',
-            de: 'Erledigt',
-            fr: 'Terminees',
-            es: 'Completadas',
-            ru: 'Выполнено',
-          ),
+          title: i18n.t('toolbox.sleep.rhythm.completed'),
           icon: Icons.task_alt_rounded,
           items: _sortedTodos(completed),
         ),
@@ -1241,16 +1169,7 @@ extension _FocusPageWorkspaceTodoExtension on _FocusPageState {
       visible.add(
         _TodoPlanSection(
           key: 'todo-plan-completed',
-          title: pickUiText(
-            i18n,
-            zh: '已完成',
-            en: 'Completed',
-            ja: '完了',
-            de: 'Erledigt',
-            fr: 'Terminees',
-            es: 'Completadas',
-            ru: 'Выполнено',
-          ),
+          title: i18n.t('toolbox.sleep.rhythm.completed'),
           icon: Icons.task_alt_rounded,
           items: _sortedTodos(completed),
         ),
@@ -1268,15 +1187,8 @@ extension _FocusPageWorkspaceTodoExtension on _FocusPageState {
     if (sections.isEmpty) {
       return Center(
         child: Text(
-          pickUiText(
-            i18n,
-            zh: '当前筛选下还没有任务，先添加一个今天要完成的小目标吧。',
-            en: 'No tasks match this view yet. Add one small goal for today.',
-            ja: 'この表示にはまだタスクがありません。まずは今日の小さな目標を追加しましょう。',
-            de: 'In dieser Ansicht gibt es noch keine Aufgaben. Fuege zuerst ein kleines Ziel fuer heute hinzu.',
-            fr: 'Aucune tache pour cette vue. Ajoutez d’abord un petit objectif pour aujourd’hui.',
-            es: 'Aun no hay tareas en esta vista. Agrega primero un pequeno objetivo para hoy.',
-            ru: 'Для этого представления пока нет задач. Добавьте сначала одну небольшую цель на сегодня.',
+          i18n.t(
+            'inline.ui.pages.focus_page_workspace_todo.no_tasks_match_this_view_yet_add_one_small_goal_for_toda_e26f89',
           ),
           textAlign: TextAlign.center,
         ),
@@ -1737,37 +1649,14 @@ extension _FocusPageWorkspaceTodoExtension on _FocusPageState {
     final todayStart = _startOfDay(now);
     final tomorrowStart = todayStart.add(const Duration(days: 1));
     final text = dueAt.isBefore(todayStart)
-        ? pickUiText(
-            i18n,
-            zh: '已逾期',
-            en: 'Overdue',
-            ja: '期限超過',
-            de: 'Ueberfaellig',
-            fr: 'En retard',
-            es: 'Vencida',
-            ru: 'Просрочено',
-          )
+        ? i18n.t('inline.ui.pages.focus_page_workspace_todo.overdue_1c2291')
         : dueAt.isBefore(tomorrowStart)
-        ? pickUiText(
-            i18n,
-            zh: '今天 ${_formatTodoTime(dueAt)}',
-            en: 'Today ${_formatTodoTime(dueAt)}',
-            ja: '今日 ${_formatTodoTime(dueAt)}',
-            de: 'Heute ${_formatTodoTime(dueAt)}',
-            fr: 'Aujourd’hui ${_formatTodoTime(dueAt)}',
-            es: 'Hoy ${_formatTodoTime(dueAt)}',
-            ru: 'Сегодня ${_formatTodoTime(dueAt)}',
+        ? i18n.t(
+            'inline.ui.pages.focus_page_workspace_todo.today_formattodotime_dueat_68dd27',
           )
         : _isSameDay(dueAt, tomorrowStart)
-        ? pickUiText(
-            i18n,
-            zh: '明天 ${_formatTodoTime(dueAt)}',
-            en: 'Tomorrow ${_formatTodoTime(dueAt)}',
-            ja: '明日 ${_formatTodoTime(dueAt)}',
-            de: 'Morgen ${_formatTodoTime(dueAt)}',
-            fr: 'Demain ${_formatTodoTime(dueAt)}',
-            es: 'Manana ${_formatTodoTime(dueAt)}',
-            ru: 'Завтра ${_formatTodoTime(dueAt)}',
+        ? i18n.t(
+            'inline.ui.pages.focus_page_workspace_todo.tomorrow_formattodotime_dueat_94cdb1',
           )
         : _formatTodoDateTime(dueAt);
     final color = dueAt.isBefore(todayStart)

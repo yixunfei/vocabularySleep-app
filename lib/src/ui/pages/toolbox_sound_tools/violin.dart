@@ -127,8 +127,12 @@ class _ViolinToolState extends State<_ViolinTool> {
 
   String _presetSubtitle(AppI18n i18n, _ViolinPreset preset) {
     return switch (preset.id) {
-      'warm_legato' => i18n.t('toolbox.sound.violin.softer_bow_pressure_with_a'),
-      'glass_harmonic' => i18n.t('toolbox.sound.violin.brighter_harmonics_with_a_cleaner'),
+      'warm_legato' => i18n.t(
+        'toolbox.sound.violin.softer_bow_pressure_with_a',
+      ),
+      'glass_harmonic' => i18n.t(
+        'toolbox.sound.violin.brighter_harmonics_with_a_cleaner',
+      ),
       _ => i18n.t('toolbox.sound.violin.balanced_solo_tone_for_melodic'),
     };
   }
@@ -604,7 +608,9 @@ class _ViolinToolState extends State<_ViolinTool> {
                       vertical: 6,
                     ),
                     child: Text(
-                      i18n.t('toolbox.sound.violin.two_fingers_enable_doublestop'),
+                      i18n.t(
+                        'toolbox.sound.violin.two_fingers_enable_doublestop',
+                      ),
                       style: theme.textTheme.labelMedium?.copyWith(
                         color: Colors.white,
                       ),
@@ -739,9 +745,7 @@ class _ViolinToolState extends State<_ViolinTool> {
           }),
         ),
         const SizedBox(height: 14),
-        Text(
-          i18n.t('toolbox.sound.violin.bow_tone'),
-        ),
+        Text(i18n.t('toolbox.sound.violin.bow_tone')),
         Slider(
           value: _bow,
           min: 0.15,
@@ -758,9 +762,7 @@ class _ViolinToolState extends State<_ViolinTool> {
             refreshSheet();
           },
         ),
-        Text(
-          i18n.t('toolbox.sound.violin.reverb'),
-        ),
+        Text(i18n.t('toolbox.sound.violin.reverb')),
         Slider(
           value: _reverb,
           min: 0.0,
@@ -1037,7 +1039,9 @@ class _ViolinToolState extends State<_ViolinTool> {
               const SizedBox(height: 14),
               SectionHeader(
                 title: i18n.t('toolbox.sound.violin.scale_and_position'),
-                subtitle: i18n.t('toolbox.sound.violin.use_scale_categories_and_position'),
+                subtitle: i18n.t(
+                  'toolbox.sound.violin.use_scale_categories_and_position',
+                ),
               ),
               const SizedBox(height: 10),
               Wrap(
@@ -1070,12 +1074,12 @@ class _ViolinToolState extends State<_ViolinTool> {
               const SizedBox(height: 14),
               SectionHeader(
                 title: i18n.t('toolbox.sound.violin.bow_and_space'),
-                subtitle: i18n.t('toolbox.sound.violin.expose_bow_pressure_and_reverb'),
+                subtitle: i18n.t(
+                  'toolbox.sound.violin.expose_bow_pressure_and_reverb',
+                ),
               ),
               const SizedBox(height: 10),
-              Text(
-                i18n.t('toolbox.sound.violin.bow_tone'),
-              ),
+              Text(i18n.t('toolbox.sound.violin.bow_tone')),
               Slider(
                 value: _bow,
                 min: 0.15,
@@ -1083,9 +1087,7 @@ class _ViolinToolState extends State<_ViolinTool> {
                 divisions: 17,
                 onChanged: (value) => setState(() => _bow = value),
               ),
-              Text(
-                i18n.t('toolbox.sound.violin.reverb'),
-              ),
+              Text(i18n.t('toolbox.sound.violin.reverb')),
               Slider(
                 value: _reverb,
                 min: 0.0,

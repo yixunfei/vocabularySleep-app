@@ -12,14 +12,18 @@ Future<String?> _promptEatCollectionName({
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(pickUiText(i18n, zh: '重命名食谱集', en: 'Rename set')),
+          title: Text(
+            i18n.t('inline.plan295.daily_choice.rename_set.e67b5a3dc805'),
+          ),
           content: TextField(
             controller: controller,
             autofocus: true,
             textInputAction: TextInputAction.done,
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.bookmarks_rounded),
-              labelText: pickUiText(i18n, zh: '食谱集名称', en: 'Set name'),
+              labelText: i18n.t(
+                'inline.plan295.daily_choice.set_name.738fb8527e27',
+              ),
               focusedBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: accent),
               ),
@@ -34,7 +38,7 @@ Future<String?> _promptEatCollectionName({
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+              child: Text(i18n.t('cancel')),
             ),
             FilledButton.icon(
               onPressed: () {
@@ -44,7 +48,7 @@ Future<String?> _promptEatCollectionName({
                 }
               },
               icon: const Icon(Icons.check_rounded),
-              label: Text(pickUiText(i18n, zh: '保存', en: 'Save')),
+              label: Text(i18n.t('save')),
             ),
           ],
         );
@@ -64,23 +68,23 @@ Future<bool?> _confirmDeleteEatCollection({
     context: context,
     builder: (context) {
       return AlertDialog(
-        title: Text(pickUiText(i18n, zh: '删除食谱集？', en: 'Delete recipe set?')),
+        title: Text(
+          i18n.t('inline.plan295.daily_choice.delete_recipe_set.38ccf00f0de0'),
+        ),
         content: Text(
-          pickUiText(
-            i18n,
-            zh: '「${collection.title(i18n)}」只会删除这个集合，不会删除集合里的个人菜谱或内置菜谱。',
-            en: '"${collection.title(i18n)}" will be removed as a set. Recipes inside it will not be deleted.',
+          i18n.t(
+            'inline.plan295.daily_choice.collection_title_i18n_will_be_remove.9c682cda7ca6',
           ),
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+            child: Text(i18n.t('cancel')),
           ),
           FilledButton.icon(
             onPressed: () => Navigator.of(context).pop(true),
             icon: const Icon(Icons.delete_outline_rounded),
-            label: Text(pickUiText(i18n, zh: '删除', en: 'Delete')),
+            label: Text(i18n.t('delete')),
           ),
         ],
       );
@@ -272,14 +276,18 @@ Future<String?> _promptWearCollectionName({
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(pickUiText(i18n, zh: '重命名衣橱', en: 'Rename wardrobe')),
+          title: Text(
+            i18n.t('inline.plan295.daily_choice.rename_wardrobe.2b833f19423b'),
+          ),
           content: TextField(
             controller: controller,
             autofocus: true,
             textInputAction: TextInputAction.done,
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.checkroom_rounded),
-              labelText: pickUiText(i18n, zh: '衣橱名称', en: 'Wardrobe name'),
+              labelText: i18n.t(
+                'inline.ui.pages.toolbox_daily_choice.daily_choice_manager_collection_io.wardrobe_name_1ec86f',
+              ),
               focusedBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: accent),
               ),
@@ -294,7 +302,7 @@ Future<String?> _promptWearCollectionName({
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+              child: Text(i18n.t('cancel')),
             ),
             FilledButton.icon(
               onPressed: () {
@@ -304,7 +312,7 @@ Future<String?> _promptWearCollectionName({
                 }
               },
               icon: const Icon(Icons.check_rounded),
-              label: Text(pickUiText(i18n, zh: '保存', en: 'Save')),
+              label: Text(i18n.t('save')),
             ),
           ],
         );
@@ -324,23 +332,23 @@ Future<bool?> _confirmDeleteWearCollection({
     context: context,
     builder: (context) {
       return AlertDialog(
-        title: Text(pickUiText(i18n, zh: '删除衣橱？', en: 'Delete wardrobe?')),
+        title: Text(
+          i18n.t('inline.plan295.daily_choice.delete_wardrobe.a4153f84b633'),
+        ),
         content: Text(
-          pickUiText(
-            i18n,
-            zh: '「${collection.title(i18n)}」只会删除这个衣橱，不会删除衣橱里的个人搭配或内置穿搭。',
-            en: '"${collection.title(i18n)}" will be removed as a wardrobe. Outfits inside it will not be deleted.',
+          i18n.t(
+            'inline.plan295.daily_choice.collection_title_i18n_will_be_remove.34bb8b26bd3a',
           ),
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+            child: Text(i18n.t('cancel')),
           ),
           FilledButton.icon(
             onPressed: () => Navigator.of(context).pop(true),
             icon: const Icon(Icons.delete_outline_rounded),
-            label: Text(pickUiText(i18n, zh: '删除', en: 'Delete')),
+            label: Text(i18n.t('delete')),
           ),
         ],
       );
@@ -549,14 +557,20 @@ Future<String?> _promptActivityCollectionName({
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(pickUiText(i18n, zh: '重命名行动集', en: 'Rename action set')),
+          title: Text(
+            i18n.t(
+              'inline.plan295.daily_choice.rename_action_set.887cc121bed7',
+            ),
+          ),
           content: TextField(
             controller: controller,
             autofocus: true,
             textInputAction: TextInputAction.done,
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.playlist_add_check_rounded),
-              labelText: pickUiText(i18n, zh: '行动集名称', en: 'Action set name'),
+              labelText: i18n.t(
+                'inline.plan295.daily_choice.action_set_name.b810f3f31e1e',
+              ),
               focusedBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: accent),
               ),
@@ -571,7 +585,7 @@ Future<String?> _promptActivityCollectionName({
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+              child: Text(i18n.t('cancel')),
             ),
             FilledButton.icon(
               onPressed: () {
@@ -581,7 +595,7 @@ Future<String?> _promptActivityCollectionName({
                 }
               },
               icon: const Icon(Icons.check_rounded),
-              label: Text(pickUiText(i18n, zh: '保存', en: 'Save')),
+              label: Text(i18n.t('save')),
             ),
           ],
         );
@@ -601,23 +615,23 @@ Future<bool?> _confirmDeleteActivityCollection({
     context: context,
     builder: (context) {
       return AlertDialog(
-        title: Text(pickUiText(i18n, zh: '删除行动集？', en: 'Delete action set?')),
+        title: Text(
+          i18n.t('inline.plan295.daily_choice.delete_action_set.e6c3f83364b1'),
+        ),
         content: Text(
-          pickUiText(
-            i18n,
-            zh: '「${collection.title(i18n)}」只会删除这个集合，不会删除集合里的个人行动或内置行动。',
-            en: '"${collection.title(i18n)}" will be removed as a set. Actions inside it will not be deleted.',
+          i18n.t(
+            'inline.plan295.daily_choice.collection_title_i18n_will_be_remove.d2c1a2ec3f4f',
           ),
         ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+            child: Text(i18n.t('cancel')),
           ),
           FilledButton.icon(
             onPressed: () => Navigator.of(context).pop(true),
             icon: const Icon(Icons.delete_outline_rounded),
-            label: Text(pickUiText(i18n, zh: '删除', en: 'Delete')),
+            label: Text(i18n.t('delete')),
           ),
         ],
       );

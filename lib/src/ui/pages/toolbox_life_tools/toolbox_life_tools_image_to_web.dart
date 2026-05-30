@@ -37,11 +37,13 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
   @override
   Widget build(BuildContext context) {
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '图片转网页', en: 'Image to webpage'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '把本地图片封装成单文件 HTML 预览页，也可上传原图到 Uguu 获取 3 小时临时分享链接。',
-        en: 'Wrap a local image into a single-file HTML page, or upload the image to Uguu for a temporary 3-hour share link.',
+        'inline.plan295.life.image_to_webpage.1ddd6465ce87',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.wrap_a_local_image_into_a_single_fil.41c4df832745',
       ),
       child: Column(
         key: const ValueKey<String>('life-image-to-web-page'),
@@ -68,11 +70,13 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
   Widget _buildStagePanel(BuildContext context) {
     final theme = Theme.of(context);
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '图片舞台', en: 'Image stage'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '先选择图片，再生成可离线打开的单文件网页。',
-        en: 'Pick an image first, then generate an offline single-file page.',
+        'inline.plan295.life.image_stage.77dcc9325097',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.pick_an_image_first_then_generate_an.582435b25277',
       ),
       children: <Widget>[
         Row(
@@ -82,12 +86,20 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
                 key: const ValueKey<String>('life_image_to_web_pick_button'),
                 onPressed: _uploading || _saving ? null : _pickImage,
                 icon: const Icon(Icons.photo_library_rounded),
-                label: Text(_lifeText(context, zh: '选择图片', en: 'Pick image')),
+                label: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.pick_image.9ce43eb388b3',
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 10),
             IconButton.filledTonal(
-              tooltip: _lifeText(context, zh: '清空', en: 'Clear'),
+              tooltip: _lifeI18nText(
+                context,
+                'inline.plan294.zen_sand.clear_ea17218b',
+              ),
               onPressed: _uploading || _saving ? null : _reset,
               icon: const Icon(Icons.clear_rounded),
             ),
@@ -97,10 +109,9 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
         _LifePreviewFrame(
           child: !_hasSource
               ? Text(
-                  _lifeText(
+                  _lifeI18nText(
                     context,
-                    zh: '尚未选择图片。',
-                    en: 'No image selected yet.',
+                    'inline.plan295.life.no_image_selected_yet.1d4a4b1c698c',
                   ),
                 )
               : Column(
@@ -108,7 +119,10 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
                   children: <Widget>[
                     Text(
                       _sourceName ??
-                          _lifeText(context, zh: '未命名图片', en: 'Unnamed image'),
+                          _lifeI18nText(
+                            context,
+                            'inline.plan295.life.unnamed_image.e89ca462aeab',
+                          ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleSmall?.copyWith(
@@ -121,15 +135,24 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
                       runSpacing: 8,
                       children: <Widget>[
                         _ImageToWebMetricChip(
-                          label: _lifeText(context, zh: '原图尺寸', en: 'Image'),
+                          label: _lifeI18nText(
+                            context,
+                            'inline.plan295.life.image.81cbdc5d8b60',
+                          ),
                           value: '${_preview!.width}x${_preview!.height}',
                         ),
                         _ImageToWebMetricChip(
-                          label: _lifeText(context, zh: '文件大小', en: 'Size'),
+                          label: _lifeI18nText(
+                            context,
+                            'inline.plan295.life.size.5d3d989d937b',
+                          ),
                           value: _formatBytes(_sourceBytes!.length),
                         ),
                         _ImageToWebMetricChip(
-                          label: _lifeText(context, zh: 'HTML 体积', en: 'HTML'),
+                          label: _lifeI18nText(
+                            context,
+                            'inline.plan295.life.html.f7a0fb516649',
+                          ),
                           value: _hasHtml
                               ? _formatBytes(utf8.encode(_html!).length)
                               : '--',
@@ -155,11 +178,13 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
 
   Widget _buildConfigPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '网页配置', en: 'Page settings'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '标题和替代文本会写入生成的 HTML，适合分享给浏览器直接打开。',
-        en: 'Title and alt text are written into the generated HTML for browser viewing.',
+        'inline.plan295.life.page_settings.12acbc180e4d',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.title_and_alt_text_are_written_into.026104732106',
       ),
       children: <Widget>[
         TextField(
@@ -167,7 +192,10 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
           controller: _titleController,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
-            labelText: _lifeText(context, zh: '网页标题', en: 'Page title'),
+            labelText: _lifeI18nText(
+              context,
+              'inline.plan295.life.page_title.febb78bb6738',
+            ),
           ),
           onChanged: (_) => _regenerateHtml(),
         ),
@@ -177,29 +205,32 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
           controller: _altController,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
-            labelText: _lifeText(context, zh: '图片替代文本', en: 'Image alt text'),
+            labelText: _lifeI18nText(
+              context,
+              'inline.plan295.life.image_alt_text.dd0c788e0911',
+            ),
           ),
           onChanged: (_) => _regenerateHtml(),
         ),
         const SizedBox(height: 12),
         _LifeSegmentedField<ToolboxImageToWebFit>(
-          label: _lifeText(context, zh: '图片适配', en: 'Image fit'),
+          label: _lifeI18nText(
+            context,
+            'inline.plan295.life.image_fit.c7dc99a73afc',
+          ),
           value: _fit,
           options: const <_LifeOption<ToolboxImageToWebFit>>[
             _LifeOption<ToolboxImageToWebFit>(
               value: ToolboxImageToWebFit.contain,
-              labelZh: '完整显示',
-              labelEn: 'Contain',
+              labelKey: 'inline.plan295.life.contain.2824f148c19d',
             ),
             _LifeOption<ToolboxImageToWebFit>(
               value: ToolboxImageToWebFit.cover,
-              labelZh: '封面裁切',
-              labelEn: 'Cover',
+              labelKey: 'inline.plan295.life.cover.5a87ca6b52d1',
             ),
             _LifeOption<ToolboxImageToWebFit>(
               value: ToolboxImageToWebFit.natural,
-              labelZh: '自然尺寸',
-              labelEn: 'Natural',
+              labelKey: 'inline.plan295.life.natural.aea6b49dc498',
             ),
           ],
           onChanged: (value) {
@@ -209,23 +240,20 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
         ),
         const SizedBox(height: 12),
         _LifeSegmentedField<ToolboxImageToWebBackground>(
-          label: _lifeText(context, zh: '背景', en: 'Background'),
+          label: _lifeI18nText(context, 'appearanceBackgroundTitle'),
           value: _background,
           options: const <_LifeOption<ToolboxImageToWebBackground>>[
             _LifeOption<ToolboxImageToWebBackground>(
               value: ToolboxImageToWebBackground.light,
-              labelZh: '浅色',
-              labelEn: 'Light',
+              labelKey: 'inline.plan295.life.light.91610509632d',
             ),
             _LifeOption<ToolboxImageToWebBackground>(
               value: ToolboxImageToWebBackground.dark,
-              labelZh: '深色',
-              labelEn: 'Dark',
+              labelKey: 'ref.themeDark',
             ),
             _LifeOption<ToolboxImageToWebBackground>(
               value: ToolboxImageToWebBackground.checker,
-              labelZh: '棋盘格',
-              labelEn: 'Checker',
+              labelKey: 'inline.plan295.life.checker.b9325f7ccf0f',
             ),
           ],
           onChanged: (value) {
@@ -239,11 +267,13 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
 
   Widget _buildLocalExportPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '本地网页', en: 'Local webpage'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: 'HTML 内嵌 Base64 图片，不依赖网络；大图会让 HTML 体积明显变大。',
-        en: 'The HTML embeds the image as Base64 and works offline; large images make the HTML much bigger.',
+        'inline.plan295.life.local_webpage.8d183d9c6bcc',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.the_html_embeds_the_image_as_base64.b630a7869b05',
       ),
       children: <Widget>[
         Row(
@@ -264,15 +294,24 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
                     : const Icon(Icons.save_alt_rounded),
                 label: Text(
                   _saving
-                      ? _lifeText(context, zh: '保存中...', en: 'Saving...')
-                      : _lifeText(context, zh: '保存 HTML', en: 'Save HTML'),
+                      ? _lifeI18nText(
+                          context,
+                          'inline.plan295.life.saving.2c9b4d88c6ff',
+                        )
+                      : _lifeI18nText(
+                          context,
+                          'inline.plan295.life.save_html.879e0d010a21',
+                        ),
                 ),
               ),
             ),
             const SizedBox(width: 10),
             IconButton.filledTonal(
               key: const ValueKey<String>('life_image_to_web_copy_html_button'),
-              tooltip: _lifeText(context, zh: '复制 HTML', en: 'Copy HTML'),
+              tooltip: _lifeI18nText(
+                context,
+                'inline.plan295.life.copy_html.a04d80ff229f',
+              ),
               onPressed: _hasHtml ? () => _copyText(_html!, 'HTML') : null,
               icon: const Icon(Icons.copy_rounded),
             ),
@@ -281,10 +320,10 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
         if (_savedPath != null) ...<Widget>[
           const SizedBox(height: 10),
           SelectableText(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '保存位置: $_savedPath',
-              en: 'Saved to: $_savedPath',
+              'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.to.web.saved_to.a70708f829',
+              params: <String, Object?>{'_savedPath': _savedPath},
             ),
           ),
         ],
@@ -295,11 +334,13 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
   Widget _buildUploadPanel(BuildContext context) {
     final result = _uploadResult;
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '临时图片分享', en: 'Temporary image share'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '上传原图到 Uguu，生成公开临时链接。请不要上传证件、隐私或敏感图片。',
-        en: 'Upload the original image to Uguu for a public temporary link. Do not upload ID, private, or sensitive images.',
+        'inline.plan295.life.temporary_image_share.b03d76d0fb35',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.upload_the_original_image_to_uguu_fo.919ddfc0a29f',
       ),
       children: <Widget>[
         Row(
@@ -318,11 +359,13 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
                     : const Icon(Icons.cloud_upload_rounded),
                 label: Text(
                   _uploading
-                      ? _lifeText(context, zh: '上传中...', en: 'Uploading...')
-                      : _lifeText(
+                      ? _lifeI18nText(
                           context,
-                          zh: '上传到 Uguu',
-                          en: 'Upload to Uguu',
+                          'inline.plan295.life.uploading.b78f7ab33897',
+                        )
+                      : _lifeI18nText(
+                          context,
+                          'inline.plan295.life.upload_to_uguu.553b40a7c339',
                         ),
                 ),
               ),
@@ -330,7 +373,10 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
             const SizedBox(width: 10),
             IconButton.filledTonal(
               key: const ValueKey<String>('life_image_to_web_copy_url_button'),
-              tooltip: _lifeText(context, zh: '复制链接', en: 'Copy link'),
+              tooltip: _lifeI18nText(
+                context,
+                'inline.plan295.life.copy_link.6782e0d873b9',
+              ),
               onPressed: result == null
                   ? null
                   : () => _copyText(result.url.toString(), 'URL'),
@@ -338,7 +384,10 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
             ),
             const SizedBox(width: 8),
             IconButton.filledTonal(
-              tooltip: _lifeText(context, zh: '打开链接', en: 'Open link'),
+              tooltip: _lifeI18nText(
+                context,
+                'inline.plan295.life.open_link.94c87d5b803d',
+              ),
               onPressed: result == null
                   ? null
                   : () => _openExternal(context, result.url.toString()),
@@ -350,10 +399,9 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
         _LifePreviewFrame(
           child: result == null
               ? Text(
-                  _lifeText(
+                  _lifeI18nText(
                     context,
-                    zh: '上传后会在这里显示临时链接。',
-                    en: 'The temporary link will appear here after upload.',
+                    'inline.plan295.life.the_temporary_link_will_appear_here.a2dbbb207867',
                   ),
                 )
               : Column(
@@ -367,17 +415,29 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
                       children: <Widget>[
                         if (result.name.isNotEmpty)
                           _ImageToWebMetricChip(
-                            label: _lifeText(context, zh: '文件名', en: 'Name'),
+                            label: _lifeI18nText(
+                              context,
+                              'inline.plan295.life.name.160a4094139f',
+                            ),
                             value: result.name,
                           ),
                         if (result.sizeBytes != null)
                           _ImageToWebMetricChip(
-                            label: _lifeText(context, zh: '上传大小', en: 'Size'),
+                            label: _lifeI18nText(
+                              context,
+                              'inline.plan295.life.size.7850a09793a0',
+                            ),
                             value: _formatBytes(result.sizeBytes!),
                           ),
                         _ImageToWebMetricChip(
-                          label: _lifeText(context, zh: '有效期', en: 'TTL'),
-                          value: _lifeText(context, zh: '约 3 小时', en: '~3h'),
+                          label: _lifeI18nText(
+                            context,
+                            'inline.plan295.life.ttl.a0399b1384a9',
+                          ),
+                          value: _lifeI18nText(
+                            context,
+                            'inline.plan295.life.3h.7df2ebc1dfa7',
+                          ),
                         ),
                       ],
                     ),
@@ -408,18 +468,19 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
 
   Widget _buildBoundaryPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '使用边界', en: 'Boundary'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '本地 HTML 不会上传图片；Uguu 分享是第三方公开临时链接，公开站 FAQ 当前声明约 3 小时后删除，并会保留活动文件数据库记录到过期。',
-        en: 'Local HTML generation does not upload the image. Uguu sharing is a third-party public temporary link; its FAQ currently states deletion after about 3 hours and active-file database records until expiry.',
+        'inline.plan295.life.boundary.b72c98dd2a1f',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.local_html_generation_does_not_uploa.5399cbc040ee',
       ),
       children: <Widget>[
         Text(
-          _lifeText(
+          _lifeI18nText(
             context,
-            zh: '若需要长期托管网页，请使用正式对象存储或静态站点服务；本工具更适合临时预览、转发和轻量展示。',
-            en: 'For long-term hosting, use real object storage or a static-site service. This tool is meant for temporary preview, forwarding, and lightweight display.',
+            'inline.plan295.life.for_long_term_hosting_use_real_objec.de9c865b1bd9',
           ),
         ),
       ],
@@ -467,10 +528,10 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '选择图片失败: $error',
-          en: 'Failed to pick image: $error',
+          'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.compress.failed_to_pick_image.6e0bad236d',
+          params: <String, Object?>{'error': error},
         );
       });
     }
@@ -523,10 +584,9 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
       String? savedPath;
       try {
         savedPath = await FilePicker.platform.saveFile(
-          dialogTitle: _lifeText(
+          dialogTitle: _lifeI18nText(
             context,
-            zh: '保存图片网页',
-            en: 'Save image webpage',
+            'inline.plan295.life.save_image_webpage.bfb018d381f9',
           ),
           fileName: fileName,
           type: FileType.custom,
@@ -544,10 +604,9 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
       if (savedPath == null || savedPath.trim().isEmpty) {
         if (kIsWeb) {
           setState(() {
-            _savedPath = _lifeText(
+            _savedPath = _lifeI18nText(
               context,
-              zh: '浏览器下载已触发，请查看下载列表。',
-              en: 'Browser download started. Check your downloads.',
+              'inline.plan295.crypto.browser_download_started_check_your.b28d392515b4',
             );
           });
           return;
@@ -580,10 +639,10 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '保存 HTML 失败: $error',
-          en: 'Failed to save HTML: $error',
+          'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.to.web.failed_to_save_html.b0261ecb82',
+          params: <String, Object?>{'error': error},
         );
       });
     } finally {
@@ -617,10 +676,10 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
         return;
       }
       setState(() {
-        _error = _lifeText(
+        _error = _lifeI18nText(
           context,
-          zh: '上传失败: $error',
-          en: 'Upload failed: $error',
+          'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.to.web.upload_failed.97b5ae72f7',
+          params: <String, Object?>{'error': error},
         );
       });
     } finally {
@@ -638,7 +697,11 @@ class _ImageToWebToolPageState extends State<_ImageToWebToolPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          _lifeText(context, zh: '已复制 $label', en: '$label copied'),
+          _lifeI18nText(
+            context,
+            'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.to.web.copied.e89207e2d2',
+            params: <String, Object?>{'label': label},
+          ),
         ),
       ),
     );

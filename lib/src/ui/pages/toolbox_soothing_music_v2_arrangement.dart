@@ -50,7 +50,10 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          i18n.t('toolbox.sound.soothing.arrangement_saved', params: <String, Object?>{'name': trimmedName}),
+          i18n.t(
+            'toolbox.sound.soothing.arrangement_saved',
+            params: <String, Object?>{'name': trimmedName},
+          ),
         ),
       ),
     );
@@ -92,7 +95,10 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
     final confirmed = await showConfirmDialog(
       context: context,
       title: i18n.t('toolbox.sound.soothing.delete_arrangement'),
-      message: i18n.t('toolbox.sound.soothing.delete_arrangement_confirm', params: <String, Object?>{'name': template.name}),
+      message: i18n.t(
+        'toolbox.sound.soothing.delete_arrangement_confirm',
+        params: <String, Object?>{'name': template.name},
+      ),
       confirmText: i18n.t('toolbox.sound.soothing.delete'),
       danger: true,
     );
@@ -248,10 +254,18 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
                         leading: const Icon(Icons.bookmark_added_outlined),
                         title: Text(
                           activeTemplate?.name ??
-                              i18n.t('toolbox.sound.soothing.arrangement_not_saved'),
+                              i18n.t(
+                                'toolbox.sound.soothing.arrangement_not_saved',
+                              ),
                         ),
                         subtitle: Text(
-                              i18n.t('toolbox.sound.soothing.arrangement_steps_info', params: <String, Object?>{'steps': '${draftSteps.length}', 'templates': '${templates.length}'}),
+                          i18n.t(
+                            'toolbox.sound.soothing.arrangement_steps_info',
+                            params: <String, Object?>{
+                              'steps': '${draftSteps.length}',
+                              'templates': '${templates.length}',
+                            },
+                          ),
                         ),
                       ),
                     ),
@@ -274,7 +288,9 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
                             await _saveArrangementTemplate(i18n);
                           },
                           icon: const Icon(Icons.save_outlined),
-                            label: Text(i18n.t('toolbox.sound.soothing.save_current')),
+                          label: Text(
+                            i18n.t('toolbox.sound.soothing.save_current'),
+                          ),
                         ),
                         if (templates.isNotEmpty)
                           OutlinedButton.icon(
@@ -312,7 +328,13 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
                                               ),
                                               title: Text(template.name),
                                               subtitle: Text(
-                                                i18n.t('toolbox.sound.soothing.template_steps', params: <String, Object?>{'count': template.steps.length}),
+                                                i18n.t(
+                                                  'toolbox.sound.soothing.template_steps',
+                                                  params: <String, Object?>{
+                                                    'count':
+                                                        template.steps.length,
+                                                  },
+                                                ),
                                               ),
                                               onTap: () => Navigator.of(
                                                 dialogContext,
@@ -340,13 +362,17 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
                                                       PopupMenuItem<String>(
                                                         value: 'rename',
                                                         child: Text(
-                                                          i18n.t('toolbox.sound.soothing.rename'),
+                                                          i18n.t(
+                                                            'toolbox.sound.soothing.rename',
+                                                          ),
                                                         ),
                                                       ),
                                                       PopupMenuItem<String>(
                                                         value: 'delete',
                                                         child: Text(
-                                                          i18n.t('toolbox.sound.soothing.delete'),
+                                                          i18n.t(
+                                                            'toolbox.sound.soothing.delete',
+                                                          ),
                                                         ),
                                                       ),
                                                     ],
@@ -369,7 +395,9 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
                               _applyArrangementTemplate(selected);
                             },
                             icon: const Icon(Icons.folder_open_rounded),
-                            label: Text(i18n.t('toolbox.sound.soothing.load_saved')),
+                            label: Text(
+                              i18n.t('toolbox.sound.soothing.load_saved'),
+                            ),
                           ),
                       ],
                     ),
@@ -378,7 +406,9 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
                       children: <Widget>[
                         Expanded(
                           child: Text(
-                            i18n.t('toolbox.sound.soothing.arrangement_steps_title'),
+                            i18n.t(
+                              'toolbox.sound.soothing.arrangement_steps_title',
+                            ),
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                         ),
@@ -395,7 +425,9 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
                             });
                           },
                           icon: const Icon(Icons.add_rounded),
-                            label: Text(i18n.t('toolbox.sound.soothing.add_current')),
+                          label: Text(
+                            i18n.t('toolbox.sound.soothing.add_current'),
+                          ),
                         ),
                       ],
                     ),
@@ -488,7 +520,9 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
                                   DropdownButtonFormField<String>(
                                     initialValue: stepMode.id,
                                     decoration: InputDecoration(
-                                      labelText: i18n.t('toolbox.sound.soothing.theme'),
+                                      labelText: i18n.t(
+                                        'toolbox.sound.soothing.theme',
+                                      ),
                                     ),
                                     items: _modes
                                         .map(
@@ -513,7 +547,9 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
                                   DropdownButtonFormField<int>(
                                     initialValue: safeTrackIndex,
                                     decoration: InputDecoration(
-                                      labelText: i18n.t('toolbox.sound.soothing.track'),
+                                      labelText: i18n.t(
+                                        'toolbox.sound.soothing.track',
+                                      ),
                                     ),
                                     items: List<DropdownMenuItem<int>>.generate(
                                       tracks.length,
@@ -540,7 +576,9 @@ extension _SoothingMusicV2Arrangement on _SoothingMusicV2PageState {
                                   Row(
                                     children: <Widget>[
                                       Text(
-                                        i18n.t('toolbox.sound.soothing.repeats'),
+                                        i18n.t(
+                                          'toolbox.sound.soothing.repeats',
+                                        ),
                                       ),
                                       const Spacer(),
                                       IconButton(

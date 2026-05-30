@@ -23,26 +23,10 @@ String localizedWordbookNameByPath(
   final normalizedPath = path.trim();
   final normalizedFallback = fallbackName.trim();
   if (normalizedPath == 'builtin:favorites') {
-    return pickUiText(
-      i18n,
-      zh: '收藏',
-      en: 'Favorites',
-      ja: 'お気に入り',
-      de: 'Favoriten',
-      fr: 'Favoris',
-      es: 'Favoritos',
-    );
+    return i18n.t('toolbox.sound.soothing.v2.mode.filter.favorites');
   }
   if (normalizedPath == 'builtin:task') {
-    return pickUiText(
-      i18n,
-      zh: '任务',
-      en: 'Task',
-      ja: 'タスク',
-      de: 'Aufgabe',
-      fr: 'Tache',
-      es: 'Tarea',
-    );
+    return i18n.t('inline.ui.widgets.word_card.task_df1f06');
   }
   if (normalizedFallback.isNotEmpty) return normalizedFallback;
   if (normalizedPath.startsWith('builtin:dict:')) {

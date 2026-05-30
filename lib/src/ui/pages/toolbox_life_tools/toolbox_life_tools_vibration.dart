@@ -9,10 +9,22 @@ class _VibrationToolPage extends StatefulWidget {
 
 class _VibrationToolPageState extends State<_VibrationToolPage> {
   static const List<_LifeOption<String>> _presetOptions = <_LifeOption<String>>[
-    _LifeOption(value: 'focus', labelZh: '专注点拍', labelEn: 'Focus taps'),
-    _LifeOption(value: 'double', labelZh: '双击提醒', labelEn: 'Double alert'),
-    _LifeOption(value: 'sos', labelZh: 'SOS 节奏', labelEn: 'SOS rhythm'),
-    _LifeOption(value: 'wave', labelZh: '波浪脉冲', labelEn: 'Wave pulse'),
+    _LifeOption(
+      value: 'focus',
+      labelKey: 'inline.plan297.life.focus_taps.3220e6795e0b',
+    ),
+    _LifeOption(
+      value: 'double',
+      labelKey: 'inline.plan297.life.double_alert.d88dbd61973c',
+    ),
+    _LifeOption(
+      value: 'sos',
+      labelKey: 'inline.plan297.life.sos_rhythm.cc2d2ecf34df',
+    ),
+    _LifeOption(
+      value: 'wave',
+      labelKey: 'inline.plan297.life.wave_pulse.5ec55a862bd4',
+    ),
   ];
 
   String _preset = 'focus';
@@ -51,30 +63,37 @@ class _VibrationToolPageState extends State<_VibrationToolPage> {
     final theme = Theme.of(context);
     final preview = _patternPreview();
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '震动仪', en: 'Vibration tool'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '把提醒节奏、力度和停顿先调清楚，再一键试震，适合找手感或做安静提醒。',
-        en: 'Shape rhythm, strength, and pauses first, then test the vibration in one tap for quiet alerts or tactile tuning.',
+        'inline.plan295.life.vibration_tool.e1833c0d758f',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.shape_rhythm_strength_and_pauses_fir.312c7c9800aa',
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _capability.isSupported ? _togglePlayback : null,
         icon: Icon(_playing ? Icons.stop_rounded : Icons.vibration_rounded),
         label: Text(
           _playing
-              ? _lifeText(context, zh: '停止', en: 'Stop')
-              : _lifeText(context, zh: '试震', en: 'Test'),
+              ? _lifeI18nText(
+                  context,
+                  'inline.ui.pages.toolbox_daily_choice.daily_choice_widgets.stop_d03661',
+                )
+              : _lifeI18nText(context, 'inline.plan295.life.test.e08ae258cb69'),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '当前节奏', en: 'Current rhythm'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '首屏先看预设、能力状态和预计脉冲数量，再决定要不要开震。',
-              en: 'Start with the preset, capability state, and expected pulse count before triggering the motor.',
+              'inline.plan295.life.current_rhythm.a81483a1b8a3',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.start_with_the_preset_capability_sta.ed6ab0a78175',
             ),
             children: <Widget>[
               Wrap(
@@ -95,10 +114,10 @@ class _VibrationToolPageState extends State<_VibrationToolPage> {
                   ),
                   _VibrationPill(
                     icon: Icons.bolt_rounded,
-                    label: _lifeText(
+                    label: _lifeI18nText(
                       context,
-                      zh: '约 $preview 次脉冲',
-                      en: '~$preview pulses',
+                      'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.vibration.pulses.e5e97bd848',
+                      params: <String, Object?>{'preview': preview},
                     ),
                     color: theme.colorScheme.primary,
                   ),
@@ -140,15 +159,16 @@ class _VibrationToolPageState extends State<_VibrationToolPage> {
                     const SizedBox(height: 12),
                     Text(
                       _playing
-                          ? _lifeText(
+                          ? _lifeI18nText(
                               context,
-                              zh: '已触发 $_pulseCount 次脉冲',
-                              en: '$_pulseCount pulses sent',
+                              'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.vibration.pulses_sent.dcf0cf3233',
+                              params: <String, Object?>{
+                                '_pulseCount': _pulseCount,
+                              },
                             )
-                          : _lifeText(
+                          : _lifeI18nText(
                               context,
-                              zh: '准备好后点右下角试震',
-                              en: 'Tap the action button when ready',
+                              'inline.plan295.life.tap_the_action_button_when_ready.8cad80ad0e99',
                             ),
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
@@ -156,15 +176,15 @@ class _VibrationToolPageState extends State<_VibrationToolPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _lifeText(
-                        context,
-                        zh: _capability.isSupported
-                            ? 'Android 会优先使用原生波形；不支持的平台会降级为系统轻触感。'
-                            : '当前设备或运行环境没有可用震动马达，页面只保留节奏预览。',
-                        en: _capability.isSupported
-                            ? 'Android prefers native waveforms; unsupported targets fall back to light system haptics.'
-                            : 'This device or runtime has no accessible vibration motor, so only the rhythm preview is available.',
-                      ),
+                      _capability.isSupported
+                          ? _lifeI18nText(
+                              context,
+                              'inline.plan295.life.android_prefers_native_waveforms_uns.4fa691ba9425',
+                            )
+                          : _lifeI18nText(
+                              context,
+                              'inline.plan295.life.this_device_or_runtime_has_no_access.762e7cc59a7e',
+                            ),
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
@@ -177,22 +197,30 @@ class _VibrationToolPageState extends State<_VibrationToolPage> {
           ),
           const SizedBox(height: 12),
           _LifeSettingsPanel(
-            title: _lifeText(context, zh: '参数设置', en: 'Pattern settings'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '脉冲宽度决定每一下的存在感，间隔决定节奏，循环次数决定总长度。',
-              en: 'Pulse width controls each hit, gap shapes rhythm, and cycle count sets total length.',
+              'inline.plan295.life.pattern_settings.a5d369999b0e',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.pulse_width_controls_each_hit_gap_sh.60350ee59049',
             ),
             children: <Widget>[
               _LifeSegmentedField<String>(
-                label: _lifeText(context, zh: '预设', en: 'Preset'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.ui.pages.toolbox_sound_tools.drum_pad.preset_a98ad7',
+                ),
                 value: _preset,
                 options: _presetOptions,
                 onChanged: (value) => setState(() => _preset = value),
               ),
               const SizedBox(height: 12),
               _LifeSliderField(
-                label: _lifeText(context, zh: '强度', en: 'Intensity'),
+                label: _lifeI18nText(
+                  context,
+                  'ref.toolbox.sleep.winddown.intensity',
+                ),
                 valueText: '${(_intensity * 100).round()}%',
                 value: _intensity,
                 min: 0.2,
@@ -201,7 +229,10 @@ class _VibrationToolPageState extends State<_VibrationToolPage> {
                 onChanged: (value) => setState(() => _intensity = value),
               ),
               _LifeSliderField(
-                label: _lifeText(context, zh: '单次脉冲', en: 'Pulse width'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.pulse_width.058f18960e51',
+                ),
                 valueText: '${_pulseWidth.round()} ms',
                 value: _pulseWidth,
                 min: 60,
@@ -210,7 +241,10 @@ class _VibrationToolPageState extends State<_VibrationToolPage> {
                 onChanged: (value) => setState(() => _pulseWidth = value),
               ),
               _LifeSliderField(
-                label: _lifeText(context, zh: '脉冲间隔', en: 'Gap'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.gap.379f86cce902',
+                ),
                 valueText: '${_gap.round()} ms',
                 value: _gap,
                 min: 40,
@@ -219,7 +253,10 @@ class _VibrationToolPageState extends State<_VibrationToolPage> {
                 onChanged: (value) => setState(() => _gap = value),
               ),
               _LifeSliderField(
-                label: _lifeText(context, zh: '循环次数', en: 'Cycles'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.cycles.3492aa65e38b',
+                ),
                 valueText: '$_cycles',
                 value: _cycles.toDouble(),
                 min: 1,
@@ -235,15 +272,24 @@ class _VibrationToolPageState extends State<_VibrationToolPage> {
             runSpacing: 8,
             children: <Widget>[
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '预计时长', en: 'Duration'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.duration.d33b4c0dbaf1',
+                ),
                 value: '${_totalDurationMs().round()} ms',
               ),
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '震动次数', en: 'Pulses'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.pulses.6659139322c4',
+                ),
                 value: '$preview',
               ),
               ToolboxMetricCard(
-                label: _lifeText(context, zh: '平台', en: 'Platform'),
+                label: _lifeI18nText(
+                  context,
+                  'inline.ui.pages.toolbox_human_tests_auditory_lab.platform_913e74',
+                ),
                 value: _capability.platform,
               ),
             ],
@@ -420,15 +466,20 @@ class _VibrationToolPageState extends State<_VibrationToolPage> {
 
   String _capabilityLabel(BuildContext context) {
     if (_capability.isSupported) {
-      return _lifeText(
-        context,
-        zh: _capability.supportsWaveform ? '可用原生波形' : '可用基础震动',
-        en: _capability.supportsWaveform
-            ? 'Native waveform ready'
-            : 'Basic haptics ready',
-      );
+      return _capability.supportsWaveform
+          ? _lifeI18nText(
+              context,
+              'inline.plan295.life.native_waveform_ready.b8de25663d12',
+            )
+          : _lifeI18nText(
+              context,
+              'inline.plan295.life.basic_haptics_ready.c12bc84e2510',
+            );
     }
-    return _lifeText(context, zh: '无可用震动能力', en: 'No vibration access');
+    return _lifeI18nText(
+      context,
+      'inline.plan295.life.no_vibration_access.d7b5ed1555ac',
+    );
   }
 }
 

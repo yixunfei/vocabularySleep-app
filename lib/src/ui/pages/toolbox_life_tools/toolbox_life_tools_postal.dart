@@ -196,30 +196,26 @@ List<_RemotePostalEntry> _parsePostalEntries(String html, String sourceUrl) {
 
 String _postalRemoteErrorText(BuildContext context, Object? error) {
   if (error == null) {
-    return _lifeText(
+    return _lifeI18nText(
       context,
-      zh: '暂时无法查询邮编。',
-      en: 'Postal lookup is unavailable.',
+      'inline.plan295.life.postal_lookup_is_unavailable.dcd060fedd50',
     );
   }
   if (error is TimeoutException) {
-    return _lifeText(
+    return _lifeI18nText(
       context,
-      zh: '查询超时，请稍后重试或打开来源页面查询。',
-      en: 'Lookup timed out. Try again later or open the source page.',
+      'inline.plan295.life.lookup_timed_out_try_again_later_or.fb63ba728330',
     );
   }
   if (error is FormatException) {
-    return _lifeText(
+    return _lifeI18nText(
       context,
-      zh: '查询结果格式变化，暂时无法解析。',
-      en: 'Lookup result format changed and cannot be parsed yet.',
+      'inline.plan295.life.lookup_result_format_changed_and_can.72a2868769e9',
     );
   }
-  return _lifeText(
+  return _lifeI18nText(
     context,
-    zh: '查询失败，请检查网络后重试。',
-    en: 'Lookup failed. Check the network and retry.',
+    'inline.plan295.life.lookup_failed_check_the_network_and.dfa19d45fe2e',
   );
 }
 
@@ -301,15 +297,20 @@ class _PostalLookupToolPageState extends State<_PostalLookupToolPage> {
   @override
   Widget build(BuildContext context) {
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '邮编查询', en: 'Postal lookup'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '输入城市、网点或地址片段，查询中国邮政网点邮编。',
-        en: 'Enter a city, site, or address fragment to find China Post site postal codes.',
+        'inline.plan295.life.postal_lookup.1ce6c88311a4',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.enter_a_city_site_or_address_fragmen.0435accd37ad',
       ),
       appBarActions: <Widget>[
         IconButton(
-          tooltip: _lifeText(context, zh: '打开中国邮政', en: 'Open China Post'),
+          tooltip: _lifeI18nText(
+            context,
+            'inline.plan295.life.open_china_post.cf77c8de48bb',
+          ),
           onPressed: () {
             _openExternal(context, _postalSourceBaseUrl);
           },
@@ -331,7 +332,10 @@ class _PostalLookupToolPageState extends State<_PostalLookupToolPage> {
               suffixIcon: _controller.text.trim().isEmpty
                   ? null
                   : IconButton(
-                      tooltip: _lifeText(context, zh: '清空', en: 'Clear'),
+                      tooltip: _lifeI18nText(
+                        context,
+                        'inline.plan294.zen_sand.clear_ea17218b',
+                      ),
                       onPressed: () {
                         _controller.clear();
                         setState(() {
@@ -341,10 +345,9 @@ class _PostalLookupToolPageState extends State<_PostalLookupToolPage> {
                       icon: const Icon(Icons.close_rounded),
                     ),
               border: const OutlineInputBorder(),
-              labelText: _lifeText(
+              labelText: _lifeI18nText(
                 context,
-                zh: '输入城市/网点/地址，例如：深圳、深圳大学',
-                en: 'Enter city/site/address, e.g. Shenzhen, Shenzhen University',
+                'inline.plan295.life.enter_city_site_address_e_g_shenzhen.0723eca5c713',
               ),
             ),
             onChanged: (_) => setState(() {}),
@@ -356,25 +359,31 @@ class _PostalLookupToolPageState extends State<_PostalLookupToolPage> {
             child: FilledButton.icon(
               onPressed: _remoteState.loading ? null : _runRemoteQuery,
               icon: const Icon(Icons.search_rounded),
-              label: Text(_lifeText(context, zh: '查询', en: 'Search')),
+              label: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.search.229b0d36efee',
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 16),
           SectionHeader(
-            title: _lifeText(context, zh: '查询结果', en: 'Results'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '只显示网点、地址、邮编和必要电话；重要邮件仍建议按完整地址复核。',
-              en: 'Only key site, address, postal code, and phone details are shown; verify important mail by full address.',
+              'inline.plan295.life.results.f26b34f465de',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan295.life.only_key_site_address_postal_code_an.faab52cc9adb',
             ),
           ),
           const SizedBox(height: 10),
           if (_remoteState.loading)
             _RemoteLoadingPanel(
-              text: _lifeText(
+              text: _lifeI18nText(
                 context,
-                zh: '正在查询邮编...',
-                en: 'Looking up postal code...',
+                'inline.plan295.life.looking_up_postal_code.1d272437dd4a',
               ),
             )
           else if (_remoteState.error != null)
@@ -473,7 +482,10 @@ class _PostalHeroCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  _lifeText(context, zh: '邮编查询', en: 'Postal lookup'),
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.postal_lookup.1ce6c88311a4',
+                  ),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -481,19 +493,23 @@ class _PostalHeroCard extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   remoteState.loading
-                      ? _lifeText(context, zh: '正在查询', en: 'Looking up')
+                      ? _lifeI18nText(
+                          context,
+                          'inline.plan295.life.looking_up.27bb54323dbd',
+                        )
                       : remoteState.error != null
                       ? _postalRemoteErrorText(context, remoteState.error)
                       : remoteState.query.trim().isEmpty
-                      ? _lifeText(
+                      ? _lifeI18nText(
                           context,
-                          zh: '输入地址、城市或邮编开始查询',
-                          en: 'Enter an address, city, or code to search',
+                          'inline.plan295.life.enter_an_address_city_or_code_to_sea.60f3a3f6fe21',
                         )
-                      : _lifeText(
+                      : _lifeI18nText(
                           context,
-                          zh: '已解析 ${remoteState.entries.length} 条结果',
-                          en: '${remoteState.entries.length} results parsed',
+                          'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.postal.results_parsed.72c3d609ff',
+                          params: <String, Object?>{
+                            'length': remoteState.entries.length,
+                          },
                         ),
                   style: theme.textTheme.bodySmall,
                 ),
@@ -628,11 +644,13 @@ class _PostalStartPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '快速开始', en: 'Quick start'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '可以输入城市、网点名称或更具体的地址片段。',
-        en: 'Enter a city, postal site name, or more specific address fragment.',
+        'inline.ui.pages.practice_page.quick_start_c5b829',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.enter_a_city_postal_site_name_or_mor.995dc6c2042f',
       ),
       children: <Widget>[
         Wrap(
@@ -642,13 +660,12 @@ class _PostalStartPanel extends StatelessWidget {
               const <_LifeOption<String>>[
                     _LifeOption<String>(
                       value: '深圳',
-                      labelZh: '深圳',
-                      labelEn: 'Shenzhen',
+                      labelKey: 'inline.plan295.life.shenzhen.90fa94d03930',
                     ),
                     _LifeOption<String>(
                       value: '深圳大学',
-                      labelZh: '深圳大学',
-                      labelEn: 'Shenzhen University',
+                      labelKey:
+                          'inline.plan295.life.shenzhen_university.ba2996aeb454',
                     ),
                   ]
                   .map((example) {
@@ -693,7 +710,9 @@ class _PostalErrorPanel extends StatelessWidget {
           FilledButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh_rounded),
-            label: Text(_lifeText(context, zh: '重试', en: 'Retry')),
+            label: Text(
+              _lifeI18nText(context, 'inline.plan295.life.retry.da2bb8aff35f'),
+            ),
           ),
         ],
       ),
@@ -722,24 +741,32 @@ class _PostalEmptyState extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            _lifeText(context, zh: '没有找到邮编', en: 'No postal code found'),
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.no_postal_code_found.7c002ec4f4b1',
+            ),
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '可以换更完整的地址关键词，或打开来源页面继续查询「$query」。',
-              en: 'Try a fuller address keyword, or open the source page for "$query".',
+              'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.postal.try_a_fuller_address_keyword_or.5b714b384e',
+              params: <String, Object?>{'query': query},
             ),
           ),
           const SizedBox(height: 12),
           FilledButton.icon(
             onPressed: onOpenSource,
             icon: const Icon(Icons.open_in_new_rounded),
-            label: Text(_lifeText(context, zh: '打开来源页', en: 'Open source')),
+            label: Text(
+              _lifeI18nText(
+                context,
+                'inline.plan295.life.open_source.132faf4b4128',
+              ),
+            ),
           ),
         ],
       ),
@@ -755,42 +782,49 @@ class _PostalRulePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const examples = <_LifeOption<String>>[
-      _LifeOption<String>(value: '深圳', labelZh: '深圳', labelEn: 'Shenzhen'),
+      _LifeOption<String>(
+        value: '深圳',
+        labelKey: 'inline.plan295.life.shenzhen.90fa94d03930',
+      ),
       _LifeOption<String>(
         value: '深圳大学',
-        labelZh: '深圳大学',
-        labelEn: 'Shenzhen University',
+        labelKey: 'inline.plan295.life.shenzhen_university.ba2996aeb454',
       ),
-      _LifeOption<String>(value: '上海', labelZh: '上海', labelEn: 'Shanghai'),
+      _LifeOption<String>(
+        value: '上海',
+        labelKey: 'inline.plan295.life.shanghai.ae22662abff7',
+      ),
     ];
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '查询提示', en: 'Lookup tips'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '当前来源为中国邮政网点查询，结果通常对应具体邮政网点；寄送重要文件前请按完整地址复核。',
-        en: 'The current source is China Post site lookup, so results usually map to specific postal service sites; verify important mail by full address.',
+        'inline.plan295.life.lookup_tips.c209a8141692',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.the_current_source_is_china_post_sit.b2dc3aa7e571',
       ),
       children: <Widget>[
         _PostalRuleRow(
           icon: Icons.search_rounded,
-          title: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '关键词越完整越准确',
-            en: 'Fuller keywords help',
+            'inline.plan295.life.fuller_keywords_help.ea56d11ee33a',
           ),
-          body: _lifeText(
+          body: _lifeI18nText(
             context,
-            zh: '输入网点名、城市名或更具体的地址片段，更容易定位到可用邮编。',
-            en: 'Site names, city names, or more specific address fragments make it easier to find a useful code.',
+            'inline.plan295.life.site_names_city_names_or_more_specif.fe1362941dcd',
           ),
         ),
         _PostalRuleRow(
           icon: Icons.fact_check_outlined,
-          title: _lifeText(context, zh: '重要邮件先核验', en: 'Verify important mail'),
-          body: _lifeText(
+          title: _lifeI18nText(
             context,
-            zh: '证件、合同、发票等重要邮件请用完整地址和收件单位信息再次确认。',
-            en: 'For IDs, contracts, invoices, and other important mail, verify with full address and recipient info.',
+            'inline.plan295.life.verify_important_mail.f6fb9e5e7145',
+          ),
+          body: _lifeI18nText(
+            context,
+            'inline.plan295.life.for_ids_contracts_invoices_and_other.f295819ca4ae',
           ),
         ),
         Wrap(
@@ -881,17 +915,19 @@ class _PostalSourcePanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            _lifeText(context, zh: '数据来源', en: 'Data source'),
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.data_source.9dd4d43ace21',
+            ),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w800,
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            _lifeText(
+            _lifeI18nText(
               context,
-              zh: '结果来自中国邮政网点查询页面。若查询结果不完整，请打开来源页面继续核验。',
-              en: 'Results come from China Post site lookup pages. If results look incomplete, open the source page to verify.',
+              'inline.plan295.life.results_come_from_china_post_site_lo.42872ef54ddb',
             ),
             style: theme.textTheme.bodySmall,
           ),
@@ -906,13 +942,21 @@ class _PostalSourcePanel extends StatelessWidget {
                 onPressed: onOpenSource,
                 icon: const Icon(Icons.open_in_new_rounded),
                 label: Text(
-                  _lifeText(context, zh: '打开当前来源', en: 'Open source'),
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.open_source.e9b30cc4cd21',
+                  ),
                 ),
               ),
               OutlinedButton.icon(
                 onPressed: onOpenChinaPost,
                 icon: const Icon(Icons.open_in_new_rounded),
-                label: Text(_lifeText(context, zh: '中国邮政', en: 'China Post')),
+                label: Text(
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.china_post.b9253533d982',
+                  ),
+                ),
               ),
             ],
           ),

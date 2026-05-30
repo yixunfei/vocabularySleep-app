@@ -547,97 +547,127 @@ extension _AppStateSleep on AppState {
     return switch (track) {
       SleepPlanTrack.rhythmReset => SleepPlan(
         track: track,
-        title: _sleepText(zh: '节律修复计划', en: 'Rhythm reset plan'),
-        summary: _sleepText(
-          zh: '先稳住起床、晨光和晚间减光，再慢慢把夜里的节奏拉回来。',
-          en: 'Stabilize wake time, morning light, and evening dim-down first.',
+        title: _sleepI18nText(
+          'inline.plan296.state.app.state.sleep.rhythm_reset_plan.48bd2997db',
+        ),
+        summary: _sleepI18nText(
+          'inline.plan296.state.app.state.sleep.stabilize_wake_time_morning_light_and.c714ec8d29',
         ),
         primaryActions: <String>[
-          _sleepText(zh: '固定起床时间', en: 'Keep a fixed wake time'),
-          _sleepText(zh: '醒来后尽快接触自然光', en: 'Get daylight soon after waking'),
-          _sleepText(zh: '晚上提前减光', en: 'Dim lights earlier at night'),
+          _sleepI18nText(
+            'inline.plan296.state.app.state.sleep.keep_a_fixed_wake_time.d75ce57225',
+          ),
+          _sleepI18nText(
+            'inline.plan296.state.app.state.sleep.get_daylight_soon_after_waking.50b9f89056',
+          ),
+          _sleepI18nText(
+            'inline.plan296.state.app.state.sleep.dim_lights_earlier_at_night.0d195b4f5f',
+          ),
         ],
         startedAt: startedAt,
       ),
       SleepPlanTrack.insomniaSupport => SleepPlan(
         track: track,
-        title: _sleepText(zh: '失眠支持计划', en: 'Insomnia support plan'),
-        summary: _sleepText(
-          zh: '优先处理夜醒挣扎和床上清醒过久的问题，再看要不要收紧睡眠窗口。',
-          en: 'Address long awake time in bed before adding stricter sleep work.',
+        title: _sleepI18nText(
+          'inline.plan296.state.app.state.sleep.insomnia_support_plan.d465940b02',
+        ),
+        summary: _sleepI18nText(
+          'inline.plan296.state.app.state.sleep.address_long_awake_time_in_bed.268241b5e6',
         ),
         primaryActions: <String>[
-          _sleepText(
-            zh: '学习夜醒后的离床策略',
-            en: 'Use a leave-bed strategy when fully awake',
+          _sleepI18nText(
+            'inline.plan296.state.app.state.sleep.use_a_leave_bed_strategy_when.20b2abdf92',
           ),
-          _sleepText(zh: '开始睡眠日记', en: 'Start a sleep diary'),
-          _sleepText(zh: '把担忧移到白天处理', en: 'Move worry work into daytime'),
+          _sleepI18nText(
+            'inline.plan296.state.app.state.sleep.start_a_sleep_diary.9d3c9fa1dc',
+          ),
+          _sleepI18nText(
+            'inline.plan296.state.app.state.sleep.move_worry_work_into_daytime.a84b2e5f93',
+          ),
         ],
         startedAt: startedAt,
       ),
       SleepPlanTrack.daytimeRecovery => SleepPlan(
         track: track,
-        title: _sleepText(zh: '白天恢复计划', en: 'Daytime recovery plan'),
-        summary: _sleepText(
-          zh: '重点看晨起恢复感、午后低谷和白天行为怎样拖累了夜里。',
-          en: 'Focus on daytime behaviors that drag down the night.',
+        title: _sleepI18nText(
+          'inline.plan296.state.app.state.sleep.daytime_recovery_plan.b5e3a87105',
+        ),
+        summary: _sleepI18nText(
+          'inline.plan296.state.app.state.sleep.focus_on_daytime_behaviors_that_drag.27f8dabb02',
         ),
         primaryActions: <String>[
-          _sleepText(zh: '记录晨起精神度', en: 'Track morning energy'),
-          _sleepText(zh: '管理午睡时长', en: 'Keep naps short'),
-          _sleepText(zh: '设定咖啡因截止时间', en: 'Set a caffeine cutoff'),
+          _sleepI18nText(
+            'inline.plan296.state.app.state.sleep.track_morning_energy.ac5f04ad18',
+          ),
+          _sleepI18nText(
+            'inline.plan296.state.app.state.sleep.keep_naps_short.c1f5802b9a',
+          ),
+          _sleepI18nText(
+            'inline.plan296.state.app.state.sleep.set_a_caffeine_cutoff.a104468d2c',
+          ),
         ],
         startedAt: startedAt,
       ),
       SleepPlanTrack.environmentFix => SleepPlan(
         track: track,
-        title: _sleepText(zh: '环境调整计划', en: 'Environment fix plan'),
-        summary: _sleepText(
-          zh: '先清掉卧室里最明显的刺激和不适，再看更细的习惯。',
-          en: 'Fix the most obvious bedroom stressors first.',
+        title: _sleepI18nText(
+          'inline.plan296.state.app.state.sleep.environment_fix_plan.ad39ab85af',
+        ),
+        summary: _sleepI18nText(
+          'inline.plan296.state.app.state.sleep.fix_the_most_obvious_bedroom_stressors.2d91017f83',
         ),
         primaryActions: <String>[
-          _sleepText(zh: '让卧室更暗更凉', en: 'Make the room darker and cooler'),
-          _sleepText(
-            zh: '把工作和手机移出床边',
-            en: 'Keep work and phones away from bed',
+          _sleepI18nText(
+            'inline.plan296.state.app.state.sleep.make_the_room_darker_and_cooler.aeb835e093',
           ),
-          _sleepText(
-            zh: '记录哪些环境更影响夜醒',
-            en: 'Track which conditions trigger awakenings',
+          _sleepI18nText(
+            'inline.plan296.state.app.state.sleep.keep_work_and_phones_away_from.6e0e962599',
+          ),
+          _sleepI18nText(
+            'inline.plan296.state.app.state.sleep.track_which_conditions_trigger_awakenings.4706e59578',
           ),
         ],
         startedAt: startedAt,
       ),
       SleepPlanTrack.windDown => SleepPlan(
         track: track,
-        title: _sleepText(zh: '睡前减压计划', en: 'Wind-down plan'),
-        summary: _sleepText(
-          zh: '优先降低睡前唤醒水平，让脑子和身体都慢慢收下来。',
-          en: 'Lower bedtime activation with a softer wind-down.',
+        title: _sleepI18nText(
+          'inline.plan296.state.app.state.sleep.wind_down_plan.128f503a48',
+        ),
+        summary: _sleepI18nText(
+          'inline.plan296.state.app.state.sleep.lower_bedtime_activation_with_a_softer.7c9773731a',
         ),
         primaryActions: <String>[
-          _sleepText(zh: '开始固定睡前流程', en: 'Start a fixed wind-down routine'),
-          _sleepText(zh: '写下担忧和明日待办', en: 'Unload worries and tomorrow tasks'),
-          _sleepText(
-            zh: '用轻柔呼吸代替硬扛入睡',
-            en: 'Use gentle breathing instead of forcing sleep',
+          _sleepI18nText(
+            'inline.plan296.state.app.state.sleep.start_a_fixed_wind_down_routine.66d0db65c8',
+          ),
+          _sleepI18nText(
+            'inline.plan296.state.app.state.sleep.unload_worries_and_tomorrow_tasks.4169a639ad',
+          ),
+          _sleepI18nText(
+            'inline.plan296.state.app.state.sleep.use_gentle_breathing_instead_of_forcing.1271e4df64',
           ),
         ],
         startedAt: startedAt,
       ),
       SleepPlanTrack.observation => SleepPlan(
         track: track,
-        title: _sleepText(zh: '观察计划', en: 'Observation plan'),
-        summary: _sleepText(
-          zh: '先连续记录几天，找出真正拖累睡眠的主因。',
-          en: 'Track a few days first and identify the main drag on sleep.',
+        title: _sleepI18nText(
+          'inline.plan296.state.app.state.sleep.observation_plan.bfb8dc1f09',
+        ),
+        summary: _sleepI18nText(
+          'inline.plan296.state.app.state.sleep.track_a_few_days_first_and.1b854706af',
         ),
         primaryActions: <String>[
-          _sleepText(zh: '先记 3 到 7 天睡眠日志', en: 'Log 3 to 7 days first'),
-          _sleepText(zh: '记录晚间刺激因素', en: 'Track evening stimulation'),
-          _sleepText(zh: '不要一次改太多', en: 'Change one thing at a time'),
+          _sleepI18nText(
+            'inline.plan296.state.app.state.sleep.log_3_to_7_days_first.c72938e96a',
+          ),
+          _sleepI18nText(
+            'inline.plan296.state.app.state.sleep.track_evening_stimulation.f2a36b2060',
+          ),
+          _sleepI18nText(
+            'inline.plan296.state.app.state.sleep.change_one_thing_at_a_time.a83deec89e',
+          ),
         ],
         startedAt: startedAt,
       ),
@@ -679,31 +709,29 @@ extension _AppStateSleep on AppState {
 
   String _nightRescueActionForMode(SleepNightRescueMode mode) {
     return switch (mode) {
-      SleepNightRescueMode.briefAwakening => _sleepText(
-        zh: '先别加任务，保持低刺激，看看困意会不会自己回来。',
-        en: 'Keep things low-stim and give the sleep drive a chance to return.',
+      SleepNightRescueMode.briefAwakening => _sleepI18nText(
+        'inline.plan296.state.app.state.sleep.keep_things_low_stim_and_give.45e2748ab8',
       ),
-      SleepNightRescueMode.fullyAwake => _sleepText(
-        zh: '如果你明显越来越清醒，先离开床，去做一件枯燥又不刺激的事。',
-        en: 'If you are fully awake, leave bed and do something calm and boring.',
+      SleepNightRescueMode.fullyAwake => _sleepI18nText(
+        'inline.plan296.state.app.state.sleep.if_you_are_fully_awake_leave.85320bc1da',
       ),
-      SleepNightRescueMode.racingThoughts => _sleepText(
-        zh: '不要在床上继续解决问题，先把念头停放下来，再回到呼吸。',
-        en: 'Stop problem-solving in bed, park the thoughts, then return to breathing.',
+      SleepNightRescueMode.racingThoughts => _sleepI18nText(
+        'inline.plan296.state.app.state.sleep.stop_problem_solving_in_bed_park.0db7ce02de',
       ),
-      SleepNightRescueMode.bodyActivated => _sleepText(
-        zh: '先让身体降下来，做轻柔呼气或放松动作，不追求立刻睡着。',
-        en: 'Lower body activation first with a softer exhale or a small release.',
+      SleepNightRescueMode.bodyActivated => _sleepI18nText(
+        'inline.plan296.state.app.state.sleep.lower_body_activation_first_with_a.2a2cf6f0b0',
       ),
-      SleepNightRescueMode.temperatureDiscomfort => _sleepText(
-        zh: '先处理冷热和不适，再决定要不要离床。',
-        en: 'Adjust temperature discomfort first, then decide whether to leave bed.',
+      SleepNightRescueMode.temperatureDiscomfort => _sleepI18nText(
+        'inline.plan296.state.app.state.sleep.adjust_temperature_discomfort_first_then_decide.70907e4863',
       ),
     };
   }
 
-  String _sleepText({required String zh, required String en}) {
-    return AppI18n.normalizeLanguageCode(_uiLanguage) == 'zh' ? zh : en;
+  String _sleepI18nText(
+    String key, {
+    Map<String, Object?> params = const <String, Object?>{},
+  }) {
+    return AppI18n(_uiLanguage).t(key, params: params);
   }
 
   SleepRoutineTemplate _normalizeSleepRoutineTemplate(

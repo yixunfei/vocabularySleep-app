@@ -18,37 +18,16 @@ class DualTaskSwitchTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(
-        i18n,
-        zh: '双任务切换',
-        en: 'Dual-task switching',
-        ja: 'Dual-task switching',
-        de: 'Dual-task switching',
-        fr: 'Interrupteur à double tâche',
-        es: 'Interruptor de dos discos',
-        ru: 'Двойное задание',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_switching.dual_task_switching_ed2cb8',
       ),
-      subtitle: pickUiText(
-        i18n,
-        zh: '大脑来回换挡——数字判奇偶，颜色判冷暖。',
-        en: 'Alternate between digit and color judgments, tracking switch cost.',
-        ja: 'Switch between digit parity and warm/cool color judgments while tracking switch cost.',
-        de: 'Switch between digit parity and warm/cool color judgments while tracking switch cost.',
-        fr: 'Passez entre la parité des chiffres et les jugements de couleur chaud/froid tout en suivant le coût du commutateur.',
-        es: 'Interruptor entre la paridad de dígitos y los juicios de color cálido / frío mientras el interruptor de seguimiento cuesta.',
-        ru: 'Переключитесь между паритетом цифр и теплыми / холодными цветовыми решениями при отслеживании стоимости переключателя.',
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_switching.alternate_between_digit_and_color_judgments_tracking_swi_b09ed9',
       ),
       accent: _accent,
       icon: Icons.swap_horiz_rounded,
-      status: pickUiText(
-        i18n,
-        zh: '数字判奇偶，颜色判冷暖——来回切换',
-        en: 'Next: choose a switch rhythm and start the alternating set',
-        ja: 'Next: choose a switch rhythm and start the alternating set',
-        de: 'Next: choose a switch rhythm and start the alternating set',
-        fr: 'Suivant : choisissez un rythme de commutation et démarrez l\'ensemble alternatif',
-        es: 'Siguiente: elegir un ritmo de cambio y comenzar el conjunto de alternancia',
-        ru: 'Далее: выберите ритм переключения и запустите переменный набор',
+      status: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_switching.next_choose_a_switch_rhythm_and_start_the_alternating_se_a3e5a4',
       ),
       child: const _DualTaskSwitchCard(),
     );
@@ -263,50 +242,22 @@ class _DualTaskSwitchCardState extends State<_DualTaskSwitchCard> {
 
   String _taskLabel(AppI18n i18n, _SwitchTask task) {
     return switch (task) {
-      _SwitchTask.parity => pickUiText(
-        i18n,
-        zh: '数字奇偶',
-        en: 'Digit parity',
-        ja: 'Digit parity',
-        de: 'Digit parity',
-        fr: 'Parité numérique',
-        es: 'Digit parity',
-        ru: 'Цифровой паритет',
+      _SwitchTask.parity => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_switching.digit_parity_71624c',
       ),
-      _SwitchTask.color => pickUiText(
-        i18n,
-        zh: '颜色冷热',
-        en: 'Warm or cool',
-        ja: 'Warm or cool',
-        de: 'Warm or cool',
-        fr: 'Chaud ou frais',
-        es: 'Caliente o fresco',
-        ru: 'Тепло или прохладно',
+      _SwitchTask.color => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_switching.warm_or_cool_2a9af2',
       ),
     };
   }
 
   String _taskPrompt(AppI18n i18n) {
     return switch (_currentTask) {
-      _SwitchTask.parity => pickUiText(
-        i18n,
-        zh: '判断当前数字是奇数还是偶数。',
-        en: 'Judge whether the current digit is odd or even.',
-        ja: 'Judge whether the current digit is odd or even.',
-        de: 'Judge whether the current digit is odd or even.',
-        fr: 'Jugez si le chiffre actuel est étrange ou même.',
-        es: 'Juzgue si el dígito actual es extraño o incluso.',
-        ru: 'Оцените, является ли текущая цифра странной или четной.',
+      _SwitchTask.parity => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_switching.judge_whether_the_current_digit_is_odd_or_even_b6c498',
       ),
-      _SwitchTask.color => pickUiText(
-        i18n,
-        zh: '判断当前颜色是暖色还是冷色。',
-        en: 'Judge whether the current color is warm or cool.',
-        ja: 'Judge whether the current color is warm or cool.',
-        de: 'Judge whether the current color is warm or cool.',
-        fr: 'Juger si la couleur actuelle est chaude ou fraîche.',
-        es: 'Juzgue si el color actual es cálido o fresco.',
-        ru: 'Определите, является ли текущий цвет теплым или холодным.',
+      _SwitchTask.color => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_switching.judge_whether_the_current_color_is_warm_or_cool_3d86e5',
       ),
     };
   }
@@ -376,55 +327,20 @@ class _DualTaskSwitchCardState extends State<_DualTaskSwitchCard> {
       children: <Widget>[
         _HumanMetricWrap(
           metrics: <(String, String)>[
+            (i18n.t('progress'), '$_roundIndex/$_roundCount'),
             (
-              pickUiText(
-                i18n,
-                zh: '进度',
-                en: 'Progress',
-                ja: 'Progress',
-                de: 'Progress',
-                fr: 'Progrès accomplis',
-                es: 'Progresos',
-                ru: 'Прогресс',
-              ),
-              '$_roundIndex/$_roundCount',
-            ),
-            (
-              pickUiText(
-                i18n,
-                zh: '准确率',
-                en: 'Accuracy',
-                ja: '精度',
-                de: 'Accuracy',
-                fr: 'Accuracy',
-                es: 'Precisión',
-                ru: 'точность',
-              ),
+              i18n.t('inline.ui.pages.practice_review_page.accuracy_8cf5a1'),
               '${(_accuracy * 100).round()}%',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '切换轮',
-                en: 'Switch rounds',
-                ja: 'Switch rounds',
-                de: 'Switch rounds',
-                fr: 'Interrupteurs',
-                es: 'Cambio de rondas',
-                ru: 'Переключать раунды',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_switching.switch_rounds_cb06ac',
               ),
               '$_switchRounds',
             ),
             (
-              pickUiText(
-                i18n,
-                zh: '连击',
-                en: 'Streak',
-                ja: 'Streak',
-                de: 'Streak',
-                fr: 'Streak',
-                es: 'Streak',
-                ru: 'полоса',
+              i18n.t(
+                'inline.ui.pages.toolbox_human_tests_reaction.streak_78b2bd',
               ),
               '$_bestStreak',
             ),
@@ -432,25 +348,11 @@ class _DualTaskSwitchCardState extends State<_DualTaskSwitchCard> {
         ),
         const SizedBox(height: 12),
         _HumanSettingsSection(
-          title: pickUiText(
-            i18n,
-            zh: '双任务设置',
-            en: 'Dual-task settings',
-            ja: 'Dual-task settings',
-            de: 'Dual-task settings',
-            fr: 'Paramètres à double tâche',
-            es: 'Ajustes de doble-tarea',
-            ru: 'Параметры двойной задачи',
+          title: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_switching.dual_task_settings_50b3e3',
           ),
-          subtitle: pickUiText(
-            i18n,
-            zh: '切换节奏、题量和判断主题都可以在这里调。',
-            en: 'Adjust the switch rhythm, round count, and judgment theme.',
-            ja: 'スイッチリズム、ラウンドカウント、判定テーマを調整します。',
-            de: 'Adjust the switch rhythm, round count, and judgment theme.',
-            fr: 'Adjust the switch rhythm, round count, and judgment theme.',
-            es: 'Ajuste el ritmo de cambio, recuento redondo y el tema del juicio.',
-            ru: 'Настройте ритм переключения, круглое количество и тему суждения.',
+          subtitle: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_switching.adjust_the_switch_rhythm_round_count_and_judgment_theme_b4ef47',
           ),
           child: _buildSettings(context, i18n),
         ),
@@ -475,60 +377,32 @@ class _DualTaskSwitchCardState extends State<_DualTaskSwitchCard> {
                 ButtonSegment<_SwitchPace>(
                   value: _SwitchPace.alternateEveryRound,
                   label: Text(
-                    pickUiText(
-                      i18n,
-                      zh: '每轮切换',
-                      en: 'Every round',
-                      ja: 'Every round',
-                      de: 'Every round',
-                      fr: 'Chaque tour',
-                      es: 'Cada ronda',
-                      ru: 'Каждый раунд',
+                    i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_switching.every_round_975a59',
                     ),
                   ),
                 ),
                 ButtonSegment<_SwitchPace>(
                   value: _SwitchPace.alternateEveryTwo,
                   label: Text(
-                    pickUiText(
-                      i18n,
-                      zh: '每两轮',
-                      en: 'Every 2',
-                      ja: 'Every 2',
-                      de: 'Every 2',
-                      fr: 'Tous les 2',
-                      es: 'Cada 2',
-                      ru: 'каждые 2',
+                    i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_switching.every_2_a73243',
                     ),
                   ),
                 ),
                 ButtonSegment<_SwitchPace>(
                   value: _SwitchPace.alternateEveryThree,
                   label: Text(
-                    pickUiText(
-                      i18n,
-                      zh: '每三轮',
-                      en: 'Every 3',
-                      ja: 'Every 3',
-                      de: 'Every 3',
-                      fr: 'Tous les 3',
-                      es: 'Cada 3',
-                      ru: 'каждые 3',
+                    i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_switching.every_3_cfc779',
                     ),
                   ),
                 ),
                 ButtonSegment<_SwitchPace>(
                   value: _SwitchPace.randomBlocks,
                   label: Text(
-                    pickUiText(
-                      i18n,
-                      zh: '随机块',
-                      en: 'Random blocks',
-                      ja: 'Random blocks',
-                      de: 'Random blocks',
-                      fr: 'Blocs aléatoires',
-                      es: 'Bloqueos aleatorios',
-                      ru: 'Случайные блоки',
+                    i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_switching.random_blocks_aaac4b',
                     ),
                   ),
                 ),
@@ -540,44 +414,17 @@ class _DualTaskSwitchCardState extends State<_DualTaskSwitchCard> {
             ),
             _HumanActionButton(
               label: _running
-                  ? pickUiText(
-                      i18n,
-                      zh: '重新开始',
-                      en: 'Restart',
-                      ja: 'Restart',
-                      de: 'Restart',
-                      fr: 'Redémarrer',
-                      es: 'Restart',
-                      ru: 'Перезапустить',
+                  ? i18n.t(
+                      'inline.ui.pages.practice_session_page.restart_8b7fcc',
                     )
-                  : pickUiText(
-                      i18n,
-                      zh: '开始',
-                      en: 'Start',
-                      ja: 'Start',
-                      de: 'Start',
-                      fr: 'Démarrer',
-                      es: 'Comienzo',
-                      ru: 'Начинать',
-                    ),
+                  : i18n.t('toolbox.breathing.start'),
               icon: _running ? Icons.replay_rounded : Icons.play_arrow_rounded,
               onPressed: _start,
             ),
             OutlinedButton.icon(
               onPressed: _reset,
               icon: const Icon(Icons.refresh_rounded),
-              label: Text(
-                pickUiText(
-                  i18n,
-                  zh: '重置',
-                  en: 'Reset',
-                  ja: 'Reset',
-                  de: 'Reset',
-                  fr: 'Réinitialiser',
-                  es: 'Reset',
-                  ru: 'сброс',
-                ),
-              ),
+              label: Text(i18n.t('appearanceReset')),
             ),
           ],
         ),
@@ -661,15 +508,8 @@ class _DualTaskSwitchCardState extends State<_DualTaskSwitchCard> {
                           : null,
                       icon: const Icon(Icons.filter_1_rounded),
                       label: Text(
-                        pickUiText(
-                          i18n,
-                          zh: '奇数',
-                          en: 'Odd',
-                          ja: 'Odd',
-                          de: 'Odd',
-                          fr: 'Curieuse',
-                          es: 'Odd',
-                          ru: 'странный',
+                        i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_switching.odd_9aa6a3',
                         ),
                       ),
                     ),
@@ -679,15 +519,8 @@ class _DualTaskSwitchCardState extends State<_DualTaskSwitchCard> {
                           : null,
                       icon: const Icon(Icons.filter_2_rounded),
                       label: Text(
-                        pickUiText(
-                          i18n,
-                          zh: '偶数',
-                          en: 'Even',
-                          ja: 'Even',
-                          de: 'Even',
-                          fr: 'Même',
-                          es: 'Incluso',
-                          ru: 'Даже',
+                        i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_switching.even_391cc4',
                         ),
                       ),
                     ),
@@ -702,33 +535,13 @@ class _DualTaskSwitchCardState extends State<_DualTaskSwitchCard> {
                     FilledButton.icon(
                       onPressed: _running ? () => _answer(_currentWarm) : null,
                       icon: const Icon(Icons.wb_sunny_rounded),
-                      label: Text(
-                        pickUiText(
-                          i18n,
-                          zh: '暖色',
-                          en: 'Warm',
-                          ja: 'Warm',
-                          de: 'Warm',
-                          fr: 'Chaleur',
-                          es: 'Warm',
-                          ru: 'теплый',
-                        ),
-                      ),
+                      label: Text(i18n.t('toolbox.sound.harp.warm')),
                     ),
                     FilledButton.icon(
                       onPressed: _running ? () => _answer(!_currentWarm) : null,
                       icon: const Icon(Icons.ac_unit_rounded),
                       label: Text(
-                        pickUiText(
-                          i18n,
-                          zh: '冷色',
-                          en: 'Cool',
-                          ja: 'クール',
-                          de: 'Cool',
-                          fr: 'Frais',
-                          es: 'Genial.',
-                          ru: 'Круто',
-                        ),
+                        i18n.t('inline.plan295.daily_choice.cool.97b323d9a1f6'),
                       ),
                     ),
                   ],
@@ -737,25 +550,11 @@ class _DualTaskSwitchCardState extends State<_DualTaskSwitchCard> {
                 const SizedBox(height: 12),
                 _HumanPill(
                   text: _lastCorrect!
-                      ? pickUiText(
-                          i18n,
-                          zh: '上一轮正确',
-                          en: 'Last round correct',
-                          ja: 'Last round correct',
-                          de: 'Last round correct',
-                          fr: 'Dernier round correct',
-                          es: 'Última ronda correcta',
-                          ru: 'Последний раунд правильный',
+                      ? i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_switching.last_round_correct_319d07',
                         )
-                      : pickUiText(
-                          i18n,
-                          zh: '上一轮失误',
-                          en: 'Last round missed',
-                          ja: 'Last round missed',
-                          de: 'Last round missed',
-                          fr: 'Dernier tour manqué',
-                          es: 'Última ronda perdida',
-                          ru: 'Последний пропущенный раунд',
+                      : i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_auditory.last_round_missed_323436',
                         ),
                   accent: _lastCorrect!
                       ? const Color(0xFF4E8B6B)
@@ -773,18 +572,7 @@ class _DualTaskSwitchCardState extends State<_DualTaskSwitchCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Text(
-          pickUiText(
-            i18n,
-            zh: '轮数',
-            en: 'Rounds',
-            ja: 'Rounds',
-            de: 'Rounds',
-            fr: 'Rondes',
-            es: 'Rondas',
-            ru: 'Круги',
-          ),
-        ),
+        Text(i18n.t('inline.plan294.breathing.rounds_06b0afec')),
         Wrap(
           spacing: 8,
           children: <int>[8, 12, 16, 20]
@@ -801,27 +589,13 @@ class _DualTaskSwitchCardState extends State<_DualTaskSwitchCard> {
         ),
         const SizedBox(height: 12),
         Text(
-          pickUiText(
-            i18n,
-            zh: '切换主题',
-            en: 'Task theme',
-            ja: 'Task theme',
-            de: 'Task theme',
-            fr: 'Thème de tâche',
-            es: 'Tema de la tarea',
-            ru: 'Тема задания',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_switching.task_theme_8bbe5f',
           ),
         ),
         Text(
-          pickUiText(
-            i18n,
-            zh: '数字奇偶与颜色冷热交替出现，帮助观察切换代价。',
-            en: 'Digit parity and warm/cool color cues alternate to reveal switch cost.',
-            ja: 'Digit parity and warm/cool color cues alternate to reveal switch cost.',
-            de: 'Digit parity and warm/cool color cues alternate to reveal switch cost.',
-            fr: 'La parité numérique et les indices de couleur chaud/froid alternent pour révéler le coût du commutateur.',
-            es: 'Digit parity and warm/cool color cues alternan para revelar el coste del interruptor.',
-            ru: 'Цифровой паритет и теплые / холодные цветовые сигналы чередуются, чтобы выявить стоимость переключения.',
+          i18n.t(
+            'inline.ui.pages.toolbox_human_tests_switching.digit_parity_and_warm_cool_color_cues_alternate_to_revea_3e9833',
           ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
@@ -839,15 +613,8 @@ class _DualTaskSwitchCardState extends State<_DualTaskSwitchCard> {
       builder: (context) {
         return AlertDialog(
           title: Text(
-            pickUiText(
-              i18n,
-              zh: '双任务切换报告',
-              en: 'Dual-task report',
-              ja: 'Dual-task report',
-              de: 'Dual-task report',
-              fr: 'Rapport à double tâche',
-              es: 'Informe de doble análisis',
-              ru: 'Отчет о двух задачах',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_switching.dual_task_report_441a6c',
             ),
           ),
           content: SingleChildScrollView(
@@ -858,54 +625,26 @@ class _DualTaskSwitchCardState extends State<_DualTaskSwitchCard> {
                 _HumanMetricWrap(
                   metrics: <(String, String)>[
                     (
-                      pickUiText(
-                        i18n,
-                        zh: '准确率',
-                        en: 'Accuracy',
-                        ja: '精度',
-                        de: 'Accuracy',
-                        fr: 'Accuracy',
-                        es: 'Precisión',
-                        ru: 'точность',
+                      i18n.t(
+                        'inline.ui.pages.practice_review_page.accuracy_8cf5a1',
                       ),
                       '${(_accuracy * 100).round()}%',
                     ),
                     (
-                      pickUiText(
-                        i18n,
-                        zh: '切换代价',
-                        en: 'Switch cost',
-                        ja: 'Switch cost',
-                        de: 'Switch cost',
-                        fr: 'Coût de commutation',
-                        es: 'Costo de conmutación',
-                        ru: 'Стоимость коммутатора',
+                      i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_switching.switch_cost_cab5df',
                       ),
                       _switchCost == 0 ? '-' : _formatMilliseconds(_switchCost),
                     ),
                     (
-                      pickUiText(
-                        i18n,
-                        zh: '切换轮',
-                        en: 'Switch rounds',
-                        ja: 'Switch rounds',
-                        de: 'Switch rounds',
-                        fr: 'Interrupteurs',
-                        es: 'Cambio de rondas',
-                        ru: 'Переключать раунды',
+                      i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_switching.switch_rounds_cb06ac',
                       ),
                       '$_switchRounds',
                     ),
                     (
-                      pickUiText(
-                        i18n,
-                        zh: '最佳连击',
-                        en: 'Best streak',
-                        ja: 'ベストストリーク',
-                        de: 'Best streak',
-                        fr: 'Meilleure série',
-                        es: 'La mejor racha',
-                        ru: 'Лучшая полоса',
+                      i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_aim_widgets.best_streak_5a5a71',
                       ),
                       '$_bestStreak',
                     ),
@@ -917,15 +656,8 @@ class _DualTaskSwitchCardState extends State<_DualTaskSwitchCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        pickUiText(
-                          i18n,
-                          zh: '重复轮平均',
-                          en: 'Repeat average',
-                          ja: 'Repeat average',
-                          de: 'Repeat average',
-                          fr: 'Répéter la moyenne',
-                          es: 'Promedio de repetición',
-                          ru: 'Повторить средний',
+                        i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_switching.repeat_average_10022d',
                         ),
                       ),
                       Text(
@@ -935,15 +667,8 @@ class _DualTaskSwitchCardState extends State<_DualTaskSwitchCard> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        pickUiText(
-                          i18n,
-                          zh: '切换轮平均',
-                          en: 'Switch average',
-                          ja: 'Switch average',
-                          de: 'Switch average',
-                          fr: 'Moyenne des changements',
-                          es: 'Interruptor promedio',
-                          ru: 'Средняя коммутация',
+                        i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_switching.switch_average_901bc9',
                         ),
                       ),
                       Text(
@@ -960,18 +685,7 @@ class _DualTaskSwitchCardState extends State<_DualTaskSwitchCard> {
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                pickUiText(
-                  i18n,
-                  zh: '关闭',
-                  en: 'Close',
-                  ja: '閉じる',
-                  de: 'Close',
-                  fr: 'Fermer',
-                  es: 'Cerca',
-                  ru: 'Закрыть',
-                ),
-              ),
+              child: Text(i18n.t('inline.plan295.life.close.370fb8697deb')),
             ),
           ],
         );

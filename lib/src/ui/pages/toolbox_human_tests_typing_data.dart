@@ -4,199 +4,187 @@ const List<_TypingPassage> _typingPassages = <_TypingPassage>[
   _TypingPassage(
     language: _TypingLanguage.zh,
     topic: _TypingTopic.focus,
-    zh: '清醒的注意力来自稳定的呼吸、明确的目标和可持续的节奏。',
-    en: 'Focused attention comes from steady breathing, a clear goal, and a sustainable rhythm.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.focused_attention_comes_from_steady_breathing_a_.3992ca32ff',
   ),
   _TypingPassage(
     language: _TypingLanguage.zh,
     topic: _TypingTopic.focus,
-    zh: '把复杂任务切成几段，手指会更快找到下一个落点。',
-    en: 'Split complex work into smaller steps, and your hands find the next move faster.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.split_complex_work_into_smaller_steps_and_your_h.c85d58bab9',
   ),
   _TypingPassage(
     language: _TypingLanguage.zh,
     topic: _TypingTopic.sleep,
-    zh: '今晚把单词放慢一点，记忆会在安静的间隔里留下痕迹。',
-    en: 'Slow the words down tonight, and memory will leave traces in the quiet gaps.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.slow_the_words_down_tonight_and_memory_will_leav.48214cd486',
   ),
   _TypingPassage(
     language: _TypingLanguage.zh,
     topic: _TypingTopic.tech,
-    zh: '专业的输入训练不只看速度，也看错误密度、回退次数和稳定性。',
-    en: 'Professional typing practice measures speed, error density, corrections, and stability.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.professional_typing_practice_measures_speed_erro.7eb7ddc04c',
   ),
   _TypingPassage(
     language: _TypingLanguage.zh,
     topic: _TypingTopic.story,
-    zh: '窗外的灯光慢慢亮起，纸上的句子像小船一样靠岸。',
-    en: 'Lights rose outside the window, and the sentence on paper drifted gently ashore.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.lights_rose_outside_the_window_and_the_sentence_.0815612dcc',
   ),
   _TypingPassage(
     language: _TypingLanguage.zh,
     topic: _TypingTopic.vocabulary,
-    zh: '遇到生词时先读完整句，再把意思、声音和场景一起存进记忆。',
-    en: 'Read the whole sentence first, then store meaning, sound, and scene together.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.read_the_whole_sentence_first_then_store_meaning.0551684fad',
   ),
   _TypingPassage(
     language: _TypingLanguage.zh,
     topic: _TypingTopic.travel,
-    zh: '清晨的车站正在苏醒，背包里的路线图被折成整齐的小方块。',
-    en: 'The morning station woke up while the map folded into neat squares.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.the_morning_station_woke_up_while_the_map_folded.1207f3e5b4',
   ),
   _TypingPassage(
     language: _TypingLanguage.en,
     topic: _TypingTopic.focus,
-    zh: 'A calm mind can move quickly without feeling rushed.',
-    en: 'A calm mind can move quickly without feeling rushed.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.a_calm_mind_can_move_quickly_without_feeling_rus.8573264db4',
   ),
   _TypingPassage(
     language: _TypingLanguage.en,
     topic: _TypingTopic.sleep,
-    zh: 'Memory improves when attention has a gentle rhythm.',
-    en: 'Memory improves when attention has a gentle rhythm.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.memory_improves_when_attention_has_a_gentle_rhyt.a28836ac59',
   ),
   _TypingPassage(
     language: _TypingLanguage.en,
     topic: _TypingTopic.tech,
-    zh: 'Clean code keeps fast ideas from becoming expensive noise.',
-    en: 'Clean code keeps fast ideas from becoming expensive noise.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.clean_code_keeps_fast_ideas_from_becoming_expens.dabdfb7c93',
   ),
   _TypingPassage(
     language: _TypingLanguage.en,
     topic: _TypingTopic.story,
-    zh: 'The quiet station clock counted every suitcase and every goodbye.',
-    en: 'The quiet station clock counted every suitcase and every goodbye.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.the_quiet_station_clock_counted_every_suitcase_a.a4da437e92',
   ),
   _TypingPassage(
     language: _TypingLanguage.en,
     topic: _TypingTopic.vocabulary,
-    zh: 'A useful word becomes stronger each time it appears in a new context.',
-    en: 'A useful word becomes stronger each time it appears in a new context.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.a_useful_word_becomes_stronger_each_time_it_appe.c707bf7a73',
   ),
   _TypingPassage(
     language: _TypingLanguage.en,
     topic: _TypingTopic.travel,
-    zh: 'The train crossed the river just as the city opened its windows.',
-    en: 'The train crossed the river just as the city opened its windows.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.the_train_crossed_the_river_just_as_the_city_ope.12a131898a',
   ),
   _TypingPassage(
     language: _TypingLanguage.mixed,
     topic: _TypingTopic.focus,
-    zh: 'Focus 25 minutes, rest 5 minutes, then review one small win.',
-    en: 'Focus 25 minutes, rest 5 minutes, then review one small win.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.focus_25_minutes_rest_5_minutes_then_review_one_.c80a46ff7f',
   ),
   _TypingPassage(
     language: _TypingLanguage.mixed,
     topic: _TypingTopic.tech,
-    zh: 'Flutter widget tree: state first, layout second, polish last.',
-    en: 'Flutter widget tree: state first, layout second, polish last.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.flutter_widget_tree_state_first_layout_second_po.47ec49ada6',
   ),
   _TypingPassage(
     language: _TypingLanguage.mixed,
     topic: _TypingTopic.sleep,
-    zh: 'Sleep mode: dim light, soft voice, zero pressure.',
-    en: 'Sleep mode: dim light, soft voice, zero pressure.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.sleep_mode_dim_light_soft_voice_zero_pressure.604f0fd0e0',
   ),
   _TypingPassage(
     language: _TypingLanguage.mixed,
     topic: _TypingTopic.story,
-    zh: 'The note said: 明天见, and the platform became quiet again.',
-    en: 'The note said: see you tomorrow, and the platform became quiet again.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.the_note_said_see_you_tomorrow_and_the_platform_.0bfc1633b5',
   ),
   _TypingPassage(
     language: _TypingLanguage.mixed,
     topic: _TypingTopic.vocabulary,
-    zh: 'Review "steady", 复习「稳定」, then use both in one sentence.',
-    en: 'Review "steady", then use both languages in one sentence.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.review_steady_then_use_both_languages_in_one_sen.b0fa9fd564',
   ),
   _TypingPassage(
     language: _TypingLanguage.mixed,
     topic: _TypingTopic.travel,
-    zh: 'Gate B12 opens at 08:40, 行李放左侧, coffee stays sealed.',
-    en: 'Gate B12 opens at 08:40, keep luggage left, coffee sealed.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.gate_b12_opens_at_08_40_keep_luggage_left_coffee.98ebf6c9c2',
   ),
   _TypingPassage(
     language: _TypingLanguage.ja,
     topic: _TypingTopic.focus,
-    zh: '静かな集中は、短い休憩と小さな確認から生まれる。',
-    en: 'Quiet focus grows from short breaks and small checks.',
-    ja: '静かな集中は、短い休憩と小さな確認から生まれる。',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.quiet_focus_grows_from_short_breaks_and_small_ch.ac1b5542b6',
   ),
   _TypingPassage(
     language: _TypingLanguage.ja,
     topic: _TypingTopic.sleep,
-    zh: '夜の単語はゆっくり読み、朝にもう一度思い出す。',
-    en: 'Read the night words slowly and recall them again in the morning.',
-    ja: '夜の単語はゆっくり読み、朝にもう一度思い出す。',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.read_the_night_words_slowly_and_recall_them_agai.5231376cd9',
   ),
   _TypingPassage(
     language: _TypingLanguage.ja,
     topic: _TypingTopic.tech,
-    zh: '小さな関数は、あとで読む人への親切な案内になる。',
-    en: 'Small functions become kind guides for the next reader.',
-    ja: '小さな関数は、あとで読む人への親切な案内になる。',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.small_functions_become_kind_guides_for_the_next_.bf71c48128',
   ),
   _TypingPassage(
     language: _TypingLanguage.ja,
     topic: _TypingTopic.story,
-    zh: '雨の駅で、古い切符だけが旅の続きを覚えていた。',
-    en: 'At the rainy station, only the old ticket remembered the journey.',
-    ja: '雨の駅で、古い切符だけが旅の続きを覚えていた。',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.at_the_rainy_station_only_the_old_ticket_remembe.c594bc3b1e',
   ),
   _TypingPassage(
     language: _TypingLanguage.ja,
     topic: _TypingTopic.vocabulary,
-    zh: '新しい言葉は、例文の中で少しずつ自分の形になる。',
-    en: 'New words slowly take shape inside example sentences.',
-    ja: '新しい言葉は、例文の中で少しずつ自分の形になる。',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.new_words_slowly_take_shape_inside_example_sente.855a3dcc93',
   ),
   _TypingPassage(
     language: _TypingLanguage.ja,
     topic: _TypingTopic.travel,
-    zh: '港の朝、白い船が静かにロープをほどいて出発した。',
-    en: 'In the harbor morning, a white ship quietly untied and left.',
-    ja: '港の朝、白い船が静かにロープをほどいて出発した。',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.in_the_harbor_morning_a_white_ship_quietly_untie.ba575a8fb8',
   ),
   _TypingPassage(
     language: _TypingLanguage.es,
     topic: _TypingTopic.focus,
-    zh: 'La mente clara avanza mejor cuando cada tarea tiene un borde visible.',
-    en: 'A clear mind moves better when each task has a visible edge.',
-    es: 'La mente clara avanza mejor cuando cada tarea tiene un borde visible.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.a_clear_mind_moves_better_when_each_task_has_a_v.33817dca3d',
   ),
   _TypingPassage(
     language: _TypingLanguage.es,
     topic: _TypingTopic.sleep,
-    zh: 'Antes de dormir, una frase lenta puede ordenar todo el día.',
-    en: 'Before sleep, one slow sentence can put the whole day in order.',
-    es: 'Antes de dormir, una frase lenta puede ordenar todo el día.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.before_sleep_one_slow_sentence_can_put_the_whole.c7b512ad3f',
   ),
   _TypingPassage(
     language: _TypingLanguage.es,
     topic: _TypingTopic.tech,
-    zh: 'Un buen registro explica el fallo sin llenar la pantalla de ruido.',
-    en: 'A good log explains the failure without filling the screen with noise.',
-    es: 'Un buen registro explica el fallo sin llenar la pantalla de ruido.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.a_good_log_explains_the_failure_without_filling_.da6d54ce94',
   ),
   _TypingPassage(
     language: _TypingLanguage.es,
     topic: _TypingTopic.story,
-    zh: 'La plaza quedó vacía, pero la música siguió doblando la esquina.',
-    en: 'The square was empty, but the music kept turning the corner.',
-    es: 'La plaza quedó vacía, pero la música siguió doblando la esquina.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.the_square_was_empty_but_the_music_kept_turning_.3aee3020df',
   ),
   _TypingPassage(
     language: _TypingLanguage.es,
     topic: _TypingTopic.vocabulary,
-    zh: 'Una palabra nueva necesita sonido, imagen y uso para quedarse.',
-    en: 'A new word needs sound, image, and use before it stays.',
-    es: 'Una palabra nueva necesita sonido, imagen y uso para quedarse.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.a_new_word_needs_sound_image_and_use_before_it_s.80e6fb5283',
   ),
   _TypingPassage(
     language: _TypingLanguage.es,
     topic: _TypingTopic.travel,
-    zh: 'El tren salió temprano y dejó una línea dorada sobre el río.',
-    en: 'The train left early and drew a golden line over the river.',
-    es: 'El tren salió temprano y dejó una línea dorada sobre el río.',
+    textKey:
+        'inline.plan297.human_tests.typing.passage.the_train_left_early_and_drew_a_golden_line_over.573e850a74',
   ),
 ];

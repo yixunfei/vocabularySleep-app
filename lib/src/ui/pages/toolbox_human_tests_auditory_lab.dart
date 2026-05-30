@@ -12,25 +12,11 @@ class AuditoryLabPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         SectionHeader(
-          title: pickUiText(
-            i18n,
-            zh: '音量校准',
-            en: 'Volume calibration',
-            ja: 'Volume calibration',
-            de: 'Volume calibration',
-            fr: 'Étalonnage du volume',
-            es: 'Calibración del volumen',
-            ru: 'калибровка объема',
+          title: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory_lab.volume_calibration_fdaebf',
           ),
-          subtitle: pickUiText(
-            i18n,
-            zh: '先把播放音量调到合适范围，再开始频率、灵敏度、空间和麦克风测试。',
-            en: 'Set playback volume to a comfortable range before frequency, sensitivity, spatial, and mic tests.',
-            ja: 'Set playback volume to a comfortable range before frequency, sensitivity, spatial, and mic tests.',
-            de: 'Set playback volume to a comfortable range before frequency, sensitivity, spatial, and mic tests.',
-            fr: 'Réglez le volume de lecture à une plage confortable avant les tests de fréquence, de sensibilité, d\'espace et de micro.',
-            es: 'Establecer el volumen de reproducción a un rango cómodo antes de las pruebas de frecuencia, sensibilidad, espacio y micrófono.',
-            ru: 'Установите громкость воспроизведения в удобном диапазоне перед частотными, чувствительными, пространственными и микрофонными тестами.',
+          subtitle: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory_lab.set_playback_volume_to_a_comfortable_range_before_freque_58c901',
           ),
         ),
         const SizedBox(height: 10),
@@ -51,37 +37,16 @@ class AcousticExperimentTestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return _HumanTestScaffold(
-      title: pickUiText(
-        i18n,
-        zh: '声学实验',
-        en: 'Acoustic experiment',
-        ja: '音響実験',
-        de: 'Akustiktest',
-        fr: 'Expérience acoustique',
-        es: 'Experimento acústico',
-        ru: 'Акустический тест',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.acoustic_experiment_36e23d',
       ),
-      subtitle: pickUiText(
-        i18n,
-        zh: '用麦克风记录低音、高音、持续发声和环境噪声，整理成可读的声学报告。',
-        en: 'Record low tone, high tone, vocal sustain, and ambient noise with the microphone, then review a readable acoustic report.',
-        ja: 'マイクで低音、高音、持続音、周囲の音を記録し、読みやすい音響レポートで確認します。',
-        de: 'Nimm tiefe Töne, hohe Töne, gehaltene Stimme und Umgebungsgeräusche mit dem Mikrofon auf und prüfe sie in einem verständlichen Akustikbericht.',
-        fr: 'Enregistrez les graves, les aigus, la tenue vocale et le bruit ambiant au micro, puis consultez un rapport acoustique clair.',
-        es: 'Graba tonos graves, agudos, voz sostenida y ruido ambiente con el micrófono, y revisa un informe acústico claro.',
-        ru: 'Запишите низкий тон, высокий тон, длительное звучание и шум комнаты, затем посмотрите понятный акустический отчет.',
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.record_low_tone_high_tone_vocal_sustain_and_ambient_nois_de584e',
       ),
       accent: _accent,
       icon: Icons.mic_external_on_rounded,
-      status: pickUiText(
-        i18n,
-        zh: '打开麦克风权限，选个模式开始采集声音',
-        en: 'Next: allow microphone access, choose a mode, and start sampling',
-        ja: '次へ: マイクを許可し、モードを選んで測定を始めます',
-        de: 'Weiter: Mikrofon erlauben, Modus wählen und Aufnahme starten',
-        fr: 'Étape suivante : autoriser le micro, choisir un mode et lancer la mesure',
-        es: 'Siguiente: permite el micrófono, elige un modo y empieza a medir',
-        ru: 'Далее: разрешите доступ к микрофону, выберите режим и начните запись',
+      status: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.next_allow_microphone_access_choose_a_mode_and_start_sam_061745',
       ),
       child: const AcousticExperimentPanel(),
     );
@@ -98,48 +63,20 @@ class AcousticExperimentPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         SectionHeader(
-          title: pickUiText(
-            i18n,
-            zh: '麦克风声学实验',
-            en: 'Mic acoustic lab',
-            ja: 'マイク音響ラボ',
-            de: 'Mikrofon-Akustiklabor',
-            fr: 'Laboratoire acoustique micro',
-            es: 'Laboratorio acústico de micrófono',
-            ru: 'Микрофонная акустика',
+          title: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory_lab.mic_acoustic_lab_829792',
           ),
-          subtitle: pickUiText(
-            i18n,
-            zh: '按模式完成采样，查看音量、音高稳定性、持续性和环境噪声表现。结果适合日常练习和环境观察。',
-            en: 'Complete each sampling mode to review level, pitch stability, sustain, and ambient noise. Use the results for everyday practice and room checks.',
-            ja: '各モードで測定し、音量、音程の安定性、持続、周囲の音を確認します。日々の練習や部屋の確認に使えます。',
-            de: 'Schließe jeden Aufnahmemodus ab, um Pegel, Tonhöhenstabilität, Halten und Umgebungsgeräusch zu prüfen. Die Ergebnisse eignen sich für Übung und Raumcheck.',
-            fr: 'Terminez chaque mode pour voir le niveau, la stabilité de hauteur, la tenue et le bruit ambiant. Les résultats servent à l’entraînement et au contrôle de la pièce.',
-            es: 'Completa cada modo para revisar nivel, estabilidad de tono, sostenido y ruido ambiente. Úsalo para practicar y comprobar la habitación.',
-            ru: 'Пройдите каждый режим, чтобы увидеть уровень, стабильность высоты, длительность и шум комнаты. Результаты подходят для практики и проверки помещения.',
+          subtitle: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory_lab.complete_each_sampling_mode_to_review_level_pitch_stabil_a673c8',
           ),
         ),
         const SizedBox(height: 10),
         _HumanSettingsSection(
-          title: pickUiText(
-            i18n,
-            zh: '声学指标',
-            en: 'Acoustic metrics',
-            ja: '音響メトリック',
-            de: 'Acoustic metrics',
-            fr: 'Acoustic metrics',
-            es: 'métricas acústicas',
-            ru: 'Акустические метрики',
+          title: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory_lab.acoustic_metrics_8bd0b8',
           ),
-          subtitle: pickUiText(
-            i18n,
-            zh: '记录 dBFS、峰值、音高、稳定性、持续性、曲线平滑度和环境评分。',
-            en: 'Tracks dBFS, peak, pitch, stability, sustain, smoothness, and ambient score.',
-            ja: 'Tracks dBFS, peak, pitch, stability, sustain, smoothness, and ambient score.',
-            de: 'Tracks dBFS, peak, pitch, stability, sustain, smoothness, and ambient score.',
-            fr: 'Voies dBFS, pic, pas, stabilité, maintien, douceur et score ambiant.',
-            es: 'Pistas dBFS, pico, campo, estabilidad, sostenimiento, suavidad y puntuación ambiente.',
-            ru: 'Треки dBFS, пик, высота, стабильность, устойчивость, плавность и окружающая оценка.',
+          subtitle: i18n.t(
+            'inline.ui.pages.toolbox_human_tests_auditory_lab.tracks_dbfs_peak_pitch_stability_sustain_smoothness_and_e7cdd6',
           ),
           initiallyExpanded: true,
           child: const _AuditoryMicLabCard(),
@@ -302,15 +239,8 @@ class _AuditoryVolumeReadinessCardState
       builder: (dialogContext) {
         return AlertDialog(
           title: Text(
-            pickUiText(
-              i18n,
-              zh: '请手动调整系统音量',
-              en: 'Adjust system volume manually',
-              ja: 'システム音量を手動で調整する',
-              de: 'Adjust system volume manually',
-              fr: 'Adjust system volume manually',
-              es: 'Ajuste manualmente el volumen del sistema',
-              ru: 'Регулировать объем системы вручную',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_auditory_lab.adjust_system_volume_manually_88517b',
             ),
           ),
           content: Column(
@@ -318,58 +248,30 @@ class _AuditoryVolumeReadinessCardState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '当前设备无法自动改动系统媒体音量，请先把音量调到推荐范围再继续测试。',
-                  en: 'This device cannot change the system media volume automatically. Please move the volume into the recommended range before continuing.',
-                  ja: 'This device cannot change the system media volume automatically. Please move the volume into the recommended range before continuing.',
-                  de: 'This device cannot change the system media volume automatically. Please move the volume into the recommended range before continuing.',
-                  fr: 'Ce périphérique ne peut pas changer automatiquement le volume des médias système. Veuillez déplacer le volume dans la plage recommandée avant de continuer.',
-                  es: 'Este dispositivo no puede cambiar el volumen multimedia del sistema automáticamente. Por favor, mueva el volumen al rango recomendado antes de continuar.',
-                  ru: 'Это устройство не может автоматически изменять объем системных носителей. Пожалуйста, переместите объем в рекомендуемый диапазон, прежде чем продолжить.',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_auditory_lab.this_device_cannot_change_the_system_media_volume_automa_09488f',
                 ),
               ),
               const SizedBox(height: 12),
               Text(
-                pickUiText(
-                  i18n,
-                  zh: '当前值: ${(snapshot.currentRatio * 100).round()}%  推荐值: ${(snapshot.recommendedRatio * 100).round()}%',
-                  en: 'Current: ${(snapshot.currentRatio * 100).round()}%  Recommended: ${(snapshot.recommendedRatio * 100).round()}%',
-                  ja: 'Current: ${(snapshot.currentRatio * 100).round()}%  Recommended: ${(snapshot.recommendedRatio * 100).round()}%',
-                  de: 'Current: ${(snapshot.currentRatio * 100).round()}%  Recommended: ${(snapshot.recommendedRatio * 100).round()}%',
-                  fr: 'Actuellement : ${(snapshot.currentRatio * 100).round()}% Recommandé : ${(snapshot.recommendedRatio * 100).round()}%',
-                  es: 'Corriente: 0/% Recomendado: <v1/%',
-                  ru: 'Текущее значение: ${(snapshot.currentRatio * 100).round()}% Рекомендовано: ${(snapshot.recommendedRatio * 100).round()}%',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_auditory_lab.current_snapshot_currentratio_100_round_recommended_snap_13fabd',
                 ),
               ),
               if (snapshot.currentIndex != null &&
                   snapshot.maxIndex != null) ...<Widget>[
                 const SizedBox(height: 6),
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '系统音量档位: ${snapshot.currentIndex}/${snapshot.maxIndex}',
-                    en: 'System volume index: ${snapshot.currentIndex}/${snapshot.maxIndex}',
-                    ja: 'System volume index: ${snapshot.currentIndex}/${snapshot.maxIndex}',
-                    de: 'System volume index: ${snapshot.currentIndex}/${snapshot.maxIndex}',
-                    fr: 'Indice de volume du système: ${snapshot.currentIndex}/${snapshot.maxIndex}',
-                    es: 'Índice de volumen del sistema:',
-                    ru: 'Индекс объема системы: ${snapshot.currentIndex}/${snapshot.maxIndex}',
+                  i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_auditory_lab.system_volume_index_snapshot_currentindex_snapshot_maxin_6a70ab',
                   ),
                 ),
               ],
               if (snapshot.currentDb != null) ...<Widget>[
                 const SizedBox(height: 6),
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '参考输出: ${snapshot.currentDb!.toStringAsFixed(1)} dB',
-                    en: 'Reference output: ${snapshot.currentDb!.toStringAsFixed(1)} dB',
-                    ja: 'Reference output: ${snapshot.currentDb!.toStringAsFixed(1)} dB',
-                    de: 'Reference output: ${snapshot.currentDb!.toStringAsFixed(1)} dB',
-                    fr: 'Sortie de référence : ${snapshot.currentDb!.toStringAsFixed(1)} dB',
-                    es: 'Resultado de referencia:',
-                    ru: 'Ссылочный выход: ${snapshot.currentDb!.toStringAsFixed(1)} dB',
+                  i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_auditory_lab.reference_output_snapshot_currentdb_tostringasfixed_1_db_b0be84',
                   ),
                 ),
               ],
@@ -379,15 +281,8 @@ class _AuditoryVolumeReadinessCardState
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
               child: Text(
-                pickUiText(
-                  i18n,
-                  zh: '稍后',
-                  en: 'Later',
-                  ja: 'Later',
-                  de: 'Later',
-                  fr: 'Plus tard',
-                  es: 'Más tarde',
-                  ru: 'Позже',
+                i18n.t(
+                  'inline.ui.pages.toolbox_daily_choice.daily_choice_place_map_panel.later_b5566f',
                 ),
               ),
             ),
@@ -398,15 +293,8 @@ class _AuditoryVolumeReadinessCardState
               },
               icon: const Icon(Icons.refresh_rounded),
               label: Text(
-                pickUiText(
-                  i18n,
-                  zh: '我已调整',
-                  en: 'I adjusted it',
-                  ja: 'I adjusted it',
-                  de: 'I adjusted it',
-                  fr: 'Je l\'ai ajusté.',
-                  es: 'Lo ajusté.',
-                  ru: 'Я скорректировал его.',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_auditory_lab.i_adjusted_it_d27a29',
                 ),
               ),
             ),
@@ -421,109 +309,46 @@ class _AuditoryVolumeReadinessCardState
     ToolboxAudioVolumeSnapshot? snapshot,
   ) {
     if (_statusText == 'auto_disabled') {
-      return pickUiText(
-        i18n,
-        zh: '自动调整系统媒体音量已关闭；需要时可在此快捷开启，或手动使用音量键校准。',
-        en: 'Automatic system media volume adjustment is off. Enable it here when needed, or calibrate manually with volume keys.',
-        ja: 'Automatic system media volume adjustment is off. Enable it here when needed, or calibrate manually with volume keys.',
-        de: 'Automatic system media volume adjustment is off. Enable it here when needed, or calibrate manually with volume keys.',
-        fr: 'Le réglage automatique du volume média système est désactivé. Activez-le ici si nécessaire ou calibrez manuellement.',
-        es: 'El ajuste automático del volumen multimedia del sistema está desactivado. Actívalo aquí si hace falta o calibra manualmente.',
-        ru: 'Автоматическая регулировка громкости системных медиа отключена. Включите ее здесь при необходимости или настройте вручную.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.automatic_system_media_volume_adjustment_is_off_enable_i_01b1e1',
       );
     }
     if (_statusText == 'auto_applying') {
-      return pickUiText(
-        i18n,
-        zh: '正在自动调整系统媒体音量...',
-        en: 'Adjusting system media volume automatically...',
-        ja: 'システムメディアボリュームを自動的に調整しています...',
-        de: 'Adjusting system media volume automatically...',
-        fr: 'Adjusting system media volume automatically...',
-        es: 'Ajuste del volumen de medios del sistema automáticamente...',
-        ru: 'Регулировка объема медиасистемы автоматически...',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.adjusting_system_media_volume_automatically_e5e735',
       );
     }
     if (_statusText == 'read_failed') {
-      return pickUiText(
-        i18n,
-        zh: '无法读取系统媒体音量。请手动把媒体音量调到约 65%。',
-        en: 'Cannot read system media volume. Set media volume near 65% manually.',
-        ja: 'システムメディアボリュームを読み取れません。メディアボリュームを手動で65%近くに設定します。',
-        de: 'Cannot read system media volume. Set media volume near 65% manually.',
-        fr: 'Impossible de lire le volume des médias système. Réglez le volume des médias près de 65% manuellement.',
-        es: 'No se puede leer volumen de medios de sistema. Establecer volumen de medios cerca del 65% manualmente.',
-        ru: 'Не может читать объем системных носителей. Установить объем медиа около 65% вручную.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.cannot_read_system_media_volume_set_media_volume_near_65_5eb958',
       );
     }
     if (_statusText == 'auto_failed') {
-      return pickUiText(
-        i18n,
-        zh: '自动调整未完成。请手动调整系统媒体音量后重新检查。',
-        en: 'Automatic adjustment did not complete. Adjust media volume manually and recheck.',
-        ja: '自動調整が完了しませんでした。 メディアの音量を手動で調整し、再確認します。',
-        de: 'Automatic adjustment did not complete. Adjust media volume manually and recheck.',
-        fr: 'Le réglage automatique n\'a pas été effectué. Ajustez manuellement le volume des médias et revérifiez.',
-        es: 'El ajuste automático no se completó. Ajuste manualmente el volumen multimedia y vuelva a comprobar.',
-        ru: 'Автоматическая настройка не была завершена. Настройте объем медиа вручную и перепроверьте.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.automatic_adjustment_did_not_complete_adjust_media_volum_e6929c',
       );
     }
     if (snapshot == null) {
-      return pickUiText(
-        i18n,
-        zh: '等待设备音量检查。',
-        en: 'Waiting for volume check.',
-        ja: 'Waiting for volume check.',
-        de: 'Waiting for volume check.',
-        fr: 'Attendre le contrôle du volume.',
-        es: 'Esperando un cheque de volumen.',
-        ru: 'В ожидании проверки объема.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.waiting_for_volume_check_fe21b6',
       );
     }
     if (!snapshot.isSupported) {
-      return pickUiText(
-        i18n,
-        zh: '当前平台不支持读取系统音量，请按设备音量键手动校准。',
-        en: 'This platform cannot report system volume; calibrate manually with volume keys.',
-        ja: 'This platform cannot report system volume; calibrate manually with volume keys.',
-        de: 'This platform cannot report system volume; calibrate manually with volume keys.',
-        fr: 'Cette plate-forme ne peut pas rapporter le volume du système; calibrer manuellement avec les touches de volume.',
-        es: 'Esta plataforma no puede reportar volumen del sistema; calibrar manualmente con teclas de volumen.',
-        ru: 'Эта платформа не может сообщать об объеме системы; калибровать вручную с помощью клавиш громкости.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.this_platform_cannot_report_system_volume_calibrate_manu_befff5',
       );
     }
     if (snapshot.needsAdjustment) {
       return snapshot.canAutoApply
-          ? pickUiText(
-              i18n,
-              zh: '音量不在建议范围内，可使用自动调整或手动调到推荐值。',
-              en: 'Volume is outside the recommended range. Use auto adjust or set it manually.',
-              ja: 'Volume is outside the recommended range. Use auto adjust or set it manually.',
-              de: 'Volume is outside the recommended range. Use auto adjust or set it manually.',
-              fr: 'Le volume est hors de la plage recommandée. Utilisez le réglage automatique ou le régler manuellement.',
-              es: 'El volumen está fuera del rango recomendado. Utilice el ajuste automático o ajustarlo manualmente.',
-              ru: 'Объем находится за пределами рекомендуемого диапазона. Используйте авторегулировку или установите ее вручную.',
+          ? i18n.t(
+              'inline.ui.pages.toolbox_human_tests_auditory_lab.volume_is_outside_the_recommended_range_use_auto_adjust_e71d26',
             )
-          : pickUiText(
-              i18n,
-              zh: '音量不在建议范围内，请手动调到推荐值再开始测试。',
-              en: 'Volume is outside the recommended range. Set it manually before testing.',
-              ja: 'Volume is outside the recommended range. Set it manually before testing.',
-              de: 'Volume is outside the recommended range. Set it manually before testing.',
-              fr: 'Le volume est hors de la plage recommandée. Réglez-le manuellement avant de tester.',
-              es: 'El volumen está fuera del rango recomendado. Ponlo manualmente antes de probar.',
-              ru: 'Объем находится за пределами рекомендуемого диапазона. Установите его вручную перед тестированием.',
+          : i18n.t(
+              'inline.ui.pages.toolbox_human_tests_auditory_lab.volume_is_outside_the_recommended_range_set_it_manually_74717b',
             );
     }
-    return pickUiText(
-      i18n,
-      zh: '系统媒体音量已处于建议范围。',
-      en: 'System media volume is in the recommended range.',
-      ja: 'System media volume is in the recommended range.',
-      de: 'System media volume is in the recommended range.',
-      fr: 'Le volume des médias système est dans la plage recommandée.',
-      es: 'El volumen de los medios de comunicación del sistema está en el rango recomendado.',
-      ru: 'Объем системных носителей находится в рекомендуемом диапазоне.',
+    return i18n.t(
+      'inline.ui.pages.toolbox_human_tests_auditory_lab.system_media_volume_is_in_the_recommended_range_7fcae9',
     );
   }
 
@@ -555,15 +380,8 @@ class _AuditoryVolumeReadinessCardState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '自动调整系统音量已关闭',
-                        en: 'Auto system volume adjustment is off',
-                        ja: '自動システム音量調整はオフです',
-                        de: 'Auto system volume adjustment is off',
-                        fr: 'Réglage automatique du volume désactivé',
-                        es: 'Ajuste automático de volumen desactivado',
-                        ru: 'Автонастройка громкости отключена',
+                      i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_auditory_lab.auto_system_volume_adjustment_is_off_b8bada',
                       ),
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w900,
@@ -571,15 +389,8 @@ class _AuditoryVolumeReadinessCardState
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '需要校准时会先检查当前音量；支持的平台会把媒体音量调到建议范围。',
-                        en: 'The acoustic test will not change your system media volume without notice. If enabled, this page checks the current volume first, then sets media volume to the recommended range on supported platforms.',
-                        ja: 'The acoustic test will not change your system media volume without notice. If enabled, this page checks the current volume first, then sets media volume to the recommended range on supported platforms.',
-                        de: 'The acoustic test will not change your system media volume without notice. If enabled, this page checks the current volume first, then sets media volume to the recommended range on supported platforms.',
-                        fr: 'Le test acoustique ne modifie pas le volume média système sans avertissement. Une fois activé, il vérifie d’abord le volume puis l’ajuste sur les plateformes prises en charge.',
-                        es: 'La prueba acústica no cambiará el volumen multimedia del sistema sin aviso. Si se activa, primero comprueba el volumen y luego lo ajusta en plataformas compatibles.',
-                        ru: 'Акустический тест не изменит системную громкость без предупреждения. После включения он сначала проверит громкость, а затем настроит ее на поддерживаемых платформах.',
+                      i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_auditory_lab.the_acoustic_test_will_not_change_your_system_media_volu_ceed3b',
                       ),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
@@ -603,15 +414,8 @@ class _AuditoryVolumeReadinessCardState
                 },
                 icon: const Icon(Icons.volume_up_rounded),
                 label: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '快捷开启并检查',
-                    en: 'Enable and check',
-                    ja: 'Enable and check',
-                    de: 'Enable and check',
-                    fr: 'Activer et vérifier',
-                    es: 'Activar y comprobar',
-                    ru: 'Включить и проверить',
+                  i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_auditory_lab.enable_and_check_cde304',
                   ),
                 ),
               ),
@@ -642,77 +446,33 @@ class _AuditoryVolumeReadinessCardState
             runSpacing: 10,
             children: <Widget>[
               ToolboxMetricCard(
-                label: pickUiText(
-                  i18n,
-                  zh: '平台',
-                  en: 'Platform',
-                  ja: 'Platform',
-                  de: 'Platform',
-                  fr: 'Plateforme',
-                  es: 'Plataforma',
-                  ru: 'Платформа',
+                label: i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_auditory_lab.platform_913e74',
                 ),
                 value: snapshot?.platformName ?? '--',
               ),
               ToolboxMetricCard(
-                label: pickUiText(
-                  i18n,
-                  zh: '当前',
-                  en: 'Current',
-                  ja: '現在',
-                  de: 'Current',
-                  fr: 'Actuellement',
-                  es: 'Corriente',
-                  ru: 'текущий',
-                ),
+                label: i18n.t('toolbox.breathing.current'),
                 value: '${(current * 100).round()}%',
               ),
               ToolboxMetricCard(
-                label: pickUiText(
-                  i18n,
-                  zh: '推荐',
-                  en: 'Recommended',
-                  ja: 'Recommended',
-                  de: 'Recommended',
-                  fr: 'Recommandation',
-                  es: 'Recomendado',
-                  ru: 'рекомендованный',
+                label: i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_auditory_lab.recommended_994d2d',
                 ),
                 value: '${(recommended * 100).round()}%',
               ),
               ToolboxMetricCard(
-                label: pickUiText(
-                  i18n,
-                  zh: '自动调整',
-                  en: 'Auto adjust',
-                  ja: '自動調整',
-                  de: 'Auto adjust',
-                  fr: 'Réglage automatique',
-                  es: 'Ajuste automático',
-                  ru: 'Автоматическая настройка',
+                label: i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_auditory_lab.auto_adjust_315e16',
                 ),
                 value: snapshot == null
                     ? '--'
                     : snapshot.canAutoApply
-                    ? pickUiText(
-                        i18n,
-                        zh: '可用',
-                        en: 'Yes',
-                        ja: 'Yes',
-                        de: 'Yes',
-                        fr: 'Oui',
-                        es: 'Sí.',
-                        ru: 'Да.',
+                    ? i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_auditory_lab.yes_3dc2f0',
                       )
-                    : pickUiText(
-                        i18n,
-                        zh: '手动',
-                        en: 'Manual',
-                        ja: 'Manual',
-                        de: 'Manual',
-                        fr: 'Manuel',
-                        es: 'Manual',
-                        ru: 'Ручной',
+                    : i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_auditory_lab.manual_3ec2d8',
                       ),
               ),
             ],
@@ -731,36 +491,15 @@ class _AuditoryVolumeReadinessCardState
           const SizedBox(height: 10),
           Text(
             _loading
-                ? pickUiText(
-                    i18n,
-                    zh: '正在检查系统音量...',
-                    en: 'Checking system volume...',
-                    ja: 'システムボリュームを確認しています...',
-                    de: 'Checking system volume...',
-                    fr: 'Contrôle du volume du système...',
-                    es: 'Comprobando el volumen del sistema...',
-                    ru: 'Проверка объема системы...',
+                ? i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_auditory_lab.checking_system_volume_e8faae',
                   )
                 : needsAdjustment
-                ? pickUiText(
-                    i18n,
-                    zh: '音量未落在推荐范围内，请先调整再开始测试。',
-                    en: 'The volume is outside the recommended range. Adjust it before starting the test.',
-                    ja: 'The volume is outside the recommended range. Adjust it before starting the test.',
-                    de: 'The volume is outside the recommended range. Adjust it before starting the test.',
-                    fr: 'Le volume est hors de la plage recommandée. Réglez-le avant de commencer le test.',
-                    es: 'El volumen está fuera del rango recomendado. Ajustarlo antes de comenzar la prueba.',
-                    ru: 'Объем находится за пределами рекомендуемого диапазона. Отрегулируйте его перед началом теста.',
+                ? i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_auditory_lab.the_volume_is_outside_the_recommended_range_adjust_it_be_fb1108',
                   )
-                : pickUiText(
-                    i18n,
-                    zh: '系统音量已适合当前听觉测试。',
-                    en: 'The system volume is ready for the current hearing test.',
-                    ja: 'The system volume is ready for the current hearing test.',
-                    de: 'The system volume is ready for the current hearing test.',
-                    fr: 'Le volume du système est prêt pour le test d\'audition actuel.',
-                    es: 'El volumen del sistema está listo para la prueba auditiva actual.',
-                    ru: 'Объем системы готов к текущему тесту на слух.',
+                : i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_auditory_lab.the_system_volume_is_ready_for_the_current_hearing_test_fa545b',
                   ),
             style: Theme.of(context).textTheme.bodySmall,
           ),
@@ -783,15 +522,8 @@ class _AuditoryVolumeReadinessCardState
                 onPressed: _loading ? null : _refreshVolumeState,
                 icon: const Icon(Icons.refresh_rounded),
                 label: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '重新检查',
-                    en: 'Recheck',
-                    ja: 'Recheck',
-                    de: 'Recheck',
-                    fr: 'Revérifier',
-                    es: 'Rechazo',
-                    ru: 'перепроверять',
+                  i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_auditory_lab.recheck_d984c3',
                   ),
                 ),
               ),
@@ -801,25 +533,11 @@ class _AuditoryVolumeReadinessCardState
                   icon: const Icon(Icons.volume_up_rounded),
                   label: Text(
                     _applying
-                        ? pickUiText(
-                            i18n,
-                            zh: '正在调整',
-                            en: 'Adjusting',
-                            ja: '調整中',
-                            de: 'Adjusting',
-                            fr: 'Adjusting',
-                            es: 'Ajuste',
-                            ru: 'корректировка',
+                        ? i18n.t(
+                            'inline.ui.pages.toolbox_human_tests_auditory_lab.adjusting_1f4d82',
                           )
-                        : pickUiText(
-                            i18n,
-                            zh: '自动调整',
-                            en: 'Auto adjust',
-                            ja: '自動調整',
-                            de: 'Auto adjust',
-                            fr: 'Réglage automatique',
-                            es: 'Ajuste automático',
-                            ru: 'Автоматическая настройка',
+                        : i18n.t(
+                            'inline.ui.pages.toolbox_human_tests_auditory_lab.auto_adjust_315e16',
                           ),
                   ),
                 ),
@@ -833,64 +551,22 @@ class _AuditoryVolumeReadinessCardState
 
 class _MicModeSpec {
   const _MicModeSpec({
-    required this.zhLabel,
-    required this.enLabel,
-    required this.jaLabel,
-    required this.deLabel,
-    required this.frLabel,
-    required this.esLabel,
-    required this.ruLabel,
-    required this.zhDescription,
-    required this.enDescription,
-    required this.jaDescription,
-    required this.deDescription,
-    required this.frDescription,
-    required this.esDescription,
-    required this.ruDescription,
+    required this.labelKey,
+    required this.descriptionKey,
     required this.icon,
     required this.targetMinHz,
     required this.targetMaxHz,
   });
 
-  final String zhLabel;
-  final String enLabel;
-  final String jaLabel;
-  final String deLabel;
-  final String frLabel;
-  final String esLabel;
-  final String ruLabel;
-  final String zhDescription;
-  final String enDescription;
-  final String jaDescription;
-  final String deDescription;
-  final String frDescription;
-  final String esDescription;
-  final String ruDescription;
+  final String labelKey;
+  final String descriptionKey;
   final IconData icon;
   final double targetMinHz;
   final double targetMaxHz;
 
-  String label(AppI18n i18n) => pickUiText(
-    i18n,
-    zh: zhLabel,
-    en: enLabel,
-    ja: jaLabel,
-    de: deLabel,
-    fr: frLabel,
-    es: esLabel,
-    ru: ruLabel,
-  );
+  String label(AppI18n i18n) => i18n.t(labelKey);
 
-  String description(AppI18n i18n) => pickUiText(
-    i18n,
-    zh: zhDescription,
-    en: enDescription,
-    ja: jaDescription,
-    de: deDescription,
-    fr: frDescription,
-    es: esDescription,
-    ru: ruDescription,
-  );
+  String description(AppI18n i18n) => i18n.t(descriptionKey);
 }
 
 class _MicRecorderProfile {
@@ -1215,97 +891,37 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
   static const Map<_MicLabMode, _MicModeSpec>
   _modeSpecs = <_MicLabMode, _MicModeSpec>{
     _MicLabMode.low: _MicModeSpec(
-      zhLabel: '低音',
-      enLabel: 'Low tone',
-      jaLabel: '低音',
-      deLabel: 'Tiefton',
-      frLabel: 'Son grave',
-      esLabel: 'Tono grave',
-      ruLabel: 'Низкий тон',
-      zhDescription: '请用低沉、稳定的声音持续发声，检查低频音高、幅度和稳定性。',
-      enDescription:
-          'Produce a low, steady hum and check low-frequency pitch, level, and stability.',
-      jaDescription: '低く安定した声を出し、低音の高さ、音量、安定性を確認します。',
-      deDescription:
-          'Erzeuge einen tiefen, gleichmäßigen Ton und prüfe Tonhöhe, Pegel und Stabilität.',
-      frDescription:
-          'Produisez un son grave et stable pour vérifier hauteur, niveau et stabilité.',
-      esDescription:
-          'Emite un tono grave y estable para comprobar altura, nivel y estabilidad.',
-      ruDescription:
-          'Произнесите низкий ровный звук, чтобы проверить высоту, уровень и стабильность.',
+      labelKey:
+          'inline.plan297.human_tests.auditory_lab.mode.label.low_tone.e3c1256c24',
+      descriptionKey:
+          'inline.plan297.human_tests.auditory_lab.mode.description.produce_a_low_steady_hum_and_check_low_frequency_pit.44b54f70f8',
       icon: Icons.arrow_downward_rounded,
       targetMinHz: 110,
       targetMaxHz: 240,
     ),
     _MicLabMode.high: _MicModeSpec(
-      zhLabel: '高音',
-      enLabel: 'High tone',
-      jaLabel: '高音',
-      deLabel: 'Hochton',
-      frLabel: 'Son aigu',
-      esLabel: 'Tono agudo',
-      ruLabel: 'Высокий тон',
-      zhDescription: '请用较高的声音持续发声，观察高频音高与曲线平滑程度。',
-      enDescription:
-          'Produce a higher tone and observe the high-frequency pitch and curve smoothness.',
-      jaDescription: '高めの声を出し、高音の高さと曲線のなめらかさを確認します。',
-      deDescription:
-          'Erzeuge einen höheren Ton und beobachte Tonhöhe und Kurvenglätte.',
-      frDescription:
-          'Produisez un son plus aigu et observez la hauteur ainsi que la régularité de la courbe.',
-      esDescription:
-          'Emite un tono más alto y observa la altura y la suavidad de la curva.',
-      ruDescription:
-          'Произнесите более высокий звук и оцените высоту и плавность кривой.',
+      labelKey:
+          'inline.plan297.human_tests.auditory_lab.mode.label.high_tone.19cf39f726',
+      descriptionKey:
+          'inline.plan297.human_tests.auditory_lab.mode.description.produce_a_higher_tone_and_observe_the_high_frequency.319a3befd1',
       icon: Icons.arrow_upward_rounded,
       targetMinHz: 360,
       targetMaxHz: 860,
     ),
     _MicLabMode.sustain: _MicModeSpec(
-      zhLabel: '持续',
-      enLabel: 'Sustain',
-      jaLabel: '持続',
-      deLabel: 'Halten',
-      frLabel: 'Tenue',
-      esLabel: 'Sostenido',
-      ruLabel: 'Длительность',
-      zhDescription: '保持均匀发声 5 秒以上，系统会给出持续性和波动指标。',
-      enDescription:
-          'Hold a steady sound for 5+ seconds and measure sustain and variation.',
-      jaDescription: '5 秒以上声を安定して伸ばし、持続と揺れを確認します。',
-      deDescription:
-          'Halte einen gleichmäßigen Ton mindestens 5 Sekunden und prüfe Dauer und Schwankung.',
-      frDescription:
-          'Tenez un son régulier plus de 5 secondes pour mesurer tenue et variation.',
-      esDescription:
-          'Mantén un sonido estable más de 5 segundos para medir sostenido y variación.',
-      ruDescription:
-          'Держите ровный звук более 5 секунд, чтобы измерить длительность и колебания.',
+      labelKey:
+          'inline.plan297.human_tests.auditory_lab.mode.label.sustain.924fe96c4e',
+      descriptionKey:
+          'inline.plan297.human_tests.auditory_lab.mode.description.hold_a_steady_sound_for_5_seconds_and_measure_sustai.1ea2bdec97',
       icon: Icons.graphic_eq_rounded,
       targetMinHz: 160,
       targetMaxHz: 420,
     ),
     _MicLabMode.noise: _MicModeSpec(
-      zhLabel: '噪声仪',
-      enLabel: 'Noise meter',
-      jaLabel: '騒音計',
-      deLabel: 'Geräuschmesser',
-      frLabel: 'Sonomètre',
-      esLabel: 'Medidor de ruido',
-      ruLabel: 'Шумомер',
-      zhDescription: '保持安静，测量环境噪声、峰值和相对分贝。',
-      enDescription:
-          'Stay quiet to measure ambient noise, peak, and relative dBFS.',
-      jaDescription: '静かにして、周囲の音、ピーク、相対 dBFS を測ります。',
-      deDescription:
-          'Bleibe ruhig und miss Umgebungsgeräusch, Spitzenwert und relative dBFS.',
-      frDescription:
-          'Restez silencieux pour mesurer le bruit ambiant, le pic et le dBFS relatif.',
-      esDescription:
-          'Mantén silencio para medir ruido ambiente, pico y dBFS relativo.',
-      ruDescription:
-          'Сохраняйте тишину, чтобы измерить шум комнаты, пик и относительный dBFS.',
+      labelKey:
+          'inline.plan297.human_tests.auditory_lab.mode.label.noise_meter.703c222640',
+      descriptionKey:
+          'inline.plan297.human_tests.auditory_lab.mode.description.stay_quiet_to_measure_ambient_noise_peak_and_relativ.7dc763fa72',
       icon: Icons.hearing_disabled_rounded,
       targetMinHz: 0,
       targetMaxHz: 0,
@@ -2269,377 +1885,150 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
 
   String _noiseLabel(AppI18n i18n) {
     if (_dbfs <= -52) {
-      return pickUiText(
-        i18n,
-        zh: '安静',
-        en: 'Quiet',
-        ja: 'Quiet',
-        de: 'Quiet',
-        fr: 'Du calme',
-        es: 'Silencio.',
-        ru: 'Тихо',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.quiet_5ada47',
       );
     }
     if (_dbfs <= -38) {
-      return pickUiText(
-        i18n,
-        zh: '中等',
-        en: 'Moderate',
-        ja: 'Moderate',
-        de: 'Moderate',
-        fr: 'Modéré',
-        es: 'Moderado',
-        ru: 'умеренный',
-      );
+      return i18n.t('toolbox.sleep.support.intensity.moderate');
     }
-    return pickUiText(
-      i18n,
-      zh: '偏吵',
-      en: 'Noisy',
-      ja: 'Noisy',
-      de: 'Noisy',
-      fr: 'Bruit',
-      es: 'Noisy',
-      ru: 'шумный',
+    return i18n.t(
+      'inline.ui.pages.toolbox_human_tests_auditory_lab.noisy_fc4f5a',
     );
   }
 
   String _captureQualityLabel(AppI18n i18n, double score) {
     if (score >= 0.82) {
-      return pickUiText(
-        i18n,
-        zh: '优秀',
-        en: 'Excellent',
-        ja: 'Excellent',
-        de: 'Excellent',
-        fr: 'Excellent',
-        es: 'Excelente',
-        ru: 'Отлично',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.excellent_9e08fb',
       );
     }
     if (score >= 0.64) {
-      return pickUiText(
-        i18n,
-        zh: '良好',
-        en: 'Good',
-        ja: 'Good',
-        de: 'Good',
-        fr: 'Bonne',
-        es: 'Bien.',
-        ru: 'Хорошо.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.good_4b6421',
       );
     }
     if (score >= 0.42) {
-      return pickUiText(
-        i18n,
-        zh: '可参考',
-        en: 'Usable',
-        ja: 'Usable',
-        de: 'Usable',
-        fr: 'Utilisable',
-        es: 'Usable',
-        ru: 'удобный',
-      );
+      return i18n.t('toolbox.sound.locator.status_usable');
     }
-    return pickUiText(
-      i18n,
-      zh: '需重测',
-      en: 'Retest',
-      ja: 'Retest',
-      de: 'Retest',
-      fr: 'Répétition',
-      es: 'Retest',
-      ru: 'Протестовать',
+    return i18n.t(
+      'inline.ui.pages.toolbox_human_tests_auditory_lab.retest_98b4de',
     );
   }
 
   String _captureReadiness(AppI18n i18n) {
     if (_switchingInput || _statusCode == 'switching_input') {
-      return pickUiText(
-        i18n,
-        zh: '正在切换到更兼容的麦克风输入，请继续保持发声。',
-        en: 'Switching to a more compatible microphone input. Keep making sound.',
-        ja: 'より互換性の高いマイク入力へ切り替えています。音を出し続けてください。',
-        de: 'Wechsle zu einem kompatibleren Mikrofoneingang. Halte den Ton weiter.',
-        fr: 'Passage à une entrée micro plus compatible. Continuez le son.',
-        es: 'Cambiando a una entrada de micrófono más compatible. Mantén el sonido.',
-        ru: 'Переключаемся на более совместимый микрофон. Продолжайте звук.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.switching_to_a_more_compatible_microphone_input_keep_mak_d2374a',
       );
     }
     if (_starting) {
-      return pickUiText(
-        i18n,
-        zh: '正在检查麦克风和 PCM 实时流，请稍候。',
-        en: 'Checking the microphone and live PCM stream...',
-        ja: 'マイクとライブ PCM ストリームを確認しています...',
-        de: 'Mikrofon und Live-PCM-Stream werden geprüft...',
-        fr: 'Vérification du micro et du flux PCM en direct...',
-        es: 'Comprobando el micrófono y el flujo PCM en vivo...',
-        ru: 'Проверяем микрофон и поток PCM...',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.checking_the_microphone_and_live_pcm_stream_5d8e73',
       );
     }
     if (_running) {
       if (!_hasSeenFrame) {
-        return pickUiText(
-          i18n,
-          zh: '录音已启动，正在等待第一帧声音数据。',
-          en: 'Recording has started; waiting for the first audio frame.',
-          ja: '録音は開始済みです。最初の音声フレームを待っています。',
-          de: 'Die Aufnahme läuft; warte auf den ersten Audio-Frame.',
-          fr: 'L’enregistrement a démarré ; attente de la première trame audio.',
-          es: 'La grabación comenzó; esperando el primer fotograma de audio.',
-          ru: 'Запись началась; ожидаем первый аудиофрейм.',
+        return i18n.t(
+          'inline.ui.pages.toolbox_human_tests_auditory_lab.recording_has_started_waiting_for_the_first_audio_frame_b69ca5',
         );
       }
       if (_stopwatch.elapsedMilliseconds < 2800) {
-        return pickUiText(
-          i18n,
-          zh: '继续采样，建议至少 3 秒。',
-          en: 'Keep sampling; at least 3 seconds is recommended.',
-          ja: 'Keep sampling; at least 3 seconds is recommended.',
-          de: 'Keep sampling; at least 3 seconds is recommended.',
-          fr: 'Conserver l\'échantillonnage; il est recommandé de faire au moins 3 secondes.',
-          es: 'Mantenga el muestreo; al menos 3 segundos se recomienda.',
-          ru: 'Держите выборку; рекомендуется не менее 3 секунд.',
+        return i18n.t(
+          'inline.ui.pages.toolbox_human_tests_auditory_lab.keep_sampling_at_least_3_seconds_is_recommended_14a30b',
         );
       }
-      return pickUiText(
-        i18n,
-        zh: '样本已经够用，可以停止并加入报告。',
-        en: 'The sample is ready; stop and add it to the report.',
-        ja: 'The sample is ready; stop and add it to the report.',
-        de: 'The sample is ready; stop and add it to the report.',
-        fr: 'L\'échantillon est prêt; arrêtez et ajoutez-le au rapport.',
-        es: 'La muestra está lista; pare y agréguela al informe.',
-        ru: 'Образец готов, остановитесь и добавьте его в отчет.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.the_sample_is_ready_stop_and_add_it_to_the_report_735883',
       );
     }
     if (_statusCode == 'sample_added') {
-      return pickUiText(
-        i18n,
-        zh: '样本已写入报告，可以继续切换到下一个模式。',
-        en: 'Sample saved to the report. You can move to the next mode.',
-        ja: 'サンプルをレポートに保存しました。次のモードへ進めます。',
-        de: 'Probe im Bericht gespeichert. Du kannst zum nächsten Modus wechseln.',
-        fr: 'Échantillon ajouté au rapport. Vous pouvez passer au mode suivant.',
-        es: 'Muestra guardada en el informe. Puedes pasar al siguiente modo.',
-        ru: 'Образец сохранен в отчет. Можно перейти к следующему режиму.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.sample_saved_to_the_report_you_can_move_to_the_next_mode_74ec0c',
       );
     }
     final capture = _captures[_mode];
     if (capture != null) {
-      return pickUiText(
-        i18n,
-        zh: '这个模式已有样本，再测一次会替换当前结果。',
-        en: 'This mode already has a sample. A new run will replace it.',
-        ja: 'This mode already has a sample. A new run will replace it.',
-        de: 'This mode already has a sample. A new run will replace it.',
-        fr: 'Ce mode a déjà un échantillon. Une nouvelle course le remplacera.',
-        es: 'Este modo ya tiene una muestra. Una nueva carrera lo reemplazará.',
-        ru: 'Этот режим уже имеет образец. Новый проект заменит его.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.this_mode_already_has_a_sample_a_new_run_will_replace_it_c028e0',
       );
     }
-    return pickUiText(
-      i18n,
-      zh: '选择模式后开始采样，结束时加入声学报告。',
-      en: 'Choose a mode, start sampling, then add it to the acoustic report.',
-      ja: 'モードを選択してサンプリングを開始し、音響レポートに追加します。',
-      de: 'Choose a mode, start sampling, then add it to the acoustic report.',
-      fr: 'Choisissez un mode, commencez l\'échantillonnage, puis ajoutez-le au rapport acoustique.',
-      es: 'Elija un modo, inicie el muestreo, luego agréguelo al informe acústico.',
-      ru: 'Выберите режим, начните отбор проб, затем добавьте его в акустический отчет.',
+    return i18n.t(
+      'inline.ui.pages.toolbox_human_tests_auditory_lab.choose_a_mode_start_sampling_then_add_it_to_the_acoustic_1de8c4',
     );
   }
 
   String _protocolText(AppI18n i18n) {
     return switch (_mode) {
-      _MicLabMode.low => pickUiText(
-        i18n,
-        zh: '低音：距离麦克风 20-30 cm，稳定发声 3-6 秒，尽量不要喷麦或碰到设备。',
-        en: 'Low tone: stay 20-30 cm from the mic, hum steadily for 3-6 seconds, and avoid plosives or touching the device.',
-        ja: 'Low tone: stay 20-30 cm from the mic, hum steadily for 3-6 seconds, and avoid plosives or touching the device.',
-        de: 'Low tone: stay 20-30 cm from the mic, hum steadily for 3-6 seconds, and avoid plosives or touching the device.',
-        fr: 'Ton bas : rester de 20-30 cm du micro, humer régulièrement pendant 3-6 secondes, et éviter les plosifs ou toucher l\'appareil.',
-        es: 'Tono bajo: Mantener 20-30 cm desde el micrófono, hum firmemente durante 3-6 segundos, y evitar los plosivos o tocar el dispositivo.',
-        ru: 'Низкий тон: держитесь на расстоянии 20-30 см от микрофона, постоянно жужжите в течение 3-6 секунд и избегайте ударов или прикосновений к устройству.',
+      _MicLabMode.low => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.low_tone_stay_20_30_cm_from_the_mic_hum_steadily_for_3_6_8a8778',
       ),
-      _MicLabMode.high => pickUiText(
-        i18n,
-        zh: '高音：用舒服的高音持续 3-6 秒，不用喊，重点看音高是否稳定。',
-        en: 'High tone: hold a comfortable high tone for 3-6 seconds without shouting, and watch pitch stability.',
-        ja: 'High tone: hold a comfortable high tone for 3-6 seconds without shouting, and watch pitch stability.',
-        de: 'High tone: hold a comfortable high tone for 3-6 seconds without shouting, and watch pitch stability.',
-        fr: 'Haut ton : tenir un haut ton confortable pendant 3-6 secondes sans crier, et regarder la stabilité du pas.',
-        es: 'Tono alto: mantener un tono alto cómodo durante 3-6 segundos sin gritar, y ver la estabilidad del campo.',
-        ru: 'Высокий тон: держите комфортный высокий тон в течение 3-6 секунд без крика и следите за стабильностью шага.',
+      _MicLabMode.high => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.high_tone_hold_a_comfortable_high_tone_for_3_6_seconds_w_529b3a',
       ),
-      _MicLabMode.sustain => pickUiText(
-        i18n,
-        zh: '持续：任选一个舒服的音高保持 5 秒以上，报告会看响度、音高和曲线是否稳定。',
-        en: 'Sustain: hold a comfortable pitch for 5+ seconds. The report checks whether level, pitch, and curve stay steady.',
-        ja: 'Sustain: hold a comfortable pitch for 5+ seconds. The report checks whether level, pitch, and curve stay steady.',
-        de: 'Sustain: hold a comfortable pitch for 5+ seconds. The report checks whether level, pitch, and curve stay steady.',
-        fr: 'Sustain: tenir un pas confortable pendant 5+ secondes. Le rapport vérifie si le niveau, le tangage et la courbe restent stables.',
-        es: 'Sostenga: mantenga un campo cómodo durante 5+ segundos. El informe comprueba si el nivel, el campo y la curva permanecen estables.',
-        ru: 'Устойчиво: держите удобный шаг в течение 5+ секунд. Отчет проверяет, остаются ли уровень, шаг и кривая устойчивыми.',
+      _MicLabMode.sustain => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.sustain_hold_a_comfortable_pitch_for_5_seconds_the_repor_b8a178',
       ),
-      _MicLabMode.noise => pickUiText(
-        i18n,
-        zh: '噪声：保持房间安静 5 秒，先记录环境底噪，后续样本会用它估算信噪比。',
-        en: 'Noise: keep the room quiet for 5 seconds to capture the room floor. Later samples use it to estimate SNR.',
-        ja: 'Noise: keep the room quiet for 5 seconds to capture the room floor. Later samples use it to estimate SNR.',
-        de: 'Noise: keep the room quiet for 5 seconds to capture the room floor. Later samples use it to estimate SNR.',
-        fr: 'Bruit: garder la chambre tranquille pendant 5 secondes pour capturer le plancher de la chambre. Des échantillons ultérieurs l\'utilisent pour estimer le RNS.',
-        es: 'Noise: mantener la habitación tranquila durante 5 segundos para capturar el piso de la habitación. Las muestras posteriores lo usan para estimar SNR.',
-        ru: 'Шум: держите комнату в тишине в течение 5 секунд, чтобы захватить пол комнаты. Более поздние образцы используют его для оценки SNR.',
+      _MicLabMode.noise => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.noise_keep_the_room_quiet_for_5_seconds_to_capture_the_r_d1ddf5',
       ),
     };
   }
 
   String _statusLabel(AppI18n i18n) {
     if (_switchingInput || _statusCode == 'switching_input') {
-      return pickUiText(
-        i18n,
-        zh: '切换输入',
-        en: 'Switching input',
-        ja: '入力切替中',
-        de: 'Eingang wechseln',
-        fr: 'Changement entrée',
-        es: 'Cambiando entrada',
-        ru: 'Смена входа',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.switching_input_4a93e8',
       );
     }
     if (_starting) {
-      return pickUiText(
-        i18n,
-        zh: '启动中',
-        en: 'Starting',
-        ja: '起動中',
-        de: 'Startet',
-        fr: 'Démarrage',
-        es: 'Iniciando',
-        ru: 'Запуск',
-      );
+      return i18n.t('toolbox.sound.locator.btn_starting');
     }
     if (_running && !_hasSeenFrame) {
-      return pickUiText(
-        i18n,
-        zh: '等待声音',
-        en: 'Waiting for audio',
-        ja: '音声待機中',
-        de: 'Warte auf Audio',
-        fr: 'Attente audio',
-        es: 'Esperando audio',
-        ru: 'Ожидание звука',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.waiting_for_audio_693144',
       );
     }
     if (_running) {
-      return pickUiText(
-        i18n,
-        zh: '采样中',
-        en: 'Sampling',
-        ja: 'サンプリング中',
-        de: 'Messung läuft',
-        fr: 'Mesure en cours',
-        es: 'Muestreando',
-        ru: 'Идет замер',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.sampling_aca32f',
       );
     }
     if (_error != null) {
-      return pickUiText(
-        i18n,
-        zh: '需要处理',
-        en: 'Needs attention',
-        ja: '確認が必要',
-        de: 'Prüfen',
-        fr: 'À vérifier',
-        es: 'Revisar',
-        ru: 'Требует внимания',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.needs_attention_cb8534',
       );
     }
     if (_statusCode == 'sample_added') {
-      return pickUiText(
-        i18n,
-        zh: '已写入',
-        en: 'Saved',
-        ja: '保存済み',
-        de: 'Gespeichert',
-        fr: 'Enregistré',
-        es: 'Guardado',
-        ru: 'Сохранено',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.saved_147d6b',
       );
     }
-    return pickUiText(
-      i18n,
-      zh: '就绪',
-      en: 'Ready',
-      ja: '準備完了',
-      de: 'Bereit',
-      fr: 'Prêt',
-      es: 'Listo',
-      ru: 'Готово',
-    );
+    return i18n.t('timerIdle');
   }
 
   String _profileLabel(AppI18n i18n) {
     final profile = _activeRecorderProfileId;
     if (profile == null) {
-      return pickUiText(
-        i18n,
-        zh: '未启动',
-        en: 'Not started',
-        ja: '未開始',
-        de: 'Nicht gestartet',
-        fr: 'Non démarré',
-        es: 'Sin iniciar',
-        ru: 'Не запущено',
-      );
+      return i18n.t('toolbox.sleep.winddown.notStarted');
     }
     if (profile.contains('unprocessed')) {
-      return pickUiText(
-        i18n,
-        zh: '原始麦克风',
-        en: 'Raw mic',
-        ja: 'Raw mic',
-        de: 'Raw mic',
-        fr: 'Micro brut',
-        es: 'Micrófono directo',
-        ru: 'Чистый микрофон',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.raw_mic_3b77de',
       );
     }
     if (profile.contains('default')) {
-      return pickUiText(
-        i18n,
-        zh: '自动输入',
-        en: 'Auto input',
-        ja: '自動入力',
-        de: 'Auto-Eingang',
-        fr: 'Entrée auto',
-        es: 'Entrada auto',
-        ru: 'Авто вход',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.auto_input_eb1c12',
       );
     }
     if (profile.contains('voice_recognition')) {
-      return pickUiText(
-        i18n,
-        zh: '兼容模式',
-        en: 'Compat mode',
-        ja: '互換モード',
-        de: 'Kompatibel',
-        fr: 'Mode compatible',
-        es: 'Modo compatible',
-        ru: 'Совместимый режим',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.compat_mode_da4b80',
       );
     }
-    return pickUiText(
-      i18n,
-      zh: '标准麦克风',
-      en: 'Standard mic',
-      ja: '標準マイク',
-      de: 'Standardmikro',
-      fr: 'Micro standard',
-      es: 'Micrófono estándar',
-      ru: 'Стандартный микрофон',
+    return i18n.t(
+      'inline.ui.pages.toolbox_human_tests_auditory_lab.standard_mic_eb364e',
     );
   }
 
@@ -2648,15 +2037,8 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
     if (label != null && label.trim().isNotEmpty) {
       return label;
     }
-    return pickUiText(
-      i18n,
-      zh: '默认输入',
-      en: 'Default input',
-      ja: '既定入力',
-      de: 'Standardeingang',
-      fr: 'Entrée par défaut',
-      es: 'Entrada predeterminada',
-      ru: 'Вход по умолчанию',
+    return i18n.t(
+      'inline.ui.pages.toolbox_human_tests_auditory_lab.default_input_087701',
     );
   }
 
@@ -2665,16 +2047,7 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
     if (firstFrameMs == null) {
       return _hasSeenFrame
           ? '< 1 ms'
-          : pickUiText(
-              i18n,
-              zh: '等待中',
-              en: 'Waiting',
-              ja: '待機中',
-              de: 'Wartet',
-              fr: 'Attente',
-              es: 'Esperando',
-              ru: 'Ожидание',
-            );
+          : i18n.t('inline.plan295.life.waiting.22b93486ae77');
     }
     return '$firstFrameMs ms';
   }
@@ -2682,63 +2055,28 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
   String _errorMessage(AppI18n i18n) {
     final error = _error;
     if (error == 'microphone_permission_denied') {
-      return pickUiText(
-        i18n,
-        zh: '麦克风权限被拒绝，请在系统设置中允许本应用使用麦克风后再开始。',
-        en: 'Microphone permission was denied. Allow microphone access in system settings and try again.',
-        ja: 'マイク権限が拒否されました。システム設定でマイクを許可してから再試行してください。',
-        de: 'Mikrofonzugriff wurde verweigert. Erlaube den Zugriff in den Systemeinstellungen und versuche es erneut.',
-        fr: 'L’autorisation du micro a été refusée. Autorisez le micro dans les réglages système puis réessayez.',
-        es: 'Se denegó el permiso del micrófono. Permite el acceso en los ajustes del sistema e inténtalo de nuevo.',
-        ru: 'Доступ к микрофону отклонен. Разрешите микрофон в настройках системы и повторите попытку.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.microphone_permission_was_denied_allow_microphone_access_84fc50',
       );
     }
     if (error == 'pcm_stream_not_supported') {
-      return pickUiText(
-        i18n,
-        zh: '当前平台不支持 PCM 实时流，无法进行声学频谱与音高分析。',
-        en: 'This platform does not support live PCM streaming, so acoustic and pitch analysis cannot run.',
-        ja: 'この環境ではライブ PCM ストリームに対応していないため、音響・音高解析を実行できません。',
-        de: 'Diese Plattform unterstützt kein Live-PCM-Streaming; Akustik- und Tonhöhenanalyse können nicht laufen.',
-        fr: 'Cette plateforme ne prend pas en charge le flux PCM en direct ; l’analyse acoustique ne peut pas fonctionner.',
-        es: 'Esta plataforma no admite flujo PCM en vivo; no se puede analizar acústica ni tono.',
-        ru: 'Платформа не поддерживает поток PCM, поэтому анализ акустики и высоты недоступен.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.this_platform_does_not_support_live_pcm_streaming_so_aco_329a1c',
       );
     }
     if (error == 'no_pcm_frames') {
-      return pickUiText(
-        i18n,
-        zh: '录音已启动但没有收到声音帧。请确认系统麦克风权限、隐私开关和外接耳机麦克风，然后重新开始。',
-        en: 'Recording started, but no audio frames arrived. Check microphone permission, privacy switches, and headset mic routing, then start again.',
-        ja: '録音は開始しましたが音声フレームを受信できません。権限、プライバシー設定、外部マイク経路を確認して再開してください。',
-        de: 'Die Aufnahme startete, aber es kamen keine Audio-Frames an. Prüfe Berechtigung, Datenschutzschalter und Headset-Mikrofon und starte neu.',
-        fr: 'L’enregistrement a démarré mais aucune trame audio n’est arrivée. Vérifiez l’autorisation, les réglages de confidentialité et le micro du casque, puis relancez.',
-        es: 'La grabación comenzó, pero no llegaron fotogramas de audio. Revisa permisos, privacidad y micrófono del auricular, y vuelve a iniciar.',
-        ru: 'Запись началась, но аудиофреймы не поступают. Проверьте разрешения, приватность и микрофон гарнитуры, затем перезапустите.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.recording_started_but_no_audio_frames_arrived_check_micr_d37229',
       );
     }
     if (error == 'silent_input') {
-      return pickUiText(
-        i18n,
-        zh: '麦克风流只返回数字静音。已尝试可用输入源，请检查系统麦克风、蓝牙耳机路由、通话/录屏占用后再试。',
-        en: 'The microphone stream only returned digital silence. Available inputs were tried; check system mic access, Bluetooth routing, calls, or screen recording and try again.',
-        ja: 'マイク入力がデジタル無音だけを返しました。権限、Bluetooth 経路、通話や画面収録を確認して再試行してください。',
-        de: 'Der Mikrofonstream liefert nur digitale Stille. Prüfe Mikrofonzugriff, Bluetooth-Routing, Anruf oder Bildschirmaufnahme und versuche es erneut.',
-        fr: 'Le flux micro ne renvoie que du silence numérique. Vérifiez l’accès micro, le Bluetooth, un appel ou l’enregistrement d’écran, puis réessayez.',
-        es: 'El flujo del micrófono solo devuelve silencio digital. Revisa permisos, Bluetooth, llamadas o grabación de pantalla y prueba de nuevo.',
-        ru: 'Поток микрофона возвращает только цифровую тишину. Проверьте доступ, Bluetooth, звонки или запись экрана и повторите.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.the_microphone_stream_only_returned_digital_silence_avai_46a026',
       );
     }
     if (error == 'capture_too_short') {
-      return pickUiText(
-        i18n,
-        zh: '样本过短，请至少采样 3 秒后加入报告。',
-        en: 'The sample is too short. Capture at least 3 seconds before adding it to the report.',
-        ja: 'サンプルが短すぎます。少なくとも 3 秒測定してからレポートに追加してください。',
-        de: 'Die Probe ist zu kurz. Miss mindestens 3 Sekunden, bevor du sie dem Bericht hinzufügst.',
-        fr: 'L’échantillon est trop court. Mesurez au moins 3 secondes avant de l’ajouter au rapport.',
-        es: 'La muestra es demasiado corta. Captura al menos 3 segundos antes de añadirla al informe.',
-        ru: 'Образец слишком короткий. Записывайте не менее 3 секунд перед добавлением в отчет.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.the_sample_is_too_short_capture_at_least_3_seconds_befor_590c81',
       );
     }
     return error ?? '';
@@ -2750,51 +2088,23 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
       return null;
     }
     if (code == 'exhausted_digital_silence') {
-      return pickUiText(
-        i18n,
-        zh: '已试完可用输入源，但仍只收到静音。请检查系统麦克风权限、蓝牙路由、通话或录屏占用。',
-        en: 'All available inputs were tried, but only silence came through. Check microphone access, Bluetooth routing, calls, or screen recording.',
-        ja: '利用可能な入力をすべて試しましたが、無音しか返りません。権限、Bluetooth 経路、通話や画面収録を確認してください。',
-        de: 'Alle Eingänge wurden versucht, aber es kam nur Stille an. Prüfe Zugriff, Bluetooth-Routing, Anruf oder Bildschirmaufnahme.',
-        fr: 'Tous les entrées disponibles ont été essayées, mais seul le silence revient. Vérifiez le micro, le Bluetooth, un appel ou l’enregistrement d’écran.',
-        es: 'Se probaron todas las entradas disponibles, pero solo llegó silencio. Revisa micrófono, Bluetooth, llamadas o grabación de pantalla.',
-        ru: 'Испробованы все входы, но пришла только тишина. Проверьте доступ, Bluetooth, звонки или запись экрана.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.all_available_inputs_were_tried_but_only_silence_came_th_71dc3c',
       );
     }
     if (code == 'exhausted_no_pcm_frames') {
-      return pickUiText(
-        i18n,
-        zh: '已试完可用输入源，但仍没有收到声音帧。请检查麦克风权限、系统隐私开关和设备路由。',
-        en: 'All available inputs were tried, but no audio frames arrived. Check microphone permission, privacy switches, and device routing.',
-        ja: '利用可能な入力をすべて試しましたが、音声フレームが届きません。権限、プライバシー設定、デバイス経路を確認してください。',
-        de: 'Alle Eingänge wurden versucht, aber es kamen keine Audioframes an. Prüfe Berechtigung, Datenschalter und Geräterouting.',
-        fr: 'Tous les entrées ont été essayées, mais aucune trame audio n’est arrivée. Vérifiez l’autorisation, les réglages de confidentialité et le routage.',
-        es: 'Se probaron todas las entradas, pero no llegaron frames de audio. Revisa permisos, privacidad y el enrutamiento del dispositivo.',
-        ru: 'Испробованы все входы, но аудиокадры не пришли. Проверьте разрешения, приватность и маршрутизацию устройства.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.all_available_inputs_were_tried_but_no_audio_frames_arri_b5ecb3',
       );
     }
     if (code == 'digital_silence') {
-      return pickUiText(
-        i18n,
-        zh: '上一输入源启动成功但只返回静音，已自动切到更稳的麦克风路径。',
-        en: 'The previous input started but returned silence, so the lab switched to a steadier mic path.',
-        ja: '前の入力は起動しましたが無音だったため、より安定したマイク経路へ切り替えました。',
-        de: 'Der vorige Eingang startete, blieb aber stumm. Das Labor nutzt nun einen stabileren Mikrofonpfad.',
-        fr: 'L’entrée précédente a démarré sans signal ; le labo utilise un chemin micro plus stable.',
-        es: 'La entrada anterior inició sin señal; el laboratorio cambió a una ruta de micrófono más estable.',
-        ru: 'Предыдущий вход запустился без сигнала; выбран более надежный путь микрофона.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.the_previous_input_started_but_returned_silence_so_the_l_3c77b1',
       );
     }
     if (code == 'no_pcm_frames') {
-      return pickUiText(
-        i18n,
-        zh: '上一输入源没有送达声音帧，已自动尝试下一个输入配置。',
-        en: 'The previous input delivered no audio frames, so the next input profile was tried.',
-        ja: '前の入力から音声フレームが届かなかったため、次の入力設定を試しました。',
-        de: 'Der vorige Eingang lieferte keine Audioframes; das nächste Profil wurde versucht.',
-        fr: 'L’entrée précédente n’a livré aucune trame audio ; le profil suivant a été essayé.',
-        es: 'La entrada anterior no entregó frames de audio; se probó el siguiente perfil.',
-        ru: 'Предыдущий вход не дал аудиокадров; попробован следующий профиль.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.the_previous_input_delivered_no_audio_frames_so_the_next_35e89c',
       );
     }
     return null;
@@ -2802,15 +2112,8 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
 
   String _reportSummary(AppI18n i18n) {
     if (_captures.isEmpty) {
-      return pickUiText(
-        i18n,
-        zh: '还没有样本。建议先测环境噪声，再测低音、高音和持续发声。',
-        en: 'No samples yet. Start with ambient noise, then low tone, high tone, and sustain.',
-        ja: 'No samples yet. Start with ambient noise, then low tone, high tone, and sustain.',
-        de: 'No samples yet. Start with ambient noise, then low tone, high tone, and sustain.',
-        fr: 'Pas encore d\'échantillons. Commencez par le bruit ambiant, puis le ton bas, le ton haut et maintenir.',
-        es: 'Aún no hay muestras. Comience con ruido ambiente, luego tono bajo, tono alto y sostener.',
-        ru: 'Пока нет образцов. Начните с окружающего шума, затем низкий тон, высокий тон и выдерживайте.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.no_samples_yet_start_with_ambient_noise_then_low_tone_hi_894cb4',
       );
     }
     final averageScore =
@@ -2825,29 +2128,15 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
     final weakest = _captures.values.reduce(
       (a, b) => a.qualityScore <= b.qualityScore ? a : b,
     );
-    return pickUiText(
-      i18n,
-      zh: '已完成 ${_captures.length}/4 项，综合质量 ${_captureQualityLabel(i18n, averageScore)}。最佳：${_modeSpecs[best.mode]!.label(i18n)}；优先复测：${_modeSpecs[weakest.mode]!.label(i18n)}。',
-      en: '${_captures.length}/4 modes complete. Overall quality: ${_captureQualityLabel(i18n, averageScore)}. Best: ${_modeSpecs[best.mode]!.label(i18n)}; retest priority: ${_modeSpecs[weakest.mode]!.label(i18n)}.',
-      ja: '${_captures.length}/4つのモードが完了しました。全体的な品質：${_captureQualityLabel(i18n, averageScore)}。ベスト：${_modeSpecs[best.mode]!.label(i18n)};再テストの優先度： ${_modeSpecs[weakest.mode]!.label(i18n)}。',
-      de: '${_captures.length}/4 modes complete. Overall quality: ${_captureQualityLabel(i18n, averageScore)}. Best: ${_modeSpecs[best.mode]!.label(i18n)}; retest priority: ${_modeSpecs[weakest.mode]!.label(i18n)}.',
-      fr: '${_captures.length}/4 modes complete. Overall quality: ${_captureQualityLabel(i18n, averageScore)}. Best: ${_modeSpecs[best.mode]!.label(i18n)}; retest priority: ${_modeSpecs[weakest.mode]!.label(i18n)}.',
-      es: 'Se completan los modos de contacto. Calidad general: יv1/ título. Mejor: <v2/ título; retest priority: יv3/año.',
-      ru: '${_captures.length}/4 режимы завершены. Общее качество: ${_captureQualityLabel(i18n, averageScore)} Лучше всего: ${_modeSpecs[best.mode]!.label(i18n)}; приоритет повторного тестирования: ${_modeSpecs[weakest.mode]!.label(i18n)}.',
+    return i18n.t(
+      'inline.ui.pages.toolbox_human_tests_auditory_lab.captures_length_4_modes_complete_overall_quality_capture_2d49a7',
     );
   }
 
   String _recommendedNextStep(AppI18n i18n) {
     if (!_captures.containsKey(_MicLabMode.noise)) {
-      return pickUiText(
-        i18n,
-        zh: '可以先测噪声仪，了解这台设备和这个房间的底噪。',
-        en: 'Next: measure the noise meter first to establish the room floor on this device.',
-        ja: '次は騒音計で部屋のノイズフロアを測り、この端末の基準を作ります。',
-        de: 'Nächster Schritt: zuerst den Geräuschmesser messen, um den Raumpegel auf diesem Gerät zu erfassen.',
-        fr: 'Étape suivante : mesurez d’abord le sonomètre pour établir le bruit de fond de cette pièce.',
-        es: 'Siguiente: mide primero el ruido ambiente para fijar el piso de sala en este dispositivo.',
-        ru: 'Далее: сначала измерьте шум комнаты, чтобы задать базовый фон на этом устройстве.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.next_measure_the_noise_meter_first_to_establish_the_room_b38a82',
       );
     }
     for (final mode in <_MicLabMode>[
@@ -2856,55 +2145,27 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
       _MicLabMode.sustain,
     ]) {
       if (!_captures.containsKey(mode)) {
-        return pickUiText(
-          i18n,
-          zh: '接着完成 ${_modeSpecs[mode]!.label(i18n)} 样本，尽量保持同一距离和音量。',
-          en: 'Next: capture ${_modeSpecs[mode]!.label(i18n)} with the same distance and level.',
-          ja: '次は ${_modeSpecs[mode]!.label(i18n)} を同じ距離と音量で測ります。',
-          de: 'Nächster Schritt: ${_modeSpecs[mode]!.label(i18n)} mit gleichem Abstand und Pegel aufnehmen.',
-          fr: 'Étape suivante : mesurez ${_modeSpecs[mode]!.label(i18n)} avec la même distance et le même niveau.',
-          es: 'Siguiente: captura ${_modeSpecs[mode]!.label(i18n)} con la misma distancia y nivel.',
-          ru: 'Далее: запишите ${_modeSpecs[mode]!.label(i18n)} на той же дистанции и громкости.',
+        return i18n.t(
+          'inline.ui.pages.toolbox_human_tests_auditory_lab.next_capture_modespecs_mode_label_i18n_with_the_same_dis_0c5c6d',
         );
       }
     }
     final weakest = _captures.values.reduce(
       (a, b) => a.qualityScore <= b.qualityScore ? a : b,
     );
-    return pickUiText(
-      i18n,
-      zh: '四项已完成。若要提高可比性，优先复测 ${_modeSpecs[weakest.mode]!.label(i18n)}。',
-      en: 'All four modes are complete. To improve comparability, retest ${_modeSpecs[weakest.mode]!.label(i18n)} first.',
-      ja: '4 つのモードが完了しました。比較精度を上げるなら ${_modeSpecs[weakest.mode]!.label(i18n)} を優先して再測します。',
-      de: 'Alle vier Modi sind vollständig. Für bessere Vergleichbarkeit zuerst ${_modeSpecs[weakest.mode]!.label(i18n)} erneut messen.',
-      fr: 'Les quatre modes sont terminés. Pour améliorer la comparaison, recommencez d’abord ${_modeSpecs[weakest.mode]!.label(i18n)}.',
-      es: 'Los cuatro modos están completos. Para mejorar la comparación, repite primero ${_modeSpecs[weakest.mode]!.label(i18n)}.',
-      ru: 'Все четыре режима завершены. Для лучшего сравнения сначала повторите ${_modeSpecs[weakest.mode]!.label(i18n)}.',
+    return i18n.t(
+      'inline.ui.pages.toolbox_human_tests_auditory_lab.all_four_modes_are_complete_to_improve_comparability_ret_589f75',
     );
   }
 
   String _baselineHint(AppI18n i18n) {
     if (_noiseFloorDbfs != null) {
-      return pickUiText(
-        i18n,
-        zh: '环境底噪 ${_noiseFloorDbfs!.toStringAsFixed(1)} dBFS，后续报告会用它估算信噪比。',
-        en: 'Room floor: ${_noiseFloorDbfs!.toStringAsFixed(1)} dBFS. Later samples use it for SNR.',
-        ja: 'ノイズフロア: ${_noiseFloorDbfs!.toStringAsFixed(1)} dBFS。以後のサンプルで SNR 推定に使います。',
-        de: 'Raumpegel: ${_noiseFloorDbfs!.toStringAsFixed(1)} dBFS. Spätere Proben nutzen ihn für SNR.',
-        fr: 'Bruit de fond : ${_noiseFloorDbfs!.toStringAsFixed(1)} dBFS. Les autres mesures l’utilisent pour le SNR.',
-        es: 'Piso de ruido: ${_noiseFloorDbfs!.toStringAsFixed(1)} dBFS. Las muestras posteriores lo usan para SNR.',
-        ru: 'Фон комнаты: ${_noiseFloorDbfs!.toStringAsFixed(1)} dBFS. Позже он используется для SNR.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.room_floor_noisefloordbfs_tostringasfixed_1_dbfs_later_s_b81d7e',
       );
     }
-    return pickUiText(
-      i18n,
-      zh: '尚未建立环境底噪。先测噪声仪，低音/高音/持续的信噪比会更可信。',
-      en: 'No room floor yet. Measure noise first so low, high, and sustain SNR are more useful.',
-      ja: 'まだノイズフロアがありません。先に騒音を測ると、低音・高音・持続の SNR が役立ちます。',
-      de: 'Noch kein Raumpegel. Miss zuerst Geräusch, damit SNR für Tiefton, Hochton und Halten nützlicher wird.',
-      fr: 'Aucun bruit de fond pour l’instant. Mesurez le bruit d’abord pour rendre le SNR plus utile.',
-      es: 'Aún no hay piso de ruido. Mide ruido primero para que el SNR sea más útil.',
-      ru: 'Фон комнаты еще не измерен. Сначала измерьте шум, чтобы SNR был полезнее.',
+    return i18n.t(
+      'inline.ui.pages.toolbox_human_tests_auditory_lab.no_room_floor_yet_measure_noise_first_so_low_high_and_su_f4bd38',
     );
   }
 
@@ -3010,45 +2271,17 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
   String _modeSummary(AppI18n i18n) {
     final spec = _modeSpecs[_mode]!;
     return switch (_mode) {
-      _MicLabMode.low => pickUiText(
-        i18n,
-        zh: '目标: ${spec.targetMinHz.round()}-${spec.targetMaxHz.round()} Hz',
-        en: 'Target: ${spec.targetMinHz.round()}-${spec.targetMaxHz.round()} Hz',
-        ja: 'Target: ${spec.targetMinHz.round()}-${spec.targetMaxHz.round()} Hz',
-        de: 'Target: ${spec.targetMinHz.round()}-${spec.targetMaxHz.round()} Hz',
-        fr: 'Objectif : ${spec.targetMinHz.round()}-${spec.targetMaxHz.round()} Hz',
-        es: 'Objetivo: ${spec.targetMinHz.round()}-${spec.targetMaxHz.round()} Hz',
-        ru: 'Цель: ${spec.targetMinHz.round()}-${spec.targetMaxHz.round()} Гц',
+      _MicLabMode.low => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.target_spec_targetminhz_round_spec_targetmaxhz_round_hz_5c0997',
       ),
-      _MicLabMode.high => pickUiText(
-        i18n,
-        zh: '目标: ${spec.targetMinHz.round()}-${spec.targetMaxHz.round()} Hz',
-        en: 'Target: ${spec.targetMinHz.round()}-${spec.targetMaxHz.round()} Hz',
-        ja: 'Target: ${spec.targetMinHz.round()}-${spec.targetMaxHz.round()} Hz',
-        de: 'Target: ${spec.targetMinHz.round()}-${spec.targetMaxHz.round()} Hz',
-        fr: 'Objectif : ${spec.targetMinHz.round()}-${spec.targetMaxHz.round()} Hz',
-        es: 'Objetivo: ${spec.targetMinHz.round()}-${spec.targetMaxHz.round()} Hz',
-        ru: 'Цель: ${spec.targetMinHz.round()}-${spec.targetMaxHz.round()} Гц',
+      _MicLabMode.high => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.target_spec_targetminhz_round_spec_targetmaxhz_round_hz_5c0997',
       ),
-      _MicLabMode.sustain => pickUiText(
-        i18n,
-        zh: '保持稳定 5 秒以上，系统会读持续性和波动。',
-        en: 'Hold steady for 5+ seconds; the system reads sustain and variation.',
-        ja: 'Hold steady for 5+ seconds; the system reads sustain and variation.',
-        de: 'Hold steady for 5+ seconds; the system reads sustain and variation.',
-        fr: 'Tenez-vous stable pendant 5+ secondes ; le système lit soutenir et variation.',
-        es: 'Mantenerse firme durante 5+ segundos; el sistema lee sostenimiento y variación.',
-        ru: 'Оставайтесь на месте в течение 5+ секунд; система считывает устойчивость и изменение.',
+      _MicLabMode.sustain => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.hold_steady_for_5_seconds_the_system_reads_sustain_and_v_c6ea24',
       ),
-      _MicLabMode.noise => pickUiText(
-        i18n,
-        zh: '保持安静，读环境噪声底和峰值。',
-        en: 'Stay quiet and read the ambient floor and peaks.',
-        ja: 'Stay quiet and read the ambient floor and peaks.',
-        de: 'Stay quiet and read the ambient floor and peaks.',
-        fr: 'Restez calme et lisez le plancher ambiant et les pics.',
-        es: 'Manténgase tranquilo y leer el suelo ambiente y los picos.',
-        ru: 'Оставайтесь спокойными и читайте окружающий пол и пики.',
+      _MicLabMode.noise => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.stay_quiet_and_read_the_ambient_floor_and_peaks_751f50',
       ),
     };
   }
@@ -3100,15 +2333,8 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
                   children: <Widget>[
                     Expanded(
                       child: Text(
-                        pickUiText(
-                          i18n,
-                          zh: '声学报告',
-                          en: 'Acoustic report',
-                          ja: '音響レポート',
-                          de: 'Akustikbericht',
-                          fr: 'Rapport acoustique',
-                          es: 'Informe acústico',
-                          ru: 'Акустический отчет',
+                        i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_auditory_lab.acoustic_report_20f936',
                         ),
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w900,
@@ -3119,16 +2345,7 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
                       key: const ValueKey<String>(
                         'acoustic_report_close_button',
                       ),
-                      tooltip: pickUiText(
-                        i18n,
-                        zh: '关闭',
-                        en: 'Close',
-                        ja: '閉じる',
-                        de: 'Close',
-                        fr: 'Fermer',
-                        es: 'Cerca',
-                        ru: 'Закрыть',
-                      ),
+                      tooltip: i18n.t('inline.plan295.life.close.370fb8697deb'),
                       onPressed: () => Navigator.of(context).pop(),
                       icon: const Icon(Icons.close_rounded),
                     ),
@@ -3150,15 +2367,8 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
                     ),
                   ),
                   child: Text(
-                    pickUiText(
-                      i18n,
-                      zh: '提醒：手机和电脑麦克风会受设备、距离和环境影响。结果适合练习、对比和观察房间噪声，不能替代专业检查。',
-                      en: 'Note: phone and computer microphones vary by device, distance, and room. Use these results for practice, comparison, and room-noise checks; they do not replace a professional check.',
-                      ja: '注: スマホやパソコンのマイクは、機種、距離、部屋の影響を受けます。結果は練習や比較、部屋の音の確認に使い、専門的な確認の代わりにはしないでください。',
-                      de: 'Hinweis: Mikrofone in Telefonen und Computern reagieren je nach Gerät, Abstand und Raum anders. Die Ergebnisse helfen beim Üben, Vergleichen und Prüfen des Raumgeräuschs, ersetzen aber keine fachliche Kontrolle.',
-                      fr: 'Remarque : les micros de téléphone et d’ordinateur varient selon l’appareil, la distance et la pièce. Ces résultats servent à pratiquer, comparer et vérifier le bruit de la pièce ; ils ne remplacent pas un contrôle professionnel.',
-                      es: 'Nota: los micrófonos de teléfonos y ordenadores cambian según el dispositivo, la distancia y la habitación. Usa estos resultados para practicar, comparar y revisar el ruido de la habitación; no sustituyen una revisión profesional.',
-                      ru: 'Примечание: микрофоны телефона и компьютера зависят от устройства, расстояния и комнаты. Используйте результаты для практики, сравнения и проверки шума в помещении; они не заменяют профессиональную проверку.',
+                    i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_auditory_lab.note_phone_and_computer_microphones_vary_by_device_dista_cb6da3',
                     ),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: colorScheme.onErrorContainer,
@@ -3170,15 +2380,8 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
                 if (orderedCaptures.isEmpty)
                   _HumanPanel(
                     child: Text(
-                      pickUiText(
-                        i18n,
-                        zh: '暂无样本。请先完成至少一个模式并点击“加入报告”。',
-                        en: 'No samples yet. Complete at least one mode and tap “Add to report”.',
-                        ja: 'No samples yet. Complete at least one mode and tap “Add to report”.',
-                        de: 'No samples yet. Complete at least one mode and tap “Add to report”.',
-                        fr: 'Pas encore d\'échantillons. Compléter au moins un mode et appuyez sur Ajouter au rapport.',
-                        es: 'Aún no hay muestras. Completa al menos un modo y pulsa “Añadir al informe”.',
-                        ru: 'Пока нет образцов. Заполните хотя бы один режим и нажмите «Добавить в отчет».',
+                      i18n.t(
+                        'inline.ui.pages.toolbox_human_tests_auditory_lab.no_samples_yet_complete_at_least_one_mode_and_tap_add_to_6794a6',
                       ),
                     ),
                   )
@@ -3197,15 +2400,8 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
                   ],
                 const SizedBox(height: 6),
                 Text(
-                  pickUiText(
-                    i18n,
-                    zh: '复测时：如果削波高于 1%、音高命中低于 60% 或曲线平滑低于 45%，可以拉远一点或放轻音量；如果环境噪声高于 -38 dBFS，先换到更安静的位置。',
-                    en: 'Retest tip: if clipping is above 1%, pitch hit is below 60%, or smoothness is below 45%, move back a little or lower your voice and try again. If ambient noise is above -38 dBFS, move somewhere quieter first.',
-                    ja: 'Retest tip: if clipping is above 1%, pitch hit is below 60%, or smoothness is below 45%, move back a little or lower your voice and try again. If ambient noise is above -38 dBFS, move somewhere quieter first.',
-                    de: 'Retest tip: if clipping is above 1%, pitch hit is below 60%, or smoothness is below 45%, move back a little or lower your voice and try again. If ambient noise is above -38 dBFS, move somewhere quieter first.',
-                    fr: 'Astuce de contre-test : si la coupure est supérieure à 1%, la hauteur est inférieure à 60%, ou la douceur est inférieure à 45%, reculez un peu ou baissez votre voix et essayez à nouveau. Si le bruit ambiant est supérieur à -38 dBFS, déplacez-vous d\'abord dans un endroit plus calme.',
-                    es: 'Retest tip: si el recorte es superior al 1%, el golpe de lanzamiento es inferior al 60%, o la suavidad es inferior al 45%, retrocede un poco o baja la voz y vuelva a intentarlo. Si el ruido ambiente está por encima de -38 dBFS, mueva un lugar más tranquilo primero.',
-                    ru: 'Совет: если обрезка выше 1%, удар ниже 60%, или плавность ниже 45%, немного отойдите назад или понизьте голос и попробуйте снова. Если шум окружающей среды выше -38 дБФС, сначала перейдите в более тихое место.',
+                  i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_auditory_lab.retest_tip_if_clipping_is_above_1_pitch_hit_is_below_60_aaacda',
                   ),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
@@ -3262,36 +2458,11 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
           icon: Icon(_running ? Icons.stop_rounded : Icons.mic_rounded),
           label: Text(
             _starting || _switchingInput
-                ? pickUiText(
-                    i18n,
-                    zh: '正在准备',
-                    en: 'Preparing',
-                    ja: '準備中',
-                    de: 'Vorbereiten',
-                    fr: 'Préparation',
-                    es: 'Preparando',
-                    ru: 'Подготовка',
-                  )
+                ? i18n.t('toolbox.breathing.preparing')
                 : _running
-                ? pickUiText(
-                    i18n,
-                    zh: '停止监测',
-                    en: 'Stop',
-                    ja: '停止',
-                    de: 'Stop',
-                    fr: 'Arrêter',
-                    es: 'Detener',
-                    ru: 'Стоп',
-                  )
-                : pickUiText(
-                    i18n,
-                    zh: '打开麦克风',
-                    en: 'Open mic',
-                    ja: 'マイクを開く',
-                    de: 'Mikro öffnen',
-                    fr: 'Ouvrir le micro',
-                    es: 'Abrir micrófono',
-                    ru: 'Открыть микрофон',
+                ? i18n.t('stop')
+                : i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_auditory_lab.open_mic_0c95cb',
                   ),
           ),
         ),
@@ -3301,15 +2472,8 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
               : null,
           icon: const Icon(Icons.assignment_turned_in_rounded),
           label: Text(
-            pickUiText(
-              i18n,
-              zh: '加入报告',
-              en: 'Add to report',
-              ja: 'レポートに追加',
-              de: 'Zum Bericht hinzufügen',
-              fr: 'Ajouter au rapport',
-              es: 'Añadir al informe',
-              ru: 'Добавить в отчет',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_auditory_lab.add_to_report_1d2fed',
             ),
           ),
         ),
@@ -3317,33 +2481,15 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
           onPressed: _showProfessionalReport,
           icon: const Icon(Icons.summarize_rounded),
           label: Text(
-            pickUiText(
-              i18n,
-              zh: '声学报告',
-              en: 'Acoustic report',
-              ja: '音響レポート',
-              de: 'Akustikbericht',
-              fr: 'Rapport acoustique',
-              es: 'Informe acústico',
-              ru: 'Акустический отчет',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_auditory_lab.acoustic_report_20f936',
             ),
           ),
         ),
         OutlinedButton.icon(
           onPressed: canReset ? () => unawaited(_resetCurrentRun()) : null,
           icon: const Icon(Icons.refresh_rounded),
-          label: Text(
-            pickUiText(
-              i18n,
-              zh: '重置',
-              en: 'Reset',
-              ja: 'Reset',
-              de: 'Zurücksetzen',
-              fr: 'Réinitialiser',
-              es: 'Reiniciar',
-              ru: 'Сброс',
-            ),
-          ),
+          label: Text(i18n.t('appearanceReset')),
         ),
       ],
     );
@@ -3356,172 +2502,73 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
   ) {
     return <Widget>[
       ToolboxMetricCard(
-        label: pickUiText(
-          i18n,
-          zh: '状态',
-          en: 'Status',
-          ja: '状態',
-          de: 'Status',
-          fr: 'État',
-          es: 'Estado',
-          ru: 'Статус',
+        label: i18n.t(
+          'inline.ui.pages.focus_page_workspace_editor.status_cc59cb',
         ),
         value: _statusLabel(i18n),
       ),
       ToolboxMetricCard(
-        label: pickUiText(
-          i18n,
-          zh: '电平',
-          en: 'Level',
-          ja: 'Level',
-          de: 'Level',
-          fr: 'Niveau',
-          es: 'Nivel',
-          ru: 'Уровень',
-        ),
+        label: i18n.t('toolbox.sound.pickup.level'),
         value: '${(_level * 100).round()}%',
       ),
       ToolboxMetricCard(
-        label: pickUiText(
-          i18n,
-          zh: '峰值',
-          en: 'Peak',
-          ja: 'Peak',
-          de: 'Peak',
-          fr: 'Pic',
-          es: 'Peak',
-          ru: 'Пик',
-        ),
+        label: i18n.t('toolbox.sound.locator.metric_peak'),
         value: '${(_peak * 100).round()}%',
       ),
       ToolboxMetricCard(
-        label: pickUiText(
-          i18n,
-          zh: 'dBFS',
-          en: 'dBFS',
-          ja: 'dBFS',
-          de: 'dBFS',
-          fr: 'dBFS',
-          es: 'dBFS',
-          ru: 'dBFS',
+        label: i18n.t(
+          'inline.ui.pages.toolbox_human_tests_auditory_lab.dbfs_768d78',
         ),
         value: _dbfs.toStringAsFixed(1),
       ),
       ToolboxMetricCard(
-        label: pickUiText(
-          i18n,
-          zh: '音高',
-          en: 'Pitch',
-          ja: 'Pitch',
-          de: 'Pitch',
-          fr: 'Hauteur',
-          es: 'Tono',
-          ru: 'Высота',
+        label: i18n.t(
+          'inline.ui.pages.toolbox_human_tests_auditory_lab.pitch_bb1d92',
         ),
         value: pitchLabel,
       ),
       ToolboxMetricCard(
-        label: pickUiText(
-          i18n,
-          zh: '稳定性',
-          en: 'Stability',
-          ja: 'Stability',
-          de: 'Stability',
-          fr: 'Stabilité',
-          es: 'Estabilidad',
-          ru: 'Стабильность',
+        label: i18n.t(
+          'inline.ui.pages.toolbox_human_tests_auditory_lab.stability_c45fda',
         ),
         value: '${(_pitchStability * 100).round()}%',
       ),
       ToolboxMetricCard(
-        label: pickUiText(
-          i18n,
-          zh: '持续性',
-          en: 'Sustain',
-          ja: 'Sustain',
-          de: 'Sustain',
-          fr: 'Tenue',
-          es: 'Sostenido',
-          ru: 'Длительность',
+        label: i18n.t(
+          'inline.ui.pages.toolbox_human_tests_auditory_lab.sustain_03fa8b',
         ),
         value: '${(_sustainScore * 100).round()}%',
       ),
       ToolboxMetricCard(
-        label: pickUiText(
-          i18n,
-          zh: '曲线平滑',
-          en: 'Smoothness',
-          ja: 'Smoothness',
-          de: 'Smoothness',
-          fr: 'Lissage',
-          es: 'Suavidad',
-          ru: 'Плавность',
+        label: i18n.t(
+          'inline.ui.pages.toolbox_human_tests_auditory_lab.smoothness_22ffe0',
         ),
         value: '${(_lastCurveSmoothness * 100).round()}%',
       ),
       ToolboxMetricCard(
-        label: pickUiText(
-          i18n,
-          zh: '响度一致',
-          en: 'Level hold',
-          ja: 'Level hold',
-          de: 'Level hold',
-          fr: 'Tenue niveau',
-          es: 'Nivel estable',
-          ru: 'Удержание',
+        label: i18n.t(
+          'inline.ui.pages.toolbox_human_tests_auditory_lab.level_hold_a5f198',
         ),
         value: '${(_levelConsistencyScore * 100).round()}%',
       ),
       ToolboxMetricCard(
-        label: pickUiText(
-          i18n,
-          zh: '环境评分',
-          en: 'Ambient',
-          ja: 'Ambient',
-          de: 'Ambient',
-          fr: 'Ambiant',
-          es: 'Ambiente',
-          ru: 'Фон',
-        ),
+        label: i18n.t('inline.ui.pages.play_page.ambient_6e3e01'),
         value: '${(_ambientScore * 100).round()}%',
       ),
       ToolboxMetricCard(
-        label: pickUiText(
-          i18n,
-          zh: '过零率',
-          en: 'ZCR',
-          ja: 'ZCR',
-          de: 'ZCR',
-          fr: 'ZCR',
-          es: 'ZCR',
-          ru: 'ZCR',
+        label: i18n.t(
+          'inline.ui.pages.toolbox_human_tests_auditory_lab.zcr_a7b1f2',
         ),
         value: _zeroCrossingRate.toStringAsFixed(3),
       ),
       ToolboxMetricCard(
-        label: pickUiText(
-          i18n,
-          zh: '削波',
-          en: 'Clipping',
-          ja: 'クリッピング',
-          de: 'Clipping',
-          fr: 'Écrêtage',
-          es: 'Recorte',
-          ru: 'Клиппинг',
+        label: i18n.t(
+          'inline.ui.pages.toolbox_human_tests_auditory_lab.clipping_3a711c',
         ),
         value: '${(_clippingRatio * 100).toStringAsFixed(1)}%',
       ),
       ToolboxMetricCard(
-        label: pickUiText(
-          i18n,
-          zh: '动态范围',
-          en: 'Range',
-          ja: 'Range',
-          de: 'Range',
-          fr: 'Plage',
-          es: 'Rango',
-          ru: 'Диапазон',
-        ),
+        label: i18n.t('toolbox.sleep.report.range'),
         value: activeCapture == null
             ? '--'
             : '${activeCapture.dynamicRangeDb.toStringAsFixed(1)} dB',
@@ -3541,27 +2588,13 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
               : (value) => setState(() => _preferCompatibilityInput = value),
           secondary: const Icon(Icons.settings_input_component_rounded),
           title: Text(
-            pickUiText(
-              i18n,
-              zh: '兼容输入优先',
-              en: 'Compatibility input first',
-              ja: '互換入力を優先',
-              de: 'Kompatiblen Eingang zuerst',
-              fr: 'Entrée compatible d’abord',
-              es: 'Entrada compatible primero',
-              ru: 'Сначала совместимый вход',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_auditory_lab.compatibility_input_first_790687',
             ),
           ),
           subtitle: Text(
-            pickUiText(
-              i18n,
-              zh: '部分手机的原始/标准输入会启动但没有信号，开启后会先使用语音识别输入。',
-              en: 'Some phones start a raw or standard input with no signal. This starts with the voice-recognition input instead.',
-              ja: '一部の端末では標準入力が無音になるため、音声認識入力から開始します。',
-              de: 'Einige Geräte starten ohne Signal. Diese Option beginnt mit dem Spracherkennungseingang.',
-              fr: 'Certains téléphones démarrent sans signal ; cette option commence par l’entrée de reconnaissance vocale.',
-              es: 'Algunos teléfonos inician sin señal; esta opción empieza con la entrada de reconocimiento de voz.',
-              ru: 'Некоторые телефоны запускают вход без сигнала; этот режим сначала использует распознавание речи.',
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_auditory_lab.some_phones_start_a_raw_or_standard_input_with_no_signal_ccc04a',
             ),
           ),
         ),
@@ -3571,95 +2604,44 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
           runSpacing: 10,
           children: <Widget>[
             ToolboxMetricCard(
-              label: pickUiText(
-                i18n,
-                zh: '采样率',
-                en: 'Sample rate',
-                ja: 'Sample rate',
-                de: 'Sample rate',
-                fr: 'Échantillonnage',
-                es: 'Muestreo',
-                ru: 'Частота',
-              ),
+              label: i18n.t('toolbox.sound.locator.metric_sample_rate'),
               value: _running || _activeRecorderProfileId != null
                   ? '${(_activeSampleRate / 1000).toStringAsFixed(_activeSampleRate % 1000 == 0 ? 0 : 1)} kHz'
                   : '--',
             ),
             ToolboxMetricCard(
-              label: pickUiText(
-                i18n,
-                zh: '输入',
-                en: 'Input',
-                ja: 'Input',
-                de: 'Input',
-                fr: 'Entrée',
-                es: 'Entrada',
-                ru: 'Вход',
+              label: i18n.t(
+                'inline.ui.pages.toolbox_human_tests_auditory_lab.input_6e272b',
               ),
               value: _inputLabel(i18n),
             ),
             ToolboxMetricCard(
-              label: pickUiText(
-                i18n,
-                zh: '流模式',
-                en: 'Stream',
-                ja: 'Stream',
-                de: 'Stream',
-                fr: 'Flux',
-                es: 'Flujo',
-                ru: 'Поток',
+              label: i18n.t(
+                'inline.ui.pages.toolbox_human_tests_auditory_lab.stream_7c7440',
               ),
               value: _profileLabel(i18n),
             ),
             ToolboxMetricCard(
-              label: pickUiText(
-                i18n,
-                zh: '首帧',
-                en: 'First frame',
-                ja: 'First frame',
-                de: 'First frame',
-                fr: '1re trame',
-                es: 'Primer frame',
-                ru: 'Первый кадр',
+              label: i18n.t(
+                'inline.ui.pages.toolbox_human_tests_auditory_lab.first_frame_93065c',
               ),
               value: _formatFirstFrame(i18n),
             ),
             ToolboxMetricCard(
-              label: pickUiText(
-                i18n,
-                zh: '样本',
-                en: 'Frames',
-                ja: 'Frames',
-                de: 'Frames',
-                fr: 'Cadres',
-                es: 'Frames',
-                ru: 'Кадры',
+              label: i18n.t(
+                'inline.ui.pages.toolbox_human_tests_auditory_lab.frames_a0bc28',
               ),
               value: '$_frameCount',
             ),
             ToolboxMetricCard(
-              label: pickUiText(
-                i18n,
-                zh: '空帧',
-                en: 'Blank frames',
-                ja: 'Blank frames',
-                de: 'Leere Frames',
-                fr: 'Trames vides',
-                es: 'Frames vacíos',
-                ru: 'Пустые кадры',
+              label: i18n.t(
+                'inline.ui.pages.toolbox_human_tests_auditory_lab.blank_frames_ce9269',
               ),
               value: '$_emptyChunkCount',
             ),
             ToolboxMetricCard(
-              label: pickUiText(
-                i18n,
-                zh: '启动尝试',
-                en: 'Starts',
-                ja: 'Starts',
-                de: 'Starts',
-                fr: 'Démarrages',
-                es: 'Inicios',
-                ru: 'Запуски',
+              label: i18n.t(
+                'inline.ui.pages.toolbox_human_tests_auditory_lab.starts_e37521',
               ),
               value: '$_streamRestartCount',
             ),
@@ -3676,15 +2658,8 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
     Color meterColor,
   ) {
     return _HumanSettingsSection(
-      title: pickUiText(
-        i18n,
-        zh: '采样指南',
-        en: 'Sampling guide',
-        ja: 'Sampling guide',
-        de: 'Sampling guide',
-        fr: 'Guide de mesure',
-        es: 'Guía de muestreo',
-        ru: 'Руководство',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.sampling_guide_c8ece1',
       ),
       subtitle: _baselineHint(i18n),
       child: Column(
@@ -3700,15 +2675,8 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
           const SizedBox(height: 10),
           _AcousticStatusBanner(
             icon: Icons.tips_and_updates_rounded,
-            message: pickUiText(
-              i18n,
-              zh: '低音/高音保持单一持续音；持续模式保持同一音高；噪声仪保持安静，并让手机远离风扇和桌面震动。',
-              en: 'For low and high modes, keep one steady sound. For sustain, hold one pitch. For the noise meter, stay quiet and keep the phone away from fans and table vibration.',
-              ja: '低音/高音は安定した一音を保ち、持続は同じ音高を伸ばします。騒音計では静かにし、風や机の振動を避けます。',
-              de: 'Halte bei tief/hoch einen gleichmäßigen Ton. Beim Halten bleibt eine Tonhöhe stabil. Für Geräusch bleib ruhig und meide Lüfter oder Tischvibration.',
-              fr: 'Gardez un son stable en grave/aigu, une hauteur en tenue, et le silence pour le bruit. Éloignez le téléphone des ventilateurs et vibrations.',
-              es: 'En bajo/agudo mantén un sonido estable. En sostenido mantén un tono. En ruido, guarda silencio y evita ventiladores o vibración.',
-              ru: 'Для низкого/высокого тона держите ровный звук. Для длительности держите высоту. Для шума сохраняйте тишину и избегайте вибрации.',
+            message: i18n.t(
+              'inline.ui.pages.toolbox_human_tests_auditory_lab.for_low_and_high_modes_keep_one_steady_sound_for_sustain_68803c',
             ),
             color: theme.colorScheme.secondary,
           ),
@@ -3719,25 +2687,11 @@ class _AuditoryMicLabCardState extends State<_AuditoryMicLabCard> {
 
   Widget _buildDiagnosticsSection(AppI18n i18n) {
     return _HumanSettingsSection(
-      title: pickUiText(
-        i18n,
-        zh: '采集诊断',
-        en: 'Capture diagnostics',
-        ja: 'Capture diagnostics',
-        de: 'Capture diagnostics',
-        fr: 'Diagnostic de capture',
-        es: 'Diagnóstico de captura',
-        ru: 'Диагностика',
+      title: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.capture_diagnostics_9f6b8d',
       ),
-      subtitle: pickUiText(
-        i18n,
-        zh: '查看输入源、首帧、空帧和兼容模式；真机无声时优先打开这里。',
-        en: 'Check input source, first frame, blank frames, and compatibility mode. Open this first if a real device stays silent.',
-        ja: '入力、初回フレーム、空フレーム、互換モードを確認します。実機で無音ならここを開きます。',
-        de: 'Prüfe Eingang, ersten Frame, Leerframes und Kompatibilitätsmodus, wenn ein Gerät stumm bleibt.',
-        fr: 'Vérifiez l’entrée, la première trame, les trames vides et le mode compatible si l’appareil reste muet.',
-        es: 'Revisa entrada, primer frame, frames vacíos y modo compatible si el dispositivo queda sin señal.',
-        ru: 'Проверьте вход, первый кадр, пустые кадры и режим совместимости, если устройство молчит.',
+      subtitle: i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.check_input_source_first_frame_blank_frames_and_compatib_db035d',
       ),
       initiallyExpanded: _error != null || _profileNoticeCode != null,
       child: _buildDiagnostics(i18n),
@@ -4044,15 +2998,8 @@ class _AcousticReportSummaryCard extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: Text(
-                  pickUiText(
-                    i18n,
-                    zh: '声学报告',
-                    en: 'Acoustic report',
-                    ja: '音響レポート',
-                    de: 'Akustikbericht',
-                    fr: 'Rapport acoustique',
-                    es: 'Informe acústico',
-                    ru: 'Акустический отчет',
+                  i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_auditory_lab.acoustic_report_20f936',
                   ),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w900,
@@ -4076,15 +3023,8 @@ class _AcousticReportSummaryCard extends StatelessWidget {
               onPressed: onOpen,
               icon: const Icon(Icons.summarize_rounded),
               label: Text(
-                pickUiText(
-                  i18n,
-                  zh: '打开声学报告',
-                  en: 'Acoustic report',
-                  ja: 'レポートを開く',
-                  de: 'Bericht öffnen',
-                  fr: 'Ouvrir le rapport',
-                  es: 'Abrir informe',
-                  ru: 'Открыть отчет',
+                i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_auditory_lab.acoustic_report_20f936',
                 ),
               ),
             ),
@@ -4379,171 +3319,72 @@ class _AcousticReportCaptureCard extends StatelessWidget {
             runSpacing: 8,
             children: <Widget>[
               ToolboxMetricCard(
-                label: pickUiText(
-                  i18n,
-                  zh: '时长',
-                  en: 'Duration',
-                  ja: 'Duration',
-                  de: 'Duration',
-                  fr: 'Durée',
-                  es: 'Duración',
-                  ru: 'Продолжительность',
-                ),
+                label: i18n.t('inline.plan294.breathing.duration_7b90564f'),
                 value: '${capture.seconds.toStringAsFixed(1)} s',
               ),
               ToolboxMetricCard(
-                label: pickUiText(
-                  i18n,
-                  zh: '均值',
-                  en: 'Mean',
-                  ja: 'Mean',
-                  de: 'Mean',
-                  fr: 'Moyenne',
-                  es: 'Significa',
-                  ru: 'Значение',
+                label: i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_auditory_lab.mean_cff00a',
                 ),
                 value: '${capture.averageDbfs.toStringAsFixed(1)} dBFS',
               ),
               ToolboxMetricCard(
-                label: pickUiText(
-                  i18n,
-                  zh: '峰值',
-                  en: 'Peak',
-                  ja: 'Peak',
-                  de: 'Peak',
-                  fr: 'Pic',
-                  es: 'Peak',
-                  ru: 'пик',
-                ),
+                label: i18n.t('toolbox.sound.locator.metric_peak'),
                 value: '${capture.peakDbfs.toStringAsFixed(1)} dBFS',
               ),
               ToolboxMetricCard(
-                label: pickUiText(
-                  i18n,
-                  zh: '音高',
-                  en: 'Pitch',
-                  ja: 'Pitch',
-                  de: 'Pitch',
-                  fr: 'Emplacement',
-                  es: 'Pitch',
-                  ru: 'стучать',
+                label: i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_auditory_lab.pitch_bb1d92',
                 ),
                 value: pitch,
               ),
               ToolboxMetricCard(
-                label: pickUiText(
-                  i18n,
-                  zh: '音高波动',
-                  en: 'Pitch SD',
-                  ja: 'Pitch SD',
-                  de: 'Pitch SD',
-                  fr: 'Emplacement SD',
-                  es: 'Pitch SD',
-                  ru: 'Pitch SD',
+                label: i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_auditory_lab.pitch_sd_76ff97',
                 ),
                 value: '${capture.pitchStdDevHz.toStringAsFixed(1)} Hz',
               ),
               ToolboxMetricCard(
-                label: pickUiText(
-                  i18n,
-                  zh: '命中',
-                  en: 'Target hit',
-                  ja: 'Target hit',
-                  de: 'Target hit',
-                  fr: 'Cible atteinte',
-                  es: 'Objetivo alcanzado',
-                  ru: 'Цель ранена.',
+                label: i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_auditory_lab.target_hit_82f8a9',
                 ),
                 value: '${(capture.targetHitRatio * 100).round()}%',
               ),
               ToolboxMetricCard(
-                label: pickUiText(
-                  i18n,
-                  zh: '信噪比',
-                  en: 'SNR',
-                  ja: 'SNR',
-                  de: 'SNR',
-                  fr: 'SNR',
-                  es: 'SNR',
-                  ru: 'SNR',
-                ),
+                label: i18n.t('toolbox.sound.locator.metric_snr'),
                 value: snr,
               ),
               ToolboxMetricCard(
-                label: pickUiText(
-                  i18n,
-                  zh: '有效声',
-                  en: 'Voiced',
-                  ja: 'Voiced',
-                  de: 'Stimmhaft',
-                  fr: 'Voisé',
-                  es: 'Sonoro',
-                  ru: 'Голос',
+                label: i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_auditory_lab.voiced_932dff',
                 ),
                 value: '${(capture.voicedRatio * 100).round()}%',
               ),
               ToolboxMetricCard(
-                label: pickUiText(
-                  i18n,
-                  zh: '动态',
-                  en: 'Range',
-                  ja: 'Range',
-                  de: 'Range',
-                  fr: 'Plage',
-                  es: 'Rango',
-                  ru: 'Диапазон',
-                ),
+                label: i18n.t('toolbox.sleep.report.range'),
                 value: '${capture.dynamicRangeDb.toStringAsFixed(1)} dB',
               ),
               ToolboxMetricCard(
-                label: pickUiText(
-                  i18n,
-                  zh: '峰均比',
-                  en: 'Crest',
-                  ja: 'Crest',
-                  de: 'Crest',
-                  fr: 'Crête',
-                  es: 'Cresta',
-                  ru: 'Пик/ср.',
+                label: i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_auditory_lab.crest_6868de',
                 ),
                 value: '${capture.crestFactorDb.toStringAsFixed(1)} dB',
               ),
               ToolboxMetricCard(
-                label: pickUiText(
-                  i18n,
-                  zh: '削波',
-                  en: 'Clipping',
-                  ja: 'クリッピング',
-                  de: 'Clipping',
-                  fr: 'Clippage',
-                  es: 'Clipping',
-                  ru: 'клиппинг',
+                label: i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_auditory_lab.clipping_3a711c',
                 ),
                 value: '${(capture.clippingRatio * 100).toStringAsFixed(1)}%',
               ),
               ToolboxMetricCard(
-                label: pickUiText(
-                  i18n,
-                  zh: '空白帧',
-                  en: 'Blank',
-                  ja: 'Blank',
-                  de: 'Leer',
-                  fr: 'Blanc',
-                  es: 'Vacío',
-                  ru: 'Пусто',
+                label: i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_auditory_lab.blank_06d198',
                 ),
                 value: '${(capture.emptyChunkRatio * 100).toStringAsFixed(1)}%',
               ),
               ToolboxMetricCard(
-                label: pickUiText(
-                  i18n,
-                  zh: '帧数',
-                  en: 'Frames',
-                  ja: 'Frames',
-                  de: 'Frames',
-                  fr: 'Trames',
-                  es: 'Frames',
-                  ru: 'Кадры',
+                label: i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_auditory_lab.frames_a0bc28',
                 ),
                 value: '${capture.sampleCount}',
               ),
@@ -4578,73 +3419,31 @@ class _AcousticReportCaptureCard extends StatelessWidget {
   String _interpretation(AppI18n i18n, _MicLabCapture capture) {
     if (capture.mode == _MicLabMode.noise) {
       if (capture.averageDbfs <= -52) {
-        return pickUiText(
-          i18n,
-          zh: '环境噪声底较低，适合作为其他声学测试的参考环境。',
-          en: 'The ambient noise floor is low, suitable as a reference environment for the other acoustic tests.',
-          ja: 'The ambient noise floor is low, suitable as a reference environment for the other acoustic tests.',
-          de: 'The ambient noise floor is low, suitable as a reference environment for the other acoustic tests.',
-          fr: 'Le plancher de bruit ambiant est bas, adapté comme environnement de référence pour les autres essais acoustiques.',
-          es: 'El suelo de ruido ambiente es bajo, adecuado como ambiente de referencia para las otras pruebas acústicas.',
-          ru: 'Уровень шума в окружающей среде низкий, подходит в качестве эталонной среды для других акустических тестов.',
+        return i18n.t(
+          'inline.ui.pages.toolbox_human_tests_auditory_lab.the_ambient_noise_floor_is_low_suitable_as_a_reference_e_6f4708',
         );
       }
-      return pickUiText(
-        i18n,
-        zh: '环境噪声偏高，可能压低后续信噪比与音高识别稳定性，建议换到更安静的位置。',
-        en: 'Ambient noise is elevated and may reduce later SNR and pitch stability. Move to a quieter place if possible.',
-        ja: 'は上昇し、後のSNRとピッチの安定性を低下 させる可能性があります。 可能であれば、より静かな場所に移動してください。',
-        de: 'Ambient noise is elevated and may reduce later SNR and pitch stability. Move to a quieter place if possible.',
-        fr: 'Le bruit ambiant est élevé et peut réduire la stabilité du SNR et du pas. Déplacez-vous dans un endroit plus calme si possible.',
-        es: 'El ruido ambiente es elevado y puede reducir más tarde SNR y la estabilidad del campo. Muévete a un lugar más tranquilo si es posible.',
-        ru: 'Шум окружающей среды повышен и может снизить более позднюю SNR и стабильность шага. По возможности перейдите в более тихое место.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.ambient_noise_is_elevated_and_may_reduce_later_snr_and_p_88cc39',
       );
     }
     if (capture.clippingRatio > 0.01) {
-      return pickUiText(
-        i18n,
-        zh: '检测到削波风险，可能是声音太响或距离太近；请降低音量或拉远麦克风后重测。',
-        en: 'Clipping risk is present, suggesting the input is too loud or too close. Lower the level or increase mic distance and retest.',
-        ja: 'クリッピングのリスクがあり、入力が大きすぎるか近すぎることを示唆しています。レベルを下げるか、マイク距離を増やして再テストします。',
-        de: 'Clipping risk is present, suggesting the input is too loud or too close. Lower the level or increase mic distance and retest.',
-        fr: 'Le risque de pincement est présent, ce qui suggère que l\'entrée est trop forte ou trop proche. Abaissez le niveau ou augmentez la distance micro et retestez.',
-        es: 'El riesgo de deslizamiento está presente, sugiriendo que la entrada es demasiado alta o demasiado cercana. Bajar el nivel o aumentar la distancia de micrófono y retest.',
-        ru: 'Риск скольжения присутствует, предполагая, что вход слишком громкий или слишком близко. Понизить уровень или увеличить дистанцию микрофона и повторно протестировать.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.clipping_risk_is_present_suggesting_the_input_is_too_lou_faa6c1',
       );
     }
     if (capture.targetHitRatio < 0.55) {
-      return pickUiText(
-        i18n,
-        zh: '音高落在目标区间的比例偏低，建议用更稳定、更单一的音重测。',
-        en: 'Pitch target-hit ratio is low. Retest with a steadier, single tone.',
-        ja: 'Pitch target-hit ratio is low. Retest with a steadier, single tone.',
-        de: 'Pitch target-hit ratio is low. Retest with a steadier, single tone.',
-        fr: 'Le rapport cible-coup est faible. Retestez avec un ton plus stable.',
-        es: 'La relación objetivo-hit de Pitch es baja. Retesta con un tono más firme y sencillo.',
-        ru: 'Коэффициент попадания в цель низкий. Повторяйте с более устойчивым, единичным тоном.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.pitch_target_hit_ratio_is_low_retest_with_a_steadier_sin_74457e',
       );
     }
     if (capture.pitchStability >= 0.78 && capture.levelConsistency >= 0.66) {
-      return pickUiText(
-        i18n,
-        zh: '音高和响度都较稳定，样本质量足够用于前后对比。',
-        en: 'Pitch and level are stable; this sample is strong enough for before-and-after comparison.',
-        ja: 'Pitch and level are stable; this sample is strong enough for before-and-after comparison.',
-        de: 'Pitch and level are stable; this sample is strong enough for before-and-after comparison.',
-        fr: 'Pitch and level are stable; this sample is strong enough for before-and-after comparison.',
-        es: 'Pitch and level are stable; this sample is strong enough for before-and-after comparison.',
-        ru: 'Pitch and level are stable; this sample is strong enough for before-and-after comparison.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_human_tests_auditory_lab.pitch_and_level_are_stable_this_sample_is_strong_enough_3a9f53',
       );
     }
-    return pickUiText(
-      i18n,
-      zh: '样本可用于参考，但音高或响度仍有波动；若要比较训练变化，建议按同一距离和音量复测。',
-      en: 'The sample is usable, but pitch or level still fluctuates. For training comparison, repeat with the same distance and level.',
-      ja: 'The sample is usable, but pitch or level still fluctuates. For training comparison, repeat with the same distance and level.',
-      de: 'The sample is usable, but pitch or level still fluctuates. For training comparison, repeat with the same distance and level.',
-      fr: 'L\'échantillon est utilisable, mais la hauteur ou le niveau fluctue encore. Pour comparer la formation, répéter avec la même distance et le même niveau.',
-      es: 'La muestra es usable, pero el campo o el nivel todavía fluctúa. Para la comparación de entrenamiento, repita con la misma distancia y nivel.',
-      ru: 'Образец можно использовать, но высота или уровень все еще колеблется. Для сравнения тренировок повторите с той же дистанцией и уровнем.',
+    return i18n.t(
+      'inline.ui.pages.toolbox_human_tests_auditory_lab.the_sample_is_usable_but_pitch_or_level_still_fluctuates_56c88f',
     );
   }
 }

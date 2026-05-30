@@ -30,16 +30,14 @@ class _WallpaperSource {
     required this.name,
     required this.kind,
     required this.homeUrl,
-    required this.summaryZh,
-    required this.summaryEn,
+    required this.summaryKey,
   });
 
   final String id;
   final String name;
   final _WallpaperSourceKind kind;
   final String homeUrl;
-  final String summaryZh;
-  final String summaryEn;
+  final String summaryKey;
 }
 
 class _WallpaperItem {
@@ -263,8 +261,8 @@ const List<_WallpaperSource> _wallpaperSources = <_WallpaperSource>[
     name: 'Bing Wallpaper',
     kind: _WallpaperSourceKind.bing,
     homeUrl: 'https://www.bing.com',
-    summaryZh: '每日首页壁纸，附带原始摄影来源说明。',
-    summaryEn: 'Daily homepage wallpapers with original attribution.',
+    summaryKey:
+        'inline.plan295.life.daily_homepage_wallpapers_with_origi.90a7340a6511',
   ),
 ];
 
@@ -306,18 +304,19 @@ class _WallpaperHelperToolPageState extends State<_WallpaperHelperToolPage> {
     final physicalSize = mediaQuery.size * mediaQuery.devicePixelRatio;
     final logicalSize = mediaQuery.size;
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '壁纸助手', en: 'Wallpaper helper'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '聚合公开资源页，默认加载 9 张随机壁纸，支持搜索、预览、下载和设置壁纸。',
-        en: 'Aggregates public sources, loads 9 random wallpapers by default, and supports search, preview, download, and setting wallpaper.',
+        'inline.plan295.life.wallpaper_helper.bda912c53aec',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.aggregates_public_sources_loads_9_ra.ecb9232bbd34',
       ),
       appBarActions: <Widget>[
         IconButton(
-          tooltip: _lifeText(
+          tooltip: _lifeI18nText(
             context,
-            zh: '刷新随机壁纸',
-            en: 'Refresh random wallpapers',
+            'inline.plan295.life.refresh_random_wallpapers.269a713f442d',
           ),
           onPressed: _reload,
           icon: const Icon(Icons.shuffle_rounded),
@@ -336,15 +335,13 @@ class _WallpaperHelperToolPageState extends State<_WallpaperHelperToolPage> {
               if (snapshot.connectionState != ConnectionState.done &&
                   !snapshot.hasData) {
                 return _LifeSettingsPanel(
-                  title: _lifeText(
+                  title: _lifeI18nText(
                     context,
-                    zh: '正在获取壁纸',
-                    en: 'Loading wallpapers',
+                    'inline.plan295.life.loading_wallpapers.54ef9318f9ee',
                   ),
-                  subtitle: _lifeText(
+                  subtitle: _lifeI18nText(
                     context,
-                    zh: '正在从公开来源获取随机壁纸。',
-                    en: 'Fetching random wallpapers from public sources.',
+                    'inline.plan295.life.fetching_random_wallpapers_from_publ.b3bd1040999a',
                   ),
                   children: const <Widget>[LinearProgressIndicator()],
                 );
@@ -389,11 +386,17 @@ class _WallpaperHelperToolPageState extends State<_WallpaperHelperToolPage> {
   Widget _buildSearchPanel(BuildContext context, Size physicalSize) {
     final theme = Theme.of(context);
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '壁纸检索', en: 'Wallpaper search'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '当前屏幕约 ${physicalSize.width.round()} x ${physicalSize.height.round()} px，可优先匹配接近比例和尺寸的图片。',
-        en: 'Current screen is about ${physicalSize.width.round()} x ${physicalSize.height.round()} px; matching can prioritize similar ratio and size.',
+        'inline.plan295.life.wallpaper_search.20ae6f2d65a7',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.wallpaper.current_screen_is_about_x_px.0b0150fe3f',
+        params: <String, Object?>{
+          'p0': physicalSize.width.round(),
+          'p1': physicalSize.height.round(),
+        },
       ),
       children: <Widget>[
         TextField(
@@ -401,15 +404,17 @@ class _WallpaperHelperToolPageState extends State<_WallpaperHelperToolPage> {
           decoration: InputDecoration(
             prefixIcon: const Icon(Icons.search_rounded),
             border: const OutlineInputBorder(),
-            labelText: _lifeText(
+            labelText: _lifeI18nText(
               context,
-              zh: '搜索关键词，例如 nature / city / sky',
-              en: 'Search keywords, e.g. nature / city / sky',
+              'inline.plan295.life.search_keywords_e_g_nature_city_sky.2a0c22dfbb17',
             ),
             suffixIcon: _query.isEmpty
                 ? null
                 : IconButton(
-                    tooltip: _lifeText(context, zh: '清空', en: 'Clear'),
+                    tooltip: _lifeI18nText(
+                      context,
+                      'inline.plan294.zen_sand.clear_ea17218b',
+                    ),
                     onPressed: () {
                       _queryController.clear();
                       setState(() => _query = '');
@@ -428,7 +433,12 @@ class _WallpaperHelperToolPageState extends State<_WallpaperHelperToolPage> {
           children: <Widget>[
             ChoiceChip(
               selected: _sourceId == 'all',
-              label: Text(_lifeText(context, zh: '全部来源', en: 'All sources')),
+              label: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.all_sources.cac79d41a0ee',
+                ),
+              ),
               onSelected: (_) => _selectSource('all'),
             ),
             for (final source in _wallpaperSources)
@@ -445,12 +455,22 @@ class _WallpaperHelperToolPageState extends State<_WallpaperHelperToolPage> {
             ButtonSegment<_WallpaperFitMode>(
               value: _WallpaperFitMode.screen,
               icon: const Icon(Icons.phone_iphone_rounded),
-              label: Text(_lifeText(context, zh: '匹配当前屏幕', en: 'Match screen')),
+              label: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.match_screen.ef9aaee7bfdf',
+                ),
+              ),
             ),
             ButtonSegment<_WallpaperFitMode>(
               value: _WallpaperFitMode.any,
               icon: const Icon(Icons.grid_view_rounded),
-              label: Text(_lifeText(context, zh: '不限尺寸', en: 'Any size')),
+              label: Text(
+                _lifeI18nText(
+                  context,
+                  'inline.plan295.life.any_size.09b226e61c5a',
+                ),
+              ),
             ),
           ],
           selected: <_WallpaperFitMode>{_fitMode},
@@ -464,13 +484,19 @@ class _WallpaperHelperToolPageState extends State<_WallpaperHelperToolPage> {
                 onPressed: _reload,
                 icon: const Icon(Icons.search_rounded),
                 label: Text(
-                  _lifeText(context, zh: '获取壁纸', en: 'Get wallpapers'),
+                  _lifeI18nText(
+                    context,
+                    'inline.plan295.life.get_wallpapers.751dbb1834eb',
+                  ),
                 ),
               ),
             ),
             const SizedBox(width: 10),
             IconButton.filledTonal(
-              tooltip: _lifeText(context, zh: '随机刷新', en: 'Random refresh'),
+              tooltip: _lifeI18nText(
+                context,
+                'inline.plan295.life.random_refresh.179cec4dca87',
+              ),
               onPressed: _reload,
               icon: const Icon(Icons.shuffle_rounded),
             ),
@@ -478,10 +504,9 @@ class _WallpaperHelperToolPageState extends State<_WallpaperHelperToolPage> {
         ),
         const SizedBox(height: 10),
         Text(
-          _lifeText(
+          _lifeI18nText(
             context,
-            zh: '默认只聚合公开资源链接与运行时图片，不内置第三方壁纸文件；版权和使用范围请以来源页面说明为准。',
-            en: 'This tool aggregates public links and runtime images without bundling third-party wallpaper files; copyright and usage rights follow each source page.',
+            'inline.plan295.life.this_tool_aggregates_public_links_an.561d48c7edea',
           ),
           style: theme.textTheme.bodySmall,
         ),
@@ -491,11 +516,13 @@ class _WallpaperHelperToolPageState extends State<_WallpaperHelperToolPage> {
 
   Widget _buildCachePanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '图片缓存', en: 'Image cache'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '预览和下载会复用本地缓存；来源短暂不可用时也会尝试读取已缓存结果。',
-        en: 'Previews and downloads reuse local cache; cached source results are used when a source is temporarily unavailable.',
+        'inline.plan295.life.image_cache.745e273d4832',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.previews_and_downloads_reuse_local_c.157983715693',
       ),
       children: <Widget>[
         FutureBuilder<_WallpaperCacheStatus>(
@@ -503,11 +530,18 @@ class _WallpaperHelperToolPageState extends State<_WallpaperHelperToolPage> {
           builder: (context, snapshot) {
             final status = snapshot.data;
             final label = status == null
-                ? _lifeText(context, zh: '正在读取缓存状态', en: 'Reading cache status')
-                : _lifeText(
+                ? _lifeI18nText(
                     context,
-                    zh: '来源快照 ${status.sourceSnapshots} 组 · 图片 ${status.imageFiles} 张 · ${_formatBytes(status.totalBytes)}',
-                    en: '${status.sourceSnapshots} source snapshots · ${status.imageFiles} images · ${_formatBytes(status.totalBytes)}',
+                    'inline.plan295.life.reading_cache_status.47ac666d97db',
+                  )
+                : _lifeI18nText(
+                    context,
+                    'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.wallpaper.source_snapshots_images.62adf851d8',
+                    params: <String, Object?>{
+                      'sourceSnapshots': status.sourceSnapshots,
+                      'imageFiles': status.imageFiles,
+                      'p2': _formatBytes(status.totalBytes),
+                    },
                   );
             return Row(
               children: <Widget>[
@@ -517,7 +551,10 @@ class _WallpaperHelperToolPageState extends State<_WallpaperHelperToolPage> {
                   onPressed: status?.hasData == true ? _clearCache : null,
                   icon: const Icon(Icons.delete_outline_rounded),
                   label: Text(
-                    _lifeText(context, zh: '清理缓存', en: 'Clear cache'),
+                    _lifeI18nText(
+                      context,
+                      'inline.plan295.life.clear_cache.3c05c3345557',
+                    ),
                   ),
                 ),
               ],
@@ -555,15 +592,13 @@ class _WallpaperHelperToolPageState extends State<_WallpaperHelperToolPage> {
               Expanded(
                 child: Text(
                   usedCache
-                      ? _lifeText(
+                      ? _lifeI18nText(
                           context,
-                          zh: '已使用本地缓存结果',
-                          en: 'Using cached wallpaper results',
+                          'inline.plan295.life.using_cached_wallpaper_results.0918f56e722e',
                         )
-                      : _lifeText(
+                      : _lifeI18nText(
                           context,
-                          zh: '随机壁纸 9 张',
-                          en: '9 random wallpapers',
+                          'inline.plan295.life.9_random_wallpapers.f1c30aad62d9',
                         ),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w900,
@@ -575,10 +610,9 @@ class _WallpaperHelperToolPageState extends State<_WallpaperHelperToolPage> {
           if (errors.isNotEmpty) ...<Widget>[
             const SizedBox(height: 8),
             Text(
-              _lifeText(
+              _lifeI18nText(
                 context,
-                zh: '部分来源暂时不可用，已保留可访问来源结果。',
-                en: 'Some sources are temporarily unavailable; available results are still shown.',
+                'inline.plan295.life.some_sources_are_temporarily_unavail.f7ad15f7d26d',
               ),
               style: theme.textTheme.bodySmall,
             ),
@@ -600,55 +634,51 @@ class _WallpaperHelperToolPageState extends State<_WallpaperHelperToolPage> {
 
   String _sourceErrorLabel(BuildContext context, _WallpaperSourceError error) {
     final reason = switch (error.kind) {
-      _WallpaperSourceErrorKind.timeout => _lifeText(
+      _WallpaperSourceErrorKind.timeout => _lifeI18nText(
         context,
-        zh: '请求超时',
-        en: 'request timed out',
+        'inline.plan295.life.request_timed_out.8e3a6a7f1650',
       ),
-      _WallpaperSourceErrorKind.forbidden => _lifeText(
+      _WallpaperSourceErrorKind.forbidden => _lifeI18nText(
         context,
-        zh: '来源拒绝访问',
-        en: 'access denied',
+        'inline.plan295.life.access_denied.d3eea76644d1',
       ),
-      _WallpaperSourceErrorKind.protected => _lifeText(
+      _WallpaperSourceErrorKind.protected => _lifeI18nText(
         context,
-        zh: '站点访问保护拦截',
-        en: 'blocked by source protection',
+        'inline.plan295.life.blocked_by_source_protection.0aa858ebed76',
       ),
-      _WallpaperSourceErrorKind.http => _lifeText(
+      _WallpaperSourceErrorKind.http => _lifeI18nText(
         context,
-        zh: 'HTTP ${error.statusCode ?? ''}',
-        en: 'HTTP ${error.statusCode ?? ''}',
+        'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.wallpaper.http.f4827c8db9',
+        params: <String, Object?>{'p0': error.statusCode ?? ''},
       ),
-      _WallpaperSourceErrorKind.network => _lifeText(
+      _WallpaperSourceErrorKind.network => _lifeI18nText(
         context,
-        zh: '网络连接失败',
-        en: 'network unavailable',
+        'inline.plan295.life.network_unavailable.055df1c6fae0',
       ),
-      _WallpaperSourceErrorKind.parse => _lifeText(
+      _WallpaperSourceErrorKind.parse => _lifeI18nText(
         context,
-        zh: '返回数据无法解析',
-        en: 'response parse failed',
+        'inline.plan295.life.response_parse_failed.f29595dc8b7a',
       ),
-      _WallpaperSourceErrorKind.other => _lifeText(
+      _WallpaperSourceErrorKind.other => _lifeI18nText(
         context,
-        zh: '暂时不可用',
-        en: 'temporarily unavailable',
+        'inline.plan295.life.temporarily_unavailable.230aa5e06a72',
       ),
     };
     final suffix = error.usedCache
-        ? _lifeText(context, zh: '，已使用缓存', en: ', cache used')
+        ? _lifeI18nText(context, 'inline.plan295.life.cache_used.9a3cc125e1e2')
         : '';
     return '${error.sourceName}: $reason$suffix';
   }
 
   Widget _buildErrorPanel(BuildContext context, String message) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '壁纸加载失败', en: 'Wallpaper load failed'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '请检查网络或直接打开下方来源页面。',
-        en: 'Check the network or open the source pages below.',
+        'inline.plan295.life.wallpaper_load_failed.df82faabaaed',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.check_the_network_or_open_the_source.3f0b58f53180',
       ),
       children: <Widget>[SelectableText(message)],
     );
@@ -656,17 +686,24 @@ class _WallpaperHelperToolPageState extends State<_WallpaperHelperToolPage> {
 
   Widget _buildEmptyPanel(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '没有匹配的壁纸', en: 'No matching wallpapers'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '可切换为不限尺寸，或换一个关键词后重新获取。',
-        en: 'Switch to any size or try another keyword and fetch again.',
+        'inline.plan295.life.no_matching_wallpapers.abb7d0238ca6',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.switch_to_any_size_or_try_another_ke.a01ed58fad9f',
       ),
       children: <Widget>[
         FilledButton.tonalIcon(
           onPressed: () => setState(() => _fitMode = _WallpaperFitMode.any),
           icon: const Icon(Icons.grid_view_rounded),
-          label: Text(_lifeText(context, zh: '不限尺寸查看', en: 'Show any size')),
+          label: Text(
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.show_any_size.b6c992ba70db',
+            ),
+          ),
         ),
       ],
     );
@@ -674,11 +711,13 @@ class _WallpaperHelperToolPageState extends State<_WallpaperHelperToolPage> {
 
   Widget _buildSourceLinks(BuildContext context) {
     return _LifeSettingsPanel(
-      title: _lifeText(context, zh: '来源入口', en: 'Source entries'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '壁纸助手当前仅保留 Bing Wallpaper 来源，版权、下载与使用范围以来源页面说明为准。',
-        en: 'Wallpaper helper now keeps only Bing Wallpaper; rights, downloads, and usage follow the source page.',
+        'inline.plan295.life.source_entries.0dac5504cc85',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan295.life.wallpaper_helper_now_keeps_only_bing.93a8174ccaa9',
       ),
       children: <Widget>[
         for (final source in _wallpaperSources)
@@ -686,9 +725,7 @@ class _WallpaperHelperToolPageState extends State<_WallpaperHelperToolPage> {
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.open_in_new_rounded),
             title: Text(source.name),
-            subtitle: Text(
-              _lifeText(context, zh: source.summaryZh, en: source.summaryEn),
-            ),
+            subtitle: Text(_lifeI18nText(context, source.summaryKey)),
             onTap: () => _openExternal(context, _sourceUrl(source)),
           ),
       ],
@@ -763,7 +800,10 @@ class _WallpaperHelperToolPageState extends State<_WallpaperHelperToolPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          _lifeText(context, zh: '壁纸缓存已清理', en: 'Wallpaper cache cleared'),
+          _lifeI18nText(
+            context,
+            'inline.plan295.life.wallpaper_cache_cleared.f248fecaf313',
+          ),
         ),
       ),
     );
@@ -1235,7 +1275,10 @@ class _WallpaperPreviewPageState extends State<_WallpaperPreviewPage> {
         title: Text(item.sourceName),
         actions: <Widget>[
           IconButton(
-            tooltip: _lifeText(context, zh: '打开来源', en: 'Open source'),
+            tooltip: _lifeI18nText(
+              context,
+              'inline.plan295.life.open_source.7796cc613b9b',
+            ),
             onPressed: () => _openExternal(context, item.sourceUrl),
             icon: const Icon(Icons.open_in_new_rounded),
           ),
@@ -1280,7 +1323,10 @@ class _WallpaperPreviewPageState extends State<_WallpaperPreviewPage> {
                     right: 14,
                     bottom: 14,
                     child: IconButton.filled(
-                      tooltip: _lifeText(context, zh: '重置缩放', en: 'Reset zoom'),
+                      tooltip: _lifeI18nText(
+                        context,
+                        'inline.plan295.life.reset_zoom.5526c102ba3b',
+                      ),
                       onPressed: () =>
                           _transformController.value = Matrix4.identity(),
                       icon: const Icon(Icons.center_focus_strong_rounded),
@@ -1338,17 +1384,32 @@ class _WallpaperPreviewPageState extends State<_WallpaperPreviewPage> {
                       ButtonSegment<_WallpaperTarget>(
                         value: _WallpaperTarget.home,
                         icon: const Icon(Icons.home_rounded),
-                        label: Text(_lifeText(context, zh: '桌面', en: 'Home')),
+                        label: Text(
+                          _lifeI18nText(
+                            context,
+                            'inline.plan295.life.home.23d554dfef88',
+                          ),
+                        ),
                       ),
                       ButtonSegment<_WallpaperTarget>(
                         value: _WallpaperTarget.lock,
                         icon: const Icon(Icons.lock_rounded),
-                        label: Text(_lifeText(context, zh: '锁屏', en: 'Lock')),
+                        label: Text(
+                          _lifeI18nText(
+                            context,
+                            'inline.plan295.life.lock.512c333a1f18',
+                          ),
+                        ),
                       ),
                       ButtonSegment<_WallpaperTarget>(
                         value: _WallpaperTarget.both,
                         icon: const Icon(Icons.wallpaper_rounded),
-                        label: Text(_lifeText(context, zh: '两者', en: 'Both')),
+                        label: Text(
+                          _lifeI18nText(
+                            context,
+                            'inline.ui.pages.toolbox_human_tests_bimanual.both_897ba3',
+                          ),
+                        ),
                       ),
                     ],
                     selected: <_WallpaperTarget>{_target},
@@ -1363,9 +1424,7 @@ class _WallpaperPreviewPageState extends State<_WallpaperPreviewPage> {
                         child: FilledButton.tonalIcon(
                           onPressed: _busy ? null : _download,
                           icon: const Icon(Icons.download_rounded),
-                          label: Text(
-                            _lifeText(context, zh: '下载', en: 'Download'),
-                          ),
+                          label: Text(_lifeI18nText(context, 'download')),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -1381,7 +1440,10 @@ class _WallpaperPreviewPageState extends State<_WallpaperPreviewPage> {
                                 )
                               : const Icon(Icons.wallpaper_rounded),
                           label: Text(
-                            _lifeText(context, zh: '设为壁纸', en: 'Set wallpaper'),
+                            _lifeI18nText(
+                              context,
+                              'inline.plan295.life.set_wallpaper.5f52ac244d68',
+                            ),
                           ),
                         ),
                       ),
@@ -1404,7 +1466,10 @@ class _WallpaperPreviewPageState extends State<_WallpaperPreviewPage> {
           const Icon(Icons.broken_image_rounded, color: Colors.white, size: 48),
           const SizedBox(height: 10),
           Text(
-            _lifeText(context, zh: '图片暂时无法加载', en: 'Image unavailable'),
+            _lifeI18nText(
+              context,
+              'inline.plan295.life.image_unavailable.f6becb2de91e',
+            ),
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: Colors.white),
@@ -1413,7 +1478,12 @@ class _WallpaperPreviewPageState extends State<_WallpaperPreviewPage> {
           FilledButton.tonalIcon(
             onPressed: () => _openExternal(context, widget.item.sourceUrl),
             icon: const Icon(Icons.open_in_new_rounded),
-            label: Text(_lifeText(context, zh: '打开来源', en: 'Open source')),
+            label: Text(
+              _lifeI18nText(
+                context,
+                'inline.plan295.life.open_source.7796cc613b9b',
+              ),
+            ),
           ),
         ],
       ),
@@ -1448,15 +1518,13 @@ class _WallpaperPreviewPageState extends State<_WallpaperPreviewPage> {
       SnackBar(
         content: Text(
           success
-              ? _lifeText(
+              ? _lifeI18nText(
                   context,
-                  zh: '已尝试设置壁纸',
-                  en: 'Wallpaper set request completed',
+                  'inline.plan295.life.wallpaper_set_request_completed.5e87f29d723a',
                 )
-              : _lifeText(
+              : _lifeI18nText(
                       context,
-                      zh: '当前平台不支持直接设置壁纸，已保留本地缓存文件。',
-                      en: 'This platform does not support direct wallpaper setting; the cached file was kept locally.',
+                      'inline.plan295.life.this_platform_does_not_support_direc.901cb43fec9e',
                     ) +
                     (errorCode == null ? '' : ' ($errorCode)'),
         ),
@@ -1487,10 +1555,10 @@ class _WallpaperPreviewPageState extends State<_WallpaperPreviewPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              _lifeText(
+              _lifeI18nText(
                 context,
-                zh: '已保存: $messagePath',
-                en: 'Saved: $messagePath',
+                'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.wallpaper.saved.cb776c173a',
+                params: <String, Object?>{'messagePath': messagePath},
               ),
             ),
           ),
@@ -1505,7 +1573,11 @@ class _WallpaperPreviewPageState extends State<_WallpaperPreviewPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _lifeText(context, zh: '保存失败: $error', en: 'Save failed: $error'),
+            _lifeI18nText(
+              context,
+              'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.save_failed.733e2f2246',
+              params: <String, Object?>{'error': error},
+            ),
           ),
         ),
       );

@@ -1,4 +1,4 @@
-﻿part of 'toolbox_mini_games.dart';
+part of 'toolbox_mini_games.dart';
 
 enum _SlideDirection { up, down, left, right }
 
@@ -26,10 +26,6 @@ class _SlideNumberGameState extends State<_SlideNumberGame> {
   void initState() {
     super.initState();
     _newGame();
-  }
-
-  String _text(AppI18n i18n, {required String zh, required String en}) {
-    return pickUiText(i18n, zh: zh, en: en);
   }
 
   void _newGame() {
@@ -241,10 +237,10 @@ class _SlideNumberGameState extends State<_SlideNumberGame> {
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     final status = _gameOver
-        ? _text(i18n, zh: '游戏结束', en: 'Game over')
+        ? i18n.t('toolbox.miniGames.slide.game_over.bc6f5994')
         : _won
-        ? _text(i18n, zh: '已达到目标', en: 'Target reached')
-        : _text(i18n, zh: '进行中', en: 'Playing');
+        ? i18n.t('toolbox.miniGames.slide.target_reached.bf015ce3')
+        : i18n.t('toolbox.miniGames.slide.playing.a76f133d');
 
     return Card(
       child: Padding(
@@ -257,19 +253,19 @@ class _SlideNumberGameState extends State<_SlideNumberGame> {
               runSpacing: 10,
               children: <Widget>[
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '得分', en: 'Score'),
+                  label: i18n.t('toolbox.miniGames.slide.score.21b6ac69'),
                   value: '$_score',
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '最大数字', en: 'Best tile'),
+                  label: i18n.t('toolbox.miniGames.slide.best_tile.f5bcbfea'),
                   value: '$_bestTile',
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '目标', en: 'Target'),
+                  label: i18n.t('toolbox.miniGames.slide.target.6afad01a'),
                   value: '$_target',
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '状态', en: 'Status'),
+                  label: i18n.t('toolbox.miniGames.slide.status.e4245e82'),
                   value: status,
                 ),
               ],
@@ -292,16 +288,16 @@ class _SlideNumberGameState extends State<_SlideNumberGame> {
                 OutlinedButton.icon(
                   onPressed: _newGame,
                   icon: const Icon(Icons.refresh_rounded),
-                  label: Text(_text(i18n, zh: '新开一局', en: 'New game')),
+                  label: Text(
+                    i18n.t('toolbox.miniGames.slide.new_game.a2d8dee4'),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
             Text(
-              _text(
-                i18n,
-                zh: '在棋盘上滑动即可移动数字，页面滚动不会抢走滑动手势。',
-                en: 'Swipe on the board to move tiles. Page scrolling will no longer steal the gesture.',
+              i18n.t(
+                'toolbox.miniGames.slide.swipe_on_the_board_to_move_tiles.5ae4ef02',
               ),
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -372,19 +368,19 @@ class _SlideNumberGameState extends State<_SlideNumberGame> {
               children: <Widget>[
                 FilledButton.tonal(
                   onPressed: () => _move(_SlideDirection.up),
-                  child: Text(_text(i18n, zh: '上', en: 'Up')),
+                  child: Text(i18n.t('toolbox.miniGames.slide.up.d59a4395')),
                 ),
                 FilledButton.tonal(
                   onPressed: () => _move(_SlideDirection.left),
-                  child: Text(_text(i18n, zh: '左', en: 'Left')),
+                  child: Text(i18n.t('toolbox.miniGames.slide.left.04efb5dc')),
                 ),
                 FilledButton.tonal(
                   onPressed: () => _move(_SlideDirection.down),
-                  child: Text(_text(i18n, zh: '下', en: 'Down')),
+                  child: Text(i18n.t('toolbox.miniGames.slide.down.8f53047d')),
                 ),
                 FilledButton.tonal(
                   onPressed: () => _move(_SlideDirection.right),
-                  child: Text(_text(i18n, zh: '右', en: 'Right')),
+                  child: Text(i18n.t('toolbox.miniGames.slide.right.070dc40b')),
                 ),
               ],
             ),

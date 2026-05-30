@@ -64,15 +64,17 @@ class _TetrisGameState extends State<_TetrisGame> {
     return Duration(milliseconds: millis);
   }
 
-  String _text(AppI18n i18n, {required String zh, required String en}) {
-    return pickUiText(i18n, zh: zh, en: en);
-  }
-
   String _difficultyLabel(AppI18n i18n, _TetrisDifficulty difficulty) {
     return switch (difficulty) {
-      _TetrisDifficulty.relaxed => _text(i18n, zh: '放松', en: 'Relaxed'),
-      _TetrisDifficulty.classic => _text(i18n, zh: '经典', en: 'Classic'),
-      _TetrisDifficulty.sprint => _text(i18n, zh: '竞速', en: 'Sprint'),
+      _TetrisDifficulty.relaxed => i18n.t(
+        'toolbox.miniGames.tetris.relaxed.c6d5ee8e',
+      ),
+      _TetrisDifficulty.classic => i18n.t(
+        'toolbox.miniGames.tetris.classic.665c7f52',
+      ),
+      _TetrisDifficulty.sprint => i18n.t(
+        'toolbox.miniGames.tetris.sprint.e5fb9160',
+      ),
     };
   }
 
@@ -279,26 +281,42 @@ class _TetrisGameState extends State<_TetrisGame> {
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          title: Text(_text(i18n, zh: '方块堆满了', en: 'Game over')),
+          title: Text(i18n.t('toolbox.miniGames.tetris.game_over.4a8d9446')),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                _text(i18n, zh: '本局结算', en: 'Round summary'),
+                i18n.t('toolbox.miniGames.tetris.round_summary.43324c59'),
                 style: Theme.of(
                   context,
                 ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 8),
-              Text(_text(i18n, zh: '得分：$_score', en: 'Score: $_score')),
-              Text(_text(i18n, zh: '消行：$_lines', en: 'Lines: $_lines')),
-              Text(_text(i18n, zh: '等级：$_level', en: 'Level: $_level')),
               Text(
-                _text(
-                  i18n,
-                  zh: '难度：${_difficultyLabel(i18n, _difficulty)}',
-                  en: 'Difficulty: ${_difficultyLabel(i18n, _difficulty)}',
+                i18n.t(
+                  'toolbox.miniGames.tetris.score_value.6efd0b83',
+                  params: <String, Object?>{'score': _score},
+                ),
+              ),
+              Text(
+                i18n.t(
+                  'toolbox.miniGames.tetris.lines_value.d5f04673',
+                  params: <String, Object?>{'lines': _lines},
+                ),
+              ),
+              Text(
+                i18n.t(
+                  'toolbox.miniGames.tetris.level_value.6a796f4d',
+                  params: <String, Object?>{'level': _level},
+                ),
+              ),
+              Text(
+                i18n.t(
+                  'toolbox.miniGames.tetris.difficulty_value.1fbd5026',
+                  params: <String, Object?>{
+                    'difficulty': _difficultyLabel(i18n, _difficulty),
+                  },
                 ),
               ),
             ],
@@ -306,14 +324,16 @@ class _TetrisGameState extends State<_TetrisGame> {
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(_text(i18n, zh: '关闭', en: 'Close')),
+              child: Text(i18n.t('toolbox.miniGames.tetris.close.fe81151b')),
             ),
             FilledButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 _newGame();
               },
-              child: Text(_text(i18n, zh: '再来一局', en: 'Play again')),
+              child: Text(
+                i18n.t('toolbox.miniGames.tetris.play_again.7a9153f9'),
+              ),
             ),
           ],
         );
@@ -354,12 +374,12 @@ class _TetrisGameState extends State<_TetrisGame> {
 
   String _statusLabel(AppI18n i18n) {
     if (_gameOver) {
-      return _text(i18n, zh: '游戏结束', en: 'Game over');
+      return i18n.t('toolbox.miniGames.tetris.game_over.746ac38d');
     }
     if (_paused) {
-      return _text(i18n, zh: '已暂停', en: 'Paused');
+      return i18n.t('toolbox.miniGames.tetris.paused.1e1aa869');
     }
-    return _text(i18n, zh: '进行中', en: 'Playing');
+    return i18n.t('toolbox.miniGames.tetris.playing.36f1d9a0');
   }
 
   Color _cellColor(BuildContext context, int value) {
@@ -453,11 +473,9 @@ class _TetrisGameState extends State<_TetrisGame> {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Text(
-            _text(
-              AppI18n(Localizations.localeOf(context).languageCode),
-              zh: '下一个',
-              en: 'Next',
-            ),
+            AppI18n(
+              Localizations.localeOf(context).languageCode,
+            ).t('toolbox.miniGames.tetris.next.de45a45c'),
             style: Theme.of(context).textTheme.labelMedium,
           ),
           const SizedBox(height: 8),
@@ -503,7 +521,7 @@ class _TetrisGameState extends State<_TetrisGame> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            _text(i18n, zh: '难度设置', en: 'Difficulty settings'),
+            i18n.t('toolbox.miniGames.tetris.difficulty_settings.7fcf2a80'),
             style: Theme.of(
               context,
             ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
@@ -523,10 +541,13 @@ class _TetrisGameState extends State<_TetrisGame> {
           ),
           const SizedBox(height: 8),
           Text(
-            _text(
-              i18n,
-              zh: '初始下降 ${_difficulty.baseMs}ms，每级加速 ${_difficulty.accelerationMs}ms，约每 ${_difficulty.linesPerLevel} 行升一级。',
-              en: 'Initial fall ${_difficulty.baseMs}ms, speed-up ${_difficulty.accelerationMs}ms per level, level up about every ${_difficulty.linesPerLevel} lines.',
+            i18n.t(
+              'toolbox.miniGames.tetris.initial_fall_value_ms_speed_up_value.d5017569',
+              params: <String, Object?>{
+                'baseMs': _difficulty.baseMs,
+                'accelerationMs': _difficulty.accelerationMs,
+                'linesPerLevel': _difficulty.linesPerLevel,
+              },
             ),
             style: Theme.of(context).textTheme.bodySmall,
           ),
@@ -577,8 +598,8 @@ class _TetrisGameState extends State<_TetrisGame> {
               icon: _paused ? Icons.play_arrow_rounded : Icons.pause_rounded,
               onPressed: _togglePause,
               tooltip: _paused
-                  ? _text(i18n, zh: '继续', en: 'Resume')
-                  : _text(i18n, zh: '暂停', en: 'Pause'),
+                  ? i18n.t('toolbox.miniGames.tetris.resume.7f87ff5e')
+                  : i18n.t('toolbox.miniGames.tetris.pause.e6d2c123'),
             ),
             const SizedBox(height: 8),
             Row(
@@ -587,20 +608,26 @@ class _TetrisGameState extends State<_TetrisGame> {
                 padButton(
                   icon: Icons.keyboard_arrow_left_rounded,
                   onPressed: () => _moveHorizontal(-1),
-                  tooltip: _text(i18n, zh: '左移', en: 'Move left'),
+                  tooltip: i18n.t(
+                    'toolbox.miniGames.tetris.move_left.d01e9f05',
+                  ),
                 ),
                 const SizedBox(width: 8),
                 padButton(
                   icon: Icons.change_circle_rounded,
                   onPressed: _rotate,
-                  tooltip: _text(i18n, zh: '变形', en: 'Transform'),
+                  tooltip: i18n.t(
+                    'toolbox.miniGames.tetris.transform.3dd2f28e',
+                  ),
                   filled: true,
                 ),
                 const SizedBox(width: 8),
                 padButton(
                   icon: Icons.keyboard_arrow_right_rounded,
                   onPressed: () => _moveHorizontal(1),
-                  tooltip: _text(i18n, zh: '右移', en: 'Move right'),
+                  tooltip: i18n.t(
+                    'toolbox.miniGames.tetris.move_right.e85b744f',
+                  ),
                 ),
               ],
             ),
@@ -609,10 +636,8 @@ class _TetrisGameState extends State<_TetrisGame> {
               icon: Icons.keyboard_arrow_down_rounded,
               onPressed: () => _stepDown(soft: true),
               onLongPress: _hardDrop,
-              tooltip: _text(
-                i18n,
-                zh: '下降，长按硬降',
-                en: 'Drop, long-press hard drop',
+              tooltip: i18n.t(
+                'toolbox.miniGames.tetris.drop_long_press_hard_drop.0faeb5f1',
               ),
             ),
           ],
@@ -635,33 +660,31 @@ class _TetrisGameState extends State<_TetrisGame> {
               runSpacing: 10,
               children: <Widget>[
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '得分', en: 'Score'),
+                  label: i18n.t('toolbox.miniGames.tetris.score.81992ab8'),
                   value: '$_score',
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '消行', en: 'Lines'),
+                  label: i18n.t('toolbox.miniGames.tetris.lines.7f3795e9'),
                   value: '$_lines',
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '等级', en: 'Level'),
+                  label: i18n.t('toolbox.miniGames.tetris.level.5ea4bdcf'),
                   value: '$_level',
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '难度', en: 'Difficulty'),
+                  label: i18n.t('toolbox.miniGames.tetris.difficulty.c526df65'),
                   value: _difficultyLabel(i18n, _difficulty),
                 ),
                 ToolboxMetricCard(
-                  label: _text(i18n, zh: '状态', en: 'Status'),
+                  label: i18n.t('toolbox.miniGames.tetris.status.b0d4fea8'),
                   value: _statusLabel(i18n),
                 ),
               ],
             ),
             const SizedBox(height: 12),
             Text(
-              _text(
-                i18n,
-                zh: '棋盘内滑动或使用五键手柄。上键暂停，下键下降，长按下键硬降，中间键变形。',
-                en: 'Swipe on the board or use the five-key pad. Up pauses, down drops, long-press down hard-drops, and the center transforms the block.',
+              i18n.t(
+                'toolbox.miniGames.tetris.swipe_on_the_board_or_use_the.921a2d2a',
               ),
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -695,7 +718,7 @@ class _TetrisGameState extends State<_TetrisGame> {
             OutlinedButton.icon(
               onPressed: _newGame,
               icon: const Icon(Icons.refresh_rounded),
-              label: Text(_text(i18n, zh: '新开一局', en: 'New game')),
+              label: Text(i18n.t('toolbox.miniGames.tetris.new_game.8857ec9e')),
             ),
           ],
         ),

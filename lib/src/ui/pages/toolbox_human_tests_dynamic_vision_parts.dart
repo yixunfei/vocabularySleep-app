@@ -223,48 +223,20 @@ class _DynamicSymbolReportDialog extends StatelessWidget {
         : records.map((record) => record.durationMs).reduce(math.min);
     final missed = records.where((record) => !record.correct).toList();
     final recommendation = accuracy >= 0.85
-        ? pickUiText(
-            i18n,
-            zh: '识别稳定，可以提高速度、增加组合长度或开启弱干扰字符。',
-            en: 'Recognition is stable. Raise speed, increase group length, or enable faint distractors.',
-            ja: 'Recognition is stable. Raise speed, increase group length, or enable faint distractors.',
-            de: 'Recognition is stable. Raise speed, increase group length, or enable faint distractors.',
-            fr: 'La reconnaissance est stable. Augmenter la vitesse, augmenter la longueur du groupe ou permettre des disjoncteurs faibles.',
-            es: 'El reconocimiento es estable. Aumentar la velocidad, aumentar la longitud del grupo o permitir distracciones débiles.',
-            ru: 'Признание стабильное. Повысить скорость, увеличить длину группы или включить слабые отвлекающие факторы.',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_human_tests_dynamic_vision_parts.recognition_is_stable_raise_speed_increase_group_length_c0cf2b',
           )
         : accuracy >= 0.65
-        ? pickUiText(
-            i18n,
-            zh: '建议保留当前字符集，先把正确率稳定到 85% 后再增加速度。',
-            en: 'Keep the current set and stabilize accuracy above 85% before raising speed.',
-            ja: 'Keep the current set and stabilize accuracy above 85% before raising speed.',
-            de: 'Keep the current set and stabilize accuracy above 85% before raising speed.',
-            fr: 'Conserver le réglage du courant et stabiliser la précision au-dessus de 85% avant de soulever la vitesse.',
-            es: 'Mantener el conjunto actual y estabilizar la precisión por encima del 85% antes de aumentar la velocidad.',
-            ru: 'Поддерживайте ток и стабилизируйте точность выше 85%, прежде чем повышать скорость.',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_human_tests_dynamic_vision_parts.keep_the_current_set_and_stabilize_accuracy_above_85_bef_32747d',
           )
-        : pickUiText(
-            i18n,
-            zh: '先降低速度或改用数字/字母单一字符集，减少易混淆压力。',
-            en: 'Lower speed or use a single digits/letters set to reduce confusable-symbol pressure.',
-            ja: 'Lower speed or use a single digits/letters set to reduce confusable-symbol pressure.',
-            de: 'Lower speed or use a single digits/letters set to reduce confusable-symbol pressure.',
-            fr: 'Abaissez la vitesse ou utilisez un seul chiffre/lettre pour réduire la pression du symbole confusable.',
-            es: 'Velocidad inferior o utilizar un solo dígitos/letters para reducir la presión confusable-símbolo.',
-            ru: 'Снижение скорости или использование однозначных цифр / букв, установленных для снижения давления конфузионного символа.',
+        : i18n.t(
+            'inline.ui.pages.toolbox_human_tests_dynamic_vision_parts.lower_speed_or_use_a_single_digits_letters_set_to_reduce_8639f7',
           );
     return AlertDialog(
       title: Text(
-        pickUiText(
-          i18n,
-          zh: '字符识别报告',
-          en: 'Symbol recognition report',
-          ja: 'Symbol recognition report',
-          de: 'Symbol recognition report',
-          fr: 'Rapport de reconnaissance des symboles',
-          es: 'Informe sobre el reconocimiento de las signaturas',
-          ru: 'Отчет о признании символов',
+        i18n.t(
+          'inline.ui.pages.toolbox_human_tests_dynamic_vision_parts.symbol_recognition_report_90675c',
         ),
       ),
       content: SizedBox(
@@ -279,54 +251,26 @@ class _DynamicSymbolReportDialog extends StatelessWidget {
                 runSpacing: 10,
                 children: <Widget>[
                   _ColorVisionReportMetric(
-                    label: pickUiText(
-                      i18n,
-                      zh: '正确率',
-                      en: 'Accuracy',
-                      ja: '精度',
-                      de: 'Accuracy',
-                      fr: 'Accuracy',
-                      es: 'Precisión',
-                      ru: 'точность',
+                    label: i18n.t(
+                      'inline.ui.pages.practice_review_page.accuracy_8cf5a1',
                     ),
                     value: '${(accuracy * 100).round()}%',
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(
-                      i18n,
-                      zh: '正确/轮次',
-                      en: 'Correct/rounds',
-                      ja: '正解/ラウンド',
-                      de: 'Correct/rounds',
-                      fr: 'Correct/rounds',
-                      es: 'Correct/rounds',
-                      ru: 'Правильные/круглые',
+                    label: i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_dynamic_vision_parts.correct_rounds_ab0678',
                     ),
                     value: '$correct/${records.length}',
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(
-                      i18n,
-                      zh: '平均显示',
-                      en: 'Avg dwell',
-                      ja: '平均滞留',
-                      de: 'Avg dwell',
-                      fr: 'Avg habite',
-                      es: 'Avg habita',
-                      ru: 'Авг живет',
+                    label: i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_dynamic_vision_parts.avg_dwell_801074',
                     ),
                     value: _formatMilliseconds(avgDwell),
                   ),
                   _ColorVisionReportMetric(
-                    label: pickUiText(
-                      i18n,
-                      zh: '最快显示',
-                      en: 'Fastest dwell',
-                      ja: 'Fastest dwell',
-                      de: 'Fastest dwell',
-                      fr: 'La plus rapide demeure',
-                      es: 'Morar más rápido',
-                      ru: 'Быстрый дом',
+                    label: i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_dynamic_vision_parts.fastest_dwell_092569',
                     ),
                     value: _formatMilliseconds(fastestDwell),
                   ),
@@ -334,16 +278,7 @@ class _DynamicSymbolReportDialog extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _ColorVisionReportSection(
-                title: pickUiText(
-                  i18n,
-                  zh: '本次设置',
-                  en: 'Session setup',
-                  ja: 'Session setup',
-                  de: 'Session setup',
-                  fr: 'Configuration de la session',
-                  es: 'Creación del período de sesiones',
-                  ru: 'Настройка сеанса',
-                ),
+                title: i18n.t('toolbox.breathing.session_setup'),
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -352,15 +287,8 @@ class _DynamicSymbolReportDialog extends StatelessWidget {
                     Chip(label: Text(pathLabel(records.last.path))),
                     Chip(
                       label: Text(
-                        pickUiText(
-                          i18n,
-                          zh: '速度 ${records.last.speed.toStringAsFixed(1)}x',
-                          en: 'Speed ${records.last.speed.toStringAsFixed(1)}x',
-                          ja: 'Speed ${records.last.speed.toStringAsFixed(1)}x',
-                          de: 'Speed ${records.last.speed.toStringAsFixed(1)}x',
-                          fr: 'Vitesse ${records.last.speed.toStringAsFixed(1)}x',
-                          es: 'Velocidad',
-                          ru: 'Скорость <v0/x>',
+                        i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_dynamic_vision_parts.speed_records_last_speed_tostringasfixed_1_x_a67a1a',
                         ),
                       ),
                     ),
@@ -369,15 +297,8 @@ class _DynamicSymbolReportDialog extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _ColorVisionReportSection(
-                title: pickUiText(
-                  i18n,
-                  zh: '练习建议',
-                  en: 'Training note',
-                  ja: 'Training note',
-                  de: 'Training note',
-                  fr: 'Note de formation',
-                  es: 'Nota de capacitación',
-                  ru: 'Учебная записка',
+                title: i18n.t(
+                  'inline.ui.pages.toolbox_human_tests_action.training_note_0dc151',
                 ),
                 child: Text(
                   recommendation,
@@ -387,15 +308,8 @@ class _DynamicSymbolReportDialog extends StatelessWidget {
               if (missed.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 12),
                 _ColorVisionReportSection(
-                  title: pickUiText(
-                    i18n,
-                    zh: '错认记录',
-                    en: 'Missed symbols',
-                    ja: 'Missed symbols',
-                    de: 'Missed symbols',
-                    fr: 'Symboles manquants',
-                    es: 'Símbolos perdidos',
-                    ru: 'Пропущенные символы',
+                  title: i18n.t(
+                    'inline.ui.pages.toolbox_human_tests_dynamic_vision_parts.missed_symbols_5a863b',
                   ),
                   child: Wrap(
                     spacing: 8,
@@ -418,18 +332,7 @@ class _DynamicSymbolReportDialog extends StatelessWidget {
       actions: <Widget>[
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(
-            pickUiText(
-              i18n,
-              zh: '关闭',
-              en: 'Close',
-              ja: '閉じる',
-              de: 'Close',
-              fr: 'Fermer',
-              es: 'Cerca',
-              ru: 'Закрыть',
-            ),
-          ),
+          child: Text(i18n.t('inline.plan295.life.close.370fb8697deb')),
         ),
       ],
     );

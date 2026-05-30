@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../../i18n/app_i18n.dart';
 import '../../motion/app_motion.dart';
-import '../../ui_copy.dart';
 import '../toolbox/toolbox_ui_components.dart';
 import '../toolbox/toolbox_ui_tokens.dart';
 import 'daily_choice_eat_library_store.dart';
@@ -56,12 +55,16 @@ class DailyChoiceHeroPanel extends StatelessWidget {
             runSpacing: 8,
             children: <Widget>[
               ToolboxInfoPill(
-                text: pickUiText(i18n, zh: '六模块基础版', en: 'Six modules'),
+                text: i18n.t(
+                  'inline.plan295.daily_choice.six_modules.aeab03483166',
+                ),
                 accent: accent,
                 backgroundColor: Colors.white.withValues(alpha: 0.64),
               ),
               ToolboxInfoPill(
-                text: pickUiText(i18n, zh: '本地自定义', en: 'Local custom'),
+                text: i18n.t(
+                  'inline.plan295.daily_choice.local_custom.59febca03438',
+                ),
                 accent: accent,
                 backgroundColor: Colors.white.withValues(alpha: 0.64),
               ),
@@ -69,17 +72,17 @@ class DailyChoiceHeroPanel extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            pickUiText(i18n, zh: '先让选择动起来', en: 'Let the choice start moving'),
+            i18n.t(
+              'inline.plan295.daily_choice.let_the_choice_start_moving.d94479e2144d',
+            ),
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            pickUiText(
-              i18n,
-              zh: '吃什么、穿什么、去哪儿、干什么、随机助手和决策助手都在同一套轻量交互里：选条件、开始随机、停止选中，再按需查看详情或管理自己的条目。',
-              en: 'Eat, wear, go, do, random assistant, and decision tools share one light flow: choose conditions, randomize, stop, then inspect or manage your own entries.',
+            i18n.t(
+              'inline.plan295.daily_choice.eat_wear_go_do_random_assistant_and.6b775dd3a260',
             ),
             style: theme.textTheme.bodyMedium?.copyWith(height: 1.45),
           ),
@@ -381,7 +384,7 @@ class _DailyChoiceRandomPanelState extends State<DailyChoiceRandomPanel> {
                 icon: Icons.help_outline_rounded,
                 active: false,
                 tint: widget.accent,
-                tooltip: pickUiText(widget.i18n, zh: '指南', en: 'Guide'),
+                tooltip: widget.i18n.t('toolbox.daily_choice.guide'),
                 onTap: widget.onGuide,
               ),
             ],
@@ -428,13 +431,15 @@ class _DailyChoiceRandomPanelState extends State<DailyChoiceRandomPanel> {
                 ),
                 label: Text(
                   _finalizingPick
-                      ? pickUiText(widget.i18n, zh: '选中中', en: 'Picking')
+                      ? widget.i18n.t(
+                          'inline.plan295.daily_choice.picking.8f87048ccee8',
+                        )
                       : (_running
-                            ? pickUiText(widget.i18n, zh: '停止并选中', en: 'Stop')
-                            : pickUiText(
-                                widget.i18n,
-                                zh: '开始随机',
-                                en: 'Randomize',
+                            ? widget.i18n.t(
+                                'inline.plan295.daily_choice.stop.60c4770e0c04',
+                              )
+                            : widget.i18n.t(
+                                'inline.plan295.daily_choice.randomize.9ad4c5f118a5',
                               )),
                 ),
               ),
@@ -443,12 +448,12 @@ class _DailyChoiceRandomPanelState extends State<DailyChoiceRandomPanel> {
                     ? null
                     : () => widget.onDetail(display),
                 icon: const Icon(Icons.receipt_long_rounded),
-                label: Text(pickUiText(widget.i18n, zh: '详情', en: 'Details')),
+                label: Text(widget.i18n.t('toolbox.sound.locator.btn_details')),
               ),
               OutlinedButton.icon(
                 onPressed: widget.onManage,
                 icon: const Icon(Icons.tune_rounded),
-                label: Text(pickUiText(widget.i18n, zh: '管理', en: 'Manage')),
+                label: Text(widget.i18n.t('toolbox.hub.quick.manage')),
               ),
             ],
           ),
@@ -575,17 +580,15 @@ class _OptionStage extends StatelessWidget {
                       children: <Widget>[
                         Text(
                           locked
-                              ? pickUiText(i18n, zh: '已选中', en: 'Selected')
+                              ? i18n.t(
+                                  'inline.plan295.daily_choice.selected.c15be86b0d74',
+                                )
                               : (running
-                                    ? pickUiText(
-                                        i18n,
-                                        zh: '正在随机',
-                                        en: 'Randomizing',
+                                    ? i18n.t(
+                                        'inline.plan295.daily_choice.randomizing.b1d4ddea2d33',
                                       )
-                                    : pickUiText(
-                                        i18n,
-                                        zh: '当前候选',
-                                        en: 'Current',
+                                    : i18n.t(
+                                        'inline.plan295.daily_choice.current.a3544cc1344e',
                                       )),
                           style: theme.textTheme.labelMedium?.copyWith(
                             color: accent,

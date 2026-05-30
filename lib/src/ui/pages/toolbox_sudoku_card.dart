@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../i18n/app_i18n.dart';
-import '../ui_copy.dart';
 import 'toolbox_sudoku_engine.dart';
 import 'toolbox_tool_shell.dart';
 
@@ -187,25 +186,29 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(pickUiText(i18n, zh: '恭喜完成', en: 'Congratulations')),
+          title: Text(
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_cognition.congratulations_ec9727',
+            ),
+          ),
           content: Text(
-            pickUiText(
-              i18n,
-              zh: '你已经完成当前${_difficultyLabel(i18n, _difficulty)} ${_variantLabel(i18n, _variant)}数独。',
-              en: 'You completed this ${_difficultyLabel(i18n, _difficulty)} ${_variantLabel(i18n, _variant)} Sudoku.',
+            i18n.t(
+              'inline.ui.pages.toolbox_sudoku_card.you_completed_this_difficultylabel_i18n_difficulty_varia_474ffc',
             ),
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(pickUiText(i18n, zh: '关闭', en: 'Close')),
+              child: Text(i18n.t('inline.plan295.life.close.370fb8697deb')),
             ),
             FilledButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 _newGame();
               },
-              child: Text(pickUiText(i18n, zh: '新开一局', en: 'New game')),
+              child: Text(
+                i18n.t('inline.ui.pages.toolbox_sudoku_card.new_game_2a5e2a'),
+              ),
             ),
           ],
         );
@@ -260,10 +263,8 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          pickUiText(
-            i18n,
-            zh: '已提示第 $row 行第 $col 列的正确数字。',
-            en: 'Revealed the correct digit for row $row, column $col.',
+          i18n.t(
+            'inline.ui.pages.toolbox_sudoku_card.revealed_the_correct_digit_for_row_row_column_col_543c10',
           ),
         ),
       ),
@@ -279,22 +280,26 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(pickUiText(i18n, zh: '显示答案', en: 'Show answer')),
+          title: Text(
+            i18n.t(
+              'inline.ui.pages.toolbox_human_tests_memory.show_answer_611b2f',
+            ),
+          ),
           content: Text(
-            pickUiText(
-              i18n,
-              zh: '这会直接填入完整答案并结束当前棋局，是否继续？',
-              en: 'This will fill the full solution and end the current puzzle. Continue?',
+            i18n.t(
+              'inline.ui.pages.toolbox_sudoku_card.this_will_fill_the_full_solution_and_end_the_current_puz_79a3b3',
             ),
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: Text(pickUiText(i18n, zh: '取消', en: 'Cancel')),
+              child: Text(i18n.t('cancel')),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: Text(pickUiText(i18n, zh: '确认', en: 'Confirm')),
+              child: Text(
+                i18n.t('inline.ui.pages.toolbox_sudoku_card.confirm_6250db'),
+              ),
             ),
           ],
         );
@@ -316,10 +321,8 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          pickUiText(
-            i18n,
-            zh: '已显示完整答案。',
-            en: 'The full solution is now visible.',
+          i18n.t(
+            'inline.ui.pages.toolbox_sudoku_card.the_full_solution_is_now_visible_529686',
           ),
         ),
       ),
@@ -425,83 +428,81 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
 
   String _difficultyLabel(AppI18n i18n, SudokuDifficulty difficulty) {
     return switch (difficulty) {
-      SudokuDifficulty.easy => pickUiText(i18n, zh: '简单', en: 'Easy'),
-      SudokuDifficulty.medium => pickUiText(i18n, zh: '标准', en: 'Medium'),
-      SudokuDifficulty.hard => pickUiText(i18n, zh: '挑战', en: 'Hard'),
+      SudokuDifficulty.easy => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_cognition.easy_b3ae90',
+      ),
+      SudokuDifficulty.medium => i18n.t('appearanceWeightMedium'),
+      SudokuDifficulty.hard => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_bimanual.hard_8e809b',
+      ),
     };
   }
 
   String _variantLabel(AppI18n i18n, SudokuVariant variant) {
     return switch (variant) {
-      SudokuVariant.classic => pickUiText(i18n, zh: '经典', en: 'Classic'),
-      SudokuVariant.diagonal => pickUiText(i18n, zh: '对角线', en: 'Diagonal'),
-      SudokuVariant.hyper => pickUiText(i18n, zh: '超宫', en: 'Hyper'),
-      SudokuVariant.disjoint => pickUiText(i18n, zh: '分组', en: 'Disjoint'),
+      SudokuVariant.classic => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_action.classic_3e1072',
+      ),
+      SudokuVariant.diagonal => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_dynamic_vision.diagonal_c5a023',
+      ),
+      SudokuVariant.hyper => i18n.t(
+        'inline.ui.pages.toolbox_sudoku_card.hyper_fc7a0c',
+      ),
+      SudokuVariant.disjoint => i18n.t(
+        'inline.ui.pages.toolbox_sudoku_card.disjoint_b9ac71',
+      ),
     };
   }
 
   String _variantRuleText(AppI18n i18n) {
     return switch (_variant) {
-      SudokuVariant.classic => pickUiText(
-        i18n,
-        zh: '规则：每行、每列、每个 3x3 宫都要填入 1-9。',
-        en: 'Rule: each row, column, and 3x3 box must contain 1-9.',
+      SudokuVariant.classic => i18n.t(
+        'inline.ui.pages.toolbox_sudoku_card.rule_each_row_column_and_3x3_box_must_contain_1_9_e680f3',
       ),
-      SudokuVariant.diagonal => pickUiText(
-        i18n,
-        zh: '规则：在经典数独基础上，两条主对角线也必须各含 1-9。',
-        en: 'Rule: both main diagonals must also contain 1-9.',
+      SudokuVariant.diagonal => i18n.t(
+        'inline.ui.pages.toolbox_sudoku_card.rule_both_main_diagonals_must_also_contain_1_9_e31c20',
       ),
-      SudokuVariant.hyper => pickUiText(
-        i18n,
-        zh: '规则：在经典数独基础上，中部四个额外 3x3 区块也必须各含 1-9。',
-        en: 'Rule: the four extra inner 3x3 regions must also contain 1-9.',
+      SudokuVariant.hyper => i18n.t(
+        'inline.ui.pages.toolbox_sudoku_card.rule_the_four_extra_inner_3x3_regions_must_also_contain_915fd2',
       ),
-      SudokuVariant.disjoint => pickUiText(
-        i18n,
-        zh: '规则：九宫格中同一相对位置组成的九组单元，也都必须各含 1-9。',
-        en: 'Rule: for each relative box position, the nine matching cells across boxes must also contain 1-9.',
+      SudokuVariant.disjoint => i18n.t(
+        'inline.ui.pages.toolbox_sudoku_card.rule_for_each_relative_box_position_the_nine_matching_ce_2969e7',
       ),
     };
   }
 
   String _statusLabel(AppI18n i18n) {
     if (_generating) {
-      return pickUiText(i18n, zh: '生成中', en: 'Generating');
+      return i18n.t('inline.ui.pages.toolbox_sudoku_card.generating_18669d');
     }
     if (_solved) {
-      return pickUiText(i18n, zh: '已完成', en: 'Solved');
+      return i18n.t('inline.ui.pages.toolbox_sudoku_card.solved_001b7e');
     }
     if (_noteMode) {
-      return pickUiText(i18n, zh: '预选中', en: 'Notes');
+      return i18n.t('todoNotes');
     }
-    return pickUiText(i18n, zh: '进行中', en: 'Playing');
+    return i18n.t('toolbox.sound.focus.stagePulseMoving');
   }
 
   String _selectionSummary(AppI18n i18n) {
     final selected = _selected;
     if (selected == null) {
-      return pickUiText(
-        i18n,
-        zh: '点击任意格子开始。点击已有数字可联动高亮相同数字；手机上选择空格后会直接拉起数字键盘。',
-        en: 'Tap any cell to begin. Tapping a filled digit highlights matching digits, and phones open the number keyboard when you select an editable cell.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_sudoku_card.tap_any_cell_to_begin_tapping_a_filled_digit_highlights_551ca1',
       );
     }
     final row = selected ~/ 9 + 1;
     final col = selected % 9 + 1;
     final value = _board[selected];
     if (_fixed.contains(selected)) {
-      return pickUiText(
-        i18n,
-        zh: '已选第 $row 行第 $col 列，这是题面数字，用来定位同数字和横竖宫范围。',
-        en: 'Selected row $row, column $col. This is a given clue for locating matching digits and peer zones.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_sudoku_card.selected_row_row_column_col_this_is_a_given_clue_for_loc_deaf92',
       );
     }
     if (value != 0) {
-      return pickUiText(
-        i18n,
-        zh: '已选第 $row 行第 $col 列，当前填写 $value。冲突会即时高亮，清空可改回候选状态。',
-        en: 'Selected row $row, column $col with value $value. Conflicts highlight immediately, and clear returns the cell to candidate mode.',
+      return i18n.t(
+        'inline.ui.pages.toolbox_sudoku_card.selected_row_row_column_col_with_value_value_conflicts_h_16d2bd',
       );
     }
     final marks = _notes[selected].isNotEmpty
@@ -509,15 +510,11 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
         : (_candidates[selected] ?? const <int>{});
     final candidateText = marks.isEmpty ? '--' : marks.join(' ');
     return _noteMode
-        ? pickUiText(
-            i18n,
-            zh: '已选第 $row 行第 $col 列，预选模式开启。当前候选：$candidateText。',
-            en: 'Selected row $row, column $col. Notes mode is on. Current marks: $candidateText.',
+        ? i18n.t(
+            'inline.ui.pages.toolbox_sudoku_card.selected_row_row_column_col_notes_mode_is_on_current_mar_9397ba',
           )
-        : pickUiText(
-            i18n,
-            zh: '已选第 $row 行第 $col 列。候选参考：$candidateText。',
-            en: 'Selected row $row, column $col. Candidate guide: $candidateText.',
+        : i18n.t(
+            'inline.ui.pages.toolbox_sudoku_card.selected_row_row_column_col_candidate_guide_candidatetex_38001e',
           );
   }
 
@@ -566,10 +563,8 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
     final compact = _isCompactLayout(context);
     final filled = _board.where((value) => value != 0).length;
     final colors = Theme.of(context).colorScheme;
-    final summary = pickUiText(
-      i18n,
-      zh: '进度 $filled/81 · 冲突 ${_conflicts.length} · ${_statusLabel(i18n)}',
-      en: 'Progress $filled/81 · Conflicts ${_conflicts.length} · ${_statusLabel(i18n)}',
+    final summary = i18n.t(
+      'inline.ui.pages.toolbox_sudoku_card.progress_filled_81_conflicts_conflicts_length_statuslabe_38fbf7',
     );
     return Card(
       child: Padding(
@@ -595,10 +590,8 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Text(
-                              pickUiText(
-                                i18n,
-                                zh: '棋局信息与设置',
-                                en: 'Board info & settings',
+                              i18n.t(
+                                'inline.ui.pages.toolbox_sudoku_card.board_info_settings_443a1d',
                               ),
                               style: Theme.of(context).textTheme.titleSmall
                                   ?.copyWith(fontWeight: FontWeight.w800),
@@ -623,10 +616,10 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
                               : Icons.expand_more_rounded,
                         ),
                         label: Text(
-                          pickUiText(
-                            i18n,
-                            zh: _detailsExpanded ? '收起' : '展开',
-                            en: _detailsExpanded ? 'Hide' : 'Show',
+                          i18n.t(
+                            _detailsExpanded
+                                ? 'toolbox.sudoku.details.hide'
+                                : 'toolbox.sudoku.details.show',
                           ),
                         ),
                       ),
@@ -647,23 +640,25 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
                           runSpacing: 10,
                           children: <Widget>[
                             ToolboxMetricCard(
-                              label: pickUiText(i18n, zh: '进度', en: 'Progress'),
+                              label: i18n.t('progress'),
                               value: '$filled / 81',
                             ),
                             ToolboxMetricCard(
-                              label: pickUiText(
-                                i18n,
-                                zh: '冲突',
-                                en: 'Conflicts',
+                              label: i18n.t(
+                                'inline.ui.pages.toolbox_sudoku_card.conflicts_102401',
                               ),
                               value: '${_conflicts.length}',
                             ),
                             ToolboxMetricCard(
-                              label: pickUiText(i18n, zh: '题目数', en: 'Givens'),
+                              label: i18n.t(
+                                'inline.ui.pages.toolbox_sudoku_card.givens_ba535b',
+                              ),
                               value: '${_fixed.length}',
                             ),
                             ToolboxMetricCard(
-                              label: pickUiText(i18n, zh: '状态', en: 'Status'),
+                              label: i18n.t(
+                                'inline.ui.pages.focus_page_workspace_editor.status_cc59cb',
+                              ),
                               value: _statusLabel(i18n),
                             ),
                           ],
@@ -715,7 +710,9 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
                           children: <Widget>[
                             FilterChip(
                               label: Text(
-                                pickUiText(i18n, zh: '候选辅助', en: 'Candidates'),
+                                i18n.t(
+                                  'inline.ui.pages.toolbox_sudoku_card.candidates_d63515',
+                                ),
                               ),
                               selected: _showCandidates,
                               onSelected: (value) {
@@ -726,7 +723,9 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
                             ),
                             FilterChip(
                               label: Text(
-                                pickUiText(i18n, zh: '笔记模式', en: 'Notes mode'),
+                                i18n.t(
+                                  'inline.ui.pages.toolbox_sudoku_card.notes_mode_349613',
+                                ),
                               ),
                               selected: _noteMode,
                               onSelected: (value) {
@@ -739,11 +738,7 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
                               },
                             ),
                             if (_autoNoteBadge)
-                              Chip(
-                                label: Text(
-                                  pickUiText(i18n, zh: '自动', en: 'Auto'),
-                                ),
-                              ),
+                              Chip(label: Text(i18n.t('asrLanguageAuto'))),
                             if (_generating)
                               Chip(
                                 avatar: const SizedBox(
@@ -754,10 +749,8 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
                                   ),
                                 ),
                                 label: Text(
-                                  pickUiText(
-                                    i18n,
-                                    zh: '正在生成棋局',
-                                    en: 'Building puzzle',
+                                  i18n.t(
+                                    'inline.ui.pages.toolbox_sudoku_card.building_puzzle_5b5726',
                                   ),
                                 ),
                               ),
@@ -874,10 +867,8 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
                                     ),
                                     const SizedBox(height: 10),
                                     Text(
-                                      pickUiText(
-                                        i18n,
-                                        zh: '正在准备新棋局',
-                                        en: 'Preparing a new board',
+                                      i18n.t(
+                                        'inline.ui.pages.toolbox_sudoku_card.preparing_a_new_board_6843bc',
                                       ),
                                       style: Theme.of(context)
                                           .textTheme
@@ -925,7 +916,9 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      pickUiText(i18n, zh: '数字键盘输入', en: 'Number keypad input'),
+                      i18n.t(
+                        'inline.ui.pages.toolbox_sudoku_card.number_keypad_input_25b9bc',
+                      ),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -944,14 +937,10 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
                       ],
                       onChanged: _handleDirectInputChanged,
                       decoration: InputDecoration(
-                        hintText: pickUiText(
-                          i18n,
-                          zh: _canEditSelection
-                              ? '输入 1-9，输入 0 可清空'
-                              : '先选择一个可编辑格子',
-                          en: _canEditSelection
-                              ? 'Type 1-9, use 0 to clear'
-                              : 'Select an editable cell first',
+                        hintText: i18n.t(
+                          _canEditSelection
+                              ? 'toolbox.sudoku.directInput.editableHint'
+                              : 'toolbox.sudoku.directInput.selectCellHint',
                         ),
                         prefixIcon: const Icon(Icons.dialpad_rounded),
                         border: const OutlineInputBorder(),
@@ -959,10 +948,8 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      pickUiText(
-                        i18n,
-                        zh: '在手机上点选可编辑格子后，会直接拉起数字键盘。',
-                        en: 'On phones, tapping an editable cell opens the number keyboard directly.',
+                      i18n.t(
+                        'inline.ui.pages.toolbox_sudoku_card.on_phones_tapping_an_editable_cell_opens_the_number_keyb_6ec7f5',
                       ),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
@@ -995,22 +982,38 @@ class _SudokuGameCardState extends State<SudokuGameCard> {
                 OutlinedButton.icon(
                   onPressed: _canEditSelection ? _clearSelection : null,
                   icon: const Icon(Icons.backspace_outlined),
-                  label: Text(pickUiText(i18n, zh: '清空格子', en: 'Clear cell')),
+                  label: Text(
+                    i18n.t(
+                      'inline.ui.pages.toolbox_sudoku_card.clear_cell_def0b1',
+                    ),
+                  ),
                 ),
                 FilledButton.tonalIcon(
                   onPressed: _generating || _solved ? null : _fillHintCell,
                   icon: const Icon(Icons.lightbulb_outline_rounded),
-                  label: Text(pickUiText(i18n, zh: '提示一个数字', en: 'Hint')),
+                  label: Text(
+                    i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_visual.hint_972a23',
+                    ),
+                  ),
                 ),
                 FilledButton.tonalIcon(
                   onPressed: _generating ? null : _showAnswer,
                   icon: const Icon(Icons.visibility_rounded),
-                  label: Text(pickUiText(i18n, zh: '显示答案', en: 'Show answer')),
+                  label: Text(
+                    i18n.t(
+                      'inline.ui.pages.toolbox_human_tests_memory.show_answer_611b2f',
+                    ),
+                  ),
                 ),
                 OutlinedButton.icon(
                   onPressed: _newGame,
                   icon: const Icon(Icons.refresh_rounded),
-                  label: Text(pickUiText(i18n, zh: '新开一局', en: 'New game')),
+                  label: Text(
+                    i18n.t(
+                      'inline.ui.pages.toolbox_sudoku_card.new_game_2a5e2a',
+                    ),
+                  ),
                 ),
               ],
             ),

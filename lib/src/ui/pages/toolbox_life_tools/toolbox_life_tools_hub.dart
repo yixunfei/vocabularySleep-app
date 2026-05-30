@@ -27,70 +27,68 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
     'display': _CategoryMeta(
       color: Color(0xFF3D7EC5),
       icon: Icons.tv_rounded,
-      labelZh: '屏幕展示',
-      labelEn: 'Screen & Display',
-      descZh: '时钟、弹幕、记分与全屏信息展示',
-      descEn: 'Clock, barrage, scoreboard, and fullscreen displays',
+      labelKey: 'inline.plan294.life_hub.screen_display_a91ca045',
+      descKey:
+          'inline.plan295.life.clock_barrage_scoreboard_and_fullscr.12e9b5b35c7a',
     ),
     'device': _CategoryMeta(
       color: Color(0xFFD4784A),
       icon: Icons.smartphone_rounded,
-      labelZh: '设备工坊',
-      labelEn: 'Device Lab',
-      descZh: '传感器、水平仪、震动与来电模拟',
-      descEn: 'Sensors, level, vibration, and call simulation',
+      labelKey: 'inline.plan294.life_hub.device_lab_ca8d729a',
+      descKey:
+          'inline.plan295.life.sensors_level_vibration_and_call_sim.f7db19836168',
     ),
     'image': _CategoryMeta(
       color: Color(0xFF7B6EC5),
       icon: Icons.image_rounded,
-      labelZh: '图像创作',
-      labelEn: 'Image Studio',
-      descZh: '取色、压缩、带壳截图与表情包制作',
-      descEn: 'Color picker, compression, framing, and meme maker',
+      labelKey: 'inline.plan294.life_hub.image_studio_e7c14f78',
+      descKey:
+          'inline.plan295.life.color_picker_compression_framing_and.5efc81e28f98',
     ),
     'web': _CategoryMeta(
       color: Color(0xFF0C9E98),
       icon: Icons.language_rounded,
-      labelZh: '网络百宝箱',
-      labelEn: 'Web Toolkit',
-      descZh: '壁纸、邮编、搜图、短链与二维码',
-      descEn: 'Wallpaper, postal lookup, reverse search, short links, and QR',
+      labelKey: 'inline.plan294.life_hub.web_toolkit_d6d8c505',
+      descKey:
+          'inline.plan295.life.wallpaper_postal_lookup_reverse_sear.33b46d520b54',
     ),
     'text': _CategoryMeta(
       color: Color(0xFF6B5D93),
       icon: Icons.text_fields_rounded,
-      labelZh: '文本编辑',
-      labelEn: 'Text Editor',
-      descZh: '字数统计、格式转换、思维导图与数字标号',
-      descEn: 'Word count, format transform, mind map, and number marks',
+      labelKey: 'inline.plan294.life_hub.text_editor_a34e3c31',
+      descKey:
+          'inline.plan295.life.word_count_format_transform_mind_map.52ffe3c01241',
     ),
     'study': _CategoryMeta(
       color: Color(0xFF4B8C66),
       icon: Icons.school_rounded,
-      labelZh: '学习助手',
-      labelEn: 'Study Aid',
-      descZh: '历史年表、元素周期表与 AI 面试练习',
-      descEn: 'Timeline, periodic table, and AI interview practice',
+      labelKey: 'inline.plan294.life_hub.study_aid_7f02db0c',
+      descKey:
+          'inline.plan295.life.timeline_periodic_table_and_ai_inter.2b719f4d79ec',
     ),
     'calc': _CategoryMeta(
       color: Color(0xFFCD4B5E),
       icon: Icons.calculate_rounded,
-      labelZh: '生活计算',
-      labelEn: 'Life Calculator',
-      descZh: '单位换算、薪资对比、房贷、BMI 与日期推算',
-      descEn: 'Unit converter, salary compare, mortgage, BMI, and date calc',
+      labelKey: 'inline.plan294.life_hub.life_calculator_f97e01d2',
+      descKey:
+          'inline.plan295.life.unit_converter_salary_compare_mortga.e1f7eae1b869',
     ),
   };
+
+  String _localizedToolSearchText(_LifeTool tool) {
+    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+    return <String>[
+      i18n.t(tool.titleKey),
+      i18n.t(tool.summaryKey),
+    ].join(' ').toLowerCase();
+  }
 
   List<_LifeTool> get _filteredTools {
     return _lifeTools
         .where((tool) {
           if (_query.trim().isEmpty) return true;
           final q = _query.toLowerCase();
-          return tool.titleZh.toLowerCase().contains(q) ||
-              tool.titleEn.toLowerCase().contains(q) ||
-              tool.summaryZh.toLowerCase().contains(q) ||
-              tool.summaryEn.toLowerCase().contains(q);
+          return _localizedToolSearchText(tool).contains(q);
         })
         .toList(growable: false);
   }
@@ -143,9 +141,6 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
   }
 
   void _showAddQuickAccessSheet() {
-    final byId = <String, _LifeTool>{
-      for (final tool in _lifeTools) tool.id: tool,
-    };
     final available = _lifeTools
         .where((t) => !_quickAccessIds.contains(t.id))
         .toList(growable: false);
@@ -162,7 +157,7 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
           initialChildSize: 0.6,
           minChildSize: 0.3,
           maxChildSize: 0.85,
-          builder: (_, scrollController) {
+          builder: (context, scrollController) {
             return Column(
               children: <Widget>[
                 const SizedBox(height: 12),
@@ -180,7 +175,10 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
-                    _lifeText(sheetContext, zh: '添加快捷工具', en: 'Add quick tool'),
+                    _lifeI18nText(
+                      sheetContext,
+                      'inline.plan294.life_hub.add_quick_tool_881c5f49',
+                    ),
                     style: Theme.of(sheetContext).textTheme.titleMedium
                         ?.copyWith(fontWeight: FontWeight.w800),
                   ),
@@ -190,10 +188,9 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
                   child: available.isEmpty
                       ? Center(
                           child: Text(
-                            _lifeText(
+                            _lifeI18nText(
                               sheetContext,
-                              zh: '所有工具已添加',
-                              en: 'All tools added',
+                              'inline.plan294.life_hub.all_tools_added_f2375380',
                             ),
                             style: Theme.of(sheetContext).textTheme.bodyLarge,
                           ),
@@ -220,18 +217,10 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
                                 ),
                               ),
                               title: Text(
-                                _lifeText(
-                                  sheetContext,
-                                  zh: tool.titleZh,
-                                  en: tool.titleEn,
-                                ),
+                                _lifeI18nText(sheetContext, tool.titleKey),
                               ),
                               subtitle: Text(
-                                _lifeText(
-                                  sheetContext,
-                                  zh: tool.summaryZh,
-                                  en: tool.summaryEn,
-                                ),
+                                _lifeI18nText(sheetContext, tool.summaryKey),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -262,7 +251,10 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
         Row(
           children: <Widget>[
             Text(
-              _lifeText(context, zh: '快捷入口', en: 'Quick access'),
+              _lifeI18nText(
+                context,
+                'inline.plan294.life_hub.quick_access_8882fa92',
+              ),
               style: theme.textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: colorScheme.onSurfaceVariant,
@@ -271,7 +263,10 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
             const Spacer(),
             if (quickTools.isNotEmpty)
               Text(
-                _lifeText(context, zh: '长按图标可删除', en: 'Long press to remove'),
+                _lifeI18nText(
+                  context,
+                  'inline.plan294.life_hub.long_press_to_remove_c175edd4',
+                ),
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                 ),
@@ -284,7 +279,7 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: quickTools.length + 1,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
             itemBuilder: (context, index) {
               if (index == 0) {
                 return _AddQuickAccessButton(onTap: _showAddQuickAccessSheet);
@@ -310,26 +305,36 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
       builder: (dialogContext) {
         return AlertDialog(
           title: Text(
-            _lifeText(dialogContext, zh: '移除快捷入口', en: 'Remove quick access'),
+            _lifeI18nText(
+              dialogContext,
+              'inline.plan294.life_hub.remove_quick_access_62d3bd88',
+            ),
           ),
           content: Text(
-            _lifeText(
+            _lifeI18nText(
               dialogContext,
-              zh: '确定要将「${tool.titleZh}」从快捷入口移除吗？',
-              en: 'Remove "${tool.titleEn}" from quick access?',
+              'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.hub.remove_from_quick_access.c39e2e9b07',
+              params: <String, Object?>{
+                'title': _lifeI18nText(dialogContext, tool.titleKey),
+              },
             ),
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: Text(_lifeText(dialogContext, zh: '取消', en: 'Cancel')),
+              child: Text(_lifeI18nText(dialogContext, 'cancel')),
             ),
             TextButton(
               onPressed: () {
                 _removeFromQuickAccess(tool.id);
                 Navigator.pop(dialogContext);
               },
-              child: Text(_lifeText(dialogContext, zh: '移除', en: 'Remove')),
+              child: Text(
+                _lifeI18nText(
+                  dialogContext,
+                  'inline.ui.pages.practice_notebook_page.remove_2837f7',
+                ),
+              ),
             ),
           ],
         );
@@ -364,21 +369,26 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
     final isSearching = _query.trim().isNotEmpty;
 
     return ToolboxToolPage(
-      title: _lifeText(context, zh: '生活实用', en: 'Life tools'),
-      subtitle: _lifeText(
+      title: _lifeI18nText(
         context,
-        zh: '${_lifeTools.length} 个实用工具，按 7 大分类整理，支持搜索和快捷入口。',
-        en: '${_lifeTools.length} handy tools organized in 7 categories with search and quick access.',
+        'inline.plan294.life_hub.life_tools_292cc56d',
+      ),
+      subtitle: _lifeI18nText(
+        context,
+        'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.hub.handy_tools_organized_in_7_categories.20f0dca39e',
+        params: <String, Object?>{'length': _lifeTools.length},
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           SectionHeader(
-            title: _lifeText(context, zh: '功能总览', en: 'Overview'),
-            subtitle: _lifeText(
+            title: _lifeI18nText(
               context,
-              zh: '可按关键词搜索，或展开分类抽屉浏览全部工具。',
-              en: 'Search by keyword or expand category drawers to browse all tools.',
+              'inline.plan294.life_hub.overview_451aa8b2',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'inline.plan294.life_hub.search_by_keyword_or_expand_category_drawers_to__0a37b578',
             ),
             trailing: grouped.isNotEmpty && !isSearching
                 ? TextButton.icon(
@@ -391,8 +401,14 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
                     ),
                     label: Text(
                       _allExpanded
-                          ? _lifeText(context, zh: '全部收起', en: 'Collapse all')
-                          : _lifeText(context, zh: '全部展开', en: 'Expand all'),
+                          ? _lifeI18nText(
+                              context,
+                              'inline.plan294.life_hub.collapse_all_ad827378',
+                            )
+                          : _lifeI18nText(
+                              context,
+                              'inline.plan294.life_hub.expand_all_a71926cb',
+                            ),
                       style: theme.textTheme.labelMedium,
                     ),
                   )
@@ -403,7 +419,10 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.search_rounded),
               border: const OutlineInputBorder(),
-              labelText: _lifeText(context, zh: '搜索工具', en: 'Search tools'),
+              labelText: _lifeI18nText(
+                context,
+                'inline.plan294.life_hub.search_tools_fe1669f3',
+              ),
               suffixIcon: isSearching
                   ? IconButton(
                       icon: const Icon(Icons.clear_rounded),
@@ -431,10 +450,9 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      _lifeText(
+                      _lifeI18nText(
                         context,
-                        zh: '未找到匹配的工具',
-                        en: 'No matching tools',
+                        'inline.plan294.life_hub.no_matching_tools_cd217d95',
                       ),
                       style: theme.textTheme.bodyLarge?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
@@ -531,18 +549,14 @@ class _CategoryMeta {
   const _CategoryMeta({
     required this.color,
     required this.icon,
-    required this.labelZh,
-    required this.labelEn,
-    required this.descZh,
-    required this.descEn,
+    required this.labelKey,
+    required this.descKey,
   });
 
   final Color color;
   final IconData icon;
-  final String labelZh;
-  final String labelEn;
-  final String descZh;
-  final String descEn;
+  final String labelKey;
+  final String descKey;
 }
 
 class _AddQuickAccessButton extends StatelessWidget {
@@ -617,7 +631,7 @@ class _QuickAccessChip extends StatelessWidget {
               Icon(tool.icon, color: accent, size: 20),
               const SizedBox(width: 6),
               Text(
-                _lifeText(context, zh: tool.titleZh, en: tool.titleEn),
+                _lifeI18nText(context, tool.titleKey),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.labelMedium?.copyWith(
@@ -793,10 +807,9 @@ class _CategoryDrawerState extends State<_CategoryDrawer>
                                           children: <Widget>[
                                             Flexible(
                                               child: Text(
-                                                _lifeText(
+                                                _lifeI18nText(
                                                   context,
-                                                  zh: meta.labelZh,
-                                                  en: meta.labelEn,
+                                                  meta.labelKey,
                                                 ),
                                                 style: theme
                                                     .textTheme
@@ -848,11 +861,7 @@ class _CategoryDrawerState extends State<_CategoryDrawer>
                                         ),
                                         const SizedBox(height: 3),
                                         Text(
-                                          _lifeText(
-                                            context,
-                                            zh: meta.descZh,
-                                            en: meta.descEn,
-                                          ),
+                                          _lifeI18nText(context, meta.descKey),
                                           style: theme.textTheme.bodySmall
                                               ?.copyWith(
                                                 color: colorScheme
@@ -1043,7 +1052,7 @@ class _ToolDrawerCardState extends State<_ToolDrawerCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        _lifeText(context, zh: tool.titleZh, en: tool.titleEn),
+                        _lifeI18nText(context, tool.titleKey),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodyMedium?.copyWith(
@@ -1052,11 +1061,7 @@ class _ToolDrawerCardState extends State<_ToolDrawerCard> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        _lifeText(
-                          context,
-                          zh: tool.summaryZh,
-                          en: tool.summaryEn,
-                        ),
+                        _lifeI18nText(context, tool.summaryKey),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -1093,8 +1098,8 @@ class _LifeToolInfoPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ToolboxToolPage(
-      title: _lifeText(context, zh: tool.titleZh, en: tool.titleEn),
-      subtitle: _lifeText(context, zh: tool.summaryZh, en: tool.summaryEn),
+      title: _lifeI18nText(context, tool.titleKey),
+      subtitle: _lifeI18nText(context, tool.summaryKey),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -1109,20 +1114,18 @@ class _LifeToolInfoPage extends StatelessWidget {
               ),
             ),
             child: Text(
-              _lifeText(
+              _lifeI18nText(
                 context,
-                zh: '该工具以提供公开资源链接和信息参考为主，详细功能可在相关来源网站使用。',
-                en: 'This tool provides public resource links and information references. For detailed features, please refer to the source websites.',
+                'inline.plan294.life_hub.this_tool_provides_public_resource_links_and_inf_ddb547a1',
               ),
             ),
           ),
           const SizedBox(height: 12),
           if (tool.sources.isNotEmpty) ...<Widget>[
             SectionHeader(
-              title: _lifeText(
+              title: _lifeI18nText(
                 context,
-                zh: '来源与版权说明',
-                en: 'Sources and attribution',
+                'inline.plan294.life_hub.sources_and_attribution_19299461',
               ),
             ),
             const SizedBox(height: 8),
@@ -1141,10 +1144,9 @@ class _LifeToolInfoPage extends StatelessWidget {
               ),
             const SizedBox(height: 6),
             Text(
-              _lifeText(
+              _lifeI18nText(
                 context,
-                zh: '版权和使用权请以来源网站政策及原作者声明为准。',
-                en: 'Copyright and usage rights follow each source website policy and original author statement.',
+                'inline.plan294.life_hub.copyright_and_usage_rights_follow_each_source_we_9e70bef2',
               ),
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -1159,8 +1161,16 @@ Future<void> _openExternal(BuildContext context, String url) async {
   final uri = Uri.parse(url);
   final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
   if (!ok && context.mounted) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('无法打开链接: $url')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _lifeI18nText(
+            context,
+            'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.hub.unable_to_open_link.fd0fc474f3',
+            params: <String, Object?>{'url': url},
+          ),
+        ),
+      ),
+    );
   }
 }

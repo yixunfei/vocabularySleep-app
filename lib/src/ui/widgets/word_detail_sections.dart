@@ -23,18 +23,14 @@ class WordDetailOverviewCard extends StatelessWidget {
     final chips = <Widget>[
       _OverviewChip(
         icon: Icons.layers_rounded,
-        label: pickUiText(
-          i18n,
-          zh: '${groupedFields.length} 个分组',
-          en: '${groupedFields.length} groups',
+        label: i18n.t(
+          'inline.ui.widgets.word_detail_sections.groupedfields_length_groups_2ab664',
         ),
       ),
       _OverviewChip(
         icon: Icons.view_list_rounded,
-        label: pickUiText(
-          i18n,
-          zh: '${word.fields.length} 个字段',
-          en: '${word.fields.length} fields',
+        label: i18n.t(
+          'inline.ui.widgets.word_detail_sections.word_fields_length_fields_105c39',
         ),
       ),
     ];
@@ -58,11 +54,11 @@ class WordDetailOverviewCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             SectionHeader(
-              title: pickUiText(i18n, zh: '阅读导览', en: 'Reading guide'),
-              subtitle: pickUiText(
-                i18n,
-                zh: '先看核心字段，再按需展开用法和补充信息，减少移动端长内容干扰。',
-                en: 'Start with the core fields, then expand usage and supporting sections only when needed.',
+              title: i18n.t(
+                'inline.ui.widgets.word_detail_sections.reading_guide_374a57',
+              ),
+              subtitle: i18n.t(
+                'inline.ui.widgets.word_detail_sections.start_with_the_core_fields_then_expand_usage_and_support_f3ccd8',
               ),
             ),
             const SizedBox(height: 12),
@@ -108,10 +104,12 @@ class WordFieldGroupCard extends StatelessWidget {
           style: Theme.of(context).textTheme.titleMedium,
         ),
         subtitle: Text(
-          pickUiText(
-            i18n,
-            zh: '${group.fields.length} 个字段 · ${fieldLabels.join(' / ')}',
-            en: '${group.fields.length} fields · ${fieldLabels.join(' / ')}',
+          i18n.t(
+            'inline.plan296.ui.widgets.word.detail.sections.fields.3b84a11ba1',
+            params: <String, Object?>{
+              'length': group.fields.length,
+              'p1': fieldLabels.join(' / '),
+            },
           ),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
@@ -242,8 +240,12 @@ class _ExpandableFieldTextState extends State<_ExpandableFieldText> {
             ),
             label: Text(
               _expanded
-                  ? pickUiText(widget.i18n, zh: '收起长内容', en: 'Collapse')
-                  : pickUiText(widget.i18n, zh: '展开完整内容', en: 'Expand'),
+                  ? widget.i18n.t(
+                      'inline.plan295.breathing.collapse.0b47184ebf0f',
+                    )
+                  : widget.i18n.t(
+                      'inline.plan295.breathing.expand.face3cd93c1c',
+                    ),
             ),
           ),
       ],
