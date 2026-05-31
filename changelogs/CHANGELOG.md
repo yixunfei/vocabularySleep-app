@@ -116,6 +116,22 @@
 - `dart analyze lib/src/ui/pages/toolbox_sound_tools.dart` 通过，No issues found。
 - `flutter build windows` 通过。
 
+## [Unreleased-I18N-TOOLBOX-COPY-FIX] - 2026-05-31
+
+### 原因
+- 修正工具箱游戏中心与生活实用入口中仍显示英文或不准确中文名称的问题。
+
+### 修改
+- `lib/l10n/catalog/app_texts_zh.json`
+- `lib/l10n/catalog/app_text_registry.json`
+  - 将工具箱“迷你游戏”统一修正为“游戏中心”。
+  - 修正游戏名称：俄罗斯轮盘赌、俄罗斯方块、推箱子、数独、扫雷、五子棋。
+  - 补齐生活实用 35 个子模块入口说明的中文文案。
+
+### 验证
+- 8 个 catalog/registry JSON 文件解析通过。
+- 已反查用户点名的旧中文和英文入口说明残留。
+
 ## [Unreleased-I18N-PROCESS-HANDOFF] - 2026-05-31
 
 ### 原因
