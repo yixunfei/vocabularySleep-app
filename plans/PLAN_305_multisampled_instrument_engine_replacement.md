@@ -134,6 +134,7 @@
 - **平台风险**: 插件对 Windows/Linux/Web 支持有限；非移动端继续用程序化 fallback。
 - **性能风险**: SoundFont 加载可能一次性占内存；需要 lazy load、预热、卸载和错误兜底。
 - **音色一致性风险**: 多来源音色空间感不一致；只做轻量混响/音量归一，不在首批追求录音棚级统一。
+- **小提琴真实感风险**: 手机屏幕上的弓弦连续控制和 GM violin 音色都难以接近真实小提琴；后续不建议继续在当前交互上微调追真，应考虑改为简化弦乐氛围/练耳音高工具，或单独设计更适合手机的弦乐交互。
 - **特殊乐器缺口**: 古琴、音钵、木鱼不强行 GM 化，单独采样或保留现有实现。
 
 ## 验证清单
@@ -155,6 +156,7 @@
 - 2026-05-31: 第二扩展切片已验证 `dart analyze`、采样引擎测试、音频 bank 回归、i18n catalog 检查、旧 helper/catalog 插值扫描、Windows debug build、Android debug APK build 与 `git diff --check`；仍待移动真机听感确认吉他扫弦和竖琴滑扫。
 - 2026-05-31: 第三扩展切片接入长笛 flute 与小提琴 violin 采样持续音；长笛采用 SoundFont core sustain + 现有 air/edge 呼吸层，小提琴采用 SoundFont bow sustain + 现有 attack/tail 表情层，并新增 `ToolboxSampledMidiSustainController` 管理 noteOn/noteOff、动态音量和换音释放。
 - 2026-05-31: 第三扩展切片已验证 `dart format`、`dart analyze`、采样引擎测试、音频 bank 回归、i18n catalog 检查、旧 helper/catalog 插值扫描、Windows debug build、Android debug APK build 与 `git diff --check`；仍待手机真机确认长笛长按/换孔、小提琴滑动换音/双音与尾音释放。
+- 2026-05-31: 根据真机反馈修复长笛吹气传感器在无麦克风/无权限时可能闪退的问题；启动前检查权限、WAV 编码器和输入设备，改为自管 amplitude 轮询并在异常时提示触摸播放仍可使用。同时记录小提琴真实感不足为产品方向风险，后续建议重新设计而非继续微调 GM violin。
 
 ## 参考源
 - FluidSynth: https://www.fluidsynth.org/

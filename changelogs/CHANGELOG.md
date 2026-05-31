@@ -1,3 +1,27 @@
+## [Unreleased-PLAN_305-FIX-FLUTE-BLOW-SENSOR] - 2026-05-31
+
+### 原因
+- 真机反馈长笛整体可用，但无麦克风或未授予权限时开启吹气传感器会闪退，应改为明确提示并保留触控演奏。
+
+### 修复
+- 长笛吹气传感器启动前检查麦克风权限、WAV 编码器支持和输入设备列表，任一不可用时关闭吹气模式并提示“触摸播放仍可使用”。
+- 将吹气振幅监听从 `record` 插件内部 amplitude stream 改为本模块自管 `Timer` 轮询 `getAmplitude()`，所有轮询异常都会被捕获并降级到触控模式，避免异步计时器错误绕过启动流程的 try/catch。
+
+### 修改
+- `PLAN_305` 记录小提琴真实感不足为产品方向风险：当前手机屏幕弓弦交互和 GM violin 音色不适合继续追求真实小提琴，应后续重新设计为更适合手机的弦乐体验或音高工具。
+
+### 验证
+- `dart format lib\src\ui\pages\toolbox_sound_tools\flute.dart` 通过。
+- `dart analyze lib\src\ui\pages\toolbox_sound_tools.dart` 通过，No issues found。
+- `node scripts\audit_i18n_placeholders.js` 通过，missing 0，placeholderMismatch 0，Dart missingParams 0。
+- 旧 i18n helper 扫描与 catalog Dart 插值扫描无命中。
+- `flutter build windows --debug` 通过，生成 `build\windows\x64\runner\Debug\xianyushengxi.exe`。
+- `flutter build apk --debug` 通过，生成 `build\app\outputs\flutter-apk\app-debug.apk`。
+- `git diff --check` 通过；仅提示 changelog 与 plan 文档后续 Git 触碰时会按当前 Windows 配置转换 CRLF。
+
+### 风险变更
+- 某些设备若输入设备枚举为空，即使系统存在特殊虚拟输入，也会禁用吹气模式；这是为避免无硬件/权限异常闪退而采取的保守策略。
+
 ## [Unreleased-PLAN_305-IMPLEMENTATION-SLICE-3] - 2026-05-31
 
 ### 原因

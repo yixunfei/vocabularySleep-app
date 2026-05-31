@@ -109,7 +109,7 @@ class _FluteToolState extends State<_FluteTool> {
   final ToolboxLoopController _sustainEdgeLoop = ToolboxLoopController();
   late final ToolboxSoundFontInstrumentEngine _sampledFluteEngine;
   late final ToolboxSampledMidiSustainController _sampledFluteSustain;
-  StreamSubscription<Amplitude>? _amplitudeSub;
+  Timer? _amplitudeTimer;
   final Set<int> _pressedHoles = <int>{};
   final Map<int, int> _activeHolePointers = <int, int>{};
   final Map<int, int> _holePressCounts = <int, int>{};
@@ -803,21 +803,136 @@ class _FluteToolState extends State<_FluteTool> {
     _releaseHolePress(boundHole);
   }
 
+  void _showBlowSensorUnavailableMessage() {
+    if (!mounted) {
+      return;
+    }
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) {
+      return;
+    }
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            _toolboxI18n(context, listen: false).t(
+              'toolbox.sound.flute.microphone_permission_unavailable_touch_play',
+            ),
+          ),
+        ),
+      );
+  }
+
+  Future<void> _handleBlowSensorUnavailable({bool notify = true}) async {
+    _amplitudeTimer?.cancel();
+    _amplitudeTimer = null;
+    try {
+      await _micRecorder.stop();
+    } catch (_) {}
+    if (mounted) {
+      setState(() {
+        _blowPermissionDenied = true;
+        _blowSensorEnabled = false;
+        _isBlowing = false;
+        _micLevel = 0;
+        _ambientNoiseFloor = 0;
+        _breathConfidence = 0;
+      });
+    }
+    await _syncBreathSustain();
+    if (notify) {
+      _showBlowSensorUnavailableMessage();
+    }
+  }
+
+  Future<bool> _canStartBlowSensor() async {
+    final granted = await _micRecorder.hasPermission();
+    if (!granted) {
+      return false;
+    }
+    final supportsWav = await _micRecorder.isEncoderSupported(AudioEncoder.wav);
+    if (!supportsWav) {
+      return false;
+    }
+    final devices = await _micRecorder.listInputDevices();
+    return devices.isNotEmpty;
+  }
+
+  Future<void> _pollBlowAmplitude() async {
+    try {
+      if (!_blowSensorEnabled || !await _micRecorder.isRecording()) {
+        return;
+      }
+      _handleBlowAmplitude(await _micRecorder.getAmplitude());
+    } catch (_) {
+      await _handleBlowSensorUnavailable();
+    }
+  }
+
+  void _handleBlowAmplitude(Amplitude amplitude) {
+    final rawLevel = _normalizedMicLevel(amplitude);
+    final ambientTarget = _isBlowing
+        ? math.min(rawLevel, _ambientNoiseFloor + 0.02)
+        : rawLevel;
+    final ambientSmoothing = _isBlowing ? 0.985 : 0.92;
+    final ambientFloor =
+        (_ambientNoiseFloor * ambientSmoothing +
+                ambientTarget * (1.0 - ambientSmoothing))
+            .clamp(0.0, 0.45)
+            .toDouble();
+    final filtered = _filteredBreathLevel(rawLevel, noiseFloor: ambientFloor);
+    final smoothing = filtered > _micLevel ? 0.42 : 0.78;
+    final level = (_micLevel * smoothing + filtered * (1.0 - smoothing)).clamp(
+      0.0,
+      1.0,
+    );
+    final onsetEnergy = math.max(0.0, filtered - _micLevel);
+    final startThreshold = (_blowThreshold * 0.74 + ambientFloor * 0.9 + 0.04)
+        .clamp(0.08, 0.92)
+        .toDouble();
+    final holdThreshold = math.max(0.04, startThreshold - 0.08).toDouble();
+    final onsetCandidate = level >= startThreshold || onsetEnergy >= 0.06;
+    final confidence =
+        (_breathConfidence * 0.7 + (onsetCandidate ? 1.0 : 0.0) * 0.3).clamp(
+          0.0,
+          1.0,
+        );
+    final blowing = _isBlowing
+        ? level >= holdThreshold ||
+              (confidence >= 0.36 && level >= holdThreshold * 0.85)
+        : level >= startThreshold &&
+              (confidence >= 0.48 || onsetEnergy >= 0.08);
+    var shouldRefresh = false;
+    final levelChanged = (_micLevel - level).abs() > 0.015;
+    if ((_ambientNoiseFloor - ambientFloor).abs() > 0.004) {
+      _ambientNoiseFloor = ambientFloor;
+    }
+    if (levelChanged) {
+      _micLevel = level;
+      shouldRefresh = true;
+    }
+    if ((_breathConfidence - confidence).abs() > 0.025) {
+      _breathConfidence = confidence.toDouble();
+      shouldRefresh = true;
+    }
+    if (_isBlowing != blowing) {
+      _isBlowing = blowing;
+      shouldRefresh = true;
+      unawaited(_syncBreathSustain());
+    } else if (_blowSensorEnabled && _isBlowing && levelChanged) {
+      unawaited(_syncBreathSustain());
+    }
+    if (shouldRefresh && mounted) {
+      setState(() {});
+    }
+  }
+
   Future<void> _startBlowSensor() async {
     if (_blowSensorEnabled) return;
     try {
-      final granted = await _micRecorder.hasPermission();
-      if (!granted) {
-        if (mounted) {
-          setState(() {
-            _blowPermissionDenied = true;
-            _blowSensorEnabled = false;
-            _isBlowing = false;
-            _micLevel = 0;
-            _ambientNoiseFloor = 0;
-          });
-        }
-        await _syncBreathSustain();
+      if (!await _canStartBlowSensor()) {
+        await _handleBlowSensorUnavailable();
         return;
       }
       await _micRecorder.start(
@@ -830,71 +945,9 @@ class _FluteToolState extends State<_FluteTool> {
             '${Directory.systemTemp.path}${Platform.pathSeparator}'
             'flute_blow_meter_${DateTime.now().microsecondsSinceEpoch}.wav',
       );
-      await _amplitudeSub?.cancel();
+      _amplitudeTimer?.cancel();
       _invalidateSustainSync();
       await _stopSustainLayers();
-      _amplitudeSub = _micRecorder
-          .onAmplitudeChanged(const Duration(milliseconds: 50))
-          .listen((amplitude) {
-            final rawLevel = _normalizedMicLevel(amplitude);
-            final ambientTarget = _isBlowing
-                ? math.min(rawLevel, _ambientNoiseFloor + 0.02)
-                : rawLevel;
-            final ambientSmoothing = _isBlowing ? 0.985 : 0.92;
-            final ambientFloor =
-                (_ambientNoiseFloor * ambientSmoothing +
-                        ambientTarget * (1.0 - ambientSmoothing))
-                    .clamp(0.0, 0.45)
-                    .toDouble();
-            final filtered = _filteredBreathLevel(
-              rawLevel,
-              noiseFloor: ambientFloor,
-            );
-            final smoothing = filtered > _micLevel ? 0.42 : 0.78;
-            final level = (_micLevel * smoothing + filtered * (1.0 - smoothing))
-                .clamp(0.0, 1.0);
-            final onsetEnergy = math.max(0.0, filtered - _micLevel);
-            final startThreshold =
-                (_blowThreshold * 0.74 + ambientFloor * 0.9 + 0.04)
-                    .clamp(0.08, 0.92)
-                    .toDouble();
-            final holdThreshold = math
-                .max(0.04, startThreshold - 0.08)
-                .toDouble();
-            final onsetCandidate =
-                level >= startThreshold || onsetEnergy >= 0.06;
-            final confidence =
-                (_breathConfidence * 0.7 + (onsetCandidate ? 1.0 : 0.0) * 0.3)
-                    .clamp(0.0, 1.0);
-            final blowing = _isBlowing
-                ? level >= holdThreshold ||
-                      (confidence >= 0.36 && level >= holdThreshold * 0.85)
-                : level >= startThreshold &&
-                      (confidence >= 0.48 || onsetEnergy >= 0.08);
-            var shouldRefresh = false;
-            final levelChanged = (_micLevel - level).abs() > 0.015;
-            if ((_ambientNoiseFloor - ambientFloor).abs() > 0.004) {
-              _ambientNoiseFloor = ambientFloor;
-            }
-            if (levelChanged) {
-              _micLevel = level;
-              shouldRefresh = true;
-            }
-            if ((_breathConfidence - confidence).abs() > 0.025) {
-              _breathConfidence = confidence;
-              shouldRefresh = true;
-            }
-            if (_isBlowing != blowing) {
-              _isBlowing = blowing;
-              shouldRefresh = true;
-              unawaited(_syncBreathSustain());
-            } else if (_blowSensorEnabled && _isBlowing && levelChanged) {
-              unawaited(_syncBreathSustain());
-            }
-            if (shouldRefresh && mounted) {
-              setState(() {});
-            }
-          });
       if (mounted) {
         setState(() {
           _blowSensorEnabled = true;
@@ -905,25 +958,18 @@ class _FluteToolState extends State<_FluteTool> {
           _breathConfidence = 0;
         });
       }
+      _amplitudeTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
+        unawaited(_pollBlowAmplitude());
+      });
       unawaited(_warmUpActivePreset());
     } catch (_) {
-      if (mounted) {
-        setState(() {
-          _blowPermissionDenied = true;
-          _blowSensorEnabled = false;
-          _isBlowing = false;
-          _micLevel = 0;
-          _ambientNoiseFloor = 0;
-          _breathConfidence = 0;
-        });
-      }
-      await _syncBreathSustain();
+      await _handleBlowSensorUnavailable();
     }
   }
 
   Future<void> _stopBlowSensor({bool resetUi = true}) async {
-    await _amplitudeSub?.cancel();
-    _amplitudeSub = null;
+    _amplitudeTimer?.cancel();
+    _amplitudeTimer = null;
     try {
       await _micRecorder.stop();
     } catch (_) {}
@@ -1948,11 +1994,8 @@ class _FluteToolState extends State<_FluteTool> {
 
   @override
   void dispose() {
-    final amplitudeSub = _amplitudeSub;
-    _amplitudeSub = null;
-    if (amplitudeSub != null) {
-      unawaited(amplitudeSub.cancel());
-    }
+    _amplitudeTimer?.cancel();
+    _amplitudeTimer = null;
     _invalidateSustainSync();
     unawaited(_disposeMicRecorder());
     unawaited(_sustainCoreLoop.dispose());
