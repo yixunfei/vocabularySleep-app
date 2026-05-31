@@ -81,6 +81,20 @@ class ToolboxInstrumentBankCatalog {
         channel: 1,
       );
 
+  static const ToolboxInstrumentPatch violin = ToolboxInstrumentPatch(
+    id: 'gm_violin',
+    instrumentId: ToolboxInstrumentId.violin,
+    program: 40,
+    channel: 2,
+  );
+
+  static const ToolboxInstrumentPatch flute = ToolboxInstrumentPatch(
+    id: 'gm_flute',
+    instrumentId: ToolboxInstrumentId.flute,
+    program: 73,
+    channel: 3,
+  );
+
   static const ToolboxInstrumentPatch orchestralHarp = ToolboxInstrumentPatch(
     id: 'gm_orchestral_harp',
     instrumentId: ToolboxInstrumentId.harp,
@@ -571,5 +585,97 @@ class ToolboxSampledMidiNotePlayer implements ToolboxNotePlayer {
     }
     _noteActive = false;
     await engine.noteOff(patch: patch, midiNote: midiNote);
+  }
+}
+
+class ToolboxSampledMidiSustainController {
+  ToolboxSampledMidiSustainController({
+    required this.engine,
+    required this.bank,
+    required this.patch,
+    this.volume = 1.0,
+    this.reverb = 0.18,
+  });
+
+  final ToolboxSoundFontInstrumentEngine engine;
+  final ToolboxInstrumentBankSpec bank;
+  final ToolboxInstrumentPatch patch;
+  final double volume;
+  final double reverb;
+  final _ToolboxAsyncLock _noteLock = _ToolboxAsyncLock();
+
+  int? _activeMidiNote;
+
+  Future<void> warmUp() {
+    return engine.ensurePatch(
+      bank: bank,
+      patch: patch,
+      volume: volume,
+      reverb: reverb,
+    );
+  }
+
+  Future<bool> start({
+    required int midiNote,
+    required double velocity,
+    double? volume,
+    double? reverb,
+  }) {
+    return _noteLock.synchronized(() async {
+      final normalizedNote = midiNote.clamp(0, 127).toInt();
+      final normalizedVolume = (volume ?? this.volume)
+          .clamp(0.0, 1.0)
+          .toDouble();
+      final normalizedReverb = (reverb ?? this.reverb)
+          .clamp(0.0, 1.0)
+          .toDouble();
+      if (_activeMidiNote == normalizedNote) {
+        return engine.ensurePatch(
+          bank: bank,
+          patch: patch,
+          volume: normalizedVolume,
+          reverb: normalizedReverb,
+        );
+      }
+      await _releaseActiveNote();
+      final played = await engine.noteOn(
+        bank: bank,
+        patch: patch,
+        midiNote: normalizedNote,
+        velocity: velocity,
+        volume: normalizedVolume,
+        reverb: normalizedReverb,
+      );
+      if (played) {
+        _activeMidiNote = normalizedNote;
+      }
+      return played;
+    });
+  }
+
+  Future<bool> update({double? volume, double? reverb}) {
+    return _noteLock.synchronized(() {
+      return engine.ensurePatch(
+        bank: bank,
+        patch: patch,
+        volume: (volume ?? this.volume).clamp(0.0, 1.0).toDouble(),
+        reverb: (reverb ?? this.reverb).clamp(0.0, 1.0).toDouble(),
+      );
+    });
+  }
+
+  Future<void> stop() {
+    return _noteLock.synchronized(_releaseActiveNote);
+  }
+
+  Future<void> dispose() => stop();
+
+  Future<void> _releaseActiveNote() async {
+    final activeMidiNote = _activeMidiNote;
+    if (activeMidiNote == null) {
+      return;
+    }
+    _activeMidiNote = null;
+    await engine.noteOff(patch: patch, midiNote: activeMidiNote);
   }
 }

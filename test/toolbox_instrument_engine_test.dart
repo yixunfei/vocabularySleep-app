@@ -13,6 +13,10 @@ void main() {
       expect(ToolboxInstrumentBankCatalog.acousticGrandPiano.channel, 0);
       expect(ToolboxInstrumentBankCatalog.acousticGuitarNylon.program, 24);
       expect(ToolboxInstrumentBankCatalog.acousticGuitarNylon.channel, 1);
+      expect(ToolboxInstrumentBankCatalog.violin.program, 40);
+      expect(ToolboxInstrumentBankCatalog.violin.channel, 2);
+      expect(ToolboxInstrumentBankCatalog.flute.program, 73);
+      expect(ToolboxInstrumentBankCatalog.flute.channel, 3);
       expect(ToolboxInstrumentBankCatalog.orchestralHarp.program, 46);
       expect(ToolboxInstrumentBankCatalog.orchestralHarp.channel, 4);
       expect(ToolboxInstrumentPitch.midiFromFrequency(440), 69);
@@ -174,6 +178,73 @@ void main() {
         'noteOn:60:64:0',
       ]);
     });
+
+    test(
+      'sampled sustain controller keeps note held until target changes',
+      () async {
+        final tempDir = await Directory.systemTemp.createTemp(
+          'toolbox_instrument_sustain_controller_test_',
+        );
+        addTearDown(() async {
+          if (await tempDir.exists()) {
+            await tempDir.delete(recursive: true);
+          }
+        });
+        final bank = await _writeTestBank(tempDir, fileName: 'Sustain.sf3');
+
+        final synth = _FakeMidiSynthAdapter();
+        final engine = ToolboxSoundFontInstrumentEngine(
+          synth: synth,
+          bankStore: ToolboxInstrumentBankStore(debugDirectory: tempDir.path),
+          platformSupported: () => true,
+        );
+        final controller = ToolboxSampledMidiSustainController(
+          engine: engine,
+          bank: bank,
+          patch: ToolboxInstrumentBankCatalog.flute,
+          volume: 0.8,
+          reverb: 0.2,
+        );
+        addTearDown(controller.dispose);
+
+        final first = await controller.start(
+          midiNote: 72,
+          velocity: 0.6,
+          volume: 0.8,
+          reverb: 0.2,
+        );
+        final update = await controller.update(volume: 0.4, reverb: 0.3);
+        final second = await controller.start(
+          midiNote: 74,
+          velocity: 0.7,
+          volume: 0.4,
+          reverb: 0.3,
+        );
+        await controller.stop();
+
+        expect(first, isTrue);
+        expect(update, isTrue);
+        expect(second, isTrue);
+        expect(
+          synth.calls.where((call) => call.startsWith('program:')),
+          <String>['program:73:3'],
+        );
+        expect(
+          synth.calls.where((call) => call.startsWith('volume:')),
+          <String>['volume:102:3', 'volume:51:3'],
+        );
+        expect(
+          synth.calls.where((call) => call.startsWith('reverb:')),
+          <String>['reverb:0.20', 'reverb:0.30'],
+        );
+        expect(synth.calls.where((call) => call.startsWith('note')), <String>[
+          'noteOn:72:76:3',
+          'noteOff:72:64:3',
+          'noteOn:74:89:3',
+          'noteOff:74:64:3',
+        ]);
+      },
+    );
 
     test('rejects local bank with mismatched metadata', () async {
       final tempDir = await Directory.systemTemp.createTemp(

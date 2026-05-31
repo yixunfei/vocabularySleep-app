@@ -102,12 +102,13 @@ class _FluteToolState extends State<_FluteTool> {
     ),
   ];
 
-  final Map<String, ToolboxEffectPlayer> _players =
-      <String, ToolboxEffectPlayer>{};
+  final Map<String, ToolboxNotePlayer> _players = <String, ToolboxNotePlayer>{};
   final AudioRecorder _micRecorder = AudioRecorder();
   final ToolboxLoopController _sustainCoreLoop = ToolboxLoopController();
   final ToolboxLoopController _sustainAirLoop = ToolboxLoopController();
   final ToolboxLoopController _sustainEdgeLoop = ToolboxLoopController();
+  late final ToolboxSoundFontInstrumentEngine _sampledFluteEngine;
+  late final ToolboxSampledMidiSustainController _sampledFluteSustain;
   StreamSubscription<Amplitude>? _amplitudeSub;
   final Set<int> _pressedHoles = <int>{};
   final Map<int, int> _activeHolePointers = <int, int>{};
@@ -137,11 +138,21 @@ class _FluteToolState extends State<_FluteTool> {
   double _manualBreathGesture = 0;
   bool _manualBreathActive = false;
   bool _manualBreathLocksNote = false;
+  bool _sampledFluteReady = false;
 
   @override
   void initState() {
     super.initState();
+    _sampledFluteEngine = _createToolboxSoundFontInstrumentEngine(context);
+    _sampledFluteSustain = ToolboxSampledMidiSustainController(
+      engine: _sampledFluteEngine,
+      bank: ToolboxInstrumentBankCatalog.museScoreGeneral,
+      patch: ToolboxInstrumentBankCatalog.flute,
+      volume: 0.82,
+      reverb: _airSpace,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_prepareSampledFluteEngine());
       unawaited(_warmUpActivePreset());
     });
   }
@@ -524,17 +535,58 @@ class _FluteToolState extends State<_FluteTool> {
     return (core: core, air: air, edge: edge);
   }
 
+  double get _sampledFluteReverb => _airSpace.clamp(0.0, 0.5).toDouble();
+
+  double _sampledFluteVelocityFor(double breathLevel) {
+    return (0.38 + breathLevel.clamp(0.0, 1.0) * 0.58)
+        .clamp(0.18, 1.0)
+        .toDouble();
+  }
+
+  double _sampledFluteVolumeFor(double breathLevel) {
+    return (0.34 + breathLevel.clamp(0.0, 1.0) * 0.48)
+        .clamp(0.22, 0.9)
+        .toDouble();
+  }
+
   Future<void> _setSustainLayerVolumes() async {
     final mix = _sustainLayerMix();
-    await _sustainCoreLoop.setVolume(mix.core);
+    if (_sampledFluteReady) {
+      await _sampledFluteSustain.update(
+        volume: _sampledFluteVolumeFor(_performanceBreathLevel),
+        reverb: _sampledFluteReverb,
+      );
+    } else {
+      await _sustainCoreLoop.setVolume(mix.core);
+    }
     await _sustainAirLoop.setVolume(mix.air);
     await _sustainEdgeLoop.setVolume(mix.edge);
   }
 
   Future<void> _stopSustainLayers() async {
+    await _sampledFluteSustain.stop();
     await _sustainCoreLoop.stop();
     await _sustainAirLoop.stop();
     await _sustainEdgeLoop.stop();
+  }
+
+  Future<void> _prepareSampledFluteEngine() async {
+    final ready = await _sampledFluteEngine.ensurePatch(
+      bank: ToolboxInstrumentBankCatalog.museScoreGeneral,
+      patch: ToolboxInstrumentBankCatalog.flute,
+      volume: _sampledFluteVolumeFor(_performanceBreathLevel),
+      reverb: _sampledFluteReverb,
+    );
+    if (!mounted || ready == _sampledFluteReady) {
+      return;
+    }
+    _sampledFluteReady = ready;
+    _invalidatePlayers();
+    _invalidateSustainSync();
+    if (ready) {
+      unawaited(_syncBreathSustain());
+      unawaited(_warmUpActivePreset());
+    }
   }
 
   void _invalidateSustainSync() {
@@ -647,14 +699,30 @@ class _FluteToolState extends State<_FluteTool> {
     }
     final sustainFrequency = _sustainFrequencyFor(note);
     final mix = _sustainLayerMix();
-    await _sustainCoreLoop.play(
-      ToolboxAudioBank.fluteSustainCore(
-        sustainFrequency,
-        style: _style,
-        material: _material,
-      ),
-      volume: mix.core,
-    );
+    var sampledCoreStarted = false;
+    if (_sampledFluteReady) {
+      sampledCoreStarted = await _sampledFluteSustain.start(
+        midiNote: ToolboxInstrumentPitch.midiFromFrequency(sustainFrequency),
+        velocity: _sampledFluteVelocityFor(_performanceBreathLevel),
+        volume: _sampledFluteVolumeFor(_performanceBreathLevel),
+        reverb: _sampledFluteReverb,
+      );
+      if (!sampledCoreStarted) {
+        _sampledFluteReady = false;
+      }
+    }
+    if (sampledCoreStarted) {
+      await _sustainCoreLoop.stop();
+    } else {
+      await _sustainCoreLoop.play(
+        ToolboxAudioBank.fluteSustainCore(
+          sustainFrequency,
+          style: _style,
+          material: _material,
+        ),
+        volume: mix.core,
+      );
+    }
     if (!_isLatestSustainSync(serial)) {
       await _stopSustainLayers();
       return;
@@ -934,12 +1002,26 @@ class _FluteToolState extends State<_FluteTool> {
     unawaited(_warmUpActivePreset());
   }
 
-  ToolboxEffectPlayer _playerFor(_PianoKey key) {
+  ToolboxNotePlayer _playerFor(_PianoKey key) {
     final breathLevel = _oneShotBreathLevel;
     final cacheKey =
         'flute:${key.id}:$_style:$_material:${breathLevel.toStringAsFixed(2)}:${_airSpace.toStringAsFixed(2)}:${_tail.toStringAsFixed(2)}';
     final existing = _players[cacheKey];
     if (existing != null) return existing;
+    if (_sampledFluteReady) {
+      final sampled = ToolboxSampledMidiNotePlayer(
+        engine: _sampledFluteEngine,
+        bank: ToolboxInstrumentBankCatalog.museScoreGeneral,
+        patch: ToolboxInstrumentBankCatalog.flute,
+        midiNote: ToolboxInstrumentPitch.midiFromFrequency(key.frequency),
+        velocity: _sampledFluteVelocityFor(breathLevel),
+        releaseAfter: Duration(milliseconds: (620 + _tail * 980).round()),
+        volume: _sampledFluteVolumeFor(breathLevel),
+        reverb: _sampledFluteReverb,
+      );
+      _players[cacheKey] = sampled;
+      return sampled;
+    }
     final created = ToolboxEffectPlayer(
       ToolboxAudioBank.fluteNote(
         key.frequency,
@@ -1876,6 +1958,8 @@ class _FluteToolState extends State<_FluteTool> {
     unawaited(_sustainCoreLoop.dispose());
     unawaited(_sustainAirLoop.dispose());
     unawaited(_sustainEdgeLoop.dispose());
+    unawaited(_sampledFluteSustain.dispose());
+    unawaited(_sampledFluteEngine.dispose());
     _activeHolePointers.clear();
     _holePressCounts.clear();
     _invalidatePlayers();

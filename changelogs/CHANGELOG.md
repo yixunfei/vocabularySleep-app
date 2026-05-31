@@ -1,3 +1,34 @@
+## [Unreleased-PLAN_305-IMPLEMENTATION-SLICE-3] - 2026-05-31
+
+### 原因
+- 继续推进真实采样乐器替换，将剩余 GM 覆盖的一类持续音乐器长笛和小提琴纳入 SoundFont 路线。
+
+### 新增
+- 新增 `ToolboxSampledMidiSustainController`，用于持续音 noteOn/noteOff、换音释放、动态音量和 reverb 更新。
+- `ToolboxInstrumentBankCatalog` 补齐 `gm_flute` 与 `gm_violin` patch 常量，和既有 manifest program/channel 保持一致。
+- 采样引擎测试新增持续音控制器用例，覆盖 held note、动态更新、换音 noteOff/noteOn 与停止释放。
+
+### 修改
+- 长笛模块接入 `gm_flute` 采样核心持续音，同时保留现有 air/edge 呼吸层；采样不可用时继续完整回退原三层程序化 sustain。
+- 长笛短音触发优先走采样 one-shot，失败或不支持平台时回退 `ToolboxAudioBank.fluteNote`。
+- 小提琴模块接入 `gm_violin` 采样 bow sustain，同时保留现有 bow attack 与 room tail 表情层；双音使用第二个采样 sustain controller，采样不可用时回退原 loop。
+- `PLAN_305` 更新第三扩展切片状态和真机验收重点。
+
+### 验证
+- `dart format lib\src\services\toolbox_instrument_engine.dart lib\src\ui\pages\toolbox_sound_tools\flute.dart lib\src\ui\pages\toolbox_sound_tools\violin.dart test\toolbox_instrument_engine_test.dart` 通过。
+- `dart analyze lib\src\services\toolbox_audio_service.dart lib\src\ui\pages\toolbox_sound_tools.dart test\toolbox_instrument_engine_test.dart` 通过，No issues found。
+- `flutter test test\toolbox_instrument_engine_test.dart --reporter compact` 通过。
+- `flutter test test\toolbox_audio_bank_regression_test.dart --reporter compact` 通过。
+- `node scripts\audit_i18n_placeholders.js` 通过，missing 0，placeholderMismatch 0，Dart missingParams 0。
+- 旧 i18n helper 扫描与 catalog Dart 插值扫描无命中。
+- `flutter build windows --debug` 通过，生成 `build\windows\x64\runner\Debug\xianyushengxi.exe`。
+- `flutter build apk --debug` 通过，生成 `build\app\outputs\flutter-apk\app-debug.apk`。
+- `git diff --check` 通过；仅提示 changelog 与 plan 文档后续 Git 触碰时会按当前 Windows 配置转换 CRLF。
+
+### 风险变更
+- 长笛和小提琴的采样层不模拟 breath noise、bow scrape 或复杂连奏，只承接核心音高/持续音；细节仍由现有合成层补足。
+- 仍需手机真机听感确认长笛长按持续、换孔、吹气/手动 breath，以及小提琴滑动换音、双音和尾音释放。
+
 ## [Unreleased-PLAN_305-IMPLEMENTATION-SLICE-2] - 2026-05-31
 
 ### 原因

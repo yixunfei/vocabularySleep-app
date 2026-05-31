@@ -90,6 +90,9 @@ class _ViolinToolState extends State<_ViolinTool> {
   final Map<String, ToolboxEffectPlayer> _transientPlayers =
       <String, ToolboxEffectPlayer>{};
   final Map<int, Offset> _activePointers = <int, Offset>{};
+  late final ToolboxSoundFontInstrumentEngine _sampledViolinEngine;
+  late final ToolboxSampledMidiSustainController _sampledViolinSustain;
+  late final ToolboxSampledMidiSustainController _sampledViolinDoubleStop;
 
   String _presetId = _presets.first.id;
   String _scaleId = _presets.first.scaleId;
@@ -105,6 +108,30 @@ class _ViolinToolState extends State<_ViolinTool> {
   double _bowGestureVolume = 0;
   double _bowGestureRate = 1.0;
   bool _bowing = false;
+  bool _sampledViolinReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _sampledViolinEngine = _createToolboxSoundFontInstrumentEngine(context);
+    _sampledViolinSustain = ToolboxSampledMidiSustainController(
+      engine: _sampledViolinEngine,
+      bank: ToolboxInstrumentBankCatalog.museScoreGeneral,
+      patch: ToolboxInstrumentBankCatalog.violin,
+      volume: _sampledViolinVolumeFor(_bow),
+      reverb: _reverb,
+    );
+    _sampledViolinDoubleStop = ToolboxSampledMidiSustainController(
+      engine: _sampledViolinEngine,
+      bank: ToolboxInstrumentBankCatalog.museScoreGeneral,
+      patch: ToolboxInstrumentBankCatalog.violin,
+      volume: _sampledViolinVolumeFor(_bow) * 0.72,
+      reverb: _reverb,
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_prepareSampledViolinEngine());
+    });
+  }
 
   bool _isCompactPhoneWidth(double width) {
     return width < (widget.fullScreen ? 480 : 430);
@@ -191,6 +218,31 @@ class _ViolinToolState extends State<_ViolinTool> {
 
   double _frequencyFromMidi(int midi) {
     return (440 * math.pow(2, (midi - 69) / 12)).toDouble();
+  }
+
+  double _sampledViolinVolumeFor(double bowVolume) {
+    return (0.28 + bowVolume.clamp(0.0, 1.0) * 0.62)
+        .clamp(0.18, 0.94)
+        .toDouble();
+  }
+
+  double _sampledViolinVelocityFor(double bowVolume) {
+    return (0.34 + bowVolume.clamp(0.0, 1.0) * 0.58)
+        .clamp(0.16, 1.0)
+        .toDouble();
+  }
+
+  Future<void> _prepareSampledViolinEngine() async {
+    final ready = await _sampledViolinEngine.ensurePatch(
+      bank: ToolboxInstrumentBankCatalog.museScoreGeneral,
+      patch: ToolboxInstrumentBankCatalog.violin,
+      volume: _sampledViolinVolumeFor(_bow),
+      reverb: _reverb,
+    );
+    if (!mounted || ready == _sampledViolinReady) {
+      return;
+    }
+    _sampledViolinReady = ready;
   }
 
   ToolboxEffectPlayer _transientPlayer(String key, Uint8List bytes) {
@@ -280,11 +332,25 @@ class _ViolinToolState extends State<_ViolinTool> {
     required double volume,
     required double playbackRate,
   }) async {
-    await _sustainLoop.setVolume(volume);
-    await _sustainLoop.setPlaybackRate(playbackRate);
+    if (_sampledViolinReady) {
+      await _sampledViolinSustain.update(
+        volume: _sampledViolinVolumeFor(volume),
+        reverb: _reverb,
+      );
+    } else {
+      await _sustainLoop.setVolume(volume);
+      await _sustainLoop.setPlaybackRate(playbackRate);
+    }
     if (_activeDoubleStopMidi != null) {
-      await _doubleStopLoop.setVolume((volume * 0.72).clamp(0.0, 1.0));
-      await _doubleStopLoop.setPlaybackRate(playbackRate);
+      if (_sampledViolinReady) {
+        await _sampledViolinDoubleStop.update(
+          volume: _sampledViolinVolumeFor(volume) * 0.72,
+          reverb: _reverb,
+        );
+      } else {
+        await _doubleStopLoop.setVolume((volume * 0.72).clamp(0.0, 1.0));
+        await _doubleStopLoop.setPlaybackRate(playbackRate);
+      }
     }
     if (!mounted) {
       return;
@@ -313,16 +379,32 @@ class _ViolinToolState extends State<_ViolinTool> {
         ),
       );
     }
-    await _sustainLoop.play(
-      ToolboxAudioBank.violinSustainCore(
-        _frequencyFromMidi(midi),
-        style: _activePreset.styleId,
-        variant: _toneVariant,
-        bow: _bow,
-      ),
-      volume: bowVolume,
-      playbackRate: playbackRate,
-    );
+    var sampledSustainStarted = false;
+    if (_sampledViolinReady) {
+      sampledSustainStarted = await _sampledViolinSustain.start(
+        midiNote: midi,
+        velocity: _sampledViolinVelocityFor(bowVolume),
+        volume: _sampledViolinVolumeFor(bowVolume),
+        reverb: _reverb,
+      );
+      if (!sampledSustainStarted) {
+        _sampledViolinReady = false;
+      }
+    }
+    if (sampledSustainStarted) {
+      await _sustainLoop.stop();
+    } else {
+      await _sustainLoop.play(
+        ToolboxAudioBank.violinSustainCore(
+          _frequencyFromMidi(midi),
+          style: _activePreset.styleId,
+          variant: _toneVariant,
+          bow: _bow,
+        ),
+        volume: bowVolume,
+        playbackRate: playbackRate,
+      );
+    }
 
     int? doubleStopMidi;
     if (_activePointers.length >= 2) {
@@ -331,16 +413,32 @@ class _ViolinToolState extends State<_ViolinTool> {
         final secondNotes = _notesForString(_strings[secondStringIndex]);
         doubleStopMidi =
             secondNotes[noteIndex.clamp(0, secondNotes.length - 1)];
-        await _doubleStopLoop.play(
-          ToolboxAudioBank.violinSustainCore(
-            _frequencyFromMidi(doubleStopMidi),
-            style: _activePreset.styleId,
-            variant: _toneVariant,
-            bow: (_bow * 0.92).clamp(0.15, 1.0),
-          ),
-          volume: (bowVolume * 0.72).clamp(0.0, 1.0),
-          playbackRate: playbackRate,
-        );
+        var sampledDoubleStopStarted = false;
+        if (_sampledViolinReady) {
+          sampledDoubleStopStarted = await _sampledViolinDoubleStop.start(
+            midiNote: doubleStopMidi,
+            velocity: _sampledViolinVelocityFor(bowVolume * 0.72),
+            volume: _sampledViolinVolumeFor(bowVolume) * 0.72,
+            reverb: _reverb,
+          );
+          if (!sampledDoubleStopStarted) {
+            _sampledViolinReady = false;
+          }
+        }
+        if (sampledDoubleStopStarted) {
+          await _doubleStopLoop.stop();
+        } else {
+          await _doubleStopLoop.play(
+            ToolboxAudioBank.violinSustainCore(
+              _frequencyFromMidi(doubleStopMidi),
+              style: _activePreset.styleId,
+              variant: _toneVariant,
+              bow: (_bow * 0.92).clamp(0.15, 1.0),
+            ),
+            volume: (bowVolume * 0.72).clamp(0.0, 1.0),
+            playbackRate: playbackRate,
+          );
+        }
         if (withAttack) {
           unawaited(
             _attackPlayerForMidi(doubleStopMidi).play(
@@ -351,6 +449,7 @@ class _ViolinToolState extends State<_ViolinTool> {
         }
       }
     } else {
+      await _sampledViolinDoubleStop.stop();
       await _doubleStopLoop.stop();
     }
 
@@ -371,6 +470,8 @@ class _ViolinToolState extends State<_ViolinTool> {
     final primaryMidi = _activeNoteMidi;
     final secondMidi = _activeDoubleStopMidi;
     final tailVolume = _bowGestureVolume;
+    await _sampledViolinSustain.stop();
+    await _sampledViolinDoubleStop.stop();
     await _sustainLoop.stop();
     await _doubleStopLoop.stop();
     if (withTail && primaryMidi != null) {
@@ -410,6 +511,9 @@ class _ViolinToolState extends State<_ViolinTool> {
       _bow = preset.bow;
       _reverb = preset.reverb;
     });
+    if (_sampledViolinReady) {
+      unawaited(_prepareSampledViolinEngine());
+    }
   }
 
   void _handleFingerboardGesture(
@@ -469,6 +573,7 @@ class _ViolinToolState extends State<_ViolinTool> {
   void _handlePointerUp(PointerEvent event) {
     _activePointers.remove(event.pointer);
     if (_activePointers.length < 2 && _activeDoubleStopMidi != null) {
+      unawaited(_sampledViolinDoubleStop.stop());
       unawaited(_doubleStopLoop.stop());
       if (mounted) {
         setState(() {
@@ -771,6 +876,9 @@ class _ViolinToolState extends State<_ViolinTool> {
             if (mounted) {
               setState(() {});
             }
+            if (_sampledViolinReady) {
+              unawaited(_prepareSampledViolinEngine());
+            }
             refreshSheet();
           },
         ),
@@ -792,6 +900,9 @@ class _ViolinToolState extends State<_ViolinTool> {
           onChangeEnd: (_) {
             if (mounted) {
               setState(() {});
+            }
+            if (_sampledViolinReady) {
+              unawaited(_prepareSampledViolinEngine());
             }
             refreshSheet();
           },
@@ -843,6 +954,9 @@ class _ViolinToolState extends State<_ViolinTool> {
       unawaited(player.dispose());
     }
     _transientPlayers.clear();
+    unawaited(_sampledViolinSustain.dispose());
+    unawaited(_sampledViolinDoubleStop.dispose());
+    unawaited(_sampledViolinEngine.dispose());
     super.dispose();
   }
 
