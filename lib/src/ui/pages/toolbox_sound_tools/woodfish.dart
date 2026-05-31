@@ -1277,6 +1277,7 @@ class _WoodfishToolState extends State<_WoodfishTool>
     BuildContext context, {
     required bool immersive,
     required double height,
+    bool showHud = true,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final tokens = _visualTokens(_visualStyle);
@@ -1340,7 +1341,10 @@ class _WoodfishToolState extends State<_WoodfishTool>
         final ambient = _ambientController.value;
 
         // ── Image sizing ──
-        final imageW = math.min(height * 0.72, 280.0);
+        final imageW = math.min(
+          height * (immersive ? 0.82 : 0.72),
+          immersive ? 360.0 : 280.0,
+        );
         final imageH = imageW * 0.62; // Match the real woodfish aspect ratio
         final imageTop = height * 0.34;
 
@@ -1375,7 +1379,7 @@ class _WoodfishToolState extends State<_WoodfishTool>
             width: double.infinity,
             height: height,
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(immersive ? 0 : 24),
               child: Stack(
                 alignment: Alignment.center,
                 children: <Widget>[
@@ -1522,44 +1526,49 @@ class _WoodfishToolState extends State<_WoodfishTool>
                   ),
 
                   // ── 8. Count display ──
-                  Positioned(
-                    top: height * 0.06,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Text('$_sessionCount', style: countTextStyle),
-                        const SizedBox(height: 2),
-                        Text(
-                          _toolboxI18n(context, listen: false).t(
-                            'inline.plan296.ui.pages.toolbox.sound.tools.woodfish.target.d022d113ed',
-                            params: <String, Object?>{
-                              '_targetCount': _targetCount,
-                              'p1': _pulseInCycle + 1,
-                              '_cyclePulses': _cyclePulses,
-                            },
+                  if (showHud) ...<Widget>[
+                    Positioned(
+                      top: height * 0.06,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Text('$_sessionCount', style: countTextStyle),
+                          const SizedBox(height: 2),
+                          Text(
+                            _toolboxI18n(context, listen: false).t(
+                              'inline.plan296.ui.pages.toolbox.sound.tools.woodfish.target.d022d113ed',
+                              params: <String, Object?>{
+                                '_targetCount': _targetCount,
+                                'p1': _pulseInCycle + 1,
+                                '_cyclePulses': _cyclePulses,
+                              },
+                            ),
+                            style: detailTextStyle,
                           ),
-                          style: detailTextStyle,
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
 
-                  // ── 9. Floating blessing text ──
-                  Positioned(
-                    top: height * 0.20,
-                    child: _buildFloatingBlessing(
-                      context,
-                      immersive: immersive,
+                    // ── 9. Floating blessing text ──
+                    Positioned(
+                      top: height * 0.20,
+                      child: _buildFloatingBlessing(
+                        context,
+                        immersive: immersive,
+                      ),
                     ),
-                  ),
 
-                  // ── 10. Pulse indicators ──
-                  Positioned(
-                    left: 16,
-                    right: 16,
-                    bottom: 14,
-                    child: _buildPulseIndicators(context, immersive: immersive),
-                  ),
+                    // ── 10. Pulse indicators ──
+                    Positioned(
+                      left: 16,
+                      right: 16,
+                      bottom: 14,
+                      child: _buildPulseIndicators(
+                        context,
+                        immersive: immersive,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -1901,69 +1910,19 @@ class _WoodfishToolState extends State<_WoodfishTool>
   }
 
   Widget _buildFullScreen(BuildContext context) {
-    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
     return DecoratedBox(
       decoration: BoxDecoration(gradient: _screenBackgroundGradient()),
       child: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final stageHeight = math.min(460.0, constraints.maxHeight - 230);
             return Stack(
               children: <Widget>[
                 Positioned.fill(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(14, 64, 14, bottomInset + 124),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: <Widget>[
-                            _PianoOverlayChip(
-                              label: _toolboxI18n(context, listen: false).t(
-                                'inline.ui.pages.toolbox_human_tests_aim.mode_35c458',
-                              ),
-                              value: _modeLabelText(context),
-                            ),
-                            _PianoOverlayChip(
-                              label: _toolboxI18n(
-                                context,
-                                listen: false,
-                              ).t('inline.plan294.woodfish.cycle_00595c94'),
-                              value: '${_pulseInCycle + 1}/$_cyclePulses',
-                            ),
-                            _PianoOverlayChip(
-                              label: _toolboxI18n(context, listen: false).t(
-                                'inline.ui.pages.toolbox_breathing_tool.target_6033c5',
-                              ),
-                              value: '$_sessionCount/$_targetCount',
-                            ),
-                            _PianoOverlayChip(
-                              label: _toolboxI18n(
-                                context,
-                                listen: false,
-                              ).t('inline.plan294.woodfish.tone_e6a7319d'),
-                              value: _soundLabelText(context, _soundProfile),
-                            ),
-                            _PianoOverlayChip(
-                              label: _toolboxI18n(
-                                context,
-                                listen: false,
-                              ).t('inline.plan294.woodfish.style_5db2ee08'),
-                              value: _visualStyleLabel(context, _visualStyle),
-                            ),
-                            _PianoOverlayChip(label: 'BPM', value: '$_bpm'),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        _buildStrikeStage(
-                          context,
-                          immersive: true,
-                          height: stageHeight,
-                        ),
-                      ],
-                    ),
+                  child: _buildStrikeStage(
+                    context,
+                    immersive: true,
+                    height: constraints.maxHeight,
+                    showHud: false,
                   ),
                 ),
                 Positioned(
@@ -1972,62 +1931,32 @@ class _WoodfishToolState extends State<_WoodfishTool>
                   top: 8,
                   child: Row(
                     children: <Widget>[
-                      FilledButton.tonal(
+                      IconButton.filledTonal(
                         onPressed: widget.onExitFullScreen,
-                        style: FilledButton.styleFrom(
+                        tooltip: _toolboxI18n(
+                          context,
+                          listen: false,
+                        ).t('toolbox.sound.woodfish.exit_fullscreen'),
+                        style: IconButton.styleFrom(
                           backgroundColor: Colors.black.withValues(alpha: 0.34),
                           foregroundColor: Colors.white,
                         ),
-                        child: const Icon(Icons.arrow_back_rounded),
+                        icon: const Icon(Icons.arrow_back_rounded),
                       ),
                       const Spacer(),
-                      FilledButton.tonalIcon(
+                      IconButton.filledTonal(
                         onPressed: () => _openSettingsSheet(context),
-                        style: FilledButton.styleFrom(
+                        tooltip: _toolboxI18n(
+                          context,
+                          listen: false,
+                        ).t('arb.settings_b74cfc'),
+                        style: IconButton.styleFrom(
                           backgroundColor: Colors.black.withValues(alpha: 0.34),
                           foregroundColor: Colors.white,
                         ),
                         icon: const Icon(Icons.tune_rounded),
-                        label: Text(
-                          _toolboxI18n(
-                            context,
-                            listen: false,
-                          ).t('arb.settings_b74cfc'),
-                        ),
                       ),
                     ],
-                  ),
-                ),
-                Positioned(
-                  left: 14,
-                  right: 14,
-                  bottom: bottomInset + 12,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.32),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.12),
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Text(
-                            _toolboxI18n(context, listen: false).t(
-                              'inline.plan294.woodfish.mobile_immersive_mode_with_large_touch_targets_a_e31dab66',
-                            ),
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: Colors.white70),
-                          ),
-                          const SizedBox(height: 10),
-                          _buildQuickControls(context, immersive: true),
-                        ],
-                      ),
-                    ),
                   ),
                 ),
               ],

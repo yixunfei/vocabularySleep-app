@@ -7,6 +7,8 @@ import '../../i18n/app_i18n.dart';
 import '../../services/ambient_service.dart';
 import '../../services/online_ambient_catalog_service.dart';
 import '../../state/app_state_provider.dart';
+import '../sheets/ambient_sheet.dart';
+import '../ui_copy.dart';
 import 'sleep_assistant_ui_support.dart';
 
 part 'sleep_quick_tools_sheets.dart';
@@ -16,7 +18,17 @@ Future<void> showSleepWhiteNoiseSheet(BuildContext context) {
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    builder: (_) => const _SleepQuickToolTheme(child: _SleepWhiteNoiseSheet()),
+    builder: (_) => Consumer(
+      builder: (context, ref, _) {
+        final appState = ref.watch(appStateProvider);
+        return _SleepQuickToolTheme(
+          child: AmbientSheet(
+            state: appState,
+            i18n: AppI18n(appState.uiLanguage),
+          ),
+        );
+      },
+    ),
   );
 }
 
@@ -270,7 +282,7 @@ class _AmbientSourceRow extends StatelessWidget {
           children: <Widget>[
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(source.name),
+              title: Text(localizedAmbientName(i18n, source)),
               subtitle: Text(
                 source.enabled
                     ? i18n.t('toolbox.sleep.tools.available')
@@ -320,7 +332,7 @@ class _OnlineAmbientOptionRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        title: Text(option.name),
+        title: Text(localizedOnlineAmbientOptionName(i18n, option)),
         subtitle: Text(
           existing == null
               ? i18n.t('toolbox.sleep.tools.notDownloaded')

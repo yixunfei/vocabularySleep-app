@@ -116,6 +116,7 @@ class AudioPlayerSourceHelper {
     AudioPlayer player,
     Source source, {
     required double volume,
+    double playbackRate = 1.0,
     String tag = 'audio_player_source',
     AudioContext? ctx,
     PlayerMode? mode,
@@ -130,6 +131,7 @@ class AudioPlayerSourceHelper {
     }
     await player.setVolume(volume.clamp(0.0, 1.0));
     await setSource(player, source, tag: tag, data: data);
+    await player.setPlaybackRate(playbackRate.clamp(0.5, 2.0).toDouble());
     await player.resume();
   }
 

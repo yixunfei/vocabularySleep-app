@@ -8,18 +8,20 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets(
-    'roulette page paints the immersive stage without framework errors',
+    'randomizer page paints the lightweight stage without framework errors',
     (tester) async {
       await tester.pumpWidget(const MaterialApp(home: RouletteGamePage()));
       await tester.pump();
 
       expect(tester.takeException(), isNull);
-      expect(find.text('Roulette trigger'), findsWidgets);
-      expect(find.text('Spin cylinder'), findsOneWidget);
+      expect(find.text('Choice spinner'), findsWidgets);
+      expect(find.text('Spin choice'), findsOneWidget);
     },
   );
 
-  testWidgets('roulette page renders repaired Chinese labels', (tester) async {
+  testWidgets('randomizer page renders repaired Chinese labels', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       const MaterialApp(
         locale: Locale('zh'),
@@ -31,10 +33,9 @@ void main() {
     await tester.pump();
 
     expect(tester.takeException(), isNull);
-    expect(find.text('俄罗斯轮盘赌'), findsWidgets);
-    expect(find.text('旋转弹仓'), findsOneWidget);
-    expect(find.text('扣动扳机'), findsOneWidget);
-    expect(find.text('舞台控制'), findsOneWidget);
+    expect(find.text('随机选择器'), findsWidgets);
+    expect(find.text('旋转选择'), findsOneWidget);
+    expect(find.text('设置'), findsOneWidget);
     expect(find.textContaining('??'), findsNothing);
   });
 }

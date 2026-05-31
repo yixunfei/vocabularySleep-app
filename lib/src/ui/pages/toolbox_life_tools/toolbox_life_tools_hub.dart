@@ -78,6 +78,7 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
   String _localizedToolSearchText(_LifeTool tool) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return <String>[
+      tool.id,
       i18n.t(tool.titleKey),
       i18n.t(tool.summaryKey),
     ].join(' ').toLowerCase();
@@ -352,6 +353,7 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
           if (didPop) {
             return;
           }
+          const BackIntentConsumedNotification().dispatch(context);
           _closeTool();
         },
         child: ToolboxEmbeddedNavigation(

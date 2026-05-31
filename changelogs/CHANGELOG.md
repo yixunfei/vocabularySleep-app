@@ -1,3 +1,113 @@
+## [Unreleased-PLAN_304-IMPLEMENTATION-SLICE-3] - 2026-05-31
+
+### 原因
+- 用户已补齐呼吸引导通用语音文件并上传到远端 S3，需要完成语音覆盖收口；多层采样乐器替换工程量较大，本轮只沉淀独立计划。
+
+### 新增
+- 新增 `plans/PLAN_305_multisampled_instrument_engine_replacement.md`，记录 SoundFont/多层采样替换的架构、候选免费音色库、授权风险和分阶段验证方案。
+- 新增 `plans/PLAN_306_toolbox_structure_governance.md`，将 toolbox 文件结构治理拆为独立单线计划，避免混入当前功能修复 diff。
+- 新增呼吸引导语音资源回归测试，覆盖通用远端文件名映射、场景 stage fallback 和移动端友好播放速率上限。
+
+### 修改
+- 呼吸引导 stage 语音继续优先尝试场景专属文件，失败后使用通用远端文件；播放时根据 WAV 实际时长或 catalog 近似时长计算速率，并对短 stage、屏息、吸气/呼气分别设置自然速率上限。
+- 腹式基础在首轮首个吸气阶段优先播放 `开始用鼻子缓缓吸气.wav` 对应的开场引导，后续循环仍使用短 stage cue，避免重复“开始”提示。
+- 呼吸舞台改为浅色主题下暖色背景深色文字、深色主题下暗色背景浅色文字，并同步修正舞台统计、阶段条、进度说明和操作按钮的前景色。
+- `AudioPlayerSourceHelper.play` 支持可选 `playbackRate`，在音源绑定后、恢复播放前设置速率，降低平台差异导致的语速设置失效风险。
+- `PLAN_304` 剩余风险改为：模拟乐器深层替换转入 `PLAN_305`，舒缓轻音远程曲目维持首次远程加载后本地缓存，仅用户自定义导入的路径持久化作为后续增强。
+
+### 验证
+- `dart analyze lib\src\services\audio_player_source_helper.dart lib\src\ui\pages\toolbox_breathing_tool.dart lib\src\ui\pages\toolbox_breathing_ui_parts.dart test\toolbox_breathing_audio_repository_test.dart` 通过，No issues found。
+- `flutter test test\toolbox_breathing_audio_repository_test.dart --reporter compact` 通过。
+- `flutter build windows --debug` 通过，生成 `build\windows\x64\runner\Debug\xianyushengxi.exe`。
+- `flutter test test\app_i18n_catalog_test.dart --reporter compact` 通过。
+- `node scripts\audit_i18n_placeholders.js` 通过，missing 0，placeholderMismatch 0，Dart missingParams 0。
+- 旧 i18n helper 扫描与 catalog Dart 插值扫描无命中。
+- `git diff --check` 通过，仅保留既有 LF/CRLF 提示。
+
+### 风险变更
+- 多层采样/SoundFont 替换当前明确搁置，不在本批次引入原生依赖或大音色库。
+- 结构治理当前仅完成子计划和迁移映射，实际文件移动需在当前功能修复提交稳定后单独分支执行。
+
+## [Unreleased-PLAN_304-IMPLEMENTATION-SLICE-2] - 2026-05-31
+
+### 原因
+- 继续落实 toolbox 第一批沉浸工具、触觉反馈、移动端遮挡和声音工具卡顿优化，优先处理低风险体验收口。
+
+### 新增
+- 念珠加入可持久化的触觉强度设置，支持轻微、轻、明显三档，并保留原触觉反馈总开关。
+- 专注节拍在快速开始附近新增三组快捷预设，覆盖稳定、深呼吸和冲刺节奏，便于手机端一键切换。
+
+### 修改
+- 赛博木鱼全屏模式收敛为木鱼主体、退出和设置两个最小控制入口，隐藏指标、提示和底部设置面板。
+- 专注节拍移除固定视觉延迟，并在沉浸控制面板中同步提供快捷预设，降低声画脱节感和移动端配置成本。
+- 禅意沙盘在窄屏和矮屏下更积极折叠统计、工具条、提示与底部操作，保留更明确的沉浸/全屏入口。
+- 呼吸引导加载偏好时优先使用当前场景自己的主题，降低场景、舞台和语音提示入口状态不一致的概率。
+- 疗愈音钵延后首帧后的播放器构建，增加参数变化防抖，降低移动端一次性 burst 数量，并用 `RepaintBoundary` 隔离背景和音钵动画绘制。
+
+### 验证
+- `dart analyze lib\src\ui\pages\toolbox_sound_tools.dart lib\src\ui\pages\toolbox_prayer_beads_tool.dart lib\src\services\toolbox_prayer_beads_prefs_service.dart lib\src\ui\pages\toolbox_zen_sand_tool.dart lib\src\ui\pages\toolbox_breathing_tool.dart lib\src\ui\pages\toolbox_singing_bowls_tool.dart` 通过，No issues found。
+- `node scripts\audit_i18n_placeholders.js` 通过，missing 0，placeholderMismatch 0，Dart missingParams 0。
+- 旧 i18n helper 扫描与 catalog Dart 插值扫描无命中。
+- `flutter test test\app_i18n_catalog_test.dart --reporter compact` 通过。
+- `flutter test test\toolbox_mini_games_roulette_smoke_test.dart --reporter compact` 通过。
+- `flutter test test\ui_smoke_test.dart --plain-name "app shell keeps bottom navigation inside life tools" --reporter compact` 通过。
+- `flutter test test\toolbox_audio_bank_regression_test.dart --reporter compact` 通过。
+- `flutter test test\toolbox_zen_sand_sound_service_test.dart --reporter compact` 通过。
+- `git diff --check` 通过。
+
+### 风险变更
+- 疗愈音钵本轮为低风险调度、防抖和绘制隔离优化，尚未做真机音频 DSP/profile 级深挖；模拟乐器的深层性能治理仍需后续单独处理。
+- 呼吸引导已先修正加载时的场景主题对齐，语音资产覆盖仍依赖现有远端/本地资源，尚未补齐所有场景语音。
+- 舒缓轻音本地导入仍是运行期加入当前列表，尚未持久化本地路径和失效文件恢复策略。
+
+## [Unreleased-PLAN_304-IMPLEMENTATION-SLICE-1] - 2026-05-31
+
+### 原因
+- 落实 toolbox 第一批移动端体验、音频入口一致性、生活实用返回、地图提示和小游戏可用性修复。
+
+### 新增
+- 新增 `BackIntentConsumedNotification`，让内层工具消费系统返回时能通知外层 Shell，避免生活实用子模块返回上一层时误弹退出应用确认。
+- 舒缓轻音支持从本地选择音频文件并加入当前模式曲目列表，播放时使用本地文件源。
+
+### 修改
+- 睡眠助手白噪入口改为复用外部环境音面板，在线环境音目录不再暴露原始路径，旧行内名称改走本地化 helper。
+- 游戏中心将原俄罗斯轮盘赌入口替换为轻量随机选择器，移除高刺激武器主题作为用户入口。
+- 俄罗斯方块在窄屏下改为紧凑一屏布局，压缩棋盘、预览、控制区和状态行高度。
+- 扫雷与五子棋移除易误触的棋盘缩放/伪全屏入口，改为稳定单点棋盘并按视口收敛尺寸。
+- 推箱子生成器加入最近关卡签名去重，并扩大路线起点随机范围，降低连续刷到相同三箱布局的概率。
+- 舒缓轻音加载进度提前到主舞台顶部显示，避免首次加载时进度条被挤到首屏下方。
+- 每日决策“到哪儿去”地图提示去掉对固定首选源和网络环境备选的歧义描述，仅保留连接/下载失败时的网络可达性提示。
+- 测试启动配置在加载 i18n catalog 前显式初始化 Flutter test binding，避免单文件 widget test 读取 asset 时绑定未初始化。
+
+### 验证
+- `dart analyze` 覆盖本轮小游戏、舒缓轻音、测试配置与 roulette smoke 相关文件，No issues found。
+- `flutter test test\toolbox_mini_games_roulette_smoke_test.dart --reporter compact` 通过。
+- `flutter test test\app_i18n_catalog_test.dart --reporter compact` 通过。
+- `flutter test test\ui_smoke_test.dart --plain-name "app shell keeps bottom navigation inside life tools" --reporter compact` 通过。
+- `node scripts\audit_i18n_placeholders.js` 通过，missing 0，placeholderMismatch 0，Dart missingParams 0。
+- 旧 i18n helper 扫描与 catalog Dart 插值扫描无命中。
+- `git diff --check` 通过。
+
+### 风险变更
+- 舒缓轻音本地导入当前为运行期加入当前模式列表，尚未把本地路径持久化到偏好设置；后续可在音频性能批次中补持久化和失效文件提示。
+- 旧轮盘赌实现仍保留为未接入口代码，便于回滚对照；用户入口和 smoke 测试已切到随机选择器。
+
+## [Unreleased-PLAN_304-TOOLBOX-BATCH1-MOBILE-AUDIO-GAME-FIXES] - 2026-05-31
+
+### 原因
+- 用户提出第一批 toolbox/sleep/game/life 相关移动端体验、音频性能、入口一致性、文案本地化和结构治理问题，需要先形成可交接计划与分支基线。
+
+### 新增
+- 新增 `plans/PLAN_304_toolbox_batch1_mobile_audio_game_fixes.md`，记录分支、原始基线提交、15 项问题拆分、风险、验证命令和新会话交接顺序。
+- 启动并回收三条只读 explorer 探索线，分别定位睡眠/音频、游戏中心、沉浸工具/生活实用的关键文件边界与根因候选。
+
+### 修改
+- 将本批工作拆为低耦合入口/文案修复、游戏中心移动端体验、声音工具加载与导入、沉浸工具体验、结构治理五个阶段。
+- 明确结构治理必须最后单线执行，不与业务逻辑修复并行落代码。
+
+### 验证
+- 当前仅完成计划与只读探索，尚未修改业务代码。
+
 ## [Unreleased-I18N-SOUND-COPY-CLEANUP] - 2026-05-31
 
 ### 原因

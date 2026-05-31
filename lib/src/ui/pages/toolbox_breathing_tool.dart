@@ -219,8 +219,11 @@ class _BreathingPracticeReleaseCardState
       return;
     }
     setState(() {
-      _scenario = BreathingExperienceCatalog.scenarioById(prefs.presetId);
-      _theme = BreathingExperienceCatalog.themeById(prefs.themeId);
+      final loadedScenario = BreathingExperienceCatalog.scenarioById(
+        prefs.presetId,
+      );
+      _scenario = loadedScenario;
+      _theme = BreathingExperienceCatalog.themeById(loadedScenario.themeId);
       _targetMinutes = prefs.targetMinutes;
       _includeHoldStage = prefs.breathHoldEnabled;
       _includeRecoveryStage = prefs.includeRecoveryStage;
@@ -1087,8 +1090,58 @@ class _BreathingPracticeReleaseCardState
       BreathingStageKind.inhale => _theme.orbStart,
       BreathingStageKind.hold => _theme.accent,
       BreathingStageKind.exhale => _theme.orbEnd,
-      BreathingStageKind.rest => Colors.white.withValues(alpha: 0.32),
+      BreathingStageKind.rest => _theme.accent.withValues(alpha: 0.72),
     };
+  }
+
+  bool _stageUsesDarkBackground(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark;
+  }
+
+  List<Color> _practiceStageGradient(BuildContext context) {
+    if (_stageUsesDarkBackground(context)) {
+      return <Color>[_theme.bgStart, _theme.bgEnd];
+    }
+    return <Color>[
+      Color.alphaBlend(
+        _theme.orbStart.withValues(alpha: 0.18),
+        const Color(0xFFFFF3E2),
+      ),
+      Color.alphaBlend(
+        _theme.orbEnd.withValues(alpha: 0.24),
+        const Color(0xFFFFD8BB),
+      ),
+    ];
+  }
+
+  Color _practiceStageForeground(BuildContext context) {
+    return _stageUsesDarkBackground(context)
+        ? Colors.white
+        : const Color(0xFF2B211A);
+  }
+
+  Color _practiceStageMutedForeground(BuildContext context) {
+    return _stageUsesDarkBackground(context)
+        ? Colors.white.withValues(alpha: 0.74)
+        : const Color(0xFF66524A);
+  }
+
+  Color _practiceStagePanelFill(BuildContext context) {
+    return _stageUsesDarkBackground(context)
+        ? Colors.white.withValues(alpha: 0.1)
+        : Colors.white.withValues(alpha: 0.52);
+  }
+
+  Color _practiceStagePanelBorder(BuildContext context) {
+    return _stageUsesDarkBackground(context)
+        ? Colors.white.withValues(alpha: 0.14)
+        : const Color(0xFF7A4B2F).withValues(alpha: 0.18);
+  }
+
+  Color _readableOn(Color color) {
+    return color.computeLuminance() > 0.52
+        ? const Color(0xFF172027)
+        : Colors.white;
   }
 
   Widget _buildScenarioSelector(AppI18n i18n) {
@@ -1784,6 +1837,20 @@ class _BreathingPracticeReleaseCardState
     final stagePrompt = _textOn
         ? _stage.prompt.resolve(i18n)
         : i18n.t('inline.plan294.breathing.keep_the_breath_natural_a64ed4b6');
+    final stageGradient = _practiceStageGradient(context);
+    final stageForeground = _practiceStageForeground(context);
+    final stageMutedForeground = _practiceStageMutedForeground(context);
+    final stagePanelFill = _practiceStagePanelFill(context);
+    final stagePanelBorder = _practiceStagePanelBorder(context);
+    final orbTextColor = _readableOn(_theme.orbEnd);
+    final orbMutedTextColor = orbTextColor.withValues(alpha: 0.78);
+    final primaryControlColor = _stageUsesDarkBackground(context)
+        ? _theme.accent
+        : Color.alphaBlend(
+            _theme.orbEnd.withValues(alpha: 0.64),
+            const Color(0xFF8B4E33),
+          );
+    final primaryControlForeground = _readableOn(primaryControlColor);
 
     return Container(
       width: double.infinity,
@@ -1792,7 +1859,7 @@ class _BreathingPracticeReleaseCardState
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: <Color>[_theme.bgStart, _theme.bgEnd],
+          colors: stageGradient,
         ),
         borderRadius: BorderRadius.circular(28),
       ),
@@ -1809,7 +1876,8 @@ class _BreathingPracticeReleaseCardState
                 child: Text(
                   _theme.mood.resolve(i18n),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.92),
+                    color: stageForeground,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -1821,6 +1889,10 @@ class _BreathingPracticeReleaseCardState
                     'loopCycleSeconds': _loopCycleSeconds,
                   },
                 ),
+                foregroundColor: stageForeground,
+                mutedForegroundColor: stageMutedForeground,
+                fillColor: stagePanelFill,
+                borderColor: stagePanelBorder,
               ),
             ],
           ),
@@ -1909,16 +1981,14 @@ class _BreathingPracticeReleaseCardState
                                               BreathingStageKind.rest =>
                                                 Icons.self_improvement_rounded,
                                             },
-                                            color: Colors.white.withValues(
-                                              alpha: 0.96,
-                                            ),
+                                            color: orbTextColor,
                                             size: iconSize,
                                           ),
                                           SizedBox(height: compact ? 4 : 8),
                                           Text(
                                             stageLabel,
                                             style: labelStyle?.copyWith(
-                                              color: Colors.white,
+                                              color: orbTextColor,
                                               fontWeight: FontWeight.w800,
                                             ),
                                             textAlign: TextAlign.center,
@@ -1930,9 +2000,8 @@ class _BreathingPracticeReleaseCardState
                                             Text(
                                               stagePrompt,
                                               style: promptStyle?.copyWith(
-                                                color: Colors.white.withValues(
-                                                  alpha: 0.88,
-                                                ),
+                                                color: orbMutedTextColor,
+                                                fontWeight: FontWeight.w600,
                                               ),
                                               textAlign: TextAlign.center,
                                               maxLines: compact ? 2 : 3,
@@ -1969,9 +2038,10 @@ class _BreathingPracticeReleaseCardState
                                     .resolve(i18n),
                           },
                         ),
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: stageMutedForeground,
+                          fontWeight: FontWeight.w600,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -1986,6 +2056,10 @@ class _BreathingPracticeReleaseCardState
             activeIndex: _stageIndex,
             i18n: i18n,
             stageTintBuilder: _stageTint,
+            foregroundColor: stageForeground,
+            mutedForegroundColor: stageMutedForeground,
+            inactiveFillColor: stagePanelFill,
+            inactiveBorderColor: stagePanelBorder,
           ),
           const SizedBox(height: 12),
           ClipRRect(
@@ -1993,7 +2067,7 @@ class _BreathingPracticeReleaseCardState
             child: LinearProgressIndicator(
               minHeight: 8,
               value: _targetProgress,
-              backgroundColor: Colors.white.withValues(alpha: 0.18),
+              backgroundColor: stagePanelFill,
               valueColor: AlwaysStoppedAnimation<Color>(_theme.accent),
             ),
           ),
@@ -2009,15 +2083,27 @@ class _BreathingPracticeReleaseCardState
                   'inline.ui.pages.toolbox_breathing_tool.targetminutes_min_029964',
                   params: <String, Object?>{'targetMinutes': _targetMinutes},
                 ),
+                foregroundColor: stageForeground,
+                mutedForegroundColor: stageMutedForeground,
+                fillColor: stagePanelFill,
+                borderColor: stagePanelBorder,
               ),
               BreathingMetricPill(
                 label: i18n.t('inline.plan294.breathing.done_fe297e5a'),
                 value: _fmt(_elapsed),
+                foregroundColor: stageForeground,
+                mutedForegroundColor: stageMutedForeground,
+                fillColor: stagePanelFill,
+                borderColor: stagePanelBorder,
               ),
               BreathingMetricPill(
                 label: i18n.t('inline.plan294.breathing.left_a0d89e6f'),
                 value:
                     '${remainSession ~/ 60}:${(remainSession % 60).toString().padLeft(2, '0')}',
+                foregroundColor: stageForeground,
+                mutedForegroundColor: stageMutedForeground,
+                fillColor: stagePanelFill,
+                borderColor: stagePanelBorder,
               ),
             ],
           ),
@@ -2028,6 +2114,16 @@ class _BreathingPracticeReleaseCardState
             alignment: WrapAlignment.center,
             children: <Widget>[
               FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: primaryControlColor,
+                  foregroundColor: primaryControlForeground,
+                  disabledBackgroundColor: primaryControlColor.withValues(
+                    alpha: 0.36,
+                  ),
+                  disabledForegroundColor: primaryControlForeground.withValues(
+                    alpha: 0.58,
+                  ),
+                ),
                 onPressed: (_boltRunning || _boltPreparing || _sessionPreparing)
                     ? null
                     : () => unawaited(
@@ -2049,6 +2145,11 @@ class _BreathingPracticeReleaseCardState
                 ),
               ),
               OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: stageForeground,
+                  backgroundColor: stagePanelFill,
+                  side: BorderSide(color: stagePanelBorder),
+                ),
                 onPressed: _sessionPreparing
                     ? null
                     : () => unawaited(_skipStage()),
@@ -2056,6 +2157,11 @@ class _BreathingPracticeReleaseCardState
                 label: Text(i18n.t('toolbox.breathing.next_stage')),
               ),
               OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: stageForeground,
+                  backgroundColor: stagePanelFill,
+                  side: BorderSide(color: stagePanelBorder),
+                ),
                 onPressed: _sessionPreparing
                     ? null
                     : () => unawaited(_resetSession()),

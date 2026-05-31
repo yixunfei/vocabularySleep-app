@@ -1,5 +1,7 @@
 part of 'toolbox_breathing_tool.dart';
 
+const String _diaphragmScenarioId = 'diaphragm_4262';
+
 extension _BreathingVoiceHelpers on _BreathingPracticeReleaseCardState {
   List<String> _localeTags(Locale locale) {
     final language = locale.languageCode.trim().toLowerCase();
@@ -67,7 +69,16 @@ extension _BreathingVoiceHelpers on _BreathingPracticeReleaseCardState {
     }
   }
 
-  String? _effectiveCueIdForStage(BreathingStagePlan stage) {
+  String? _effectiveCueIdForStage(
+    BreathingStagePlan stage, {
+    bool preferOpeningCue = false,
+  }) {
+    if (preferOpeningCue) {
+      final openingCueId = _openingCueIdForStage(stage);
+      if (openingCueId != null) {
+        return openingCueId;
+      }
+    }
     if (stage.kind == BreathingStageKind.rest) {
       return null;
     }
@@ -83,6 +94,15 @@ extension _BreathingVoiceHelpers on _BreathingPracticeReleaseCardState {
       };
     }
     return stage.cueId;
+  }
+
+  String? _openingCueIdForStage(BreathingStagePlan stage) {
+    if (_scenario.id == _diaphragmScenarioId &&
+        _scenarioStageIndex(stage) == 0 &&
+        stage.kind == BreathingStageKind.inhale) {
+      return 'preview_nose_slow';
+    }
+    return null;
   }
 
   int _scenarioStageIndex(BreathingStagePlan stage) {
@@ -120,9 +140,25 @@ extension _BreathingVoiceHelpers on _BreathingPracticeReleaseCardState {
     }
     final paddingMs = _cueSafetyPaddingForStage(stage).inMilliseconds;
     final targetWindowMs = math.max(240, stage.seconds * 1000 - paddingMs);
+    final maxRate = _maxCuePlaybackRateForStage(stage);
     return (cueDuration.inMilliseconds / targetWindowMs)
-        .clamp(1.0, 2.0)
+        .clamp(1.0, maxRate)
         .toDouble();
+  }
+
+  double _maxCuePlaybackRateForStage(BreathingStagePlan stage) {
+    if (stage.seconds <= 1) {
+      return 1.55;
+    }
+    if (stage.seconds <= 2) {
+      return 1.4;
+    }
+    return switch (stage.kind) {
+      BreathingStageKind.hold => 1.25,
+      BreathingStageKind.inhale => 1.35,
+      BreathingStageKind.exhale => 1.35,
+      BreathingStageKind.rest => 1.0,
+    };
   }
 
   bool _canPlayResolvedCueForStage(
@@ -142,9 +178,13 @@ extension _BreathingVoiceHelpers on _BreathingPracticeReleaseCardState {
   }
 
   Future<BreathingResolvedCue?> _resolveStageCueForStage(
-    BreathingStagePlan stage,
-  ) async {
-    final cueId = _effectiveCueIdForStage(stage);
+    BreathingStagePlan stage, {
+    bool preferOpeningCue = false,
+  }) async {
+    final cueId = _effectiveCueIdForStage(
+      stage,
+      preferOpeningCue: preferOpeningCue,
+    );
     if (cueId == null) {
       return null;
     }
@@ -257,18 +297,19 @@ extension _BreathingVoiceHelpers on _BreathingPracticeReleaseCardState {
         return false;
       }
       await player.stop();
-      await player.setPlaybackRate(playbackRate.clamp(0.75, 2.0).toDouble());
+      final normalizedRate = playbackRate.clamp(0.75, 2.0).toDouble();
       await AudioPlayerSourceHelper.play(
         player,
         resolved.source,
         volume: 1.0,
+        playbackRate: normalizedRate,
         tag: 'breathing_voice',
         data: <String, Object?>{
           'cueId': resolved.cue.id,
           'sourceKind': resolved.kind.name,
           'location': resolved.location,
           'respectVoiceSetting': respectVoiceSetting,
-          'playbackRate': playbackRate,
+          'playbackRate': normalizedRate,
         },
       );
       if (mounted) {
@@ -424,7 +465,10 @@ extension _BreathingVoiceHelpers on _BreathingPracticeReleaseCardState {
 
   Future<void> _announceStage() async {
     _performHaptic();
-    final resolved = await _resolveStageCueForStage(_stage);
+    final resolved = await _resolveStageCueForStage(
+      _stage,
+      preferOpeningCue: _stageIndex == 0 && _rounds == 0,
+    );
     if (resolved == null || !_canPlayResolvedCueForStage(_stage, resolved)) {
       return;
     }

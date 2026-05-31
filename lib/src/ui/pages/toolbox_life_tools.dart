@@ -50,6 +50,7 @@ import '../../services/todo_reminder_service.dart';
 import '../../state/app_state.dart';
 import '../layout/app_width_tier.dart';
 import '../motion/app_motion.dart';
+import '../widgets/back_intent_consumed_notification.dart';
 import '../widgets/section_header.dart';
 import 'toolbox_tool_shell.dart';
 

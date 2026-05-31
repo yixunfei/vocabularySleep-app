@@ -60,6 +60,7 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
 
   Timer? _autoPlayTimer;
   Timer? _persistTimer;
+  Timer? _playerRebuildTimer;
   ToolboxRealisticEffectPlayer? _player;
 
   String _frequencyId = 'heart';
@@ -70,6 +71,7 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
   bool _hapticsEnabled = true;
   bool _pressing = false;
   int _playerBuildNonce = 0;
+  bool _resumeAutoPlayAfterRebuild = false;
   List<_SpectrumBurst> _bursts = const <_SpectrumBurst>[];
 
   AppI18n get i18n => AppI18n(Localizations.localeOf(context).languageCode);
@@ -100,13 +102,13 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
       duration: _strikeMotionDuration,
     );
     unawaited(_loadPrefs());
-    unawaited(_rebuildPlayer());
   }
 
   @override
   void dispose() {
     _autoPlayTimer?.cancel();
     _persistTimer?.cancel();
+    _playerRebuildTimer?.cancel();
     _ambientController.dispose();
     _strikeController.dispose();
     final player = _player;
@@ -128,7 +130,11 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
       _soundEnabled = prefs.soundEnabled;
       _hapticsEnabled = prefs.hapticsEnabled;
     });
-    await _rebuildPlayer();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(_rebuildPlayer());
+      }
+    });
   }
 
   Future<void> _rebuildPlayer() async {
@@ -166,6 +172,24 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
     });
   }
 
+  void _schedulePlayerRebuild({required bool resumeAutoPlay}) {
+    _playerRebuildTimer?.cancel();
+    _resumeAutoPlayAfterRebuild = _resumeAutoPlayAfterRebuild || resumeAutoPlay;
+    _playerRebuildTimer = Timer(const Duration(milliseconds: 220), () {
+      final shouldResume = _resumeAutoPlayAfterRebuild;
+      _resumeAutoPlayAfterRebuild = false;
+      unawaited(_stopVoices());
+      unawaited(
+        _rebuildPlayer().then((_) {
+          if (!mounted || !shouldResume) {
+            return;
+          }
+          _restartAutoPlay(strikeNow: true);
+        }),
+      );
+    });
+  }
+
   Future<void> _stopVoices() async {
     try {
       await _player?.stop();
@@ -197,16 +221,8 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
     setState(() {
       _frequencyId = id;
     });
-    unawaited(_stopVoices());
     _schedulePersist();
-    unawaited(
-      _rebuildPlayer().then((_) {
-        if (!mounted || !shouldResume) {
-          return;
-        }
-        _restartAutoPlay(strikeNow: true);
-      }),
-    );
+    _schedulePlayerRebuild(resumeAutoPlay: shouldResume);
   }
 
   void setVoice(String id) {
@@ -218,16 +234,8 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
     setState(() {
       _voiceId = id;
     });
-    unawaited(_stopVoices());
     _schedulePersist();
-    unawaited(
-      _rebuildPlayer().then((_) {
-        if (!mounted || !shouldResume) {
-          return;
-        }
-        _restartAutoPlay(strikeNow: true);
-      }),
-    );
+    _schedulePlayerRebuild(resumeAutoPlay: shouldResume);
   }
 
   void setAutoPlayInterval(int value) {
@@ -294,12 +302,15 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
   void _addBurst() {
     final id = DateTime.now().microsecondsSinceEpoch;
     final seed = ((id % 100000) / 100000.0) * math.pi * 2;
+    final maxBursts = MediaQuery.sizeOf(context).width < 760 ? 2 : 4;
     setState(() {
       final next = <_SpectrumBurst>[
         ..._bursts,
         _SpectrumBurst(id: id, seed: seed),
       ];
-      _bursts = next.length > 4 ? next.sublist(next.length - 4) : next;
+      _bursts = next.length > maxBursts
+          ? next.sublist(next.length - maxBursts)
+          : next;
     });
   }
 
@@ -352,16 +363,18 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
               ],
             ),
           ),
-          child: CustomPaint(
-            painter: _SingingBowlBackdropPainter(
-              accent: frequencySpec.accent,
-              glow: frequencySpec.glow,
-              ambientValue: _ambientController,
-              strikeValue: _strikeController,
+          child: RepaintBoundary(
+            child: CustomPaint(
+              painter: _SingingBowlBackdropPainter(
+                accent: frequencySpec.accent,
+                glow: frequencySpec.glow,
+                ambientValue: _ambientController,
+                strikeValue: _strikeController,
+              ),
+              child: isPhone
+                  ? buildMobileLayout(context, constraints)
+                  : buildWideLayout(context),
             ),
-            child: isPhone
-                ? buildMobileLayout(context, constraints)
-                : buildWideLayout(context),
           ),
         );
       },

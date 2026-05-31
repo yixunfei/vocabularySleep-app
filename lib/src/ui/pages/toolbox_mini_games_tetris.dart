@@ -389,12 +389,14 @@ class _TetrisGameState extends State<_TetrisGame> {
     return _tetrisColors[value - 1];
   }
 
-  Widget _buildBoard(BuildContext context) {
+  Widget _buildBoard(BuildContext context, {bool compact = false}) {
     final colors = Theme.of(context).colorScheme;
     return LayoutBuilder(
       builder: (context, constraints) {
         final screenHeight = MediaQuery.sizeOf(context).height;
-        final targetHeight = (screenHeight * 0.62).clamp(380.0, 620.0);
+        final targetHeight = compact
+            ? (screenHeight * 0.4).clamp(250.0, 330.0)
+            : (screenHeight * 0.62).clamp(380.0, 620.0);
         final boardWidth = math.min(
           constraints.maxWidth,
           math.min(360.0, targetHeight / 2),
@@ -419,19 +421,19 @@ class _TetrisGameState extends State<_TetrisGame> {
               child: Container(
                 width: boardWidth,
                 height: boardWidth * 2,
-                padding: const EdgeInsets.all(8),
+                padding: EdgeInsets.all(compact ? 5 : 8),
                 decoration: BoxDecoration(
                   color: colors.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(compact ? 12 : 16),
                   border: Border.all(color: colors.outlineVariant),
                 ),
                 child: GridView.builder(
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: _cols * _rows,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: _cols,
-                    mainAxisSpacing: 2,
-                    crossAxisSpacing: 2,
+                    mainAxisSpacing: compact ? 1 : 2,
+                    crossAxisSpacing: compact ? 1 : 2,
                   ),
                   itemBuilder: (context, index) {
                     final value = _displayValueAt(index);
@@ -458,15 +460,15 @@ class _TetrisGameState extends State<_TetrisGame> {
     );
   }
 
-  Widget _buildNextPreview(BuildContext context) {
+  Widget _buildNextPreview(BuildContext context, {bool compact = false}) {
     final colors = Theme.of(context).colorScheme;
     final previewCells = <int>{for (final cell in _next.previewCells) cell};
     return Container(
-      width: 112,
-      padding: const EdgeInsets.all(10),
+      width: compact ? 88 : 112,
+      padding: EdgeInsets.all(compact ? 8 : 10),
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(compact ? 12 : 16),
         border: Border.all(color: colors.outlineVariant),
       ),
       child: Column(
@@ -478,17 +480,17 @@ class _TetrisGameState extends State<_TetrisGame> {
             ).t('toolbox.miniGames.tetris.next.de45a45c'),
             style: Theme.of(context).textTheme.labelMedium,
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: compact ? 6 : 8),
           SizedBox(
-            width: 72,
-            height: 72,
+            width: compact ? 56 : 72,
+            height: compact ? 56 : 72,
             child: GridView.builder(
               physics: const NeverScrollableScrollPhysics(),
               itemCount: 16,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 4,
-                mainAxisSpacing: 3,
-                crossAxisSpacing: 3,
+                mainAxisSpacing: compact ? 2 : 3,
+                crossAxisSpacing: compact ? 2 : 3,
               ),
               itemBuilder: (context, index) {
                 final active = previewCells.contains(index);
@@ -508,55 +510,68 @@ class _TetrisGameState extends State<_TetrisGame> {
     );
   }
 
-  Widget _buildDifficultySettings(BuildContext context, AppI18n i18n) {
+  Widget _buildDifficultySettings(
+    BuildContext context,
+    AppI18n i18n, {
+    bool compact = false,
+  }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(compact ? 8 : 12),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(compact ? 12 : 16),
         border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            i18n.t('toolbox.miniGames.tetris.difficulty_settings.7fcf2a80'),
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 8),
+          if (!compact) ...<Widget>[
+            Text(
+              i18n.t('toolbox.miniGames.tetris.difficulty_settings.7fcf2a80'),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+          ],
           Wrap(
             spacing: 8,
-            runSpacing: 8,
+            runSpacing: compact ? 4 : 8,
             children: <Widget>[
               for (final difficulty in _TetrisDifficulty.values)
                 ChoiceChip(
+                  visualDensity: compact ? VisualDensity.compact : null,
                   label: Text(_difficultyLabel(i18n, difficulty)),
                   selected: _difficulty == difficulty,
                   onSelected: (_) => _setDifficulty(difficulty),
                 ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            i18n.t(
-              'toolbox.miniGames.tetris.initial_fall_value_ms_speed_up_value.d5017569',
-              params: <String, Object?>{
-                'baseMs': _difficulty.baseMs,
-                'accelerationMs': _difficulty.accelerationMs,
-                'linesPerLevel': _difficulty.linesPerLevel,
-              },
+          if (!compact) ...<Widget>[
+            const SizedBox(height: 8),
+            Text(
+              i18n.t(
+                'toolbox.miniGames.tetris.initial_fall_value_ms_speed_up_value.d5017569',
+                params: <String, Object?>{
+                  'baseMs': _difficulty.baseMs,
+                  'accelerationMs': _difficulty.accelerationMs,
+                  'linesPerLevel': _difficulty.linesPerLevel,
+                },
+              ),
+              style: Theme.of(context).textTheme.bodySmall,
             ),
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildGamepad(BuildContext context, AppI18n i18n) {
+  Widget _buildGamepad(
+    BuildContext context,
+    AppI18n i18n, {
+    bool compact = false,
+  }) {
     final colors = Theme.of(context).colorScheme;
     Widget padButton({
       required IconData icon,
@@ -570,7 +585,7 @@ class _TetrisGameState extends State<_TetrisGame> {
         foregroundColor: filled ? null : colors.onSecondaryContainer,
         shape: const CircleBorder(),
         padding: EdgeInsets.zero,
-        fixedSize: const Size(58, 58),
+        fixedSize: Size(compact ? 48 : 58, compact ? 48 : 58),
       );
       return Tooltip(
         message: tooltip,
@@ -578,70 +593,157 @@ class _TetrisGameState extends State<_TetrisGame> {
           onPressed: onPressed,
           onLongPress: onLongPress,
           style: style,
-          child: Icon(icon, size: 28),
+          child: Icon(icon, size: compact ? 24 : 28),
         ),
       );
     }
 
     return Center(
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: EdgeInsets.all(compact ? 8 : 14),
         decoration: BoxDecoration(
           color: colors.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(compact ? 18 : 24),
           border: Border.all(color: colors.outlineVariant),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            padButton(
-              icon: _paused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-              onPressed: _togglePause,
-              tooltip: _paused
-                  ? i18n.t('toolbox.miniGames.tetris.resume.7f87ff5e')
-                  : i18n.t('toolbox.miniGames.tetris.pause.e6d2c123'),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                padButton(
-                  icon: Icons.keyboard_arrow_left_rounded,
-                  onPressed: () => _moveHorizontal(-1),
-                  tooltip: i18n.t(
-                    'toolbox.miniGames.tetris.move_left.d01e9f05',
+        child: compact
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  padButton(
+                    icon: Icons.keyboard_arrow_left_rounded,
+                    onPressed: () => _moveHorizontal(-1),
+                    tooltip: i18n.t(
+                      'toolbox.miniGames.tetris.move_left.d01e9f05',
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                padButton(
-                  icon: Icons.change_circle_rounded,
-                  onPressed: _rotate,
-                  tooltip: i18n.t(
-                    'toolbox.miniGames.tetris.transform.3dd2f28e',
+                  const SizedBox(width: 8),
+                  padButton(
+                    icon: Icons.change_circle_rounded,
+                    onPressed: _rotate,
+                    tooltip: i18n.t(
+                      'toolbox.miniGames.tetris.transform.3dd2f28e',
+                    ),
+                    filled: true,
                   ),
-                  filled: true,
-                ),
-                const SizedBox(width: 8),
-                padButton(
-                  icon: Icons.keyboard_arrow_right_rounded,
-                  onPressed: () => _moveHorizontal(1),
-                  tooltip: i18n.t(
-                    'toolbox.miniGames.tetris.move_right.e85b744f',
+                  const SizedBox(width: 8),
+                  padButton(
+                    icon: Icons.keyboard_arrow_right_rounded,
+                    onPressed: () => _moveHorizontal(1),
+                    tooltip: i18n.t(
+                      'toolbox.miniGames.tetris.move_right.e85b744f',
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            padButton(
-              icon: Icons.keyboard_arrow_down_rounded,
-              onPressed: () => _stepDown(soft: true),
-              onLongPress: _hardDrop,
-              tooltip: i18n.t(
-                'toolbox.miniGames.tetris.drop_long_press_hard_drop.0faeb5f1',
+                  const SizedBox(width: 8),
+                  padButton(
+                    icon: Icons.keyboard_arrow_down_rounded,
+                    onPressed: () => _stepDown(soft: true),
+                    onLongPress: _hardDrop,
+                    tooltip: i18n.t(
+                      'toolbox.miniGames.tetris.drop_long_press_hard_drop.0faeb5f1',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  padButton(
+                    icon: _paused
+                        ? Icons.play_arrow_rounded
+                        : Icons.pause_rounded,
+                    onPressed: _togglePause,
+                    tooltip: _paused
+                        ? i18n.t('toolbox.miniGames.tetris.resume.7f87ff5e')
+                        : i18n.t('toolbox.miniGames.tetris.pause.e6d2c123'),
+                  ),
+                ],
+              )
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  padButton(
+                    icon: _paused
+                        ? Icons.play_arrow_rounded
+                        : Icons.pause_rounded,
+                    onPressed: _togglePause,
+                    tooltip: _paused
+                        ? i18n.t('toolbox.miniGames.tetris.resume.7f87ff5e')
+                        : i18n.t('toolbox.miniGames.tetris.pause.e6d2c123'),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      padButton(
+                        icon: Icons.keyboard_arrow_left_rounded,
+                        onPressed: () => _moveHorizontal(-1),
+                        tooltip: i18n.t(
+                          'toolbox.miniGames.tetris.move_left.d01e9f05',
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      padButton(
+                        icon: Icons.change_circle_rounded,
+                        onPressed: _rotate,
+                        tooltip: i18n.t(
+                          'toolbox.miniGames.tetris.transform.3dd2f28e',
+                        ),
+                        filled: true,
+                      ),
+                      const SizedBox(width: 8),
+                      padButton(
+                        icon: Icons.keyboard_arrow_right_rounded,
+                        onPressed: () => _moveHorizontal(1),
+                        tooltip: i18n.t(
+                          'toolbox.miniGames.tetris.move_right.e85b744f',
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  padButton(
+                    icon: Icons.keyboard_arrow_down_rounded,
+                    onPressed: () => _stepDown(soft: true),
+                    onLongPress: _hardDrop,
+                    tooltip: i18n.t(
+                      'toolbox.miniGames.tetris.drop_long_press_hard_drop.0faeb5f1',
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactStatusLine(BuildContext context, AppI18n i18n) {
+    final colors = Theme.of(context).colorScheme;
+    final textStyle = Theme.of(context).textTheme.labelMedium?.copyWith(
+      fontWeight: FontWeight.w700,
+      color: colors.onSurfaceVariant,
+    );
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: Wrap(
+        spacing: 10,
+        runSpacing: 4,
+        children: <Widget>[
+          Text(
+            '${i18n.t('toolbox.miniGames.tetris.score.81992ab8')}: $_score',
+            style: textStyle,
+          ),
+          Text(
+            '${i18n.t('toolbox.miniGames.tetris.lines.7f3795e9')}: $_lines',
+            style: textStyle,
+          ),
+          Text(
+            '${i18n.t('toolbox.miniGames.tetris.level.5ea4bdcf')}: $_level',
+            style: textStyle,
+          ),
+          Text(_statusLabel(i18n), style: textStyle),
+        ],
       ),
     );
   }
@@ -649,80 +751,110 @@ class _TetrisGameState extends State<_TetrisGame> {
   @override
   Widget build(BuildContext context) {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact =
+            constraints.maxWidth < 520 ||
+            MediaQuery.sizeOf(context).height < 760;
+        return Card(
+          child: Padding(
+            padding: EdgeInsets.all(compact ? 10 : 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                ToolboxMetricCard(
-                  label: i18n.t('toolbox.miniGames.tetris.score.81992ab8'),
-                  value: '$_score',
+                if (compact)
+                  _buildCompactStatusLine(context, i18n)
+                else
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: <Widget>[
+                      ToolboxMetricCard(
+                        label: i18n.t(
+                          'toolbox.miniGames.tetris.score.81992ab8',
+                        ),
+                        value: '$_score',
+                      ),
+                      ToolboxMetricCard(
+                        label: i18n.t(
+                          'toolbox.miniGames.tetris.lines.7f3795e9',
+                        ),
+                        value: '$_lines',
+                      ),
+                      ToolboxMetricCard(
+                        label: i18n.t(
+                          'toolbox.miniGames.tetris.level.5ea4bdcf',
+                        ),
+                        value: '$_level',
+                      ),
+                      ToolboxMetricCard(
+                        label: i18n.t(
+                          'toolbox.miniGames.tetris.difficulty.c526df65',
+                        ),
+                        value: _difficultyLabel(i18n, _difficulty),
+                      ),
+                      ToolboxMetricCard(
+                        label: i18n.t(
+                          'toolbox.miniGames.tetris.status.b0d4fea8',
+                        ),
+                        value: _statusLabel(i18n),
+                      ),
+                    ],
+                  ),
+                if (!compact) ...<Widget>[
+                  const SizedBox(height: 12),
+                  Text(
+                    i18n.t(
+                      'toolbox.miniGames.tetris.swipe_on_the_board_or_use_the.921a2d2a',
+                    ),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+                SizedBox(height: compact ? 8 : 12),
+                _buildDifficultySettings(context, i18n, compact: compact),
+                SizedBox(height: compact ? 8 : 12),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    return compact
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: <Widget>[
+                              Expanded(
+                                child: _buildBoard(context, compact: true),
+                              ),
+                              const SizedBox(width: 8),
+                              _buildNextPreview(context, compact: true),
+                            ],
+                          )
+                        : Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Expanded(child: _buildBoard(context)),
+                              const SizedBox(width: 12),
+                              _buildNextPreview(context),
+                            ],
+                          );
+                  },
                 ),
-                ToolboxMetricCard(
-                  label: i18n.t('toolbox.miniGames.tetris.lines.7f3795e9'),
-                  value: '$_lines',
-                ),
-                ToolboxMetricCard(
-                  label: i18n.t('toolbox.miniGames.tetris.level.5ea4bdcf'),
-                  value: '$_level',
-                ),
-                ToolboxMetricCard(
-                  label: i18n.t('toolbox.miniGames.tetris.difficulty.c526df65'),
-                  value: _difficultyLabel(i18n, _difficulty),
-                ),
-                ToolboxMetricCard(
-                  label: i18n.t('toolbox.miniGames.tetris.status.b0d4fea8'),
-                  value: _statusLabel(i18n),
+                SizedBox(height: compact ? 8 : 12),
+                _buildGamepad(context, i18n, compact: compact),
+                SizedBox(height: compact ? 8 : 12),
+                Align(
+                  alignment: compact ? Alignment.center : Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    onPressed: _newGame,
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: Text(
+                      i18n.t('toolbox.miniGames.tetris.new_game.8857ec9e'),
+                    ),
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              i18n.t(
-                'toolbox.miniGames.tetris.swipe_on_the_board_or_use_the.921a2d2a',
-              ),
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 12),
-            _buildDifficultySettings(context, i18n),
-            const SizedBox(height: 12),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final compact = constraints.maxWidth < 520;
-                return compact
-                    ? Column(
-                        children: <Widget>[
-                          _buildBoard(context),
-                          const SizedBox(height: 12),
-                          _buildNextPreview(context),
-                        ],
-                      )
-                    : Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Expanded(child: _buildBoard(context)),
-                          const SizedBox(width: 12),
-                          _buildNextPreview(context),
-                        ],
-                      );
-              },
-            ),
-            const SizedBox(height: 12),
-            _buildGamepad(context, i18n),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: _newGame,
-              icon: const Icon(Icons.refresh_rounded),
-              label: Text(i18n.t('toolbox.miniGames.tetris.new_game.8857ec9e')),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

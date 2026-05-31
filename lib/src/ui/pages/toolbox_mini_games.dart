@@ -55,7 +55,7 @@ class RouletteGamePage extends StatelessWidget {
       subtitle: i18n.t(
         'inline.ui.pages.toolbox_mini_games.set_the_bullet_count_spin_the_cylinder_and_pull_chamber_f769c3',
       ),
-      child: const _RouletteGame(),
+      child: const _ChoiceSpinnerGame(),
     );
   }
 }
@@ -186,8 +186,8 @@ class _MiniGamesHub extends StatelessWidget {
         subtitle: i18n.t(
           'inline.ui.pages.toolbox_mini_games.set_bullets_and_pull_one_chamber_at_a_time_559d26',
         ),
-        icon: Icons.casino_rounded,
-        accent: const Color(0xFFC2554C),
+        icon: Icons.shuffle_rounded,
+        accent: const Color(0xFF5E8C61),
         pageBuilder: RouletteGamePage.new,
       ),
       _MiniGameEntry(

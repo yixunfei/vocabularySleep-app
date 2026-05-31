@@ -907,10 +907,20 @@ void main() {
           .first;
       await tester.ensureVisible(lifeHubCard);
       await tester.pumpAndSettle();
-      await tester.tap(lifeHubCard, warnIfMissed: false);
+      await tester.tap(
+        find.descendant(of: lifeHubCard, matching: find.byType(InkWell)).first,
+        warnIfMissed: false,
+      );
       await tester.pumpAndSettle();
 
-      expect(find.text('Life tools'), findsWidgets);
+      expect(
+        find.byKey(
+          const ValueKey<String>(
+            'toolbox_embedded_${ModuleIds.toolboxLifeTools}',
+          ),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('Overview'), findsOneWidget);
       expect(find.text('Time screen'), findsWidgets);
       expect(find.text('Scoreboard'), findsWidgets);
@@ -930,26 +940,34 @@ void main() {
 
       expect(find.byType(NavigationBar), findsOneWidget);
 
-      await tester.scrollUntilVisible(
-        find.text('Life tool hub'),
-        300,
-        scrollable: find.byType(Scrollable).first,
+      await tester.tap(find.byType(NavigationDestination).at(3));
+      await tester.pumpAndSettle();
+
+      final lifeHubCard = find.byKey(
+        const ValueKey<String>(
+          'toolbox_entry_draggable_${ModuleIds.toolboxLifeTools}',
+        ),
+      );
+      await tester.ensureVisible(lifeHubCard);
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.descendant(of: lifeHubCard, matching: find.byType(InkWell)).first,
+        warnIfMissed: false,
       );
       await tester.pumpAndSettle();
 
-      final lifeHubCard = find
-          .ancestor(
-            of: find.text('Life tool hub'),
-            matching: find.byType(InkWell),
-          )
-          .first;
-      await tester.tap(lifeHubCard, warnIfMissed: false);
-      await tester.pumpAndSettle();
-
-      expect(find.text('Life tools'), findsWidgets);
+      expect(
+        find.byKey(
+          const ValueKey<String>(
+            'toolbox_embedded_${ModuleIds.toolboxLifeTools}',
+          ),
+        ),
+        findsOneWidget,
+      );
       expect(find.byType(NavigationBar), findsOneWidget);
 
-      await tester.enterText(find.byType(TextField).first, 'Date calculator');
+      await tester.enterText(find.byType(TextField).first, 'date_calculator');
       await tester.pumpAndSettle();
 
       final dateCard = find.byKey(
@@ -962,6 +980,25 @@ void main() {
         find.byKey(const ValueKey<String>('life-date-calculator-page')),
         findsOneWidget,
       );
+      expect(find.byType(NavigationBar), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('life-date-calculator-page')),
+        findsNothing,
+      );
+      expect(find.text('Exit app?'), findsNothing);
+      expect(
+        find.byKey(
+          const ValueKey<String>(
+            'toolbox_embedded_${ModuleIds.toolboxLifeTools}',
+          ),
+        ),
+        findsOneWidget,
+      );
+      expect(find.byType(TextField), findsOneWidget);
       expect(find.byType(NavigationBar), findsOneWidget);
     });
 
@@ -6721,6 +6758,7 @@ class _FakeAppState extends ChangeNotifier
   FocusStartupTab _focusStartupTab = FocusStartupTab.todo;
   ModuleToggleState _moduleToggleState = ModuleToggleState.defaults;
   ToolboxLayoutState _toolboxLayoutState = ToolboxLayoutState.defaults;
+  bool _firstRunSetupCompleted = true;
   bool _weatherEnabled = false;
   WeatherSnapshot? _weatherSnapshot;
   bool _weatherLoading = false;
@@ -7159,6 +7197,9 @@ class _FakeAppState extends ChangeNotifier
 
   @override
   ToolboxLayoutState get toolboxLayoutState => _toolboxLayoutState;
+
+  @override
+  bool get firstRunSetupCompleted => _firstRunSetupCompleted;
 
   @override
   AppHomeTab get startupPage => _startupPage;
@@ -8645,6 +8686,31 @@ class _FakeAppState extends ChangeNotifier
   @override
   void setUiLanguageFollowSystem() {
     _uiLanguageFollowsSystem = true;
+    notifyListeners();
+  }
+
+  @override
+  void completeFirstRunSetup({
+    required String languageSelection,
+    required String theme,
+    required Set<String> enabledModuleIds,
+  }) {
+    _firstRunSetupCompleted = true;
+    if (languageSelection == 'system') {
+      _uiLanguageFollowsSystem = true;
+    } else {
+      _uiLanguage = AppI18n.normalizeLanguageCode(languageSelection);
+      _uiLanguageFollowsSystem = false;
+    }
+    _config = _config.copyWith(
+      appearance: _config.appearance.copyWith(theme: theme),
+    );
+    for (final moduleId in ModuleIds.allModules) {
+      _moduleToggleState = _moduleToggleState.copyWithModule(
+        moduleId,
+        enabledModuleIds.contains(moduleId),
+      );
+    }
     notifyListeners();
   }
 

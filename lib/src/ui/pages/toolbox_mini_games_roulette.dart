@@ -1,5 +1,249 @@
 part of 'toolbox_mini_games.dart';
 
+class _ChoiceSpinnerGame extends StatefulWidget {
+  const _ChoiceSpinnerGame();
+
+  @override
+  State<_ChoiceSpinnerGame> createState() => _ChoiceSpinnerGameState();
+}
+
+class _ChoiceSpinnerGameState extends State<_ChoiceSpinnerGame> {
+  final math.Random _random = math.Random();
+  int _choiceCount = 6;
+  int? _result;
+  bool _spinning = false;
+  bool _hapticsEnabled = true;
+  double _turns = 0;
+
+  Future<void> _spin() async {
+    if (_spinning) {
+      return;
+    }
+    setState(() {
+      _spinning = true;
+      _result = null;
+      _turns += 2.75 + _random.nextDouble() * 1.4;
+    });
+    if (_hapticsEnabled) {
+      unawaited(HapticFeedback.selectionClick());
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 520));
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _result = _random.nextInt(_choiceCount) + 1;
+      _spinning = false;
+    });
+    if (_hapticsEnabled) {
+      unawaited(HapticFeedback.lightImpact());
+    }
+  }
+
+  void _reset() {
+    setState(() {
+      _result = null;
+      _spinning = false;
+    });
+  }
+
+  String _statusLabel(AppI18n i18n) {
+    if (_spinning) {
+      return i18n.t('toolbox.miniGames.roulette.preparing.fb8a1fd7');
+    }
+    if (_result != null) {
+      return i18n.t('toolbox.miniGames.roulette.round_over.3a866748');
+    }
+    return i18n.t('toolbox.miniGames.roulette.idle.c59d4163');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+    final colors = Theme.of(context).colorScheme;
+    final compact = _miniGameCompactLayout(context);
+    final resultText = _result == null ? '-' : '${_result!}';
+    return Card(
+      child: Padding(
+        padding: EdgeInsets.all(compact ? 14 : 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: <Widget>[
+                ToolboxMetricCard(
+                  label: i18n.t('toolbox.miniGames.roulette.metric.current'),
+                  value: resultText,
+                ),
+                ToolboxMetricCard(
+                  label: i18n.t('toolbox.miniGames.roulette.roundsLoaded'),
+                  value: '$_choiceCount',
+                ),
+                ToolboxMetricCard(
+                  label: i18n.t('toolbox.miniGames.gomoku.status.7c405acf'),
+                  value: _statusLabel(i18n),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Center(
+              child: TweenAnimationBuilder<double>(
+                tween: Tween<double>(end: _turns),
+                duration: const Duration(milliseconds: 520),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, child) {
+                  return Transform.rotate(
+                    angle: value * math.pi * 2,
+                    child: child,
+                  );
+                },
+                child: Container(
+                  width: compact ? 172 : 220,
+                  height: compact ? 172 : 220,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: <Color>[
+                        colors.primaryContainer,
+                        colors.secondaryContainer,
+                        colors.surfaceContainerHighest,
+                      ],
+                    ),
+                    border: Border.all(color: colors.outlineVariant),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color: colors.primary.withValues(alpha: 0.16),
+                        blurRadius: 22,
+                        offset: const Offset(0, 12),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: <Widget>[
+                      for (var index = 0; index < 12; index += 1)
+                        Transform.rotate(
+                          angle: index * math.pi / 6,
+                          child: Align(
+                            alignment: Alignment.topCenter,
+                            child: Container(
+                              width: 4,
+                              height: compact ? 22 : 28,
+                              margin: const EdgeInsets.only(top: 12),
+                              decoration: BoxDecoration(
+                                color: colors.onPrimaryContainer.withValues(
+                                  alpha: 0.22,
+                                ),
+                                borderRadius: BorderRadius.circular(99),
+                              ),
+                            ),
+                          ),
+                        ),
+                      Container(
+                        width: compact ? 104 : 128,
+                        height: compact ? 104 : 128,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: colors.surface.withValues(alpha: 0.88),
+                          border: Border.all(color: colors.outlineVariant),
+                        ),
+                        alignment: Alignment.center,
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 180),
+                          child: Text(
+                            resultText,
+                            key: ValueKey<String>(resultText),
+                            style: Theme.of(context).textTheme.displaySmall
+                                ?.copyWith(
+                                  color: colors.primary,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: colors.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: colors.outlineVariant),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    i18n.t('toolbox.miniGames.roulette.settings'),
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Slider(
+                    value: _choiceCount.toDouble(),
+                    min: 2,
+                    max: 12,
+                    divisions: 10,
+                    label: '$_choiceCount',
+                    onChanged: _spinning
+                        ? null
+                        : (value) {
+                            setState(() {
+                              _choiceCount = value.round();
+                              if (_result != null && _result! > _choiceCount) {
+                                _result = null;
+                              }
+                            });
+                          },
+                  ),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: <Widget>[
+                      FilledButton.icon(
+                        onPressed: _spinning ? null : _spin,
+                        icon: const Icon(Icons.shuffle_rounded),
+                        label: Text(
+                          i18n.t('toolbox.miniGames.roulette.spinCylinder'),
+                        ),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: _spinning ? null : _reset,
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: Text(i18n.t('toolbox.miniGames.roulette.reset')),
+                      ),
+                      FilterChip(
+                        label: Text(
+                          i18n.t('toolbox.miniGames.roulette.haptics'),
+                        ),
+                        selected: _hapticsEnabled,
+                        onSelected: (value) {
+                          setState(() {
+                            _hapticsEnabled = value;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 enum _RoulettePhase { idle, spinning, armed, firing, safeClick, hit, exhausted }
 
 class _RouletteGame extends StatefulWidget {

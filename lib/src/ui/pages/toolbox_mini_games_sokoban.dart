@@ -30,7 +30,9 @@ class _SokobanGame extends StatefulWidget {
 class _SokobanGameState extends State<_SokobanGame> {
   static const int _rows = 9;
   static const int _cols = 9;
+  static const int _recentLevelMemory = 10;
   final math.Random _random = math.Random();
+  final Queue<String> _recentLevelSignatures = Queue<String>();
 
   _SokobanDifficulty _difficulty = _SokobanDifficulty.easy;
   late _SokobanLevel _level;
@@ -160,10 +162,17 @@ class _SokobanGameState extends State<_SokobanGame> {
         ),
       );
       if (_solutionCanPlay(level)) {
+        final signature = _levelSignature(level);
+        if (_recentLevelSignatures.contains(signature) && attempt < 260) {
+          continue;
+        }
+        _rememberLevelSignature(signature);
         return level;
       }
     }
-    return _fallbackLevel(_difficulty);
+    final fallback = _fallbackLevel(_difficulty);
+    _rememberLevelSignature(_levelSignature(fallback));
+    return fallback;
   }
 
   _SokobanPushPlan? _buildNonOverlappingPlan(Set<int> reserved) {
@@ -190,7 +199,7 @@ class _SokobanGameState extends State<_SokobanGame> {
         _difficulty.minRoute +
         _random.nextInt(_difficulty.maxRoute - _difficulty.minRoute + 1);
     for (var attempt = 0; attempt < 100; attempt += 1) {
-      final start = _indexOf(2 + _random.nextInt(5), 2 + _random.nextInt(5));
+      final start = _indexOf(1 + _random.nextInt(7), 1 + _random.nextInt(7));
       final cells = <int>[start];
       final directions = <_SokobanDirection>[];
       while (directions.length < targetLength) {
@@ -253,6 +262,43 @@ class _SokobanGameState extends State<_SokobanGame> {
       candidates.take(math.min(candidates.length, _difficulty.extraWalls)),
     );
     return walls;
+  }
+
+  String _levelSignature(_SokobanLevel level) {
+    String sortedSet(Set<int> values) {
+      final sorted = values.toList(growable: false)..sort();
+      return sorted.join('.');
+    }
+
+    final routeShape = level.plans
+        .map(
+          (plan) => plan.directions
+              .map(
+                (direction) => switch (direction) {
+                  _SokobanDirection.up => 'u',
+                  _SokobanDirection.down => 'd',
+                  _SokobanDirection.left => 'l',
+                  _SokobanDirection.right => 'r',
+                },
+              )
+              .join(),
+        )
+        .join('|');
+    return [
+      level.playerStart,
+      sortedSet(level.boxStarts),
+      sortedSet(level.goals),
+      sortedSet(level.walls),
+      routeShape,
+    ].join('/');
+  }
+
+  void _rememberLevelSignature(String signature) {
+    _recentLevelSignatures.remove(signature);
+    _recentLevelSignatures.addLast(signature);
+    while (_recentLevelSignatures.length > _recentLevelMemory) {
+      _recentLevelSignatures.removeFirst();
+    }
   }
 
   bool _solutionCanPlay(_SokobanLevel level) {

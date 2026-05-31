@@ -20,20 +20,11 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
   bool _won = false;
   bool _flagMode = false;
   int _revealedSafe = 0;
-  bool _fullscreen = false;
 
   @override
   void initState() {
     super.initState();
     _startNewGame();
-  }
-
-  @override
-  void dispose() {
-    if (_fullscreen) {
-      unawaited(_exitMiniGameFullscreen());
-    }
-    super.dispose();
   }
 
   int get _safeCellTotal => _rows * _cols - _mineCount;
@@ -110,20 +101,6 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
     _revealedSafe = 0;
   }
 
-  Future<void> _setFullscreen(bool value) async {
-    if (_fullscreen == value) {
-      return;
-    }
-    setState(() {
-      _fullscreen = value;
-    });
-    if (value) {
-      await _enterMiniGameFullscreen();
-    } else {
-      await _exitMiniGameFullscreen();
-    }
-  }
-
   String _presetLabel(AppI18n i18n, _MinesweeperPreset preset) {
     if (preset.label == 'Easy') {
       return i18n.t('toolbox.miniGames.minesweeper.easy.34fe6875');
@@ -178,48 +155,36 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
     );
   }
 
-  Widget _buildBoard(BuildContext context, {required bool fullscreen}) {
+  Widget _buildBoard(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final viewportWidth = constraints.maxWidth;
-        final viewportHeight = constraints.maxHeight;
         final targetCell = _miniGameCompactLayout(context) ? 22.0 : 26.0;
-        final boardWidth = fullscreen
-            ? _cols *
-                  (math.min(viewportWidth / _cols, viewportHeight / _rows) *
-                          0.96)
-                      .clamp(8.0, 36.0)
-            : math.max(viewportWidth, _cols * targetCell);
-        final boardHeight = fullscreen
-            ? _rows * (boardWidth / _cols)
-            : boardWidth * _rows / _cols;
+        final targetWidth = math.max(320.0, _cols * targetCell);
+        final boardWidth = math.min(viewportWidth, targetWidth);
+        final boardHeight = boardWidth * _rows / _cols;
         final cellExtent = boardWidth / _cols;
         return _MiniGameScrollLockSurface(
-          child: InteractiveViewer(
-            minScale: 0.65,
-            maxScale: 4.0,
-            boundaryMargin: const EdgeInsets.all(24),
-            child: Center(
-              child: SizedBox(
-                width: boardWidth,
-                height: boardHeight,
-                child: GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _cells.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: _cols,
-                  ),
-                  itemBuilder: (context, index) {
-                    return GestureDetector(
-                      onTap: () => _onCellTap(index),
-                      onLongPress: () => _cycleMark(index),
-                      child: _MineCellTile(
-                        cell: _cells[index],
-                        extent: cellExtent,
-                      ),
-                    );
-                  },
+          child: Center(
+            child: SizedBox(
+              width: boardWidth,
+              height: boardHeight,
+              child: GridView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _cells.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: _cols,
                 ),
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () => _onCellTap(index),
+                    onLongPress: () => _cycleMark(index),
+                    child: _MineCellTile(
+                      cell: _cells[index],
+                      extent: cellExtent,
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -332,99 +297,6 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
       _MinesweeperPreset(label: 'Medium', rows: 16, cols: 16, mines: 40),
       _MinesweeperPreset(label: 'Hard', rows: 24, cols: 24, mines: 99),
     ];
-    if (_fullscreen) {
-      return Card(
-        clipBehavior: Clip.antiAlias,
-        child: SizedBox(
-          height: MediaQuery.sizeOf(context).height * 0.8,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: <Widget>[
-                    FilledButton.tonalIcon(
-                      onPressed: () => _setFullscreen(false),
-                      icon: const Icon(Icons.fullscreen_exit_rounded),
-                      label: Text(
-                        i18n.t(
-                          'toolbox.miniGames.minesweeper.exit_fullscreen.af67784f',
-                        ),
-                      ),
-                    ),
-                    FilledButton.tonalIcon(
-                      onPressed: _lost || _won ? null : _revealHint,
-                      icon: const Icon(Icons.lightbulb_outline_rounded),
-                      label: Text(
-                        i18n.t('toolbox.miniGames.minesweeper.hint.09c61a16'),
-                      ),
-                    ),
-                    FilterChip(
-                      label: Text(
-                        i18n.t(
-                          'toolbox.miniGames.minesweeper.flag_mode.9242bb28',
-                        ),
-                      ),
-                      selected: _flagMode,
-                      onSelected: (value) {
-                        setState(() {
-                          _flagMode = value;
-                        });
-                      },
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () => setState(() => _startNewGame()),
-                      icon: const Icon(Icons.refresh_rounded),
-                      label: Text(
-                        i18n.t(
-                          'toolbox.miniGames.minesweeper.new_game.361fb747',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: <Widget>[
-                    ToolboxMetricCard(
-                      label: i18n.t(
-                        'toolbox.miniGames.minesweeper.board.3de83dc1',
-                      ),
-                      value: '${_rows}x$_cols',
-                    ),
-                    ToolboxMetricCard(
-                      label: i18n.t(
-                        'toolbox.miniGames.minesweeper.mines.f88b1f6f',
-                      ),
-                      value: '$_mineCount',
-                    ),
-                    ToolboxMetricCard(
-                      label: i18n.t(
-                        'toolbox.miniGames.minesweeper.mines_left.7f3c2da8',
-                      ),
-                      value: '${math.max(0, _mineCount - flags)}',
-                    ),
-                    ToolboxMetricCard(
-                      label: i18n.t(
-                        'toolbox.miniGames.minesweeper.status.b7c49b3a',
-                      ),
-                      value: _statusLabel(i18n),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Expanded(child: _buildBoard(context, fullscreen: true)),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -550,15 +422,6 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
                             ),
                           ),
                         ),
-                        OutlinedButton.icon(
-                          onPressed: () => _setFullscreen(true),
-                          icon: const Icon(Icons.fullscreen_rounded),
-                          label: Text(
-                            i18n.t(
-                              'toolbox.miniGames.minesweeper.fullscreen_board.cfae8089',
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   ],
@@ -622,7 +485,7 @@ class _MinesweeperGameState extends State<_MinesweeperGame> {
             const SizedBox(height: 12),
             SizedBox(
               height: _miniGameCompactLayout(context) ? 320 : 420,
-              child: _buildBoard(context, fullscreen: false),
+              child: _buildBoard(context),
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(

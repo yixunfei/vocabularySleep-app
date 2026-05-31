@@ -2043,7 +2043,7 @@ class _PlaceMapStatusOverlay extends StatelessWidget {
             ),
             _PlaceMapMiniPill(
               icon: cacheEnabled
-                  ? Icons.offline_pin_rounded
+                  ? Icons.storage_rounded
                   : Icons.cloud_queue_rounded,
               text: cacheEnabled
                   ? i18n.t('inline.plan295.daily_choice.cache_on.faf6afd21de4')

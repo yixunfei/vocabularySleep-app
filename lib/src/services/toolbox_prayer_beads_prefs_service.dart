@@ -12,6 +12,7 @@ class PrayerBeadsPrefsState {
     this.allTimeCount = 0,
     this.soundEnabled = true,
     this.hapticsEnabled = true,
+    this.hapticStrengthId = 'subtle',
   });
 
   final String materialId;
@@ -20,6 +21,7 @@ class PrayerBeadsPrefsState {
   final int allTimeCount;
   final bool soundEnabled;
   final bool hapticsEnabled;
+  final String hapticStrengthId;
 
   PrayerBeadsPrefsState copyWith({
     String? materialId,
@@ -28,6 +30,7 @@ class PrayerBeadsPrefsState {
     int? allTimeCount,
     bool? soundEnabled,
     bool? hapticsEnabled,
+    String? hapticStrengthId,
   }) {
     return PrayerBeadsPrefsState(
       materialId: materialId ?? this.materialId,
@@ -36,6 +39,7 @@ class PrayerBeadsPrefsState {
       allTimeCount: allTimeCount ?? this.allTimeCount,
       soundEnabled: soundEnabled ?? this.soundEnabled,
       hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
+      hapticStrengthId: hapticStrengthId ?? this.hapticStrengthId,
     );
   }
 
@@ -47,6 +51,7 @@ class PrayerBeadsPrefsState {
       'all_time_count': allTimeCount,
       'sound_enabled': soundEnabled,
       'haptics_enabled': hapticsEnabled,
+      'haptic_strength_id': hapticStrengthId,
     };
   }
 
@@ -74,7 +79,18 @@ class PrayerBeadsPrefsState {
           .toInt(),
       soundEnabled: map['sound_enabled'] as bool? ?? true,
       hapticsEnabled: map['haptics_enabled'] as bool? ?? true,
+      hapticStrengthId: _normalizeHapticStrengthId(
+        '${map['haptic_strength_id'] ?? 'subtle'}',
+      ),
     );
+  }
+
+  static String _normalizeHapticStrengthId(String rawValue) {
+    return switch (rawValue.trim()) {
+      'light' => 'light',
+      'firm' => 'firm',
+      _ => 'subtle',
+    };
   }
 
   static String _normalizeMaterialId(String rawValue) {

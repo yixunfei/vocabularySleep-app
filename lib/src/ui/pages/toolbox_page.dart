@@ -7,6 +7,7 @@ import '../../state/app_state.dart';
 import '../../state/app_state_provider.dart';
 import '../module/module_access.dart';
 import '../ui_copy.dart';
+import '../widgets/back_intent_consumed_notification.dart';
 import '../widgets/page_header.dart';
 import 'toolbox/toolbox_page_content.dart';
 import 'toolbox/toolbox_page_models.dart';
@@ -26,6 +27,8 @@ class ToolboxPage extends ConsumerStatefulWidget {
 class _ToolboxPageState extends ConsumerState<ToolboxPage> {
   bool _editing = false;
   bool _layoutDragActive = false;
+  bool _childConsumedBackIntent = false;
+  int _backIntentSerial = 0;
   ToolboxEntryData? _activeEntry;
 
   @override
@@ -91,16 +94,38 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
         if (didPop) {
           return;
         }
-        if (activeEntry != null) {
-          _closeActiveEntry();
-          return;
-        }
-        if (_editing) {
-          _exitEditMode();
-        }
+        _handleRootBackIntent();
       },
-      child: body,
+      child: NotificationListener<BackIntentConsumedNotification>(
+        onNotification: (notification) {
+          _childConsumedBackIntent = true;
+          return false;
+        },
+        child: body,
+      ),
     );
+  }
+
+  void _handleRootBackIntent() {
+    final serial = ++_backIntentSerial;
+    Future<void>.delayed(Duration.zero, () {
+      if (!mounted || serial != _backIntentSerial) {
+        return;
+      }
+      if (_childConsumedBackIntent) {
+        _childConsumedBackIntent = false;
+        return;
+      }
+      if (_activeEntry != null) {
+        const BackIntentConsumedNotification().dispatch(context);
+        _closeActiveEntry();
+        return;
+      }
+      if (_editing) {
+        const BackIntentConsumedNotification().dispatch(context);
+        _exitEditMode();
+      }
+    });
   }
 
   Widget _buildEmbeddedToolView(ToolboxEntryData entry) {

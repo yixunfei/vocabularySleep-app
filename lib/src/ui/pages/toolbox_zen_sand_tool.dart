@@ -1883,10 +1883,12 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
           final isCompactWidth = constraints.maxWidth < 350;
           final isShortViewport = constraints.maxHeight < 820;
           final collapseDock = constraints.maxHeight < 900 || isNarrowViewport;
-          final foldBottomDock = constraints.maxHeight < 760 || isCompactWidth;
-          final hideRitualRow = constraints.maxHeight < 700 || isCompactWidth;
+          final foldBottomDock =
+              constraints.maxHeight < 820 || isNarrowViewport;
+          final denseStats = constraints.maxHeight < 760 || isNarrowViewport;
+          final hideRitualRow = constraints.maxHeight < 820 || isNarrowViewport;
           final hideInlinePalette =
-              constraints.maxHeight < 740 || isNarrowViewport;
+              constraints.maxHeight < 860 || isNarrowViewport;
           final headerGap = isShortViewport || isNarrowViewport ? 10.0 : 14.0;
           final sectionGap = isShortViewport || isNarrowViewport ? 8.0 : 12.0;
           final horizontalPadding = isCompactWidth ? 12.0 : 16.0;
@@ -1920,7 +1922,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
               children: <Widget>[
                 _buildHeader(theme),
                 SizedBox(height: headerGap),
-                _buildStats(theme),
+                _buildStats(theme, dense: denseStats),
                 if (!hideRitualRow) ...<Widget>[
                   SizedBox(height: sectionGap),
                   _buildRitualQuickRow(theme),
@@ -2113,10 +2115,38 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     );
   }
 
-  Widget _buildStats(ThemeData theme) {
+  Widget _buildStats(ThemeData theme, {bool dense = false}) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 390;
+        if (dense) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: <Widget>[
+                _ZenMiniStatusPill(
+                  label: _i18n.t(
+                    'inline.ui.pages.toolbox_daily_choice.daily_choice_wear_module.scene_d8ab7f',
+                  ),
+                  value: _background.label(_i18n),
+                  accent: _background.accent,
+                ),
+                const SizedBox(width: 8),
+                _ZenMiniStatusPill(
+                  label: _i18n.t('inline.plan294.zen_sand.tool_4e3ea81e'),
+                  value: _tool.label(_i18n),
+                  accent: _tool.tint,
+                ),
+                const SizedBox(width: 8),
+                _ZenMiniStatusPill(
+                  label: _i18n.t('inline.plan294.zen_sand.brush_184dcd1d'),
+                  value: _brushSize.round().toString(),
+                  accent: Color.lerp(_tool.tint, Colors.white, 0.15)!,
+                ),
+              ],
+            ),
+          );
+        }
         if (compact) {
           return Wrap(
             spacing: 8,
@@ -2317,8 +2347,11 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final maxHeight = constraints.maxHeight;
-        final hideCanvasActionStrip = immersive || maxHeight < 290;
-        final hideCanvasChrome = immersive || maxHeight < 220;
+        final hideCanvasActionStrip =
+            immersive || maxHeight < 360 || width < 360;
+        final hideCanvasChrome =
+            immersive || maxHeight < 300 || (width < 360 && maxHeight < 420);
+        final hideCanvasHints = immersive || maxHeight < 420 || width < 360;
         final canvasGap = hideCanvasChrome
             ? 0.0
             : hideCanvasActionStrip
@@ -2426,7 +2459,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                                     ),
                                   ),
                                 ),
-                                if (!immersive && _guideEnabled)
+                                if (!hideCanvasHints && _guideEnabled)
                                   Positioned(
                                     left: 12,
                                     top: 12,
@@ -2441,7 +2474,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                                       accent: _tool.tint,
                                     ),
                                   ),
-                                if (!immersive && _transformHintVisible)
+                                if (!hideCanvasHints && _transformHintVisible)
                                   Positioned(
                                     left: 12,
                                     top: _guideEnabled ? 56 : 12,
@@ -2452,7 +2485,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                                       accent: _background.accent,
                                     ),
                                   ),
-                                if (!immersive)
+                                if (!hideCanvasHints)
                                   Positioned(
                                     right: 12,
                                     bottom: 12,
@@ -2712,6 +2745,20 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                       ),
                       const SizedBox(width: 4),
                       _ZenDockButton(
+                        icon: _immersiveMode
+                            ? Icons.fullscreen_exit_rounded
+                            : Icons.fullscreen_rounded,
+                        label: _immersiveMode
+                            ? _i18n.t(
+                                'inline.plan294.zen_sand.exit_full_screen_8a439134',
+                              )
+                            : _i18n.t(
+                                'inline.plan294.zen_sand.immersive_93f9418b',
+                              ),
+                        onPressed: _toggleImmersiveMode,
+                      ),
+                      const SizedBox(width: 4),
+                      _ZenDockButton(
                         icon: Icons.undo_rounded,
                         label: _i18n.t('toolbox.hub.edit.snackbar_restore'),
                         enabled: _actions.isNotEmpty,
@@ -2791,6 +2838,20 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
                         'inline.plan294.zen_sand.control_ef4bd302',
                       ),
                       onPressed: _openControlSheet,
+                    ),
+                    const SizedBox(width: 8),
+                    _ZenDockButton(
+                      icon: _immersiveMode
+                          ? Icons.fullscreen_exit_rounded
+                          : Icons.fullscreen_rounded,
+                      label: _immersiveMode
+                          ? _i18n.t(
+                              'inline.plan294.zen_sand.exit_full_screen_8a439134',
+                            )
+                          : _i18n.t(
+                              'inline.plan294.zen_sand.immersive_93f9418b',
+                            ),
+                      onPressed: _toggleImmersiveMode,
                     ),
                     const SizedBox(width: 8),
                     _ZenDockButton(

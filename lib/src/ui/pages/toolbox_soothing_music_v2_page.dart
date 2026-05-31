@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
@@ -71,8 +72,13 @@ class _SoothingMusicV2PageState extends ConsumerState<SoothingMusicV2Page>
     0.18,
     0.14,
   ];
+  static final Map<String, List<_SoothingTrack>> _customTracksByMode =
+      <String, List<_SoothingTrack>>{};
   static List<_SoothingTrack> _tracksForMode(String modeId) {
-    return SoothingMusicTrackCatalog.tracksForMode(modeId);
+    return <_SoothingTrack>[
+      ...SoothingMusicTrackCatalog.tracksForMode(modeId),
+      ...?_customTracksByMode[modeId],
+    ];
   }
 
   late final AudioPlayer _player;

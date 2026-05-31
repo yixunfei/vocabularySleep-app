@@ -129,6 +129,107 @@ extension _SoothingMusicV2Playback on _SoothingMusicV2PageState {
     }
   }
 
+  Future<void> _importLocalTracks() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.audio,
+        allowMultiple: true,
+      );
+      if (!mounted || result == null || result.files.isEmpty) {
+        return;
+      }
+      final picked = result.files
+          .where((file) => (file.path ?? '').trim().isNotEmpty)
+          .toList(growable: false);
+      if (picked.isEmpty) {
+        return;
+      }
+      final customTracks = _SoothingMusicV2PageState._customTracksByMode
+          .putIfAbsent(_mode.id, () => <_SoothingTrack>[]);
+      for (final file in picked) {
+        final path = file.path!.trim();
+        customTracks.add(
+          _SoothingTrack(
+            assetPath: 'local:$path',
+            labelKey: 'importedAudio',
+            seed: path.hashCode.abs(),
+            localPath: path,
+            customLabel: file.name.trim().isEmpty ? null : file.name.trim(),
+          ),
+        );
+      }
+      final firstImportedIndex =
+          SoothingMusicTrackCatalog.tracksForMode(_mode.id).length +
+          customTracks.length -
+          picked.length;
+      _setViewState(() {
+        _tracksExpanded = true;
+      });
+      await _setTrackIndex(firstImportedIndex, autoplayOverride: false);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            i18n.t(
+              'errorImportFailed',
+              params: <String, Object?>{'error': error},
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<Duration?> _replacePlayerSourceForTrack(
+    _SoothingTrack track, {
+    required int loadToken,
+    required String modeId,
+  }) async {
+    Uint8List? bytes;
+    if (!track.isLocal) {
+      bytes = await _loadTrackBytes(track, loadToken: loadToken);
+      if (!_isLoadTokenActive(loadToken)) {
+        return null;
+      }
+    }
+    return _runSerializedPlayerMutation<Duration?>(() async {
+      if (!_isLoadTokenActive(loadToken)) {
+        return null;
+      }
+      await _player.stop();
+      final source = track.isLocal
+          ? DeviceFileSource(track.localPath!)
+          : BytesSource(bytes!, mimeType: 'audio/mp4');
+      await AudioPlayerSourceHelper.setSource(
+        _player,
+        source,
+        tag: 'soothing_audio',
+        data: <String, Object?>{
+          'modeId': modeId,
+          'trackAssetPath': track.assetPath,
+          'local': track.isLocal,
+          if (bytes != null) 'bytes': bytes.length,
+        },
+      );
+      final resolvedDuration = await AudioPlayerSourceHelper.waitForDuration(
+        _player,
+        tag: 'soothing_audio',
+        data: <String, Object?>{
+          'modeId': modeId,
+          'trackAssetPath': track.assetPath,
+          'local': track.isLocal,
+          'playerId': _player.playerId,
+        },
+      );
+      await _player.setVolume(_muted ? 0 : _volume);
+      return resolvedDuration;
+    });
+  }
+
   SoothingMusicTrackLoader get _resolvedTrackLoader => _trackLoader ??=
       SoothingMusicTrackLoader(remoteResourceCache: _remoteResourceCache);
 
@@ -224,46 +325,20 @@ extension _SoothingMusicV2Playback on _SoothingMusicV2PageState {
         return;
       }
       final track = tracks[restoredTrackIndex];
-      final bytes = await _loadTrackBytes(track, loadToken: loadToken);
-      if (!_isLoadTokenActive(loadToken)) {
-        return;
+      final duration = await _replacePlayerSourceForTrack(
+        track,
+        loadToken: loadToken,
+        modeId: mode.id,
+      );
+      if (_isLoadTokenActive(loadToken)) {
+        if (shouldAutoplay) {
+          await _player.seek(Duration.zero);
+          await _player.resume();
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+        } else {
+          await _player.stop();
+        }
       }
-      final duration = await _runSerializedPlayerMutation<Duration?>(() async {
-        if (!_isLoadTokenActive(loadToken)) {
-          return null;
-        }
-        await _player.stop();
-        await AudioPlayerSourceHelper.setSource(
-          _player,
-          BytesSource(bytes, mimeType: 'audio/mp4'),
-          tag: 'soothing_audio',
-          data: <String, Object?>{
-            'modeId': mode.id,
-            'trackAssetPath': track.assetPath,
-            'bytes': bytes.length,
-          },
-        );
-        final resolvedDuration = await AudioPlayerSourceHelper.waitForDuration(
-          _player,
-          tag: 'soothing_audio',
-          data: <String, Object?>{
-            'modeId': mode.id,
-            'trackAssetPath': track.assetPath,
-            'playerId': _player.playerId,
-          },
-        );
-        await _player.setVolume(_muted ? 0 : _volume);
-        if (_isLoadTokenActive(loadToken)) {
-          if (shouldAutoplay) {
-            await _player.seek(Duration.zero);
-            await _player.resume();
-            await Future<void>.delayed(const Duration(milliseconds: 50));
-          } else {
-            await _player.stop();
-          }
-        }
-        return resolvedDuration;
-      });
       if (duration != null) {
         _duration = duration;
       }
@@ -520,45 +595,19 @@ extension _SoothingMusicV2Playback on _SoothingMusicV2PageState {
 
     try {
       track = _currentTrack;
-      final bytes = await _loadTrackBytes(track, loadToken: loadToken);
-      if (!_isLoadTokenActive(loadToken)) {
-        return;
+      final duration = await _replacePlayerSourceForTrack(
+        track,
+        loadToken: loadToken,
+        modeId: _mode.id,
+      );
+      if (_isLoadTokenActive(loadToken)) {
+        if (shouldResume) {
+          await _player.seek(Duration.zero);
+          await _player.resume();
+        } else {
+          await _player.stop();
+        }
       }
-      final duration = await _runSerializedPlayerMutation<Duration?>(() async {
-        if (!_isLoadTokenActive(loadToken)) {
-          return null;
-        }
-        await _player.stop();
-        await AudioPlayerSourceHelper.setSource(
-          _player,
-          BytesSource(bytes, mimeType: 'audio/mp4'),
-          tag: 'soothing_audio',
-          data: <String, Object?>{
-            'modeId': _mode.id,
-            'trackAssetPath': track.assetPath,
-            'bytes': bytes.length,
-          },
-        );
-        final resolvedDuration = await AudioPlayerSourceHelper.waitForDuration(
-          _player,
-          tag: 'soothing_audio',
-          data: <String, Object?>{
-            'modeId': _mode.id,
-            'trackAssetPath': track.assetPath,
-            'playerId': _player.playerId,
-          },
-        );
-        await _player.setVolume(_muted ? 0 : _volume);
-        if (_isLoadTokenActive(loadToken)) {
-          if (shouldResume) {
-            await _player.seek(Duration.zero);
-            await _player.resume();
-          } else {
-            await _player.stop();
-          }
-        }
-        return resolvedDuration;
-      });
       if (duration != null) {
         _duration = duration;
       }

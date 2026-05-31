@@ -204,6 +204,34 @@ class _FocusArrangementPreset {
   String label(AppI18n i18n) => i18n.t(i18nKey);
 }
 
+class _FocusBeatQuickPreset {
+  const _FocusBeatQuickPreset({
+    required this.id,
+    required this.titleKey,
+    required this.subtitleKey,
+    required this.icon,
+    required this.bpm,
+    required this.beatsPerBar,
+    required this.subdivision,
+    required this.animationKind,
+    required this.soundKind,
+    required this.patternEnabled,
+    required this.arrangementBeats,
+  });
+
+  final String id;
+  final String titleKey;
+  final String subtitleKey;
+  final IconData icon;
+  final int bpm;
+  final int beatsPerBar;
+  final int subdivision;
+  final _FocusBeatAnimationKind animationKind;
+  final _FocusBeatSoundKind soundKind;
+  final bool patternEnabled;
+  final List<int> arrangementBeats;
+}
+
 class _FocusVisualPalette {
   const _FocusVisualPalette({
     required this.accent,
@@ -289,6 +317,48 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
           name: '冲刺 2+3+1/2bar',
           i18nKey: 'toolbox.sound.focus.editor.preset_sprint',
           segmentsInBars: <double>[2, 3, 0.5],
+        ),
+      ];
+  static const List<_FocusBeatQuickPreset> _quickPresets =
+      <_FocusBeatQuickPreset>[
+        _FocusBeatQuickPreset(
+          id: 'steady',
+          titleKey: 'toolbox.sound.focus.quick_presets.steady.title',
+          subtitleKey: 'toolbox.sound.focus.quick_presets.steady.subtitle',
+          icon: Icons.spa_rounded,
+          bpm: 60,
+          beatsPerBar: 4,
+          subdivision: 1,
+          animationKind: _FocusBeatAnimationKind.pendulum,
+          soundKind: _FocusBeatSoundKind.pendulum,
+          patternEnabled: false,
+          arrangementBeats: <int>[4],
+        ),
+        _FocusBeatQuickPreset(
+          id: 'deep',
+          titleKey: 'toolbox.sound.focus.quick_presets.deep.title',
+          subtitleKey: 'toolbox.sound.focus.quick_presets.deep.subtitle',
+          icon: Icons.blur_on_rounded,
+          bpm: 54,
+          beatsPerBar: 4,
+          subdivision: 2,
+          animationKind: _FocusBeatAnimationKind.dew,
+          soundKind: _FocusBeatSoundKind.dew,
+          patternEnabled: true,
+          arrangementBeats: <int>[8, 8],
+        ),
+        _FocusBeatQuickPreset(
+          id: 'sprint',
+          titleKey: 'toolbox.sound.focus.quick_presets.sprint.title',
+          subtitleKey: 'toolbox.sound.focus.quick_presets.sprint.subtitle',
+          icon: Icons.bolt_rounded,
+          bpm: 96,
+          beatsPerBar: 4,
+          subdivision: 2,
+          animationKind: _FocusBeatAnimationKind.steps,
+          soundKind: _FocusBeatSoundKind.steps,
+          patternEnabled: true,
+          arrangementBeats: <int>[8, 12, 2],
         ),
       ];
 
@@ -466,6 +536,8 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
         _buildStageCompact(context),
         const SizedBox(height: 16),
         _buildPrimaryControls(context),
+        const SizedBox(height: 12),
+        _buildQuickPresetSection(context),
         const SizedBox(height: 16),
         _FocusControlSection(
           icon: Icons.speed_rounded,

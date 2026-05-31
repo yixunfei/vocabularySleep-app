@@ -807,6 +807,161 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
     );
   }
 
+  bool _isQuickPresetActive(_FocusBeatQuickPreset preset) {
+    return _bpm == preset.bpm &&
+        _beatsPerBar == preset.beatsPerBar &&
+        _subdivision == preset.subdivision &&
+        _animationKind == preset.animationKind &&
+        _soundKind == preset.soundKind &&
+        _patternEnabled == preset.patternEnabled &&
+        _arrangementBeats.length == preset.arrangementBeats.length &&
+        Iterable<int>.generate(preset.arrangementBeats.length).every(
+          (index) => _arrangementBeats[index] == preset.arrangementBeats[index],
+        );
+  }
+
+  Widget _buildQuickPresetSection(BuildContext context) {
+    final i18n = _i18nOf(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final palette = _visualPalette(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: palette.stroke.withValues(alpha: 0.26)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(Icons.auto_awesome_rounded, color: palette.accent, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      i18n.t('toolbox.sound.focus.quick_presets.title'),
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      i18n.t('toolbox.sound.focus.quick_presets.subtitle'),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: <Widget>[
+                for (final preset in _FocusBeatsToolState._quickPresets) ...[
+                  _buildQuickPresetTile(context, preset),
+                  if (preset != _FocusBeatsToolState._quickPresets.last)
+                    const SizedBox(width: 10),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickPresetTile(
+    BuildContext context,
+    _FocusBeatQuickPreset preset,
+  ) {
+    final i18n = _i18nOf(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final palette = _visualPalette(context);
+    final selected = _isQuickPresetActive(preset);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: Key('focus-quick-preset-${preset.id}'),
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => _applyQuickPreset(preset),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: 176,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            color: selected
+                ? palette.accent.withValues(alpha: 0.14)
+                : colorScheme.surface,
+            border: Border.all(
+              color: selected
+                  ? palette.accent.withValues(alpha: 0.58)
+                  : colorScheme.outlineVariant,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Icon(preset.icon, size: 18, color: palette.accent),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      i18n.t(preset.titleKey),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                i18n.t(preset.subtitleKey),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  height: 1.28,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                i18n.t(
+                  'toolbox.sound.focus.quick_presets.meter',
+                  params: <String, Object?>{
+                    'bpm': preset.bpm,
+                    'beats': preset.beatsPerBar,
+                    'subdivision': preset.subdivision,
+                  },
+                ),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: selected ? palette.accent : colorScheme.primary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildPrimaryControls(
     BuildContext context, {
     bool immersiveSheet = false,
@@ -863,7 +1018,9 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
                 ),
                 onPressed: _tapTempo,
                 icon: const Icon(Icons.touch_app_rounded),
-                label: const Text('Tap'),
+                label: Text(
+                  controlI18n.t('toolbox.sound.focus.controlTapTempo'),
+                ),
               ),
             ],
           ),

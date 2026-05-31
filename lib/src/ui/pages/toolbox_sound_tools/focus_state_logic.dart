@@ -367,6 +367,32 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
     }
   }
 
+  void _applyQuickPreset(_FocusBeatQuickPreset preset) {
+    final shouldRebuildPlayers = _soundKind != preset.soundKind;
+    _setViewState(() {
+      _bpm = preset.bpm;
+      _beatsPerBar = preset.beatsPerBar;
+      _subdivision = preset.subdivision;
+      _animationKind = preset.animationKind;
+      _soundKind = preset.soundKind;
+      _linkAnimationAndSound = true;
+      _patternEnabled = preset.patternEnabled;
+      _arrangementBeats = List<int>.from(preset.arrangementBeats);
+      _activeTemplateId = null;
+      _syncPulseAnimationDuration();
+      _syncPatternFromArrangement(syncTemplate: false);
+      _resetRuntime();
+    });
+    _scheduleSavePrefs();
+    if (shouldRebuildPlayers) {
+      unawaited(_rebuildPlayers());
+    }
+    _restartTransportIfRunning();
+    if (_hapticsEnabled) {
+      HapticFeedback.selectionClick();
+    }
+  }
+
   void _tick() {
     final frame = _buildTickFrame();
     _maybePrimeLayer(frame.nextLayer);
@@ -800,6 +826,8 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
                       ),
                       const SizedBox(height: 16),
                       _buildPrimaryControls(sheetContext, immersiveSheet: true),
+                      const SizedBox(height: 12),
+                      _buildQuickPresetSection(sheetContext),
                       const SizedBox(height: 16),
                       _FocusControlSection(
                         icon: Icons.speed_rounded,

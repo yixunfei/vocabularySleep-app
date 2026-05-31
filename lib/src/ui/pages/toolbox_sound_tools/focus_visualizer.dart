@@ -24,7 +24,7 @@ class _FocusBeatVisualizerPainter extends CustomPainter {
   final int activeSubPulse;
   final int beatsPerBar;
   final int subdivision;
-  static const double _visualSyncDelayMs = 30.0;
+  static const double _visualSyncDelayMs = 0.0;
 
   double _mix(double a, double b, double t) => a + (b - a) * t;
 

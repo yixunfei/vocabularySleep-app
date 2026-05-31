@@ -24,6 +24,7 @@ import 'ui_copy.dart';
 import 'widgets/app_background.dart';
 import 'widgets/ambient_floating_dock.dart';
 import 'widgets/busy_overlay.dart';
+import 'widgets/back_intent_consumed_notification.dart';
 import 'widgets/focus_lock_overlay.dart';
 import 'widgets/first_run_setup_dialog.dart';
 import 'widgets/mini_player.dart';
@@ -51,9 +52,11 @@ class _AppShellState extends ConsumerState<AppShell> {
   bool _navigationBarVisible = true;
   VoidCallback? _scrollLibraryToTop;
   bool _exitDialogVisible = false;
+  bool _childConsumedBackIntent = false;
   bool _firstRunSetupShown = false;
   bool _startupPromptShown = false;
   int? _lastHandledTodoReminderLaunchId;
+  int _rootBackIntentSerial = 0;
 
   @override
   void initState() {
@@ -622,6 +625,26 @@ class _AppShellState extends ConsumerState<AppShell> {
     }
   }
 
+  void _handleBackIntentConsumed() {
+    _childConsumedBackIntent = true;
+  }
+
+  void _handleRootBackIntent(AppI18n i18n, {required bool focusLocked}) {
+    final serial = ++_rootBackIntentSerial;
+    Future<void>.delayed(Duration.zero, () {
+      if (!mounted || serial != _rootBackIntentSerial) return;
+      if (_childConsumedBackIntent) {
+        _childConsumedBackIntent = false;
+        return;
+      }
+      if (focusLocked) {
+        _showFocusLockBackHint(i18n);
+        return;
+      }
+      unawaited(_confirmExit(i18n));
+    });
+  }
+
   Widget _buildStartupPromptTodoSection(AppI18n i18n, AppState state) {
     final todos = state.todayActiveTodos;
     final theme = Theme.of(context);
@@ -987,191 +1010,196 @@ class _AppShellState extends ConsumerState<AppShell> {
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
-        if (state.focusService.lockScreenActive) {
-          _showFocusLockBackHint(i18n);
-          return;
-        }
-        _confirmExit(i18n);
+        _handleRootBackIntent(
+          i18n,
+          focusLocked: state.focusService.lockScreenActive,
+        );
       },
-      child: Scaffold(
-        body: AppBackground(
-          appearance: state.config.appearance,
-          child: NotificationListener<ScrollNotification>(
-            onNotification: (notification) =>
-                _handleNavigationScrollNotification(
-                  notification,
+      child: NotificationListener<BackIntentConsumedNotification>(
+        onNotification: (notification) {
+          _handleBackIntentConsumed();
+          return false;
+        },
+        child: Scaffold(
+          body: AppBackground(
+            appearance: state.config.appearance,
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (notification) =>
+                  _handleNavigationScrollNotification(
+                    notification,
+                    navigationAutoHideEnabled && !isInitializing,
+                  ),
+              child: Listener(
+                behavior: HitTestBehavior.translucent,
+                onPointerDown: (event) => _handleNavigationPointerDown(
+                  event,
                   navigationAutoHideEnabled && !isInitializing,
                 ),
-            child: Listener(
-              behavior: HitTestBehavior.translucent,
-              onPointerDown: (event) => _handleNavigationPointerDown(
-                event,
-                navigationAutoHideEnabled && !isInitializing,
-              ),
-              onPointerMove: _handleNavigationPointerMove,
-              onPointerUp: (_) => _handleNavigationPointerUp(
-                navigationAutoHideEnabled && !isInitializing,
-              ),
-              onPointerCancel: (_) => _clearNavigationPointerTracking(),
-              child: Stack(
-                children: <Widget>[
-                  SafeArea(
-                    bottom: false,
-                    child: Column(
-                      children: <Widget>[
-                        Expanded(
-                          child: AnimatedPadding(
-                            duration: const Duration(milliseconds: 240),
-                            curve: Curves.easeOutCubic,
-                            padding: EdgeInsets.only(
-                              bottom: combinedMiniPlayerHeight,
-                            ),
-                            child: isInitializing
-                                ? _buildInitializingView(context, i18n)
-                                : IndexedStack(
-                                    index: safeIndex,
-                                    children: _visibleTabs
-                                        .map(_buildPageForTab)
-                                        .toList(growable: false),
-                                  ),
-                          ),
-                        ),
-                        _buildBottomNavigationChrome(
-                          height: navigationChromeHeight,
-                          bottomInset: bottomInset,
-                          selectedIndex: safeIndex,
-                          i18n: i18n,
-                          visible: navigationContentVisible,
-                        ),
-                      ],
-                    ),
-                  ),
-                  AnimatedPositioned(
-                    duration: _navigationChromeDuration,
-                    curve: Curves.easeOutCubic,
-                    left: 0,
-                    right: 0,
-                    bottom: navigationChromeHeight + 8,
-                    child: MiniPlayer(
-                      state: state,
-                      i18n: i18n,
-                      onOpenPractice: () => _setTab(AppHomeTab.practice),
-                      onOpenLibrary: () {
-                        _setTab(AppHomeTab.study);
-                        _setStudyTab(StudyStartupTab.library);
-                      },
-                      onPresentationChanged: _handleMiniPlayerPresentation,
-                    ),
-                  ),
-                  AnimatedPositioned(
-                    duration: _navigationChromeDuration,
-                    curve: Curves.easeOutCubic,
-                    left: 0,
-                    right: 0,
-                    bottom:
-                        navigationChromeHeight +
-                        (_miniPlayerReservedHeight > 0
-                            ? _miniPlayerReservedHeight + 16
-                            : 8),
-                    child: ValueListenableBuilder<int>(
-                      valueListenable: SoothingMusicRuntimeStore.revision,
-                      builder: (context, _, _) {
-                        final visible =
-                            !isInitializing &&
-                            shellRouteIsCurrent &&
-                            currentTab != AppHomeTab.toolbox &&
-                            SoothingMiniPlayer.isVisible;
-                        final reservedHeight = visible ? 86.0 : 0.0;
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (!mounted) return;
-                          _handleSoothingMiniPlayerPresentation(
-                            visible,
-                            reservedHeight,
-                          );
-                        });
-                        if (!visible) {
-                          return const SizedBox.shrink();
-                        }
-                        return SoothingMiniPlayer(
-                          i18n: i18n,
-                          onOpen: () {
-                            pushModuleRoute<void>(
-                              context,
-                              state: state,
-                              moduleId: ModuleIds.toolboxSoothingMusic,
-                              settings: const RouteSettings(
-                                name: 'soothing_music',
-                              ),
-                              builder: (_) => const SoothingMusicV2Page(),
-                            );
-                          },
-                          onTogglePlayback: () async {
-                            final player =
-                                SoothingMusicRuntimeStore.retainedPlayer;
-                            if (player == null) {
-                              _setTab(AppHomeTab.toolbox);
-                              return;
-                            }
-                            if (SoothingMusicRuntimeStore.activePlaying) {
-                              await player.pause();
-                              SoothingMusicRuntimeStore.activePlaying = false;
-                            } else {
-                              await player.resume();
-                              SoothingMusicRuntimeStore.activePlaying = true;
-                            }
-                            SoothingMusicRuntimeStore.notifyChanged();
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                  if (!isInitializing)
-                    Positioned.fill(
-                      child: AmbientFloatingDock(
-                        state: state,
-                        i18n: i18n,
-                        bottomClearance: ambientLauncherBottomClearance,
-                      ),
-                    ),
-                  if (!isInitializing &&
-                      (state.wordbookImportActive ||
-                          state.remotePrewarmActive ||
-                          state.remotePrewarmFailed))
-                    Positioned(
-                      top: media.padding.top + 10,
-                      left: 16,
-                      right: 16,
+                onPointerMove: _handleNavigationPointerMove,
+                onPointerUp: (_) => _handleNavigationPointerUp(
+                  navigationAutoHideEnabled && !isInitializing,
+                ),
+                onPointerCancel: (_) => _clearNavigationPointerTracking(),
+                child: Stack(
+                  children: <Widget>[
+                    SafeArea(
+                      bottom: false,
                       child: Column(
-                        mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
-                          if (state.wordbookImportActive)
-                            _buildWordbookImportBanner(i18n, state),
-                          if (state.wordbookImportActive &&
-                              (state.remotePrewarmActive ||
-                                  state.remotePrewarmFailed))
-                            const SizedBox(height: 8),
-                          if (state.remotePrewarmActive ||
-                              state.remotePrewarmFailed)
-                            _buildRemotePrewarmBanner(i18n, state),
+                          Expanded(
+                            child: AnimatedPadding(
+                              duration: const Duration(milliseconds: 240),
+                              curve: Curves.easeOutCubic,
+                              padding: EdgeInsets.only(
+                                bottom: combinedMiniPlayerHeight,
+                              ),
+                              child: isInitializing
+                                  ? _buildInitializingView(context, i18n)
+                                  : IndexedStack(
+                                      index: safeIndex,
+                                      children: _visibleTabs
+                                          .map(_buildPageForTab)
+                                          .toList(growable: false),
+                                    ),
+                            ),
+                          ),
+                          _buildBottomNavigationChrome(
+                            height: navigationChromeHeight,
+                            bottomInset: bottomInset,
+                            selectedIndex: safeIndex,
+                            i18n: i18n,
+                            visible: navigationContentVisible,
+                          ),
                         ],
                       ),
                     ),
-                  BusyOverlay(
-                    visible: state.busy,
-                    message: state.busyMessage ?? i18n.t('processing'),
-                    detail: _busyDetail(i18n, state),
-                    progress: state.busyProgress,
-                  ),
-                  ValueListenableBuilder<int>(
-                    valueListenable: state.focusService.viewRevision,
-                    builder: (context, _, _) {
-                      if (!state.focusService.lockScreenActive) {
-                        return const SizedBox.shrink();
-                      }
-                      return const Positioned.fill(child: FocusLockOverlay());
-                    },
-                  ),
-                ],
+                    AnimatedPositioned(
+                      duration: _navigationChromeDuration,
+                      curve: Curves.easeOutCubic,
+                      left: 0,
+                      right: 0,
+                      bottom: navigationChromeHeight + 8,
+                      child: MiniPlayer(
+                        state: state,
+                        i18n: i18n,
+                        onOpenPractice: () => _setTab(AppHomeTab.practice),
+                        onOpenLibrary: () {
+                          _setTab(AppHomeTab.study);
+                          _setStudyTab(StudyStartupTab.library);
+                        },
+                        onPresentationChanged: _handleMiniPlayerPresentation,
+                      ),
+                    ),
+                    AnimatedPositioned(
+                      duration: _navigationChromeDuration,
+                      curve: Curves.easeOutCubic,
+                      left: 0,
+                      right: 0,
+                      bottom:
+                          navigationChromeHeight +
+                          (_miniPlayerReservedHeight > 0
+                              ? _miniPlayerReservedHeight + 16
+                              : 8),
+                      child: ValueListenableBuilder<int>(
+                        valueListenable: SoothingMusicRuntimeStore.revision,
+                        builder: (context, _, _) {
+                          final visible =
+                              !isInitializing &&
+                              shellRouteIsCurrent &&
+                              currentTab != AppHomeTab.toolbox &&
+                              SoothingMiniPlayer.isVisible;
+                          final reservedHeight = visible ? 86.0 : 0.0;
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (!mounted) return;
+                            _handleSoothingMiniPlayerPresentation(
+                              visible,
+                              reservedHeight,
+                            );
+                          });
+                          if (!visible) {
+                            return const SizedBox.shrink();
+                          }
+                          return SoothingMiniPlayer(
+                            i18n: i18n,
+                            onOpen: () {
+                              pushModuleRoute<void>(
+                                context,
+                                state: state,
+                                moduleId: ModuleIds.toolboxSoothingMusic,
+                                settings: const RouteSettings(
+                                  name: 'soothing_music',
+                                ),
+                                builder: (_) => const SoothingMusicV2Page(),
+                              );
+                            },
+                            onTogglePlayback: () async {
+                              final player =
+                                  SoothingMusicRuntimeStore.retainedPlayer;
+                              if (player == null) {
+                                _setTab(AppHomeTab.toolbox);
+                                return;
+                              }
+                              if (SoothingMusicRuntimeStore.activePlaying) {
+                                await player.pause();
+                                SoothingMusicRuntimeStore.activePlaying = false;
+                              } else {
+                                await player.resume();
+                                SoothingMusicRuntimeStore.activePlaying = true;
+                              }
+                              SoothingMusicRuntimeStore.notifyChanged();
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                    if (!isInitializing)
+                      Positioned.fill(
+                        child: AmbientFloatingDock(
+                          state: state,
+                          i18n: i18n,
+                          bottomClearance: ambientLauncherBottomClearance,
+                        ),
+                      ),
+                    if (!isInitializing &&
+                        (state.wordbookImportActive ||
+                            state.remotePrewarmActive ||
+                            state.remotePrewarmFailed))
+                      Positioned(
+                        top: media.padding.top + 10,
+                        left: 16,
+                        right: 16,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            if (state.wordbookImportActive)
+                              _buildWordbookImportBanner(i18n, state),
+                            if (state.wordbookImportActive &&
+                                (state.remotePrewarmActive ||
+                                    state.remotePrewarmFailed))
+                              const SizedBox(height: 8),
+                            if (state.remotePrewarmActive ||
+                                state.remotePrewarmFailed)
+                              _buildRemotePrewarmBanner(i18n, state),
+                          ],
+                        ),
+                      ),
+                    BusyOverlay(
+                      visible: state.busy,
+                      message: state.busyMessage ?? i18n.t('processing'),
+                      detail: _busyDetail(i18n, state),
+                      progress: state.busyProgress,
+                    ),
+                    ValueListenableBuilder<int>(
+                      valueListenable: state.focusService.viewRevision,
+                      builder: (context, _, _) {
+                        if (!state.focusService.lockScreenActive) {
+                          return const SizedBox.shrink();
+                        }
+                        return const Positioned.fill(child: FocusLockOverlay());
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

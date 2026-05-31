@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../services/toolbox_breathing_catalog.dart';
-import '../ui_copy.dart';
 import 'toolbox/toolbox_ui_components.dart';
 
 BoxDecoration breathingPanelDecoration({
@@ -183,19 +182,29 @@ class BreathingMetricPill extends StatelessWidget {
     super.key,
     required this.label,
     required this.value,
+    this.foregroundColor = Colors.white,
+    this.mutedForegroundColor = Colors.white70,
+    this.fillColor,
+    this.borderColor,
   });
 
   final String label;
   final String value;
+  final Color foregroundColor;
+  final Color mutedForegroundColor;
+  final Color? fillColor;
+  final Color? borderColor;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
+        color: fillColor ?? Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        border: Border.all(
+          color: borderColor ?? Colors.white.withValues(alpha: 0.12),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,13 +214,13 @@ class BreathingMetricPill extends StatelessWidget {
             label,
             style: Theme.of(
               context,
-            ).textTheme.labelSmall?.copyWith(color: Colors.white70),
+            ).textTheme.labelSmall?.copyWith(color: mutedForegroundColor),
           ),
           const SizedBox(height: 3),
           Text(
             value,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Colors.white,
+              color: foregroundColor,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -273,12 +282,20 @@ class BreathingStageTimeline extends StatelessWidget {
     required this.activeIndex,
     required this.i18n,
     required this.stageTintBuilder,
+    this.foregroundColor = Colors.white,
+    this.mutedForegroundColor = Colors.white70,
+    this.inactiveFillColor,
+    this.inactiveBorderColor,
   });
 
   final List<BreathingStagePlan> stages;
   final int activeIndex;
   final AppI18n i18n;
   final Color Function(BreathingStageKind kind) stageTintBuilder;
+  final Color foregroundColor;
+  final Color mutedForegroundColor;
+  final Color? inactiveFillColor;
+  final Color? inactiveBorderColor;
 
   Widget _buildSegment(
     BuildContext context,
@@ -294,12 +311,12 @@ class BreathingStageTimeline extends StatelessWidget {
       decoration: BoxDecoration(
         color: active
             ? stageTintBuilder(stage.kind).withValues(alpha: 0.28)
-            : Colors.white.withValues(alpha: 0.08),
+            : inactiveFillColor ?? Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: active
               ? stageTintBuilder(stage.kind)
-              : Colors.white.withValues(alpha: 0.14),
+              : inactiveBorderColor ?? Colors.white.withValues(alpha: 0.14),
         ),
       ),
       child: Column(
@@ -308,7 +325,7 @@ class BreathingStageTimeline extends StatelessWidget {
           Text(
             stage.label.resolve(i18n),
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: Colors.white,
+              color: foregroundColor,
               fontWeight: FontWeight.w700,
             ),
             maxLines: 2,
@@ -320,7 +337,7 @@ class BreathingStageTimeline extends StatelessWidget {
             '${stage.seconds}${i18n.t('toolbox.breathing.seconds_unit')}',
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: Colors.white70),
+            ).textTheme.bodySmall?.copyWith(color: mutedForegroundColor),
           ),
         ],
       ),

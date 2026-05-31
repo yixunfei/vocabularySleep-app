@@ -26,20 +26,11 @@ class _GomokuGameState extends State<_GomokuGame> {
   int? _lastMove;
   int? _suggestedMove;
   String _status = 'Your turn (black)';
-  bool _fullscreen = false;
 
   @override
   void initState() {
     super.initState();
     _resetGame();
-  }
-
-  @override
-  void dispose() {
-    if (_fullscreen) {
-      unawaited(_exitMiniGameFullscreen());
-    }
-    super.dispose();
   }
 
   int get _total => _size * _size;
@@ -89,20 +80,6 @@ class _GomokuGameState extends State<_GomokuGame> {
           ),
       ],
     );
-  }
-
-  Future<void> _setFullscreen(bool value) async {
-    if (_fullscreen == value) {
-      return;
-    }
-    setState(() {
-      _fullscreen = value;
-    });
-    if (value) {
-      await _enterMiniGameFullscreen(landscape: true);
-    } else {
-      await _exitMiniGameFullscreen();
-    }
   }
 
   void _resetGame() {
@@ -657,90 +634,79 @@ class _GomokuGameState extends State<_GomokuGame> {
     );
   }
 
-  Widget _buildBoard(BuildContext context, {required bool fullscreen}) {
+  Widget _buildBoard(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final viewportWidth = constraints.maxWidth;
-        final targetCell = fullscreen
-            ? 34.0
-            : _miniGameCompactLayout(context)
-            ? 24.0
-            : 30.0;
-        final boardWidth = math.max(viewportWidth, _size * targetCell);
+        final targetCell = _miniGameCompactLayout(context) ? 24.0 : 30.0;
+        final targetWidth = math.max(360.0, _size * targetCell);
+        final boardWidth = math.min(viewportWidth, targetWidth);
         final cellExtent = boardWidth / _size;
         return _MiniGameScrollLockSurface(
-          child: InteractiveViewer(
-            minScale: 0.7,
-            maxScale: 4,
-            boundaryMargin: const EdgeInsets.all(24),
-            child: Center(
-              child: SizedBox(
-                width: boardWidth,
-                height: boardWidth,
-                child: GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _board.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: _size,
-                  ),
-                  itemBuilder: (context, index) {
-                    final row = index ~/ _size;
-                    final col = index % _size;
-                    final suggested = _suggestedMove == index;
-                    return GestureDetector(
-                      onTap: () => _tapCell(index),
-                      child: Container(
-                        margin: EdgeInsets.all(cellExtent <= 24 ? 0.18 : 0.3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1D6A9),
-                          border: Border.all(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.outline.withValues(alpha: 0.45),
-                            width: cellExtent <= 24 ? 0.3 : 0.45,
-                          ),
-                        ),
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: <Widget>[
-                            if (_board[index] == _GomokuStone.empty &&
-                                _isStarPoint(row, col))
-                              Container(
-                                width: (cellExtent * 0.18)
-                                    .clamp(3, 7)
-                                    .toDouble(),
-                                height: (cellExtent * 0.18)
-                                    .clamp(3, 7)
-                                    .toDouble(),
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF7E5525),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            if (suggested &&
-                                _board[index] == _GomokuStone.empty)
-                              Container(
-                                width: cellExtent * 0.64,
-                                height: cellExtent * 0.64,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: const Color(0xFF2E6CE6),
-                                    width: 2,
-                                  ),
-                                ),
-                              ),
-                            _GomokuStoneView(
-                              stone: _board[index],
-                              highlight: _lastMove == index,
-                              extent: cellExtent,
-                            ),
-                          ],
+          child: Center(
+            child: SizedBox(
+              width: boardWidth,
+              height: boardWidth,
+              child: GridView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _board.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: _size,
+                ),
+                itemBuilder: (context, index) {
+                  final row = index ~/ _size;
+                  final col = index % _size;
+                  final suggested = _suggestedMove == index;
+                  return GestureDetector(
+                    onTap: () => _tapCell(index),
+                    child: Container(
+                      margin: EdgeInsets.all(cellExtent <= 24 ? 0.18 : 0.3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1D6A9),
+                        border: Border.all(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.outline.withValues(alpha: 0.45),
+                          width: cellExtent <= 24 ? 0.3 : 0.45,
                         ),
                       ),
-                    );
-                  },
-                ),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: <Widget>[
+                          if (_board[index] == _GomokuStone.empty &&
+                              _isStarPoint(row, col))
+                            Container(
+                              width: (cellExtent * 0.18).clamp(3, 7).toDouble(),
+                              height: (cellExtent * 0.18)
+                                  .clamp(3, 7)
+                                  .toDouble(),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF7E5525),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          if (suggested && _board[index] == _GomokuStone.empty)
+                            Container(
+                              width: cellExtent * 0.64,
+                              height: cellExtent * 0.64,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFF2E6CE6),
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                          _GomokuStoneView(
+                            stone: _board[index],
+                            highlight: _lastMove == index,
+                            extent: cellExtent,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -757,85 +723,6 @@ class _GomokuGameState extends State<_GomokuGame> {
         : _aiThinking
         ? i18n.t('toolbox.miniGames.gomoku.ai_thinking.9700f995')
         : i18n.t('toolbox.miniGames.gomoku.your_turn_black.c50daa6f');
-    if (_fullscreen) {
-      return Card(
-        clipBehavior: Clip.antiAlias,
-        child: SizedBox(
-          height: MediaQuery.sizeOf(context).height * 0.8,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: <Widget>[
-                    FilledButton.tonalIcon(
-                      onPressed: () => _setFullscreen(false),
-                      icon: const Icon(Icons.fullscreen_exit_rounded),
-                      label: Text(
-                        i18n.t(
-                          'toolbox.miniGames.gomoku.exit_fullscreen.adad14ea',
-                        ),
-                      ),
-                    ),
-                    FilledButton.tonalIcon(
-                      onPressed:
-                          _aiThinking ||
-                              _gameOver ||
-                              _turn != _GomokuStone.black
-                          ? null
-                          : _showHint,
-                      icon: const Icon(Icons.tips_and_updates_outlined),
-                      label: Text(
-                        i18n.t('toolbox.miniGames.gomoku.hint.7bc3c1bc'),
-                      ),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: _resetGame,
-                      icon: const Icon(Icons.refresh_rounded),
-                      label: Text(
-                        i18n.t('toolbox.miniGames.gomoku.new_game.73979522'),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: <Widget>[
-                    ToolboxMetricCard(
-                      label: i18n.t('toolbox.miniGames.gomoku.board.2999f1e6'),
-                      value: '15x15',
-                    ),
-                    ToolboxMetricCard(
-                      label: i18n.t('toolbox.miniGames.gomoku.moves.e992cb6f'),
-                      value: '$_moves',
-                    ),
-                    ToolboxMetricCard(
-                      label: i18n.t('toolbox.miniGames.gomoku.status.7c405acf'),
-                      value: displayStatus,
-                    ),
-                    ToolboxMetricCard(
-                      label: i18n.t(
-                        'toolbox.miniGames.gomoku.ai_level.19e3b3c8',
-                      ),
-                      value: _difficultyLabel(i18n, _difficulty),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _buildDifficultySelector(i18n),
-                const SizedBox(height: 12),
-                Expanded(child: _buildBoard(context, fullscreen: true)),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -876,7 +763,7 @@ class _GomokuGameState extends State<_GomokuGame> {
             const SizedBox(height: 12),
             SizedBox(
               height: _miniGameCompactLayout(context) ? 360 : 520,
-              child: _buildBoard(context, fullscreen: false),
+              child: _buildBoard(context),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -897,15 +784,6 @@ class _GomokuGameState extends State<_GomokuGame> {
                       : _showHint,
                   icon: const Icon(Icons.tips_and_updates_outlined),
                   label: Text(i18n.t('toolbox.miniGames.gomoku.hint.7bc3c1bc')),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => _setFullscreen(true),
-                  icon: const Icon(Icons.fullscreen_rounded),
-                  label: Text(
-                    i18n.t(
-                      'toolbox.miniGames.gomoku.fullscreen_board.ed7ca85a',
-                    ),
-                  ),
                 ),
                 if (_aiThinking)
                   Chip(

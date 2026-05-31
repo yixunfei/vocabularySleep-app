@@ -6,13 +6,20 @@ class SoothingMusicTrack {
     required this.assetPath,
     required this.labelKey,
     required this.seed,
+    this.localPath,
+    this.customLabel,
   });
 
   final String assetPath;
   final String labelKey;
   final int seed;
+  final String? localPath;
+  final String? customLabel;
 
-  String label(AppI18n i18n) => SoothingMusicCopy.trackLabel(i18n, labelKey);
+  bool get isLocal => localPath != null && localPath!.trim().isNotEmpty;
+
+  String label(AppI18n i18n) =>
+      customLabel ?? SoothingMusicCopy.trackLabel(i18n, labelKey);
 }
 
 class SoothingMusicTrackCatalog {

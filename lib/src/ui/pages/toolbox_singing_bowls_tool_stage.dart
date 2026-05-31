@@ -39,45 +39,49 @@ extension _SingingBowlsStage on _SingingBowlsPracticeCardState {
                               burst: burst,
                               bowlSize: bowlSize * 2.02,
                             ),
-                          AnimatedBuilder(
-                            animation: Listenable.merge(<Listenable>[
-                              _ambientController,
-                              _strikeController,
-                            ]),
-                            builder: (BuildContext context, Widget? child) {
-                              final strike = AppEasing.bounce.transform(
-                                _strikeController.value,
-                              );
-                              final pulse =
-                                  0.5 +
-                                  0.5 *
-                                      math.sin(
-                                        _ambientController.value * math.pi * 2,
-                                      );
-                              final scale =
-                                  1 -
-                                  strike * 0.056 -
-                                  (_pressing ? 0.025 : 0) +
-                                  pulse * 0.004;
-                              final yOffset = strike * 8.5;
-                              return Transform.translate(
-                                offset: Offset(0, yOffset),
-                                child: Transform.scale(
-                                  scale: scale,
-                                  child: child,
-                                ),
-                              );
-                            },
-                            child: SizedBox.square(
-                              dimension: bowlSize,
-                              child: CustomPaint(
-                                painter: _SingingBowlPainter(
-                                  accent: frequencySpec.accent,
-                                  glow: frequencySpec.glow,
-                                  voice: voiceSpec,
-                                  ambientValue: _ambientController.value,
-                                  strikeValue: _strikeController.value,
-                                  pressing: _pressing,
+                          RepaintBoundary(
+                            child: AnimatedBuilder(
+                              animation: Listenable.merge(<Listenable>[
+                                _ambientController,
+                                _strikeController,
+                              ]),
+                              builder: (BuildContext context, Widget? child) {
+                                final strike = AppEasing.bounce.transform(
+                                  _strikeController.value,
+                                );
+                                final pulse =
+                                    0.5 +
+                                    0.5 *
+                                        math.sin(
+                                          _ambientController.value *
+                                              math.pi *
+                                              2,
+                                        );
+                                final scale =
+                                    1 -
+                                    strike * 0.056 -
+                                    (_pressing ? 0.025 : 0) +
+                                    pulse * 0.004;
+                                final yOffset = strike * 8.5;
+                                return Transform.translate(
+                                  offset: Offset(0, yOffset),
+                                  child: Transform.scale(
+                                    scale: scale,
+                                    child: child,
+                                  ),
+                                );
+                              },
+                              child: SizedBox.square(
+                                dimension: bowlSize,
+                                child: CustomPaint(
+                                  painter: _SingingBowlPainter(
+                                    accent: frequencySpec.accent,
+                                    glow: frequencySpec.glow,
+                                    voice: voiceSpec,
+                                    ambientValue: _ambientController.value,
+                                    strikeValue: _strikeController.value,
+                                    pressing: _pressing,
+                                  ),
                                 ),
                               ),
                             ),

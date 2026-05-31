@@ -328,6 +328,10 @@ extension _SoothingMusicV2Stage on _SoothingMusicV2PageState {
               ),
             ],
           ),
+          if (loadingText != null) ...<Widget>[
+            const SizedBox(height: 12),
+            _buildTrackLoadBanner(loadingText, palette: palette),
+          ],
           const SizedBox(height: 14),
           Text(
             _mode.title(i18n),
@@ -401,39 +405,6 @@ extension _SoothingMusicV2Stage on _SoothingMusicV2PageState {
               ),
             ),
           ],
-          if (loadingText != null) ...<Widget>[
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: palette.panelSurface.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: palette.border),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    loadingText,
-                    style: TextStyle(
-                      color: palette.textPrimary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  if (_trackLoadProgress != null) ...<Widget>[
-                    const SizedBox(height: 8),
-                    LinearProgressIndicator(
-                      value: _trackLoadProgress,
-                      minHeight: 4,
-                      backgroundColor: palette.border.withValues(alpha: 0.3),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
           if (errorText != null) ...<Widget>[
             const SizedBox(height: 12),
             Container(
@@ -448,6 +419,56 @@ extension _SoothingMusicV2Stage on _SoothingMusicV2PageState {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTrackLoadBanner(
+    String loadingText, {
+    required _SoothingVisualPalette palette,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: palette.panelSurface.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: palette.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  value: _trackLoadProgress,
+                  color: palette.accent,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  loadingText,
+                  style: TextStyle(
+                    color: palette.textPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: _trackLoadProgress,
+            minHeight: 4,
+            backgroundColor: palette.border.withValues(alpha: 0.3),
+          ),
         ],
       ),
     );
@@ -484,6 +505,11 @@ extension _SoothingMusicV2Stage on _SoothingMusicV2PageState {
                 icon: Icons.library_music_rounded,
                 label: _copyTrackCountLabel(i18n, _tracks.length),
                 palette: palette,
+              ),
+              ActionChip(
+                avatar: const Icon(Icons.library_add_rounded, size: 18),
+                label: Text(i18n.t('importAudio')),
+                onPressed: _loading ? null : _importLocalTracks,
               ),
               if (_sleepRemaining != null)
                 _InfoPill(
@@ -536,11 +562,12 @@ extension _SoothingMusicV2Stage on _SoothingMusicV2PageState {
                             fontSize: 14,
                           ),
                         ),
-                        if (SoothingMusicCopy.trackLabel(
-                              AppI18n('zh'),
-                              _currentTrack.labelKey,
-                            ) !=
-                            _currentTrack.label(i18n)) ...<Widget>[
+                        if (!_currentTrack.isLocal &&
+                            SoothingMusicCopy.trackLabel(
+                                  AppI18n('zh'),
+                                  _currentTrack.labelKey,
+                                ) !=
+                                _currentTrack.label(i18n)) ...<Widget>[
                           const SizedBox(height: 1),
                           Text(
                             SoothingMusicCopy.trackLabel(

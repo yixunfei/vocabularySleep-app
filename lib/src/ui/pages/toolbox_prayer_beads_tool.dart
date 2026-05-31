@@ -23,6 +23,14 @@ enum _PrayerBeadsMaterial {
   String get id => name;
 }
 
+enum _PrayerBeadsHapticStrength {
+  subtle,
+  light,
+  firm;
+
+  String get id => name;
+}
+
 class _PrayerBeadsPalette {
   const _PrayerBeadsPalette({
     required this.stageGradient,
@@ -171,6 +179,14 @@ _PrayerBeadsMaterial _materialFromId(String? value) {
   };
 }
 
+_PrayerBeadsHapticStrength _hapticStrengthFromId(String? value) {
+  return switch (value) {
+    'light' => _PrayerBeadsHapticStrength.light,
+    'firm' => _PrayerBeadsHapticStrength.firm,
+    _ => _PrayerBeadsHapticStrength.subtle,
+  };
+}
+
 class _StageBeadLayout {
   const _StageBeadLayout({
     required this.slot,
@@ -234,6 +250,8 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
   int _allTimeCount = 0;
   bool _soundEnabled = true;
   bool _hapticsEnabled = true;
+  _PrayerBeadsHapticStrength _hapticStrength =
+      _PrayerBeadsHapticStrength.subtle;
   bool _hasInteracted = false;
   int _advanceDirection = 1;
   bool _didAdvanceThisGesture = false;
@@ -249,6 +267,7 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
     allTimeCount: _allTimeCount,
     soundEnabled: _soundEnabled,
     hapticsEnabled: _hapticsEnabled,
+    hapticStrengthId: _hapticStrength.id,
   );
 
   _PrayerBeadsPalette get _palette => _paletteFor(_material);
@@ -331,6 +350,7 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
       _allTimeCount = prefs.allTimeCount;
       _soundEnabled = prefs.soundEnabled;
       _hapticsEnabled = prefs.hapticsEnabled;
+      _hapticStrength = _hapticStrengthFromId(prefs.hapticStrengthId);
       _hasInteracted = _sessionCount > 0;
     });
     if (_sessionCount > 0) {
@@ -424,6 +444,21 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
     } catch (_) {}
   }
 
+  void _playAdvanceHaptic({required bool accent}) {
+    if (!_hapticsEnabled) {
+      return;
+    }
+    final feedback = switch (_hapticStrength) {
+      _PrayerBeadsHapticStrength.subtle =>
+        accent ? HapticFeedback.lightImpact : HapticFeedback.selectionClick,
+      _PrayerBeadsHapticStrength.light =>
+        accent ? HapticFeedback.mediumImpact : HapticFeedback.lightImpact,
+      _PrayerBeadsHapticStrength.firm =>
+        accent ? HapticFeedback.heavyImpact : HapticFeedback.mediumImpact,
+    };
+    feedback();
+  }
+
   void _stopStrandMotion() {
     if (_strandController.isAnimating) {
       _strandController.stop();
@@ -498,13 +533,7 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
       _sessionStopwatch.start();
       _ensureElapsedTimer();
     }
-    if (_hapticsEnabled) {
-      if (completesRound) {
-        HapticFeedback.mediumImpact();
-      } else {
-        HapticFeedback.selectionClick();
-      }
-    }
+    _playAdvanceHaptic(accent: completesRound);
     setState(() {
       _hasInteracted = true;
       _sessionCount += 1;
@@ -605,6 +634,16 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
   void _toggleHaptics(bool enabled) {
     setState(() {
       _hapticsEnabled = enabled;
+    });
+    _schedulePersist();
+  }
+
+  void _setHapticStrength(_PrayerBeadsHapticStrength strength) {
+    if (_hapticStrength == strength) {
+      return;
+    }
+    setState(() {
+      _hapticStrength = strength;
     });
     _schedulePersist();
   }
@@ -736,6 +775,18 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
       _ => _i18n.t(
         'toolbox.prayerBeads.warm_wood_character_with_a_natural_tactile.deb04271',
       ),
+    };
+  }
+
+  String _hapticStrengthLabel(_PrayerBeadsHapticStrength strength) {
+    return switch (strength) {
+      _PrayerBeadsHapticStrength.light => _i18n.t(
+        'toolbox.prayerBeads.haptic_strength.light',
+      ),
+      _PrayerBeadsHapticStrength.firm => _i18n.t(
+        'toolbox.prayerBeads.haptic_strength.firm',
+      ),
+      _ => _i18n.t('toolbox.prayerBeads.haptic_strength.subtle'),
     };
   }
 
@@ -1220,6 +1271,35 @@ class _PrayerBeadsPracticeCardState extends State<PrayerBeadsPracticeCard>
             ),
             onChanged: _toggleHaptics,
           ),
+          if (_hapticsEnabled) ...<Widget>[
+            const SizedBox(height: 6),
+            Text(
+              _i18n.t('toolbox.prayerBeads.haptic_strength.title'),
+              style: Theme.of(
+                context,
+              ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _PrayerBeadsHapticStrength.values
+                  .map(
+                    (strength) => ToolboxSelectablePill(
+                      key: Key('prayer-beads-haptic-strength-${strength.id}'),
+                      label: Text(_hapticStrengthLabel(strength)),
+                      selected: _hapticStrength == strength,
+                      onTap: () => _setHapticStrength(strength),
+                      tint: _palette.accent,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+          ],
           const SizedBox(height: 8),
           Wrap(
             spacing: 10,

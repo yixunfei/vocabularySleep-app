@@ -263,7 +263,7 @@ class _OnlineAmbientCatalogSheetState
                                               ),
                                               const SizedBox(height: 4),
                                               Text(
-                                                option.relativePath,
+                                                i18n.t(option.categoryKey),
                                                 style: Theme.of(
                                                   context,
                                                 ).textTheme.bodySmall,
