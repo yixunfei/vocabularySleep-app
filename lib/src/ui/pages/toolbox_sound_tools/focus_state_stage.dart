@@ -440,8 +440,16 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
               ),
             ),
             child: Text(
-              '${previewI18n.t('toolbox.sound.focus.stageSegmentS')}${index + 1} · ${previewSegmentBeats[index]} ${previewI18n.t('toolbox.sound.focus.stageBeatsUnit')} · '
-              '${_focusBarsLabel(previewSegmentBeats[index] / _beatsPerBar)}',
+              previewI18n.t(
+                'toolbox.sound.focus.stageSegmentPreview',
+                params: <String, Object?>{
+                  'index': '${index + 1}',
+                  'beats': '${previewSegmentBeats[index]}',
+                  'bars': _focusBarsLabel(
+                    previewSegmentBeats[index] / _beatsPerBar,
+                  ),
+                },
+              ),
               style: Theme.of(context).textTheme.labelMedium,
             ),
           ),

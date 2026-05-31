@@ -471,7 +471,13 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
           icon: Icons.speed_rounded,
           title: inlineI18n.t('toolbox.sound.focus.controlTempo'),
           subtitle: inlineI18n.t('toolbox.sound.focus.controlTempoDesc'),
-          summary: '$_bpm BPM · ${(60 / _bpm).toStringAsFixed(2)} s/beat',
+          summary: inlineI18n.t(
+            'toolbox.sound.focus.tempoLabel',
+            params: <String, Object?>{
+              'bpm': '$_bpm',
+              'sec': (60 / _bpm).toStringAsFixed(2),
+            },
+          ),
           expanded: _tempoExpanded,
           onToggle: () {
             setState(() {
@@ -485,7 +491,13 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
           icon: Icons.tune_rounded,
           title: inlineI18n.t('toolbox.sound.focus.controlMeter'),
           subtitle: inlineI18n.t('toolbox.sound.focus.controlMeterDesc'),
-          summary: '$_beatsPerBar/4 × $_subdivision',
+          summary: inlineI18n.t(
+            'toolbox.sound.focus.meterSummary',
+            params: <String, Object?>{
+              'beats': '$_beatsPerBar',
+              'subdivision': '$_subdivision',
+            },
+          ),
           expanded: _meterExpanded,
           onToggle: () {
             setState(() {
@@ -532,8 +544,15 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
           icon: Icons.graphic_eq_rounded,
           title: inlineI18n.t('toolbox.sound.focus.controlMix'),
           subtitle: inlineI18n.t('toolbox.sound.focus.controlMixDesc'),
-          summary:
-              '${(100 * _masterVolume).round()}% · ${_hapticsEnabled ? inlineI18n.t('toolbox.sound.focus.hapticsOn') : inlineI18n.t('toolbox.sound.focus.hapticsOff')}',
+          summary: inlineI18n.t(
+            'toolbox.sound.focus.mixSummary',
+            params: <String, Object?>{
+              'volume': '${(100 * _masterVolume).round()}',
+              'haptics': _hapticsEnabled
+                  ? inlineI18n.t('toolbox.sound.focus.hapticsOn')
+                  : inlineI18n.t('toolbox.sound.focus.hapticsOff'),
+            },
+          ),
           expanded: _advancedExpanded,
           onToggle: () {
             setState(() {

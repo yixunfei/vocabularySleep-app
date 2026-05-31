@@ -1,3 +1,21 @@
+## [Unreleased-I18N-SOUND-COPY-CLEANUP] - 2026-05-31
+
+### 原因
+- 修复工具箱声音类模块中由 key 名机械翻译造成的标题、说明和按钮文案错位，例如“竖琴标题”“焦点节拍标题”“仪表开关”“低音炮”“赛博木鱼”等。
+
+### 修复
+- 统一修正游戏/声音工具入口与内部标题：模拟乐器、专注节拍、电子木鱼、舒缓轻音乐、拾音器等均改为业务语义文案。
+- 补齐拾音器动态按钮和指标缺失 key，并修复百分比参数被转义后直接显示 `${...}` 的问题。
+- 修正专注节拍摘要与段落预览中的硬编码分隔文本，改为 catalog key + params。
+- 清理 `app_texts.csv` 中遗留的 35 个 NUL 字节，避免搜索工具把 catalog 误判为二进制文件。
+
+### 验证
+- `node scripts/audit_i18n_placeholders.js` 通过：catalog missing 0，placeholderMismatch 0，Dart 缺参 0。
+- 旧 helper 与 catalog Dart 插值表达式扫描无命中。
+- 目标 `dart analyze` 通过，No issues found。
+- `flutter test test/app_i18n_catalog_test.dart --reporter compact` 通过。
+- `git diff --check` 通过。
+
 ## [Unreleased-PLAN_303-FIRST-RUN-SETUP-GUIDE] - 2026-05-31
 
 ### 原因

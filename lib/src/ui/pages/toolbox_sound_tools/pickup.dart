@@ -1876,18 +1876,21 @@ class _PickupToolState extends State<_PickupTool>
                           '${_freezeCapturedAt!.second.toString().padLeft(2, '0')}',
                     ),
                   ToolboxMetricCard(
-                    label: 'Profile',
+                    label: i18n.t('toolbox.sound.pickup.pickup_type'),
                     value: _profileLabel(i18n, _profileId),
                   ),
                   ToolboxMetricCard(
-                    label: 'Peak',
+                    label: i18n.t('toolbox.sound.pickup.peak'),
                     value: '${(_effectivePeak * 100).round()}%',
                   ),
                   ToolboxMetricCard(
-                    label: 'Tone',
+                    label: i18n.t('toolbox.sound.pickup.tone'),
                     value: _toneBalanceLabel(i18n),
                   ),
-                  ToolboxMetricCard(label: 'Pitch', value: _pitchDisplay()),
+                  ToolboxMetricCard(
+                    label: i18n.t('toolbox.sound.pickup.pitch'),
+                    value: _pitchDisplay(),
+                  ),
                   ToolboxMetricCard(
                     label: i18n.t('toolbox.sound.pickup.score_label'),
                     value: _qualityScore(i18n),
@@ -2076,7 +2079,7 @@ class _PickupToolState extends State<_PickupTool>
                         Text(
                           i18n.t(
                             'toolbox.sound.pickup.preamp_pct',
-                            params: {'pct': '\${(_preamp * 100).round()}'},
+                            params: {'pct': '${(_preamp * 100).round()}'},
                           ),
                           style: theme.textTheme.bodyMedium,
                         ),
@@ -2101,7 +2104,7 @@ class _PickupToolState extends State<_PickupTool>
                         Text(
                           i18n.t(
                             'toolbox.sound.pickup.gate_pct',
-                            params: {'pct': '\${(_gate * 100).round()}'},
+                            params: {'pct': '${(_gate * 100).round()}'},
                           ),
                           style: theme.textTheme.bodyMedium,
                         ),
@@ -2129,7 +2132,7 @@ class _PickupToolState extends State<_PickupTool>
                         Text(
                           i18n.t(
                             'toolbox.sound.pickup.presence_pct',
-                            params: {'pct': '\${(_presence * 100).round()}'},
+                            params: {'pct': '${(_presence * 100).round()}'},
                           ),
                           style: theme.textTheme.bodyMedium,
                         ),

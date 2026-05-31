@@ -5925,7 +5925,7 @@ inline.ui.app_shell.weather_ef1420,天气,Weather,天気,Wetter,Météo,Tiempo,�
 inline.ui.module.module_access.breathing_practice_211f64,呼吸引导,Breathing practice,呼吸法の練習,Atemübung,Pratique de la respiration,Práctica de respiración,Практика дыхания
 inline.ui.module.module_access.crypto_security_edbc46,加密安全,Crypto security,暗号資産セキュリティ,Krypto-Sicherheit,Sécurité crypto,Seguridad criptográfica,Безопасность криптовалюты
 inline.ui.module.module_access.daily_decision_4f4bb0,每日决策,Daily decision,日々の決定,Tägliche Entscheidung,Décision quotidienne,Decisión diaria,Ежедневное решение
-inline.ui.module.module_access.digital_woodfish_35ef49,数字木鱼,Digital woodfish,デジタルウッドフィッシュ,Digitale Holzklingel,Poisson des bois numériques,Pez madera digital,Цифровая древесная рыба
+inline.ui.module.module_access.digital_woodfish_35ef49,电子木鱼,Digital wooden fish,電子木魚,Digitaler Holzfisch,Poisson en bois numérique,Pez de madera digital,Цифровая деревянная рыба
 inline.ui.module.module_access.focus_7a53a2,专注,Focus,集中,Fokus,Concentration,Enfoque,Фокус
 inline.ui.module.module_access.focus_beats_68284f,专注节拍,Focus beats,集中ビート,Fokus Beats,Battements de concentration,Ritmos de concentración,Ритмы концентрации
 inline.ui.module.module_access.healing_bowls_918cb2,治疗碗,Healing bowls,癒しのボウル,Heilende Klangschalen,Bols de guérison,Cuencos de sanación,Целительные чаши
@@ -12074,7 +12074,7 @@ literal.models.word_field.text_34eb53,短语,短语,短语,短语,短语,短语,
 literal.models.word_field.text_3535a8,记忆辅助策略,记忆辅助策略,记忆辅助策略,记忆辅助策略,记忆辅助策略,记忆辅助策略,记忆辅助策略
 literal.models.word_field.text_3677f6,词性,词性,词性,词性,词性,词性,词性
 literal.models.word_field.text_39708b,常见搭配,常见搭配,常见搭配,常见搭配,常见搭配,常见搭配,常见搭配
-literal.models.word_field.text_3e4f18, , , , , , , 
+literal.models.word_field.text_3e4f18,,,,,,,
 literal.models.word_field.text_3fca5a,词缀分析,词缀分析,词缀分析,词缀分析,词缀分析,词缀分析,词缀分析
 literal.models.word_field.text_423442,中文义项,中文义项,中文义项,中文义项,中文义项,中文义项,中文义项
 literal.models.word_field.text_4238f9,列举例句,列举例句,列举例句,列举例句,列举例句,列举例句,列举例句
@@ -25822,7 +25822,7 @@ literal.services.wordbook_import_service.text_4d8c40,] ??,] ??,] ??,] ??,] ??,] 
 literal.services.wordbook_import_service.text_4efc72,] ??,] ??,] ??,] ??,] ??,] ??,] ??
 literal.services.wordbook_import_service.text_524b16,},},},},},},}
 literal.services.wordbook_import_service.text_53c6b1,},},},},},},}
-literal.services.wordbook_import_service.text_55b94a, , , , , , , 
+literal.services.wordbook_import_service.text_55b94a,,,,,,,
 literal.services.wordbook_import_service.text_56f362,；,；,；,；,；,；,；
 literal.services.wordbook_import_service.text_58fca1,场景化例句,场景化例句,场景化例句,场景化例句,场景化例句,场景化例句,场景化例句
 literal.services.wordbook_import_service.text_59cc34,"""","""","""","""","""","""",""""
@@ -38094,7 +38094,7 @@ if ({variable}.length > 8) {
 }"
 literal.ui.pages.toolbox_human_tests_typing.first_second_08_minute_tostring_padleft_2_c711dc,"{first}-{second} | 08:{minute.toString().padLeft(2,","{first}-{second} | 08:{minute.toString().padLeft(2,","{first}-{second} | 08:{minute.toString().padLeft(2,","{first}-{second} | 08:{minute.toString().padLeft(2,","{first}-{second} | 08:{minute.toString().padLeft(2,","{first}-{second} | 08:{minute.toString().padLeft(2,","{first}-{second} | 08:{minute.toString().padLeft(2,"
 literal.ui.pages.toolbox_human_tests_typing.focusnote_0540fd,focusNote,focusNote,focusNote,focusNote,focusNote,focusNote,focusNote
-literal.ui.pages.toolbox_human_tests_typing.inputchars_index_3f702a, {inputCharsIndex}, {inputCharsIndex}, {inputCharsIndex}, {inputCharsIndex}, {inputCharsIndex}, {inputCharsIndex}, {inputCharsIndex}
+literal.ui.pages.toolbox_human_tests_typing.inputchars_index_3f702a,{inputCharsIndex},{inputCharsIndex},{inputCharsIndex},{inputCharsIndex},{inputCharsIndex},{inputCharsIndex},{inputCharsIndex}
 literal.ui.pages.toolbox_human_tests_typing.livecpm_round_cpm_a84124,{liveCpm} CPM,{liveCpm} CPM,{liveCpm} CPM,{liveCpm} CPM,{liveCpm} CPM,{liveCpm} CPM,{liveCpm} CPM
 literal.ui.pages.toolbox_human_tests_typing.livenetwpm_round_wpm_01891f,{liveNetWpm} WPM,{liveNetWpm} WPM,{liveNetWpm} WPM,{liveNetWpm} WPM,{liveNetWpm} WPM,{liveNetWpm} WPM,{liveNetWpm} WPM
 literal.ui.pages.toolbox_human_tests_typing.livewpm_round_wpm_76c688,{liveWpm} WPM,{liveWpm} WPM,{liveWpm} WPM,{liveWpm} WPM,{liveWpm} WPM,{liveWpm} WPM,{liveWpm} WPM
@@ -38106,14 +38106,14 @@ literal.ui.pages.toolbox_human_tests_typing.source_typo_81931e,{source} typo,{so
 literal.ui.pages.toolbox_human_tests_typing.stats_errors_393358,{statsErrors},{statsErrors},{statsErrors},{statsErrors},{statsErrors},{statsErrors},{statsErrors}
 literal.ui.pages.toolbox_human_tests_typing.storyline_efee4a,storyLine,storyLine,storyLine,storyLine,storyLine,storyLine,storyLine
 literal.ui.pages.toolbox_human_tests_typing.systemnote_6441a8,systemNote,systemNote,systemNote,systemNote,systemNote,systemNote,systemNote
-literal.ui.pages.toolbox_human_tests_typing.targetchars_index_inputchars_index_093c06,{targetCharsIndex} {inputCharsIndex},{targetCharsIndex} {inputCharsIndex},{targetCharsIndex} {inputCharsIndex},{targetCharsIndex} {inputCharsIndex},{targetCharsIndex} {inputCharsIndex},{targetCharsIndex} {inputCharsIndex},{targetCharsIndex} {inputCharsIndex}
+literal.ui.pages.toolbox_human_tests_typing.targetchars_index_inputchars_index_093c06,{targetCharsIndex}{inputCharsIndex},{targetCharsIndex}{inputCharsIndex},{targetCharsIndex}{inputCharsIndex},{targetCharsIndex}{inputCharsIndex},{targetCharsIndex}{inputCharsIndex},{targetCharsIndex}{inputCharsIndex},{targetCharsIndex}{inputCharsIndex}
 literal.ui.pages.toolbox_human_tests_typing.text_069783,！,！,！,！,！,！,！
 literal.ui.pages.toolbox_human_tests_typing.text_2f8f3d,)},)},)},)},)},)},)}
 literal.ui.pages.toolbox_human_tests_typing.text_43b0df,.,.,.,.,.,.,.
 literal.ui.pages.toolbox_human_tests_typing.text_5af676,',',',',',','
 literal.ui.pages.toolbox_human_tests_typing.text_739061,!,!,!,!,!,!,!
 literal.ui.pages.toolbox_human_tests_typing.text_a49214,"""","""","""","""","""","""",""""
-literal.ui.pages.toolbox_human_tests_typing.text_a60691, , , , , , , 
+literal.ui.pages.toolbox_human_tests_typing.text_a60691,,,,,,,
 literal.ui.pages.toolbox_human_tests_typing.text_c9f859,)},)},)},)},)},)},)}
 literal.ui.pages.toolbox_human_tests_typing.text_cb61fe,-,-,-,-,-,-,-
 literal.ui.pages.toolbox_human_tests_typing.text_cc6abd,-,-,-,-,-,-,-
@@ -57607,8 +57607,8 @@ ref.toolbox.hub.entry.decision.subtitle,将日常犹豫不决变为可随机、�
 ref.toolbox.hub.entry.decision.title,日常决策,Daily Decision,デイリーデシジョン,Tägliche Entscheidung,Décision Quotidienne,Decisión Diaria,Ежедневное решение
 ref.toolbox.hub.entry.games.subtitle,用于注意力转移的快速认知游戏中心。,Quick cognitive mini-games for focus shifting.,集中力を切り替えるためのクイック認知ミニゲーム。,Schnelle kognitive Mini-Spiele zur Fokussierungsverschiebung.,Mini-jeux cognitifs rapides pour le changement de concentration.,Mini-juegos cognitivos rápidos para cambiar el enfoque.,Быстрые мини-игры для мозга для переключения внимания.
 ref.toolbox.hub.entry.games.title,游戏中心,Mini Games,ミニゲーム,Mini-Spiele,Mini-Jeux,Mini Juegos,Мини-игры
-ref.toolbox.hub.entry.harp.subtitle,演奏竖琴、吉他、小提琴、长笛和三角铁的声音。,"Play harp, guitar, violin, flute, and triangle sounds.",ハープ、ギター、バイオリン、フルート、トライアングルの音を演奏。,"Spiele Harfen-, Gitarren-, Geigen-, Flöten- und Dreieck-Klänge.","Jouez des sons de harpe, guitare, violon, flûte et triangle.","Toca sonidos de arpa, guitarra, violín, flauta y triángulo.","Играть на звуках арфы, гитары, скрипки, флейты и треугольника."
-ref.toolbox.hub.entry.harp.title,模拟乐器,Harp & Strings,ハープ＆弦楽器,Harfe & Saiten,Harpe & Cordes,Arpa y Cuerdas,Арфа и струнные
+ref.toolbox.hub.entry.harp.subtitle,演奏竖琴、钢琴、长笛、鼓垫、吉他、小提琴等模拟乐器。,"Play simulated harp, piano, flute, drum pad, guitar, violin, and more.","Play simulated harp, piano, flute, drum pad, guitar, violin, and more.","Play simulated harp, piano, flute, drum pad, guitar, violin, and more.","Play simulated harp, piano, flute, drum pad, guitar, violin, and more.","Play simulated harp, piano, flute, drum pad, guitar, violin, and more.","Play simulated harp, piano, flute, drum pad, guitar, violin, and more."
+ref.toolbox.hub.entry.harp.title,模拟乐器,Instrument Deck,楽器デッキ,Instrumenten-Deck,Instruments simulés,Instrumentos simulados,Симулятор инструментов
 ref.toolbox.hub.entry.life.subtitle,日常实用工具。,Practical utilities for daily routines.,日常生活に役立つ実用的なツール。,Praktische Hilfsmittel für den täglichen Ablauf.,Utilitaires pratiques pour les routines quotidiennes.,Utilidades prácticas para rutinas diarias.,Практические утилиты для повседневной жизни.
 ref.toolbox.hub.entry.life.title,生活工具,Life Tools,ライフツール,Lebenswerkzeuge,Outils de Vie,Herramientas de Vida,Инструменты для жизни
 ref.toolbox.hub.entry.schulte.subtitle,经典注意力训练，跟踪速度和准确度。,Classic attention training with speed and accuracy tracking.,スピードと正確さを追跡するクラシックな注意力トレーニング。,Klassisches Aufmerksamkeitstraining mit Verfolgung von Geschwindigkeit und Genauigkeit.,Entraînement classique de l’attention avec suivi de la vitesse et de la précision.,Entrenamiento clásico de atención con seguimiento de velocidad y precisión.,Классическая тренировка внимательности с отслеживанием скорости и точности.
@@ -57620,7 +57620,7 @@ ref.toolbox.hub.entry.soothing.title,舒缓轻音乐,Soothing Music,癒しの音
 ref.toolbox.hub.entry.tests.subtitle,认知与行为自我评估。,Cognitive and behavioral self-assessments.,認知・行動の自己評価。,Kognitive und verhaltensbezogene Selbstbewertungen.,Auto-évaluations cognitives et comportementales.,Autoevaluaciones cognitivas y conductuales.,Когнитивные и поведенческие самооценки.
 ref.toolbox.hub.entry.tests.title,人类测试,Human Tests,人間のテスト,Menschliche Tests,Tests humains,Pruebas humanas,Тесты на человеке
 ref.toolbox.hub.entry.woodfish.subtitle,数字木鱼，用于专注敲击和减压。,A digital wooden fish for mindful tapping and stress relief.,マインドフルな叩きとストレス解消のためのデジタル木魚。,Ein digitaler Holzfisch für achtsames Klopfen und Stressabbau.,Un poisson en bois digital pour tapotements conscients et soulagement du stress.,Un pez de madera digital para golpear con atención plena y aliviar el estrés.,Цифровая «деревянная рыбка» для осознанного постукивания и снятия стресса.
-ref.toolbox.hub.entry.woodfish.title,赛博木鱼,Cyber Woodfish,サイバ―木魚,Cyber-Holzfisch,Poisson de bois cyber,Pez de madera cibernético,Кибер-деревянная рыбка
+ref.toolbox.hub.entry.woodfish.title,电子木鱼,Digital Wooden Fish,電子木魚,Digitaler Holzfisch,Poisson en bois numérique,Pez de madera digital,Цифровая деревянная рыба
 ref.toolbox.hub.entry.zen.subtitle,用手指在沙子上绘画——一个口袋大小的平静时刻。,Draw with your fingertip on sand — a pocket-sized moment of calm.,指先で砂に描く—ポケットサイズの落ち着きのひととき。,Zeichnen Sie mit Ihrem Finger in den Sand — ein taschengroßer Moment der Ruhe.,Dessinez avec le bout de votre doigt sur du sable — un moment de calme de poche.,Dibuja con la punta del dedo en la arena: un momento de calma portátil.,Рисуйте пальцем на песке — карманный момент спокойствия.
 ref.toolbox.hub.entry.zen.title,随心沙盘,Finger Sand Art,指の砂絵,Fingersandkunst,Art du sable au doigt,Arte en arena con el dedo,Песочная живопись пальцем
 ref.toolbox.hub.intro.details_editing,点击眼睛图标隐藏或恢复。拖动手柄重新排序。置顶条目显示在顶部。,Tap the eye icon to hide or restore. Drag the handle to reorder. Pinned entries appear at the top.,目のアイコンをタップして非表示または復元します。ハンドルをドラッグして順序を変更します。固定された項目は上部に表示されます。,"Tippen Sie auf das Augensymbol, um zu verbergen oder wiederherzustellen. Ziehen Sie den Griff, um die Reihenfolge zu ändern. Angepinnte Einträge erscheinen oben.",Appuyez sur l'icône de l'œil pour masquer ou restaurer. Faites glisser la poignée pour réorganiser. Les entrées épinglées apparaissent en haut.,Toca el ícono del ojo para ocultar o restaurar. Arrastra el control para reordenar. Las entradas fijadas aparecen en la parte superior.,"Нажмите на значок глаза, чтобы скрыть или восстановить. Перетащите ручку для изменения порядка. Закрепленные записи отображаются вверху."
@@ -58437,58 +58437,58 @@ ref.toolbox.sound.bowls.today_suggestion_title,当前聆听音符,Current listen
 ref.toolbox.sound.bowls.voices_section_subtitle,四种可轮换的谐波模式,Four harmonic profiles to rotate through,回転させるための4つのハーモニックプロファイル,Vier harmonische Profile zum Durchwechseln,Quatre profils harmoniques à faire tourner,Cuatro perfiles armónicos para rotar,Четыре гармонических профиля для перебора
 ref.toolbox.sound.bowls.voices_section_title,音钵声部,Bowl voices,ボウル音色,Schalenstimmen,Voix des bols,Voces de cuenco,Тембры чаш
 ref.toolbox.sound.deck.drum_pad,鼓垫,Drum Pad,ドラムパッド,Schlagzeug-Pad,Pad de batterie,Pad de batería,Барабанная панель
-ref.toolbox.sound.deck.drum_pad_gesture,鼓垫手势,Drum Pad Gesture,ドラムパッドジェスチャー,Drum Pad Geste,Geste de pad de batterie,Gestos del pad de batería,Жест барабанной панели
-ref.toolbox.sound.deck.drum_pad_mix,鼓垫混音,Drum Pad Mix,ドラムパッドミックス,Schlagzeug-Pad-Mix,Mix de pad de batterie,Mezcla del pad de batería,Смешивание барабанной панели
-ref.toolbox.sound.deck.drum_pad_sub,鼓垫低音炮,Drum Pad Sub,ドラムパッドサブ,Drum-Pad-Sub,Sous-pad de batterie,Sub del pad de batería,Подпанель барабанной панели
-ref.toolbox.sound.deck.drum_pad_title_sub,鼓垫标题字幕,Drum Pad Title Sub,ドラムパッドタイトルサブ,Drum Pad Titel Sub,Titre sous-pad de batterie,Subtítulo del pad de batería,Заголовок подпанели барабанной панели
+ref.toolbox.sound.deck.drum_pad_gesture,点击鼓垫触发节奏,Tap pads to trigger beats,Tap pads to trigger beats,Tap pads to trigger beats,Tap pads to trigger beats,Tap pads to trigger beats,Tap pads to trigger beats
+ref.toolbox.sound.deck.drum_pad_mix,混合底鼓、军鼓、镲片与效果,"Mix kick, snare, hats, and effects","Mix kick, snare, hats, and effects","Mix kick, snare, hats, and effects","Mix kick, snare, hats, and effects","Mix kick, snare, hats, and effects","Mix kick, snare, hats, and effects"
+ref.toolbox.sound.deck.drum_pad_sub,用鼓垫触发节奏、底鼓和氛围打击音。,"Trigger rhythms, kicks, and atmospheric percussion on the pads.","Trigger rhythms, kicks, and atmospheric percussion on the pads.","Trigger rhythms, kicks, and atmospheric percussion on the pads.","Trigger rhythms, kicks, and atmospheric percussion on the pads.","Trigger rhythms, kicks, and atmospheric percussion on the pads.","Trigger rhythms, kicks, and atmospheric percussion on the pads."
+ref.toolbox.sound.deck.drum_pad_title_sub,用鼓垫触发节奏、底鼓和氛围打击音。,"Trigger rhythms, kicks, and atmospheric percussion on the pads.","Trigger rhythms, kicks, and atmospheric percussion on the pads.","Trigger rhythms, kicks, and atmospheric percussion on the pads.","Trigger rhythms, kicks, and atmospheric percussion on the pads.","Trigger rhythms, kicks, and atmospheric percussion on the pads.","Trigger rhythms, kicks, and atmospheric percussion on the pads."
 ref.toolbox.sound.deck.flute,长笛,Flute,フルート,Flöte,Flûte,Flauta,Флейта
-ref.toolbox.sound.deck.flute_gesture,长笛手势,Flute Gesture,フルートジェスチャー,Flöte Geste,Geste de flûte,Gestos de la flauta,Жест флейты
-ref.toolbox.sound.deck.flute_mix,长笛混音,Flute Mix,フルートミックス,Flöte Mix,Mix de flûte,Mezcla de flauta,Смешивание флейты
-ref.toolbox.sound.deck.flute_sub,长笛副歌,Flute Sub,フルートサブ,Flöte Sub,Sous-flûte,Sub de flauta,Подфлейта
-ref.toolbox.sound.deck.flute_title_sub,长笛标题子版块,Flute Title Sub,フルートタイトルサブ,Flöte Titel Sub,Titre sous-flûte,Subtítulo de flauta,Заголовок подфлейты
-ref.toolbox.sound.deck.focus_beats_sub,焦点节拍子版块,Focus Beats Sub,フォーカスビートサブ,Fokus Beats Sub,Sous-battements de concentration,Sub de ritmos de enfoque,Подфокусирующие биты
-ref.toolbox.sound.deck.focus_beats_title,焦点节拍标题,Focus Beats Title,フォーカスビートタイトル,Fokus Beats Titel,Titre des battements de concentration,Título de ritmos de enfoque,Заголовок фокусирующих бит
+ref.toolbox.sound.deck.flute_gesture,长按发声，滑动改变音高,"Hold to play, slide to bend pitch","Hold to play, slide to bend pitch","Hold to play, slide to bend pitch","Hold to play, slide to bend pitch","Hold to play, slide to bend pitch","Hold to play, slide to bend pitch"
+ref.toolbox.sound.deck.flute_mix,调节气息、颤音与音量,"Adjust breath, vibrato, and volume","Adjust breath, vibrato, and volume","Adjust breath, vibrato, and volume","Adjust breath, vibrato, and volume","Adjust breath, vibrato, and volume","Adjust breath, vibrato, and volume"
+ref.toolbox.sound.deck.flute_sub,通过触摸与滑动控制气息感和音高变化。,Use touch and glide gestures to shape breath and pitch.,Use touch and glide gestures to shape breath and pitch.,Use touch and glide gestures to shape breath and pitch.,Use touch and glide gestures to shape breath and pitch.,Use touch and glide gestures to shape breath and pitch.,Use touch and glide gestures to shape breath and pitch.
+ref.toolbox.sound.deck.flute_title_sub,通过触摸与滑动控制气息感和音高变化。,Use touch and glide gestures to shape breath and pitch.,Use touch and glide gestures to shape breath and pitch.,Use touch and glide gestures to shape breath and pitch.,Use touch and glide gestures to shape breath and pitch.,Use touch and glide gestures to shape breath and pitch.,Use touch and glide gestures to shape breath and pitch.
+ref.toolbox.sound.deck.focus_beats_sub,用节拍、拍号和循环编排保持专注节奏。,"Keep focus with tempo, meter, and loop arrangements.","Keep focus with tempo, meter, and loop arrangements.","Keep focus with tempo, meter, and loop arrangements.","Keep focus with tempo, meter, and loop arrangements.","Keep focus with tempo, meter, and loop arrangements.","Keep focus with tempo, meter, and loop arrangements."
+ref.toolbox.sound.deck.focus_beats_title,专注节拍,Focus Beats,集中ビート,Fokus-Beats,Battements de concentration,Ritmos de enfoque,Ритмы фокуса
 ref.toolbox.sound.deck.full_screen,全屏,Full Screen,フルスクリーン,Vollbild,Plein écran,Pantalla completa,Полный экран
 ref.toolbox.sound.deck.guitar,吉他,Guitar,ギター,Gitarre,Guitare,Guitarra,Гитара
-ref.toolbox.sound.deck.guitar_gesture,吉他手势,Guitar Gesture,ギタージェスチャー,Gitarre Geste,Geste de guitare,Gestos de guitarra,Жест гитары
-ref.toolbox.sound.deck.guitar_mix,吉他混音,Guitar Mix,ギターミックス,Gitarre Mix,Mix de guitare,Mezcla de guitarra,Смешивание гитары
-ref.toolbox.sound.deck.guitar_sub,吉他低音版,Guitar Sub,ギターサブ,Gitarre Sub,Sous-guitare,Sub de guitarra,Подгруппа гитары
-ref.toolbox.sound.deck.guitar_title_sub,吉他标题字幕,Guitar Title Sub,ギタータイトルサブ,Gitarre Titel Sub,Titre sous-guitare,Subtítulo de guitarra,Подзаголовок гитары
+ref.toolbox.sound.deck.guitar_gesture,点击和弦，滑动扫弦,"Tap chords, swipe to strum","Tap chords, swipe to strum","Tap chords, swipe to strum","Tap chords, swipe to strum","Tap chords, swipe to strum","Tap chords, swipe to strum"
+ref.toolbox.sound.deck.guitar_mix,调节和弦、扫弦与共鸣,"Adjust chords, strum, and resonance","Adjust chords, strum, and resonance","Adjust chords, strum, and resonance","Adjust chords, strum, and resonance","Adjust chords, strum, and resonance","Adjust chords, strum, and resonance"
+ref.toolbox.sound.deck.guitar_sub,拨动虚拟琴弦，快速切换和弦与节奏。,Strum virtual strings and switch chords or rhythm patterns quickly.,Strum virtual strings and switch chords or rhythm patterns quickly.,Strum virtual strings and switch chords or rhythm patterns quickly.,Strum virtual strings and switch chords or rhythm patterns quickly.,Strum virtual strings and switch chords or rhythm patterns quickly.,Strum virtual strings and switch chords or rhythm patterns quickly.
+ref.toolbox.sound.deck.guitar_title_sub,拨动虚拟琴弦，快速切换和弦与节奏。,Strum virtual strings and switch chords or rhythm patterns quickly.,Strum virtual strings and switch chords or rhythm patterns quickly.,Strum virtual strings and switch chords or rhythm patterns quickly.,Strum virtual strings and switch chords or rhythm patterns quickly.,Strum virtual strings and switch chords or rhythm patterns quickly.,Strum virtual strings and switch chords or rhythm patterns quickly.
 ref.toolbox.sound.deck.harp,竖琴,Harp,ハープ,Harfe,Harpe,Arpa,Арфа
-ref.toolbox.sound.deck.harp_gesture,竖琴手势,Harp Gesture,ハープジェスチャー,Harfe Geste,Geste de harpe,Gestos de arpa,Жест арфы
-ref.toolbox.sound.deck.harp_mix,竖琴混音,Harp Mix,ハープミックス,Harfe Mix,Mix de harpe,Mezcla de arpa,Смешивание арфы
-ref.toolbox.sound.deck.harp_sub,竖琴副歌,Harp Sub,ハープサブ,Harfen-Untermenü,Harpe Sub,Arpa Sub,Подгруппа арфы
-ref.toolbox.sound.deck.harp_title,竖琴标题,Harp Title,ハープタイトル,Harfen-Titel,Titre de la Harpe,Título del Arpa,Заголовок арфы
-ref.toolbox.sound.deck.instrument_info,仪器信息,Instrument Info,楽器情報,Instrumenteninformationen,Informations sur l'instrument,Información del Instrumento,Информация о инструменте
-ref.toolbox.sound.deck.instrument_switch,仪表开关,Instrument Switch,楽器切替,Instrumentenschalter,Changement d'instrument,Cambio de Instrumento,Переключение инструмента
-ref.toolbox.sound.deck.instrument_switch_sub,仪器开关低音炮,Instrument Switch Sub,楽器切替サブ,Instrumenten-Schalter-Untermenü,Changement d'instrument Sub,Sub Cambio de Instrumento,Подгруппа переключения инструмента
-ref.toolbox.sound.deck.landscape_recommended,推荐景观,Landscape Recommended,横向き推奨,Querformat empfohlen,Paysage recommandé,Recomendado en Paisaje,Рекомендовано для ландшафта
+ref.toolbox.sound.deck.harp_gesture,轻触单音，滑动扫弦,"Tap notes, swipe strings","Tap notes, swipe strings","Tap notes, swipe strings","Tap notes, swipe strings","Tap notes, swipe strings","Tap notes, swipe strings"
+ref.toolbox.sound.deck.harp_mix,调整音色、音阶、和弦与混响,"Shape timbre, scale, chord, and reverb","Shape timbre, scale, chord, and reverb","Shape timbre, scale, chord, and reverb","Shape timbre, scale, chord, and reverb","Shape timbre, scale, chord, and reverb","Shape timbre, scale, chord, and reverb"
+ref.toolbox.sound.deck.harp_sub,从竖琴开始演奏，也可切换其他模拟乐器。,"Start with harp, or switch to other simulated instruments.","Start with harp, or switch to other simulated instruments.","Start with harp, or switch to other simulated instruments.","Start with harp, or switch to other simulated instruments.","Start with harp, or switch to other simulated instruments.","Start with harp, or switch to other simulated instruments."
+ref.toolbox.sound.deck.harp_title,模拟乐器,Instrument Deck,楽器デッキ,Instrumenten-Deck,Instruments simulés,Instrumentos simulados,Симулятор инструментов
+ref.toolbox.sound.deck.instrument_info,乐器说明,Instrument Guide,楽器ガイド,Instrumentenhinweise,Guide de l'instrument,Guía del instrumento,Описание инструмента
+ref.toolbox.sound.deck.instrument_switch,乐器切换,Instrument Switcher,楽器切り替え,Instrumentenauswahl,Sélecteur d'instrument,Selector de instrumentos,Переключатель инструментов
+ref.toolbox.sound.deck.instrument_switch_sub,选择要演奏的乐器，可随时进入全屏模式。,Choose the instrument to play and open it fullscreen at any time.,Choose the instrument to play and open it fullscreen at any time.,Choose the instrument to play and open it fullscreen at any time.,Choose the instrument to play and open it fullscreen at any time.,Choose the instrument to play and open it fullscreen at any time.,Choose the instrument to play and open it fullscreen at any time.
+ref.toolbox.sound.deck.landscape_recommended,建议横屏获得更大的演奏区域,Landscape is recommended for a larger playing area.,Landscape is recommended for a larger playing area.,Landscape is recommended for a larger playing area.,Landscape is recommended for a larger playing area.,Landscape is recommended for a larger playing area.,Landscape is recommended for a larger playing area.
 ref.toolbox.sound.deck.piano,钢琴,Piano,ピアノ,Klavier,Piano,Piano,Пианино
-ref.toolbox.sound.deck.piano_gesture,钢琴手势,Piano Gesture,ピアノジェスチャー,Klavier-Geste,Geste Piano,Gestos del Piano,Жест пианино
-ref.toolbox.sound.deck.piano_layout,钢琴布局,Piano Layout,ピアノレイアウト,Klavier-Layout,Disposition Piano,Distribución del Piano,Раскладка пианино
-ref.toolbox.sound.deck.piano_mix,钢琴混音,Piano Mix,ピアノミックス,Klavier-Mix,Mix Piano,Mezcla de Piano,Смешивание пианино
-ref.toolbox.sound.deck.piano_sub,钢琴副本,Piano Sub,ピアノサブ,Klavier-Untermenü,Sub piano,Sub Piano,Подгруппа пианино
-ref.toolbox.sound.deck.piano_title_sub,钢琴标题副本,Piano Title Sub,ピアノタイトルサブ,Klavier-Titel-Untermenü,Sous-titre Piano,Sub Título del Piano,Подзаголовок пианино
-ref.toolbox.sound.deck.pickup,接送,Pickup,ピックアップ,Tonabnehmer,Microphone,Recoger,Пикап
-ref.toolbox.sound.deck.pickup_gesture,接送手势,Pickup Gesture,ピックアップジェスチャー,Tonabnehmer-Geste,Geste Microphone,Gestos de Recoger,Жест пикапа
-ref.toolbox.sound.deck.pickup_mix,接送混音,Pickup Mix,ピックアップミックス,Tonabnehmer-Mix,Mix Microphone,Mezcla de Recoger,Смешивание пикапа
-ref.toolbox.sound.deck.pickup_sub,接送副本,Pickup Sub,ピックアップサブ,Tonabnehmer-Untermenü,Microphone Sub,Sub Recoger,Подгруппа пикапа
-ref.toolbox.sound.deck.pickup_title_sub,接送标题副本,Pickup Title Sub,ピックアップタイトルサブ,Tonabnehmer-Titel-Untermenü,Sous-titre Microphone,Sub Título de Recoger,Подзаголовок пикапа
-ref.toolbox.sound.deck.soothing_sub,舒缓副本,Soothing Sub,癒しサブ,Beruhigend-Untermenü,Apaisant Sub,Sub Calmante,Успокаивающий подзаголовок
-ref.toolbox.sound.deck.soothing_title,舒缓标题,Soothing Title,癒しタイトル,Beruhigend-Titel,Titre Apaisant,Título Calmante,Успокаивающий заголовок
+ref.toolbox.sound.deck.piano_gesture,点击琴键或滑动演奏,Tap keys or glide to play,Tap keys or glide to play,Tap keys or glide to play,Tap keys or glide to play,Tap keys or glide to play,Tap keys or glide to play
+ref.toolbox.sound.deck.piano_layout,适合竖屏或横屏演奏,Works in portrait or landscape.,Works in portrait or landscape.,Works in portrait or landscape.,Works in portrait or landscape.,Works in portrait or landscape.,Works in portrait or landscape.
+ref.toolbox.sound.deck.piano_mix,调节音区、延音与触感,"Adjust register, sustain, and feel","Adjust register, sustain, and feel","Adjust register, sustain, and feel","Adjust register, sustain, and feel","Adjust register, sustain, and feel","Adjust register, sustain, and feel"
+ref.toolbox.sound.deck.piano_sub,触摸琴键演奏旋律，支持滑奏与音区切换。,Play melodies on the keys with glissando and register switching.,Play melodies on the keys with glissando and register switching.,Play melodies on the keys with glissando and register switching.,Play melodies on the keys with glissando and register switching.,Play melodies on the keys with glissando and register switching.,Play melodies on the keys with glissando and register switching.
+ref.toolbox.sound.deck.piano_title_sub,触摸琴键演奏旋律，支持滑奏与音区切换。,Play melodies on the keys with glissando and register switching.,Play melodies on the keys with glissando and register switching.,Play melodies on the keys with glissando and register switching.,Play melodies on the keys with glissando and register switching.,Play melodies on the keys with glissando and register switching.,Play melodies on the keys with glissando and register switching.
+ref.toolbox.sound.deck.pickup,拾音器,Pickup Tuner,ピックアップ調整,Pickup-Tuner,Réglage de micro,Ajuste de pastilla,Настройка звукоснимателя
+ref.toolbox.sound.deck.pickup_gesture,开启监听后演奏或发声,"Start monitoring, then play or make sound","Start monitoring, then play or make sound","Start monitoring, then play or make sound","Start monitoring, then play or make sound","Start monitoring, then play or make sound","Start monitoring, then play or make sound"
+ref.toolbox.sound.deck.pickup_mix,调节前级、门限、亮度与相位,"Adjust preamp, gate, presence, and phase","Adjust preamp, gate, presence, and phase","Adjust preamp, gate, presence, and phase","Adjust preamp, gate, presence, and phase","Adjust preamp, gate, presence, and phase","Adjust preamp, gate, presence, and phase"
+ref.toolbox.sound.deck.pickup_sub,监测麦克风输入，观察音量、峰值、音高与音色。,"Monitor microphone input for level, peak, pitch, and tone.","Monitor microphone input for level, peak, pitch, and tone.","Monitor microphone input for level, peak, pitch, and tone.","Monitor microphone input for level, peak, pitch, and tone.","Monitor microphone input for level, peak, pitch, and tone.","Monitor microphone input for level, peak, pitch, and tone."
+ref.toolbox.sound.deck.pickup_title_sub,用实时输入检查乐器拾音和音准。,Check instrument pickup and tuning with live input.,Check instrument pickup and tuning with live input.,Check instrument pickup and tuning with live input.,Check instrument pickup and tuning with live input.,Check instrument pickup and tuning with live input.,Check instrument pickup and tuning with live input.
+ref.toolbox.sound.deck.soothing_sub,精选舒缓循环与呼吸光效，适合放松、阅读和入睡前陪伴。,"Curated calming loops with breathing light effects for relaxing, reading, or winding down before sleep.","Curated calming loops with breathing light effects for relaxing, reading, or winding down before sleep.","Curated calming loops with breathing light effects for relaxing, reading, or winding down before sleep.","Curated calming loops with breathing light effects for relaxing, reading, or winding down before sleep.","Curated calming loops with breathing light effects for relaxing, reading, or winding down before sleep.","Curated calming loops with breathing light effects for relaxing, reading, or winding down before sleep."
+ref.toolbox.sound.deck.soothing_title,舒缓轻音乐,Soothing Music,癒やしの軽音楽,Beruhigende Musik,Musique douce,Música relajante,Успокаивающая музыка
 ref.toolbox.sound.deck.triangle,三角铁,Triangle,トライアングル,Dreieck,Triangle,Triángulo,Треугольник
-ref.toolbox.sound.deck.triangle_gesture,三角铁手势,Triangle Gesture,トライアングルジェスチャー,Triangel-Geste,Geste Triangle,Gestos del Triángulo,Жест треугольника
-ref.toolbox.sound.deck.triangle_mix,三角铁混音,Triangle Mix,トライアングルミックス,Triangel-Mix,Mix Triangle,Mezcla del Triángulo,Смешивание треугольника
-ref.toolbox.sound.deck.triangle_sub,三角铁副本,Triangle Sub,トライアングルサブ,Triangel-Untermenü,Sub triangle,Sub Triángulo,Подгруппа треугольника
-ref.toolbox.sound.deck.triangle_title,三角铁标题,Triangle Title,トライアングルタイトル,Triangel-Titel,Titre Triangle,Título del Triángulo,Заголовок треугольника
-ref.toolbox.sound.deck.triangle_title_sub,三角铁标题副本,Triangle Title Sub,トライアングル タイトル サブ,Dreieck Titel Unter,Titre du triangle Sub,Subtítulo del Triángulo,Подзаголовок треугольника
+ref.toolbox.sound.deck.triangle_gesture,轻触敲击，长按延音,"Tap to strike, hold to sustain","Tap to strike, hold to sustain","Tap to strike, hold to sustain","Tap to strike, hold to sustain","Tap to strike, hold to sustain","Tap to strike, hold to sustain"
+ref.toolbox.sound.deck.triangle_mix,调节亮度与尾音,Adjust brightness and tail,Adjust brightness and tail,Adjust brightness and tail,Adjust brightness and tail,Adjust brightness and tail,Adjust brightness and tail
+ref.toolbox.sound.deck.triangle_sub,轻敲三角铁，获得清亮的短促铃音。,"Tap the triangle for bright, short ringing tones.","Tap the triangle for bright, short ringing tones.","Tap the triangle for bright, short ringing tones.","Tap the triangle for bright, short ringing tones.","Tap the triangle for bright, short ringing tones.","Tap the triangle for bright, short ringing tones."
+ref.toolbox.sound.deck.triangle_title,三角铁,Triangle,トライアングル,Triangel,Triangle,Triángulo,Треугольник
+ref.toolbox.sound.deck.triangle_title_sub,轻敲三角铁，获得清亮的短促铃音。,"Tap the triangle for bright, short ringing tones.","Tap the triangle for bright, short ringing tones.","Tap the triangle for bright, short ringing tones.","Tap the triangle for bright, short ringing tones.","Tap the triangle for bright, short ringing tones.","Tap the triangle for bright, short ringing tones."
 ref.toolbox.sound.deck.violin,小提琴,Violin,バイオリン,Violine,Violon,Violín,Скрипка
-ref.toolbox.sound.deck.violin_gesture,小提琴手势,Violin Gesture,バイオリン ジェスチャー,Violinengeste,Geste de violon,Gesto de Violín,Жест скрипки
-ref.toolbox.sound.deck.violin_mix,小提琴混音,Violin Mix,バイオリン ミックス,Violinmischung,Mix de violon,Mezcla de Violín,Смешивание скрипки
-ref.toolbox.sound.deck.violin_sub,小提琴副本,Violin Sub,バイオリン サブ,Violine Unter,Violon Sub,Sub de Violín,Подгруппа скрипки
-ref.toolbox.sound.deck.woodfish_full_screen,鱼板全屏,Woodfish Full Screen,ウッドフィッシュ 全画面,Holzfisch Vollbild,Woodfish plein écran,Pez de Madera Pantalla Completa,Полный экран Деревянной рыбы
-ref.toolbox.sound.deck.woodfish_sub,鱼板副本,Woodfish Sub,ウッドフィッシュ サブ,Holzfisch Unter,Sous-marin Woodfish,Sub de Pez de Madera,Поддеревянная рыба
-ref.toolbox.sound.deck.woodfish_title,木鱼标题,Woodfish Title,ウッドフィッシュ タイトル,Holzfisch Titel,Titre Woodfish,Título de Pez de Madera,Заголовок Деревянной рыбы
+ref.toolbox.sound.deck.violin_gesture,拖动琴弓，滑动换音,"Drag the bow, slide between notes","Drag the bow, slide between notes","Drag the bow, slide between notes","Drag the bow, slide between notes","Drag the bow, slide between notes","Drag the bow, slide between notes"
+ref.toolbox.sound.deck.violin_mix,调节弓压、滑音与泛音,"Adjust bow pressure, glide, and harmonics","Adjust bow pressure, glide, and harmonics","Adjust bow pressure, glide, and harmonics","Adjust bow pressure, glide, and harmonics","Adjust bow pressure, glide, and harmonics","Adjust bow pressure, glide, and harmonics"
+ref.toolbox.sound.deck.violin_sub,拖动琴弓模拟长音、滑音与轻柔弦乐。,"Drag the bow to shape long notes, glides, and soft strings.","Drag the bow to shape long notes, glides, and soft strings.","Drag the bow to shape long notes, glides, and soft strings.","Drag the bow to shape long notes, glides, and soft strings.","Drag the bow to shape long notes, glides, and soft strings.","Drag the bow to shape long notes, glides, and soft strings."
+ref.toolbox.sound.deck.woodfish_full_screen,木鱼全屏,Wooden Fish Fullscreen,Wooden Fish Fullscreen,Wooden Fish Fullscreen,Wooden Fish Fullscreen,Wooden Fish Fullscreen,Wooden Fish Fullscreen
+ref.toolbox.sound.deck.woodfish_sub,轻触敲击或自动节奏，用于专注与放松。,Tap manually or use auto rhythm for focus and relaxation.,Tap manually or use auto rhythm for focus and relaxation.,Tap manually or use auto rhythm for focus and relaxation.,Tap manually or use auto rhythm for focus and relaxation.,Tap manually or use auto rhythm for focus and relaxation.,Tap manually or use auto rhythm for focus and relaxation.
+ref.toolbox.sound.deck.woodfish_title,电子木鱼,Digital Wooden Fish,電子木魚,Digitaler Holzfisch,Poisson en bois numérique,Pez de madera digital,Цифровая деревянная рыба
 ref.toolbox.sound.flute.airy,空灵,Airy,エアリー,Luftig,Aérien,Aéreo,Воздушный
 ref.toolbox.sound.flute.airy_flow,空灵流动,Airy flow,エアリー フロー,Luftiger Fluss,Flux aérien,Flujo Aéreo,Поток воздушного
 ref.toolbox.sound.flute.alto,中音,Alto,アルト,Alt,Alto,Alto,Альт
@@ -58812,37 +58812,37 @@ ref.toolbox.sound.piano.verticalKeyboardPhoneDesc,手机布局优先单手点击
 ref.toolbox.sound.piano.window,窗口,Window,ウィンドウ,Fenster,Fenêtre,Ventana,Окно
 ref.toolbox.sound.piano.windowList,窗口列表,Window list,ウィンドウリスト,Fensterliste,Liste des fenêtres,Lista de ventanas,Список окон
 ref.toolbox.sound.piano.windowReady,窗口就绪,Window ready,ウィンドウ準備完了,Fenster bereit,Fenêtre prête,Ventana lista,Окно готово
-ref.toolbox.sound.pickup.advice_label,建议标签,Advice Label,アドバイスラベル,Beratungsetikett,Étiquette de conseil,Etiqueta de aviso,Лейбл Advice
+ref.toolbox.sound.pickup.advice_label,建议,Advice,アドバイスラベル,Beratungsetikett,Étiquette de conseil,Etiqueta de aviso,Лейбл Advice
 ref.toolbox.sound.pickup.calibration,校准,Calibration,校正,Kalibrierung,Étallonage,Calibración,Калибровка
-ref.toolbox.sound.pickup.calibration_note,校准音符,Calibration Note,校正ノート,Kalibrierungshinweis,Note d'étalonnage,Nota de calibración,Примечание по калибровке
-ref.toolbox.sound.pickup.calibration_sub,校准子项,Calibration Sub,校正サブ,Kalibrierungsunterpunkt,Sous-étalonnage,Subcalibración,Калибровка подпроцесса
-ref.toolbox.sound.pickup.clip_warns,剪辑警告,Clip Warns,クリップ警告,Clip-Warnungen,Avertissements de clip,Advertencias de clip,Предупреждение клипа
+ref.toolbox.sound.pickup.calibration_note,根据当前拾音方式微调前级、门限、亮度与相位。,"Fine-tune preamp, gate, presence, and phase for the current pickup type.",校正ノート,Kalibrierungshinweis,Note d'étalonnage,Nota de calibración,Примечание по калибровке
+ref.toolbox.sound.pickup.calibration_sub,校准输入灵敏度、噪声门和亮度。,"Calibrate input gain, noise gate, and presence.",校正サブ,Kalibrierungsunterpunkt,Sous-étalonnage,Subcalibración,Калибровка подпроцесса
+ref.toolbox.sound.pickup.clip_warns,削波警告,Clip warnings,クリップ警告,Clip-Warnungen,Avertissements de clip,Advertencias de clip,Предупреждение клипа
 ref.toolbox.sound.pickup.current_key,当前调,Current Key,現在のキー,Aktueller Schlüssel,Touche actuelle,Tecla actual,Текущий ключ
 ref.toolbox.sound.pickup.detected_key,检测到的调,Detected Key,検出されたキー,Erkannter Schlüssel,Touche détectée,Tecla detectada,Обнаруженный ключ
 ref.toolbox.sound.pickup.detected_notes,检测到的音符,Detected Notes,検出されたノート,Erkannte Noten,Notes détectées,Notas detectadas,Обнаруженные ноты
 ref.toolbox.sound.pickup.duration,持续时间,Duration,期間,Dauer,Durée,Duración,Продолжительность
-ref.toolbox.sound.pickup.error_perm_denied,错误 权限被拒,Error Perm Denied,エラー 許可拒否,Fehler Zugriff verweigert,Erreur Permission refusée,Error Permiso denegado,Ошибка: разрешение запрещено
-ref.toolbox.sound.pickup.gate_pct,门控百分比,Gate Pct,ゲート％,Torprozentsatz,Pourcentage de porte,Porcentaje de puerta,Процент гейта
+ref.toolbox.sound.pickup.error_perm_denied,麦克风权限被拒绝,Microphone permission denied,エラー 許可拒否,Fehler Zugriff verweigert,Erreur Permission refusée,Error Permiso denegado,Ошибка: разрешение запрещено
+ref.toolbox.sound.pickup.gate_pct,门限 {pct}%,Gate {pct}%,Gate {pct}%,Gate {pct}%,Gate {pct}%,Gate {pct}%,Gate {pct}%
 ref.toolbox.sound.pickup.guidance_balanced,指引 均衡,Guidance Balanced,ガイダンス バランス,Anleitung Ausgewogen,Orientation équilibrée,Guía equilibrada,Руководство: сбалансировано
 ref.toolbox.sound.pickup.guidance_bright,指引 明亮,Guidance Bright,ガイダンス 明るい,Anleitung Hell,Orientation claire,Guía brillante,Руководство: ярко
 ref.toolbox.sound.pickup.guidance_dark,指引 暗,Guidance Dark,ガイダンス 暗い,Anleitung Dunkel,Orientation sombre,Guía oscura,Руководство: темно
-ref.toolbox.sound.pickup.guidance_default,指引 默认,Guidance Default,ガイダンス デフォルト,Anleitung Standard,Orientation par défaut,Guía predeterminada,Руководство: по умолчанию
+ref.toolbox.sound.pickup.guidance_default,开始监听后会显示实时建议。,Start monitoring to see live guidance.,ガイダンス デフォルト,Anleitung Standard,Orientation par défaut,Guía predeterminada,Руководство: по умолчанию
 ref.toolbox.sound.pickup.guidance_frozen,指引 冻结,Guidance Frozen,ガイダンス 凍結,Anleitung Eingefroren,Orientation gelée,Guía congelada,Руководство: заморожено
-ref.toolbox.sound.pickup.guidance_idle,指引 空闲,Guidance Idle,ガイダンス 待機,Anleitung Leerlauf,Orientation inactive,Guía inactiva,Руководство: ожидание
-ref.toolbox.sound.pickup.guidance_low_input,指引 输入过低,Guidance Low Input,ガイダンス 低入力,Anleitung Niedriger Eingang,Orientation faible entrée,Guía de entrada baja,Руководство: низкий вход
-ref.toolbox.sound.pickup.guidance_no_perm,指引 无权限,Guidance No Perm,ガイダンス 許可なし,Anleitung Keine Berechtigung,Orientation pas de permission,Guía sin permiso,Руководство: нет разрешения
-ref.toolbox.sound.pickup.guidance_peak,指引 峰值,Guidance Peak,ガイダンスピーク,Leitspitze,Pic de guidage,Pico de Guía,Руководство: пик
+ref.toolbox.sound.pickup.guidance_idle,点击开始监听，检查输入电平与音高。,Tap start monitoring to check level and pitch.,ガイダンス 待機,Anleitung Leerlauf,Orientation inactive,Guía inactiva,Руководство: ожидание
+ref.toolbox.sound.pickup.guidance_low_input,输入偏低，请靠近音源或提高前级。,Input is low; move closer or raise preamp.,ガイダンス 低入力,Anleitung Niedriger Eingang,Orientation faible entrée,Guía de entrada baja,Руководство: низкий вход
+ref.toolbox.sound.pickup.guidance_no_perm,需要麦克风权限才能监听输入。,Microphone permission is required to monitor input.,ガイダンス 許可なし,Anleitung Keine Berechtigung,Orientation pas de permission,Guía sin permiso,Руководство: нет разрешения
+ref.toolbox.sound.pickup.guidance_peak,峰值过高，建议降低前级避免削波。,Peak is high; lower preamp to avoid clipping.,ガイダンスピーク,Leitspitze,Pic de guidage,Pico de Guía,Руководство: пик
 ref.toolbox.sound.pickup.guidance_phase,指引 相位,Guidance Phase,誘導フェーズ,Führungsphase,Phase de guidage,Fase de Guía,Руководство: фаза
 ref.toolbox.sound.pickup.guidance_unstable,指引 不稳定,Guidance Unstable,誘導不安定,Führung instabil,Guidage instable,Guía Inestable,Руководство: нестабильно
 ref.toolbox.sound.pickup.guide_adjust_params,指南 调整参数,Guide Adjust Params,ガイド調整パラメータ,Führungsparameter anpassen,Ajuster les paramètres du guide,Ajustar Parámetros de Guía,Настройка параметров руководства
 ref.toolbox.sound.pickup.guide_adjust_params_body,指南 调整参数正文,Guide Adjust Params Body,ガイド パララム調整 ボディ,Führungsparameter anpassen Text,Corps d'ajustement des paramètres du guide,Cuerpo de Ajuste de Parámetros de Guía,Настройка параметров руководства: тело
-ref.toolbox.sound.pickup.guide_button,指南 按钮,Guide Button,ガイドボタン,Führungsbutton,Bouton du guide,Botón de Guía,Кнопка руководства
+ref.toolbox.sound.pickup.guide_button,使用指南,Guide,ガイドボタン,Führungsbutton,Bouton du guide,Botón de Guía,Кнопка руководства
 ref.toolbox.sound.pickup.guide_play_note,指南 播放音符,Guide Play Note,ガイドプレイノート,Note spielen,Jouer une note avec le guide,Reproducir Nota de Guía,Воспроизвести ноту руководства
 ref.toolbox.sound.pickup.guide_play_note_body,指南 播放音符正文,Guide Play Note Body,ガイド プレイノート ボディ,Note spielen Text,Corps de lecture de note du guide,Cuerpo de Reproducción de Nota de Guía,Воспроизвести ноту руководства: тело
 ref.toolbox.sound.pickup.guide_save_preset,指南 保存预设,Guide Save Preset,ガイドセーブプリセット,Preset speichern,Enregistrer le préréglage du guide,Guardar Preset de Guía,Сохранить пресет руководства
 ref.toolbox.sound.pickup.guide_save_preset_body,指南 保存预设正文,Guide Save Preset Body,ガイド プリセットボディの保存,Preset speichern Text,Corps d'enregistrement du préréglage du guide,Cuerpo de Guardar Preset de Guía,Сохранить пресет руководства: тело
-ref.toolbox.sound.pickup.guide_start_monitor,指南 开始监控,Guide Start Monitor,ガイド・スタートモニター,Überwachung starten,Démarrer le moniteur du guide,Iniciar Monitor de Guía,Руководство по запуску монитора
-ref.toolbox.sound.pickup.guide_start_monitor_body,指南 开始监控正文,Guide Start Monitor Body,ガイド スタートモニターボディ,Überwachung starten Text,Corps de démarrage du moniteur du guide,Cuerpo de Inicio del Monitor de Guía,Тело руководства по запуску монитора
+ref.toolbox.sound.pickup.guide_start_monitor,开始监听,Start monitoring,ガイド・スタートモニター,Überwachung starten,Démarrer le moniteur du guide,Iniciar Monitor de Guía,Руководство по запуску монитора
+ref.toolbox.sound.pickup.guide_start_monitor_body,允许麦克风权限后，工具会显示实时电平、峰值、音高和音色。,"After microphone permission is granted, the tool shows live level, peak, pitch, and tone.",ガイド スタートモニターボディ,Überwachung starten Text,Corps de démarrage du moniteur du guide,Cuerpo de Inicio del Monitor de Guía,Тело руководства по запуску монитора
 ref.toolbox.sound.pickup.hide_stats,隐藏统计,Hide Stats,隠れステータス,Statistiken ausblenden,Masquer les statistiques,Ocultar Estadísticas,Скрыть статистику
 ref.toolbox.sound.pickup.in_tune,音准,In Tune,イン・チューン,In Stimmung,Accordé,Afinado,Настроено
 ref.toolbox.sound.pickup.level,电平,Level,レベル,Pegel,Niveau,Nivel,Уровень
@@ -58852,50 +58852,50 @@ ref.toolbox.sound.pickup.max_peak,最大峰值,Max Peak,マックスピーク,Ma
 ref.toolbox.sound.pickup.notes_label,音符标签,Notes Label,ノーツラベル,Notenlabel,Étiquette des notes,Etiqueta de Notas,Метка нот
 ref.toolbox.sound.pickup.peak,峰值,Peak,ピーク,Spitze,Crête,Pico,Пик
 ref.toolbox.sound.pickup.phase_rev,相位反转,Phase Rev,フェーズ・レヴ,Phasenwechsel,Inversion de phase,Reversa de Fase,Реверс фазы
-ref.toolbox.sound.pickup.phase_rev_hint,相位反转提示,Phase Rev Hint,フェーズリビジョンヒント,Hinweis zum Phasenwechsel,Indice d'inversion de phase,Sugerencia de Reversa de Fase,Подсказка по реверсу фазы
-ref.toolbox.sound.pickup.pickup_stage,拾音阶段,Pickup Stage,ピックアップステージ,Pickup-Stufe,Étape de ramassage,Etapa de Captura,Этап звукоснимателя
-ref.toolbox.sound.pickup.pickup_stage_compact,拾音阶段紧凑,Pickup Stage Compact,ピックアップステージコンパクト,Pickup-Stufe Kompakt,Étape de ramassage compacte,Etapa de Captura Compacta,Этап звукоснимателя (компактно)
-ref.toolbox.sound.pickup.pickup_stage_full,拾音阶段完整,Pickup Stage Full,ピックアップステージ フル,Pickup-Stufe Voll,Étape de ramassage complète,Etapa de Captura Completa,Этап звукоснимателя (полный)
+ref.toolbox.sound.pickup.phase_rev_hint,当声音变薄或抵消时，可尝试切换相位反转。,"If the sound thins out or cancels, try toggling phase reverse.",フェーズリビジョンヒント,Hinweis zum Phasenwechsel,Indice d'inversion de phase,Sugerencia de Reversa de Fase,Подсказка по реверсу фазы
+ref.toolbox.sound.pickup.pickup_stage,拾音监测台,Pickup monitor,ピックアップステージ,Pickup-Stufe,Étape de ramassage,Etapa de Captura,Этап звукоснимателя
+ref.toolbox.sound.pickup.pickup_stage_compact,紧凑显示实时输入状态。,Compact live input view.,ピックアップステージコンパクト,Pickup-Stufe Kompakt,Étape de ramassage compacte,Etapa de Captura Compacta,Этап звукоснимателя (компактно)
+ref.toolbox.sound.pickup.pickup_stage_full,查看电平、峰值、音高、频谱与建议。,"View level, peak, pitch, spectrum, and guidance.",ピックアップステージ フル,Pickup-Stufe Voll,Étape de ramassage complète,Etapa de Captura Completa,Этап звукоснимателя (полный)
 ref.toolbox.sound.pickup.pickup_type,拾音类型,Pickup Type,ピックアップタイプ,Pickup-Typ,Type de micros,Tipo de Captador,Тип звукоснимателя
 ref.toolbox.sound.pickup.pitch_deviation,音高偏差,Pitch Deviation,ピッチ偏差,Pitch-Abweichung,Déviation de hauteur,Desviación de Tono,Отклонение тона
 ref.toolbox.sound.pickup.pitch_good,音高良好,Pitch Good,ピッチ良好,Pitch Gut,Juste,Tono Correcto,Тон в порядке
-ref.toolbox.sound.pickup.pitch_off,投球,Pitch Off,ピッチずれ,Pitch Falsch,Faux,Tono Desajustado,Тон не в порядке
-ref.toolbox.sound.pickup.pitch_out_of_tune,音高走音,Pitch Out Of Tune,ピッチ不正確,Pitch Verstimmt,Désaccordé,Tono Fuera de Afinación,Тон расстроен
-ref.toolbox.sound.pickup.pitch_precise,精确俯仰,Pitch Precise,ピッチ精密,Pitch Präzise,Précis,Tono Preciso,Тон точный
-ref.toolbox.sound.pickup.pitch_stable,球场稳定,Pitch Stable,ピッチ安定,Pitch Stabil,Stable,Tono Estable,Тон стабильный
-ref.toolbox.sound.pickup.preamp_pct,PCT,PCT,PCT,PCT,PCT,PCT,PCT
-ref.toolbox.sound.pickup.presence_pct,PCT,PCT,PCT,PCT,PCT,PCT,PCT
+ref.toolbox.sound.pickup.pitch_off,音高偏离,Pitch off,ピッチずれ,Pitch Falsch,Faux,Tono Desajustado,Тон не в порядке
+ref.toolbox.sound.pickup.pitch_out_of_tune,音高不准,Out of tune,ピッチ不正確,Pitch Verstimmt,Désaccordé,Tono Fuera de Afinación,Тон расстроен
+ref.toolbox.sound.pickup.pitch_precise,音准精准,Precise pitch,ピッチ精密,Pitch Präzise,Précis,Tono Preciso,Тон точный
+ref.toolbox.sound.pickup.pitch_stable,音高稳定,Pitch stable,ピッチ安定,Pitch Stabil,Stable,Tono Estable,Тон стабильный
+ref.toolbox.sound.pickup.preamp_pct,前级 {pct}%,Preamp {pct}%,Preamp {pct}%,Preamp {pct}%,Preamp {pct}%,Preamp {pct}%,Preamp {pct}%
+ref.toolbox.sound.pickup.presence_pct,亮度 {pct}%,Presence {pct}%,Presence {pct}%,Presence {pct}%,Presence {pct}%,Presence {pct}%,Presence {pct}%
 ref.toolbox.sound.pickup.preset_ambient,预设环境音,Preset Ambient,プリセットアンビエント,Preset Ambiente,Préréglage Ambiant,Preajuste Ambiental,Предустановка «Атмосфера»
 ref.toolbox.sound.pickup.preset_balanced,预设平衡,Preset Balanced,プリセットバランス,Preset Ausgewogen,Préréglage Équilibré,Preajuste Equilibrado,Предустановка «Сбалансировано»
 ref.toolbox.sound.pickup.preset_bright,预设明亮,Preset Bright,プリセットブライト,Preset Hell,Préréglage Clair,Preajuste Brillante,Предустановка «Ярко»
 ref.toolbox.sound.pickup.preset_custom,预设自定义,Preset Custom,プリセットカスタム,Preset Benutzerdefiniert,Préréglage Personnalisé,Preajuste Personalizado,Пользовательский пресет
-ref.toolbox.sound.pickup.preset_label,预设标签,Preset Label,プリセットラベル,Preset Bezeichnung,Étiquette du préréglage,Etiqueta de Preajuste,Метка пресета
+ref.toolbox.sound.pickup.preset_label,温暖,Warm,プリセットラベル,Preset Bezeichnung,Étiquette du préréglage,Etiqueta de Preajuste,Метка пресета
 ref.toolbox.sound.pickup.preset_low_noise,预设低噪声,Preset Low Noise,プリセット低ノイズ,Preset Geringes Rauschen,Préréglage Faible Bruit,Preajuste Bajo Ruido,Пресет низкого шума
-ref.toolbox.sound.pickup.profile_condenser,型材电容,Profile Condenser,プロファイルコンデンサー,Profil Kondensator,Profil Condensateur,Perfil Condensador,Профиль конденсаторного микрофона
-ref.toolbox.sound.pickup.profile_condenser_sub,轮廓电容低音炮,Profile Condenser Sub,プロファイルコンデンサーサブ,Profil Kondensator Sub,Profil Condensateur Sub,Perfil Condensador Sub,Профиль конденсаторного микрофона Sub
-ref.toolbox.sound.pickup.profile_contact,个人资料联系方式,Profile Contact,プロファイルコンタクト,Profil Kontakt,Profil Contact,Perfil de Contacto,Профиль контактного микрофона
-ref.toolbox.sound.pickup.profile_contact_sub,个人资料联系子版块,Profile Contact Sub,プロファイルコンタクトサブ,Profil Kontakt Sub,Profil Contact Sub,Perfil de Contacto Sub,Профиль контактного микрофона Sub
-ref.toolbox.sound.pickup.profile_dynamic,档案动态,Profile Dynamic,プロファイルダイナミック,Profil Dynamisch,Profil Dynamique,Perfil Dinámico,Профиль динамического микрофона
-ref.toolbox.sound.pickup.profile_dynamic_sub,动态资料子版块,Profile Dynamic Sub,プロファイルダイナミックサブ,Profil Dynamisch Sub,Profil Dynamique Sub,Perfil Dinámico Sub,Профиль динамического микрофона Sub
-ref.toolbox.sound.pickup.profile_magnetic,磁性剖面,Profile Magnetic,プロファイルマグネティック,Profil Magnetisch,Profil Magnétique,Perfil Magnético,Профиль магнитного микрофона
-ref.toolbox.sound.pickup.profile_magnetic_sub,轮廓磁性低音炮,Profile Magnetic Sub,プロファイルマグネティックサブ,Profil Magnetisch Sub,Profil Magnétique Sub,Perfil Magnético Sub,Профиль магнитного микрофона Sub
-ref.toolbox.sound.pickup.profile_piezo,压电剖面,Profile Piezo,プロファイルピエゾ,Profil Piezo,Profil Piezo,Perfil Piezo,Профиль пьезоизлучателя
-ref.toolbox.sound.pickup.profile_piezo_sub,Profile 压电低音炮,Profile Piezo Sub,プロファイル ピエゾ サブ,Profil Piezo Sub,Profil Piezo Sub,Sub Perfil Piezo,Профиль пьезоизлучателя Sub
+ref.toolbox.sound.pickup.profile_condenser,电容麦,Condenser mic,Condenser mic,Condenser mic,Condenser mic,Condenser mic,Condenser mic
+ref.toolbox.sound.pickup.profile_condenser_sub,适合空气感更强、细节更明亮的输入。,Best for airy input with brighter detail.,Best for airy input with brighter detail.,Best for airy input with brighter detail.,Best for airy input with brighter detail.,Best for airy input with brighter detail.,Best for airy input with brighter detail.
+ref.toolbox.sound.pickup.profile_contact,接触式拾音,Contact pickup,Contact pickup,Contact pickup,Contact pickup,Contact pickup,Contact pickup
+ref.toolbox.sound.pickup.profile_contact_sub,适合贴近琴体、桌面或外壳的低噪声拾音。,"For low-noise pickup close to an instrument body, desk, or shell.","For low-noise pickup close to an instrument body, desk, or shell.","For low-noise pickup close to an instrument body, desk, or shell.","For low-noise pickup close to an instrument body, desk, or shell.","For low-noise pickup close to an instrument body, desk, or shell.","For low-noise pickup close to an instrument body, desk, or shell."
+ref.toolbox.sound.pickup.profile_dynamic,动圈麦,Dynamic mic,Dynamic mic,Dynamic mic,Dynamic mic,Dynamic mic,Dynamic mic
+ref.toolbox.sound.pickup.profile_dynamic_sub,适合较强声压和嘈杂环境。,Good for higher sound pressure and noisy spaces.,Good for higher sound pressure and noisy spaces.,Good for higher sound pressure and noisy spaces.,Good for higher sound pressure and noisy spaces.,Good for higher sound pressure and noisy spaces.,Good for higher sound pressure and noisy spaces.
+ref.toolbox.sound.pickup.profile_magnetic,磁拾音,Magnetic pickup,Magnetic pickup,Magnetic pickup,Magnetic pickup,Magnetic pickup,Magnetic pickup
+ref.toolbox.sound.pickup.profile_magnetic_sub,适合电吉他等磁性拾音输入。,For magnetic pickup inputs such as electric guitar.,For magnetic pickup inputs such as electric guitar.,For magnetic pickup inputs such as electric guitar.,For magnetic pickup inputs such as electric guitar.,For magnetic pickup inputs such as electric guitar.,For magnetic pickup inputs such as electric guitar.
+ref.toolbox.sound.pickup.profile_piezo,压电拾音,Piezo pickup,Piezo pickup,Piezo pickup,Piezo pickup,Piezo pickup,Piezo pickup
+ref.toolbox.sound.pickup.profile_piezo_sub,适合原声乐器桥位或贴片拾音。,For bridge or surface pickup on acoustic instruments.,For bridge or surface pickup on acoustic instruments.,For bridge or surface pickup on acoustic instruments.,For bridge or surface pickup on acoustic instruments.,For bridge or surface pickup on acoustic instruments.,For bridge or surface pickup on acoustic instruments.
 ref.toolbox.sound.pickup.quality,质量,Quality,クオリティ,Qualität,Qualité,Calidad,Качество
 ref.toolbox.sound.pickup.quality_excellent,质量：优秀,Quality Excellent,クオリティ 優,Qualität Ausgezeichnet,Qualité Excellent,Calidad Excelente,Отличное качество
-ref.toolbox.sound.pickup.quality_fair,质量博览会,Quality Fair,クオリティ 普通,Qualität Befriedigend,Qualité Moyenne,Calidad Regular,Среднее качество
+ref.toolbox.sound.pickup.quality_fair,质量尚可,Fair quality,クオリティ 普通,Qualität Befriedigend,Qualité Moyenne,Calidad Regular,Среднее качество
 ref.toolbox.sound.pickup.quality_good,质量 良好,Quality Good,クオリティ 良,Qualität Gut,Qualité Bonne,Calidad Buena,Хорошее качество
-ref.toolbox.sound.pickup.quality_needs_work,质量 需改进,Quality Needs Work,クオリティ 改善必要,Qualität Verbesserungswürdig,Qualité À Améliorer,Calidad Necesita Mejorar,Требуется доработка
+ref.toolbox.sound.pickup.quality_needs_work,需要调整,Needs adjustment,クオリティ 改善必要,Qualität Verbesserungswürdig,Qualité À Améliorer,Calidad Necesita Mejorar,Требуется доработка
 ref.toolbox.sound.pickup.quick_guide,快速指南,Quick Guide,クイックガイド,Schnellstartanleitung,Guide Rapide,Guía Rápida,Быстрое руководство
 ref.toolbox.sound.pickup.quick_presets,快速预设,Quick Presets,クイックプリセット,Schnelleinstellungen,Préréglages Rapides,Preajustes Rápidos,Быстрые пресеты
-ref.toolbox.sound.pickup.quick_presets_sub,快速预设子项,Quick Presets Sub,クイックプリセット サブ,Schnelleinstellungen Sub,Préréglages Rapides Sub,Sub Preajustes Rápidos,Быстрые пресеты Sub
+ref.toolbox.sound.pickup.quick_presets_sub,按常见拾音场景快速设置输入参数。,Set input parameters quickly for common pickup scenarios.,クイックプリセット サブ,Schnelleinstellungen Sub,Préréglages Rapides Sub,Sub Preajustes Rápidos,Быстрые пресеты Sub
 ref.toolbox.sound.pickup.reset_readings,重置读数,Reset Readings,読み取り値リセット,Messwerte zurücksetzen,Réinitialiser les Lectures,Reiniciar Lecturas,Сброс показаний
 ref.toolbox.sound.pickup.resume_live,恢复实时,Resume Live,ライブ再開,Live fortsetzen,Reprendre en Direct,Reanudar En Vivo,Возобновить в реальном времени
 ref.toolbox.sound.pickup.samples_label,样本标签,Samples Label,サンプルラベル,Probenetikett,Étiquette des Échantillons,Etiqueta de Muestras,Метка образцов
 ref.toolbox.sound.pickup.scale_view,缩放视图,Scale View,スケールビュー,Skalenansicht,Vue de l'Échelle,Vista de Escala,Масштаб просмотра
-ref.toolbox.sound.pickup.score_label,分数标签,Score Label,スコアラベル,Wertungslabel,Étiquette du Score,Etiqueta de Puntuación,Метка счета
+ref.toolbox.sound.pickup.score_label,评分,Score,スコアラベル,Wertungslabel,Étiquette du Score,Etiqueta de Puntuación,Метка счета
 ref.toolbox.sound.pickup.session_stats,会话统计,Session Stats,セッション統計,Sitzungsstatistiken,Statistiques de Session,Estadísticas de Sesión,Статистика сессии
-ref.toolbox.sound.pickup.sharp_key,锐键,Sharp Key,シャープキー,Scharf-Taste,Touche Aiguë,Tecla Aguda,Острая клавиша
+ref.toolbox.sound.pickup.sharp_key,升号调,Sharp key,シャープキー,Scharf-Taste,Touche Aiguë,Tecla Aguda,Острая клавиша
 ref.toolbox.sound.pickup.snapshot,快照,Snapshot,スナップショット,Momentaufnahme,Instantané,Instantánea,Снимок
 ref.toolbox.sound.pickup.spectrum_ext,频谱扩展,Spectrum Ext,スペクトラム拡張,Spektrum Ext,Spectre Extrême,Espectro Ext,Расширенный спектр
 ref.toolbox.sound.pickup.spectrum_high,高频谱,Spectrum High,スペクトラム高,Spektrum Hoch,Spectre Haut,Espectro Alto,Высокий спектр
@@ -58905,11 +58905,11 @@ ref.toolbox.sound.pickup.spectrum_mid_h,中高频谱,Spectrum Mid H,スペクト
 ref.toolbox.sound.pickup.spectrum_mid_l,中低频谱,Spectrum Mid L,スペクトラム中低,Spektrum Mittel L,Spectre Moyen L,Espectro Medio L,Средний нижний спектр
 ref.toolbox.sound.pickup.spectrum_top,顶频谱,Spectrum Top,スペクトラムトップ,Spectrum Oben,Spectre Haut,Espectro Superior,Верхний спектр
 ref.toolbox.sound.pickup.spectrum_v_high,超高频谱,Spectrum V High,スペクトラムVハイ,Spectrum V Hoch,Spectre V Haut,Espectro V Alto,Очень высокий спектр
-ref.toolbox.sound.pickup.status_frozen,状态 冻结,Status Frozen,ステータスフローズン,Status Eingefroren,Statut Gelé,Estado Congelado,Статус заморожен
-ref.toolbox.sound.pickup.status_idle,状态 空闲,Status Idle,ステータスアイドル,Status Leerlauf,Statut Inactif,Estado Inactivo,Статус бездействия
-ref.toolbox.sound.pickup.status_monitoring,状态 监控中,Status Monitoring,ステータスモニタリング,Status Überwachung,Statut Surveillance,Estado Monitoreando,Статус мониторинга
-ref.toolbox.sound.pickup.status_starting,状态 启动中,Status Starting,ステータススタート中,Status Starten,Statut Démarrage,Estado Iniciando,Статус запуска
-ref.toolbox.sound.pickup.stop_monitor,停止监控,Stop Monitor,モニター停止,Überwachung Stoppen,Arrêter la Surveillance,Detener Monitoreo,Остановить монитор
+ref.toolbox.sound.pickup.status_frozen,已冻结,Frozen,ステータスフローズン,Status Eingefroren,Statut Gelé,Estado Congelado,Статус заморожен
+ref.toolbox.sound.pickup.status_idle,待监听,Idle,ステータスアイドル,Status Leerlauf,Statut Inactif,Estado Inactivo,Статус бездействия
+ref.toolbox.sound.pickup.status_monitoring,监听中,Monitoring,ステータスモニタリング,Status Überwachung,Statut Surveillance,Estado Monitoreando,Статус мониторинга
+ref.toolbox.sound.pickup.status_starting,启动中,Starting,ステータススタート中,Status Starten,Statut Démarrage,Estado Iniciando,Статус запуска
+ref.toolbox.sound.pickup.stop_monitor,停止监听,Stop monitoring,モニター停止,Überwachung Stoppen,Arrêter la Surveillance,Detener Monitoreo,Остановить монитор
 ref.toolbox.sound.pickup.tone_balanced,音色平衡,Tone Balanced,トーンバランス,Klang Ausgewogen,Ton Équilibré,Tono Equilibrado,Сбалансированный тон
 ref.toolbox.sound.pickup.tone_bright,音色明亮,Tone Bright,トーンブライト,Klang Hell,Ton Clair,Tono Brillante,Яркий тон
 ref.toolbox.sound.pickup.tone_dark,音色暗,Tone Dark,トーンダーク,Klang Dunkel,Ton Sombre,Tono Oscuro,Тёмный тон
@@ -59452,8 +59452,8 @@ toolbox.hub.entry.decision.subtitle,将日常犹豫不决变为可随机、可�
 toolbox.hub.entry.decision.title,日常决策,Daily Decision,デイリーデシジョン,Tägliche Entscheidung,Décision Quotidienne,Decisión Diaria,Ежедневное решение
 toolbox.hub.entry.games.subtitle,用于注意力转移的快速认知游戏中心。,Quick cognitive mini-games for focus shifting.,集中力を切り替えるためのクイック認知ミニゲーム。,Schnelle kognitive Mini-Spiele zur Fokussierungsverschiebung.,Mini-jeux cognitifs rapides pour le changement de concentration.,Mini-juegos cognitivos rápidos para cambiar el enfoque.,Быстрые мини-игры для мозга для переключения внимания.
 toolbox.hub.entry.games.title,游戏中心,Mini Games,ミニゲーム,Mini-Spiele,Mini-Jeux,Mini Juegos,Мини-игры
-toolbox.hub.entry.harp.subtitle,演奏竖琴、吉他、小提琴、长笛和三角铁的声音。,"Play harp, guitar, violin, flute, and triangle sounds.",ハープ、ギター、バイオリン、フルート、トライアングルの音を演奏。,"Spiele Harfen-, Gitarren-, Geigen-, Flöten- und Dreieck-Klänge.","Jouez des sons de harpe, guitare, violon, flûte et triangle.","Toca sonidos de arpa, guitarra, violín, flauta y triángulo.","Играть на звуках арфы, гитары, скрипки, флейты и треугольника."
-toolbox.hub.entry.harp.title,模拟乐器,Harp & Strings,ハープ＆弦楽器,Harfe & Saiten,Harpe & Cordes,Arpa y Cuerdas,Арфа и струнные
+toolbox.hub.entry.harp.subtitle,演奏竖琴、钢琴、长笛、鼓垫、吉他、小提琴等模拟乐器。,"Play simulated harp, piano, flute, drum pad, guitar, violin, and more.","Play simulated harp, piano, flute, drum pad, guitar, violin, and more.","Play simulated harp, piano, flute, drum pad, guitar, violin, and more.","Play simulated harp, piano, flute, drum pad, guitar, violin, and more.","Play simulated harp, piano, flute, drum pad, guitar, violin, and more.","Play simulated harp, piano, flute, drum pad, guitar, violin, and more."
+toolbox.hub.entry.harp.title,模拟乐器,Instrument Deck,楽器デッキ,Instrumenten-Deck,Instruments simulés,Instrumentos simulados,Симулятор инструментов
 toolbox.hub.entry.life.subtitle,日常实用工具。,Practical utilities for daily routines.,日常生活に役立つ実用的なツール。,Praktische Hilfsmittel für den täglichen Ablauf.,Utilitaires pratiques pour les routines quotidiennes.,Utilidades prácticas para rutinas diarias.,Практические утилиты для повседневной жизни.
 toolbox.hub.entry.life.title,生活工具,Life Tools,ライフツール,Lebenswerkzeuge,Outils de Vie,Herramientas de Vida,Инструменты для жизни
 toolbox.hub.entry.schulte.subtitle,经典注意力训练，跟踪速度和准确度。,Classic attention training with speed and accuracy tracking.,スピードと正確さを追跡するクラシックな注意力トレーニング。,Klassisches Aufmerksamkeitstraining mit Verfolgung von Geschwindigkeit und Genauigkeit.,Entraînement classique de l’attention avec suivi de la vitesse et de la précision.,Entrenamiento clásico de atención con seguimiento de velocidad y precisión.,Классическая тренировка внимательности с отслеживанием скорости и точности.
@@ -59465,7 +59465,7 @@ toolbox.hub.entry.soothing.title,舒缓轻音乐,Soothing Music,癒しの音楽,
 toolbox.hub.entry.tests.subtitle,认知与行为自我评估。,Cognitive and behavioral self-assessments.,認知・行動の自己評価。,Kognitive und verhaltensbezogene Selbstbewertungen.,Auto-évaluations cognitives et comportementales.,Autoevaluaciones cognitivas y conductuales.,Когнитивные и поведенческие самооценки.
 toolbox.hub.entry.tests.title,人类测试,Human Tests,人間のテスト,Menschliche Tests,Tests humains,Pruebas humanas,Тесты на человеке
 toolbox.hub.entry.woodfish.subtitle,数字木鱼，用于专注敲击和减压。,A digital wooden fish for mindful tapping and stress relief.,マインドフルな叩きとストレス解消のためのデジタル木魚。,Ein digitaler Holzfisch für achtsames Klopfen und Stressabbau.,Un poisson en bois digital pour tapotements conscients et soulagement du stress.,Un pez de madera digital para golpear con atención plena y aliviar el estrés.,Цифровая «деревянная рыбка» для осознанного постукивания и снятия стресса.
-toolbox.hub.entry.woodfish.title,赛博木鱼,Cyber Woodfish,サイバ―木魚,Cyber-Holzfisch,Poisson de bois cyber,Pez de madera cibernético,Кибер-деревянная рыбка
+toolbox.hub.entry.woodfish.title,电子木鱼,Digital Wooden Fish,電子木魚,Digitaler Holzfisch,Poisson en bois numérique,Pez de madera digital,Цифровая деревянная рыба
 toolbox.hub.entry.zen.subtitle,用手指在沙子上绘画——一个口袋大小的平静时刻。,Draw with your fingertip on sand — a pocket-sized moment of calm.,指先で砂に描く—ポケットサイズの落ち着きのひととき。,Zeichnen Sie mit Ihrem Finger in den Sand — ein taschengroßer Moment der Ruhe.,Dessinez avec le bout de votre doigt sur du sable — un moment de calme de poche.,Dibuja con la punta del dedo en la arena: un momento de calma portátil.,Рисуйте пальцем на песке — карманный момент спокойствия.
 toolbox.hub.entry.zen.title,随心沙盘,Finger Sand Art,指の砂絵,Fingersandkunst,Art du sable au doigt,Arte en arena con el dedo,Песочная живопись пальцем
 toolbox.hub.intro.details_editing,点击眼睛图标隐藏或恢复。拖动手柄重新排序。置顶条目显示在顶部。,Tap the eye icon to hide or restore. Drag the handle to reorder. Pinned entries appear at the top.,目のアイコンをタップして非表示または復元します。ハンドルをドラッグして順序を変更します。固定された項目は上部に表示されます。,"Tippen Sie auf das Augensymbol, um zu verbergen oder wiederherzustellen. Ziehen Sie den Griff, um die Reihenfolge zu ändern. Angepinnte Einträge erscheinen oben.",Appuyez sur l'icône de l'œil pour masquer ou restaurer. Faites glisser la poignée pour réorganiser. Les entrées épinglées apparaissent en haut.,Toca el ícono del ojo para ocultar o restaurar. Arrastra el control para reordenar. Las entradas fijadas aparecen en la parte superior.,"Нажмите на значок глаза, чтобы скрыть или восстановить. Перетащите ручку для изменения порядка. Закрепленные записи отображаются вверху."
@@ -60601,60 +60601,60 @@ toolbox.sound.bowls.voices_section_subtitle,四种可轮换的谐波模式,Four 
 toolbox.sound.bowls.voices_section_title,音钵声部,Bowl voices,ボウル音色,Schalenstimmen,Voix des bols,Voces de cuenco,Тембры чаш
 toolbox.sound.deck.current_instrument,当前：{instrument},Current: {instrument},現在: {instrument},Aktuell: {instrument},Actuel : {instrument},Actual: {instrument},Текущий: {instrument}
 toolbox.sound.deck.drum_pad,鼓垫,Drum Pad,ドラムパッド,Schlagzeug-Pad,Pad de batterie,Pad de batería,Барабанная панель
-toolbox.sound.deck.drum_pad_gesture,鼓垫手势,Drum Pad Gesture,ドラムパッドジェスチャー,Drum Pad Geste,Geste de pad de batterie,Gestos del pad de batería,Жест барабанной панели
-toolbox.sound.deck.drum_pad_mix,鼓垫混音,Drum Pad Mix,ドラムパッドミックス,Schlagzeug-Pad-Mix,Mix de pad de batterie,Mezcla del pad de batería,Смешивание барабанной панели
-toolbox.sound.deck.drum_pad_sub,鼓垫低音炮,Drum Pad Sub,ドラムパッドサブ,Drum-Pad-Sub,Sous-pad de batterie,Sub del pad de batería,Подпанель барабанной панели
-toolbox.sound.deck.drum_pad_title_sub,鼓垫标题字幕,Drum Pad Title Sub,ドラムパッドタイトルサブ,Drum Pad Titel Sub,Titre sous-pad de batterie,Subtítulo del pad de batería,Заголовок подпанели барабанной панели
+toolbox.sound.deck.drum_pad_gesture,点击鼓垫触发节奏,Tap pads to trigger beats,Tap pads to trigger beats,Tap pads to trigger beats,Tap pads to trigger beats,Tap pads to trigger beats,Tap pads to trigger beats
+toolbox.sound.deck.drum_pad_mix,混合底鼓、军鼓、镲片与效果,"Mix kick, snare, hats, and effects","Mix kick, snare, hats, and effects","Mix kick, snare, hats, and effects","Mix kick, snare, hats, and effects","Mix kick, snare, hats, and effects","Mix kick, snare, hats, and effects"
+toolbox.sound.deck.drum_pad_sub,用鼓垫触发节奏、底鼓和氛围打击音。,"Trigger rhythms, kicks, and atmospheric percussion on the pads.","Trigger rhythms, kicks, and atmospheric percussion on the pads.","Trigger rhythms, kicks, and atmospheric percussion on the pads.","Trigger rhythms, kicks, and atmospheric percussion on the pads.","Trigger rhythms, kicks, and atmospheric percussion on the pads.","Trigger rhythms, kicks, and atmospheric percussion on the pads."
+toolbox.sound.deck.drum_pad_title_sub,用鼓垫触发节奏、底鼓和氛围打击音。,"Trigger rhythms, kicks, and atmospheric percussion on the pads.","Trigger rhythms, kicks, and atmospheric percussion on the pads.","Trigger rhythms, kicks, and atmospheric percussion on the pads.","Trigger rhythms, kicks, and atmospheric percussion on the pads.","Trigger rhythms, kicks, and atmospheric percussion on the pads.","Trigger rhythms, kicks, and atmospheric percussion on the pads."
 toolbox.sound.deck.flute,长笛,Flute,フルート,Flöte,Flûte,Flauta,Флейта
-toolbox.sound.deck.flute_gesture,长笛手势,Flute Gesture,フルートジェスチャー,Flöte Geste,Geste de flûte,Gestos de la flauta,Жест флейты
-toolbox.sound.deck.flute_mix,长笛混音,Flute Mix,フルートミックス,Flöte Mix,Mix de flûte,Mezcla de flauta,Смешивание флейты
-toolbox.sound.deck.flute_sub,长笛副歌,Flute Sub,フルートサブ,Flöte Sub,Sous-flûte,Sub de flauta,Подфлейта
-toolbox.sound.deck.flute_title_sub,长笛标题子版块,Flute Title Sub,フルートタイトルサブ,Flöte Titel Sub,Titre sous-flûte,Subtítulo de flauta,Заголовок подфлейты
-toolbox.sound.deck.focus_beats_sub,焦点节拍子版块,Focus Beats Sub,フォーカスビートサブ,Fokus Beats Sub,Sous-battements de concentration,Sub de ritmos de enfoque,Подфокусирующие биты
-toolbox.sound.deck.focus_beats_title,焦点节拍标题,Focus Beats Title,フォーカスビートタイトル,Fokus Beats Titel,Titre des battements de concentration,Título de ritmos de enfoque,Заголовок фокусирующих бит
+toolbox.sound.deck.flute_gesture,长按发声，滑动改变音高,"Hold to play, slide to bend pitch","Hold to play, slide to bend pitch","Hold to play, slide to bend pitch","Hold to play, slide to bend pitch","Hold to play, slide to bend pitch","Hold to play, slide to bend pitch"
+toolbox.sound.deck.flute_mix,调节气息、颤音与音量,"Adjust breath, vibrato, and volume","Adjust breath, vibrato, and volume","Adjust breath, vibrato, and volume","Adjust breath, vibrato, and volume","Adjust breath, vibrato, and volume","Adjust breath, vibrato, and volume"
+toolbox.sound.deck.flute_sub,通过触摸与滑动控制气息感和音高变化。,Use touch and glide gestures to shape breath and pitch.,Use touch and glide gestures to shape breath and pitch.,Use touch and glide gestures to shape breath and pitch.,Use touch and glide gestures to shape breath and pitch.,Use touch and glide gestures to shape breath and pitch.,Use touch and glide gestures to shape breath and pitch.
+toolbox.sound.deck.flute_title_sub,通过触摸与滑动控制气息感和音高变化。,Use touch and glide gestures to shape breath and pitch.,Use touch and glide gestures to shape breath and pitch.,Use touch and glide gestures to shape breath and pitch.,Use touch and glide gestures to shape breath and pitch.,Use touch and glide gestures to shape breath and pitch.,Use touch and glide gestures to shape breath and pitch.
+toolbox.sound.deck.focus_beats_sub,用节拍、拍号和循环编排保持专注节奏。,"Keep focus with tempo, meter, and loop arrangements.","Keep focus with tempo, meter, and loop arrangements.","Keep focus with tempo, meter, and loop arrangements.","Keep focus with tempo, meter, and loop arrangements.","Keep focus with tempo, meter, and loop arrangements.","Keep focus with tempo, meter, and loop arrangements."
+toolbox.sound.deck.focus_beats_title,专注节拍,Focus Beats,集中ビート,Fokus-Beats,Battements de concentration,Ritmos de enfoque,Ритмы фокуса
 toolbox.sound.deck.focus_fullscreen_quick_start,一键全屏启动,Quick fullscreen start,ワンタップで全画面開始,Schnell im Vollbild starten,Lancer rapidement en plein écran,Inicio rápido en pantalla completa,Быстрый запуск на весь экран
 toolbox.sound.deck.full_screen,全屏,Full Screen,フルスクリーン,Vollbild,Plein écran,Pantalla completa,Полный экран
 toolbox.sound.deck.guitar,吉他,Guitar,ギター,Gitarre,Guitare,Guitarra,Гитара
-toolbox.sound.deck.guitar_gesture,吉他手势,Guitar Gesture,ギタージェスチャー,Gitarre Geste,Geste de guitare,Gestos de guitarra,Жест гитары
-toolbox.sound.deck.guitar_mix,吉他混音,Guitar Mix,ギターミックス,Gitarre Mix,Mix de guitare,Mezcla de guitarra,Смешивание гитары
-toolbox.sound.deck.guitar_sub,吉他低音版,Guitar Sub,ギターサブ,Gitarre Sub,Sous-guitare,Sub de guitarra,Подгруппа гитары
-toolbox.sound.deck.guitar_title_sub,吉他标题字幕,Guitar Title Sub,ギタータイトルサブ,Gitarre Titel Sub,Titre sous-guitare,Subtítulo de guitarra,Подзаголовок гитары
+toolbox.sound.deck.guitar_gesture,点击和弦，滑动扫弦,"Tap chords, swipe to strum","Tap chords, swipe to strum","Tap chords, swipe to strum","Tap chords, swipe to strum","Tap chords, swipe to strum","Tap chords, swipe to strum"
+toolbox.sound.deck.guitar_mix,调节和弦、扫弦与共鸣,"Adjust chords, strum, and resonance","Adjust chords, strum, and resonance","Adjust chords, strum, and resonance","Adjust chords, strum, and resonance","Adjust chords, strum, and resonance","Adjust chords, strum, and resonance"
+toolbox.sound.deck.guitar_sub,拨动虚拟琴弦，快速切换和弦与节奏。,Strum virtual strings and switch chords or rhythm patterns quickly.,Strum virtual strings and switch chords or rhythm patterns quickly.,Strum virtual strings and switch chords or rhythm patterns quickly.,Strum virtual strings and switch chords or rhythm patterns quickly.,Strum virtual strings and switch chords or rhythm patterns quickly.,Strum virtual strings and switch chords or rhythm patterns quickly.
+toolbox.sound.deck.guitar_title_sub,拨动虚拟琴弦，快速切换和弦与节奏。,Strum virtual strings and switch chords or rhythm patterns quickly.,Strum virtual strings and switch chords or rhythm patterns quickly.,Strum virtual strings and switch chords or rhythm patterns quickly.,Strum virtual strings and switch chords or rhythm patterns quickly.,Strum virtual strings and switch chords or rhythm patterns quickly.,Strum virtual strings and switch chords or rhythm patterns quickly.
 toolbox.sound.deck.harp,竖琴,Harp,ハープ,Harfe,Harpe,Arpa,Арфа
-toolbox.sound.deck.harp_gesture,竖琴手势,Harp Gesture,ハープジェスチャー,Harfe Geste,Geste de harpe,Gestos de arpa,Жест арфы
-toolbox.sound.deck.harp_mix,竖琴混音,Harp Mix,ハープミックス,Harfe Mix,Mix de harpe,Mezcla de arpa,Смешивание арфы
-toolbox.sound.deck.harp_sub,竖琴副歌,Harp Sub,ハープサブ,Harfen-Untermenü,Harpe Sub,Arpa Sub,Подгруппа арфы
-toolbox.sound.deck.harp_title,竖琴标题,Harp Title,ハープタイトル,Harfen-Titel,Titre de la Harpe,Título del Arpa,Заголовок арфы
-toolbox.sound.deck.instrument_info,仪器信息,Instrument Info,楽器情報,Instrumenteninformationen,Informations sur l'instrument,Información del Instrumento,Информация о инструменте
-toolbox.sound.deck.instrument_switch,仪表开关,Instrument Switch,楽器切替,Instrumentenschalter,Changement d'instrument,Cambio de Instrumento,Переключение инструмента
-toolbox.sound.deck.instrument_switch_sub,仪器开关低音炮,Instrument Switch Sub,楽器切替サブ,Instrumenten-Schalter-Untermenü,Changement d'instrument Sub,Sub Cambio de Instrumento,Подгруппа переключения инструмента
-toolbox.sound.deck.landscape_recommended,推荐景观,Landscape Recommended,横向き推奨,Querformat empfohlen,Paysage recommandé,Recomendado en Paisaje,Рекомендовано для ландшафта
+toolbox.sound.deck.harp_gesture,轻触单音，滑动扫弦,"Tap notes, swipe strings","Tap notes, swipe strings","Tap notes, swipe strings","Tap notes, swipe strings","Tap notes, swipe strings","Tap notes, swipe strings"
+toolbox.sound.deck.harp_mix,调整音色、音阶、和弦与混响,"Shape timbre, scale, chord, and reverb","Shape timbre, scale, chord, and reverb","Shape timbre, scale, chord, and reverb","Shape timbre, scale, chord, and reverb","Shape timbre, scale, chord, and reverb","Shape timbre, scale, chord, and reverb"
+toolbox.sound.deck.harp_sub,从竖琴开始演奏，也可切换其他模拟乐器。,"Start with harp, or switch to other simulated instruments.","Start with harp, or switch to other simulated instruments.","Start with harp, or switch to other simulated instruments.","Start with harp, or switch to other simulated instruments.","Start with harp, or switch to other simulated instruments.","Start with harp, or switch to other simulated instruments."
+toolbox.sound.deck.harp_title,模拟乐器,Instrument Deck,楽器デッキ,Instrumenten-Deck,Instruments simulés,Instrumentos simulados,Симулятор инструментов
+toolbox.sound.deck.instrument_info,乐器说明,Instrument Guide,楽器ガイド,Instrumentenhinweise,Guide de l'instrument,Guía del instrumento,Описание инструмента
+toolbox.sound.deck.instrument_switch,乐器切换,Instrument Switcher,楽器切り替え,Instrumentenauswahl,Sélecteur d'instrument,Selector de instrumentos,Переключатель инструментов
+toolbox.sound.deck.instrument_switch_sub,选择要演奏的乐器，可随时进入全屏模式。,Choose the instrument to play and open it fullscreen at any time.,Choose the instrument to play and open it fullscreen at any time.,Choose the instrument to play and open it fullscreen at any time.,Choose the instrument to play and open it fullscreen at any time.,Choose the instrument to play and open it fullscreen at any time.,Choose the instrument to play and open it fullscreen at any time.
+toolbox.sound.deck.landscape_recommended,建议横屏获得更大的演奏区域,Landscape is recommended for a larger playing area.,Landscape is recommended for a larger playing area.,Landscape is recommended for a larger playing area.,Landscape is recommended for a larger playing area.,Landscape is recommended for a larger playing area.,Landscape is recommended for a larger playing area.
 toolbox.sound.deck.piano,钢琴,Piano,ピアノ,Klavier,Piano,Piano,Пианино
-toolbox.sound.deck.piano_gesture,钢琴手势,Piano Gesture,ピアノジェスチャー,Klavier-Geste,Geste Piano,Gestos del Piano,Жест пианино
-toolbox.sound.deck.piano_layout,钢琴布局,Piano Layout,ピアノレイアウト,Klavier-Layout,Disposition Piano,Distribución del Piano,Раскладка пианино
-toolbox.sound.deck.piano_mix,钢琴混音,Piano Mix,ピアノミックス,Klavier-Mix,Mix Piano,Mezcla de Piano,Смешивание пианино
-toolbox.sound.deck.piano_sub,钢琴副本,Piano Sub,ピアノサブ,Klavier-Untermenü,Sub piano,Sub Piano,Подгруппа пианино
-toolbox.sound.deck.piano_title_sub,钢琴标题副本,Piano Title Sub,ピアノタイトルサブ,Klavier-Titel-Untermenü,Sous-titre Piano,Sub Título del Piano,Подзаголовок пианино
-toolbox.sound.deck.pickup,接送,Pickup,ピックアップ,Tonabnehmer,Microphone,Recoger,Пикап
-toolbox.sound.deck.pickup_gesture,接送手势,Pickup Gesture,ピックアップジェスチャー,Tonabnehmer-Geste,Geste Microphone,Gestos de Recoger,Жест пикапа
-toolbox.sound.deck.pickup_mix,接送混音,Pickup Mix,ピックアップミックス,Tonabnehmer-Mix,Mix Microphone,Mezcla de Recoger,Смешивание пикапа
-toolbox.sound.deck.pickup_sub,接送副本,Pickup Sub,ピックアップサブ,Tonabnehmer-Untermenü,Microphone Sub,Sub Recoger,Подгруппа пикапа
-toolbox.sound.deck.pickup_title_sub,接送标题副本,Pickup Title Sub,ピックアップタイトルサブ,Tonabnehmer-Titel-Untermenü,Sous-titre Microphone,Sub Título de Recoger,Подзаголовок пикапа
+toolbox.sound.deck.piano_gesture,点击琴键或滑动演奏,Tap keys or glide to play,Tap keys or glide to play,Tap keys or glide to play,Tap keys or glide to play,Tap keys or glide to play,Tap keys or glide to play
+toolbox.sound.deck.piano_layout,适合竖屏或横屏演奏,Works in portrait or landscape.,Works in portrait or landscape.,Works in portrait or landscape.,Works in portrait or landscape.,Works in portrait or landscape.,Works in portrait or landscape.
+toolbox.sound.deck.piano_mix,调节音区、延音与触感,"Adjust register, sustain, and feel","Adjust register, sustain, and feel","Adjust register, sustain, and feel","Adjust register, sustain, and feel","Adjust register, sustain, and feel","Adjust register, sustain, and feel"
+toolbox.sound.deck.piano_sub,触摸琴键演奏旋律，支持滑奏与音区切换。,Play melodies on the keys with glissando and register switching.,Play melodies on the keys with glissando and register switching.,Play melodies on the keys with glissando and register switching.,Play melodies on the keys with glissando and register switching.,Play melodies on the keys with glissando and register switching.,Play melodies on the keys with glissando and register switching.
+toolbox.sound.deck.piano_title_sub,触摸琴键演奏旋律，支持滑奏与音区切换。,Play melodies on the keys with glissando and register switching.,Play melodies on the keys with glissando and register switching.,Play melodies on the keys with glissando and register switching.,Play melodies on the keys with glissando and register switching.,Play melodies on the keys with glissando and register switching.,Play melodies on the keys with glissando and register switching.
+toolbox.sound.deck.pickup,拾音器,Pickup Tuner,ピックアップ調整,Pickup-Tuner,Réglage de micro,Ajuste de pastilla,Настройка звукоснимателя
+toolbox.sound.deck.pickup_gesture,开启监听后演奏或发声,"Start monitoring, then play or make sound","Start monitoring, then play or make sound","Start monitoring, then play or make sound","Start monitoring, then play or make sound","Start monitoring, then play or make sound","Start monitoring, then play or make sound"
+toolbox.sound.deck.pickup_mix,调节前级、门限、亮度与相位,"Adjust preamp, gate, presence, and phase","Adjust preamp, gate, presence, and phase","Adjust preamp, gate, presence, and phase","Adjust preamp, gate, presence, and phase","Adjust preamp, gate, presence, and phase","Adjust preamp, gate, presence, and phase"
+toolbox.sound.deck.pickup_sub,监测麦克风输入，观察音量、峰值、音高与音色。,"Monitor microphone input for level, peak, pitch, and tone.","Monitor microphone input for level, peak, pitch, and tone.","Monitor microphone input for level, peak, pitch, and tone.","Monitor microphone input for level, peak, pitch, and tone.","Monitor microphone input for level, peak, pitch, and tone.","Monitor microphone input for level, peak, pitch, and tone."
+toolbox.sound.deck.pickup_title_sub,用实时输入检查乐器拾音和音准。,Check instrument pickup and tuning with live input.,Check instrument pickup and tuning with live input.,Check instrument pickup and tuning with live input.,Check instrument pickup and tuning with live input.,Check instrument pickup and tuning with live input.,Check instrument pickup and tuning with live input.
 toolbox.sound.deck.quick_tips,快速提示,Quick tips,クイックヒント,Kurztipps,Astuces rapides,Consejos rápidos,Краткие подсказки
-toolbox.sound.deck.soothing_sub,舒缓副本,Soothing Sub,癒しサブ,Beruhigend-Untermenü,Apaisant Sub,Sub Calmante,Успокаивающий подзаголовок
-toolbox.sound.deck.soothing_title,舒缓标题,Soothing Title,癒しタイトル,Beruhigend-Titel,Titre Apaisant,Título Calmante,Успокаивающий заголовок
+toolbox.sound.deck.soothing_sub,精选舒缓循环与呼吸光效，适合放松、阅读和入睡前陪伴。,"Curated calming loops with breathing light effects for relaxing, reading, or winding down before sleep.","Curated calming loops with breathing light effects for relaxing, reading, or winding down before sleep.","Curated calming loops with breathing light effects for relaxing, reading, or winding down before sleep.","Curated calming loops with breathing light effects for relaxing, reading, or winding down before sleep.","Curated calming loops with breathing light effects for relaxing, reading, or winding down before sleep.","Curated calming loops with breathing light effects for relaxing, reading, or winding down before sleep."
+toolbox.sound.deck.soothing_title,舒缓轻音乐,Soothing Music,癒やしの軽音楽,Beruhigende Musik,Musique douce,Música relajante,Успокаивающая музыка
 toolbox.sound.deck.triangle,三角铁,Triangle,トライアングル,Dreieck,Triangle,Triángulo,Треугольник
-toolbox.sound.deck.triangle_gesture,三角铁手势,Triangle Gesture,トライアングルジェスチャー,Triangel-Geste,Geste Triangle,Gestos del Triángulo,Жест треугольника
-toolbox.sound.deck.triangle_mix,三角铁混音,Triangle Mix,トライアングルミックス,Triangel-Mix,Mix Triangle,Mezcla del Triángulo,Смешивание треугольника
-toolbox.sound.deck.triangle_sub,三角铁副本,Triangle Sub,トライアングルサブ,Triangel-Untermenü,Sub triangle,Sub Triángulo,Подгруппа треугольника
-toolbox.sound.deck.triangle_title,三角铁标题,Triangle Title,トライアングルタイトル,Triangel-Titel,Titre Triangle,Título del Triángulo,Заголовок треугольника
-toolbox.sound.deck.triangle_title_sub,三角铁标题副本,Triangle Title Sub,トライアングル タイトル サブ,Dreieck Titel Unter,Titre du triangle Sub,Subtítulo del Triángulo,Подзаголовок треугольника
+toolbox.sound.deck.triangle_gesture,轻触敲击，长按延音,"Tap to strike, hold to sustain","Tap to strike, hold to sustain","Tap to strike, hold to sustain","Tap to strike, hold to sustain","Tap to strike, hold to sustain","Tap to strike, hold to sustain"
+toolbox.sound.deck.triangle_mix,调节亮度与尾音,Adjust brightness and tail,Adjust brightness and tail,Adjust brightness and tail,Adjust brightness and tail,Adjust brightness and tail,Adjust brightness and tail
+toolbox.sound.deck.triangle_sub,轻敲三角铁，获得清亮的短促铃音。,"Tap the triangle for bright, short ringing tones.","Tap the triangle for bright, short ringing tones.","Tap the triangle for bright, short ringing tones.","Tap the triangle for bright, short ringing tones.","Tap the triangle for bright, short ringing tones.","Tap the triangle for bright, short ringing tones."
+toolbox.sound.deck.triangle_title,三角铁,Triangle,トライアングル,Triangel,Triangle,Triángulo,Треугольник
+toolbox.sound.deck.triangle_title_sub,轻敲三角铁，获得清亮的短促铃音。,"Tap the triangle for bright, short ringing tones.","Tap the triangle for bright, short ringing tones.","Tap the triangle for bright, short ringing tones.","Tap the triangle for bright, short ringing tones.","Tap the triangle for bright, short ringing tones.","Tap the triangle for bright, short ringing tones."
 toolbox.sound.deck.violin,小提琴,Violin,バイオリン,Violine,Violon,Violín,Скрипка
-toolbox.sound.deck.violin_gesture,小提琴手势,Violin Gesture,バイオリン ジェスチャー,Violinengeste,Geste de violon,Gesto de Violín,Жест скрипки
-toolbox.sound.deck.violin_mix,小提琴混音,Violin Mix,バイオリン ミックス,Violinmischung,Mix de violon,Mezcla de Violín,Смешивание скрипки
-toolbox.sound.deck.violin_sub,小提琴副本,Violin Sub,バイオリン サブ,Violine Unter,Violon Sub,Sub de Violín,Подгруппа скрипки
-toolbox.sound.deck.woodfish_full_screen,鱼板全屏,Woodfish Full Screen,ウッドフィッシュ 全画面,Holzfisch Vollbild,Woodfish plein écran,Pez de Madera Pantalla Completa,Полный экран Деревянной рыбы
-toolbox.sound.deck.woodfish_sub,鱼板副本,Woodfish Sub,ウッドフィッシュ サブ,Holzfisch Unter,Sous-marin Woodfish,Sub de Pez de Madera,Поддеревянная рыба
-toolbox.sound.deck.woodfish_title,木鱼标题,Woodfish Title,ウッドフィッシュ タイトル,Holzfisch Titel,Titre Woodfish,Título de Pez de Madera,Заголовок Деревянной рыбы
+toolbox.sound.deck.violin_gesture,拖动琴弓，滑动换音,"Drag the bow, slide between notes","Drag the bow, slide between notes","Drag the bow, slide between notes","Drag the bow, slide between notes","Drag the bow, slide between notes","Drag the bow, slide between notes"
+toolbox.sound.deck.violin_mix,调节弓压、滑音与泛音,"Adjust bow pressure, glide, and harmonics","Adjust bow pressure, glide, and harmonics","Adjust bow pressure, glide, and harmonics","Adjust bow pressure, glide, and harmonics","Adjust bow pressure, glide, and harmonics","Adjust bow pressure, glide, and harmonics"
+toolbox.sound.deck.violin_sub,拖动琴弓模拟长音、滑音与轻柔弦乐。,"Drag the bow to shape long notes, glides, and soft strings.","Drag the bow to shape long notes, glides, and soft strings.","Drag the bow to shape long notes, glides, and soft strings.","Drag the bow to shape long notes, glides, and soft strings.","Drag the bow to shape long notes, glides, and soft strings.","Drag the bow to shape long notes, glides, and soft strings."
+toolbox.sound.deck.woodfish_full_screen,木鱼全屏,Wooden Fish Fullscreen,Wooden Fish Fullscreen,Wooden Fish Fullscreen,Wooden Fish Fullscreen,Wooden Fish Fullscreen,Wooden Fish Fullscreen
+toolbox.sound.deck.woodfish_sub,轻触敲击或自动节奏，用于专注与放松。,Tap manually or use auto rhythm for focus and relaxation.,Tap manually or use auto rhythm for focus and relaxation.,Tap manually or use auto rhythm for focus and relaxation.,Tap manually or use auto rhythm for focus and relaxation.,Tap manually or use auto rhythm for focus and relaxation.,Tap manually or use auto rhythm for focus and relaxation.
+toolbox.sound.deck.woodfish_title,电子木鱼,Digital Wooden Fish,電子木魚,Digitaler Holzfisch,Poisson en bois numérique,Pez de madera digital,Цифровая деревянная рыба
 toolbox.sound.flute.airy,空灵,Airy,エアリー,Luftig,Aérien,Aéreo,Воздушный
 toolbox.sound.flute.airy_flow,空灵流动,Airy flow,エアリー フロー,Luftiger Fluss,Flux aérien,Flujo Aéreo,Поток воздушного
 toolbox.sound.flute.alto,中音,Alto,アルト,Alt,Alto,Alto,Альт
@@ -60708,11 +60708,11 @@ toolbox.sound.flute.wood_flute,木笛,Wood flute,木製フルート,Holzflöte,F
 toolbox.sound.focus.animNameClear,清澈波纹,Clear wave,クリアウェーブ,Klare Welle,Onde claire,Onda clara,Чистая волна
 toolbox.sound.focus.animNamePrecision,精准标记,Precision mark,精密マーク,Präzisionsmarkierung,Marque de précision,Marca de precisión,Метка точности
 toolbox.sound.focus.animNameStep,阶阵,Step array,ステップ配列,Schritt-Anordnung,Séquence par étapes,Matriz de pasos,Шаговый массив
-toolbox.sound.focus.animNameStill,仍在轨道上,Still orbit,静止軌道,Stiller Orbit,Orbite immobile,Órbita quieta,Всё равно на орбите
+toolbox.sound.focus.animNameStill,静止轨道,Still orbit,Still orbit,Still orbit,Still orbit,Still orbit,Still orbit
 toolbox.sound.focus.animNameWarm,温暖路径,Warm path,温かい経路,Warmer Pfad,Chemin chaud,Camino cálido,Тёплый путь
 toolbox.sound.focus.arrangementDesc,将小节分组成乐句，以在循环中创造更强的乐段感。,Group bars into phrases to create stronger section feel across a cycle.,小節をフレーズにまとめて、サイクル全体でより強いセクション感を作る。,"Gruppiere Takte zu Phrasen, um ein stärkeres Abschnittsgefühl über einen Zyklus hinweg zu erzeugen.",Regrouper les mesures en phrases pour créer une sensation de section plus forte au travers d'un cycle.,Agrupa compases en frases para crear una sensación de sección más fuerte a lo largo de un ciclo.,"Сгруппируйте строчки в фразы, чтобы создать более сильное ощущение по всему циклу."
-toolbox.sound.focus.arrangementEnabled,模式开启,Pattern on,パターンオン,Muster ein,Motif activé,Patrón activado,Узор на
-toolbox.sound.focus.arrangementLabel,模式：{label}（{total} 拍子）,Pattern: {label} ({total} beats),パターン: {label} ({total}拍),Muster: {label} ({total} Schläge),Motif: {label} ({total} temps),Patrón: {label} ({total} tiempos),Паттерн: {label} (биты {total})
+toolbox.sound.focus.arrangementEnabled,循环编排开启,Cycle arrangement on,Cycle arrangement on,Cycle arrangement on,Cycle arrangement on,Cycle arrangement on,Cycle arrangement on
+toolbox.sound.focus.arrangementLabel,编排：{label}（共 {total} 拍）,Arrangement: {label} ({total} beats),Arrangement: {label} ({total} beats),Arrangement: {label} ({total} beats),Arrangement: {label} ({total} beats),Arrangement: {label} ({total} beats),Arrangement: {label} ({total} beats)
 toolbox.sound.focus.arrangementSingleBar,单小节,Single bar,単一小節,Einzelner Takt,Mesure simple,Compás único,Одинарная полоса
 toolbox.sound.focus.controlArrangement,拍子模式,Beat pattern,ビートパターン,Schlagmuster,Motif rythmique,Patrón de tiempo,Ритмический рисунок
 toolbox.sound.focus.controlArrangementDesc,将小节分组成乐句以增加节奏变化。,Group bars into phrases for rhythmic variety.,小節をフレーズにまとめてリズムのバリエーションを出す。,Gruppiere Takte zu Phrasen für rhythmische Vielfalt.,Regrouper les mesures en phrases pour plus de variété rythmique.,Agrupa compases en frases para variedad rítmica.,Группируйте такты в фразы для ритмического разнообразия.
@@ -60784,21 +60784,23 @@ toolbox.sound.focus.immersiveHint,点击开始节拍。保持流畅。,Tap to st
 toolbox.sound.focus.immersiveOpenControls,打开控件,Open controls,オープンコントロール,Steuerungen öffnen,Ouvrir les contrôles,Abrir controles,Открыть элементы управления
 toolbox.sound.focus.immersiveReady,已就绪,Ready,準備完了,Bereit,Prêt,Listo,Готово
 toolbox.sound.focus.meterDesc,拍号设置强弱拍；细分在每拍内进行拆分。,Time signature sets strong/weak beats; subdivision splits each beat internally.,拍子記号は強い/弱い拍子を決めます。サブディビジョンは各ビートを内部で分割します。,Taktart legt starke/schwache Schläge fest; Unterteilung teilt jeden Schlag intern.,La mesure rythmique définit les temps forts/faibles; la subdivision divise chaque temps en interne.,El compás establece los acentos fuertes/débiles; la subdivisión divide internamente cada pulso.,Размер такта устанавливает сильные/слабые доли; деление разбивает каждую долю внутри.
-toolbox.sound.focus.meterSubDiv,细分 ×{div},Sub ×{div},字幕×{div},Unter ×{div},Sous ×{div},Sub ×{div},Деление ×{div}
+toolbox.sound.focus.meterSubDiv,子拍 ×{div},Sub x{div},Sub x{div},Sub x{div},Sub x{div},Sub x{div},Sub x{div}
+toolbox.sound.focus.meterSummary,{beats}/4 · 子拍 ×{subdivision},{beats}/4 · sub x{subdivision},{beats}/4 · sub x{subdivision},{beats}/4 · sub x{subdivision},{beats}/4 · sub x{subdivision},{beats}/4 · sub x{subdivision},{beats}/4 · sub x{subdivision}
 toolbox.sound.focus.mixAccent,重音,Accent,アクセント,Akzent,Accent,Acento,Акцент
 toolbox.sound.focus.mixHapticDesc,在重音和乐段变化时产生轻微振动。,Subtle vibration on accents and section changes.,アクセントやセクションの変化に微かな振動が入ります。,Dezente Vibration bei Akzenten und Abschnittswechseln.,Vibration subtile sur les accents et les changements de section.,Vibración sutil en los acentos y cambios de sección.,Лёгкая вибрация на акцентах и изменениях секций.
 toolbox.sound.focus.mixHapticLabel,触觉反馈,Haptic feedback,触覚フィードバック,Haptisches Feedback,Retour haptique,Retroalimentación háptica,Тактильная обратная связь
 toolbox.sound.focus.mixMaster,主音量,Master,師匠,Master,Principal,Maestro,Мастер
 toolbox.sound.focus.mixRegular,常规,Regular,レギュラー,Regulär,Régulier,Regular,Регулярный
 toolbox.sound.focus.mixSubdivision,细分,Subdivision,区画,Unterteilung,Subdivision,Subdivisión,Подразделение
+toolbox.sound.focus.mixSummary,总音量 {volume}% · {haptics},Master {volume}% · {haptics},Master {volume}% · {haptics},Master {volume}% · {haptics},Master {volume}% · {haptics},Master {volume}% · {haptics},Master {volume}% · {haptics}
 toolbox.sound.focus.previewButton,预览,Preview,プレビュー,Vorschau,Aperçu,Vista previa,Предпросмотр
-toolbox.sound.focus.singleBarLoop,单小节,Single bar,単一小節,Einzelner Takt,Mesure simple,Compás único,Одинарная полоса
+toolbox.sound.focus.singleBarLoop,单小节循环,Single-bar loop,Single-bar loop,Single-bar loop,Single-bar loop,Single-bar loop,Single-bar loop
 toolbox.sound.focus.soundNameDrop,下落,Drop,ドロップ,Drop,Abaisser,Caída,Капля
 toolbox.sound.focus.soundNamePendulum,点击音,Click,カチッ,Klick,Clic,Clic,Щелчок
 toolbox.sound.focus.soundNamePulse,脉冲,Pulse,脈拍,Puls,Pouls,Pulso,Пульс
 toolbox.sound.focus.soundNameStep,步进,Step,ステップ,Schritt,Étape,Paso,Шаг
 toolbox.sound.focus.soundNameTick,滴答,Tick,チック,Ticken,Tic,Tic,Тик
-toolbox.sound.focus.stageBeatLabel,打败,Beat,ビート,Schlage,Battre,Superar,Бит
+toolbox.sound.focus.stageBeatLabel,节拍,Beat,Beat,Beat,Beat,Beat,Beat
 toolbox.sound.focus.stageBeatPath,节拍路径,Beat path,ビートパス,Schlagweg,Chemin du battement,Camino de golpe,Путь бита
 toolbox.sound.focus.stageBeatShort,拍,Bt,ビーティー,Bt,Bt,Bt,Бт
 toolbox.sound.focus.stageBeatsUnit,拍, beats,ビーツ,Schläge,battements,golpes,биты
@@ -60806,23 +60808,24 @@ toolbox.sound.focus.stageCycleLabel,循环 {label},Cycle {label},サイクル {l
 toolbox.sound.focus.stageHapticsOff,触觉关闭,Haptics off,ハプティクスオフ,Haptik aus,Haptiques désactivés,Hápticos desactivados,Тактильные ощущения выключены
 toolbox.sound.focus.stageHapticsOn,触觉开启,Haptics on,ハプティクスオン,Haptik ein,Haptiques activés,Hápticos activados,Тактильные ощущения включены
 toolbox.sound.focus.stageLoopLabel,循环,Loop,ループ,Schleife,Boucle,Bucle,Петля
-toolbox.sound.focus.stageMoving,移动中,Moving,移動中,Verschieben,En mouvement,Moviéndose,Движение
+toolbox.sound.focus.stageMoving,节拍进行中,Beat in motion,Beat in motion,Beat in motion,Beat in motion,Beat in motion,Beat in motion
 toolbox.sound.focus.stagePatternLabel,模式 {label},Pattern {label},パターン {label},Muster {label},Motif {label},Patrón {label},Шаблон {label}
 toolbox.sound.focus.stagePhraseLabel,乐句 {label},Phrase {label},フレーズ {label},Phrase {label},Phrase {label},Frase {label},Фраза {label}
-toolbox.sound.focus.stagePulseInMotion,运动中的脉冲,Pulse in motion,脈動,Puls in Bewegung,Pouls en mouvement,Pulso en movimiento,Пульс в движении
+toolbox.sound.focus.stagePulseInMotion,节拍进行中,Pulse in motion,Pulse in motion,Pulse in motion,Pulse in motion,Pulse in motion,Pulse in motion
 toolbox.sound.focus.stagePulseMoving,播放中,Playing,再生中,Spielt,Lecture,Reproduciendo,Воспроизведение
 toolbox.sound.focus.stageReady,已就绪,Ready,準備完了,Bereit,Prêt,Listo,Готово
+toolbox.sound.focus.stageSegmentPreview,段落 {index} · {beats} 拍 · {bars},Segment {index} · {beats} beats · {bars},Segment {index} · {beats} beats · {bars},Segment {index} · {beats} beats · {bars},Segment {index} · {beats} beats · {bars},Segment {index} · {beats} beats · {bars},Segment {index} · {beats} beats · {bars}
 toolbox.sound.focus.stageSegmentS,段落,Segment ,セグメント,Segment ,Segment ,Segmento,Сегмент
-toolbox.sound.focus.stageSubbeat,{label} 分割,{label} subdivision,{label} サブディビジョン,{label} Unterteilung,Subdivision {label},Subdivisión {label},Подразделение {label}
-toolbox.sound.focus.stageSubLabel,小节,Sub,サブ,Unter,Sous,Sub,Под
-toolbox.sound.focus.stageSubShort,小节,Sub,サブ,Unter,Sous,Sub,Под
+toolbox.sound.focus.stageSubbeat,{label} 子拍,{label} subdivision,{label} subdivision,{label} subdivision,{label} subdivision,{label} subdivision,{label} subdivision
+toolbox.sound.focus.stageSubLabel,子拍,Sub,Sub,Sub,Sub,Sub,Sub
+toolbox.sound.focus.stageSubShort,子拍,Sub,Sub,Sub,Sub,Sub,Sub
 toolbox.sound.focus.stageSummaryIdle,准备开始,Ready to start,スタート準備完了,Bereit zum Start,Prêt à commencer,Listo para empezar,Готов к запуску
 toolbox.sound.focus.stageSummaryRunning,播放中,Playing,再生中,Spielt,Lecture,Reproduciendo,Воспроизведение
 toolbox.sound.focus.stageTrackReady,已就绪,Ready,準備完了,Bereit,Prêt,Listo,Готово
 toolbox.sound.focus.stageWaitingBeatOne,等待第一拍,Waiting for beat one,ビート1を待っています,Warten auf den ersten Schlag,En attente du premier battement,Esperando el primer golpe,Ожидание первого бита
 toolbox.sound.focus.styleDesc,动画和音色默认配对。可自由切换进行混合搭配。,Animation and timbre are paired by default. Switch freely to mix and match.,アニメーションと音色はデフォルトで連動しています。自由に切り替えて組み合わせてください。,Animation und Klangfarbe sind standardmäßig gekoppelt. Frei wechseln zum Mischen und Anpassen.,L'animation et le timbre sont associés par défaut. Changez librement pour mélanger et assortir.,La animación y el timbre están emparejados por defecto. Cambia libremente para mezclar y combinar.,Анимация и тембр по умолчанию связаны. Свободно переключайтесь и комбинируйте.
 toolbox.sound.focus.styleTimbreTitle,拍子音色,Beat timbre,ビート・ティンバー,Schlagklang,Timbre du battement,Timbre del pulso,Тембр такта
-toolbox.sound.focus.tempoLabel,{bpm} BPM · {sec} 每拍秒数,{bpm} BPM · {sec} s/beat,{bpm} BPM · {sec} 秒/ビート,{bpm} BPM · {sec} s/Schlag,{bpm} BPM · {sec} s/battement,{bpm} BPM · {sec} s/golpe,{bpm} BPM · {sec} с/бит
+toolbox.sound.focus.tempoLabel,{bpm} BPM · {sec} 秒/拍,{bpm} BPM · {sec} s/beat,{bpm} BPM · {sec} s/beat,{bpm} BPM · {sec} s/beat,{bpm} BPM · {sec} s/beat,{bpm} BPM · {sec} s/beat,{bpm} BPM · {sec} s/beat
 toolbox.sound.guitar.ambient_chime,环境风铃,Ambient chime,アンビエントチャイム,Ambient-Glocke,Carillon ambiant,Campanilla ambiental,Атмосферный звонок
 toolbox.sound.guitar.chord_and_capo,和弦与变调夹,Chord and capo,コードとカポ,Akkord und Kapodaster,Accord et capo,Acorde y cejilla,Аккорд и каподастр
 toolbox.sound.guitar.clear_steelcore_tone_tuned_for,清晰的钢核音色，适合节奏扫弦。,Clear steel-core tone tuned for rhythmic strumming.,リズミカルなストロークに合わせたクリアなスチールコアトーン。,"Klarer Stahlkern-Klang, abgestimmt für rhythmisches Schrammeln.",Ton clair en acier accordé pour le grattage rythmique.,Tono claro de núcleo de acero afinado para rasgueo rítmico.,"Чистый тон с железным сердечником, настроенный для ритмичного перебирания."
@@ -61021,37 +61024,38 @@ toolbox.sound.piano.verticalKeyboardPhoneDesc,手机布局优先单手点击和�
 toolbox.sound.piano.window,窗口,Window,ウィンドウ,Fenster,Fenêtre,Ventana,Окно
 toolbox.sound.piano.windowList,窗口列表,Window list,ウィンドウリスト,Fensterliste,Liste des fenêtres,Lista de ventanas,Список окон
 toolbox.sound.piano.windowReady,窗口就绪,Window ready,ウィンドウ準備完了,Fenster bereit,Fenêtre prête,Ventana lista,Окно готово
-toolbox.sound.pickup.advice_label,建议标签,Advice Label,アドバイスラベル,Beratungsetikett,Étiquette de conseil,Etiqueta de aviso,Лейбл Advice
+toolbox.sound.pickup.advice_label,建议,Advice,アドバイスラベル,Beratungsetikett,Étiquette de conseil,Etiqueta de aviso,Лейбл Advice
 toolbox.sound.pickup.calibration,校准,Calibration,校正,Kalibrierung,Étallonage,Calibración,Калибровка
-toolbox.sound.pickup.calibration_note,校准音符,Calibration Note,校正ノート,Kalibrierungshinweis,Note d'étalonnage,Nota de calibración,Примечание по калибровке
-toolbox.sound.pickup.calibration_sub,校准子项,Calibration Sub,校正サブ,Kalibrierungsunterpunkt,Sous-étalonnage,Subcalibración,Калибровка подпроцесса
-toolbox.sound.pickup.clip_warns,剪辑警告,Clip Warns,クリップ警告,Clip-Warnungen,Avertissements de clip,Advertencias de clip,Предупреждение клипа
+toolbox.sound.pickup.calibration_note,根据当前拾音方式微调前级、门限、亮度与相位。,"Fine-tune preamp, gate, presence, and phase for the current pickup type.",校正ノート,Kalibrierungshinweis,Note d'étalonnage,Nota de calibración,Примечание по калибровке
+toolbox.sound.pickup.calibration_sub,校准输入灵敏度、噪声门和亮度。,"Calibrate input gain, noise gate, and presence.",校正サブ,Kalibrierungsunterpunkt,Sous-étalonnage,Subcalibración,Калибровка подпроцесса
+toolbox.sound.pickup.clip_warns,削波警告,Clip warnings,クリップ警告,Clip-Warnungen,Avertissements de clip,Advertencias de clip,Предупреждение клипа
 toolbox.sound.pickup.current_key,当前调,Current Key,現在のキー,Aktueller Schlüssel,Touche actuelle,Tecla actual,Текущий ключ
 toolbox.sound.pickup.detected_key,检测到的调,Detected Key,検出されたキー,Erkannter Schlüssel,Touche détectée,Tecla detectada,Обнаруженный ключ
 toolbox.sound.pickup.detected_notes,检测到的音符,Detected Notes,検出されたノート,Erkannte Noten,Notes détectées,Notas detectadas,Обнаруженные ноты
 toolbox.sound.pickup.duration,持续时间,Duration,期間,Dauer,Durée,Duración,Продолжительность
-toolbox.sound.pickup.error_perm_denied,错误 权限被拒,Error Perm Denied,エラー 許可拒否,Fehler Zugriff verweigert,Erreur Permission refusée,Error Permiso denegado,Ошибка: разрешение запрещено
-toolbox.sound.pickup.gate_pct,门控百分比,Gate Pct,ゲート％,Torprozentsatz,Pourcentage de porte,Porcentaje de puerta,Процент гейта
+toolbox.sound.pickup.error_perm_denied,麦克风权限被拒绝,Microphone permission denied,エラー 許可拒否,Fehler Zugriff verweigert,Erreur Permission refusée,Error Permiso denegado,Ошибка: разрешение запрещено
+toolbox.sound.pickup.freeze_snapshot,冻结快照,Freeze snapshot,Freeze snapshot,Freeze snapshot,Freeze snapshot,Freeze snapshot,Freeze snapshot
+toolbox.sound.pickup.gate_pct,门限 {pct}%,Gate {pct}%,Gate {pct}%,Gate {pct}%,Gate {pct}%,Gate {pct}%,Gate {pct}%
 toolbox.sound.pickup.guidance_balanced,指引 均衡,Guidance Balanced,ガイダンス バランス,Anleitung Ausgewogen,Orientation équilibrée,Guía equilibrada,Руководство: сбалансировано
 toolbox.sound.pickup.guidance_bright,指引 明亮,Guidance Bright,ガイダンス 明るい,Anleitung Hell,Orientation claire,Guía brillante,Руководство: ярко
 toolbox.sound.pickup.guidance_dark,指引 暗,Guidance Dark,ガイダンス 暗い,Anleitung Dunkel,Orientation sombre,Guía oscura,Руководство: темно
-toolbox.sound.pickup.guidance_default,指引 默认,Guidance Default,ガイダンス デフォルト,Anleitung Standard,Orientation par défaut,Guía predeterminada,Руководство: по умолчанию
+toolbox.sound.pickup.guidance_default,开始监听后会显示实时建议。,Start monitoring to see live guidance.,ガイダンス デフォルト,Anleitung Standard,Orientation par défaut,Guía predeterminada,Руководство: по умолчанию
 toolbox.sound.pickup.guidance_frozen,指引 冻结,Guidance Frozen,ガイダンス 凍結,Anleitung Eingefroren,Orientation gelée,Guía congelada,Руководство: заморожено
-toolbox.sound.pickup.guidance_idle,指引 空闲,Guidance Idle,ガイダンス 待機,Anleitung Leerlauf,Orientation inactive,Guía inactiva,Руководство: ожидание
-toolbox.sound.pickup.guidance_low_input,指引 输入过低,Guidance Low Input,ガイダンス 低入力,Anleitung Niedriger Eingang,Orientation faible entrée,Guía de entrada baja,Руководство: низкий вход
-toolbox.sound.pickup.guidance_no_perm,指引 无权限,Guidance No Perm,ガイダンス 許可なし,Anleitung Keine Berechtigung,Orientation pas de permission,Guía sin permiso,Руководство: нет разрешения
-toolbox.sound.pickup.guidance_peak,指引 峰值,Guidance Peak,ガイダンスピーク,Leitspitze,Pic de guidage,Pico de Guía,Руководство: пик
+toolbox.sound.pickup.guidance_idle,点击开始监听，检查输入电平与音高。,Tap start monitoring to check level and pitch.,ガイダンス 待機,Anleitung Leerlauf,Orientation inactive,Guía inactiva,Руководство: ожидание
+toolbox.sound.pickup.guidance_low_input,输入偏低，请靠近音源或提高前级。,Input is low; move closer or raise preamp.,ガイダンス 低入力,Anleitung Niedriger Eingang,Orientation faible entrée,Guía de entrada baja,Руководство: низкий вход
+toolbox.sound.pickup.guidance_no_perm,需要麦克风权限才能监听输入。,Microphone permission is required to monitor input.,ガイダンス 許可なし,Anleitung Keine Berechtigung,Orientation pas de permission,Guía sin permiso,Руководство: нет разрешения
+toolbox.sound.pickup.guidance_peak,峰值过高，建议降低前级避免削波。,Peak is high; lower preamp to avoid clipping.,ガイダンスピーク,Leitspitze,Pic de guidage,Pico de Guía,Руководство: пик
 toolbox.sound.pickup.guidance_phase,指引 相位,Guidance Phase,誘導フェーズ,Führungsphase,Phase de guidage,Fase de Guía,Руководство: фаза
 toolbox.sound.pickup.guidance_unstable,指引 不稳定,Guidance Unstable,誘導不安定,Führung instabil,Guidage instable,Guía Inestable,Руководство: нестабильно
 toolbox.sound.pickup.guide_adjust_params,指南 调整参数,Guide Adjust Params,ガイド調整パラメータ,Führungsparameter anpassen,Ajuster les paramètres du guide,Ajustar Parámetros de Guía,Настройка параметров руководства
 toolbox.sound.pickup.guide_adjust_params_body,指南 调整参数正文,Guide Adjust Params Body,ガイド パララム調整 ボディ,Führungsparameter anpassen Text,Corps d'ajustement des paramètres du guide,Cuerpo de Ajuste de Parámetros de Guía,Настройка параметров руководства: тело
-toolbox.sound.pickup.guide_button,指南 按钮,Guide Button,ガイドボタン,Führungsbutton,Bouton du guide,Botón de Guía,Кнопка руководства
+toolbox.sound.pickup.guide_button,使用指南,Guide,ガイドボタン,Führungsbutton,Bouton du guide,Botón de Guía,Кнопка руководства
 toolbox.sound.pickup.guide_play_note,指南 播放音符,Guide Play Note,ガイドプレイノート,Note spielen,Jouer une note avec le guide,Reproducir Nota de Guía,Воспроизвести ноту руководства
 toolbox.sound.pickup.guide_play_note_body,指南 播放音符正文,Guide Play Note Body,ガイド プレイノート ボディ,Note spielen Text,Corps de lecture de note du guide,Cuerpo de Reproducción de Nota de Guía,Воспроизвести ноту руководства: тело
 toolbox.sound.pickup.guide_save_preset,指南 保存预设,Guide Save Preset,ガイドセーブプリセット,Preset speichern,Enregistrer le préréglage du guide,Guardar Preset de Guía,Сохранить пресет руководства
 toolbox.sound.pickup.guide_save_preset_body,指南 保存预设正文,Guide Save Preset Body,ガイド プリセットボディの保存,Preset speichern Text,Corps d'enregistrement du préréglage du guide,Cuerpo de Guardar Preset de Guía,Сохранить пресет руководства: тело
-toolbox.sound.pickup.guide_start_monitor,指南 开始监控,Guide Start Monitor,ガイド・スタートモニター,Überwachung starten,Démarrer le moniteur du guide,Iniciar Monitor de Guía,Руководство по запуску монитора
-toolbox.sound.pickup.guide_start_monitor_body,指南 开始监控正文,Guide Start Monitor Body,ガイド スタートモニターボディ,Überwachung starten Text,Corps de démarrage du moniteur du guide,Cuerpo de Inicio del Monitor de Guía,Тело руководства по запуску монитора
+toolbox.sound.pickup.guide_start_monitor,开始监听,Start monitoring,ガイド・スタートモニター,Überwachung starten,Démarrer le moniteur du guide,Iniciar Monitor de Guía,Руководство по запуску монитора
+toolbox.sound.pickup.guide_start_monitor_body,允许麦克风权限后，工具会显示实时电平、峰值、音高和音色。,"After microphone permission is granted, the tool shows live level, peak, pitch, and tone.",ガイド スタートモニターボディ,Überwachung starten Text,Corps de démarrage du moniteur du guide,Cuerpo de Inicio del Monitor de Guía,Тело руководства по запуску монитора
 toolbox.sound.pickup.hide_stats,隐藏统计,Hide Stats,隠れステータス,Statistiken ausblenden,Masquer les statistiques,Ocultar Estadísticas,Скрыть статистику
 toolbox.sound.pickup.in_tune,音准,In Tune,イン・チューン,In Stimmung,Accordé,Afinado,Настроено
 toolbox.sound.pickup.level,电平,Level,レベル,Pegel,Niveau,Nivel,Уровень
@@ -61061,50 +61065,52 @@ toolbox.sound.pickup.max_peak,最大峰值,Max Peak,マックスピーク,Maxima
 toolbox.sound.pickup.notes_label,音符标签,Notes Label,ノーツラベル,Notenlabel,Étiquette des notes,Etiqueta de Notas,Метка нот
 toolbox.sound.pickup.peak,峰值,Peak,ピーク,Spitze,Crête,Pico,Пик
 toolbox.sound.pickup.phase_rev,相位反转,Phase Rev,フェーズ・レヴ,Phasenwechsel,Inversion de phase,Reversa de Fase,Реверс фазы
-toolbox.sound.pickup.phase_rev_hint,相位反转提示,Phase Rev Hint,フェーズリビジョンヒント,Hinweis zum Phasenwechsel,Indice d'inversion de phase,Sugerencia de Reversa de Fase,Подсказка по реверсу фазы
-toolbox.sound.pickup.pickup_stage,拾音阶段,Pickup Stage,ピックアップステージ,Pickup-Stufe,Étape de ramassage,Etapa de Captura,Этап звукоснимателя
-toolbox.sound.pickup.pickup_stage_compact,拾音阶段紧凑,Pickup Stage Compact,ピックアップステージコンパクト,Pickup-Stufe Kompakt,Étape de ramassage compacte,Etapa de Captura Compacta,Этап звукоснимателя (компактно)
-toolbox.sound.pickup.pickup_stage_full,拾音阶段完整,Pickup Stage Full,ピックアップステージ フル,Pickup-Stufe Voll,Étape de ramassage complète,Etapa de Captura Completa,Этап звукоснимателя (полный)
+toolbox.sound.pickup.phase_rev_hint,当声音变薄或抵消时，可尝试切换相位反转。,"If the sound thins out or cancels, try toggling phase reverse.",フェーズリビジョンヒント,Hinweis zum Phasenwechsel,Indice d'inversion de phase,Sugerencia de Reversa de Fase,Подсказка по реверсу фазы
+toolbox.sound.pickup.pickup_stage,拾音监测台,Pickup monitor,ピックアップステージ,Pickup-Stufe,Étape de ramassage,Etapa de Captura,Этап звукоснимателя
+toolbox.sound.pickup.pickup_stage_compact,紧凑显示实时输入状态。,Compact live input view.,ピックアップステージコンパクト,Pickup-Stufe Kompakt,Étape de ramassage compacte,Etapa de Captura Compacta,Этап звукоснимателя (компактно)
+toolbox.sound.pickup.pickup_stage_full,查看电平、峰值、音高、频谱与建议。,"View level, peak, pitch, spectrum, and guidance.",ピックアップステージ フル,Pickup-Stufe Voll,Étape de ramassage complète,Etapa de Captura Completa,Этап звукоснимателя (полный)
 toolbox.sound.pickup.pickup_type,拾音类型,Pickup Type,ピックアップタイプ,Pickup-Typ,Type de micros,Tipo de Captador,Тип звукоснимателя
+toolbox.sound.pickup.pitch,音高,Pitch,Pitch,Pitch,Pitch,Pitch,Pitch
 toolbox.sound.pickup.pitch_deviation,音高偏差,Pitch Deviation,ピッチ偏差,Pitch-Abweichung,Déviation de hauteur,Desviación de Tono,Отклонение тона
 toolbox.sound.pickup.pitch_good,音高良好,Pitch Good,ピッチ良好,Pitch Gut,Juste,Tono Correcto,Тон в порядке
-toolbox.sound.pickup.pitch_off,投球,Pitch Off,ピッチずれ,Pitch Falsch,Faux,Tono Desajustado,Тон не в порядке
-toolbox.sound.pickup.pitch_out_of_tune,音高走音,Pitch Out Of Tune,ピッチ不正確,Pitch Verstimmt,Désaccordé,Tono Fuera de Afinación,Тон расстроен
-toolbox.sound.pickup.pitch_precise,精确俯仰,Pitch Precise,ピッチ精密,Pitch Präzise,Précis,Tono Preciso,Тон точный
-toolbox.sound.pickup.pitch_stable,球场稳定,Pitch Stable,ピッチ安定,Pitch Stabil,Stable,Tono Estable,Тон стабильный
-toolbox.sound.pickup.preamp_pct,PCT,PCT,PCT,PCT,PCT,PCT,PCT
-toolbox.sound.pickup.presence_pct,PCT,PCT,PCT,PCT,PCT,PCT,PCT
+toolbox.sound.pickup.pitch_off,音高偏离,Pitch off,ピッチずれ,Pitch Falsch,Faux,Tono Desajustado,Тон не в порядке
+toolbox.sound.pickup.pitch_out_of_tune,音高不准,Out of tune,ピッチ不正確,Pitch Verstimmt,Désaccordé,Tono Fuera de Afinación,Тон расстроен
+toolbox.sound.pickup.pitch_precise,音准精准,Precise pitch,ピッチ精密,Pitch Präzise,Précis,Tono Preciso,Тон точный
+toolbox.sound.pickup.pitch_stable,音高稳定,Pitch stable,ピッチ安定,Pitch Stabil,Stable,Tono Estable,Тон стабильный
+toolbox.sound.pickup.preamp_pct,前级 {pct}%,Preamp {pct}%,Preamp {pct}%,Preamp {pct}%,Preamp {pct}%,Preamp {pct}%,Preamp {pct}%
+toolbox.sound.pickup.presence_pct,亮度 {pct}%,Presence {pct}%,Presence {pct}%,Presence {pct}%,Presence {pct}%,Presence {pct}%,Presence {pct}%
 toolbox.sound.pickup.preset_ambient,预设环境音,Preset Ambient,プリセットアンビエント,Preset Ambiente,Préréglage Ambiant,Preajuste Ambiental,Предустановка «Атмосфера»
 toolbox.sound.pickup.preset_balanced,预设平衡,Preset Balanced,プリセットバランス,Preset Ausgewogen,Préréglage Équilibré,Preajuste Equilibrado,Предустановка «Сбалансировано»
 toolbox.sound.pickup.preset_bright,预设明亮,Preset Bright,プリセットブライト,Preset Hell,Préréglage Clair,Preajuste Brillante,Предустановка «Ярко»
 toolbox.sound.pickup.preset_custom,预设自定义,Preset Custom,プリセットカスタム,Preset Benutzerdefiniert,Préréglage Personnalisé,Preajuste Personalizado,Пользовательский пресет
-toolbox.sound.pickup.preset_label,预设标签,Preset Label,プリセットラベル,Preset Bezeichnung,Étiquette du préréglage,Etiqueta de Preajuste,Метка пресета
+toolbox.sound.pickup.preset_label,温暖,Warm,プリセットラベル,Preset Bezeichnung,Étiquette du préréglage,Etiqueta de Preajuste,Метка пресета
 toolbox.sound.pickup.preset_low_noise,预设低噪声,Preset Low Noise,プリセット低ノイズ,Preset Geringes Rauschen,Préréglage Faible Bruit,Preajuste Bajo Ruido,Пресет низкого шума
-toolbox.sound.pickup.profile_condenser,型材电容,Profile Condenser,プロファイルコンデンサー,Profil Kondensator,Profil Condensateur,Perfil Condensador,Профиль конденсаторного микрофона
-toolbox.sound.pickup.profile_condenser_sub,轮廓电容低音炮,Profile Condenser Sub,プロファイルコンデンサーサブ,Profil Kondensator Sub,Profil Condensateur Sub,Perfil Condensador Sub,Профиль конденсаторного микрофона Sub
-toolbox.sound.pickup.profile_contact,个人资料联系方式,Profile Contact,プロファイルコンタクト,Profil Kontakt,Profil Contact,Perfil de Contacto,Профиль контактного микрофона
-toolbox.sound.pickup.profile_contact_sub,个人资料联系子版块,Profile Contact Sub,プロファイルコンタクトサブ,Profil Kontakt Sub,Profil Contact Sub,Perfil de Contacto Sub,Профиль контактного микрофона Sub
-toolbox.sound.pickup.profile_dynamic,档案动态,Profile Dynamic,プロファイルダイナミック,Profil Dynamisch,Profil Dynamique,Perfil Dinámico,Профиль динамического микрофона
-toolbox.sound.pickup.profile_dynamic_sub,动态资料子版块,Profile Dynamic Sub,プロファイルダイナミックサブ,Profil Dynamisch Sub,Profil Dynamique Sub,Perfil Dinámico Sub,Профиль динамического микрофона Sub
-toolbox.sound.pickup.profile_magnetic,磁性剖面,Profile Magnetic,プロファイルマグネティック,Profil Magnetisch,Profil Magnétique,Perfil Magnético,Профиль магнитного микрофона
-toolbox.sound.pickup.profile_magnetic_sub,轮廓磁性低音炮,Profile Magnetic Sub,プロファイルマグネティックサブ,Profil Magnetisch Sub,Profil Magnétique Sub,Perfil Magnético Sub,Профиль магнитного микрофона Sub
-toolbox.sound.pickup.profile_piezo,压电剖面,Profile Piezo,プロファイルピエゾ,Profil Piezo,Profil Piezo,Perfil Piezo,Профиль пьезоизлучателя
-toolbox.sound.pickup.profile_piezo_sub,Profile 压电低音炮,Profile Piezo Sub,プロファイル ピエゾ サブ,Profil Piezo Sub,Profil Piezo Sub,Sub Perfil Piezo,Профиль пьезоизлучателя Sub
+toolbox.sound.pickup.profile_condenser,电容麦,Condenser mic,Condenser mic,Condenser mic,Condenser mic,Condenser mic,Condenser mic
+toolbox.sound.pickup.profile_condenser_sub,适合空气感更强、细节更明亮的输入。,Best for airy input with brighter detail.,Best for airy input with brighter detail.,Best for airy input with brighter detail.,Best for airy input with brighter detail.,Best for airy input with brighter detail.,Best for airy input with brighter detail.
+toolbox.sound.pickup.profile_contact,接触式拾音,Contact pickup,Contact pickup,Contact pickup,Contact pickup,Contact pickup,Contact pickup
+toolbox.sound.pickup.profile_contact_sub,适合贴近琴体、桌面或外壳的低噪声拾音。,"For low-noise pickup close to an instrument body, desk, or shell.","For low-noise pickup close to an instrument body, desk, or shell.","For low-noise pickup close to an instrument body, desk, or shell.","For low-noise pickup close to an instrument body, desk, or shell.","For low-noise pickup close to an instrument body, desk, or shell.","For low-noise pickup close to an instrument body, desk, or shell."
+toolbox.sound.pickup.profile_dynamic,动圈麦,Dynamic mic,Dynamic mic,Dynamic mic,Dynamic mic,Dynamic mic,Dynamic mic
+toolbox.sound.pickup.profile_dynamic_sub,适合较强声压和嘈杂环境。,Good for higher sound pressure and noisy spaces.,Good for higher sound pressure and noisy spaces.,Good for higher sound pressure and noisy spaces.,Good for higher sound pressure and noisy spaces.,Good for higher sound pressure and noisy spaces.,Good for higher sound pressure and noisy spaces.
+toolbox.sound.pickup.profile_magnetic,磁拾音,Magnetic pickup,Magnetic pickup,Magnetic pickup,Magnetic pickup,Magnetic pickup,Magnetic pickup
+toolbox.sound.pickup.profile_magnetic_sub,适合电吉他等磁性拾音输入。,For magnetic pickup inputs such as electric guitar.,For magnetic pickup inputs such as electric guitar.,For magnetic pickup inputs such as electric guitar.,For magnetic pickup inputs such as electric guitar.,For magnetic pickup inputs such as electric guitar.,For magnetic pickup inputs such as electric guitar.
+toolbox.sound.pickup.profile_piezo,压电拾音,Piezo pickup,Piezo pickup,Piezo pickup,Piezo pickup,Piezo pickup,Piezo pickup
+toolbox.sound.pickup.profile_piezo_sub,适合原声乐器桥位或贴片拾音。,For bridge or surface pickup on acoustic instruments.,For bridge or surface pickup on acoustic instruments.,For bridge or surface pickup on acoustic instruments.,For bridge or surface pickup on acoustic instruments.,For bridge or surface pickup on acoustic instruments.,For bridge or surface pickup on acoustic instruments.
 toolbox.sound.pickup.quality,质量,Quality,クオリティ,Qualität,Qualité,Calidad,Качество
 toolbox.sound.pickup.quality_excellent,质量：优秀,Quality Excellent,クオリティ 優,Qualität Ausgezeichnet,Qualité Excellent,Calidad Excelente,Отличное качество
-toolbox.sound.pickup.quality_fair,质量博览会,Quality Fair,クオリティ 普通,Qualität Befriedigend,Qualité Moyenne,Calidad Regular,Среднее качество
+toolbox.sound.pickup.quality_fair,质量尚可,Fair quality,クオリティ 普通,Qualität Befriedigend,Qualité Moyenne,Calidad Regular,Среднее качество
 toolbox.sound.pickup.quality_good,质量 良好,Quality Good,クオリティ 良,Qualität Gut,Qualité Bonne,Calidad Buena,Хорошее качество
-toolbox.sound.pickup.quality_needs_work,质量 需改进,Quality Needs Work,クオリティ 改善必要,Qualität Verbesserungswürdig,Qualité À Améliorer,Calidad Necesita Mejorar,Требуется доработка
+toolbox.sound.pickup.quality_needs_work,需要调整,Needs adjustment,クオリティ 改善必要,Qualität Verbesserungswürdig,Qualité À Améliorer,Calidad Necesita Mejorar,Требуется доработка
 toolbox.sound.pickup.quick_guide,快速指南,Quick Guide,クイックガイド,Schnellstartanleitung,Guide Rapide,Guía Rápida,Быстрое руководство
 toolbox.sound.pickup.quick_presets,快速预设,Quick Presets,クイックプリセット,Schnelleinstellungen,Préréglages Rapides,Preajustes Rápidos,Быстрые пресеты
-toolbox.sound.pickup.quick_presets_sub,快速预设子项,Quick Presets Sub,クイックプリセット サブ,Schnelleinstellungen Sub,Préréglages Rapides Sub,Sub Preajustes Rápidos,Быстрые пресеты Sub
+toolbox.sound.pickup.quick_presets_sub,按常见拾音场景快速设置输入参数。,Set input parameters quickly for common pickup scenarios.,クイックプリセット サブ,Schnelleinstellungen Sub,Préréglages Rapides Sub,Sub Preajustes Rápidos,Быстрые пресеты Sub
 toolbox.sound.pickup.reset_readings,重置读数,Reset Readings,読み取り値リセット,Messwerte zurücksetzen,Réinitialiser les Lectures,Reiniciar Lecturas,Сброс показаний
 toolbox.sound.pickup.resume_live,恢复实时,Resume Live,ライブ再開,Live fortsetzen,Reprendre en Direct,Reanudar En Vivo,Возобновить в реальном времени
 toolbox.sound.pickup.samples_label,样本标签,Samples Label,サンプルラベル,Probenetikett,Étiquette des Échantillons,Etiqueta de Muestras,Метка образцов
 toolbox.sound.pickup.scale_view,缩放视图,Scale View,スケールビュー,Skalenansicht,Vue de l'Échelle,Vista de Escala,Масштаб просмотра
-toolbox.sound.pickup.score_label,分数标签,Score Label,スコアラベル,Wertungslabel,Étiquette du Score,Etiqueta de Puntuación,Метка счета
+toolbox.sound.pickup.score_label,评分,Score,スコアラベル,Wertungslabel,Étiquette du Score,Etiqueta de Puntuación,Метка счета
 toolbox.sound.pickup.session_stats,会话统计,Session Stats,セッション統計,Sitzungsstatistiken,Statistiques de Session,Estadísticas de Sesión,Статистика сессии
-toolbox.sound.pickup.sharp_key,锐键,Sharp Key,シャープキー,Scharf-Taste,Touche Aiguë,Tecla Aguda,Острая клавиша
+toolbox.sound.pickup.sharp_key,升号调,Sharp key,シャープキー,Scharf-Taste,Touche Aiguë,Tecla Aguda,Острая клавиша
+toolbox.sound.pickup.show_stats,显示统计,Show stats,Show stats,Show stats,Show stats,Show stats,Show stats
 toolbox.sound.pickup.snapshot,快照,Snapshot,スナップショット,Momentaufnahme,Instantané,Instantánea,Снимок
 toolbox.sound.pickup.spectrum_ext,频谱扩展,Spectrum Ext,スペクトラム拡張,Spektrum Ext,Spectre Extrême,Espectro Ext,Расширенный спектр
 toolbox.sound.pickup.spectrum_high,高频谱,Spectrum High,スペクトラム高,Spektrum Hoch,Spectre Haut,Espectro Alto,Высокий спектр
@@ -61114,11 +61120,13 @@ toolbox.sound.pickup.spectrum_mid_h,中高频谱,Spectrum Mid H,スペクトラ�
 toolbox.sound.pickup.spectrum_mid_l,中低频谱,Spectrum Mid L,スペクトラム中低,Spektrum Mittel L,Spectre Moyen L,Espectro Medio L,Средний нижний спектр
 toolbox.sound.pickup.spectrum_top,顶频谱,Spectrum Top,スペクトラムトップ,Spectrum Oben,Spectre Haut,Espectro Superior,Верхний спектр
 toolbox.sound.pickup.spectrum_v_high,超高频谱,Spectrum V High,スペクトラムVハイ,Spectrum V Hoch,Spectre V Haut,Espectro V Alto,Очень высокий спектр
-toolbox.sound.pickup.status_frozen,状态 冻结,Status Frozen,ステータスフローズン,Status Eingefroren,Statut Gelé,Estado Congelado,Статус заморожен
-toolbox.sound.pickup.status_idle,状态 空闲,Status Idle,ステータスアイドル,Status Leerlauf,Statut Inactif,Estado Inactivo,Статус бездействия
-toolbox.sound.pickup.status_monitoring,状态 监控中,Status Monitoring,ステータスモニタリング,Status Überwachung,Statut Surveillance,Estado Monitoreando,Статус мониторинга
-toolbox.sound.pickup.status_starting,状态 启动中,Status Starting,ステータススタート中,Status Starten,Statut Démarrage,Estado Iniciando,Статус запуска
-toolbox.sound.pickup.stop_monitor,停止监控,Stop Monitor,モニター停止,Überwachung Stoppen,Arrêter la Surveillance,Detener Monitoreo,Остановить монитор
+toolbox.sound.pickup.start_monitor,开始监听,Start monitoring,Start monitoring,Start monitoring,Start monitoring,Start monitoring,Start monitoring
+toolbox.sound.pickup.status_frozen,已冻结,Frozen,ステータスフローズン,Status Eingefroren,Statut Gelé,Estado Congelado,Статус заморожен
+toolbox.sound.pickup.status_idle,待监听,Idle,ステータスアイドル,Status Leerlauf,Statut Inactif,Estado Inactivo,Статус бездействия
+toolbox.sound.pickup.status_monitoring,监听中,Monitoring,ステータスモニタリング,Status Überwachung,Statut Surveillance,Estado Monitoreando,Статус мониторинга
+toolbox.sound.pickup.status_starting,启动中,Starting,ステータススタート中,Status Starten,Statut Démarrage,Estado Iniciando,Статус запуска
+toolbox.sound.pickup.stop_monitor,停止监听,Stop monitoring,モニター停止,Überwachung Stoppen,Arrêter la Surveillance,Detener Monitoreo,Остановить монитор
+toolbox.sound.pickup.tone,音色,Tone,Tone,Tone,Tone,Tone,Tone
 toolbox.sound.pickup.tone_balanced,音色平衡,Tone Balanced,トーンバランス,Klang Ausgewogen,Ton Équilibré,Tono Equilibrado,Сбалансированный тон
 toolbox.sound.pickup.tone_bright,音色明亮,Tone Bright,トーンブライト,Klang Hell,Ton Clair,Tono Brillante,Яркий тон
 toolbox.sound.pickup.tone_dark,音色暗,Tone Dark,トーンダーク,Klang Dunkel,Ton Sombre,Tono Oscuro,Тёмный тон
