@@ -72,6 +72,33 @@ class ToolboxInstrumentBankCatalog {
         instrumentId: ToolboxInstrumentId.piano,
         program: 0,
       );
+
+  static const ToolboxInstrumentPatch acousticGuitarNylon =
+      ToolboxInstrumentPatch(
+        id: 'gm_acoustic_guitar_nylon',
+        instrumentId: ToolboxInstrumentId.guitar,
+        program: 24,
+        channel: 1,
+      );
+
+  static const ToolboxInstrumentPatch orchestralHarp = ToolboxInstrumentPatch(
+    id: 'gm_orchestral_harp',
+    instrumentId: ToolboxInstrumentId.harp,
+    program: 46,
+    channel: 4,
+  );
+}
+
+class ToolboxInstrumentPitch {
+  const ToolboxInstrumentPitch._();
+
+  static int midiFromFrequency(double frequency) {
+    if (frequency <= 0 || frequency.isNaN || frequency.isInfinite) {
+      return 60;
+    }
+    final midi = 69 + 12 * (math.log(frequency / 440.0) / math.ln2);
+    return midi.round().clamp(0, 127).toInt();
+  }
 }
 
 abstract class ToolboxMidiSynthAdapter {

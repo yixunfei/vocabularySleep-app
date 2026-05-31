@@ -73,7 +73,7 @@ class ToolboxLoopController {
   Future<void> dispose() => _player.dispose();
 }
 
-class ToolboxEffectPlayer {
+class ToolboxEffectPlayer implements ToolboxNotePlayer {
   ToolboxEffectPlayer(this.bytes, {this.maxPlayers = 6});
 
   final Uint8List bytes;

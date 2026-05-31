@@ -65,6 +65,27 @@ AppI18n _toolboxI18n(BuildContext context, {bool listen = true}) {
   return AppI18n(language);
 }
 
+CstCloudResourceCacheService? _toolboxResourceCacheOrNull(
+  BuildContext context,
+) {
+  try {
+    return ProviderScope.containerOf(
+      context,
+      listen: false,
+    ).read(cstCloudResourceCacheProvider);
+  } on StateError {
+    return null;
+  }
+}
+
+ToolboxSoundFontInstrumentEngine _createToolboxSoundFontInstrumentEngine(
+  BuildContext context,
+) {
+  return ToolboxSoundFontInstrumentEngine(
+    resourceCache: _toolboxResourceCacheOrNull(context),
+  );
+}
+
 const List<DeviceOrientation> _toolboxAllOrientations = <DeviceOrientation>[
   DeviceOrientation.portraitUp,
   DeviceOrientation.portraitDown,

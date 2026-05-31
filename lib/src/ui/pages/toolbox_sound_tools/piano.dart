@@ -240,9 +240,7 @@ class _PianoToolState extends State<_PianoTool> {
   @override
   void initState() {
     super.initState();
-    _sampledPianoEngine = ToolboxSoundFontInstrumentEngine(
-      resourceCache: _readResourceCacheOrNull(),
-    );
+    _sampledPianoEngine = _createToolboxSoundFontInstrumentEngine(context);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_prepareSampledPianoEngine());
       unawaited(_warmUpVisibleWindow(octaveSpan: 1, rangeStart: 2));
@@ -297,17 +295,6 @@ class _PianoToolState extends State<_PianoTool> {
       return;
     }
     setState(updates);
-  }
-
-  CstCloudResourceCacheService? _readResourceCacheOrNull() {
-    try {
-      return ProviderScope.containerOf(
-        context,
-        listen: false,
-      ).read(cstCloudResourceCacheProvider);
-    } on StateError {
-      return null;
-    }
   }
 
   @override

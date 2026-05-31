@@ -92,18 +92,20 @@
 ### 阶段 0: 单独分支与基线
 - [x] 从当前稳定点创建 `codex/multisampled-instrument-engine`。
 - 记录当前程序化乐器首音延迟、连续触发延迟、内存和卡顿复现条件。
-- [x] 明确首批只接入钢琴 POC；长笛/小提琴 sustain、竖琴和鼓类暂不改动。
+- [x] 明确首批以钢琴 POC 验证引擎，后续按低风险切片扩展；长笛/小提琴 sustain 与鼓类暂不改动。
 
 ### 阶段 1: POC
 - [x] 引入 `flutter_midi_engine`，只在 Android/iOS 采样路径启用；其他平台保持程序化合成 fallback。
 - [x] 下载或放置一个小体积 SoundFont 测试包。已尝试从 Debian 下载 `musescore-general-soundfont_0.2.1-1_all.deb` 到 `dev_resources/instrument_banks/`，当前网络速度过慢，未保留半成品文件；随后切换为 MuseScore 官方 GitHub 直链 `FluidR3Mono_GM.sf3` 作为首批轻量 POC bank，已暂存到 `dev_resources/instrument_banks/FluidR3Mono_GM.sf3`。
 - [x] 验证钢琴 patch 的 note on/off、program change、音量和回退路径。
-- [ ] 验证吉他、长笛、小提琴 patch 的 note on/off、连续触控、多点触控和 all notes off。
+- [x] 接入并单测登记吉他、竖琴 GM patch 的 program/channel；采样加载失败时继续回退现有程序化发声。
+- [ ] 验证长笛、小提琴 patch 的 note on/off、连续触控、多点触控和 all notes off。
+- [ ] 吉他、竖琴仍需移动真机听感确认，包括快速扫弦/滑弦、竖琴滑扫与和弦共鸣触发。
 - 记录 Android/iOS 原生构建问题。
 
 ### 阶段 2: 抽象与回退
 - [x] 添加首批 `ToolboxSoundFontInstrumentEngine`、`ToolboxMidiSynthAdapter`、`ToolboxInstrumentBankCatalog` 与 `ToolboxNotePlayer` 抽象。
-- [x] 钢琴页面通过 capability 判断使用采样引擎或现有引擎。
+- [x] 钢琴、吉他、竖琴页面通过 capability 判断使用采样引擎或现有引擎。
 - [x] 下载缺失、加载失败、平台不支持时自动回退。
 - [x] `ToolboxSoundFontInstrumentEngine` 接入 `CstCloudResourceCacheService`，钢琴页会读取 `cstCloudResourceCacheProvider`，上传 S3 后可用 `remoteKey` 直接进入既有 `remote_resource_cache` 下载/缓存路径。
 - [x] 加载前执行 bank size/SHA256 校验；远程缓存损坏时删除坏缓存并尝试本地 bank fallback，下一次可重新下载。
@@ -136,7 +138,7 @@
 ## 验证清单
 - `flutter pub get`
 - `flutter test test/toolbox_audio_bank_regression_test.dart --reporter compact`
-- 新增采样引擎单元测试与 smoke。
+- 新增采样引擎单元测试与 smoke，覆盖钢琴/吉他/竖琴 GM patch、频率到 MIDI note 映射与 fallback。
 - Android release 构建。
 - iOS 真机 note on/off、静音开关、后台/锁屏行为验证。
 - 375dp 手机页面首帧、加载态、触控热区验证。
@@ -148,6 +150,8 @@
 - 2026-05-31: 钢琴采样引擎读取 `cstCloudResourceCacheProvider`；加载前校验 bank size/SHA256，远程缓存损坏时删除坏缓存并回退本地 bank。
 - 2026-05-31: 用户确认 SF3 已上传到 S3 `SoundFont/FluidR3Mono_GM.sf3`；同步 remoteKey，并缓存采样引擎 program/volume/reverb 配置，单音动态走 MIDI velocity，同一按键重触发先释放活跃 note，降低移动端连续 note on 的平台通道串行开销。
 - 2026-05-31: 验证 `dart analyze lib\src\services\toolbox_audio_service.dart lib\src\ui\pages\toolbox_sound_tools.dart test\toolbox_instrument_engine_test.dart`、`flutter test test\toolbox_instrument_engine_test.dart --reporter compact`、`flutter test test\toolbox_audio_bank_regression_test.dart --reporter compact`、`node scripts\audit_i18n_placeholders.js`、旧 i18n helper/catalog 插值扫描、`flutter build windows --debug`、`flutter build apk --debug`、`git diff --check` 均通过；Android debug APK 产物为 `build\app\outputs\flutter-apk\app-debug.apk`，`git diff --check` 仅提示 changelog、plan 与开发资源 README 后续 Git 触碰时会按当前 Windows 配置转换 CRLF。
+- 2026-05-31: 第二扩展切片接入吉他 nylon guitar 与竖琴 orchestral harp 采样优先路径；复用同一个 `FluidR3Mono_GM.sf3`，保留程序化合成 fallback，并将长笛/小提琴 sustain 迁移顺延到独立切片。
+- 2026-05-31: 第二扩展切片已验证 `dart analyze`、采样引擎测试、音频 bank 回归、i18n catalog 检查、旧 helper/catalog 插值扫描、Windows debug build、Android debug APK build 与 `git diff --check`；仍待移动真机听感确认吉他扫弦和竖琴滑扫。
 
 ## 参考源
 - FluidSynth: https://www.fluidsynth.org/

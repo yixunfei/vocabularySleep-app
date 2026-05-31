@@ -294,8 +294,8 @@ class _HarpToolState extends State<_HarpTool>
     ),
   ];
 
-  final Map<String, ToolboxRealisticEffectPlayer> _playersByKey =
-      <String, ToolboxRealisticEffectPlayer>{};
+  final Map<String, ToolboxNotePlayer> _playersByKey =
+      <String, ToolboxNotePlayer>{};
   final List<double> _stringOffsets = List<double>.filled(_stringCount, 0);
   final List<double> _stringVelocities = List<double>.filled(_stringCount, 0);
   final List<double> _stringAudioFrequencies = List<double>.filled(
@@ -306,6 +306,7 @@ class _HarpToolState extends State<_HarpTool>
   final Map<int, _HarpPointerState> _pointerStates = <int, _HarpPointerState>{};
   final List<_HarpSweepTrail> _sweepTrails = <_HarpSweepTrail>[];
   final ValueNotifier<int> _harpPaintRevision = ValueNotifier<int>(0);
+  late final ToolboxSoundFontInstrumentEngine _sampledHarpEngine;
   late final Ticker _vibrationTicker;
 
   int? _focusedString;
@@ -327,10 +328,12 @@ class _HarpToolState extends State<_HarpTool>
   String? _activeRealismPresetId;
   bool _showGestureCoach = true;
   bool _advancedSettingsExpanded = false;
+  bool _sampledHarpReady = false;
 
   @override
   void initState() {
     super.initState();
+    _sampledHarpEngine = _createToolboxSoundFontInstrumentEngine(context);
     final config = widget.initialConfig;
     if (config != null) {
       _scaleId = config.scaleId;
@@ -369,6 +372,7 @@ class _HarpToolState extends State<_HarpTool>
       unawaited(_enterImmersiveMode());
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_prepareSampledHarpEngine());
       unawaited(_warmUpActiveTone());
     });
   }
@@ -616,10 +620,40 @@ class _HarpToolState extends State<_HarpTool>
     }
   }
 
-  ToolboxRealisticEffectPlayer _playerForFrequency(double frequency) {
+  Future<void> _prepareSampledHarpEngine() async {
+    final ready = await _sampledHarpEngine.ensurePatch(
+      bank: ToolboxInstrumentBankCatalog.museScoreGeneral,
+      patch: ToolboxInstrumentBankCatalog.orchestralHarp,
+      volume: 0.9,
+      reverb: _reverbForAudio,
+    );
+    if (!mounted || ready == _sampledHarpReady) {
+      return;
+    }
+    _sampledHarpReady = ready;
+    _invalidateAudioPlayers();
+  }
+
+  ToolboxNotePlayer _playerForFrequency(double frequency) {
     final key = _playerKeyForFrequency(frequency);
     final existing = _playersByKey[key];
     if (existing != null) return existing;
+    if (_sampledHarpReady) {
+      final sampled = ToolboxSampledMidiNotePlayer(
+        engine: _sampledHarpEngine,
+        bank: ToolboxInstrumentBankCatalog.museScoreGeneral,
+        patch: ToolboxInstrumentBankCatalog.orchestralHarp,
+        midiNote: ToolboxInstrumentPitch.midiFromFrequency(frequency),
+        velocity: 0.82,
+        releaseAfter: Duration(
+          milliseconds: (900 + _audioDecayFromDamping * 1200).round(),
+        ),
+        volume: 0.9,
+        reverb: _reverbForAudio,
+      );
+      _playersByKey[key] = sampled;
+      return sampled;
+    }
     final created = ToolboxRealisticEffectPlayer.build(
       variants: _harpVariants,
       bytesForVariant: (variant) => ToolboxAudioBank.harpNote(
@@ -1178,6 +1212,7 @@ class _HarpToolState extends State<_HarpTool>
     _vibrationTicker.dispose();
     _harpPaintRevision.dispose();
     _invalidateAudioPlayers(warmUp: false);
+    unawaited(_sampledHarpEngine.dispose());
     super.dispose();
   }
 

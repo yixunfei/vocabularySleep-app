@@ -1,3 +1,34 @@
+## [Unreleased-PLAN_305-IMPLEMENTATION-SLICE-2] - 2026-05-31
+
+### 原因
+- 钢琴采样路径经手机真机测试基本正常，继续沿同一 SoundFont/SF3 路线扩展到更低风险的一次性发声乐器。
+
+### 新增
+- 新增吉他 `gm_acoustic_guitar_nylon` 与竖琴 `gm_orchestral_harp` 的 GM patch catalog 映射，并同步 `assets/toolbox/instruments/instrument_banks.json`。
+- 新增 `ToolboxInstrumentPitch.midiFromFrequency`，用于竖琴频率到 MIDI note 的轻量映射。
+- 采样引擎单测新增钢琴、吉他、竖琴 GM program/channel 与频率映射断言。
+
+### 修改
+- 吉他模块在非 palm-mute 场景优先使用 `FluidR3Mono_GM.sf3` 的 nylon guitar 采样；palm-mute 继续使用原程序化短音兜底，避免用 GM 音色硬模拟闷音。
+- 竖琴模块优先使用 `FluidR3Mono_GM.sf3` 的 orchestral harp 采样，并保留原多 variant 程序化竖琴作为平台不支持、下载失败或加载失败时的 fallback。
+- 抽出 shared SoundFont engine 创建入口，钢琴、吉他、竖琴统一读取 `cstCloudResourceCacheProvider`。
+- `ToolboxEffectPlayer` 显式实现 `ToolboxNotePlayer`，让采样播放器与既有 WAV effect 播放器共享缓存与回退接口。
+
+### 验证
+- `dart format lib\src\services\toolbox_audio_players.dart lib\src\services\toolbox_instrument_engine.dart lib\src\ui\pages\toolbox_sound_tools.dart lib\src\ui\pages\toolbox_sound_tools\piano.dart lib\src\ui\pages\toolbox_sound_tools\guitar.dart lib\src\ui\pages\toolbox_sound_tools\harp.dart test\toolbox_instrument_engine_test.dart` 通过。
+- `dart analyze lib\src\services\toolbox_audio_service.dart lib\src\ui\pages\toolbox_sound_tools.dart test\toolbox_instrument_engine_test.dart` 通过，No issues found。
+- `flutter test test\toolbox_instrument_engine_test.dart --reporter compact` 通过。
+- `flutter test test\toolbox_audio_bank_regression_test.dart --reporter compact` 通过。
+- `node scripts\audit_i18n_placeholders.js` 通过，missing 0，placeholderMismatch 0，Dart missingParams 0。
+- 旧 i18n helper 扫描与 catalog Dart 插值扫描无命中。
+- `flutter build windows --debug` 通过，生成 `build\windows\x64\runner\Debug\xianyushengxi.exe`。
+- `flutter build apk --debug` 通过，生成 `build\app\outputs\flutter-apk\app-debug.apk`。
+- `git diff --check` 通过；仅提示 changelog 与 plan 文档后续 Git 触碰时会按当前 Windows 配置转换 CRLF。
+
+### 风险变更
+- 吉他与竖琴仍需手机真机听感确认，重点检查快速扫弦、连续滑扫、竖琴和弦共鸣与 MIDI 采样尾音释放。
+- 长笛和小提琴包含 sustain/loop/breath/bow 等持续音逻辑，本轮没有混入迁移，保留到下一独立切片。
+
 ## [Unreleased-PLAN_305-IMPLEMENTATION-SLICE-1] - 2026-05-31
 
 ### 原因

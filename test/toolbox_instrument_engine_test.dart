@@ -8,6 +8,18 @@ import 'package:vocabulary_sleep_app/src/services/toolbox_audio_service.dart';
 
 void main() {
   group('ToolboxSoundFontInstrumentEngine', () {
+    test('catalog maps first SoundFont patches to stable GM programs', () {
+      expect(ToolboxInstrumentBankCatalog.acousticGrandPiano.program, 0);
+      expect(ToolboxInstrumentBankCatalog.acousticGrandPiano.channel, 0);
+      expect(ToolboxInstrumentBankCatalog.acousticGuitarNylon.program, 24);
+      expect(ToolboxInstrumentBankCatalog.acousticGuitarNylon.channel, 1);
+      expect(ToolboxInstrumentBankCatalog.orchestralHarp.program, 46);
+      expect(ToolboxInstrumentBankCatalog.orchestralHarp.channel, 4);
+      expect(ToolboxInstrumentPitch.midiFromFrequency(440), 69);
+      expect(ToolboxInstrumentPitch.midiFromFrequency(261.63), 60);
+      expect(ToolboxInstrumentPitch.midiFromFrequency(0), 60);
+    });
+
     test('stays unavailable on unsupported platforms', () async {
       final synth = _FakeMidiSynthAdapter();
       final engine = ToolboxSoundFontInstrumentEngine(

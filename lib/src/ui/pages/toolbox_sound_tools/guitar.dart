@@ -69,8 +69,8 @@ class _GuitarToolState extends State<_GuitarTool> {
     _GuitarChordVoicing(id: 'f', label: 'F', frets: <int>[1, 3, 3, 2, 1, 1]),
   ];
 
-  final Map<String, ToolboxEffectPlayer> _players =
-      <String, ToolboxEffectPlayer>{};
+  final Map<String, ToolboxNotePlayer> _players = <String, ToolboxNotePlayer>{};
+  late final ToolboxSoundFontInstrumentEngine _sampledGuitarEngine;
   final Map<int, int> _pointerStringIndexes = <int, int>{};
 
   String _presetId = _presets.first.id;
@@ -81,13 +81,16 @@ class _GuitarToolState extends State<_GuitarTool> {
   double _pickPosition = _presets.first.pickPosition;
   bool _palmMute = false;
   bool _momentaryPalmMute = false;
+  bool _sampledGuitarReady = false;
   String? _lastPlayedLabel;
   int _strumCount = 0;
 
   @override
   void initState() {
     super.initState();
+    _sampledGuitarEngine = _createToolboxSoundFontInstrumentEngine(context);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_prepareSampledGuitarEngine());
       unawaited(_warmUpActivePreset());
     });
   }
@@ -185,7 +188,7 @@ class _GuitarToolState extends State<_GuitarTool> {
     return (base + dynamicLift).clamp(0.28, 1.0).toDouble();
   }
 
-  ToolboxEffectPlayer _playerForMidi(
+  ToolboxNotePlayer _playerForMidi(
     int midi, {
     double? pickPosition,
     double velocity = 0.8,
@@ -204,6 +207,22 @@ class _GuitarToolState extends State<_GuitarTool> {
         '${resolvedPalmMute ? 'mute' : 'open'}';
     final existing = _players[key];
     if (existing != null) return existing;
+    if (_sampledGuitarReady && !resolvedPalmMute) {
+      final sampled = ToolboxSampledMidiNotePlayer(
+        engine: _sampledGuitarEngine,
+        bank: ToolboxInstrumentBankCatalog.museScoreGeneral,
+        patch: ToolboxInstrumentBankCatalog.acousticGuitarNylon,
+        midiNote: midi,
+        velocity: resolvedVelocity,
+        releaseAfter: Duration(
+          milliseconds: (760 + _resonance.clamp(0.1, 1.0) * 1240).round(),
+        ),
+        volume: _activePreset.pluckVolume,
+        reverb: _sampledGuitarReverb,
+      );
+      _players[key] = sampled;
+      return sampled;
+    }
     final created = ToolboxEffectPlayer(
       ToolboxAudioBank.guitarNote(
         frequency,
@@ -224,6 +243,25 @@ class _GuitarToolState extends State<_GuitarTool> {
       unawaited(player.dispose());
     }
     _players.clear();
+  }
+
+  double get _sampledGuitarReverb {
+    return (0.06 + _resonance * 0.18).clamp(0.05, 0.28).toDouble();
+  }
+
+  Future<void> _prepareSampledGuitarEngine() async {
+    final ready = await _sampledGuitarEngine.ensurePatch(
+      bank: ToolboxInstrumentBankCatalog.museScoreGeneral,
+      patch: ToolboxInstrumentBankCatalog.acousticGuitarNylon,
+      volume: _activePreset.pluckVolume,
+      reverb: _sampledGuitarReverb,
+    );
+    if (!mounted || ready == _sampledGuitarReady) {
+      return;
+    }
+    _sampledGuitarReady = ready;
+    _invalidatePlayers();
+    unawaited(_warmUpActivePreset());
   }
 
   Future<void> _warmUpActivePreset() async {
@@ -248,6 +286,9 @@ class _GuitarToolState extends State<_GuitarTool> {
       _pickPosition = preset.pickPosition;
     });
     _invalidatePlayers();
+    if (_sampledGuitarReady) {
+      unawaited(_prepareSampledGuitarEngine());
+    }
     unawaited(_warmUpActivePreset());
   }
 
@@ -955,6 +996,7 @@ class _GuitarToolState extends State<_GuitarTool> {
   @override
   void dispose() {
     _invalidatePlayers();
+    unawaited(_sampledGuitarEngine.dispose());
     super.dispose();
   }
 
