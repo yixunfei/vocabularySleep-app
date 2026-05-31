@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "banks": [
+    {
+      "id": "fluidr3mono_gm",
+      "fileName": "FluidR3Mono_GM.sf3",
+      "format": "sf3",
+      "license": "MIT",
+      "licenseUrl": "https://github.com/musescore/MuseScore/blob/master/share/sound/FluidR3Mono_License.md",
+      "sourceUrl": "https://github.com/musescore/MuseScore/raw/2.1/share/sound/FluidR3Mono_GM.sf3",
+      "remoteKey": "instrument_banks/v1/fluidr3mono_gm/FluidR3Mono_GM.sf3",
+      "sha256": "cfcd66d89e8386823400eca64934b14fbea7bf48ba1f00d21189af1262794ec2",
+      "sizeBytes": 14563174,
+      "target": "first-poc",
+      "patches": [
+        {"id": "gm_acoustic_grand_piano", "instrument": "piano", "program": 0, "channel": 0},
+        {"id": "gm_acoustic_guitar_nylon", "instrument": "guitar", "program": 24, "channel": 1},
+        {"id": "gm_violin", "instrument": "violin", "program": 40, "channel": 2},
+        {"id": "gm_flute", "instrument": "flute", "program": 73, "channel": 3}
+      ]
+    }
+  ]
+}

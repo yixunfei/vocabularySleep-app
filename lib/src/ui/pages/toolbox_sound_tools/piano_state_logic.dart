@@ -343,6 +343,20 @@ extension _PianoToolStateLogic on _PianoToolState {
     }
   }
 
+  Future<void> _prepareSampledPianoEngine() async {
+    final ready = await _sampledPianoEngine.ensurePatch(
+      bank: ToolboxInstrumentBankCatalog.museScoreGeneral,
+      patch: ToolboxInstrumentBankCatalog.acousticGrandPiano,
+      volume: _touch,
+      reverb: _reverb,
+    );
+    if (!mounted || ready == _sampledPianoReady) {
+      return;
+    }
+    _sampledPianoReady = ready;
+    _invalidatePlayers(warmUp: true);
+  }
+
   List<_PianoKey> _warmUpCandidatesFor(
     _PianoKeyboardSlice slice, {
     required bool preloadAllKeys,
@@ -409,10 +423,7 @@ extension _PianoToolStateLogic on _PianoToolState {
     return best;
   }
 
-  ToolboxRealisticEffectPlayer _playerFor(
-    _PianoKey key, {
-    double velocity = 0.74,
-  }) {
+  ToolboxNotePlayer _playerFor(_PianoKey key, {double velocity = 0.74}) {
     final styleId = _activePreset.styleId;
     final velocityBucket = _velocityBucket(velocity);
     final cacheKey =
@@ -421,6 +432,22 @@ extension _PianoToolStateLogic on _PianoToolState {
     final existing = _players[cacheKey];
     if (existing != null) {
       return existing;
+    }
+    if (_sampledPianoReady) {
+      final sampled = ToolboxSampledMidiNotePlayer(
+        engine: _sampledPianoEngine,
+        bank: ToolboxInstrumentBankCatalog.museScoreGeneral,
+        patch: ToolboxInstrumentBankCatalog.acousticGrandPiano,
+        midiNote: key.midi,
+        velocity: velocityBucket,
+        releaseAfter: Duration(
+          milliseconds: (720 + _decay.clamp(0.7, 1.8) * 520).round(),
+        ),
+        volume: _touch,
+        reverb: _reverb,
+      );
+      _players[cacheKey] = sampled;
+      return sampled;
     }
     final created = ToolboxRealisticEffectPlayer.build(
       variants: _PianoToolState._pianoVariants,

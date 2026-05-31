@@ -1,5 +1,12 @@
 part of 'toolbox_audio_service.dart';
 
+abstract class ToolboxNotePlayer {
+  Future<void> play({double volume = 1.0, double playbackRate = 1.0});
+  Future<void> warmUp();
+  Future<void> stop();
+  Future<void> dispose();
+}
+
 final AudioContext _toolboxAudioContext = AudioContextConfig(
   focus: AudioContextConfigFocus.mixWithOthers,
 ).build();
@@ -292,7 +299,7 @@ class ToolboxEffectPlayer {
 }
 
 /// Round-robin multi-variant effect player with light humanization.
-class ToolboxRealisticEffectPlayer {
+class ToolboxRealisticEffectPlayer implements ToolboxNotePlayer {
   ToolboxRealisticEffectPlayer(
     this.bytesVariants, {
     this.maxPlayers = 6,

@@ -2,10 +2,10 @@
 
 ## 基本信息
 - **创建日期**: 2026-05-31
-- **状态**: 已搁置，等待单独分支实施
+- **状态**: 进行中
 - **负责人**: Codex
 - **建议分支**: `codex/multisampled-instrument-engine`
-- **当前结论**: 不混入 `PLAN_304` 当前修复批次；先完成移动端体验与呼吸语音收口，再单独拉分支验证。
+- **当前结论**: 已切到 `codex/multisampled-instrument-engine` 单独分支，先以钢琴 SoundFont POC 建立采样优先、程序化合成回退的最小闭环。
 
 ## 背景
 当前模拟乐器主要依赖程序化合成与临时 WAV 生成。它的优势是包体可控、参数连续、没有外部授权依赖；劣势是在手机端容易把波形生成、临时文件、播放器预热和多层 UI 动画挤到同一条路径上，首次进入或快速触发时出现卡顿。
@@ -56,10 +56,10 @@
 - **适用阶段**: POC 和移动端 MVP。
 
 ### B. `flutter_midi_engine` + SF2/SF3
-- **可行性**: 中。
+- **可行性**: 中高，已选为首批 POC 方案。
 - **优点**: 宣称支持 SF2/SF3、多通道、reverb/chorus、Android/iOS/Web。
 - **风险**: 包较新、生态和下载量较小，Web 为实验性质；需重点测稳定性和后台音频行为。
-- **适用阶段**: 备选 POC。
+- **适用阶段**: 首批 POC。原因是 API 覆盖 SF2/SF3、program change、note on/off、reverb、all notes off，且可在 Windows/Linux/Web 回退现有程序化合成。
 
 ### C. 自建 SFZ/WAV 采样播放器
 - **可行性**: 中低，工程量大。
@@ -71,7 +71,7 @@
 | 来源 | 格式 | 授权/注意 | 覆盖价值 | 建议用途 |
 | --- | --- | --- | --- | --- |
 | GeneralUser GS | SF2 | 自定义宽松授权；作者允许软件项目使用和修改，但样本来源有历史不确定性 | GM/GS，覆盖钢琴、吉他、长笛、小提琴、竖琴、鼓、三角铁 | 第一 POC，可验证完整 GM 映射 |
-| MuseScore_General / FluidR3Mono_GM | SF3/SF2 | MuseScore 页面列出 MuseScore_General 为 MIT；Debian 页面说明 FluidR3Mono_GM 为 MIT | GM 覆盖完整，SF3 体积更友好 | 第二 POC，重点看 SF3 支持和体积 |
+| MuseScore_General / FluidR3Mono_GM | SF3/SF2 | MuseScore 页面列出 MuseScore_General 为 MIT；Debian 页面说明 FluidR3Mono_GM 为 MIT | GM 覆盖完整，SF3 体积更友好 | 首批 POC 基线；优先使用约 13.8MB 的 `FluidR3Mono_GM.sf3`，下载暂存到 `dev_resources/instrument_banks/` 后再统一上传 S3 |
 | FreePats | SF2/SFZ/WAV | 单库/单乐器授权需逐项检查；GM set 目前不完整 | 钢琴、吉他、竖琴、鼓等可补充 | 单乐器精修补丁，不建议只靠 GM set |
 | VCSL | SFZ/WAV | CC0，授权非常清晰；体积大 | 竖琴、钢琴、打击、钟类、世界/实验音色 | 作为精选 WAV/SFZ 源，适合补特殊音色 |
 | VSCO 2 Community Edition | SFZ/WAV | GitHub 标记 CC0-1.0；体积约 3GB | 管弦、钢琴、打击、长笛/小提琴/竖琴 | 只挑必要乐器，不整包进入移动端 |
@@ -90,25 +90,33 @@
 
 ## 实施阶段
 ### 阶段 0: 单独分支与基线
-- 从当前稳定点创建 `codex/multisampled-instrument-engine`。
+- [x] 从当前稳定点创建 `codex/multisampled-instrument-engine`。
 - 记录当前程序化乐器首音延迟、连续触发延迟、内存和卡顿复现条件。
-- 明确先只接入 3-4 个乐器，不做全量替换。
+- [x] 明确首批只接入钢琴 POC；长笛/小提琴 sustain、竖琴和鼓类暂不改动。
 
 ### 阶段 1: POC
-- 引入 `flutter_midi_pro`，只在移动端启用。
-- 下载或放置一个小体积 SoundFont 测试包。
-- 验证钢琴、吉他、长笛、小提琴四个 patch 的 note on/off、连续触控、多点触控和 all notes off。
+- [x] 引入 `flutter_midi_engine`，只在 Android/iOS 采样路径启用；其他平台保持程序化合成 fallback。
+- [x] 下载或放置一个小体积 SoundFont 测试包。已尝试从 Debian 下载 `musescore-general-soundfont_0.2.1-1_all.deb` 到 `dev_resources/instrument_banks/`，当前网络速度过慢，未保留半成品文件；随后切换为 MuseScore 官方 GitHub 直链 `FluidR3Mono_GM.sf3` 作为首批轻量 POC bank，已暂存到 `dev_resources/instrument_banks/FluidR3Mono_GM.sf3`。
+- [x] 验证钢琴 patch 的 note on/off、program change、音量和回退路径。
+- [ ] 验证吉他、长笛、小提琴 patch 的 note on/off、连续触控、多点触控和 all notes off。
 - 记录 Android/iOS 原生构建问题。
 
 ### 阶段 2: 抽象与回退
-- 添加 `InstrumentEngine` 与 `InstrumentPatchRegistry`。
-- 每个乐器页面先通过 capability 判断使用采样引擎或现有引擎。
-- 下载失败、加载失败、平台不支持、内存不足时自动回退。
+- [x] 添加首批 `ToolboxSoundFontInstrumentEngine`、`ToolboxMidiSynthAdapter`、`ToolboxInstrumentBankCatalog` 与 `ToolboxNotePlayer` 抽象。
+- [x] 钢琴页面通过 capability 判断使用采样引擎或现有引擎。
+- [x] 下载缺失、加载失败、平台不支持时自动回退。
+- [x] `ToolboxSoundFontInstrumentEngine` 接入 `CstCloudResourceCacheService`，钢琴页会读取 `cstCloudResourceCacheProvider`，上传 S3 后可用 `remoteKey` 直接进入既有 `remote_resource_cache` 下载/缓存路径。
+- [x] 加载前执行 bank size/SHA256 校验；远程缓存损坏时删除坏缓存并尝试本地 bank fallback，下一次可重新下载。
+- [ ] 内存不足、缓存清理与版本迁移仍待资源治理阶段补齐。
 
 ### 阶段 3: 资源治理
-- 建立 `instrument_banks.json`，记录库名、版本、license、sourceUrl、sha256、size、patch 映射。
+- [x] 建立 `assets/toolbox/instruments/instrument_banks.json`，记录库名、license、sourceUrl 和 patch 映射。
+- [x] 建立 `dev_resources/instrument_banks/` 暂存目录并排除大文件提交。
+- [x] 补齐首批 bank 的 sha256、size 和 S3 key；`FluidR3Mono_GM.sf3` 为 `14563174` bytes，SHA256 `cfcd66d89e8386823400eca64934b14fbea7bf48ba1f00d21189af1262794ec2`，远程 key 为 `instrument_banks/v1/fluidr3mono_gm/FluidR3Mono_GM.sf3`。
+- [x] 首批 bank 元数据已被加载路径实际使用，加载前会校验 size/SHA256，避免坏缓存进入 MIDI 引擎。
+- [ ] 上传 S3 后补正式 URL/HEAD 验证和下载校验。
 - 远程资源按 bank 下载并持久缓存。
-- 加入缓存清理、版本迁移、损坏文件重下。
+- 加入缓存清理与版本迁移。
 
 ### 阶段 4: 移动端体验验收
 - 首音延迟目标: 已缓存后 < 80ms，首次加载后第一声 < 250ms。
@@ -131,6 +139,13 @@
 - Android release 构建。
 - iOS 真机 note on/off、静音开关、后台/锁屏行为验证。
 - 375dp 手机页面首帧、加载态、触控热区验证。
+
+## 实施记录
+- 2026-05-31: 创建 `codex/multisampled-instrument-engine` 分支。
+- 2026-05-31: 新增 `flutter_midi_engine` 依赖、`ToolboxSoundFontInstrumentEngine`、`ToolboxMidiSynthAdapter`、`ToolboxSampledMidiNotePlayer` 和钢琴采样优先回退接入，并预留 `CstCloudResourceCacheService` 远程下载钩子。
+- 2026-05-31: 新增 `assets/toolbox/instruments/instrument_banks.json` 与 `dev_resources/instrument_banks/` 资源暂存目录；下载 `FluidR3Mono_GM.sf3` 到暂存目录并记录 sha256/size。
+- 2026-05-31: 钢琴采样引擎读取 `cstCloudResourceCacheProvider`；加载前校验 bank size/SHA256，远程缓存损坏时删除坏缓存并回退本地 bank。
+- 2026-05-31: 验证 `dart analyze lib\src\services\toolbox_audio_service.dart lib\src\ui\pages\toolbox_sound_tools.dart test\toolbox_instrument_engine_test.dart`、`flutter test test\toolbox_instrument_engine_test.dart --reporter compact`、`flutter test test\toolbox_audio_bank_regression_test.dart --reporter compact`、`node scripts\audit_i18n_placeholders.js`、旧 i18n helper/catalog 插值扫描、`flutter build windows --debug`、`git diff --check` 均通过；`git diff --check` 仅提示 changelog/plan 后续 Git 触碰时会按当前 Windows 配置转换 CRLF。
 
 ## 参考源
 - FluidSynth: https://www.fluidsynth.org/

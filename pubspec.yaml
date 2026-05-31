@@ -71,6 +71,7 @@ dependencies:
   sxwnl_spa_dart: ^0.18.5
   qr_flutter: ^4.1.0
   barcode_widget: ^2.0.4
+  flutter_midi_engine: ^0.1.3
 
 dev_dependencies:
   flutter_test:
@@ -123,6 +124,7 @@ flutter:
     - assets/toolbox/colors/
     - assets/toolbox/device_frames/
     - assets/toolbox/games/roulette/
+    - assets/toolbox/instruments/
     - lib/l10n/catalog/
 
   # To add assets to your application, add an assets section, like this:

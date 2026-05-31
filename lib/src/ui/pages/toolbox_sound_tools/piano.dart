@@ -197,8 +197,8 @@ class _PianoToolState extends State<_PianoTool> {
         ),
       ];
 
-  final Map<String, ToolboxRealisticEffectPlayer> _players =
-      <String, ToolboxRealisticEffectPlayer>{};
+  final Map<String, ToolboxNotePlayer> _players = <String, ToolboxNotePlayer>{};
+  late final ToolboxSoundFontInstrumentEngine _sampledPianoEngine;
   final Map<int, Offset> _activePointers = <int, Offset>{};
   final Map<int, String> _activePointerKeyIds = <int, String>{};
   final Map<int, int> _activePointerLastNoteAtMillis = <int, int>{};
@@ -228,6 +228,7 @@ class _PianoToolState extends State<_PianoTool> {
   bool _compactKeyboardMode = false;
   bool _aggressiveOneHandMode = true;
   bool _didApplyResponsiveDefaults = false;
+  bool _sampledPianoReady = false;
   DateTime? _lastRangeGestureAt;
   Timer? _rangeWarmUpTimer;
   Timer? _activeKeyReleaseTimer;
@@ -239,7 +240,11 @@ class _PianoToolState extends State<_PianoTool> {
   @override
   void initState() {
     super.initState();
+    _sampledPianoEngine = ToolboxSoundFontInstrumentEngine(
+      resourceCache: _readResourceCacheOrNull(),
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_prepareSampledPianoEngine());
       unawaited(_warmUpVisibleWindow(octaveSpan: 1, rangeStart: 2));
     });
   }
@@ -292,6 +297,17 @@ class _PianoToolState extends State<_PianoTool> {
       return;
     }
     setState(updates);
+  }
+
+  CstCloudResourceCacheService? _readResourceCacheOrNull() {
+    try {
+      return ProviderScope.containerOf(
+        context,
+        listen: false,
+      ).read(cstCloudResourceCacheProvider);
+    } on StateError {
+      return null;
+    }
   }
 
   @override

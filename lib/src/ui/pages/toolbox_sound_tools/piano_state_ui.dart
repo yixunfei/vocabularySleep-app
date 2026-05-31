@@ -1807,6 +1807,7 @@ extension _PianoToolStateUi on _PianoToolState {
     _activeKeyReleaseTimer = null;
     _rangeWarmUpVersion += 1;
     _invalidatePlayers(warmUp: false);
+    unawaited(_sampledPianoEngine.dispose());
   }
 
   Widget _buildPianoToolState(BuildContext context) {
