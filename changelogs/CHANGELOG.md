@@ -8,11 +8,12 @@
 - 新增 `lib/src/services/toolbox_instrument_engine.dart`，提供 `ToolboxSoundFontInstrumentEngine`、`ToolboxMidiSynthAdapter`、`ToolboxSampledMidiNotePlayer`、bank/patch catalog、`CstCloudResourceCacheService` 远程下载钩子和平台能力回退判断。
 - 新增 `assets/toolbox/instruments/instrument_banks.json`，记录 `FluidR3Mono_GM.sf3` 的 license、sourceUrl、S3 `remoteKey`、sha256、size 和首批 GM patch 映射。
 - 新增 `dev_resources/instrument_banks/` 暂存目录，排除大音色文件提交，作为后续统一上传 S3 前的开发下载位置。
-- 新增 `test/toolbox_instrument_engine_test.dart`，覆盖不支持平台回退、SoundFont 加载、program change、note on/off、音量映射、bank 完整性校验、远程缓存加载与坏缓存回退。
+- 新增 `test/toolbox_instrument_engine_test.dart`，覆盖不支持平台回退、SoundFont 加载、program change、note on/off、音量映射、配置缓存、velocity 动态路径、bank 完整性校验、远程缓存加载与坏缓存回退。
 
 ### 修改
 - 钢琴模块接入采样优先 POC：Android/iOS 且远程缓存或本地 SoundFont 可用时走 `flutter_midi_engine` note on/off；平台不支持、文件缺失、完整性校验失败或加载失败时自动回退现有 `ToolboxAudioBank.pianoNote` 程序化合成。
 - `ToolboxSoundFontInstrumentEngine` 加载前校验 bank size 与 SHA256；远程缓存损坏时删除坏缓存并尝试本地 bank fallback，为后续 S3 资源替换保留完整性防线。
+- 钢琴采样路径缓存 SoundFont program、channel volume 与 reverb 配置，避免移动端每次 note on 都串行发送配置命令；单音力度改由 MIDI velocity 表达，同一按键快速重触发时先释放活跃 note 再重新 note on。
 - `ToolboxRealisticEffectPlayer` 实现通用 `ToolboxNotePlayer` 接口，为后续吉他、长笛、小提琴等乐器按低风险切片迁移提供统一调用面。
 - `plans/PLAN_305_multisampled_instrument_engine_replacement.md` 状态改为进行中，并记录首批 POC、资源下载暂存策略和验证结果。
 
@@ -23,12 +24,13 @@
 - `node scripts\audit_i18n_placeholders.js` 通过，missing 0，placeholderMismatch 0，Dart missingParams 0。
 - 旧 i18n helper 扫描与 catalog Dart 插值扫描均无命中。
 - `flutter build windows --debug` 通过，确认桌面 fallback 编译链路未被移动端 MIDI 插件破坏。
-- `git diff --check` 通过；仅提示 changelog/plan 后续 Git 触碰时会按当前 Windows 配置转换 CRLF。
+- `flutter build apk --debug` 通过，生成 `build\app\outputs\flutter-apk\app-debug.apk`。
+- `git diff --check` 通过；仅提示 changelog、plan 与开发资源 README 后续 Git 触碰时会按当前 Windows 配置转换 CRLF。
 
 ### 风险变更
 - 首批只完成钢琴采样引擎 POC，不触碰长笛三层 sustain、小提琴 sustain/double-stop、竖琴动画与鼓类高频触控路径。
-- 当前未提交真实 SF3 文件；已尝试下载 Debian `musescore-general-soundfont_0.2.1-1_all.deb`，但镜像速度过慢，已停止并删除半成品。随后首批 bank 改为更轻的 `FluidR3Mono_GM.sf3`，已放入 `dev_resources/instrument_banks/FluidR3Mono_GM.sf3` 且被 `.gitignore` 排除；后续需上传到 `instrument_banks/v1/fluidr3mono_gm/FluidR3Mono_GM.sf3` 并做 S3 HEAD/下载校验。
-- `flutter_midi_engine` 官方声明 Windows/Linux 仍为 planned，当前桌面端继续依赖程序化合成 fallback；Android/iOS 还需真机验证 native 构建、静音开关和后台行为。
+- 当前未提交真实 SF3 文件；已尝试下载 Debian `musescore-general-soundfont_0.2.1-1_all.deb`，但镜像速度过慢，已停止并删除半成品。随后首批 bank 改为更轻的 `FluidR3Mono_GM.sf3`，已放入 `dev_resources/instrument_banks/FluidR3Mono_GM.sf3` 且被 `.gitignore` 排除；用户已上传到 S3 `SoundFont/FluidR3Mono_GM.sf3`，后续需在移动端做 HEAD/下载校验和真机延迟验证。
+- `flutter_midi_engine` 官方声明 Windows/Linux 仍为 planned，当前桌面端继续依赖程序化合成 fallback；Android debug 构建已通过，Android/iOS 仍需真机验证连续触控、静音开关和后台行为。
 
 ## [Unreleased-PLAN_304-IMPLEMENTATION-SLICE-3] - 2026-05-31
 

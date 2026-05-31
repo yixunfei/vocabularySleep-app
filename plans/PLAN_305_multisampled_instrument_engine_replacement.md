@@ -112,9 +112,10 @@
 ### 阶段 3: 资源治理
 - [x] 建立 `assets/toolbox/instruments/instrument_banks.json`，记录库名、license、sourceUrl 和 patch 映射。
 - [x] 建立 `dev_resources/instrument_banks/` 暂存目录并排除大文件提交。
-- [x] 补齐首批 bank 的 sha256、size 和 S3 key；`FluidR3Mono_GM.sf3` 为 `14563174` bytes，SHA256 `cfcd66d89e8386823400eca64934b14fbea7bf48ba1f00d21189af1262794ec2`，远程 key 为 `instrument_banks/v1/fluidr3mono_gm/FluidR3Mono_GM.sf3`。
+- [x] 补齐首批 bank 的 sha256、size 和 S3 key；`FluidR3Mono_GM.sf3` 为 `14563174` bytes，SHA256 `cfcd66d89e8386823400eca64934b14fbea7bf48ba1f00d21189af1262794ec2`，远程 key 为 `SoundFont/FluidR3Mono_GM.sf3`。
 - [x] 首批 bank 元数据已被加载路径实际使用，加载前会校验 size/SHA256，避免坏缓存进入 MIDI 引擎。
-- [ ] 上传 S3 后补正式 URL/HEAD 验证和下载校验。
+- [x] 用户已上传 S3 到 `SoundFont/FluidR3Mono_GM.sf3`，代码与 manifest 已切到该 key。
+- [ ] 补正式 URL/HEAD 验证和移动端下载校验。
 - 远程资源按 bank 下载并持久缓存。
 - 加入缓存清理与版本迁移。
 
@@ -145,7 +146,8 @@
 - 2026-05-31: 新增 `flutter_midi_engine` 依赖、`ToolboxSoundFontInstrumentEngine`、`ToolboxMidiSynthAdapter`、`ToolboxSampledMidiNotePlayer` 和钢琴采样优先回退接入，并预留 `CstCloudResourceCacheService` 远程下载钩子。
 - 2026-05-31: 新增 `assets/toolbox/instruments/instrument_banks.json` 与 `dev_resources/instrument_banks/` 资源暂存目录；下载 `FluidR3Mono_GM.sf3` 到暂存目录并记录 sha256/size。
 - 2026-05-31: 钢琴采样引擎读取 `cstCloudResourceCacheProvider`；加载前校验 bank size/SHA256，远程缓存损坏时删除坏缓存并回退本地 bank。
-- 2026-05-31: 验证 `dart analyze lib\src\services\toolbox_audio_service.dart lib\src\ui\pages\toolbox_sound_tools.dart test\toolbox_instrument_engine_test.dart`、`flutter test test\toolbox_instrument_engine_test.dart --reporter compact`、`flutter test test\toolbox_audio_bank_regression_test.dart --reporter compact`、`node scripts\audit_i18n_placeholders.js`、旧 i18n helper/catalog 插值扫描、`flutter build windows --debug`、`git diff --check` 均通过；`git diff --check` 仅提示 changelog/plan 后续 Git 触碰时会按当前 Windows 配置转换 CRLF。
+- 2026-05-31: 用户确认 SF3 已上传到 S3 `SoundFont/FluidR3Mono_GM.sf3`；同步 remoteKey，并缓存采样引擎 program/volume/reverb 配置，单音动态走 MIDI velocity，同一按键重触发先释放活跃 note，降低移动端连续 note on 的平台通道串行开销。
+- 2026-05-31: 验证 `dart analyze lib\src\services\toolbox_audio_service.dart lib\src\ui\pages\toolbox_sound_tools.dart test\toolbox_instrument_engine_test.dart`、`flutter test test\toolbox_instrument_engine_test.dart --reporter compact`、`flutter test test\toolbox_audio_bank_regression_test.dart --reporter compact`、`node scripts\audit_i18n_placeholders.js`、旧 i18n helper/catalog 插值扫描、`flutter build windows --debug`、`flutter build apk --debug`、`git diff --check` 均通过；Android debug APK 产物为 `build\app\outputs\flutter-apk\app-debug.apk`，`git diff --check` 仅提示 changelog、plan 与开发资源 README 后续 Git 触碰时会按当前 Windows 配置转换 CRLF。
 
 ## 参考源
 - FluidSynth: https://www.fluidsynth.org/

@@ -7,7 +7,7 @@ Current first POC target:
 
 - `FluidR3Mono_GM.sf3`
 - Future S3 key:
-  `instrument_banks/v1/fluidr3mono_gm/FluidR3Mono_GM.sf3`
+  `SoundFont/FluidR3Mono_GM.sf3`
 - Source: https://github.com/musescore/MuseScore/raw/2.1/share/sound/FluidR3Mono_GM.sf3
 - License reference: https://github.com/musescore/MuseScore/blob/master/share/sound/FluidR3Mono_License.md
 - SHA256:

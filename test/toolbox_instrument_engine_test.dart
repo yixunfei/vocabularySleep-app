@@ -72,6 +72,97 @@ void main() {
       expect(synth.calls, contains('noteOff:60:64:0'));
     });
 
+    test('reuses channel configuration across repeated note on', () async {
+      final tempDir = await Directory.systemTemp.createTemp(
+        'toolbox_instrument_config_cache_test_',
+      );
+      addTearDown(() async {
+        if (await tempDir.exists()) {
+          await tempDir.delete(recursive: true);
+        }
+      });
+      final bank = await _writeTestBank(tempDir, fileName: 'Config.sf3');
+
+      final synth = _FakeMidiSynthAdapter();
+      final engine = ToolboxSoundFontInstrumentEngine(
+        synth: synth,
+        bankStore: ToolboxInstrumentBankStore(debugDirectory: tempDir.path),
+        platformSupported: () => true,
+      );
+
+      await engine.noteOn(
+        bank: bank,
+        patch: ToolboxInstrumentBankCatalog.acousticGrandPiano,
+        midiNote: 60,
+        velocity: 0.5,
+        volume: 0.8,
+        reverb: 0.2,
+      );
+      await engine.noteOn(
+        bank: bank,
+        patch: ToolboxInstrumentBankCatalog.acousticGrandPiano,
+        midiNote: 64,
+        velocity: 0.6,
+        volume: 0.8,
+        reverb: 0.2,
+      );
+
+      expect(synth.calls.where((call) => call.startsWith('program:')), <String>[
+        'program:0:0',
+      ]);
+      expect(synth.calls.where((call) => call.startsWith('volume:')), <String>[
+        'volume:102:0',
+      ]);
+      expect(synth.calls.where((call) => call.startsWith('reverb:')), <String>[
+        'reverb:0.20',
+      ]);
+      expect(synth.calls.where((call) => call.startsWith('noteOn:')), <String>[
+        'noteOn:60:64:0',
+        'noteOn:64:76:0',
+      ]);
+    });
+
+    test('sampled note player keeps dynamics on velocity path', () async {
+      final tempDir = await Directory.systemTemp.createTemp(
+        'toolbox_instrument_sampled_player_test_',
+      );
+      addTearDown(() async {
+        if (await tempDir.exists()) {
+          await tempDir.delete(recursive: true);
+        }
+      });
+      final bank = await _writeTestBank(tempDir, fileName: 'Sampled.sf3');
+
+      final synth = _FakeMidiSynthAdapter();
+      final engine = ToolboxSoundFontInstrumentEngine(
+        synth: synth,
+        bankStore: ToolboxInstrumentBankStore(debugDirectory: tempDir.path),
+        platformSupported: () => true,
+      );
+      final player = ToolboxSampledMidiNotePlayer(
+        engine: engine,
+        bank: bank,
+        patch: ToolboxInstrumentBankCatalog.acousticGrandPiano,
+        midiNote: 60,
+        velocity: 0.5,
+        releaseAfter: const Duration(seconds: 30),
+        volume: 0.8,
+        reverb: 0.2,
+      );
+      addTearDown(player.dispose);
+
+      await player.play(volume: 0.5);
+      await player.play(volume: 1.0);
+
+      expect(synth.calls.where((call) => call.startsWith('volume:')), <String>[
+        'volume:102:0',
+      ]);
+      expect(synth.calls.where((call) => call.startsWith('noteOn:')), <String>[
+        'noteOn:60:32:0',
+        'noteOn:60:64:0',
+      ]);
+    });
+
     test('rejects local bank with mismatched metadata', () async {
       final tempDir = await Directory.systemTemp.createTemp(
         'toolbox_instrument_bad_bank_test_',
@@ -182,6 +273,15 @@ void main() {
 }
 
 const List<int> _testBankBytes = <int>[0, 1, 2, 3];
+
+Future<ToolboxInstrumentBankSpec> _writeTestBank(
+  Directory directory, {
+  required String fileName,
+}) async {
+  final file = File('${directory.path}${Platform.pathSeparator}$fileName');
+  await file.writeAsBytes(_testBankBytes, flush: true);
+  return _testBankSpec(fileName: fileName);
+}
 
 ToolboxInstrumentBankSpec _testBankSpec({
   required String fileName,

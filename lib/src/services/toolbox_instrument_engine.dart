@@ -50,8 +50,7 @@ class ToolboxInstrumentBankCatalog {
   const ToolboxInstrumentBankCatalog._();
 
   static const String cacheSubdirectory = 'toolbox_instrument_banks';
-  static const String fluidR3MonoGmRemoteKey =
-      'instrument_banks/v1/fluidr3mono_gm/FluidR3Mono_GM.sf3';
+  static const String fluidR3MonoGmRemoteKey = 'SoundFont/FluidR3Mono_GM.sf3';
 
   static const ToolboxInstrumentBankSpec
   museScoreGeneral = ToolboxInstrumentBankSpec(
@@ -201,7 +200,10 @@ class ToolboxSoundFontInstrumentEngine {
   final AppLogService _log = AppLogService.instance;
 
   String? _loadedBankId;
+  final _ToolboxAsyncLock _configurationLock = _ToolboxAsyncLock();
   final Map<int, String> _selectedPatchByChannel = <int, String>{};
+  final Map<int, int> _volumeByChannel = <int, int>{};
+  double? _lastReverb;
   bool _failed = false;
 
   bool get isLoaded => _loadedBankId != null;
@@ -233,6 +235,8 @@ class ToolboxSoundFontInstrumentEngine {
       }
       _loadedBankId = bank.id;
       _selectedPatchByChannel.clear();
+      _volumeByChannel.clear();
+      _lastReverb = null;
       return true;
     } catch (error, stackTrace) {
       _failed = true;
@@ -379,29 +383,40 @@ class ToolboxSoundFontInstrumentEngine {
     double volume = 1.0,
     double reverb = 0.18,
   }) async {
-    final loaded = await loadBank(bank);
-    if (!loaded) {
-      return false;
-    }
-    final channel = patch.channel.clamp(0, 15).toInt();
-    if (_selectedPatchByChannel[channel] != patch.id) {
-      await _synth.changeProgram(
-        program: patch.program.clamp(0, 127).toInt(),
-        channel: channel,
-      );
-      _selectedPatchByChannel[channel] = patch.id;
-    }
-    await _synth.setVolume(
-      volume: (volume.clamp(0.0, 1.0) * 127).round().clamp(0, 127).toInt(),
-      channel: channel,
-    );
-    await _synth.setReverb(
-      roomSize: reverb.clamp(0.0, 1.0).toDouble(),
-      damping: 0.42,
-      width: 0.72,
-      level: (reverb * 0.9).clamp(0.0, 0.55).toDouble(),
-    );
-    return true;
+    return _configurationLock.synchronized(() async {
+      final loaded = await loadBank(bank);
+      if (!loaded) {
+        return false;
+      }
+      final channel = patch.channel.clamp(0, 15).toInt();
+      if (_selectedPatchByChannel[channel] != patch.id) {
+        await _synth.changeProgram(
+          program: patch.program.clamp(0, 127).toInt(),
+          channel: channel,
+        );
+        _selectedPatchByChannel[channel] = patch.id;
+      }
+      final midiVolume = (volume.clamp(0.0, 1.0) * 127)
+          .round()
+          .clamp(0, 127)
+          .toInt();
+      if (_volumeByChannel[channel] != midiVolume) {
+        await _synth.setVolume(volume: midiVolume, channel: channel);
+        _volumeByChannel[channel] = midiVolume;
+      }
+      final normalizedReverb = reverb.clamp(0.0, 1.0).toDouble();
+      if (_lastReverb == null ||
+          (_lastReverb! - normalizedReverb).abs() >= 0.01) {
+        await _synth.setReverb(
+          roomSize: normalizedReverb,
+          damping: 0.42,
+          width: 0.72,
+          level: (normalizedReverb * 0.9).clamp(0.0, 0.55).toDouble(),
+        );
+        _lastReverb = normalizedReverb;
+      }
+      return true;
+    });
   }
 
   Future<bool> noteOn({
@@ -449,6 +464,8 @@ class ToolboxSoundFontInstrumentEngine {
     }
     _loadedBankId = null;
     _selectedPatchByChannel.clear();
+    _volumeByChannel.clear();
+    _lastReverb = null;
   }
 }
 
@@ -472,24 +489,30 @@ class ToolboxSampledMidiNotePlayer implements ToolboxNotePlayer {
   final Duration releaseAfter;
   final double volume;
   final double reverb;
+  final _ToolboxAsyncLock _noteLock = _ToolboxAsyncLock();
   Timer? _releaseTimer;
+  bool _noteActive = false;
 
   @override
-  Future<void> play({double volume = 1.0, double playbackRate = 1.0}) async {
-    _releaseTimer?.cancel();
-    final played = await engine.noteOn(
-      bank: bank,
-      patch: patch,
-      midiNote: midiNote,
-      velocity: velocity * volume,
-      volume: this.volume * volume,
-      reverb: reverb,
-    );
-    if (!played) {
-      return;
-    }
-    _releaseTimer = Timer(releaseAfter, () {
-      unawaited(engine.noteOff(patch: patch, midiNote: midiNote));
+  Future<void> play({double volume = 1.0, double playbackRate = 1.0}) {
+    return _noteLock.synchronized(() async {
+      _releaseTimer?.cancel();
+      await _releaseActiveNote();
+      final played = await engine.noteOn(
+        bank: bank,
+        patch: patch,
+        midiNote: midiNote,
+        velocity: velocity * volume,
+        volume: this.volume,
+        reverb: reverb,
+      );
+      if (!played) {
+        return;
+      }
+      _noteActive = true;
+      _releaseTimer = Timer(releaseAfter, () {
+        unawaited(_releaseActiveNote());
+      });
     });
   }
 
@@ -504,12 +527,22 @@ class ToolboxSampledMidiNotePlayer implements ToolboxNotePlayer {
   }
 
   @override
-  Future<void> stop() async {
-    _releaseTimer?.cancel();
-    _releaseTimer = null;
-    await engine.noteOff(patch: patch, midiNote: midiNote);
+  Future<void> stop() {
+    return _noteLock.synchronized(() async {
+      _releaseTimer?.cancel();
+      _releaseTimer = null;
+      await _releaseActiveNote();
+    });
   }
 
   @override
   Future<void> dispose() => stop();
+
+  Future<void> _releaseActiveNote() async {
+    if (!_noteActive) {
+      return;
+    }
+    _noteActive = false;
+    await engine.noteOff(patch: patch, midiNote: midiNote);
+  }
 }
