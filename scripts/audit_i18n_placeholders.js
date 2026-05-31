@@ -8,14 +8,100 @@ const catalogDir = path.join(root, 'lib', 'l10n', 'catalog');
 const locales = ['zh', 'en', 'ja', 'de', 'fr', 'es', 'ru'];
 const placeholderPattern = /\{([A-Za-z_][A-Za-z0-9_]*)\}/g;
 
-function readJson(filePath) {
-  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-}
-
 function placeholdersOf(value) {
   return Array.from(
     new Set(String(value).matchAll(placeholderPattern).map((match) => match[1])),
   ).sort();
+}
+
+function parseCsvRows(raw) {
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQuotes = false;
+
+  function endField() {
+    row.push(field);
+    field = '';
+  }
+
+  function endRow() {
+    endField();
+    rows.push(row);
+    row = [];
+  }
+
+  for (let index = 0; index < raw.length; index += 1) {
+    const char = raw[index];
+    if (inQuotes) {
+      if (char === '"') {
+        if (raw[index + 1] === '"') {
+          field += '"';
+          index += 1;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        field += char;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inQuotes = true;
+    } else if (char === ',') {
+      endField();
+    } else if (char === '\n') {
+      endRow();
+    } else if (char === '\r') {
+      if (raw[index + 1] === '\n') {
+        index += 1;
+      }
+      endRow();
+    } else {
+      field += char;
+    }
+  }
+
+  if (field.length > 0 || row.length > 0) {
+    endRow();
+  }
+
+  return rows;
+}
+
+function readCsvCatalog(filePath) {
+  const rows = parseCsvRows(fs.readFileSync(filePath, 'utf8'));
+  if (rows.length === 0) {
+    throw new Error(`Empty CSV catalog: ${filePath}`);
+  }
+  const header = rows[0].map((cell) => String(cell).trim());
+  const keyIndex = header.indexOf('key');
+  if (keyIndex < 0) {
+    throw new Error(`CSV catalog is missing key column: ${filePath}`);
+  }
+  const localeIndexes = Object.fromEntries(
+    locales.map((locale) => [locale, header.indexOf(locale)]),
+  );
+  const catalogs = Object.fromEntries(
+    locales.map((locale) => [locale, Object.create(null)]),
+  );
+
+  for (const row of rows.slice(1)) {
+    const key = row[keyIndex] == null ? '' : String(row[keyIndex]).trim();
+    if (key.length === 0 || key.startsWith('@@')) {
+      continue;
+    }
+    for (const locale of locales) {
+      const index = localeIndexes[locale];
+      if (index < 0) {
+        continue;
+      }
+      catalogs[locale][key] = row[index] == null ? '' : String(row[index]);
+    }
+  }
+
+  return catalogs;
 }
 
 function walk(dir, predicate, out = []) {
@@ -108,12 +194,7 @@ function paramKeysFromLiteralMap(body) {
   return keys;
 }
 
-const catalogs = Object.fromEntries(
-  locales.map((locale) => [
-    locale,
-    readJson(path.join(catalogDir, `app_texts_${locale}.json`)),
-  ]),
-);
+const catalogs = readCsvCatalog(path.join(catalogDir, 'app_texts.csv'));
 
 const baseKeys = Object.keys(catalogs.zh).sort();
 const missingCatalog = [];

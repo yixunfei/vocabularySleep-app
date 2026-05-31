@@ -116,6 +116,32 @@
 - `dart analyze lib/src/ui/pages/toolbox_sound_tools.dart` 通过，No issues found。
 - `flutter build windows` 通过。
 
+## [Unreleased-I18N-CSV-CATALOG] - 2026-05-31
+
+### 原因
+- 分语言 JSON 文案表不便于人工横向检索和批量维护，需要改为保留稳定 key 的单表多语言结构。
+
+### 新增
+- `lib/l10n/catalog/app_texts.csv`
+  - 以 `key,zh,en,ja,de,fr,es,ru` 为列结构集中保存全部运行时文案。
+
+### 修改
+- `lib/src/i18n/app_i18n_catalog.dart`
+  - 从单个 CSV asset 加载文案，并继续提供原有 `language -> key -> text` 查询能力。
+- `scripts/audit_i18n_placeholders.js`
+  - 改为读取 CSV 主文案表，继续校验 key 覆盖、占位符一致性和 Dart 调用参数。
+- `lib/l10n/catalog/README.md`
+  - 明确 `app_texts.csv` 是人工维护入口，registry 仅作为审计元数据。
+
+### 移除
+- `lib/l10n/catalog/app_texts_zh.json`
+- `lib/l10n/catalog/app_texts_en.json`
+- `lib/l10n/catalog/app_texts_ja.json`
+- `lib/l10n/catalog/app_texts_de.json`
+- `lib/l10n/catalog/app_texts_fr.json`
+- `lib/l10n/catalog/app_texts_es.json`
+- `lib/l10n/catalog/app_texts_ru.json`
+
 ## [Unreleased-I18N-TOOLBOX-COPY-FIX] - 2026-05-31
 
 ### 原因
