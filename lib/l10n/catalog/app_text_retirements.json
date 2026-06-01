@@ -1,0 +1,5 @@
+{
+  "schemaVersion": "1.0.0",
+  "policy": "Daily i18n work is append-only. Add keys here only when removal is intentional, reviewed, and safe to apply with scripts/maintain_i18n_catalog.js --apply-retirements.",
+  "retirements": []
+}

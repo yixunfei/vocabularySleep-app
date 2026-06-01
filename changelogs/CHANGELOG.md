@@ -1,3 +1,25 @@
+## [Unreleased-PLAN_307-I18N-MAINTENANCE] - 2026-06-01
+
+### 原因
+- i18n catalog 体积持续增长，日常功能开发需要避免边做功能边大规模整理，同时保留后续集中瘦身的可审计入口。
+
+### 新增
+- 新增 `scripts/maintain_i18n_catalog.js`：默认只读报告 catalog/registry 重复项、缺失 locale、旧 source、未引用 key 和退休 key 状态。
+- 新增 `lib/l10n/catalog/app_text_retirements.json`：记录待移除 key 的软删除清单，供定期整理使用。
+- `maintain_i18n_catalog.js --apply-retirements` 支持只删除已登记且无 `lib/test` 字面引用的退休 key。
+
+### 修改
+- `AGENTS.md` 新增 i18n append-only、软删除、定期整理和每次完成后的维护检查规则。
+- `lib/l10n/catalog/README.md` 补充退休清单与维护脚本使用说明。
+
+### 风险变更
+- `unreferencedCatalogKeys` 和 `staleRegistrySources` 默认作为整理线索，不作为失败条件，避免历史债务阻塞日常开发。
+
+### 验证
+- `node scripts\maintain_i18n_catalog.js --limit 12` 通过。
+- `node scripts\audit_i18n_placeholders.js` 通过。
+- 旧 helper 扫描与 catalog Dart 插值扫描无命中。
+
 ## [Unreleased-PLAN_305-KALIMBA-CHIMES] - 2026-06-01
 
 ### 原因
