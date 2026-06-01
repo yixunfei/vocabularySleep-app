@@ -198,7 +198,12 @@ class ToolboxFlutterMidiEngineAdapter implements ToolboxMidiSynthAdapter {
   Future<bool> loadSoundfont(String path) => _engine.loadSoundfont(path);
 
   @override
-  Future<bool> unloadSoundfont() => _engine.unloadSoundfont();
+  Future<bool> unloadSoundfont() async {
+    // flutter_midi_engine 0.1.3 logs MissingPluginException before returning
+    // false on platforms that do not implement unloadSoundfont. Treat the
+    // SoundFont as process-scoped and only stop active notes during dispose.
+    return true;
+  }
 
   @override
   Future<void> playNote({

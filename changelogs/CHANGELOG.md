@@ -1,3 +1,30 @@
+## [Unreleased-PLAN_310-INSTRUMENT-DECK-FULLSCREEN] - 2026-06-01
+
+### 原因
+- 模拟乐器切换区使用变长 chip，移动端换行空白参差不齐，且全屏按钮放在切换区内不够醒目。
+- 快速提示按钮仅展开已有说明区，实际使用价值低。
+- 用户发现 `flutter_midi_engine` 卸载 SoundFont 时打印 `MissingPluginException`，影响日志可读性。
+
+### 修改
+- 乐器切换区改为固定列网格，按竖琴、敲击乐器、拇指琴、钢琴、长笛、吉他、三角铁、鼓垫、拾音器排列，并为每个乐器图标设置独立强调色。
+- “木琴与排钟”入口更名为“敲击乐器”，同步更新七语言 catalog 和 registry 文案；切换说明改为提示全屏入口在舞台下方。
+- 全屏按钮移出乐器切换区，放到当前乐器舞台后方，改为更醒目的全宽主按钮。
+- 移除快速提示按钮，保留乐器说明折叠区。
+- `ToolboxFlutterMidiEngineAdapter.unloadSoundfont()` 不再调用插件缺失的原生卸载方法，dispose 时仍会先停止所有音符。
+
+### 风险变更
+- `toolbox.sound.deck.quick_tips` 文案暂不删除，仅变为未引用 key，等待后续 i18n 瘦身切片统一处理。
+- `node scripts/maintain_i18n_catalog.js --limit 20` 仍报告历史 staleRegistrySources 123 和 unreferencedCatalogKeys 39592，本轮不处理。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_sound_tools/deck.dart lib/src/services/toolbox_instrument_engine.dart test/toolbox_instrument_engine_test.dart` 通过。
+- `flutter analyze lib/src/ui/pages/toolbox_sound_tools.dart lib/src/services/toolbox_audio_service.dart test/toolbox_instrument_engine_test.dart` 通过，No issues found。
+- `flutter test test/toolbox_instrument_engine_test.dart` 通过。
+- `flutter test test/app_i18n_catalog_test.dart` 通过。
+- `node scripts/audit_i18n_placeholders.js` 通过；维护报告无重复 key、无缺失 locale 列。
+- 旧 helper 扫描和 catalog Dart 插值扫描无命中。
+- `git diff --check` 通过。
+
 ## [Unreleased-PLAN_309-MALLET-HITBOX-RESONATOR] - 2026-06-01
 
 ### 原因

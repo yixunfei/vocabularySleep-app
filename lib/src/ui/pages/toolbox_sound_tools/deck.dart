@@ -59,6 +59,19 @@ class _HarpInstrumentDeck extends StatefulWidget {
 }
 
 class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
+  static const List<_HarpDeckInstrument> _instrumentOrder =
+      <_HarpDeckInstrument>[
+        _HarpDeckInstrument.harp,
+        _HarpDeckInstrument.chimes,
+        _HarpDeckInstrument.kalimba,
+        _HarpDeckInstrument.piano,
+        _HarpDeckInstrument.flute,
+        _HarpDeckInstrument.guitar,
+        _HarpDeckInstrument.triangle,
+        _HarpDeckInstrument.drumPad,
+        _HarpDeckInstrument.pickup,
+      ];
+
   _HarpDeckInstrument _selected = _HarpDeckInstrument.harp;
   _HarpConfig _harpConfig = const _HarpConfig();
   bool _switchSectionExpanded = true;
@@ -152,6 +165,20 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
     };
   }
 
+  Color _accentColor(_HarpDeckInstrument instrument) {
+    return switch (instrument) {
+      _HarpDeckInstrument.harp => const Color(0xFF8B5CF6),
+      _HarpDeckInstrument.chimes => const Color(0xFFEA580C),
+      _HarpDeckInstrument.kalimba => const Color(0xFF0D9488),
+      _HarpDeckInstrument.piano => const Color(0xFF2563EB),
+      _HarpDeckInstrument.flute => const Color(0xFF0284C7),
+      _HarpDeckInstrument.guitar => const Color(0xFFB45309),
+      _HarpDeckInstrument.triangle => const Color(0xFF64748B),
+      _HarpDeckInstrument.drumPad => const Color(0xFFDC2626),
+      _HarpDeckInstrument.pickup => const Color(0xFF16A34A),
+    };
+  }
+
   Widget _activeTool() {
     return switch (_selected) {
       _HarpDeckInstrument.piano => const _PianoTool(),
@@ -181,6 +208,61 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
     );
   }
 
+  Widget _buildInstrumentGrid(AppI18n i18n) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = math.max(1.0, constraints.maxWidth);
+        final columns = availableWidth >= 560
+            ? 4
+            : (availableWidth >= 330 ? 3 : 2);
+        const spacing = 8.0;
+        final tileWidth = (availableWidth - spacing * (columns - 1)) / columns;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: <Widget>[
+            for (final item in _instrumentOrder)
+              SizedBox(
+                width: tileWidth,
+                child: _DeckInstrumentTile(
+                  icon: _icon(item),
+                  label: _label(i18n, item),
+                  color: _accentColor(item),
+                  selected: item == _selected,
+                  onTap: () => setState(() => _selected = item),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildFullScreenAction(AppI18n i18n) {
+    final color = _accentColor(_selected);
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton.icon(
+        onPressed: _openInstrumentFullScreen,
+        icon: const Icon(Icons.open_in_full_rounded),
+        label: Text(i18n.t('toolbox.sound.deck.full_screen')),
+        style: FilledButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(58),
+          textStyle: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 3,
+          shadowColor: color.withValues(alpha: 0.36),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final i18n = _toolboxI18n(context);
@@ -203,39 +285,7 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 8,
-                      children: <Widget>[
-                        for (final item in _HarpDeckInstrument.values)
-                          ChoiceChip(
-                            avatar: Icon(_icon(item), size: 16),
-                            label: Text(_label(i18n, item)),
-                            selected: item == _selected,
-                            materialTapTargetSize: MaterialTapTargetSize.padded,
-                            labelPadding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                            ),
-                            onSelected: (_) => setState(() => _selected = item),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    FilledButton.tonalIcon(
-                      onPressed: _openInstrumentFullScreen,
-                      icon: const Icon(Icons.open_in_full_rounded),
-                      label: Text(i18n.t('toolbox.sound.deck.full_screen')),
-                    ),
-                    const SizedBox(height: 8),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          _infoSectionExpanded = true;
-                        });
-                      },
-                      icon: const Icon(Icons.tips_and_updates_rounded),
-                      label: Text(i18n.t('toolbox.sound.deck.quick_tips')),
-                    ),
+                    _buildInstrumentGrid(i18n),
                     const SizedBox(height: 8),
                     Text(
                       i18n.t(
@@ -316,7 +366,82 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
             child: _activeTool(),
           ),
         ),
+        const SizedBox(height: 12),
+        _buildFullScreenAction(i18n),
       ],
+    );
+  }
+}
+
+class _DeckInstrumentTile extends StatelessWidget {
+  const _DeckInstrumentTile({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final background = selected
+        ? color.withValues(alpha: 0.16)
+        : theme.colorScheme.surfaceContainerHighest;
+    final borderColor = selected ? color : theme.colorScheme.outlineVariant;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            curve: Curves.easeOutCubic,
+            height: 58,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              color: background,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: borderColor, width: selected ? 1.4 : 1),
+            ),
+            child: Row(
+              children: <Widget>[
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: selected ? 0.22 : 0.14),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, size: 18, color: color),
+                ),
+                const SizedBox(width: 7),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: selected ? color : theme.colorScheme.onSurface,
+                      fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

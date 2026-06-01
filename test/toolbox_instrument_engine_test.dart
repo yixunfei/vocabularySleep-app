@@ -36,6 +36,12 @@ void main() {
       expect(ToolboxInstrumentPitch.midiFromFrequency(0), 60);
     });
 
+    test('default MIDI adapter skips unsupported soundfont unload channel', () {
+      final adapter = ToolboxFlutterMidiEngineAdapter();
+
+      expect(adapter.unloadSoundfont(), completion(isTrue));
+    });
+
     test('stays unavailable on unsupported platforms', () async {
       final synth = _FakeMidiSynthAdapter();
       final engine = ToolboxSoundFontInstrumentEngine(
