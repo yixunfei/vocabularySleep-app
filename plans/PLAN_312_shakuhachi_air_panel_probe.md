@@ -42,6 +42,11 @@
 - i18n catalog 新增尺八相关 key 11 个、退休 key 0 个；registry 已同步。
 - 本轮仅暂存尺八相关文件；当前工作树中的并行模块改动保留为未提交状态，不纳入本次提交。
 
+## 追加记录
+- 2026-06-01: 根据现代尺八重新调整全屏演奏面板，采用五孔布局（前四后一）与右侧气流滑控两列排列；一尺八寸 D 管按全闭 D、开放 F/G/A/C/D 映射当前音。
+- 移除尺八模块自身的全屏入口，只保留模拟乐器 deck 底部全屏按钮，避免页面出现两个全屏按钮。
+- 移除“测试用乐器”描述，i18n catalog 新增 `toolbox.sound.shakuhachi.current_note` 1 个 key，退休 key 0 个；registry 已同步。
+
 ## 验证记录
 - `dart format lib/src/ui/pages/toolbox_sound_tools.dart lib/src/ui/pages/toolbox_sound_tools/deck.dart lib/src/ui/pages/toolbox_sound_tools/shakuhachi.dart lib/src/services/toolbox_instrument_engine.dart test/toolbox_instrument_engine_test.dart` 通过。
 - `flutter analyze lib/src/ui/pages/toolbox_sound_tools.dart lib/src/services/toolbox_audio_service.dart test/toolbox_instrument_engine_test.dart` 通过，No issues found。
@@ -51,3 +56,7 @@
 - `node scripts/maintain_i18n_catalog.js --limit 20` 通过：duplicateCsvKeys 0，duplicateRegistryIds 0，missingLocaleColumns 0；历史 staleRegistrySources 123 和 unreferencedCatalogKeys 39610 保留，不在本轮处理。
 - 旧 helper 扫描无命中，catalog Dart 插值扫描无命中。
 - `git diff --check` 通过。
+- 2026-06-01 追加验证：`dart format lib/src/ui/pages/toolbox_sound_tools/shakuhachi.dart lib/src/ui/pages/toolbox_sound_tools/deck.dart` 通过。
+- 2026-06-01 追加验证：`flutter analyze lib/src/ui/pages/toolbox_sound_tools.dart lib/src/services/toolbox_audio_service.dart test/toolbox_instrument_engine_test.dart` 通过，No issues found。
+- 2026-06-01 追加验证：`flutter test test/toolbox_instrument_engine_test.dart` 与 `flutter test test/app_i18n_catalog_test.dart` 通过。
+- 2026-06-01 追加验证：`node scripts/audit_i18n_placeholders.js` 通过；`node scripts/maintain_i18n_catalog.js --limit 20` 仅报告历史 staleRegistrySources 123 和 unreferencedCatalogKeys 39612。

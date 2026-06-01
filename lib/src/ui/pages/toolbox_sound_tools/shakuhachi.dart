@@ -10,19 +10,45 @@ class _ShakuhachiTool extends StatefulWidget {
 }
 
 class _ShakuhachiToolState extends State<_ShakuhachiTool> {
-  static const List<_PianoKey> _notes = <_PianoKey>[
-    _PianoKey(id: 'D4', label: 'D', frequency: 293.66),
-    _PianoKey(id: 'F4', label: 'F', frequency: 349.23),
-    _PianoKey(id: 'G4', label: 'G', frequency: 392.0),
-    _PianoKey(id: 'A4', label: 'A', frequency: 440.0),
-    _PianoKey(id: 'C5', label: 'C', frequency: 523.25),
-    _PianoKey(id: 'D5', label: 'D5', frequency: 587.33),
+  static const _PianoKey _pipeNote = _PianoKey(
+    id: 'D4',
+    label: 'D',
+    frequency: 293.66,
+  );
+  static const List<_ShakuhachiHole> _holes = <_ShakuhachiHole>[
+    _ShakuhachiHole(
+      label: 'F',
+      tone: _PianoKey(id: 'F4', label: 'F', frequency: 349.23),
+      alignment: Alignment(0.0, 0.72),
+    ),
+    _ShakuhachiHole(
+      label: 'G',
+      tone: _PianoKey(id: 'G4', label: 'G', frequency: 392.0),
+      alignment: Alignment(0.0, 0.46),
+    ),
+    _ShakuhachiHole(
+      label: 'A',
+      tone: _PianoKey(id: 'A4', label: 'A', frequency: 440.0),
+      alignment: Alignment(0.0, 0.20),
+    ),
+    _ShakuhachiHole(
+      label: 'C',
+      tone: _PianoKey(id: 'C5', label: 'C', frequency: 523.25),
+      alignment: Alignment(0.0, -0.08),
+    ),
+    _ShakuhachiHole(
+      label: 'D',
+      tone: _PianoKey(id: 'D5', label: 'D', frequency: 587.33),
+      alignment: Alignment(0.78, -0.62),
+      backHole: true,
+    ),
   ];
 
   late final ToolboxSoundFontInstrumentEngine _sampledEngine;
   late final ToolboxSampledMidiSustainController _sampledSustain;
   final Map<String, ToolboxNotePlayer> _players = <String, ToolboxNotePlayer>{};
-  int _noteIndex = 0;
+  final Map<int, int> _holePointers = <int, int>{};
+  final Set<int> _coveredHoles = <int>{};
   int? _airPointer;
   double _airLevel = 0;
   double _reverb = 0.24;
@@ -47,7 +73,14 @@ class _ShakuhachiToolState extends State<_ShakuhachiTool> {
     });
   }
 
-  _PianoKey get _activeNote => _notes[_noteIndex.clamp(0, _notes.length - 1)];
+  _PianoKey get _activeNote {
+    for (var index = _holes.length - 1; index >= 0; index -= 1) {
+      if (!_coveredHoles.contains(index)) {
+        return _holes[index].tone;
+      }
+    }
+    return _pipeNote;
+  }
 
   double get _effectiveAir => _playing ? _airLevel.clamp(0.0, 1.0) : 0.0;
 
@@ -153,21 +186,22 @@ class _ShakuhachiToolState extends State<_ShakuhachiTool> {
     unawaited(_syncSustain());
   }
 
-  void _setNoteIndex(int index) {
-    if (_noteIndex == index) return;
-    setState(() => _noteIndex = index);
+  void _coverHole(int index, PointerDownEvent event) {
+    if (_holePointers.containsKey(event.pointer)) return;
+    _holePointers[event.pointer] = index;
+    setState(() => _coveredHoles.add(index));
     if (_playing) {
       unawaited(_syncSustain());
     }
   }
 
-  void _openFullScreen(BuildContext context) {
-    if (widget.fullScreen) return;
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => const _ShakuhachiFullScreenPage(),
-      ),
-    );
+  void _releaseHole(PointerEvent event) {
+    final index = _holePointers.remove(event.pointer);
+    if (index == null) return;
+    setState(() => _coveredHoles.remove(index));
+    if (_playing) {
+      unawaited(_syncSustain());
+    }
   }
 
   @override
@@ -204,20 +238,6 @@ class _ShakuhachiToolState extends State<_ShakuhachiTool> {
           Text(
             i18n.t('toolbox.sound.shakuhachi.inline_sub'),
             style: theme.textTheme.bodySmall,
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: () => _openFullScreen(context),
-              icon: const Icon(Icons.open_in_full_rounded),
-              label: Text(i18n.t('toolbox.sound.flute.full_screen')),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(56),
-                backgroundColor: const Color(0xFF0F766E),
-                foregroundColor: Colors.white,
-              ),
-            ),
           ),
         ],
       ),
@@ -319,18 +339,94 @@ class _ShakuhachiToolState extends State<_ShakuhachiTool> {
     );
   }
 
-  Widget _buildNoteRail(AppI18n i18n) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: <Widget>[
-        for (var index = 0; index < _notes.length; index += 1)
-          ChoiceChip(
-            label: Text(_notes[index].label),
-            selected: _noteIndex == index,
-            onSelected: (_) => _setNoteIndex(index),
+  Widget _buildHolePanel(BuildContext context, AppI18n i18n) {
+    final theme = Theme.of(context);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = math.max(160.0, constraints.maxWidth);
+        final height = math.max(360.0, constraints.maxHeight);
+        final holeSize = (math.min(width, height) * 0.22).clamp(56.0, 76.0);
+        return Container(
+          height: height,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: <Color>[Color(0xFF6B3F1D), Color(0xFFB98543)],
+            ),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
           ),
-      ],
+          child: Stack(
+            children: <Widget>[
+              Align(
+                alignment: Alignment.center,
+                child: Container(
+                  width: width * 0.46,
+                  height: height * 0.92,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(999),
+                    gradient: const LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: <Color>[
+                        Color(0xFF3F2411),
+                        Color(0xFFD5A45B),
+                        Color(0xFF6F421F),
+                      ],
+                    ),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.28),
+                        blurRadius: 18,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              for (var index = 0; index < _holes.length; index += 1)
+                Align(
+                  alignment: _holes[index].alignment,
+                  child: _ShakuhachiHolePad(
+                    hole: _holes[index],
+                    covered: _coveredHoles.contains(index),
+                    size: holeSize,
+                    onPointerDown: (event) => _coverHole(index, event),
+                    onPointerUp: _releaseHole,
+                    onPointerCancel: _releaseHole,
+                  ),
+                ),
+              Positioned(
+                left: 12,
+                right: 12,
+                bottom: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.24),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Text(
+                    i18n.t(
+                      'toolbox.sound.shakuhachi.current_note',
+                      params: <String, Object?>{'note': _activeNote.label},
+                    ),
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -392,9 +488,16 @@ class _ShakuhachiToolState extends State<_ShakuhachiTool> {
                 ],
               ),
               const SizedBox(height: 12),
-              _buildNoteRail(i18n),
-              const SizedBox(height: 12),
-              Expanded(child: _buildAirPanel(context, i18n)),
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    Expanded(flex: 6, child: _buildHolePanel(context, i18n)),
+                    const SizedBox(width: 12),
+                    Expanded(flex: 5, child: _buildAirPanel(context, i18n)),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -412,32 +515,74 @@ class _ShakuhachiToolState extends State<_ShakuhachiTool> {
   }
 }
 
-class _ShakuhachiFullScreenPage extends StatefulWidget {
-  const _ShakuhachiFullScreenPage();
+class _ShakuhachiHole {
+  const _ShakuhachiHole({
+    required this.label,
+    required this.tone,
+    required this.alignment,
+    this.backHole = false,
+  });
 
-  @override
-  State<_ShakuhachiFullScreenPage> createState() =>
-      _ShakuhachiFullScreenPageState();
+  final String label;
+  final _PianoKey tone;
+  final Alignment alignment;
+  final bool backHole;
 }
 
-class _ShakuhachiFullScreenPageState extends State<_ShakuhachiFullScreenPage> {
-  @override
-  void initState() {
-    super.initState();
-    unawaited(_enterToolboxPortraitMode());
-  }
+class _ShakuhachiHolePad extends StatelessWidget {
+  const _ShakuhachiHolePad({
+    required this.hole,
+    required this.covered,
+    required this.size,
+    required this.onPointerDown,
+    required this.onPointerUp,
+    required this.onPointerCancel,
+  });
 
-  @override
-  void dispose() {
-    unawaited(_exitToolboxLandscapeMode());
-    super.dispose();
-  }
+  final _ShakuhachiHole hole;
+  final bool covered;
+  final double size;
+  final void Function(PointerDownEvent event) onPointerDown;
+  final void Function(PointerEvent event) onPointerUp;
+  final void Function(PointerEvent event) onPointerCancel;
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Colors.black,
-      body: _ShakuhachiTool(fullScreen: true),
+    return Listener(
+      behavior: HitTestBehavior.opaque,
+      onPointerDown: onPointerDown,
+      onPointerUp: onPointerUp,
+      onPointerCancel: onPointerCancel,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 90),
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: covered ? const Color(0xFF111827) : const Color(0xFFF8E7B7),
+          border: Border.all(
+            color: hole.backHole
+                ? const Color(0xFF0F766E)
+                : Colors.white.withValues(alpha: 0.72),
+            width: hole.backHole ? 3 : 2,
+          ),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withValues(alpha: covered ? 0.36 : 0.22),
+              blurRadius: covered ? 8 : 14,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          hole.label,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: covered ? Colors.white : const Color(0xFF3F2411),
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
     );
   }
 }

@@ -512,7 +512,6 @@ class _DeckInstrumentFullScreenPageState
   bool _prefersPortraitFullScreen(_HarpDeckInstrument instrument) {
     return switch (instrument) {
       _HarpDeckInstrument.piano => true,
-      _HarpDeckInstrument.shakuhachi => true,
       _ => false,
     };
   }
