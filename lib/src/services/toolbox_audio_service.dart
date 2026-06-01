@@ -25,6 +25,7 @@ part 'toolbox_audio_bank_flute.dart';
 part 'toolbox_audio_bank_strings.dart';
 part 'toolbox_audio_bank_drums.dart';
 part 'toolbox_audio_bank_clicks.dart';
+part 'toolbox_audio_bank_free_chimes.dart';
 part 'toolbox_audio_bank_prayer_bead.dart';
 part 'toolbox_audio_bank_singing_bowl.dart';
 part 'toolbox_audio_bank_woodfish.dart';

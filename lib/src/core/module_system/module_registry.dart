@@ -40,6 +40,11 @@ class ModuleRegistry {
       parentId: ModuleIds.toolbox,
     ),
     ModuleDescriptor(
+      id: ModuleIds.toolboxFreeChimes,
+      group: ModuleGroup.toolbox,
+      parentId: ModuleIds.toolbox,
+    ),
+    ModuleDescriptor(
       id: ModuleIds.toolboxSingingBowls,
       group: ModuleGroup.toolbox,
       parentId: ModuleIds.toolbox,

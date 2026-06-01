@@ -352,6 +352,7 @@ class _FirstRunSetupDialogState extends ConsumerState<FirstRunSetupDialog> {
         ModuleIds.toolboxMiniGames,
         ModuleIds.toolboxHumanTests,
         ModuleIds.toolboxSoundDeck,
+        ModuleIds.toolboxFreeChimes,
         ModuleIds.toolboxSingingBowls,
         ModuleIds.toolboxWoodfish,
         ModuleIds.toolboxZenSand,

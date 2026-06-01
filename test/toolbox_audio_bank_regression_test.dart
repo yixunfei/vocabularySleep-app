@@ -132,6 +132,32 @@ void main() {
       expect(chime.samples.length, greaterThan(kalimba.samples.length));
     });
 
+    test('free chime layers emit non-silent gesture wavs', () {
+      final shaker = _decodeWavPcm16(
+        ToolboxAudioBank.freeChimeLayer('shaker', intensity: 0.3, variant: 2),
+      );
+      final gong = _decodeWavPcm16(
+        ToolboxAudioBank.freeChimeLayer(
+          'gong_drum',
+          intensity: 0.8,
+          variant: 4,
+        ),
+      );
+      final marble = _decodeWavPcm16(
+        ToolboxAudioBank.freeChimeLayer('marble', intensity: 0.7, variant: 5),
+      );
+      final kuaiban = _decodeWavPcm16(
+        ToolboxAudioBank.freeChimeLayer('kuaiban', intensity: 0.82, variant: 6),
+      );
+
+      expect(_rms(shaker.samples), greaterThan(0.006));
+      expect(_rms(gong.samples), greaterThan(0.008));
+      expect(_rms(marble.samples), greaterThan(0.006));
+      expect(_rms(kuaiban.samples), greaterThan(0.006));
+      expect(gong.samples.length, greaterThan(shaker.samples.length));
+      expect(kuaiban.samples.length, lessThan(gong.samples.length));
+    });
+
     test('same parameters keep deterministic wav bytes in-process', () {
       final first = ToolboxAudioBank.violinRoomTail(
         329.63,

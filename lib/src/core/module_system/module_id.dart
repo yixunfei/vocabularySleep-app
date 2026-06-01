@@ -14,6 +14,7 @@ class ModuleIds {
   static const String toolboxHumanTests = 'toolbox.human_tests';
   static const String toolboxSoothingMusic = 'toolbox.soothing_music';
   static const String toolboxSoundDeck = 'toolbox.sound_deck';
+  static const String toolboxFreeChimes = 'toolbox.free_chimes';
   static const String toolboxSingingBowls = 'toolbox.singing_bowls';
   static const String toolboxFocusBeats = 'toolbox.focus_beats';
   static const String toolboxWoodfish = 'toolbox.woodfish';
@@ -39,6 +40,7 @@ class ModuleIds {
     toolboxHumanTests,
     toolboxSoothingMusic,
     toolboxSoundDeck,
+    toolboxFreeChimes,
     toolboxSingingBowls,
     toolboxFocusBeats,
     toolboxWoodfish,

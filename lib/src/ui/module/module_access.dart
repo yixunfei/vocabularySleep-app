@@ -26,6 +26,7 @@ String localizedModuleLabel(AppI18n i18n, String moduleId) {
     ModuleIds.toolboxSoundDeck => i18n.t(
       'inline.ui.module.module_access.sound_deck_129c55',
     ),
+    ModuleIds.toolboxFreeChimes => i18n.t('toolbox.free_chimes.title'),
     ModuleIds.toolboxSingingBowls => i18n.t(
       'inline.ui.module.module_access.healing_bowls_918cb2',
     ),

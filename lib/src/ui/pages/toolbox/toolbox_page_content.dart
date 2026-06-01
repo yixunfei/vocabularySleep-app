@@ -6,6 +6,7 @@ import '../../../models/settings_dto.dart';
 import '../../theme/toolbox_colors.dart';
 import '../toolbox_crypto_security.dart';
 import '../toolbox_daily_choice_tool.dart';
+import '../toolbox_free_chimes_tool.dart';
 import '../toolbox_human_tests.dart';
 import '../toolbox_mini_games.dart';
 import '../toolbox_mind_tools.dart';
@@ -157,6 +158,14 @@ List<ToolboxSectionData> buildAllToolboxSections(AppI18n i18n) {
           icon: Icons.music_note_rounded,
           accent: ToolboxColors.harpAccent,
           pageBuilder: () => const HarpToolPage(),
+        ),
+        ToolboxEntryData(
+          moduleId: ModuleIds.toolboxFreeChimes,
+          title: i18n.t('toolbox.hub.entry.free_chimes.title'),
+          subtitle: i18n.t('toolbox.hub.entry.free_chimes.subtitle'),
+          icon: Icons.phonelink_ring_rounded,
+          accent: ToolboxColors.soundAccent,
+          pageBuilder: () => const ToolboxFreeChimesToolPage(),
         ),
         ToolboxEntryData(
           moduleId: ModuleIds.toolboxSingingBowls,

@@ -657,6 +657,39 @@ class ToolboxAudioBank {
     );
   }
 
+  static Uint8List freeChimeLayer(
+    String layer, {
+    double intensity = 0.5,
+    int variant = 0,
+  }) {
+    final normalizedLayer = switch (layer) {
+      'shaker' => 'shaker',
+      'water' => 'water',
+      'wind_chime' => 'wind_chime',
+      'leaves' => 'leaves',
+      'bubbles' => 'bubbles',
+      'rain' => 'rain',
+      'impact' => 'impact',
+      'kuaiban' => 'kuaiban',
+      'gong_drum' => 'gong_drum',
+      'marble' => 'marble',
+      _ => 'wind_chime',
+    };
+    final normalizedIntensity = (intensity.clamp(0.0, 1.0) * 20).round() / 20;
+    final normalizedVariant = variant.clamp(0, 31).toInt();
+    final key =
+        'free_chime:$normalizedLayer:'
+        '${normalizedIntensity.toStringAsFixed(2)}:$normalizedVariant';
+    return _cache.putIfAbsent(
+      key,
+      () => _buildFreeChimeLayer(
+        normalizedLayer,
+        intensity: normalizedIntensity.toDouble(),
+        variant: normalizedVariant,
+      ),
+    );
+  }
+
   static Uint8List prayerBeadClick({
     String style = 'sandalwood',
     bool accent = false,

@@ -1,3 +1,61 @@
+## [Unreleased-PLAN_313-PROGRESS-ARCHIVE-PUSH] - 2026-06-01
+
+### 原因
+- 用户要求整理当前代码和进度，对已经完成的内容进行归档，并提交推送到远端 GitHub。
+- 当前分支已有多轮工具箱声音与模拟乐器提交，工作树中剩余未提交主体为 `PLAN_311` 自由风铃模块，需要在提交前明确阶段边界。
+
+### 新增
+- 新增 `plans/PLAN_313_当前进度整理归档提交推送.md`，记录本轮整理、归档、验证、提交和推送流程。
+- 新增 `records/record_313_toolbox_sound_progress_archive.md`，归档当前工具箱声音模块阶段进度、已完成切片、验证范围和不处理项。
+
+### 修改
+- 明确 `PLAN_305`、`PLAN_308`、`PLAN_309`、`PLAN_310`、`PLAN_312` 已作为当前声音工具基线提交。
+- 明确当前未提交代码主体为 `PLAN_311` 自由风铃模块，本轮归档与提交聚焦该切片及其文档收口。
+
+### 风险变更
+- 历史 i18n catalog 的 `staleRegistrySources` 与 `unreferencedCatalogKeys` 继续保留为后续独立整理项，本轮不做 catalog 瘦身。
+- 自由风铃移动端传感器阈值、快板 BPM 平滑和真机听感仍需后续实体设备校准。
+
+### 验证
+- `dart format lib/src/services/toolbox_free_chimes_controller.dart lib/src/services/toolbox_audio_service.dart lib/src/services/toolbox_audio_bank.dart lib/src/services/toolbox_audio_bank_free_chimes.dart lib/src/ui/pages/toolbox_free_chimes_tool.dart lib/src/core/module_system/module_id.dart lib/src/core/module_system/module_registry.dart lib/src/ui/module/module_access.dart lib/src/ui/widgets/first_run_setup_dialog.dart lib/src/ui/pages/toolbox/toolbox_page_content.dart test/toolbox_free_chimes_controller_test.dart test/toolbox_audio_bank_regression_test.dart` 通过，12 个文件 0 处变更。
+- `flutter analyze lib/src/ui/pages/toolbox_free_chimes_tool.dart lib/src/services/toolbox_free_chimes_controller.dart lib/src/services/toolbox_audio_service.dart lib/src/ui/pages/toolbox/toolbox_page_content.dart lib/src/core/module_system/module_id.dart lib/src/core/module_system/module_registry.dart lib/src/ui/module/module_access.dart test/toolbox_free_chimes_controller_test.dart test/toolbox_audio_bank_regression_test.dart` 通过，No issues found。
+- `flutter test test/toolbox_free_chimes_controller_test.dart test/toolbox_audio_bank_regression_test.dart --reporter compact` 通过。
+- `flutter test test/app_i18n_catalog_test.dart --reporter compact` 通过。
+- `node scripts/audit_i18n_placeholders.js` 通过：`catalog keys=49753`、`catalog missing=0`、`placeholderMismatch=0`、`dart missingParams=0`。
+- `node scripts/maintain_i18n_catalog.js --limit 20` 通过：无 duplicate/missing locale 致命项；历史 `staleRegistrySources=123`、`unreferencedCatalogKeys=39612` 保留。
+- 旧 helper 扫描与 catalog Dart 插值扫描无命中。
+- `git diff --check` 通过。
+
+## [Unreleased-PLAN_311-TOOLBOX-FREE-CHIMES] - 2026-06-01
+
+### 原因
+- 用户需要在工具箱新增“自由风铃”：可自由组合沙铃、水流、风铃、落叶、气泡、雨声、撞击、快板、锣鼓和转轮弹球碰撞等声部，并通过手机摇晃强度触发舒缓或鼓劲声音。
+- 追加需求要求在完成前加入“快板模式”，并明确快板应是清脆木板节奏敲击声。
+
+### 新增
+- 新增 `ToolboxFreeChimeController`，支持自由模式强度分层、快板模式方向翻转拍点、BPM 估算、触发节流和声部组合选择。
+- 新增 `ToolboxFreeChimesToolPage`，接入 `userAccelerometerEventStream`，提供开始/停止监听、轻摇/强摇预览、自由/快板模式切换、组合预设、十个声部开关与比例滑块、灵敏度和总音量调节。
+- `ToolboxAudioBank` 新增 `freeChimeLayer(...)` 与 `toolbox_audio_bank_free_chimes.dart`，生成沙铃、水流、风铃、落叶、气泡、雨声、撞击、快板、锣鼓和转轮弹球 one-shot WAV，并沿用 LRU 缓存。
+- 工具箱声音与音乐分区新增“自由风铃”入口，模块 registry、模块管理标签和首次启动趣味场景同步接入。
+- i18n catalog/registry 新增 59 个 key，退休 key 0 个，覆盖入口、页面、模式、BPM、声部、预设、调节和传感器不可用状态。
+
+### 修改
+- `test/toolbox_audio_bank_regression_test.dart` 增加自由风铃合成音频有效性回归。
+- 新增 `test/toolbox_free_chimes_controller_test.dart`，覆盖自由模式轻摇、冷却节流、快板方向翻转、快板木板声部优先和 BPM 上升路径。
+
+### 风险变更
+- 摇晃演奏依赖实体 Android/iOS 运动传感器；桌面或无传感器设备会展示不可用状态，并保留预览按钮。
+- 快板 BPM 基于方向翻转间隔估算，真实手感仍需手机真机听感校准；本轮先用最小节流避免高频触发导致音频堆叠。
+- `node scripts/maintain_i18n_catalog.js --limit 20` 仍报告历史 `staleRegistrySources 123` 与 `unreferencedCatalogKeys 39610`，本轮不处理历史 catalog 瘦身。
+
+### 验证
+- `dart format lib/src/services/toolbox_free_chimes_controller.dart lib/src/services/toolbox_audio_service.dart lib/src/services/toolbox_audio_bank.dart lib/src/services/toolbox_audio_bank_free_chimes.dart lib/src/ui/pages/toolbox_free_chimes_tool.dart lib/src/core/module_system/module_id.dart lib/src/core/module_system/module_registry.dart lib/src/ui/module/module_access.dart lib/src/ui/widgets/first_run_setup_dialog.dart lib/src/ui/pages/toolbox/toolbox_page_content.dart test/toolbox_free_chimes_controller_test.dart test/toolbox_audio_bank_regression_test.dart` 通过。
+- `flutter analyze lib/src/ui/pages/toolbox_free_chimes_tool.dart lib/src/services/toolbox_free_chimes_controller.dart lib/src/services/toolbox_audio_service.dart lib/src/ui/pages/toolbox/toolbox_page_content.dart lib/src/core/module_system/module_id.dart lib/src/core/module_system/module_registry.dart lib/src/ui/module/module_access.dart test/toolbox_free_chimes_controller_test.dart test/toolbox_audio_bank_regression_test.dart` 通过，No issues found。
+- `flutter test test/toolbox_free_chimes_controller_test.dart test/toolbox_audio_bank_regression_test.dart --reporter compact` 通过。
+- `flutter test test/app_i18n_catalog_test.dart --reporter compact` 通过。
+- `node scripts/audit_i18n_placeholders.js` 通过：catalog missing 0、placeholderMismatch 0、dart missingParams 0。
+- 旧 helper 扫描与 catalog Dart 插值扫描无命中。
+
 ## [Unreleased-PLAN_312-SHAKUHACHI-AIR-PANEL] - 2026-06-01
 
 ### 原因
@@ -22,7 +80,7 @@
 
 ### 风险变更
 - 尺八气流面板是可行性测试切片，真机手感仍需后续确认。
-- 本轮未纳入当前工作树中的并行模块改动。
+- 本轮未纳入当前工作树中 free chimes 相关并行改动。
 - `node scripts/maintain_i18n_catalog.js --limit 20` 仍报告历史 staleRegistrySources 123 和 unreferencedCatalogKeys 39610，本轮不处理。
 
 ### 验证
