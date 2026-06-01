@@ -11,11 +11,14 @@
 - 新增 `gm_shakuhachi` SoundFont patch，映射 FluidR3Mono_GM 的 GM program 77 / channel 11；采样不可用时复用现有 bamboo flute fallback。
 - i18n catalog 新增尺八相关 key 11 个，退休 key 0 个，并同步 registry。
 - i18n catalog 追加 `toolbox.sound.shakuhachi.current_note` 1 个 key，退休 key 0 个，并同步 registry。
+- 新增尺八说明弹窗所需 i18n key 12 个，退休 key 0 个，并同步 registry。
 
 ### 修改
 - 模拟乐器 deck 新增尺八入口，排列在长笛之后、吉他之前，使用独立图标和强调色。
 - 尺八全屏改为左侧现代五孔按孔、右侧气流按住滑控的横向两列布局；一尺八寸 D 管按全闭 D、开放 F/G/A/C/D 映射当前音。
 - 移除尺八模块自身全屏按钮，只保留模拟乐器 deck 底部全屏入口；文案移除“测试用乐器”描述。
+- D 孔保持在管身中线，仅拉大与 C 孔的纵向间距；气流面板按住期间持续吹气，滑动只改变强弱，松开右侧触点才停止。
+- 新增 `?` 帮助入口，弹窗按历史、样式/制式、声音特点、演奏方式和使用指南折叠展示尺八说明。
 
 ### 风险变更
 - 尺八气流面板是可行性测试切片，真机手感仍需后续确认。
@@ -34,6 +37,10 @@
 - 追加验证：`flutter analyze lib/src/ui/pages/toolbox_sound_tools.dart lib/src/services/toolbox_audio_service.dart test/toolbox_instrument_engine_test.dart` 通过，No issues found。
 - 追加验证：`flutter test test/toolbox_instrument_engine_test.dart` 与 `flutter test test/app_i18n_catalog_test.dart` 通过。
 - 追加验证：`node scripts/audit_i18n_placeholders.js` 通过；`node scripts/maintain_i18n_catalog.js --limit 20` 仅报告历史 staleRegistrySources 123 和 unreferencedCatalogKeys 39612。
+- 再验证：`dart format lib/src/ui/pages/toolbox_sound_tools/shakuhachi.dart` 通过。
+- 再验证：`flutter analyze lib/src/ui/pages/toolbox_sound_tools.dart lib/src/services/toolbox_audio_service.dart test/toolbox_instrument_engine_test.dart` 通过，No issues found。
+- 再验证：`flutter test test/toolbox_instrument_engine_test.dart` 与 `flutter test test/app_i18n_catalog_test.dart` 通过。
+- 再验证：`node scripts/audit_i18n_placeholders.js` 通过；`node scripts/maintain_i18n_catalog.js --limit 20` 仅报告历史 staleRegistrySources 123 和 unreferencedCatalogKeys 39612。
 
 ## [Unreleased-PLAN_310-INSTRUMENT-DECK-FULLSCREEN] - 2026-06-01
 
