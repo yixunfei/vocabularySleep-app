@@ -1,3 +1,27 @@
+## [Unreleased-PLAN_305-KALIMBA-CHIMES] - 2026-06-01
+
+### 原因
+- 小提琴在手机端真实感和操作成本都不理想，改为更适合触屏、一次性发声且学习成本低的拇指琴，并新增排钟补充明亮钟类音色。
+
+### 新增
+- 新增拇指琴工具：使用 `gm_kalimba` SoundFont patch 优先发声，支持大琴齿点击、横向滑扫、音阶切换、共鸣与混响调节，并保留轻量合成 fallback。
+- 新增排钟工具：使用 `gm_tubular_bells` SoundFont patch 优先发声，支持钟管点击、横向扫奏、止音、尾音与混响调节，并保留轻量合成 fallback。
+- `ToolboxAudioBank` 新增 `kalimbaNote` 与 `chimeNote` 合成兜底，并补充音频回归测试。
+
+### 修改
+- 模拟乐器 deck 将小提琴入口替换为拇指琴，并增加排钟入口；拇指琴和排钟全屏默认使用竖屏方向，更适合手机单手触控。
+- `instrument_banks.json` 与 `ToolboxInstrumentBankCatalog` 新增 `gm_kalimba` 和 `gm_tubular_bells` program/channel 映射。
+- 工具箱模拟乐器入口副标题移除小提琴描述，补入拇指琴与排钟。
+
+### 风险变更
+- 旧小提琴 UI 已从 deck 中移除，但小提琴合成音频 bank 与历史 i18n key 暂不清理，后续可配合 i18n 整理脚本做集中归档。
+
+### 验证
+- `dart analyze lib\src\services\toolbox_audio_service.dart lib\src\ui\pages\toolbox_sound_tools.dart test\toolbox_instrument_engine_test.dart test\toolbox_audio_bank_regression_test.dart` 通过。
+- `flutter test test\toolbox_instrument_engine_test.dart test\toolbox_audio_bank_regression_test.dart --reporter compact` 通过。
+- `node scripts\audit_i18n_placeholders.js` 通过，旧 helper 扫描与 catalog 插值扫描无命中。
+- `flutter build apk --debug` 通过，产物为 `build\app\outputs\flutter-apk\app-debug.apk`。
+
 ## [Unreleased-PLAN_305-FIX-FLUTE-BLOW-SENSOR] - 2026-05-31
 
 ### 原因

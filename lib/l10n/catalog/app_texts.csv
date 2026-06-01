@@ -57607,7 +57607,7 @@ ref.toolbox.hub.entry.decision.subtitle,将日常犹豫不决变为可随机、�
 ref.toolbox.hub.entry.decision.title,日常决策,Daily Decision,デイリーデシジョン,Tägliche Entscheidung,Décision Quotidienne,Decisión Diaria,Ежедневное решение
 ref.toolbox.hub.entry.games.subtitle,用于注意力转移的快速认知游戏中心。,Quick cognitive mini-games for focus shifting.,集中力を切り替えるためのクイック認知ミニゲーム。,Schnelle kognitive Mini-Spiele zur Fokussierungsverschiebung.,Mini-jeux cognitifs rapides pour le changement de concentration.,Mini-juegos cognitivos rápidos para cambiar el enfoque.,Быстрые мини-игры для мозга для переключения внимания.
 ref.toolbox.hub.entry.games.title,游戏中心,Mini Games,ミニゲーム,Mini-Spiele,Mini-Jeux,Mini Juegos,Мини-игры
-ref.toolbox.hub.entry.harp.subtitle,演奏竖琴、钢琴、长笛、鼓垫、吉他、小提琴等模拟乐器。,"Play simulated harp, piano, flute, drum pad, guitar, violin, and more.","Play simulated harp, piano, flute, drum pad, guitar, violin, and more.","Play simulated harp, piano, flute, drum pad, guitar, violin, and more.","Play simulated harp, piano, flute, drum pad, guitar, violin, and more.","Play simulated harp, piano, flute, drum pad, guitar, violin, and more.","Play simulated harp, piano, flute, drum pad, guitar, violin, and more."
+ref.toolbox.hub.entry.harp.subtitle,演奏竖琴、钢琴、长笛、鼓垫、吉他、拇指琴、排钟等模拟乐器。,Play simulated harp piano flute drum pad guitar kalimba tubular bells and more.,ハープ、ピアノ、フルート、ドラムパッド、ギター、カリンバ、ベルなどを演奏。,Spiele Harfe Klavier Flöte Drum-Pad Gitarre Kalimba Röhrenglocken und mehr.,Jouez harpe piano flûte pad guitare kalimba cloches tubulaires et plus.,Toca arpa piano flauta pads guitarra kalimba campanas tubulares y más.,Играйте на арфе пианино флейте пэдах гитаре калимбе трубчатых колоколах и другом.
 ref.toolbox.hub.entry.harp.title,模拟乐器,Instrument Deck,楽器デッキ,Instrumenten-Deck,Instruments simulés,Instrumentos simulados,Симулятор инструментов
 ref.toolbox.hub.entry.life.subtitle,日常实用工具。,Practical utilities for daily routines.,日常生活に役立つ実用的なツール。,Praktische Hilfsmittel für den täglichen Ablauf.,Utilitaires pratiques pour les routines quotidiennes.,Utilidades prácticas para rutinas diarias.,Практические утилиты для повседневной жизни.
 ref.toolbox.hub.entry.life.title,生活工具,Life Tools,ライフツール,Lebenswerkzeuge,Outils de Vie,Herramientas de Vida,Инструменты для жизни
@@ -59452,7 +59452,7 @@ toolbox.hub.entry.decision.subtitle,将日常犹豫不决变为可随机、可�
 toolbox.hub.entry.decision.title,日常决策,Daily Decision,デイリーデシジョン,Tägliche Entscheidung,Décision Quotidienne,Decisión Diaria,Ежедневное решение
 toolbox.hub.entry.games.subtitle,用于注意力转移的快速认知游戏中心。,Quick cognitive mini-games for focus shifting.,集中力を切り替えるためのクイック認知ミニゲーム。,Schnelle kognitive Mini-Spiele zur Fokussierungsverschiebung.,Mini-jeux cognitifs rapides pour le changement de concentration.,Mini-juegos cognitivos rápidos para cambiar el enfoque.,Быстрые мини-игры для мозга для переключения внимания.
 toolbox.hub.entry.games.title,游戏中心,Mini Games,ミニゲーム,Mini-Spiele,Mini-Jeux,Mini Juegos,Мини-игры
-toolbox.hub.entry.harp.subtitle,演奏竖琴、钢琴、长笛、鼓垫、吉他、小提琴等模拟乐器。,"Play simulated harp, piano, flute, drum pad, guitar, violin, and more.","Play simulated harp, piano, flute, drum pad, guitar, violin, and more.","Play simulated harp, piano, flute, drum pad, guitar, violin, and more.","Play simulated harp, piano, flute, drum pad, guitar, violin, and more.","Play simulated harp, piano, flute, drum pad, guitar, violin, and more.","Play simulated harp, piano, flute, drum pad, guitar, violin, and more."
+toolbox.hub.entry.harp.subtitle,演奏竖琴、钢琴、长笛、鼓垫、吉他、拇指琴、排钟等模拟乐器。,Play simulated harp piano flute drum pad guitar kalimba tubular bells and more.,ハープ、ピアノ、フルート、ドラムパッド、ギター、カリンバ、ベルなどを演奏。,Spiele Harfe Klavier Flöte Drum-Pad Gitarre Kalimba Röhrenglocken und mehr.,Jouez harpe piano flûte pad guitare kalimba cloches tubulaires et plus.,Toca arpa piano flauta pads guitarra kalimba campanas tubulares y más.,Играйте на арфе пианино флейте пэдах гитаре калимбе трубчатых колоколах и другом.
 toolbox.hub.entry.harp.title,模拟乐器,Instrument Deck,楽器デッキ,Instrumenten-Deck,Instruments simulés,Instrumentos simulados,Симулятор инструментов
 toolbox.hub.entry.life.subtitle,日常实用工具。,Practical utilities for daily routines.,日常生活に役立つ実用的なツール。,Praktische Hilfsmittel für den täglichen Ablauf.,Utilitaires pratiques pour les routines quotidiennes.,Utilidades prácticas para rutinas diarias.,Практические утилиты для повседневной жизни.
 toolbox.hub.entry.life.title,生活工具,Life Tools,ライフツール,Lebenswerkzeuge,Outils de Vie,Herramientas de Vida,Инструменты для жизни
@@ -61411,3 +61411,58 @@ wordTransitionStyleNone,无,None,なし,Keine,Aucun,Ninguno,Нет
 wordTransitionStylePageFlip,翻页,Page flip,ページめくり,Seitenumblättern,Changement de page,Voltear página,Перелистывание страницы
 wordTransitionStyleSmooth,平滑滑奏,Smooth slide,スムーズスライド,Sanfte Slide,Glissière lisse,Deslizar suavemente,Плавное скольжение
 zh,中文,中文,中文,中文,中文,中文,中文
+toolbox.sound.deck.kalimba,拇指琴,Kalimba,カリンバ,Kalimba,Kalimba,Kalimba,Калимба
+toolbox.sound.deck.kalimba_gesture,轻触琴齿或滑扫演奏,Tap tines or swipe to play,タインをタップまたはスワイプ,Tippe Lamellen an oder wische,Touchez les lames ou glissez,Toca láminas o desliza,Нажимайте пластины или скользите
+toolbox.sound.deck.kalimba_mix,调节音阶、共鸣和空间,Shape scale resonance and space,スケールと響きと空間を調整,Skala Nachklang und Raum formen,Modelez gamme résonance et espace,Ajusta escala resonancia y espacio,Настраивайте лад резонанс и пространство
+toolbox.sound.deck.kalimba_sub,用适合手机的大琴齿演奏清亮短音。,Play clear plucked tones on large phone friendly tines.,スマホ向けの大きなタインで明るい撥音を演奏。,Spiele klare Zupftöne auf großen telefonfreundlichen Lamellen.,Jouez des sons pincés clairs sur de grandes lames adaptées au téléphone.,Toca tonos pulsados claros en láminas grandes para móvil.,Играйте ясные щипковые тоны на крупных удобных пластинах.
+toolbox.sound.deck.chimes,排钟,Tubular Bells,チューブラーベル,Röhrenglocken,Cloches tubulaires,Campanas tubulares,Трубчатые колокола
+toolbox.sound.deck.chimes_gesture,轻触钟管或横向扫奏,Tap tubes or sweep across,チューブをタップまたは横にスワイプ,Tippe Röhren an oder wische,Touchez les tubes ou balayez,Toca tubos o barre,Нажимайте трубки или проводите
+toolbox.sound.deck.chimes_mix,调节钟管尾音和大厅感,Shape bell tail and hall space,ベルの余韻とホール感を調整,Nachklang und Halle formen,Modelez queue et salle,Ajusta cola y sala,Настраивайте хвост и зал
+toolbox.sound.deck.chimes_sub,敲击一排钟管，获得明亮悠长的钟声。,Strike a row of tubes for bright long ringing tones.,並んだ管を鳴らして明るく長い鐘音を出します。,Schlage eine Röhrenreihe für helle lange Glockentöne an.,Frappez une rangée de tubes pour des sons longs et clairs.,Golpea una fila de tubos para campanas largas y claras.,Ударяйте ряд трубок для яркого долгого звона.
+toolbox.sound.kalimba.a_minor,A 小调,A Minor,Aマイナー,A-Moll,La mineur,La menor,Ля минор
+toolbox.sound.kalimba.bright_tines,明亮琴齿,Bright tines,明るいタイン,Helle Lamellen,Lames claires,Láminas brillantes,Яркие пластины
+toolbox.sound.kalimba.bright_tines_sub,攻击更清楚，适合短句和滑扫。,Clearer attack for short phrases and swipes.,短いフレーズとスワイプ向けの明瞭なアタック。,Klarerer Anschlag für kurze Phrasen und Wischer.,Attaque plus nette pour phrases courtes et glissés.,Ataque más claro para frases cortas y barridos.,Более четкая атака для коротких фраз и скольжений.
+toolbox.sound.kalimba.c_major,C 大调,C Major,Cメジャー,C-Dur,Do majeur,Do mayor,До мажор
+toolbox.sound.kalimba.c_pentatonic,C 五声音阶,C Pentatonic,Cペンタトニック,C-Pentatonik,Do pentatonique,Do pentatónica,До пентатоника
+toolbox.sound.kalimba.dream_box,梦盒,Dream box,ドリームボックス,Traumbox,Boîte rêveuse,Caja de sueño,Сонная шкатулка
+toolbox.sound.kalimba.dream_box_sub,更像音乐盒的清亮高频，适合睡前氛围。,Music box like sparkle for bedtime ambience.,就寝前の空気に合うオルゴール風の輝き。,Spieluhrartiger Glanz für Abendstimmung.,Éclat de boîte à musique pour ambiance du soir.,Brillo de caja musical para ambiente nocturno.,Блеск музыкальной шкатулки для вечерней атмосферы.
+toolbox.sound.kalimba.high_tines,高音,High,高音,Hoch,Aigu,Agudo,Высоко
+toolbox.sound.kalimba.hirajoshi,平调子,Hirajoshi,平調子,Hirajoshi,Hirajoshi,Hirajoshi,Хирадзёси
+toolbox.sound.kalimba.last_note,上一音,Last note,最後の音,Letzte Note,Dernière note,Última nota,Последняя нота
+toolbox.sound.kalimba.low_tines,低音,Low,低音,Tief,Grave,Grave,Низко
+toolbox.sound.kalimba.phone_stage_sub,大琴齿适合单手点击，横向滑动可连续拨奏。,Large tines fit one handed taps and sideways swipes.,大きなタインは片手タップと横スワイプに合います。,Große Lamellen passen zu Einhandtipps und seitlichen Wischern.,Grandes lames pour touches à une main et balayages latéraux.,Láminas grandes para toques con una mano y barridos laterales.,Крупные пластины удобны для одной руки и боковых жестов.
+toolbox.sound.kalimba.play_center,弹中央音,Play center,中央を弾く,Mitte spielen,Jouer centre,Tocar centro,Сыграть центр
+toolbox.sound.kalimba.plays,次数,Plays,回数,Spiele,Jeux,Toques,Срабатывания
+toolbox.sound.kalimba.resonance,共鸣 {value}%,Resonance {value}%,響き {value}%,Resonanz {value}%,Résonance {value}%,Resonancia {value}%,Резонанс {value}%
+toolbox.sound.kalimba.scale_picker,音阶,Scale,スケール,Skala,Gamme,Escala,Лад
+toolbox.sound.kalimba.scale_picker_sub,五声音阶更容易随手弹出稳定旋律。,Pentatonic scales make casual melodies easier.,ペンタトニックは気軽な旋律を作りやすくします。,Pentatonik macht lockere Melodien leichter.,Les gammes pentatoniques facilitent les mélodies simples.,Las pentatónicas facilitan melodías casuales.,Пентатоника упрощает случайные мелодии.
+toolbox.sound.kalimba.sound_palette,音色,Tone,音色,Klang,Timbre,Timbre,Тембр
+toolbox.sound.kalimba.sound_palette_sub,预设会同时切换采样音色、共鸣和空间。,Presets switch sampled tone resonance and space together.,プリセットはサンプル音色と響きと空間をまとめて切替。,Presets wechseln Sampleklang Resonanz und Raum zusammen.,Les presets changent timbre échantillonné résonance et espace.,Los presets cambian timbre muestreado resonancia y espacio.,Пресеты меняют сэмпл резонанс и пространство вместе.
+toolbox.sound.kalimba.thumb_stage,拇指琴舞台,Kalimba stage,カリンバステージ,Kalimba-Bühne,Scène kalimba,Escenario kalimba,Сцена калимбы
+toolbox.sound.kalimba.tines,琴齿,Tines,タイン,Lamellen,Lames,Láminas,Пластины
+toolbox.sound.kalimba.warm_thumb,温暖拇指,Warm thumb,あたたかい親指,Warmer Daumen,Pouce chaud,Pulgar cálido,Теплый палец
+toolbox.sound.kalimba.warm_thumb_sub,圆润木质感，适合慢速放松旋律。,Rounded woody tone for slow relaxing melodies.,ゆっくりしたリラックス旋律向けの丸い木質感。,Runder Holzklang für langsame entspannte Melodien.,Son boisé rond pour mélodies lentes et calmes.,Tono de madera redondo para melodías lentas.,Округлый древесный тон для спокойных мелодий.
+toolbox.sound.kalimba.wide_stage_sub,点击单音，横向扫过琴齿可形成轻柔滑奏。,Tap notes and sweep across tines for soft glissando.,単音をタップし横に払うと柔らかいグリッサンド。,Tippe Noten und wische für sanftes Glissando.,Touchez les notes et balayez pour un doux glissando.,Toca notas y barre para un glissando suave.,Нажимайте ноты и проводите для мягкого глиссандо.
+toolbox.sound.chimes.bright_towers,明亮钟塔,Bright towers,明るい鐘楼,Helle Türme,Tours claires,Torres brillantes,Яркие башни
+toolbox.sound.chimes.bright_towers_sub,攻击更清晰，尾音更短，适合点缀。,Clearer strike and shorter tail for accents.,明瞭な打音と短い余韻でアクセント向け。,Klarer Schlag und kürzerer Nachklang für Akzente.,Frappe plus nette et queue courte pour accents.,Golpe más claro y cola corta para acentos.,Четкий удар и короткий хвост для акцентов.
+toolbox.sound.chimes.ceremonial_bells,仪式排钟,Ceremonial bells,儀式のベル,Feierliche Glocken,Cloches cérémonielles,Campanas ceremoniales,Церемониальные колокола
+toolbox.sound.chimes.ceremonial_bells_sub,平衡的钟管共鸣，适合慢速旋律。,Balanced tube resonance for slow melodies.,ゆっくりした旋律向けの均衡した管の響き。,Ausgewogene Röhrenresonanz für langsame Melodien.,Résonance équilibrée pour mélodies lentes.,Resonancia equilibrada para melodías lentas.,Сбалансированный резонанс для медленных мелодий.
+toolbox.sound.chimes.damp,止音,Damp,ミュート,Dämpfen,Étouffer,Apagar,Заглушить
+toolbox.sound.chimes.high_side,高钟,High bells,高いベル,Hohe Glocken,Cloches aiguës,Campanas agudas,Высокие колокола
+toolbox.sound.chimes.last_note,上一音,Last note,最後の音,Letzte Note,Dernière note,Última nota,Последняя нота
+toolbox.sound.chimes.low_side,低钟,Low bells,低いベル,Tiefe Glocken,Cloches graves,Campanas graves,Низкие колокола
+toolbox.sound.chimes.phone_stage_sub,大钟管适合点击，横向滑动可扫过整排钟。,Large tubes fit taps and sideways sweeps.,大きな管はタップと横スイープに合います。,Große Röhren eignen sich für Tipps und Seitenwischer.,Grands tubes pour touches et balayages latéraux.,Tubos grandes para toques y barridos laterales.,Крупные трубки удобны для нажатий и боковых жестов.
+toolbox.sound.chimes.soft_hall,柔和大厅,Soft hall,柔らかいホール,Weiche Halle,Salle douce,Sala suave,Мягкий зал
+toolbox.sound.chimes.soft_hall_sub,更长大厅感，适合睡前背景钟声。,Longer hall space for bedtime bell tones.,就寝前の鐘に合う長めのホール感。,Längerer Hallraum für Abendglocken.,Espace plus long pour cloches du soir.,Sala más larga para campanas nocturnas.,Более длинный зал для вечерних колоколов.
+toolbox.sound.chimes.sound_palette,钟声预设,Bell presets,ベルプリセット,Glocken-Presets,Presets de cloches,Preajustes de campanas,Пресеты колоколов
+toolbox.sound.chimes.sound_palette_sub,预设会一起调整采样钟声、尾音和混响。,Presets adjust sampled bells tail and reverb together.,プリセットはサンプル鐘と余韻とリバーブをまとめて調整。,Presets regeln Sampleglocken Nachklang und Hall zusammen.,Les presets ajustent cloches échantillonnées queue et réverbération.,Los preajustes ajustan campanas cola y reverberación.,Пресеты настраивают сэмплы хвост и реверберацию вместе.
+toolbox.sound.chimes.strikes,敲击,Strikes,打数,Schläge,Frappes,Golpes,Удары
+toolbox.sound.chimes.sweep_down,下行扫奏,Sweep down,下降スイープ,Abwärts wischen,Balayer bas,Barrer abajo,Провести вниз
+toolbox.sound.chimes.sweep_up,上行扫奏,Sweep up,上昇スイープ,Aufwärts wischen,Balayer haut,Barrer arriba,Провести вверх
+toolbox.sound.chimes.tail,尾音 {value}%,Tail {value}%,余韻 {value}%,Nachklang {value}%,Queue {value}%,Cola {value}%,Хвост {value}%
+toolbox.sound.chimes.tone_and_tail,尾音与空间,Tail and space,余韻と空間,Nachklang und Raum,Queue et espace,Cola y espacio,Хвост и пространство
+toolbox.sound.chimes.tone_and_tail_sub,尾音越长越像远处大厅中的钟声。,Longer tails feel more like bells in a distant hall.,余韻が長いほど遠いホールの鐘らしくなります。,Längere Schwänze wirken wie Glocken in ferner Halle.,Des queues longues évoquent une salle lointaine.,Colas largas suenan como campanas lejanas.,Длинный хвост похож на звон в далеком зале.
+toolbox.sound.chimes.tube_stage,排钟舞台,Tubular bell stage,チューブラーベルステージ,Röhrenglocken-Bühne,Scène de cloches tubulaires,Escenario de campanas tubulares,Сцена трубчатых колоколов
+toolbox.sound.chimes.tubes,钟管,Tubes,管,Röhren,Tubes,Tubos,Трубки
+toolbox.sound.chimes.wide_stage_sub,点击单根钟管，横向扫过可形成明亮的钟声阶梯。,Tap one tube or sweep across for a bright bell run.,1本を鳴らすか横に払って明るいベルラン。,Tippe eine Röhre oder wische für einen hellen Lauf.,Touchez un tube ou balayez pour une montée claire.,Toca un tubo o barre para una escala brillante.,Нажмите трубку или проведите для яркого прохода.
+toolbox.sound.instrument.reverb,混响 {value}%,Reverb {value}%,リバーブ {value}%,Hall {value}%,Réverbération {value}%,Reverberación {value}%,Реверберация {value}%

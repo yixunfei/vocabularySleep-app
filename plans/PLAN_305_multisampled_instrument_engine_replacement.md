@@ -1,3 +1,19 @@
+# 2026-06-01 增量记录: 拇指琴与排钟替换切片
+
+## 本轮目标
+- 将手机端真实感和操作成本都不理想的小提琴入口替换为更适合触屏的一次性拨奏乐器拇指琴。
+- 在模拟乐器 deck 中新增排钟，补齐钟类长尾音色体验。
+
+## 本轮实现边界
+- 拇指琴优先使用 `FluidR3Mono_GM.sf3` 的 `gm_kalimba` patch，排钟优先使用 `gm_tubular_bells` patch。
+- 两个乐器均保留 `ToolboxAudioBank` 合成 fallback，避免 SoundFont 未加载或非移动平台时空响。
+- 本轮不清理旧小提琴合成音频 bank 与历史 i18n key，仅移除 deck UI 入口和旧小提琴页面文件；i18n 大文件清理后续建议使用单独脚本集中整理。
+
+## 验证补充
+- 采样引擎测试新增 `gm_kalimba` 与 `gm_tubular_bells` program/channel 断言。
+- 音频 bank 回归新增拇指琴和排钟 fallback WAV 有效性断言。
+- 本轮已验证 `dart analyze`、采样引擎/音频 bank 回归、i18n catalog 占位符检查、旧 helper/catalog 插值扫描、`git diff --check` 与 `flutter build apk --debug`。
+
 # 计划 305: 多层采样乐器引擎替换预研与落地方案
 
 ## 基本信息

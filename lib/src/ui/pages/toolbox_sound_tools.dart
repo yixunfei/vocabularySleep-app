@@ -49,7 +49,8 @@ part 'toolbox_sound_tools/drum_pad_state_logic.dart';
 part 'toolbox_sound_tools/drum_pad_painter.dart';
 part 'toolbox_sound_tools/guitar.dart';
 part 'toolbox_sound_tools/triangle.dart';
-part 'toolbox_sound_tools/violin.dart';
+part 'toolbox_sound_tools/kalimba.dart';
+part 'toolbox_sound_tools/chimes.dart';
 part 'toolbox_sound_tools/pickup.dart';
 
 AppI18n _toolboxI18n(BuildContext context, {bool listen = true}) {

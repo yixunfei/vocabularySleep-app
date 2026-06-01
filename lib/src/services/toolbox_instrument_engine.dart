@@ -5,6 +5,8 @@ enum ToolboxInstrumentId {
   guitar,
   flute,
   violin,
+  kalimba,
+  chimes,
   harp,
   drumKit,
   triangle,
@@ -100,6 +102,20 @@ class ToolboxInstrumentBankCatalog {
     instrumentId: ToolboxInstrumentId.harp,
     program: 46,
     channel: 4,
+  );
+
+  static const ToolboxInstrumentPatch kalimba = ToolboxInstrumentPatch(
+    id: 'gm_kalimba',
+    instrumentId: ToolboxInstrumentId.kalimba,
+    program: 108,
+    channel: 5,
+  );
+
+  static const ToolboxInstrumentPatch tubularBells = ToolboxInstrumentPatch(
+    id: 'gm_tubular_bells',
+    instrumentId: ToolboxInstrumentId.chimes,
+    program: 14,
+    channel: 6,
   );
 }
 

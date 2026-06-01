@@ -19,6 +19,7 @@ part 'toolbox_instrument_engine.dart';
 part 'toolbox_audio_bank.dart';
 part 'toolbox_audio_bank_loops.dart';
 part 'toolbox_audio_bank_harp_piano.dart';
+part 'toolbox_audio_bank_bells.dart';
 part 'toolbox_audio_bank_guitar_guqin.dart';
 part 'toolbox_audio_bank_flute.dart';
 part 'toolbox_audio_bank_strings.dart';

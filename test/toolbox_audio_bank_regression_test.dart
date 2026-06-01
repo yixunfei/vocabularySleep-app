@@ -107,6 +107,31 @@ void main() {
       expect(_rms(edge.samples), greaterThan(0.005));
     });
 
+    test('kalimba and chime fallbacks emit valid ringing wavs', () {
+      final kalimba = _decodeWavPcm16(
+        ToolboxAudioBank.kalimbaNote(
+          523.25,
+          style: 'warm',
+          resonance: 0.72,
+          reverb: 0.18,
+        ),
+      );
+      final chime = _decodeWavPcm16(
+        ToolboxAudioBank.chimeNote(
+          523.25,
+          style: 'tubular',
+          tail: 0.74,
+          reverb: 0.34,
+        ),
+      );
+
+      expect(kalimba.sampleRate, 32000);
+      expect(chime.sampleRate, 32000);
+      expect(_rms(kalimba.samples), greaterThan(0.008));
+      expect(_rms(chime.samples), greaterThan(0.008));
+      expect(chime.samples.length, greaterThan(kalimba.samples.length));
+    });
+
     test('same parameters keep deterministic wav bytes in-process', () {
       final first = ToolboxAudioBank.violinRoomTail(
         329.63,

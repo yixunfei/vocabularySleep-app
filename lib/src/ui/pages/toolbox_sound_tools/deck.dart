@@ -46,7 +46,8 @@ enum _HarpDeckInstrument {
   drumPad,
   guitar,
   triangle,
-  violin,
+  kalimba,
+  chimes,
   pickup,
 }
 
@@ -74,7 +75,8 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
       _HarpDeckInstrument.drumPad => i18n.t('toolbox.sound.deck.drum_pad'),
       _HarpDeckInstrument.guitar => i18n.t('toolbox.sound.deck.guitar'),
       _HarpDeckInstrument.triangle => i18n.t('toolbox.sound.deck.triangle'),
-      _HarpDeckInstrument.violin => i18n.t('toolbox.sound.deck.violin'),
+      _HarpDeckInstrument.kalimba => i18n.t('toolbox.sound.deck.kalimba'),
+      _HarpDeckInstrument.chimes => i18n.t('toolbox.sound.deck.chimes'),
       _HarpDeckInstrument.pickup => i18n.t('toolbox.sound.deck.pickup'),
       _ => i18n.t('toolbox.sound.deck.harp'),
     };
@@ -87,7 +89,8 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
       _HarpDeckInstrument.drumPad => i18n.t('toolbox.sound.deck.drum_pad_sub'),
       _HarpDeckInstrument.guitar => i18n.t('toolbox.sound.deck.guitar_sub'),
       _HarpDeckInstrument.triangle => i18n.t('toolbox.sound.deck.triangle_sub'),
-      _HarpDeckInstrument.violin => i18n.t('toolbox.sound.deck.violin_sub'),
+      _HarpDeckInstrument.kalimba => i18n.t('toolbox.sound.deck.kalimba_sub'),
+      _HarpDeckInstrument.chimes => i18n.t('toolbox.sound.deck.chimes_sub'),
       _HarpDeckInstrument.pickup => i18n.t('toolbox.sound.deck.pickup_sub'),
       _ => i18n.t('toolbox.sound.deck.harp_sub'),
     };
@@ -104,7 +107,10 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
       _HarpDeckInstrument.triangle => i18n.t(
         'toolbox.sound.deck.triangle_gesture',
       ),
-      _HarpDeckInstrument.violin => i18n.t('toolbox.sound.deck.violin_gesture'),
+      _HarpDeckInstrument.kalimba => i18n.t(
+        'toolbox.sound.deck.kalimba_gesture',
+      ),
+      _HarpDeckInstrument.chimes => i18n.t('toolbox.sound.deck.chimes_gesture'),
       _HarpDeckInstrument.pickup => i18n.t('toolbox.sound.deck.pickup_gesture'),
       _ => i18n.t('toolbox.sound.deck.harp_gesture'),
     };
@@ -117,7 +123,8 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
       _HarpDeckInstrument.drumPad => i18n.t('toolbox.sound.deck.drum_pad_mix'),
       _HarpDeckInstrument.guitar => i18n.t('toolbox.sound.deck.guitar_mix'),
       _HarpDeckInstrument.triangle => i18n.t('toolbox.sound.deck.triangle_mix'),
-      _HarpDeckInstrument.violin => i18n.t('toolbox.sound.deck.violin_mix'),
+      _HarpDeckInstrument.kalimba => i18n.t('toolbox.sound.deck.kalimba_mix'),
+      _HarpDeckInstrument.chimes => i18n.t('toolbox.sound.deck.chimes_mix'),
       _HarpDeckInstrument.pickup => i18n.t('toolbox.sound.deck.pickup_mix'),
       _ => i18n.t('toolbox.sound.deck.harp_mix'),
     };
@@ -126,6 +133,8 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
   String _layoutHint(AppI18n i18n, _HarpDeckInstrument instrument) {
     return switch (instrument) {
       _HarpDeckInstrument.piano => i18n.t('toolbox.sound.deck.piano_layout'),
+      _HarpDeckInstrument.kalimba => i18n.t('toolbox.sound.deck.piano_layout'),
+      _HarpDeckInstrument.chimes => i18n.t('toolbox.sound.deck.piano_layout'),
       _HarpDeckInstrument.pickup => i18n.t('toolbox.sound.deck.piano_layout'),
       _ => i18n.t('toolbox.sound.deck.landscape_recommended'),
     };
@@ -138,7 +147,8 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
       _HarpDeckInstrument.drumPad => Icons.album_rounded,
       _HarpDeckInstrument.guitar => Icons.queue_music_rounded,
       _HarpDeckInstrument.triangle => Icons.change_history_rounded,
-      _HarpDeckInstrument.violin => Icons.multitrack_audio_rounded,
+      _HarpDeckInstrument.kalimba => Icons.view_week_rounded,
+      _HarpDeckInstrument.chimes => Icons.notifications_none_rounded,
       _HarpDeckInstrument.pickup => Icons.graphic_eq_rounded,
       _ => Icons.music_note_rounded,
     };
@@ -151,7 +161,8 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
       _HarpDeckInstrument.drumPad => const _DrumPadTool(),
       _HarpDeckInstrument.guitar => const _GuitarTool(),
       _HarpDeckInstrument.triangle => const _TriangleTool(),
-      _HarpDeckInstrument.violin => const _ViolinTool(),
+      _HarpDeckInstrument.kalimba => const _KalimbaTool(),
+      _HarpDeckInstrument.chimes => const _ChimesTool(),
       _HarpDeckInstrument.pickup => const _PickupTool(),
       _ => _HarpTool(
         initialConfig: _harpConfig,
@@ -360,11 +371,20 @@ class _DeckInstrumentFullScreenPage extends StatefulWidget {
 
 class _DeckInstrumentFullScreenPageState
     extends State<_DeckInstrumentFullScreenPage> {
+  bool _prefersPortraitFullScreen(_HarpDeckInstrument instrument) {
+    return switch (instrument) {
+      _HarpDeckInstrument.piano ||
+      _HarpDeckInstrument.kalimba ||
+      _HarpDeckInstrument.chimes => true,
+      _ => false,
+    };
+  }
+
   @override
   void initState() {
     super.initState();
     unawaited(
-      widget.instrument == _HarpDeckInstrument.piano
+      _prefersPortraitFullScreen(widget.instrument)
           ? _enterToolboxPortraitMode()
           : _enterToolboxLandscapeMode(),
     );
@@ -383,7 +403,8 @@ class _DeckInstrumentFullScreenPageState
       _HarpDeckInstrument.drumPad => const _DrumPadTool(fullScreen: true),
       _HarpDeckInstrument.guitar => const _GuitarTool(fullScreen: true),
       _HarpDeckInstrument.triangle => const _TriangleTool(fullScreen: true),
-      _HarpDeckInstrument.violin => const _ViolinTool(fullScreen: true),
+      _HarpDeckInstrument.kalimba => const _KalimbaTool(fullScreen: true),
+      _HarpDeckInstrument.chimes => const _ChimesTool(fullScreen: true),
       _HarpDeckInstrument.pickup => const _PickupTool(fullScreen: true),
       _ => _HarpTool(
         fullScreen: true,

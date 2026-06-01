@@ -17,7 +17,9 @@
         {"id": "gm_acoustic_guitar_nylon", "instrument": "guitar", "program": 24, "channel": 1},
         {"id": "gm_violin", "instrument": "violin", "program": 40, "channel": 2},
         {"id": "gm_flute", "instrument": "flute", "program": 73, "channel": 3},
-        {"id": "gm_orchestral_harp", "instrument": "harp", "program": 46, "channel": 4}
+        {"id": "gm_orchestral_harp", "instrument": "harp", "program": 46, "channel": 4},
+        {"id": "gm_kalimba", "instrument": "kalimba", "program": 108, "channel": 5},
+        {"id": "gm_tubular_bells", "instrument": "chimes", "program": 14, "channel": 6}
       ]
     }
   ]

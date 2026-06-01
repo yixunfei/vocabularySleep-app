@@ -171,6 +171,68 @@ class ToolboxAudioBank {
     );
   }
 
+  static Uint8List kalimbaNote(
+    double frequency, {
+    String style = 'warm',
+    double resonance = 0.68,
+    double reverb = 0.18,
+    int variant = 0,
+  }) {
+    final normalizedStyle = switch (style) {
+      'bright' => 'bright',
+      'music_box' => 'music_box',
+      _ => 'warm',
+    };
+    final normalizedResonance = (resonance.clamp(0.2, 1.0) * 20).round() / 20;
+    final normalizedReverb = (reverb.clamp(0.0, 0.55) * 20).round() / 20;
+    final normalizedVariant = variant.clamp(0, 31).toInt();
+    final key =
+        'kalimba:${frequency.toStringAsFixed(2)}:$normalizedStyle:'
+        '${normalizedResonance.toStringAsFixed(2)}:'
+        '${normalizedReverb.toStringAsFixed(2)}:$normalizedVariant';
+    return _cache.putIfAbsent(
+      key,
+      () => _buildKalimbaNote(
+        frequency: frequency,
+        style: normalizedStyle,
+        resonance: normalizedResonance.toDouble(),
+        reverb: normalizedReverb.toDouble(),
+        variant: normalizedVariant,
+      ),
+    );
+  }
+
+  static Uint8List chimeNote(
+    double frequency, {
+    String style = 'tubular',
+    double tail = 0.72,
+    double reverb = 0.3,
+    int variant = 0,
+  }) {
+    final normalizedStyle = switch (style) {
+      'soft' => 'soft',
+      'bright' => 'bright',
+      _ => 'tubular',
+    };
+    final normalizedTail = (tail.clamp(0.2, 1.0) * 20).round() / 20;
+    final normalizedReverb = (reverb.clamp(0.0, 0.7) * 20).round() / 20;
+    final normalizedVariant = variant.clamp(0, 31).toInt();
+    final key =
+        'chime:${frequency.toStringAsFixed(2)}:$normalizedStyle:'
+        '${normalizedTail.toStringAsFixed(2)}:'
+        '${normalizedReverb.toStringAsFixed(2)}:$normalizedVariant';
+    return _cache.putIfAbsent(
+      key,
+      () => _buildChimeNote(
+        frequency: frequency,
+        style: normalizedStyle,
+        tail: normalizedTail.toDouble(),
+        reverb: normalizedReverb.toDouble(),
+        variant: normalizedVariant,
+      ),
+    );
+  }
+
   static Uint8List pianoNote(
     double frequency, {
     String style = 'concert',

@@ -19,6 +19,10 @@ void main() {
       expect(ToolboxInstrumentBankCatalog.flute.channel, 3);
       expect(ToolboxInstrumentBankCatalog.orchestralHarp.program, 46);
       expect(ToolboxInstrumentBankCatalog.orchestralHarp.channel, 4);
+      expect(ToolboxInstrumentBankCatalog.kalimba.program, 108);
+      expect(ToolboxInstrumentBankCatalog.kalimba.channel, 5);
+      expect(ToolboxInstrumentBankCatalog.tubularBells.program, 14);
+      expect(ToolboxInstrumentBankCatalog.tubularBells.channel, 6);
       expect(ToolboxInstrumentPitch.midiFromFrequency(440), 69);
       expect(ToolboxInstrumentPitch.midiFromFrequency(261.63), 60);
       expect(ToolboxInstrumentPitch.midiFromFrequency(0), 60);
