@@ -12,19 +12,23 @@ extension _MalletStageUi on _ChimesToolState {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final compact = width < 390;
+        final compact = _isCompactPhoneWidth(width);
         final rotated = immersive || compact;
         final stageSize = Size(width, height);
-        final sideInset = compact ? 14.0 : 20.0;
-        final usableWidth = math.max(1.0, width - sideInset * 2);
-        final usableHeight = math.max(1.0, height - sideInset * 2 - 28);
+        final sideInset = _malletStageSideInset(width);
+        final usableWidth = _malletStageUsableWidth(stageSize);
+        final usableHeight = _malletStageUsableHeight(stageSize);
         final laneWidth = usableWidth / notes.length;
         final laneHeight = usableHeight / notes.length;
+        final materialMix = _materialId == 'wood' ? 0.5 : 0.78;
         final resonatorColor = Color.lerp(
           _activeInstrument.resonatorColor,
           _activeMaterial.resonatorColor,
-          0.55,
+          materialMix,
         )!;
+        final bodyMix = _supportsResonatorControls
+            ? (_materialId == 'wood' ? 0.38 : 0.58)
+            : 0.0;
         return _ToolboxScrollLockSurface(
           child: Listener(
             behavior: HitTestBehavior.opaque,
@@ -81,7 +85,7 @@ extension _MalletStageUi on _ChimesToolState {
                         color: Color.lerp(
                           _activeInstrument.bodyColor,
                           _activeMaterial.tint,
-                          0.38,
+                          bodyMix,
                         )!.withValues(alpha: immersive ? 0.34 : 0.52),
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -162,18 +166,28 @@ extension _MalletStageUi on _ChimesToolState {
     final barHeight = math.max(22.0, laneHeight * 0.72);
     return Stack(
       children: <Widget>[
-        Positioned(
-          left: sideInset + 16,
-          top: top + barHeight * 0.62,
-          width: barWidth * _activeCavity.resonatorScale,
-          height: math.max(7, barHeight * 0.22),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: resonatorColor.withValues(alpha: immersive ? 0.5 : 0.74),
-              borderRadius: BorderRadius.circular(999),
+        if (_supportsResonatorControls)
+          Positioned(
+            left: sideInset + 16,
+            top: top + barHeight * 0.62,
+            width: barWidth * _activeCavity.resonatorScale,
+            height: math.max(8, barHeight * 0.26),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: resonatorColor.withValues(
+                  alpha: immersive ? 0.62 : 0.86,
+                ),
+                borderRadius: BorderRadius.circular(999),
+                boxShadow: <BoxShadow>[
+                  BoxShadow(
+                    color: resonatorColor.withValues(alpha: 0.22),
+                    blurRadius: 8,
+                    offset: const Offset(1, 2),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
         _MalletBar(
           left: sideInset + 8,
           top: top,
@@ -207,18 +221,28 @@ extension _MalletStageUi on _ChimesToolState {
     final top = sideInset + 18 + (usableHeight - barHeight) * 0.52;
     return Stack(
       children: <Widget>[
-        Positioned(
-          left: left + laneWidth * 0.12,
-          top: top + barHeight * 0.22,
-          width: laneWidth * 0.5,
-          height: barHeight * _activeCavity.resonatorScale,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: resonatorColor.withValues(alpha: immersive ? 0.42 : 0.62),
-              borderRadius: BorderRadius.circular(999),
+        if (_supportsResonatorControls)
+          Positioned(
+            left: left + laneWidth * 0.08,
+            top: top + barHeight * 0.2,
+            width: laneWidth * 0.62,
+            height: barHeight * _activeCavity.resonatorScale,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: resonatorColor.withValues(
+                  alpha: immersive ? 0.54 : 0.78,
+                ),
+                borderRadius: BorderRadius.circular(999),
+                boxShadow: <BoxShadow>[
+                  BoxShadow(
+                    color: resonatorColor.withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
         _MalletBar(
           left: left,
           top: top,

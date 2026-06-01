@@ -64,24 +64,55 @@ class _ChimesToolState extends State<_ChimesTool> {
 
   List<int> get _activeMidis => _activeInstrument.midis;
 
+  bool get _supportsResonatorControls {
+    return _activeInstrument.supportsResonatorControls;
+  }
+
   double get _effectiveTail {
-    return (_tail + _activeMaterial.tailBias + _activeCavity.tailBias)
-        .clamp(0.12, 1.0)
-        .toDouble();
+    final resonatorTail = _supportsResonatorControls
+        ? _activeMaterial.tailBias + _activeCavity.tailBias
+        : 0.0;
+    return (_tail + resonatorTail).clamp(0.12, 1.0).toDouble();
   }
 
   double get _effectiveReverb {
-    return (_reverb + _activeMaterial.reverbBias + _activeCavity.reverbBias)
-        .clamp(0.0, 0.85)
-        .toDouble();
+    final resonatorReverb = _supportsResonatorControls
+        ? _activeMaterial.reverbBias + _activeCavity.reverbBias
+        : 0.0;
+    return (_reverb + resonatorReverb).clamp(0.0, 0.85).toDouble();
   }
 
   double get _effectiveVolume {
-    return (_volume + _activeMaterial.volumeBias).clamp(0.0, 1.0).toDouble();
+    final resonatorVolume = _supportsResonatorControls
+        ? _activeMaterial.volumeBias
+        : 0.0;
+    return (_volume + resonatorVolume).clamp(0.0, 1.0).toDouble();
   }
 
   bool _isCompactPhoneWidth(double width) {
     return width < (widget.fullScreen ? 520 : 430);
+  }
+
+  double _malletStageSideInset(double width) {
+    return _isCompactPhoneWidth(width) ? 14.0 : 20.0;
+  }
+
+  double _malletStageUsableWidth(Size size) {
+    final sideInset = _malletStageSideInset(size.width);
+    return math.max(1.0, size.width - sideInset * 2);
+  }
+
+  double _malletStageUsableHeight(Size size) {
+    final sideInset = _malletStageSideInset(size.width);
+    return math.max(1.0, size.height - sideInset * 2 - 28);
+  }
+
+  double _malletStageHeightFor(double width) {
+    final noteCount = _activeMidis.length;
+    if (_isCompactPhoneWidth(width)) {
+      return (noteCount * 42.0 + 70.0).clamp(540.0, 760.0).toDouble();
+    }
+    return (noteCount * 11.0 + 224.0).clamp(340.0, 430.0).toDouble();
   }
 
   String _instrumentLabel(AppI18n i18n, _MalletInstrumentSpec spec) {
@@ -137,13 +168,19 @@ class _ChimesToolState extends State<_ChimesTool> {
   Color _barColorFor(int index) {
     final rainbow = _malletRainbowColors[index % _malletRainbowColors.length];
     if (_instrumentId == 'xylophone') {
-      return rainbow;
+      final mix = _materialId == 'wood' ? 0.08 : 0.46;
+      return Color.lerp(rainbow, _activeMaterial.tint, mix)!;
     }
-    return Color.lerp(rainbow, _activeMaterial.tint, 0.66)!;
+    if (!_supportsResonatorControls) {
+      return Color.lerp(rainbow, _activeInstrument.bodyColor, 0.78)!;
+    }
+    return Color.lerp(rainbow, _activeMaterial.tint, 0.72)!;
   }
 
   String _playerKeyForMidi(int midi, {double velocity = 0.78}) {
-    return '$midi:$_instrumentId:$_materialId:$_cavityId:'
+    final materialKey = _supportsResonatorControls ? _materialId : 'native';
+    final cavityKey = _supportsResonatorControls ? _cavityId : 'native';
+    return '$midi:$_instrumentId:$materialKey:$cavityKey:'
         '${_effectiveTail.toStringAsFixed(2)}:'
         '${_effectiveReverb.toStringAsFixed(2)}:'
         '${velocity.toStringAsFixed(2)}';
@@ -278,12 +315,28 @@ class _ChimesToolState extends State<_ChimesTool> {
       return null;
     }
     final count = _activeMidis.length;
+    if (count == 0) return null;
+    final sideInset = _malletStageSideInset(size.width);
     if (rotated) {
-      final laneHeight = size.height / count;
-      return (position.dy / laneHeight).floor().clamp(0, count - 1);
+      final usableHeight = _malletStageUsableHeight(size);
+      final top = sideInset;
+      final bottom = top + usableHeight;
+      if (position.dy < top || position.dy > bottom) return null;
+      final laneHeight = usableHeight / count;
+      return ((position.dy - top) / laneHeight)
+          .floor()
+          .clamp(0, count - 1)
+          .toInt();
     }
-    final laneWidth = size.width / count;
-    return (position.dx / laneWidth).floor().clamp(0, count - 1);
+    final usableWidth = _malletStageUsableWidth(size);
+    final left = sideInset;
+    final right = left + usableWidth;
+    if (position.dx < left || position.dx > right) return null;
+    final laneWidth = usableWidth / count;
+    return ((position.dx - left) / laneWidth)
+        .floor()
+        .clamp(0, count - 1)
+        .toInt();
   }
 
   double _velocityForGesture(Offset delta, {bool initial = false}) {
@@ -470,6 +523,7 @@ class _ChimesToolState extends State<_ChimesTool> {
         return StatefulBuilder(
           builder: (sheetContext, setSheetState) {
             final theme = Theme.of(sheetContext);
+            final showResonatorControls = _supportsResonatorControls;
             void refresh() => setSheetState(() {});
             return Padding(
               padding: EdgeInsets.fromLTRB(
@@ -530,20 +584,22 @@ class _ChimesToolState extends State<_ChimesTool> {
                     ),
                     const SizedBox(height: 10),
                     _buildInstrumentChips(i18n, onChanged: refresh),
-                    const SizedBox(height: 16),
-                    SectionHeader(
-                      title: i18n.t('toolbox.sound.mallet.material'),
-                      subtitle: i18n.t('toolbox.sound.mallet.material_sub'),
-                    ),
-                    const SizedBox(height: 10),
-                    _buildMaterialChips(i18n, onChanged: refresh),
-                    const SizedBox(height: 16),
-                    SectionHeader(
-                      title: i18n.t('toolbox.sound.mallet.cavity'),
-                      subtitle: i18n.t('toolbox.sound.mallet.cavity_sub'),
-                    ),
-                    const SizedBox(height: 10),
-                    _buildCavityChips(i18n, onChanged: refresh),
+                    if (showResonatorControls) ...<Widget>[
+                      const SizedBox(height: 16),
+                      SectionHeader(
+                        title: i18n.t('toolbox.sound.mallet.material'),
+                        subtitle: i18n.t('toolbox.sound.mallet.material_sub'),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildMaterialChips(i18n, onChanged: refresh),
+                      const SizedBox(height: 16),
+                      SectionHeader(
+                        title: i18n.t('toolbox.sound.mallet.cavity'),
+                        subtitle: i18n.t('toolbox.sound.mallet.cavity_sub'),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildCavityChips(i18n, onChanged: refresh),
+                    ],
                     const SizedBox(height: 16),
                     Text(
                       i18n.t(
@@ -675,6 +731,7 @@ class _ChimesToolState extends State<_ChimesTool> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final compact = _isCompactPhoneWidth(constraints.maxWidth);
+          final stageHeight = _malletStageHeightFor(constraints.maxWidth);
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -690,14 +747,16 @@ class _ChimesToolState extends State<_ChimesTool> {
                     label: i18n.t('toolbox.sound.mallet.instrument_type'),
                     value: _instrumentLabel(i18n, _activeInstrument),
                   ),
-                  ToolboxMetricCard(
-                    label: i18n.t('toolbox.sound.mallet.material'),
-                    value: _materialLabel(i18n, _activeMaterial),
-                  ),
-                  ToolboxMetricCard(
-                    label: i18n.t('toolbox.sound.mallet.cavity'),
-                    value: _cavityLabel(i18n, _activeCavity),
-                  ),
+                  if (_supportsResonatorControls) ...<Widget>[
+                    ToolboxMetricCard(
+                      label: i18n.t('toolbox.sound.mallet.material'),
+                      value: _materialLabel(i18n, _activeMaterial),
+                    ),
+                    ToolboxMetricCard(
+                      label: i18n.t('toolbox.sound.mallet.cavity'),
+                      value: _cavityLabel(i18n, _activeCavity),
+                    ),
+                  ],
                   ToolboxMetricCard(
                     label: i18n.t('toolbox.sound.mallet.last_note'),
                     value: _lastNoteLabel ?? '--',
@@ -721,7 +780,7 @@ class _ChimesToolState extends State<_ChimesTool> {
               _buildMalletStage(
                 context,
                 i18n: i18n,
-                height: compact ? 430 : 318,
+                height: stageHeight,
                 immersive: false,
               ),
               const SizedBox(height: 12),
@@ -733,20 +792,22 @@ class _ChimesToolState extends State<_ChimesTool> {
               ),
               const SizedBox(height: 10),
               _buildInstrumentChips(i18n),
-              const SizedBox(height: 14),
-              SectionHeader(
-                title: i18n.t('toolbox.sound.mallet.material'),
-                subtitle: i18n.t('toolbox.sound.mallet.material_sub'),
-              ),
-              const SizedBox(height: 10),
-              _buildMaterialChips(i18n),
-              const SizedBox(height: 14),
-              SectionHeader(
-                title: i18n.t('toolbox.sound.mallet.cavity'),
-                subtitle: i18n.t('toolbox.sound.mallet.cavity_sub'),
-              ),
-              const SizedBox(height: 10),
-              _buildCavityChips(i18n),
+              if (_supportsResonatorControls) ...<Widget>[
+                const SizedBox(height: 14),
+                SectionHeader(
+                  title: i18n.t('toolbox.sound.mallet.material'),
+                  subtitle: i18n.t('toolbox.sound.mallet.material_sub'),
+                ),
+                const SizedBox(height: 10),
+                _buildMaterialChips(i18n),
+                const SizedBox(height: 14),
+                SectionHeader(
+                  title: i18n.t('toolbox.sound.mallet.cavity'),
+                  subtitle: i18n.t('toolbox.sound.mallet.cavity_sub'),
+                ),
+                const SizedBox(height: 10),
+                _buildCavityChips(i18n),
+              ],
               const SizedBox(height: 14),
               Text(
                 i18n.t(

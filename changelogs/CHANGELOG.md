@@ -1,3 +1,29 @@
+## [Unreleased-PLAN_309-MALLET-HITBOX-RESONATOR] - 2026-06-01
+
+### 原因
+- 木琴、排钟等敲击键盘乐器的视觉琴键和真实触摸分区存在偏移，窄屏 90 度布局中可能出现点击 G5 却触发 F5 的错位。
+- 普通舞台使用固定高度，在 12 到 16 键乐器之间缺少按键数自适应，手机端操作仍偏紧。
+- 共鸣管材质和腔体的声学、视觉差异不够明显；部分无明确共鸣管结构的乐器不应展示相关设置。
+
+### 修改
+- 敲击键盘舞台的绘制和触摸命中统一使用同一套内边距、可用宽高与窄屏判断，修复视觉按键和实际触摸音高不一致的问题。
+- 普通舞台高度改为按当前乐器键数动态计算，手机窄屏下给 12 到 16 键乐器保留更大的触控间距，宽屏高度也随键数小幅增加。
+- 刚片琴隐藏共鸣管材质、腔体指标卡和设置项，并停止把隐藏的材质/腔体参数叠加到声音与视觉上。
+- 强化共鸣管材质和腔体对尾音、混响、音量、共鸣管长度/透明度与琴键染色的影响；采样播放仍沿用当前 FluidR3Mono_GM 路径。
+
+### 风险变更
+- 木琴默认彩虹外观仍保留，但非木质材质会更明显地染色琴键；这属于本轮刻意增强的反馈。
+- `node scripts/maintain_i18n_catalog.js --limit 20` 仍报告历史 staleRegistrySources 123 和 unreferencedCatalogKeys 39591，本轮不处理。
+
+### 验证
+- `dart format lib/src/ui/pages/toolbox_sound_tools/chimes.dart lib/src/ui/pages/toolbox_sound_tools/mallet_stage.dart lib/src/ui/pages/toolbox_sound_tools/mallet_models.dart` 通过。
+- `flutter analyze lib/src/ui/pages/toolbox_sound_tools.dart lib/src/services/toolbox_instrument_engine.dart test/toolbox_instrument_engine_test.dart` 通过，No issues found。
+- `flutter test test/toolbox_instrument_engine_test.dart` 通过。
+- `flutter test test/app_i18n_catalog_test.dart` 通过。
+- `node scripts/audit_i18n_placeholders.js` 通过；维护报告无重复 key、无缺失 locale 列。
+- 旧 helper 扫描和 catalog Dart 插值扫描无命中。
+- `git diff --check` 通过。
+
 ## [Unreleased-PLAN_308-KALIMBA-MALLET-IMMERSIVE] - 2026-06-01
 
 ### 原因

@@ -10,6 +10,7 @@ class _MalletInstrumentSpec {
     required this.volume,
     required this.bodyColor,
     required this.resonatorColor,
+    this.supportsResonatorControls = true,
   });
 
   final String id;
@@ -20,6 +21,7 @@ class _MalletInstrumentSpec {
   final double volume;
   final Color bodyColor;
   final Color resonatorColor;
+  final bool supportsResonatorControls;
 }
 
 class _MalletMaterialSpec {
@@ -157,6 +159,7 @@ const List<_MalletInstrumentSpec> _malletInstrumentSpecs =
         volume: 0.78,
         bodyColor: Color(0xFFD6DEE8),
         resonatorColor: Color(0xFFE8EEF4),
+        supportsResonatorControls: false,
       ),
     ];
 
@@ -164,48 +167,48 @@ const List<_MalletMaterialSpec> _malletMaterialSpecs = <_MalletMaterialSpec>[
   _MalletMaterialSpec(
     id: 'wood',
     tailBias: 0,
-    reverbBias: -0.02,
-    volumeBias: 0,
+    reverbBias: -0.04,
+    volumeBias: 0.02,
     tint: Color(0xFFD89A4B),
     resonatorColor: Color(0xFFC08A4B),
   ),
   _MalletMaterialSpec(
     id: 'iron',
-    tailBias: 0.14,
-    reverbBias: 0.08,
+    tailBias: 0.22,
+    reverbBias: 0.13,
     volumeBias: -0.02,
     tint: Color(0xFFB9C3CC),
     resonatorColor: Color(0xFF9AA6B2),
   ),
   _MalletMaterialSpec(
     id: 'copper',
-    tailBias: 0.1,
-    reverbBias: 0.06,
+    tailBias: 0.18,
+    reverbBias: 0.11,
     volumeBias: 0,
     tint: Color(0xFFD5894C),
     resonatorColor: Color(0xFFC9783E),
   ),
   _MalletMaterialSpec(
     id: 'glass',
-    tailBias: 0.2,
-    reverbBias: 0.12,
+    tailBias: 0.3,
+    reverbBias: 0.2,
     volumeBias: -0.06,
     tint: Color(0xFFAEE4F5),
     resonatorColor: Color(0xFFBEEAF5),
   ),
   _MalletMaterialSpec(
     id: 'ceramic',
-    tailBias: 0.08,
-    reverbBias: 0.04,
+    tailBias: 0.14,
+    reverbBias: 0.08,
     volumeBias: -0.04,
     tint: Color(0xFFE6DDD0),
     resonatorColor: Color(0xFFD7C7B6),
   ),
   _MalletMaterialSpec(
     id: 'plastic',
-    tailBias: -0.12,
-    reverbBias: -0.06,
-    volumeBias: 0.02,
+    tailBias: -0.2,
+    reverbBias: -0.12,
+    volumeBias: 0.04,
     tint: Color(0xFFEAC6D4),
     resonatorColor: Color(0xFFD7B4C4),
   ),
@@ -214,27 +217,27 @@ const List<_MalletMaterialSpec> _malletMaterialSpecs = <_MalletMaterialSpec>[
 const List<_MalletCavitySpec> _malletCavitySpecs = <_MalletCavitySpec>[
   _MalletCavitySpec(
     id: 'open_box',
-    tailBias: 0,
-    reverbBias: 0,
-    resonatorScale: 0.72,
+    tailBias: 0.02,
+    reverbBias: 0.02,
+    resonatorScale: 0.76,
   ),
   _MalletCavitySpec(
     id: 'shallow',
-    tailBias: -0.12,
-    reverbBias: -0.05,
-    resonatorScale: 0.48,
+    tailBias: -0.22,
+    reverbBias: -0.12,
+    resonatorScale: 0.38,
   ),
   _MalletCavitySpec(
     id: 'long_tubes',
-    tailBias: 0.2,
-    reverbBias: 0.1,
-    resonatorScale: 0.95,
+    tailBias: 0.32,
+    reverbBias: 0.18,
+    resonatorScale: 1.0,
   ),
   _MalletCavitySpec(
     id: 'closed_box',
-    tailBias: -0.04,
-    reverbBias: 0.04,
-    resonatorScale: 0.64,
+    tailBias: -0.08,
+    reverbBias: 0.12,
+    resonatorScale: 0.62,
   ),
 ];
 
