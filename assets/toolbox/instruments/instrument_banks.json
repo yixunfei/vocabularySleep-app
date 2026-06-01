@@ -19,7 +19,11 @@
         {"id": "gm_flute", "instrument": "flute", "program": 73, "channel": 3},
         {"id": "gm_orchestral_harp", "instrument": "harp", "program": 46, "channel": 4},
         {"id": "gm_kalimba", "instrument": "kalimba", "program": 108, "channel": 5},
-        {"id": "gm_tubular_bells", "instrument": "chimes", "program": 14, "channel": 6}
+        {"id": "gm_tubular_bells", "instrument": "chimes", "program": 14, "channel": 6},
+        {"id": "gm_xylophone", "instrument": "xylophone", "program": 13, "channel": 7},
+        {"id": "gm_vibraphone", "instrument": "vibraphone", "program": 11, "channel": 8},
+        {"id": "gm_marimba", "instrument": "marimba", "program": 12, "channel": 9},
+        {"id": "gm_glockenspiel", "instrument": "glockenspiel", "program": 9, "channel": 10}
       ]
     }
   ]

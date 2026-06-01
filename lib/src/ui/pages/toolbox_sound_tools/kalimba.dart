@@ -276,7 +276,11 @@ class _KalimbaToolState extends State<_KalimbaTool> {
     unawaited(_warmUpActiveScale());
   }
 
-  int? _tineIndexForPosition(Offset position, Size size) {
+  int? _tineIndexForPosition(
+    Offset position,
+    Size size, {
+    required bool rotated,
+  }) {
     if (position.dx < 0 ||
         position.dy < 0 ||
         position.dx > size.width ||
@@ -284,6 +288,10 @@ class _KalimbaToolState extends State<_KalimbaTool> {
       return null;
     }
     final count = _activeScale.midis.length;
+    if (rotated) {
+      final laneHeight = size.height / count;
+      return (position.dy / laneHeight).floor().clamp(0, count - 1);
+    }
     final laneWidth = size.width / count;
     return (position.dx / laneWidth).floor().clamp(0, count - 1);
   }
@@ -317,15 +325,31 @@ class _KalimbaToolState extends State<_KalimbaTool> {
     });
   }
 
-  void _handleStagePointerDown(PointerDownEvent event, Size size) {
-    final index = _tineIndexForPosition(event.localPosition, size);
+  void _handleStagePointerDown(
+    PointerDownEvent event,
+    Size size, {
+    required bool rotated,
+  }) {
+    final index = _tineIndexForPosition(
+      event.localPosition,
+      size,
+      rotated: rotated,
+    );
     if (index == null) return;
     _pointerTines[event.pointer] = index;
     unawaited(_playTine(index, velocity: _velocityForGesture(Offset.zero)));
   }
 
-  void _handleStagePointerMove(PointerMoveEvent event, Size size) {
-    final index = _tineIndexForPosition(event.localPosition, size);
+  void _handleStagePointerMove(
+    PointerMoveEvent event,
+    Size size, {
+    required bool rotated,
+  }) {
+    final index = _tineIndexForPosition(
+      event.localPosition,
+      size,
+      rotated: rotated,
+    );
     if (index == null) return;
     final previous = _pointerTines[event.pointer];
     if (previous == index) return;
@@ -349,13 +373,24 @@ class _KalimbaToolState extends State<_KalimbaTool> {
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final stageSize = Size(width, height);
-        final laneWidth = width / notes.length;
         final compact = width < 390;
+        final rotatedLayout = immersive || compact;
+        final sideInset = compact ? 16.0 : 22.0;
+        final usableWidth = math.max(1.0, width - sideInset * 2);
+        final laneWidth = usableWidth / notes.length;
         return _ToolboxScrollLockSurface(
           child: Listener(
             behavior: HitTestBehavior.opaque,
-            onPointerDown: (event) => _handleStagePointerDown(event, stageSize),
-            onPointerMove: (event) => _handleStagePointerMove(event, stageSize),
+            onPointerDown: (event) => _handleStagePointerDown(
+              event,
+              stageSize,
+              rotated: rotatedLayout,
+            ),
+            onPointerMove: (event) => _handleStagePointerMove(
+              event,
+              stageSize,
+              rotated: rotatedLayout,
+            ),
             onPointerUp: _handleStagePointerUp,
             onPointerCancel: _handleStagePointerUp,
             child: AnimatedContainer(
@@ -395,53 +430,115 @@ class _KalimbaToolState extends State<_KalimbaTool> {
               ),
               child: Stack(
                 children: <Widget>[
-                  Positioned(
-                    left: compact ? 12 : 18,
-                    right: compact ? 12 : 18,
-                    top: 18,
-                    height: height * 0.34,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: immersive
-                            ? const Color(0xFF6B3F26)
-                            : const Color(0xFFB8733E),
-                        borderRadius: BorderRadius.circular(22),
-                        boxShadow: <BoxShadow>[
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.18),
-                            blurRadius: 14,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
+                  if (rotatedLayout) ...<Widget>[
+                    Positioned(
+                      left: sideInset,
+                      top: sideInset,
+                      bottom: sideInset,
+                      width: math.min(104, width * 0.22),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: immersive
+                              ? const Color(0xFF6B3F26)
+                              : const Color(0xFFB8733E),
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: <BoxShadow>[
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.18),
+                              blurRadius: 14,
+                              offset: const Offset(8, 0),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    left: compact ? 24 : 34,
-                    right: compact ? 24 : 34,
-                    top: height * 0.18,
-                    child: Container(
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: immersive
-                            ? const Color(0xFF273449)
-                            : const Color(0xFF4B6473),
-                        borderRadius: BorderRadius.circular(999),
+                    Positioned(
+                      left: sideInset + math.min(104, width * 0.22) - 18,
+                      top: sideInset + 10,
+                      bottom: sideInset + 10,
+                      width: 18,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: immersive
+                              ? const Color(0xFF273449)
+                              : const Color(0xFF4B6473),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
                       ),
                     ),
-                  ),
-                  for (var index = 0; index < notes.length; index += 1)
-                    _KalimbaTine(
-                      left: laneWidth * index + laneWidth * 0.12,
-                      width: laneWidth * 0.76,
-                      height: height,
-                      active: _activeTine == index,
-                      label: _noteLabelFromMidi(notes[index]),
-                      index: index,
-                      count: notes.length,
-                      immersive: immersive,
-                      textStyle: theme.textTheme.labelSmall,
+                    for (var index = 0; index < notes.length; index += 1)
+                      _KalimbaSideTine(
+                        top:
+                            sideInset +
+                            (height - sideInset * 2) / notes.length * index +
+                            (height - sideInset * 2) / notes.length * 0.16,
+                        left: sideInset + math.min(104, width * 0.22) * 0.72,
+                        width: math.max(
+                          92,
+                          (width -
+                                  sideInset * 2 -
+                                  math.min(104, width * 0.22) * 0.72) *
+                              (0.9 -
+                                  (notes.length <= 1
+                                          ? 0.0
+                                          : index / (notes.length - 1)) *
+                                      0.24),
+                        ),
+                        height: (height - sideInset * 2) / notes.length * 0.68,
+                        active: _activeTine == index,
+                        label: _noteLabelFromMidi(notes[index]),
+                        immersive: immersive,
+                        textStyle: theme.textTheme.labelSmall,
+                      ),
+                  ] else ...<Widget>[
+                    Positioned(
+                      left: sideInset,
+                      right: sideInset,
+                      top: 18,
+                      height: height * 0.34,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: immersive
+                              ? const Color(0xFF6B3F26)
+                              : const Color(0xFFB8733E),
+                          borderRadius: BorderRadius.circular(22),
+                          boxShadow: <BoxShadow>[
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.18),
+                              blurRadius: 14,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
+                    Positioned(
+                      left: sideInset + 10,
+                      right: sideInset + 10,
+                      top: height * 0.18,
+                      child: Container(
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: immersive
+                              ? const Color(0xFF273449)
+                              : const Color(0xFF4B6473),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+                    for (var index = 0; index < notes.length; index += 1)
+                      _KalimbaTine(
+                        left: sideInset + laneWidth * index + laneWidth * 0.12,
+                        width: laneWidth * 0.76,
+                        height: height,
+                        active: _activeTine == index,
+                        label: _noteLabelFromMidi(notes[index]),
+                        index: index,
+                        count: notes.length,
+                        immersive: immersive,
+                        textStyle: theme.textTheme.labelSmall,
+                      ),
+                  ],
                   Positioned(
                     left: 14,
                     right: 14,
@@ -479,7 +576,7 @@ class _KalimbaToolState extends State<_KalimbaTool> {
     );
   }
 
-  Widget _buildPresetChips(AppI18n i18n) {
+  Widget _buildPresetChips(AppI18n i18n, {VoidCallback? onChanged}) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -488,14 +585,17 @@ class _KalimbaToolState extends State<_KalimbaTool> {
             (preset) => ChoiceChip(
               label: Text(_presetLabel(i18n, preset)),
               selected: _presetId == preset.id,
-              onSelected: (_) => _applyPreset(preset.id),
+              onSelected: (_) {
+                _applyPreset(preset.id);
+                onChanged?.call();
+              },
             ),
           )
           .toList(growable: false),
     );
   }
 
-  Widget _buildScaleChips(AppI18n i18n) {
+  Widget _buildScaleChips(AppI18n i18n, {VoidCallback? onChanged}) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -504,16 +604,167 @@ class _KalimbaToolState extends State<_KalimbaTool> {
             (scale) => ChoiceChip(
               label: Text(_scaleLabel(i18n, scale.id)),
               selected: _scaleId == scale.id,
-              onSelected: (_) => _applyScale(scale.id),
+              onSelected: (_) {
+                _applyScale(scale.id);
+                onChanged?.call();
+              },
             ),
           )
           .toList(growable: false),
     );
   }
 
+  Future<void> _openKalimbaSettingsSheet(BuildContext context, AppI18n i18n) {
+    return showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      useSafeArea: true,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            final theme = Theme.of(sheetContext);
+            void refresh() => setSheetState(() {});
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                18,
+                0,
+                18,
+                18 + MediaQuery.viewInsetsOf(sheetContext).bottom,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Text(
+                            i18n.t('toolbox.sound.instrument.settings'),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        IconButton.filledTonal(
+                          onPressed: () => Navigator.of(sheetContext).pop(),
+                          icon: const Icon(Icons.close_rounded),
+                          tooltip: i18n.t(
+                            'toolbox.sound.instrument.close_settings',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: <Widget>[
+                        FilledButton.tonalIcon(
+                          onPressed: () {
+                            setState(() => _muted = !_muted);
+                            refresh();
+                          },
+                          icon: Icon(
+                            _muted
+                                ? Icons.volume_off_rounded
+                                : Icons.volume_up_rounded,
+                          ),
+                          label: Text(
+                            _muted
+                                ? i18n.t('toolbox.sound.harp.muted')
+                                : i18n.t('toolbox.sound.harp.sound_on'),
+                          ),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.of(sheetContext).pop();
+                            Navigator.of(context).pop();
+                          },
+                          icon: const Icon(Icons.close_fullscreen_rounded),
+                          label: Text(
+                            i18n.t('toolbox.sound.instrument.exit_full_screen'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    SectionHeader(
+                      title: i18n.t('toolbox.sound.kalimba.sound_palette'),
+                      subtitle: _presetSubtitle(i18n, _activePreset),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildPresetChips(i18n, onChanged: refresh),
+                    const SizedBox(height: 16),
+                    SectionHeader(
+                      title: i18n.t('toolbox.sound.kalimba.scale_picker'),
+                      subtitle: i18n.t(
+                        'toolbox.sound.kalimba.scale_picker_sub',
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildScaleChips(i18n, onChanged: refresh),
+                    const SizedBox(height: 16),
+                    Text(
+                      i18n.t(
+                        'toolbox.sound.kalimba.resonance',
+                        params: <String, Object?>{
+                          'value': (_resonance * 100).round(),
+                        },
+                      ),
+                    ),
+                    Slider(
+                      value: _resonance,
+                      min: 0.2,
+                      max: 1.0,
+                      divisions: 16,
+                      onChanged: (value) {
+                        setState(() => _resonance = value);
+                        refresh();
+                      },
+                      onChangeEnd: (_) {
+                        _invalidatePlayers();
+                        unawaited(_warmUpActiveScale());
+                      },
+                    ),
+                    Text(
+                      i18n.t(
+                        'toolbox.sound.instrument.reverb',
+                        params: <String, Object?>{
+                          'value': (_reverb * 100).round(),
+                        },
+                      ),
+                    ),
+                    Slider(
+                      value: _reverb,
+                      min: 0,
+                      max: 0.55,
+                      divisions: 11,
+                      onChanged: (value) {
+                        setState(() => _reverb = value);
+                        refresh();
+                      },
+                      onChangeEnd: (_) {
+                        _invalidatePlayers();
+                        if (_sampledKalimbaReady) {
+                          unawaited(_prepareSampledKalimbaEngine());
+                        }
+                        unawaited(_warmUpActiveScale());
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildFullScreen(BuildContext context, AppI18n i18n) {
-    final theme = Theme.of(context);
-    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
+    final viewPadding = MediaQuery.viewPaddingOf(context);
     return DecoratedBox(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -526,114 +777,42 @@ class _KalimbaToolState extends State<_KalimbaTool> {
           ],
         ),
       ),
-      child: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final stageHeight = math
-                .max(260.0, math.min(460.0, constraints.maxHeight - 230))
-                .toDouble();
-            return Stack(
-              children: <Widget>[
-                Positioned.fill(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(14, 58, 14, bottomInset + 118),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          children: <Widget>[
-                            _PianoOverlayChip(
-                              label: i18n.t('toolbox.sound.harp.preset'),
-                              value: _presetLabel(i18n, _activePreset),
-                            ),
-                            _PianoOverlayChip(
-                              label: i18n.t('toolbox.sound.flute.scale'),
-                              value: _scaleLabel(i18n, _scaleId),
-                            ),
-                            _PianoOverlayChip(
-                              label: i18n.t('toolbox.sound.kalimba.last_note'),
-                              value: _lastNoteLabel ?? '--',
-                            ),
-                          ],
-                        ),
-                        const Spacer(),
-                        _buildKalimbaStage(
-                          context,
-                          i18n: i18n,
-                          height: stageHeight,
-                          immersive: true,
-                        ),
-                      ],
-                    ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final stageHeight = math.max(240.0, constraints.maxHeight - 20);
+          return Stack(
+            children: <Widget>[
+              Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: _buildKalimbaStage(
+                    context,
+                    i18n: i18n,
+                    height: stageHeight,
+                    immersive: true,
                   ),
                 ),
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  top: 8,
-                  child: Row(
-                    children: <Widget>[
-                      FilledButton.tonal(
-                        onPressed: () => Navigator.of(context).pop(),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: Colors.black.withValues(alpha: 0.34),
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Icon(Icons.arrow_back_rounded),
-                      ),
-                      const Spacer(),
-                      FilledButton.tonal(
-                        onPressed: () => setState(() => _muted = !_muted),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: Colors.black.withValues(alpha: 0.34),
-                          foregroundColor: Colors.white,
-                        ),
-                        child: Icon(
-                          _muted
-                              ? Icons.volume_off_rounded
-                              : Icons.volume_up_rounded,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: bottomInset + 12,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.28),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.1),
-                      ),
+              ),
+              Positioned(
+                top: viewPadding.top + 10,
+                right: viewPadding.right + 10,
+                child: IconButton.filledTonal(
+                  onPressed: () => _openKalimbaSettingsSheet(context, i18n),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.black.withValues(alpha: 0.46),
+                    foregroundColor: Colors.white,
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.18),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Text(
-                            _presetSubtitle(i18n, _activePreset),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.white70,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          _buildPresetChips(i18n),
-                        ],
-                      ),
-                    ),
+                    minimumSize: const Size.square(52),
                   ),
+                  icon: const Icon(Icons.tune_rounded),
+                  tooltip: i18n.t('toolbox.sound.instrument.settings'),
                 ),
-              ],
-            );
-          },
-        ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -698,7 +877,7 @@ class _KalimbaToolState extends State<_KalimbaTool> {
               _buildKalimbaStage(
                 context,
                 i18n: i18n,
-                height: compact ? 256 : 300,
+                height: compact ? 420 : 300,
                 immersive: false,
               ),
               const SizedBox(height: 12),
@@ -792,93 +971,6 @@ class _KalimbaToolState extends State<_KalimbaTool> {
             ],
           );
         },
-      ),
-    );
-  }
-}
-
-class _KalimbaTine extends StatelessWidget {
-  const _KalimbaTine({
-    required this.left,
-    required this.width,
-    required this.height,
-    required this.active,
-    required this.label,
-    required this.index,
-    required this.count,
-    required this.immersive,
-    required this.textStyle,
-  });
-
-  final double left;
-  final double width;
-  final double height;
-  final bool active;
-  final String label;
-  final int index;
-  final int count;
-  final bool immersive;
-  final TextStyle? textStyle;
-
-  @override
-  Widget build(BuildContext context) {
-    final lowToHigh = count <= 1 ? 0.0 : index / (count - 1);
-    final tineHeight = height * (0.66 - lowToHigh * 0.24);
-    final top = height * 0.22;
-    return Positioned(
-      left: left,
-      top: top,
-      width: width,
-      height: tineHeight,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 110),
-        curve: Curves.easeOutCubic,
-        transform: Matrix4.translationValues(0, active ? 5 : 0, 0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(999),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: <Color>[
-              active ? const Color(0xFFFFE08A) : const Color(0xFFF7EFE2),
-              active ? const Color(0xFFD8A734) : const Color(0xFF9CA3AF),
-              immersive ? const Color(0xFF394150) : const Color(0xFF60717A),
-            ],
-          ),
-          boxShadow: active
-              ? <BoxShadow>[
-                  BoxShadow(
-                    color: const Color(0xFFFFD166).withValues(alpha: 0.42),
-                    blurRadius: 18,
-                    spreadRadius: 1,
-                  ),
-                ]
-              : <BoxShadow>[
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12),
-                    blurRadius: 8,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-        ),
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                label,
-                style: textStyle?.copyWith(
-                  color: active
-                      ? const Color(0xFF3B2A09)
-                      : (immersive ? Colors.white : const Color(0xFF24333A)),
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

@@ -133,8 +133,6 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
   String _layoutHint(AppI18n i18n, _HarpDeckInstrument instrument) {
     return switch (instrument) {
       _HarpDeckInstrument.piano => i18n.t('toolbox.sound.deck.piano_layout'),
-      _HarpDeckInstrument.kalimba => i18n.t('toolbox.sound.deck.piano_layout'),
-      _HarpDeckInstrument.chimes => i18n.t('toolbox.sound.deck.piano_layout'),
       _HarpDeckInstrument.pickup => i18n.t('toolbox.sound.deck.piano_layout'),
       _ => i18n.t('toolbox.sound.deck.landscape_recommended'),
     };
@@ -373,9 +371,7 @@ class _DeckInstrumentFullScreenPageState
     extends State<_DeckInstrumentFullScreenPage> {
   bool _prefersPortraitFullScreen(_HarpDeckInstrument instrument) {
     return switch (instrument) {
-      _HarpDeckInstrument.piano ||
-      _HarpDeckInstrument.kalimba ||
-      _HarpDeckInstrument.chimes => true,
+      _HarpDeckInstrument.piano => true,
       _ => false,
     };
   }

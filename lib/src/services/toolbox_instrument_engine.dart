@@ -7,6 +7,10 @@ enum ToolboxInstrumentId {
   violin,
   kalimba,
   chimes,
+  xylophone,
+  vibraphone,
+  marimba,
+  glockenspiel,
   harp,
   drumKit,
   triangle,
@@ -116,6 +120,34 @@ class ToolboxInstrumentBankCatalog {
     instrumentId: ToolboxInstrumentId.chimes,
     program: 14,
     channel: 6,
+  );
+
+  static const ToolboxInstrumentPatch xylophone = ToolboxInstrumentPatch(
+    id: 'gm_xylophone',
+    instrumentId: ToolboxInstrumentId.xylophone,
+    program: 13,
+    channel: 7,
+  );
+
+  static const ToolboxInstrumentPatch vibraphone = ToolboxInstrumentPatch(
+    id: 'gm_vibraphone',
+    instrumentId: ToolboxInstrumentId.vibraphone,
+    program: 11,
+    channel: 8,
+  );
+
+  static const ToolboxInstrumentPatch marimba = ToolboxInstrumentPatch(
+    id: 'gm_marimba',
+    instrumentId: ToolboxInstrumentId.marimba,
+    program: 12,
+    channel: 9,
+  );
+
+  static const ToolboxInstrumentPatch glockenspiel = ToolboxInstrumentPatch(
+    id: 'gm_glockenspiel',
+    instrumentId: ToolboxInstrumentId.glockenspiel,
+    program: 9,
+    channel: 10,
   );
 }
 

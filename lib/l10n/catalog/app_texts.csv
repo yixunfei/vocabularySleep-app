@@ -61415,10 +61415,10 @@ toolbox.sound.deck.kalimba,拇指琴,Kalimba,カリンバ,Kalimba,Kalimba,Kalimb
 toolbox.sound.deck.kalimba_gesture,轻触琴齿或滑扫演奏,Tap tines or swipe to play,タインをタップまたはスワイプ,Tippe Lamellen an oder wische,Touchez les lames ou glissez,Toca láminas o desliza,Нажимайте пластины или скользите
 toolbox.sound.deck.kalimba_mix,调节音阶、共鸣和空间,Shape scale resonance and space,スケールと響きと空間を調整,Skala Nachklang und Raum formen,Modelez gamme résonance et espace,Ajusta escala resonancia y espacio,Настраивайте лад резонанс и пространство
 toolbox.sound.deck.kalimba_sub,用适合手机的大琴齿演奏清亮短音。,Play clear plucked tones on large phone friendly tines.,スマホ向けの大きなタインで明るい撥音を演奏。,Spiele klare Zupftöne auf großen telefonfreundlichen Lamellen.,Jouez des sons pincés clairs sur de grandes lames adaptées au téléphone.,Toca tonos pulsados claros en láminas grandes para móvil.,Играйте ясные щипковые тоны на крупных удобных пластинах.
-toolbox.sound.deck.chimes,排钟,Tubular Bells,チューブラーベル,Röhrenglocken,Cloches tubulaires,Campanas tubulares,Трубчатые колокола
-toolbox.sound.deck.chimes_gesture,轻触钟管或横向扫奏,Tap tubes or sweep across,チューブをタップまたは横にスワイプ,Tippe Röhren an oder wische,Touchez les tubes ou balayez,Toca tubos o barre,Нажимайте трубки или проводите
-toolbox.sound.deck.chimes_mix,调节钟管尾音和大厅感,Shape bell tail and hall space,ベルの余韻とホール感を調整,Nachklang und Halle formen,Modelez queue et salle,Ajusta cola y sala,Настраивайте хвост и зал
-toolbox.sound.deck.chimes_sub,敲击一排钟管，获得明亮悠长的钟声。,Strike a row of tubes for bright long ringing tones.,並んだ管を鳴らして明るく長い鐘音を出します。,Schlage eine Röhrenreihe für helle lange Glockentöne an.,Frappez une rangée de tubes pour des sons longs et clairs.,Golpea una fila de tubos para campanas largas y claras.,Ударяйте ряд трубок для яркого долгого звона.
+toolbox.sound.deck.chimes,木琴与排钟,Mallet Keys,マレット鍵盤,Mallet-Tasten,Claviers à maillets,Teclas de mazos,Клавиши с молоточками
+toolbox.sound.deck.chimes_gesture,轻触琴键或沿排横向扫奏,Tap bars or sweep across,バーをタップまたは横にスワイプ,Tippe Stäbe an oder wische,Touchez les lames ou balayez,Toca barras o barre,Нажимайте планки или проводите
+toolbox.sound.deck.chimes_mix,切换木琴排钟和共鸣材质,Switch mallet type and resonance material,種類と共鳴素材を切替,Mallet-Typ und Resonanzmaterial wechseln,Changez type et matériau résonant,Cambia tipo y material resonante,Меняйте тип и материал резонанса
+toolbox.sound.deck.chimes_sub,默认是儿童彩虹木琴，也可切换排钟、颤音琴、马林巴和钢片琴。,Defaults to a rainbow xylophone and can switch to bells vibraphone marimba or glockenspiel.,標準は虹色の木琴でベルやビブラフォンやマリンバにも切替できます。,Standard ist ein Regenbogen-Xylophon mit Glocken Vibraphon Marimba und Glockenspiel.,Par défaut xylophone arc-en-ciel avec cloches vibraphone marimba et glockenspiel.,Por defecto xilófono arcoíris con campanas vibráfono marimba y glockenspiel.,По умолчанию радужный ксилофон с колоколами вибрафоном маримбой и глокеншпилем.
 toolbox.sound.kalimba.a_minor,A 小调,A Minor,Aマイナー,A-Moll,La mineur,La menor,Ля минор
 toolbox.sound.kalimba.bright_tines,明亮琴齿,Bright tines,明るいタイン,Helle Lamellen,Lames claires,Láminas brillantes,Яркие пластины
 toolbox.sound.kalimba.bright_tines_sub,攻击更清楚，适合短句和滑扫。,Clearer attack for short phrases and swipes.,短いフレーズとスワイプ向けの明瞭なアタック。,Klarerer Anschlag für kurze Phrasen und Wischer.,Attaque plus nette pour phrases courtes et glissés.,Ataque más claro para frases cortas y barridos.,Более четкая атака для коротких фраз и скольжений.
@@ -61466,3 +61466,43 @@ toolbox.sound.chimes.tube_stage,排钟舞台,Tubular bell stage,チューブラ�
 toolbox.sound.chimes.tubes,钟管,Tubes,管,Röhren,Tubes,Tubos,Трубки
 toolbox.sound.chimes.wide_stage_sub,点击单根钟管，横向扫过可形成明亮的钟声阶梯。,Tap one tube or sweep across for a bright bell run.,1本を鳴らすか横に払って明るいベルラン。,Tippe eine Röhre oder wische für einen hellen Lauf.,Touchez un tube ou balayez pour une montée claire.,Toca un tubo o barre para una escala brillante.,Нажмите трубку или проведите для яркого прохода.
 toolbox.sound.instrument.reverb,混响 {value}%,Reverb {value}%,リバーブ {value}%,Hall {value}%,Réverbération {value}%,Reverberación {value}%,Реверберация {value}%
+toolbox.sound.instrument.close_settings,关闭设置,Close settings,設定を閉じる,Einstellungen schließen,Fermer réglages,Cerrar ajustes,Закрыть настройки
+toolbox.sound.instrument.exit_full_screen,退出全屏,Exit full screen,全画面を終了,Vollbild verlassen,Quitter plein écran,Salir de pantalla completa,Выйти из полного экрана
+toolbox.sound.instrument.settings,设置,Settings,設定,Einstellungen,Réglages,Ajustes,Настройки
+toolbox.sound.mallet.bars,琴键,Bars,鍵盤,Stäbe,Lames,Barras,Планки
+toolbox.sound.mallet.cavity,腔体,Cavity,空洞,Resonanzraum,Cavité,Cavidad,Полость
+toolbox.sound.mallet.cavity_closed_box,封闭箱体,Closed box,閉じた箱,Geschlossener Kasten,Caisse fermée,Caja cerrada,Закрытый корпус
+toolbox.sound.mallet.cavity_long_tubes,长共鸣管,Long tubes,長い共鳴管,Lange Röhren,Tubes longs,Tubos largos,Длинные трубки
+toolbox.sound.mallet.cavity_open_box,开放箱体,Open box,開いた箱,Offener Kasten,Caisse ouverte,Caja abierta,Открытый корпус
+toolbox.sound.mallet.cavity_shallow,浅腔,Shallow,浅い空洞,Flach,Cavité courte,Cavidad baja,Мелкая полость
+toolbox.sound.mallet.cavity_sub,腔体会改变共鸣管长度、空间感和敲击收尾。,Cavity changes resonator length space and note finish.,空洞は共鳴管の長さと空間感と余韻を変えます。,Der Resonanzraum ändert Röhrenlänge Raum und Ausklang.,La cavité change longueur espace et fin de note.,La cavidad cambia longitud espacio y cierre.,Полость меняет длину резонатора пространство и окончание.
+toolbox.sound.mallet.damp,止音,Damp,ミュート,Dämpfen,Étouffer,Apagar,Заглушить
+toolbox.sound.mallet.high_side,高音,High,高音,Hoch,Aigu,Agudo,Высоко
+toolbox.sound.mallet.instrument_type,类型,Type,種類,Typ,Type,Tipo,Тип
+toolbox.sound.mallet.last_note,上一音,Last note,最後の音,Letzte Note,Dernière note,Última nota,Последняя нота
+toolbox.sound.mallet.low_side,低音,Low,低音,Tief,Grave,Grave,Низко
+toolbox.sound.mallet.material,共鸣管材质,Resonator material,共鳴管素材,Resonatormaterial,Matériau résonant,Material resonante,Материал резонатора
+toolbox.sound.mallet.material_ceramic,陶制,Ceramic,陶器,Keramik,Céramique,Cerámica,Керамика
+toolbox.sound.mallet.material_copper,铜质,Copper,銅,Kupfer,Cuivre,Cobre,Медь
+toolbox.sound.mallet.material_glass,玻璃,Glass,ガラス,Glas,Verre,Vidrio,Стекло
+toolbox.sound.mallet.material_iron,金属铁质,Iron,鉄,Eisen,Fer,Hierro,Железо
+toolbox.sound.mallet.material_plastic,塑胶,Plastic,プラスチック,Kunststoff,Plastique,Plástico,Пластик
+toolbox.sound.mallet.material_sub,材质会影响尾音、混响和视觉管色。,Material shapes tail reverb and resonator color.,素材は余韻とリバーブと管の色を変えます.,Material formt Ausklang Hall und Röhrenfarbe.,Le matériau module queue réverbération et couleur.,El material cambia cola reverberación y color.,Материал меняет хвост реверберацию и цвет.
+toolbox.sound.mallet.material_wood,木制,Wood,木,Holz,Bois,Madera,Дерево
+toolbox.sound.mallet.phone_stage_sub,90 度横向排列，沿竖向滑动可扫过琴键。,A 90 degree layout lets vertical swipes sweep the bars.,90度配置で縦スワイプが鍵盤をなぞります.,Das 90-Grad-Layout lässt vertikale Wischer über Stäbe laufen.,La disposition à 90 degrés permet un balayage vertical.,El diseño a 90 grados permite barrer en vertical.,Раскладка на 90 градусов позволяет вести пальцем вертикально.
+toolbox.sound.mallet.sample_note,声音优先使用 FluidR3Mono_GM 采样，不支持平台才降级为轻量预览。,Sound prioritizes FluidR3Mono_GM samples and falls back only on unsupported platforms.,音は FluidR3Mono_GM サンプルを優先し非対応環境だけ軽量プレビューに戻ります.,Der Klang nutzt zuerst FluidR3Mono_GM Samples und fällt nur bei fehlender Unterstützung zurück.,Le son privilégie FluidR3Mono_GM et ne bascule que si non pris en charge.,El sonido prioriza FluidR3Mono_GM y solo cae si no hay soporte.,Звук сначала использует FluidR3Mono_GM и упрощается только без поддержки.
+toolbox.sound.mallet.stage,敲击键盘舞台,Mallet key stage,マレット鍵盤ステージ,Mallet-Tasten-Bühne,Scène de lames,Escenario de mazos,Сцена клавиш
+toolbox.sound.mallet.sweep_down,下行扫奏,Sweep down,下降スイープ,Abwärts wischen,Balayer bas,Barrer abajo,Провести вниз
+toolbox.sound.mallet.sweep_up,上行扫奏,Sweep up,上昇スイープ,Aufwärts wischen,Balayer haut,Barrer arriba,Провести вверх
+toolbox.sound.mallet.tail,尾音 {value}%,Tail {value}%,余韻 {value}%,Nachklang {value}%,Queue {value}%,Cola {value}%,Хвост {value}%
+toolbox.sound.mallet.type_chimes,排钟,Tubular bells,チューブラーベル,Röhrenglocken,Cloches tubulaires,Campanas tubulares,Трубчатые колокола
+toolbox.sound.mallet.type_chimes_sub,长尾音的金属钟管，适合明亮慢速旋律。,Long ringing metal tubes for bright slow melodies.,長く響く金属管で明るいゆっくりした旋律向け。,Lang klingende Metallröhren für helle langsame Melodien.,Tubes métalliques longs pour mélodies lentes claires.,Tubos metálicos largos para melodías lentas brillantes.,Длинные металлические трубки для ярких медленных мелодий.
+toolbox.sound.mallet.type_glockenspiel,钢片琴,Glockenspiel,グロッケンシュピール,Glockenspiel,Glockenspiel,Glockenspiel,Глокеншпиль
+toolbox.sound.mallet.type_glockenspiel_sub,高音域金属片，声音清脆明亮。,High metal bars with crisp bright tone.,高音域の金属板で澄んだ明るい音です.,Hohe Metallstäbe mit klarem hellem Klang.,Lames métalliques aiguës au timbre clair.,Barras metálicas agudas de tono claro.,Высокие металлические планки с ясным звуком.
+toolbox.sound.mallet.type_marimba,马林巴,Marimba,マリンバ,Marimba,Marimba,Marimba,Маримба
+toolbox.sound.mallet.type_marimba_sub,更低更厚的木质键盘，适合温暖低音线。,Lower thicker wooden bars for warm bass lines.,低く厚い木質鍵盤で温かい低音向け。,Tiefere Holzstäbe für warme Basslinien.,Lames boisées graves pour lignes chaudes.,Barras de madera graves para bajos cálidos.,Низкие деревянные планки для теплых басов.
+toolbox.sound.mallet.type_vibraphone,颤音琴,Vibraphone,ビブラフォン,Vibraphon,Vibraphone,Vibráfono,Вибрафон
+toolbox.sound.mallet.type_vibraphone_sub,柔和金属延音，适合梦幻和弦。,Soft metallic sustain for dreamy chords.,柔らかな金属サステインで夢のような和音向け。,Weicher Metallsustain für träumerische Akkorde.,Sustain métallique doux pour accords rêveurs.,Sustain metálico suave para acordes soñadores.,Мягкий металлический сустейн для мечтательных аккордов.
+toolbox.sound.mallet.type_xylophone,木琴,Xylophone,木琴,Xylophon,Xylophone,Xilófono,Ксилофон
+toolbox.sound.mallet.type_xylophone_sub,彩虹 12 音木琴，适合儿童敲击感和短旋律。,Rainbow 12 note xylophone for playful taps and short melodies.,虹色12音木琴で遊びや短い旋律に合います.,Regenbogen-Xylophon mit 12 Tönen für Spiel und kurze Melodien.,Xylophone arc-en-ciel 12 notes pour jeu et courtes mélodies.,Xilófono arcoíris de 12 notas para juego y melodías cortas.,Радужный ксилофон на 12 нот для игры и коротких мелодий.
+toolbox.sound.mallet.wide_stage_sub,点击单个彩色琴键，横向扫过可形成明亮音阶。,Tap one colored bar or sweep across for a bright run.,色の鍵盤をタップし横に払うと明るい音階になります.,Tippe einen farbigen Stab oder wische für einen hellen Lauf.,Touchez une lame colorée ou balayez pour une gamme claire.,Toca una barra de color o barre para una escala clara.,Нажмите цветную планку или проведите для яркого прохода.

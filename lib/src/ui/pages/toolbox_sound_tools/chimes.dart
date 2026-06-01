@@ -9,60 +9,7 @@ class _ChimesTool extends StatefulWidget {
   State<_ChimesTool> createState() => _ChimesToolState();
 }
 
-class _ChimesPreset {
-  const _ChimesPreset({
-    required this.id,
-    required this.styleId,
-    required this.tail,
-    required this.reverb,
-    required this.volume,
-  });
-
-  final String id;
-  final String styleId;
-  final double tail;
-  final double reverb;
-  final double volume;
-}
-
 class _ChimesToolState extends State<_ChimesTool> {
-  static const List<int> _tubeMidis = <int>[
-    60,
-    62,
-    64,
-    65,
-    67,
-    69,
-    71,
-    72,
-    74,
-    76,
-    77,
-    79,
-  ];
-  static const List<_ChimesPreset> _presets = <_ChimesPreset>[
-    _ChimesPreset(
-      id: 'ceremonial_bells',
-      styleId: 'tubular',
-      tail: 0.74,
-      reverb: 0.34,
-      volume: 0.82,
-    ),
-    _ChimesPreset(
-      id: 'soft_hall',
-      styleId: 'soft',
-      tail: 0.88,
-      reverb: 0.46,
-      volume: 0.76,
-    ),
-    _ChimesPreset(
-      id: 'bright_towers',
-      styleId: 'bright',
-      tail: 0.58,
-      reverb: 0.24,
-      volume: 0.86,
-    ),
-  ];
   static const List<String> _pitchNames = <String>[
     'C',
     'C#',
@@ -79,54 +26,101 @@ class _ChimesToolState extends State<_ChimesTool> {
   ];
 
   final Map<String, ToolboxNotePlayer> _players = <String, ToolboxNotePlayer>{};
-  final Map<int, int> _pointerTubes = <int, int>{};
-  late final ToolboxSoundFontInstrumentEngine _sampledChimesEngine;
+  final Map<int, int> _pointerBars = <int, int>{};
+  late final ToolboxSoundFontInstrumentEngine _sampledMalletEngine;
 
-  String _presetId = _presets.first.id;
-  String _styleId = _presets.first.styleId;
-  double _tail = _presets.first.tail;
-  double _reverb = _presets.first.reverb;
-  double _volume = _presets.first.volume;
-  bool _sampledChimesReady = false;
+  String _instrumentId = _malletInstrumentSpecs.first.id;
+  String _materialId = 'wood';
+  String _cavityId = 'open_box';
+  double _tail = _malletInstrumentSpecs.first.defaultTail;
+  double _reverb = _malletInstrumentSpecs.first.defaultReverb;
+  double _volume = _malletInstrumentSpecs.first.volume;
+  bool _sampledMalletReady = false;
   bool _sweepInFlight = false;
-  int? _activeTube;
+  int? _activeBar;
   String? _lastNoteLabel;
-  int _strikeCount = 0;
 
   @override
   void initState() {
     super.initState();
-    _sampledChimesEngine = _createToolboxSoundFontInstrumentEngine(context);
+    _sampledMalletEngine = _createToolboxSoundFontInstrumentEngine(context);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(_prepareSampledChimesEngine());
-      unawaited(_warmUpCoreTubes());
+      unawaited(_prepareSampledMalletEngine());
+      unawaited(_warmUpCoreBars());
     });
   }
 
-  _ChimesPreset get _activePreset {
-    return _presets.firstWhere(
-      (item) => item.id == _presetId,
-      orElse: () => _presets.first,
-    );
+  _MalletInstrumentSpec get _activeInstrument {
+    return _malletInstrumentById(_instrumentId);
+  }
+
+  _MalletMaterialSpec get _activeMaterial {
+    return _malletMaterialById(_materialId);
+  }
+
+  _MalletCavitySpec get _activeCavity {
+    return _malletCavityById(_cavityId);
+  }
+
+  List<int> get _activeMidis => _activeInstrument.midis;
+
+  double get _effectiveTail {
+    return (_tail + _activeMaterial.tailBias + _activeCavity.tailBias)
+        .clamp(0.12, 1.0)
+        .toDouble();
+  }
+
+  double get _effectiveReverb {
+    return (_reverb + _activeMaterial.reverbBias + _activeCavity.reverbBias)
+        .clamp(0.0, 0.85)
+        .toDouble();
+  }
+
+  double get _effectiveVolume {
+    return (_volume + _activeMaterial.volumeBias).clamp(0.0, 1.0).toDouble();
   }
 
   bool _isCompactPhoneWidth(double width) {
-    return width < (widget.fullScreen ? 480 : 430);
+    return width < (widget.fullScreen ? 520 : 430);
   }
 
-  String _presetLabel(AppI18n i18n, _ChimesPreset preset) {
-    return switch (preset.id) {
-      'soft_hall' => i18n.t('toolbox.sound.chimes.soft_hall'),
-      'bright_towers' => i18n.t('toolbox.sound.chimes.bright_towers'),
-      _ => i18n.t('toolbox.sound.chimes.ceremonial_bells'),
+  String _instrumentLabel(AppI18n i18n, _MalletInstrumentSpec spec) {
+    return switch (spec.id) {
+      'chimes' => i18n.t('toolbox.sound.mallet.type_chimes'),
+      'vibraphone' => i18n.t('toolbox.sound.mallet.type_vibraphone'),
+      'marimba' => i18n.t('toolbox.sound.mallet.type_marimba'),
+      'glockenspiel' => i18n.t('toolbox.sound.mallet.type_glockenspiel'),
+      _ => i18n.t('toolbox.sound.mallet.type_xylophone'),
     };
   }
 
-  String _presetSubtitle(AppI18n i18n, _ChimesPreset preset) {
-    return switch (preset.id) {
-      'soft_hall' => i18n.t('toolbox.sound.chimes.soft_hall_sub'),
-      'bright_towers' => i18n.t('toolbox.sound.chimes.bright_towers_sub'),
-      _ => i18n.t('toolbox.sound.chimes.ceremonial_bells_sub'),
+  String _instrumentSubtitle(AppI18n i18n, _MalletInstrumentSpec spec) {
+    return switch (spec.id) {
+      'chimes' => i18n.t('toolbox.sound.mallet.type_chimes_sub'),
+      'vibraphone' => i18n.t('toolbox.sound.mallet.type_vibraphone_sub'),
+      'marimba' => i18n.t('toolbox.sound.mallet.type_marimba_sub'),
+      'glockenspiel' => i18n.t('toolbox.sound.mallet.type_glockenspiel_sub'),
+      _ => i18n.t('toolbox.sound.mallet.type_xylophone_sub'),
+    };
+  }
+
+  String _materialLabel(AppI18n i18n, _MalletMaterialSpec material) {
+    return switch (material.id) {
+      'iron' => i18n.t('toolbox.sound.mallet.material_iron'),
+      'copper' => i18n.t('toolbox.sound.mallet.material_copper'),
+      'glass' => i18n.t('toolbox.sound.mallet.material_glass'),
+      'ceramic' => i18n.t('toolbox.sound.mallet.material_ceramic'),
+      'plastic' => i18n.t('toolbox.sound.mallet.material_plastic'),
+      _ => i18n.t('toolbox.sound.mallet.material_wood'),
+    };
+  }
+
+  String _cavityLabel(AppI18n i18n, _MalletCavitySpec cavity) {
+    return switch (cavity.id) {
+      'shallow' => i18n.t('toolbox.sound.mallet.cavity_shallow'),
+      'long_tubes' => i18n.t('toolbox.sound.mallet.cavity_long_tubes'),
+      'closed_box' => i18n.t('toolbox.sound.mallet.cavity_closed_box'),
+      _ => i18n.t('toolbox.sound.mallet.cavity_open_box'),
     };
   }
 
@@ -140,44 +134,72 @@ class _ChimesToolState extends State<_ChimesTool> {
     return (440 * math.pow(2, (midi - 69) / 12)).toDouble();
   }
 
-  String _playerKeyForMidi(int midi, {double velocity = 0.78}) {
-    return '$midi:$_styleId:${_tail.toStringAsFixed(2)}:'
-        '${_reverb.toStringAsFixed(2)}:${velocity.toStringAsFixed(2)}';
+  Color _barColorFor(int index) {
+    final rainbow = _malletRainbowColors[index % _malletRainbowColors.length];
+    if (_instrumentId == 'xylophone') {
+      return rainbow;
+    }
+    return Color.lerp(rainbow, _activeMaterial.tint, 0.66)!;
   }
 
-  Future<void> _prepareSampledChimesEngine() async {
-    final ready = await _sampledChimesEngine.ensurePatch(
+  String _playerKeyForMidi(int midi, {double velocity = 0.78}) {
+    return '$midi:$_instrumentId:$_materialId:$_cavityId:'
+        '${_effectiveTail.toStringAsFixed(2)}:'
+        '${_effectiveReverb.toStringAsFixed(2)}:'
+        '${velocity.toStringAsFixed(2)}';
+  }
+
+  Future<void> _prepareSampledMalletEngine() async {
+    final ready = await _sampledMalletEngine.ensurePatch(
       bank: ToolboxInstrumentBankCatalog.museScoreGeneral,
-      patch: ToolboxInstrumentBankCatalog.tubularBells,
-      volume: _volume,
-      reverb: _reverb,
+      patch: _activeInstrument.patch,
+      volume: _effectiveVolume,
+      reverb: _effectiveReverb,
     );
-    if (!mounted || ready == _sampledChimesReady) {
-      return;
+    if (!mounted) return;
+    if (ready != _sampledMalletReady) {
+      setState(() {
+        _sampledMalletReady = ready;
+      });
     }
-    setState(() {
-      _sampledChimesReady = ready;
-    });
-    _invalidatePlayers();
-    unawaited(_warmUpCoreTubes());
+    if (ready) {
+      _invalidatePlayers();
+      unawaited(_warmUpCoreBars());
+    }
+  }
+
+  int _releaseMilliseconds() {
+    final base = switch (_instrumentId) {
+      'chimes' => 1220,
+      'vibraphone' => 940,
+      'glockenspiel' => 880,
+      'marimba' => 620,
+      _ => 520,
+    };
+    final span = switch (_instrumentId) {
+      'chimes' => 3000,
+      'vibraphone' => 2500,
+      'glockenspiel' => 2200,
+      'marimba' => 1600,
+      _ => 1300,
+    };
+    return (base + _effectiveTail * span).round();
   }
 
   ToolboxNotePlayer _playerForMidi(int midi, {double velocity = 0.78}) {
     final key = _playerKeyForMidi(midi, velocity: velocity);
     final existing = _players[key];
     if (existing != null) return existing;
-    if (_sampledChimesReady) {
+    if (_sampledMalletReady) {
       final sampled = ToolboxSampledMidiNotePlayer(
-        engine: _sampledChimesEngine,
+        engine: _sampledMalletEngine,
         bank: ToolboxInstrumentBankCatalog.museScoreGeneral,
-        patch: ToolboxInstrumentBankCatalog.tubularBells,
+        patch: _activeInstrument.patch,
         midiNote: midi,
         velocity: velocity,
-        releaseAfter: Duration(
-          milliseconds: (1200 + _tail.clamp(0.2, 1.0) * 2900).round(),
-        ),
-        volume: _volume,
-        reverb: _reverb,
+        releaseAfter: Duration(milliseconds: _releaseMilliseconds()),
+        volume: _effectiveVolume,
+        reverb: _effectiveReverb,
       );
       _players[key] = sampled;
       return sampled;
@@ -185,9 +207,9 @@ class _ChimesToolState extends State<_ChimesTool> {
     final fallback = ToolboxEffectPlayer(
       ToolboxAudioBank.chimeNote(
         _frequencyFromMidi(midi),
-        style: _styleId,
-        tail: _tail,
-        reverb: _reverb,
+        style: _instrumentId,
+        tail: _effectiveTail,
+        reverb: _effectiveReverb,
         variant: midi % 17,
       ),
       maxPlayers: 12,
@@ -203,43 +225,65 @@ class _ChimesToolState extends State<_ChimesTool> {
     _players.clear();
   }
 
-  Future<void> _warmUpCoreTubes() async {
-    final warmIndexes = <int>{0, _tubeMidis.length ~/ 2, _tubeMidis.length - 1};
+  Future<void> _warmUpCoreBars() async {
+    final notes = _activeMidis;
+    final warmIndexes = <int>{0, notes.length ~/ 2, notes.length - 1};
     for (final index in warmIndexes) {
       if (!mounted) return;
-      await _playerForMidi(_tubeMidis[index]).warmUp();
+      await _playerForMidi(notes[index]).warmUp();
       await Future<void>.delayed(const Duration(milliseconds: 8));
     }
   }
 
-  void _applyPreset(String presetId) {
-    final preset = _presets.firstWhere(
-      (item) => item.id == presetId,
-      orElse: () => _presets.first,
-    );
+  void _applyInstrument(String id) {
+    if (_instrumentId == id) return;
+    final spec = _malletInstrumentById(id);
     setState(() {
-      _presetId = preset.id;
-      _styleId = preset.styleId;
-      _tail = preset.tail;
-      _reverb = preset.reverb;
-      _volume = preset.volume;
+      _instrumentId = spec.id;
+      _tail = spec.defaultTail;
+      _reverb = spec.defaultReverb;
+      _volume = spec.volume;
+      _activeBar = null;
     });
     _invalidatePlayers();
-    if (_sampledChimesReady) {
-      unawaited(_prepareSampledChimesEngine());
-    }
-    unawaited(_warmUpCoreTubes());
+    unawaited(_prepareSampledMalletEngine());
+    unawaited(_warmUpCoreBars());
   }
 
-  int? _tubeIndexForPosition(Offset position, Size size) {
+  void _applyMaterial(String id) {
+    if (_materialId == id) return;
+    setState(() => _materialId = id);
+    _invalidatePlayers();
+    unawaited(_prepareSampledMalletEngine());
+    unawaited(_warmUpCoreBars());
+  }
+
+  void _applyCavity(String id) {
+    if (_cavityId == id) return;
+    setState(() => _cavityId = id);
+    _invalidatePlayers();
+    unawaited(_prepareSampledMalletEngine());
+    unawaited(_warmUpCoreBars());
+  }
+
+  int? _barIndexForPosition(
+    Offset position,
+    Size size, {
+    required bool rotated,
+  }) {
     if (position.dx < 0 ||
         position.dy < 0 ||
         position.dx > size.width ||
         position.dy > size.height) {
       return null;
     }
-    final laneWidth = size.width / _tubeMidis.length;
-    return (position.dx / laneWidth).floor().clamp(0, _tubeMidis.length - 1);
+    final count = _activeMidis.length;
+    if (rotated) {
+      final laneHeight = size.height / count;
+      return (position.dy / laneHeight).floor().clamp(0, count - 1);
+    }
+    final laneWidth = size.width / count;
+    return (position.dx / laneWidth).floor().clamp(0, count - 1);
   }
 
   double _velocityForGesture(Offset delta, {bool initial = false}) {
@@ -247,61 +291,74 @@ class _ChimesToolState extends State<_ChimesTool> {
     return (0.5 + delta.distance / 52).clamp(0.34, 1.0).toDouble();
   }
 
-  Future<void> _strikeTube(int index, {double velocity = 0.82}) async {
-    if (index < 0 || index >= _tubeMidis.length) return;
-    final midi = _tubeMidis[index];
+  Future<void> _strikeBar(int index, {double velocity = 0.82}) async {
+    final notes = _activeMidis;
+    if (index < 0 || index >= notes.length) return;
+    final midi = notes[index];
     HapticFeedback.lightImpact();
     unawaited(
-      _playerForMidi(
-        midi,
-        velocity: velocity,
-      ).play(volume: (_volume * (0.68 + velocity * 0.42)).clamp(0.0, 1.0)),
+      _playerForMidi(midi, velocity: velocity).play(
+        volume: (_effectiveVolume * (0.68 + velocity * 0.42)).clamp(0.0, 1.0),
+      ),
     );
     if (!mounted) return;
     setState(() {
-      _activeTube = index;
+      _activeBar = index;
       _lastNoteLabel = _noteLabelFromMidi(midi);
-      _strikeCount += 1;
     });
-    Future<void>.delayed(const Duration(milliseconds: 210), () {
-      if (!mounted || _activeTube != index) return;
-      setState(() => _activeTube = null);
+    Future<void>.delayed(const Duration(milliseconds: 180), () {
+      if (!mounted || _activeBar != index) return;
+      setState(() => _activeBar = null);
     });
   }
 
-  void _handleStagePointerDown(PointerDownEvent event, Size size) {
-    final index = _tubeIndexForPosition(event.localPosition, size);
+  void _handleStagePointerDown(
+    PointerDownEvent event,
+    Size size, {
+    required bool rotated,
+  }) {
+    final index = _barIndexForPosition(
+      event.localPosition,
+      size,
+      rotated: rotated,
+    );
     if (index == null) return;
-    _pointerTubes[event.pointer] = index;
-    unawaited(_strikeTube(index, velocity: _velocityForGesture(Offset.zero)));
+    _pointerBars[event.pointer] = index;
+    unawaited(_strikeBar(index, velocity: _velocityForGesture(Offset.zero)));
   }
 
-  void _handleStagePointerMove(PointerMoveEvent event, Size size) {
-    final index = _tubeIndexForPosition(event.localPosition, size);
+  void _handleStagePointerMove(
+    PointerMoveEvent event,
+    Size size, {
+    required bool rotated,
+  }) {
+    final index = _barIndexForPosition(
+      event.localPosition,
+      size,
+      rotated: rotated,
+    );
     if (index == null) return;
-    final previous = _pointerTubes[event.pointer];
+    final previous = _pointerBars[event.pointer];
     if (previous == index) return;
-    _pointerTubes[event.pointer] = index;
-    unawaited(_strikeTube(index, velocity: _velocityForGesture(event.delta)));
+    _pointerBars[event.pointer] = index;
+    unawaited(_strikeBar(index, velocity: _velocityForGesture(event.delta)));
   }
 
   void _handleStagePointerUp(PointerEvent event) {
-    _pointerTubes.remove(event.pointer);
+    _pointerBars.remove(event.pointer);
   }
 
   Future<void> _playSweep({required bool ascending}) async {
     if (_sweepInFlight) return;
     _sweepInFlight = true;
+    final count = _activeMidis.length;
     final indexes = ascending
-        ? List<int>.generate(_tubeMidis.length, (index) => index)
-        : List<int>.generate(
-            _tubeMidis.length,
-            (index) => _tubeMidis.length - 1 - index,
-          );
+        ? List<int>.generate(count, (index) => index)
+        : List<int>.generate(count, (index) => count - 1 - index);
     for (final index in indexes) {
       if (!mounted) break;
-      await _strikeTube(index, velocity: 0.72);
-      await Future<void>.delayed(const Duration(milliseconds: 72));
+      await _strikeBar(index, velocity: 0.72);
+      await Future<void>.delayed(const Duration(milliseconds: 64));
     }
     _sweepInFlight = false;
   }
@@ -312,144 +369,63 @@ class _ChimesToolState extends State<_ChimesTool> {
     }
     if (!mounted) return;
     HapticFeedback.mediumImpact();
-    setState(() {
-      _activeTube = null;
-    });
+    setState(() => _activeBar = null);
   }
 
-  Widget _buildPresetChips(AppI18n i18n) {
+  Widget _buildInstrumentChips(AppI18n i18n, {VoidCallback? onChanged}) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: _presets
+      children: _malletInstrumentSpecs
           .map(
-            (preset) => ChoiceChip(
-              label: Text(_presetLabel(i18n, preset)),
-              selected: _presetId == preset.id,
-              onSelected: (_) => _applyPreset(preset.id),
+            (spec) => ChoiceChip(
+              label: Text(_instrumentLabel(i18n, spec)),
+              selected: _instrumentId == spec.id,
+              onSelected: (_) {
+                _applyInstrument(spec.id);
+                onChanged?.call();
+              },
             ),
           )
           .toList(growable: false),
     );
   }
 
-  Widget _buildChimesStage(
-    BuildContext context, {
-    required AppI18n i18n,
-    required double height,
-    required bool immersive,
-  }) {
-    final theme = Theme.of(context);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final stageSize = Size(width, height);
-        final laneWidth = width / _tubeMidis.length;
-        final compact = width < 390;
-        return _ToolboxScrollLockSurface(
-          child: Listener(
-            behavior: HitTestBehavior.opaque,
-            onPointerDown: (event) => _handleStagePointerDown(event, stageSize),
-            onPointerMove: (event) => _handleStagePointerMove(event, stageSize),
-            onPointerUp: _handleStagePointerUp,
-            onPointerCancel: _handleStagePointerUp,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 160),
-              width: double.infinity,
-              height: height,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(
-                  widget.fullScreen ? 26 : 20,
-                ),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: <Color>[
-                    immersive
-                        ? const Color(0xFF111827)
-                        : const Color(0xFFE9F1F7),
-                    immersive
-                        ? const Color(0xFF1F2937)
-                        : const Color(0xFFDDE7EF),
-                  ],
-                ),
-                border: Border.all(
-                  color: immersive
-                      ? Colors.white.withValues(alpha: 0.14)
-                      : const Color(0xFF9FB0BD),
-                ),
-                boxShadow: <BoxShadow>[
-                  BoxShadow(
-                    color: Colors.black.withValues(
-                      alpha: immersive ? 0.3 : 0.12,
-                    ),
-                    blurRadius: immersive ? 26 : 14,
-                    offset: const Offset(0, 12),
-                  ),
-                ],
-              ),
-              child: Stack(
-                children: <Widget>[
-                  Positioned(
-                    left: compact ? 18 : 26,
-                    right: compact ? 18 : 26,
-                    top: 24,
-                    child: Container(
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: immersive
-                            ? const Color(0xFFCBD5E1)
-                            : const Color(0xFF64748B),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                  ),
-                  for (var index = 0; index < _tubeMidis.length; index += 1)
-                    _ChimeTube(
-                      left: laneWidth * index + laneWidth * 0.16,
-                      width: laneWidth * 0.68,
-                      height: height,
-                      active: _activeTube == index,
-                      label: _noteLabelFromMidi(_tubeMidis[index]),
-                      index: index,
-                      count: _tubeMidis.length,
-                      immersive: immersive,
-                      textStyle: theme.textTheme.labelSmall,
-                    ),
-                  Positioned(
-                    left: 14,
-                    right: 14,
-                    bottom: 12,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        Text(
-                          i18n.t('toolbox.sound.chimes.low_side'),
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: immersive
-                                ? Colors.white70
-                                : const Color(0xFF334155),
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(
-                          i18n.t('toolbox.sound.chimes.high_side'),
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: immersive
-                                ? Colors.white70
-                                : const Color(0xFF334155),
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+  Widget _buildMaterialChips(AppI18n i18n, {VoidCallback? onChanged}) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: _malletMaterialSpecs
+          .map(
+            (spec) => ChoiceChip(
+              label: Text(_materialLabel(i18n, spec)),
+              selected: _materialId == spec.id,
+              onSelected: (_) {
+                _applyMaterial(spec.id);
+                onChanged?.call();
+              },
             ),
-          ),
-        );
-      },
+          )
+          .toList(growable: false),
+    );
+  }
+
+  Widget _buildCavityChips(AppI18n i18n, {VoidCallback? onChanged}) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: _malletCavitySpecs
+          .map(
+            (spec) => ChoiceChip(
+              label: Text(_cavityLabel(i18n, spec)),
+              selected: _cavityId == spec.id,
+              onSelected: (_) {
+                _applyCavity(spec.id);
+                onChanged?.call();
+              },
+            ),
+          )
+          .toList(growable: false),
     );
   }
 
@@ -461,17 +437,17 @@ class _ChimesToolState extends State<_ChimesTool> {
         FilledButton.tonalIcon(
           onPressed: () => unawaited(_playSweep(ascending: true)),
           icon: const Icon(Icons.east_rounded),
-          label: Text(i18n.t('toolbox.sound.chimes.sweep_up')),
+          label: Text(i18n.t('toolbox.sound.mallet.sweep_up')),
         ),
         FilledButton.tonalIcon(
           onPressed: () => unawaited(_playSweep(ascending: false)),
           icon: const Icon(Icons.west_rounded),
-          label: Text(i18n.t('toolbox.sound.chimes.sweep_down')),
+          label: Text(i18n.t('toolbox.sound.mallet.sweep_down')),
         ),
         OutlinedButton.icon(
           onPressed: () => unawaited(_dampAll()),
           icon: const Icon(Icons.volume_off_rounded),
-          label: Text(i18n.t('toolbox.sound.chimes.damp')),
+          label: Text(i18n.t('toolbox.sound.mallet.damp')),
           style: immersive
               ? OutlinedButton.styleFrom(foregroundColor: Colors.white)
               : null,
@@ -480,125 +456,201 @@ class _ChimesToolState extends State<_ChimesTool> {
     );
   }
 
+  Future<void> _openMalletSettingsSheet(
+    BuildContext context,
+    AppI18n i18n, {
+    required bool showExit,
+  }) {
+    return showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      useSafeArea: true,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            final theme = Theme.of(sheetContext);
+            void refresh() => setSheetState(() {});
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                18,
+                0,
+                18,
+                18 + MediaQuery.viewInsetsOf(sheetContext).bottom,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Text(
+                            i18n.t('toolbox.sound.instrument.settings'),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        IconButton.filledTonal(
+                          onPressed: () => Navigator.of(sheetContext).pop(),
+                          icon: const Icon(Icons.close_rounded),
+                          tooltip: i18n.t(
+                            'toolbox.sound.instrument.close_settings',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: <Widget>[
+                        _buildQuickActions(i18n, immersive: false),
+                        if (showExit)
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.of(sheetContext).pop();
+                              Navigator.of(context).pop();
+                            },
+                            icon: const Icon(Icons.close_fullscreen_rounded),
+                            label: Text(
+                              i18n.t(
+                                'toolbox.sound.instrument.exit_full_screen',
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    SectionHeader(
+                      title: i18n.t('toolbox.sound.mallet.instrument_type'),
+                      subtitle: _instrumentSubtitle(i18n, _activeInstrument),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildInstrumentChips(i18n, onChanged: refresh),
+                    const SizedBox(height: 16),
+                    SectionHeader(
+                      title: i18n.t('toolbox.sound.mallet.material'),
+                      subtitle: i18n.t('toolbox.sound.mallet.material_sub'),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildMaterialChips(i18n, onChanged: refresh),
+                    const SizedBox(height: 16),
+                    SectionHeader(
+                      title: i18n.t('toolbox.sound.mallet.cavity'),
+                      subtitle: i18n.t('toolbox.sound.mallet.cavity_sub'),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildCavityChips(i18n, onChanged: refresh),
+                    const SizedBox(height: 16),
+                    Text(
+                      i18n.t(
+                        'toolbox.sound.mallet.tail',
+                        params: <String, Object?>{
+                          'value': (_effectiveTail * 100).round(),
+                        },
+                      ),
+                    ),
+                    Slider(
+                      value: _tail,
+                      min: 0.15,
+                      max: 1.0,
+                      divisions: 17,
+                      onChanged: (value) {
+                        setState(() => _tail = value);
+                        refresh();
+                      },
+                      onChangeEnd: (_) {
+                        _invalidatePlayers();
+                        unawaited(_warmUpCoreBars());
+                      },
+                    ),
+                    Text(
+                      i18n.t(
+                        'toolbox.sound.instrument.reverb',
+                        params: <String, Object?>{
+                          'value': (_effectiveReverb * 100).round(),
+                        },
+                      ),
+                    ),
+                    Slider(
+                      value: _reverb,
+                      min: 0,
+                      max: 0.7,
+                      divisions: 14,
+                      onChanged: (value) {
+                        setState(() => _reverb = value);
+                        refresh();
+                      },
+                      onChangeEnd: (_) {
+                        _invalidatePlayers();
+                        unawaited(_prepareSampledMalletEngine());
+                        unawaited(_warmUpCoreBars());
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildFullScreen(BuildContext context, AppI18n i18n) {
-    final theme = Theme.of(context);
-    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
+    final viewPadding = MediaQuery.viewPaddingOf(context);
     return DecoratedBox(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: <Color>[
-            Color(0xFF020617),
-            Color(0xFF182235),
-            Color(0xFF0F172A),
+            Color(0xFF111827),
+            Color(0xFF2B1C14),
+            Color(0xFF141B24),
           ],
         ),
       ),
-      child: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final stageHeight = math
-                .max(280.0, math.min(460.0, constraints.maxHeight - 226))
-                .toDouble();
-            return Stack(
-              children: <Widget>[
-                Positioned.fill(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(14, 58, 14, bottomInset + 118),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          children: <Widget>[
-                            _PianoOverlayChip(
-                              label: i18n.t('toolbox.sound.harp.preset'),
-                              value: _presetLabel(i18n, _activePreset),
-                            ),
-                            _PianoOverlayChip(
-                              label: i18n.t('toolbox.sound.chimes.last_note'),
-                              value: _lastNoteLabel ?? '--',
-                            ),
-                            _PianoOverlayChip(
-                              label: i18n.t('toolbox.sound.chimes.strikes'),
-                              value: '$_strikeCount',
-                            ),
-                          ],
-                        ),
-                        const Spacer(),
-                        _buildChimesStage(
-                          context,
-                          i18n: i18n,
-                          height: stageHeight,
-                          immersive: true,
-                        ),
-                      ],
-                    ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final stageHeight = math.max(240.0, constraints.maxHeight - 20);
+          return Stack(
+            children: <Widget>[
+              Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: _buildMalletStage(
+                    context,
+                    i18n: i18n,
+                    height: stageHeight,
+                    immersive: true,
                   ),
                 ),
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  top: 8,
-                  child: Row(
-                    children: <Widget>[
-                      FilledButton.tonal(
-                        onPressed: () => Navigator.of(context).pop(),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: Colors.black.withValues(alpha: 0.34),
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Icon(Icons.arrow_back_rounded),
-                      ),
-                      const Spacer(),
-                      FilledButton.tonal(
-                        onPressed: () => unawaited(_dampAll()),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: Colors.black.withValues(alpha: 0.34),
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Icon(Icons.volume_off_rounded),
-                      ),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: bottomInset + 12,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.28),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.1),
-                      ),
+              ),
+              Positioned(
+                top: viewPadding.top + 10,
+                right: viewPadding.right + 10,
+                child: IconButton.filledTonal(
+                  onPressed: () =>
+                      _openMalletSettingsSheet(context, i18n, showExit: true),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.black.withValues(alpha: 0.46),
+                    foregroundColor: Colors.white,
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.18),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Text(
-                            _presetSubtitle(i18n, _activePreset),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: Colors.white70,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          _buildQuickActions(i18n, immersive: true),
-                        ],
-                      ),
-                    ),
+                    minimumSize: const Size.square(52),
                   ),
+                  icon: const Icon(Icons.tune_rounded),
+                  tooltip: i18n.t('toolbox.sound.instrument.settings'),
                 ),
-              ],
-            );
-          },
-        ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -606,7 +658,7 @@ class _ChimesToolState extends State<_ChimesTool> {
   @override
   void dispose() {
     _invalidatePlayers();
-    unawaited(_sampledChimesEngine.dispose());
+    unawaited(_sampledMalletEngine.dispose());
     super.dispose();
   }
 
@@ -631,78 +683,96 @@ class _ChimesToolState extends State<_ChimesTool> {
                 runSpacing: 10,
                 children: <Widget>[
                   ToolboxMetricCard(
-                    label: i18n.t('toolbox.sound.chimes.tubes'),
-                    value: '${_tubeMidis.length}',
+                    label: i18n.t('toolbox.sound.mallet.bars'),
+                    value: '${_activeMidis.length}',
                   ),
                   ToolboxMetricCard(
-                    label: i18n.t('toolbox.sound.harp.preset'),
-                    value: _presetLabel(i18n, _activePreset),
+                    label: i18n.t('toolbox.sound.mallet.instrument_type'),
+                    value: _instrumentLabel(i18n, _activeInstrument),
                   ),
                   ToolboxMetricCard(
-                    label: i18n.t('toolbox.sound.chimes.last_note'),
+                    label: i18n.t('toolbox.sound.mallet.material'),
+                    value: _materialLabel(i18n, _activeMaterial),
+                  ),
+                  ToolboxMetricCard(
+                    label: i18n.t('toolbox.sound.mallet.cavity'),
+                    value: _cavityLabel(i18n, _activeCavity),
+                  ),
+                  ToolboxMetricCard(
+                    label: i18n.t('toolbox.sound.mallet.last_note'),
                     value: _lastNoteLabel ?? '--',
-                  ),
-                  ToolboxMetricCard(
-                    label: i18n.t('toolbox.sound.chimes.strikes'),
-                    value: '$_strikeCount',
                   ),
                 ],
               ),
               const SizedBox(height: 12),
               SectionHeader(
-                title: i18n.t('toolbox.sound.chimes.tube_stage'),
+                title: i18n.t('toolbox.sound.mallet.stage'),
                 subtitle: compact
-                    ? i18n.t('toolbox.sound.chimes.phone_stage_sub')
-                    : i18n.t('toolbox.sound.chimes.wide_stage_sub'),
+                    ? i18n.t('toolbox.sound.mallet.phone_stage_sub')
+                    : i18n.t('toolbox.sound.mallet.wide_stage_sub'),
+                trailing: FilledButton.tonalIcon(
+                  onPressed: () =>
+                      _openMalletSettingsSheet(context, i18n, showExit: false),
+                  icon: const Icon(Icons.tune_rounded),
+                  label: Text(i18n.t('toolbox.sound.instrument.settings')),
+                ),
               ),
               const SizedBox(height: 10),
-              _buildChimesStage(
+              _buildMalletStage(
                 context,
                 i18n: i18n,
-                height: compact ? 270 : 318,
+                height: compact ? 430 : 318,
                 immersive: false,
               ),
               const SizedBox(height: 12),
               _buildQuickActions(i18n, immersive: false),
               const SizedBox(height: 14),
               SectionHeader(
-                title: i18n.t('toolbox.sound.chimes.sound_palette'),
-                subtitle: i18n.t('toolbox.sound.chimes.sound_palette_sub'),
+                title: i18n.t('toolbox.sound.mallet.instrument_type'),
+                subtitle: _instrumentSubtitle(i18n, _activeInstrument),
               ),
               const SizedBox(height: 10),
-              _buildPresetChips(i18n),
-              const SizedBox(height: 8),
-              Text(
-                _presetSubtitle(i18n, _activePreset),
-                style: theme.textTheme.bodySmall,
-              ),
+              _buildInstrumentChips(i18n),
               const SizedBox(height: 14),
               SectionHeader(
-                title: i18n.t('toolbox.sound.chimes.tone_and_tail'),
-                subtitle: i18n.t('toolbox.sound.chimes.tone_and_tail_sub'),
+                title: i18n.t('toolbox.sound.mallet.material'),
+                subtitle: i18n.t('toolbox.sound.mallet.material_sub'),
               ),
               const SizedBox(height: 10),
+              _buildMaterialChips(i18n),
+              const SizedBox(height: 14),
+              SectionHeader(
+                title: i18n.t('toolbox.sound.mallet.cavity'),
+                subtitle: i18n.t('toolbox.sound.mallet.cavity_sub'),
+              ),
+              const SizedBox(height: 10),
+              _buildCavityChips(i18n),
+              const SizedBox(height: 14),
               Text(
                 i18n.t(
-                  'toolbox.sound.chimes.tail',
-                  params: <String, Object?>{'value': (_tail * 100).round()},
+                  'toolbox.sound.mallet.tail',
+                  params: <String, Object?>{
+                    'value': (_effectiveTail * 100).round(),
+                  },
                 ),
               ),
               Slider(
                 value: _tail,
-                min: 0.2,
+                min: 0.15,
                 max: 1.0,
-                divisions: 16,
+                divisions: 17,
                 onChanged: (value) => setState(() => _tail = value),
                 onChangeEnd: (_) {
                   _invalidatePlayers();
-                  unawaited(_warmUpCoreTubes());
+                  unawaited(_warmUpCoreBars());
                 },
               ),
               Text(
                 i18n.t(
                   'toolbox.sound.instrument.reverb',
-                  params: <String, Object?>{'value': (_reverb * 100).round()},
+                  params: <String, Object?>{
+                    'value': (_effectiveReverb * 100).round(),
+                  },
                 ),
               ),
               Slider(
@@ -713,107 +783,18 @@ class _ChimesToolState extends State<_ChimesTool> {
                 onChanged: (value) => setState(() => _reverb = value),
                 onChangeEnd: (_) {
                   _invalidatePlayers();
-                  if (_sampledChimesReady) {
-                    unawaited(_prepareSampledChimesEngine());
-                  }
-                  unawaited(_warmUpCoreTubes());
+                  unawaited(_prepareSampledMalletEngine());
+                  unawaited(_warmUpCoreBars());
                 },
+              ),
+              const SizedBox(height: 8),
+              Text(
+                i18n.t('toolbox.sound.mallet.sample_note'),
+                style: theme.textTheme.bodySmall,
               ),
             ],
           );
         },
-      ),
-    );
-  }
-}
-
-class _ChimeTube extends StatelessWidget {
-  const _ChimeTube({
-    required this.left,
-    required this.width,
-    required this.height,
-    required this.active,
-    required this.label,
-    required this.index,
-    required this.count,
-    required this.immersive,
-    required this.textStyle,
-  });
-
-  final double left;
-  final double width;
-  final double height;
-  final bool active;
-  final String label;
-  final int index;
-  final int count;
-  final bool immersive;
-  final TextStyle? textStyle;
-
-  @override
-  Widget build(BuildContext context) {
-    final lowToHigh = count <= 1 ? 0.0 : index / (count - 1);
-    final tubeHeight = height * (0.72 - lowToHigh * 0.26);
-    final top = height * 0.13;
-    return Positioned(
-      left: left,
-      top: top,
-      width: width,
-      height: tubeHeight,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOutCubic,
-        transform: Matrix4.translationValues(0, active ? 7 : 0, 0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(999),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: <Color>[
-              active ? const Color(0xFFFFE6A3) : const Color(0xFFE8EEF4),
-              active ? const Color(0xFFD0A13A) : const Color(0xFF94A3B8),
-              immersive ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-            ],
-          ),
-          border: Border.all(
-            color: active
-                ? const Color(0xFFFFD166)
-                : Colors.white.withValues(alpha: immersive ? 0.12 : 0.7),
-          ),
-          boxShadow: active
-              ? <BoxShadow>[
-                  BoxShadow(
-                    color: const Color(0xFFFFD166).withValues(alpha: 0.46),
-                    blurRadius: 22,
-                    spreadRadius: 1,
-                  ),
-                ]
-              : <BoxShadow>[
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.14),
-                    blurRadius: 10,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-        ),
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                label,
-                style: textStyle?.copyWith(
-                  color: active
-                      ? const Color(0xFF392B08)
-                      : (immersive ? Colors.white : const Color(0xFF253242)),
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }

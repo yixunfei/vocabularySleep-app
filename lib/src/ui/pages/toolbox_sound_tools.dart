@@ -38,6 +38,9 @@ part 'toolbox_sound_tools/woodfish.dart';
 part 'toolbox_sound_tools/woodfish_render.dart';
 part 'toolbox_sound_tools/woodfish_painters.dart';
 part 'toolbox_sound_tools/models.dart';
+part 'toolbox_sound_tools/mallet_models.dart';
+part 'toolbox_sound_tools/mallet_stage.dart';
+part 'toolbox_sound_tools/mallet_widgets.dart';
 part 'toolbox_sound_tools/piano.dart';
 part 'toolbox_sound_tools/piano_state_logic.dart';
 part 'toolbox_sound_tools/piano_state_ui.dart';
@@ -50,6 +53,7 @@ part 'toolbox_sound_tools/drum_pad_painter.dart';
 part 'toolbox_sound_tools/guitar.dart';
 part 'toolbox_sound_tools/triangle.dart';
 part 'toolbox_sound_tools/kalimba.dart';
+part 'toolbox_sound_tools/kalimba_widgets.dart';
 part 'toolbox_sound_tools/chimes.dart';
 part 'toolbox_sound_tools/pickup.dart';
 

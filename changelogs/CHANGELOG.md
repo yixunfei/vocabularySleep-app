@@ -1,3 +1,37 @@
+## [Unreleased-PLAN_308-KALIMBA-MALLET-IMMERSIVE] - 2026-06-01
+
+### 原因
+- 拇指琴在手机窄屏下琴齿过密且边缘琴齿露出琴面，触控体验和视觉承托不稳定。
+- 排钟需要扩展为以木琴为默认主体的敲击键盘乐器族，并在全屏沉浸场景中使用更适合手机横向演奏的 90 度舞台。
+
+### 新增
+- 新增敲击键盘乐器族配置：木琴、排钟、颤音琴、马林巴、钢片琴分别映射 FluidR3Mono_GM 的 GM patch，并支持不同键数和音域。
+- 新增共鸣管材质和腔体设置，覆盖木制、金属铁质、铜质、玻璃、陶制、塑胶，以及开放箱体、浅腔、长共鸣管、封闭箱体。
+- 新增 `kalimba_widgets.dart`、`mallet_models.dart`、`mallet_stage.dart`、`mallet_widgets.dart`，将舞台绘制和配置模型从页面状态中拆出，保持单文件规模可控。
+- i18n catalog 新增 40 个 key，退休 key 0 个；同步更新 `app_text_registry.json`。
+
+### 修改
+- 拇指琴窄屏和全屏改为 90 度横向琴齿舞台，触控命中按竖向槽位计算；全屏仅常驻一个设置入口，设置项进入底部面板。
+- 拇指琴普通宽屏舞台改用内缩可用宽度排布琴齿，修正边缘琴齿跑到琴面外的问题。
+- 原排钟模块默认切换为儿童 12 音彩虹木琴样式，保留排钟作为可选类型，并支持扫奏、止音、尾音和混响调节。
+- 模拟乐器 deck 中拇指琴和敲击键盘全屏改为横屏沉浸方向，不再走竖屏偏好。
+- `instrument_banks.json` 与 `ToolboxInstrumentBankCatalog` 增加 xylophone、vibraphone、marimba、glockenspiel patch/channel 映射。
+
+### 风险变更
+- 共鸣管材质和腔体主要通过采样 patch、release、reverb、volume 与舞台材质表达；不同材质不是独立采样包。
+- Web 或不支持平台仍保留轻量 fallback，移动端优先使用 FluidR3Mono_GM 采样。
+- 历史 i18n 维护报告仍有 123 条 stale registry source 和 39591 条 unreferenced catalog key，本轮不处理。
+- 全量 `flutter analyze` 仍受既有 DailyChoice 测试 `titleZh/titleEn/subtitleZh/subtitleEn/bodyZh/bodyEn` getter 缺失错误影响，本轮未处理该历史问题。
+
+### 验证
+- `flutter analyze lib/src/ui/pages/toolbox_sound_tools.dart lib/src/services/toolbox_instrument_engine.dart test/toolbox_instrument_engine_test.dart` 通过，No issues found。
+- `flutter test test/toolbox_instrument_engine_test.dart` 通过。
+- `flutter test test/app_i18n_catalog_test.dart` 通过。
+- `node scripts/audit_i18n_placeholders.js` 通过：catalog missing 0，placeholderMismatch 0，Dart missingParams 0。
+- `node scripts/maintain_i18n_catalog.js --limit 20` 通过：duplicateCsvKeys 0，duplicateRegistryIds 0，missingLocaleColumns 0；历史 stale/unreferenced 项保留。
+- 旧 helper 扫描和 catalog Dart 插值扫描无命中。
+- `git diff --check` 通过，仅保留当前 Windows Git 配置提示 `app_texts.csv` 后续可能 LF/CRLF 转换。
+
 ## [Unreleased-PLAN_307-I18N-MAINTENANCE] - 2026-06-01
 
 ### 原因

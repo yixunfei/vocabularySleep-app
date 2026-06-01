@@ -23,6 +23,14 @@ void main() {
       expect(ToolboxInstrumentBankCatalog.kalimba.channel, 5);
       expect(ToolboxInstrumentBankCatalog.tubularBells.program, 14);
       expect(ToolboxInstrumentBankCatalog.tubularBells.channel, 6);
+      expect(ToolboxInstrumentBankCatalog.xylophone.program, 13);
+      expect(ToolboxInstrumentBankCatalog.xylophone.channel, 7);
+      expect(ToolboxInstrumentBankCatalog.vibraphone.program, 11);
+      expect(ToolboxInstrumentBankCatalog.vibraphone.channel, 8);
+      expect(ToolboxInstrumentBankCatalog.marimba.program, 12);
+      expect(ToolboxInstrumentBankCatalog.marimba.channel, 9);
+      expect(ToolboxInstrumentBankCatalog.glockenspiel.program, 9);
+      expect(ToolboxInstrumentBankCatalog.glockenspiel.channel, 10);
       expect(ToolboxInstrumentPitch.midiFromFrequency(440), 69);
       expect(ToolboxInstrumentPitch.midiFromFrequency(261.63), 60);
       expect(ToolboxInstrumentPitch.midiFromFrequency(0), 60);
