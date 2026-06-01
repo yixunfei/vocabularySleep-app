@@ -47,6 +47,7 @@ part 'toolbox_sound_tools/piano_state_ui.dart';
 part 'toolbox_sound_tools/piano_models.dart';
 part 'toolbox_sound_tools/piano_utils.dart';
 part 'toolbox_sound_tools/flute.dart';
+part 'toolbox_sound_tools/shakuhachi.dart';
 part 'toolbox_sound_tools/drum_pad.dart';
 part 'toolbox_sound_tools/drum_pad_state_logic.dart';
 part 'toolbox_sound_tools/drum_pad_painter.dart';

@@ -43,6 +43,7 @@ enum _HarpDeckInstrument {
   harp,
   piano,
   flute,
+  shakuhachi,
   drumPad,
   guitar,
   triangle,
@@ -66,6 +67,7 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
         _HarpDeckInstrument.kalimba,
         _HarpDeckInstrument.piano,
         _HarpDeckInstrument.flute,
+        _HarpDeckInstrument.shakuhachi,
         _HarpDeckInstrument.guitar,
         _HarpDeckInstrument.triangle,
         _HarpDeckInstrument.drumPad,
@@ -85,6 +87,7 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
     return switch (instrument) {
       _HarpDeckInstrument.piano => i18n.t('toolbox.sound.deck.piano'),
       _HarpDeckInstrument.flute => i18n.t('toolbox.sound.deck.flute'),
+      _HarpDeckInstrument.shakuhachi => i18n.t('toolbox.sound.deck.shakuhachi'),
       _HarpDeckInstrument.drumPad => i18n.t('toolbox.sound.deck.drum_pad'),
       _HarpDeckInstrument.guitar => i18n.t('toolbox.sound.deck.guitar'),
       _HarpDeckInstrument.triangle => i18n.t('toolbox.sound.deck.triangle'),
@@ -99,6 +102,9 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
     return switch (instrument) {
       _HarpDeckInstrument.piano => i18n.t('toolbox.sound.deck.piano_sub'),
       _HarpDeckInstrument.flute => i18n.t('toolbox.sound.deck.flute_sub'),
+      _HarpDeckInstrument.shakuhachi => i18n.t(
+        'toolbox.sound.deck.shakuhachi_sub',
+      ),
       _HarpDeckInstrument.drumPad => i18n.t('toolbox.sound.deck.drum_pad_sub'),
       _HarpDeckInstrument.guitar => i18n.t('toolbox.sound.deck.guitar_sub'),
       _HarpDeckInstrument.triangle => i18n.t('toolbox.sound.deck.triangle_sub'),
@@ -113,6 +119,9 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
     return switch (instrument) {
       _HarpDeckInstrument.piano => i18n.t('toolbox.sound.deck.piano_gesture'),
       _HarpDeckInstrument.flute => i18n.t('toolbox.sound.deck.flute_gesture'),
+      _HarpDeckInstrument.shakuhachi => i18n.t(
+        'toolbox.sound.deck.shakuhachi_gesture',
+      ),
       _HarpDeckInstrument.drumPad => i18n.t(
         'toolbox.sound.deck.drum_pad_gesture',
       ),
@@ -133,6 +142,9 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
     return switch (instrument) {
       _HarpDeckInstrument.piano => i18n.t('toolbox.sound.deck.piano_mix'),
       _HarpDeckInstrument.flute => i18n.t('toolbox.sound.deck.flute_mix'),
+      _HarpDeckInstrument.shakuhachi => i18n.t(
+        'toolbox.sound.deck.shakuhachi_mix',
+      ),
       _HarpDeckInstrument.drumPad => i18n.t('toolbox.sound.deck.drum_pad_mix'),
       _HarpDeckInstrument.guitar => i18n.t('toolbox.sound.deck.guitar_mix'),
       _HarpDeckInstrument.triangle => i18n.t('toolbox.sound.deck.triangle_mix'),
@@ -155,6 +167,7 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
     return switch (instrument) {
       _HarpDeckInstrument.piano => Icons.piano_rounded,
       _HarpDeckInstrument.flute => Icons.air_rounded,
+      _HarpDeckInstrument.shakuhachi => Icons.spa_rounded,
       _HarpDeckInstrument.drumPad => Icons.album_rounded,
       _HarpDeckInstrument.guitar => Icons.queue_music_rounded,
       _HarpDeckInstrument.triangle => Icons.change_history_rounded,
@@ -172,6 +185,7 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
       _HarpDeckInstrument.kalimba => const Color(0xFF0D9488),
       _HarpDeckInstrument.piano => const Color(0xFF2563EB),
       _HarpDeckInstrument.flute => const Color(0xFF0284C7),
+      _HarpDeckInstrument.shakuhachi => const Color(0xFF0F766E),
       _HarpDeckInstrument.guitar => const Color(0xFFB45309),
       _HarpDeckInstrument.triangle => const Color(0xFF64748B),
       _HarpDeckInstrument.drumPad => const Color(0xFFDC2626),
@@ -183,6 +197,7 @@ class _HarpInstrumentDeckState extends State<_HarpInstrumentDeck> {
     return switch (_selected) {
       _HarpDeckInstrument.piano => const _PianoTool(),
       _HarpDeckInstrument.flute => const _FluteTool(),
+      _HarpDeckInstrument.shakuhachi => const _ShakuhachiTool(),
       _HarpDeckInstrument.drumPad => const _DrumPadTool(),
       _HarpDeckInstrument.guitar => const _GuitarTool(),
       _HarpDeckInstrument.triangle => const _TriangleTool(),
@@ -497,6 +512,7 @@ class _DeckInstrumentFullScreenPageState
   bool _prefersPortraitFullScreen(_HarpDeckInstrument instrument) {
     return switch (instrument) {
       _HarpDeckInstrument.piano => true,
+      _HarpDeckInstrument.shakuhachi => true,
       _ => false,
     };
   }
@@ -521,6 +537,7 @@ class _DeckInstrumentFullScreenPageState
     return switch (widget.instrument) {
       _HarpDeckInstrument.piano => const _PianoTool(fullScreen: true),
       _HarpDeckInstrument.flute => const _FluteTool(fullScreen: true),
+      _HarpDeckInstrument.shakuhachi => const _ShakuhachiTool(fullScreen: true),
       _HarpDeckInstrument.drumPad => const _DrumPadTool(fullScreen: true),
       _HarpDeckInstrument.guitar => const _GuitarTool(fullScreen: true),
       _HarpDeckInstrument.triangle => const _TriangleTool(fullScreen: true),

@@ -17,6 +17,8 @@ void main() {
       expect(ToolboxInstrumentBankCatalog.violin.channel, 2);
       expect(ToolboxInstrumentBankCatalog.flute.program, 73);
       expect(ToolboxInstrumentBankCatalog.flute.channel, 3);
+      expect(ToolboxInstrumentBankCatalog.shakuhachi.program, 77);
+      expect(ToolboxInstrumentBankCatalog.shakuhachi.channel, 11);
       expect(ToolboxInstrumentBankCatalog.orchestralHarp.program, 46);
       expect(ToolboxInstrumentBankCatalog.orchestralHarp.channel, 4);
       expect(ToolboxInstrumentBankCatalog.kalimba.program, 108);

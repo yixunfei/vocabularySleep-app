@@ -4,6 +4,7 @@ enum ToolboxInstrumentId {
   piano,
   guitar,
   flute,
+  shakuhachi,
   violin,
   kalimba,
   chimes,
@@ -99,6 +100,13 @@ class ToolboxInstrumentBankCatalog {
     instrumentId: ToolboxInstrumentId.flute,
     program: 73,
     channel: 3,
+  );
+
+  static const ToolboxInstrumentPatch shakuhachi = ToolboxInstrumentPatch(
+    id: 'gm_shakuhachi',
+    instrumentId: ToolboxInstrumentId.shakuhachi,
+    program: 77,
+    channel: 11,
   );
 
   static const ToolboxInstrumentPatch orchestralHarp = ToolboxInstrumentPatch(

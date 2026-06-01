@@ -23,7 +23,8 @@
         {"id": "gm_xylophone", "instrument": "xylophone", "program": 13, "channel": 7},
         {"id": "gm_vibraphone", "instrument": "vibraphone", "program": 11, "channel": 8},
         {"id": "gm_marimba", "instrument": "marimba", "program": 12, "channel": 9},
-        {"id": "gm_glockenspiel", "instrument": "glockenspiel", "program": 9, "channel": 10}
+        {"id": "gm_glockenspiel", "instrument": "glockenspiel", "program": 9, "channel": 10},
+        {"id": "gm_shakuhachi", "instrument": "shakuhachi", "program": 77, "channel": 11}
       ]
     }
   ]
