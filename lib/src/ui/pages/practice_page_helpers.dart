@@ -134,6 +134,60 @@ bool _isSameWordEntry(WordEntry a, WordEntry b) {
   return a.sameEntryAs(b);
 }
 
+class _PracticeWordBuckets {
+  const _PracticeWordBuckets({
+    required this.taskWords,
+    required this.favoriteWords,
+    required this.warmupWords,
+    required this.currentSprintSourceWords,
+  });
+
+  factory _PracticeWordBuckets.build({
+    required AppState state,
+    required List<WordEntry> wordbookWords,
+    required List<WordEntry> scopedWords,
+    required WordEntry current,
+  }) {
+    final taskWords = <WordEntry>[];
+    final favoriteWords = <WordEntry>[];
+    for (final word in wordbookWords) {
+      if (state.isTaskEntry(word)) {
+        taskWords.add(word);
+      }
+      if (state.isFavoriteEntry(word)) {
+        favoriteWords.add(word);
+      }
+    }
+
+    final warmupWords = scopedWords.length <= 7
+        ? scopedWords
+        : scopedWords.take(7).toList(growable: false);
+    final currentSprintSourceWords = _containsWordEntry(scopedWords, current)
+        ? scopedWords
+        : wordbookWords;
+
+    return _PracticeWordBuckets(
+      taskWords: List<WordEntry>.unmodifiable(taskWords),
+      favoriteWords: List<WordEntry>.unmodifiable(favoriteWords),
+      warmupWords: warmupWords,
+      currentSprintSourceWords: currentSprintSourceWords,
+    );
+  }
+
+  final List<WordEntry> taskWords;
+  final List<WordEntry> favoriteWords;
+  final List<WordEntry> warmupWords;
+  final List<WordEntry> currentSprintSourceWords;
+}
+
+Future<void> _openPracticeWordbookSheet(
+  BuildContext context,
+  AppState state,
+  AppI18n i18n,
+) async {
+  await showStudyWordbookSheet(context: context, state: state, i18n: i18n);
+}
+
 Future<void> _openPracticeSession(
   BuildContext context, {
   required String title,

@@ -8,10 +8,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record/record.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../services/app_log_service.dart';
 import '../../services/audio_player_source_helper.dart';
+import '../../services/toolbox_human_balance_controller.dart';
 import '../../services/toolbox_audio_volume_service.dart';
 import '../../state/app_state_provider.dart';
 import '../widgets/section_header.dart';
@@ -20,6 +22,7 @@ import 'toolbox_tool_shell.dart';
 part 'toolbox_human_tests_action.dart';
 part 'toolbox_human_tests_aim.dart';
 part 'toolbox_human_tests_aim_widgets.dart';
+part 'toolbox_human_tests_balance.dart';
 part 'toolbox_human_tests_cognition.dart';
 part 'toolbox_human_tests_typing.dart';
 part 'toolbox_human_tests_typing_copy.dart';
@@ -177,6 +180,7 @@ class _HumanTestsHubState extends State<_HumanTestsHub> {
       'reaction',
       'visual_memory',
       'dynamic_vision',
+      'balance',
       'joystick',
       'hand_eye',
       'color_vision',
@@ -1286,6 +1290,15 @@ List<_HumanTestEntry> _humanTestEntries(AppI18n i18n) {
       icon: Icons.remove_red_eye_rounded,
       accent: const Color(0xFF407E92),
       pageBuilder: () => const DynamicVisionTestPage(),
+    ),
+    _HumanTestEntry(
+      id: 'balance',
+      title: i18n.t('toolbox.human.balance.title'),
+      shortTitle: i18n.t('toolbox.human.balance.short_title'),
+      subtitle: i18n.t('toolbox.human.balance.entry_subtitle'),
+      icon: Icons.sports_gymnastics_rounded,
+      accent: const Color(0xFF3B9D7E),
+      pageBuilder: () => const BalanceTestPage(),
     ),
     _HumanTestEntry(
       id: 'dual_task',

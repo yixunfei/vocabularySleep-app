@@ -54,7 +54,10 @@ List<ToolboxEntryData> orderedToolboxEntries(
       .where((entry) => isModuleEnabled(entry.moduleId))
       .where((entry) => includeHidden || !layoutState.isHidden(entry.moduleId))
       .toList(growable: false);
-  final order = layoutState
+  final effectiveLayoutState = layoutState.order.isEmpty
+      ? layoutState.copyWith(order: ModuleIds.toolboxModules)
+      : layoutState;
+  final order = effectiveLayoutState
       .normalizedFor(entries.map((entry) => entry.moduleId))
       .order;
   final originalIndexById = <String, int>{

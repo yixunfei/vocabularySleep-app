@@ -198,7 +198,7 @@ class AppDatabaseService {
     caseSensitive: false,
   );
   static const int _maxSqlVariablesPerStatement = 900;
-  static const int _currentSchemaVersion = 9;
+  static const int _currentSchemaVersion = 10;
   static const String _wordOrderClause = 'sort_index ASC, id ASC';
   static const String _dictBuiltinPathPrefix = 'builtin:dict:';
   static const String _hiddenBuiltInWordbooksSettingKey =

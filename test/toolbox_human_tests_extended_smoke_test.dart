@@ -275,6 +275,7 @@ void main() {
       expect(find.text('Auditory test'), findsWidgets);
       expect(find.text('Acoustic experiment'), findsWidgets);
       expect(find.text('Dual-task switching'), findsWidgets);
+      expect(find.text('Balance test'), findsWidgets);
       expect(find.text('Fine drag tracking'), findsWidgets);
       expect(find.text('Bimanual coordination'), findsWidgets);
       expect(find.text('My tools'), findsOneWidget);
@@ -304,6 +305,9 @@ void main() {
       final dynamicVisionRect = tester.getRect(
         find.byKey(const ValueKey<String>('human_tests_entry_dynamic_vision')),
       );
+      final balanceRect = tester.getRect(
+        find.byKey(const ValueKey<String>('human_tests_entry_balance')),
+      );
       final joystickRect = tester.getRect(
         find.byKey(const ValueKey<String>('human_tests_entry_joystick')),
       );
@@ -315,12 +319,13 @@ void main() {
       );
       expect((reactionRect.top - visualMemoryRect.top).abs(), lessThan(4));
       expect(visualMemoryRect.left, greaterThan(reactionRect.left));
-      expect((dynamicVisionRect.top - joystickRect.top).abs(), lessThan(4));
-      expect(joystickRect.left, greaterThan(dynamicVisionRect.left));
+      expect((dynamicVisionRect.top - balanceRect.top).abs(), lessThan(4));
+      expect(balanceRect.left, greaterThan(dynamicVisionRect.left));
       expect(dynamicVisionRect.top, greaterThan(reactionRect.top));
-      expect((handEyeRect.top - colorVisionRect.top).abs(), lessThan(4));
-      expect(colorVisionRect.left, greaterThan(handEyeRect.left));
-      expect(handEyeRect.top, greaterThan(dynamicVisionRect.top));
+      expect((joystickRect.top - handEyeRect.top).abs(), lessThan(4));
+      expect(handEyeRect.left, greaterThan(joystickRect.left));
+      expect(joystickRect.top, greaterThan(dynamicVisionRect.top));
+      expect(colorVisionRect.top, greaterThan(joystickRect.top));
       expect(reactionRect.height, closeTo(118, 0.5));
 
       final reorderGesture = await tester.startGesture(visualMemoryRect.center);

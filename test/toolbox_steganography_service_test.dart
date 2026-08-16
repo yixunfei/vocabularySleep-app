@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:vocabulary_sleep_app/src/services/toolbox_crypto_service.dart';
@@ -53,52 +54,433 @@ void main() {
       );
     });
 
+    test(
+      'default deniable image carriers can be overwritten by another key',
+      () {
+        final embedded = service.embedText(
+          mediaKind: ToolboxSteganographyMediaKind.image,
+          carrierBytes: _makePngCarrier(),
+          text: 'existing payload',
+          encryption: ToolboxCryptoAlgorithm.aesGcm,
+          passphrase: 'first-key',
+        );
+
+        expect(
+          _readPolicyLsbBytes(embedded.bytes, 6),
+          isNot(ascii.encode('VSSGO2')),
+        );
+
+        final replacement = service.embedText(
+          mediaKind: ToolboxSteganographyMediaKind.image,
+          carrierBytes: embedded.bytes,
+          text: 'replacement payload',
+          encryption: ToolboxCryptoAlgorithm.aesGcm,
+          passphrase: 'attacker-key',
+        );
+
+        expect(
+          service
+              .revealText(
+                mediaKind: ToolboxSteganographyMediaKind.image,
+                carrierBytes: replacement.bytes,
+                passphrase: 'attacker-key',
+              )
+              .text,
+          'replacement payload',
+        );
+        expect(
+          () => service.revealText(
+            mediaKind: ToolboxSteganographyMediaKind.image,
+            carrierBytes: replacement.bytes,
+            passphrase: 'first-key',
+          ),
+          throwsA(isA<ToolboxSteganographyException>()),
+        );
+      },
+    );
+
+    test(
+      'blocks accidental overwrite when current credential can read payload',
+      () {
+        final embedded = service.embedText(
+          mediaKind: ToolboxSteganographyMediaKind.image,
+          carrierBytes: _makePngCarrier(),
+          text: 'existing payload',
+          encryption: ToolboxCryptoAlgorithm.aesGcm,
+          passphrase: 'same-key',
+        );
+
+        expect(
+          () => service.embedText(
+            mediaKind: ToolboxSteganographyMediaKind.image,
+            carrierBytes: embedded.bytes,
+            text: 'replacement payload',
+            encryption: ToolboxCryptoAlgorithm.aesGcm,
+            passphrase: 'same-key',
+          ),
+          throwsA(
+            isA<ToolboxSteganographyException>().having(
+              (error) => error.message,
+              'message',
+              contains('payload readable with the current credential'),
+            ),
+          ),
+        );
+
+        final replacement = service.embedText(
+          mediaKind: ToolboxSteganographyMediaKind.image,
+          carrierBytes: embedded.bytes,
+          text: 'replacement payload',
+          encryption: ToolboxCryptoAlgorithm.aesGcm,
+          passphrase: 'same-key',
+          allowCarrierOverwrite: true,
+        );
+        expect(
+          service
+              .revealText(
+                mediaKind: ToolboxSteganographyMediaKind.image,
+                carrierBytes: replacement.bytes,
+                passphrase: 'same-key',
+              )
+              .text,
+          'replacement payload',
+        );
+      },
+    );
+
+    test('guarded occupancy marker is visible but not trusted', () {
+      final embedded = service.embedText(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: _makePngCarrier(),
+        text: 'guarded payload',
+        encryption: ToolboxCryptoAlgorithm.aesGcm,
+        passphrase: 'guard-key',
+        carrierProtectionMode:
+            ToolboxSteganographyCarrierProtectionMode.guarded,
+      );
+
+      expect(_readPolicyLsbBytes(embedded.bytes, 6), ascii.encode('VSSGO2'));
+
+      final replacement = service.embedText(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: embedded.bytes,
+        text: 'blind replacement',
+        encryption: ToolboxCryptoAlgorithm.aesGcm,
+        passphrase: 'other-key',
+      );
+      expect(
+        service
+            .revealText(
+              mediaKind: ToolboxSteganographyMediaKind.image,
+              carrierBytes: replacement.bytes,
+              passphrase: 'other-key',
+            )
+            .text,
+        'blind replacement',
+      );
+      expect(
+        () => service.revealText(
+          mediaKind: ToolboxSteganographyMediaKind.image,
+          carrierBytes: replacement.bytes,
+          passphrase: 'guard-key',
+        ),
+        throwsA(isA<ToolboxSteganographyException>()),
+      );
+    });
+
+    test('forged guarded marker does not block clean carrier writes', () {
+      final forged = _makeForgedGuardedPngCarrier();
+      expect(_readPolicyLsbBytes(forged, 6), ascii.encode('VSSGO2'));
+
+      final embedded = service.embedText(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: forged,
+        text: 'fresh payload',
+        encryption: ToolboxCryptoAlgorithm.aesGcm,
+        passphrase: 'fresh-key',
+      );
+
+      expect(
+        service
+            .revealText(
+              mediaKind: ToolboxSteganographyMediaKind.image,
+              carrierBytes: embedded.bytes,
+              passphrase: 'fresh-key',
+            )
+            .text,
+        'fresh payload',
+      );
+    });
+
+    test('forged locator hint does not select higher KDF strength', () {
+      final crypto = _CountingToolboxCryptoService();
+      final countingService = ToolboxSteganographyService(
+        cryptoService: crypto,
+      );
+      final embedded = countingService.embedText(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: _makePngCarrier(),
+        text: 'hint payload',
+        encryption: ToolboxCryptoAlgorithm.aesGcm,
+        passphrase: 'hint-key',
+        locatorAlgorithm: ToolboxSteganographyLocatorAlgorithm.sha256,
+        locatorStrength: ToolboxSteganographyLocatorStrength.standard,
+      );
+
+      final forged = _withDeniableLocatorHintIndex(
+        embedded.bytes,
+        5, // extreme + sha512 under the legacy hint index layout.
+      );
+      crypto.locatorStrengths.clear();
+
+      final revealed = countingService.revealText(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: forged,
+        passphrase: 'hint-key',
+        locatorAlgorithm: ToolboxSteganographyLocatorAlgorithm.sha256,
+        locatorStrength: ToolboxSteganographyLocatorStrength.standard,
+      );
+
+      expect(revealed.text, 'hint payload');
+      expect(crypto.locatorStrengths, <ToolboxCryptoStrength>[
+        ToolboxCryptoStrength.standard,
+      ]);
+    });
+
     test('embeds and reveals text in WAV/PCM audio carriers', () {
+      final carrier = _makeWavCarrier(samples: 160000);
       final embedded = service.embedText(
         mediaKind: ToolboxSteganographyMediaKind.audio,
-        carrierBytes: _makeWavCarrier(samples: 24000),
-        text: 'audio carrier secret',
+        carrierBytes: carrier,
+        text: 'audio payload',
         encryption: ToolboxCryptoAlgorithm.aesGcm,
         passphrase: 'audio-key',
         sourceExtension: 'wav',
       );
 
       expect(embedded.outputExtension, 'wav');
+      expect(embedded.outputBytes, carrier.length);
       expect(embedded.capacityBytes, greaterThan(embedded.payloadBytes));
-      expect(embedded.outputBytes, embedded.sourceBytes);
-      expect(embedded.bytes.sublist(0, 4), ascii.encode('RIFF'));
 
       final revealed = service.revealText(
         mediaKind: ToolboxSteganographyMediaKind.audio,
         carrierBytes: embedded.bytes,
         passphrase: 'audio-key',
       );
-      expect(revealed.text, 'audio carrier secret');
-      expect(revealed.encryption, ToolboxCryptoAlgorithm.aesGcm);
+      expect(revealed.text, 'audio payload');
+      expect(
+        () => service.revealText(
+          mediaKind: ToolboxSteganographyMediaKind.audio,
+          carrierBytes: embedded.bytes,
+          passphrase: 'wrong-audio-key',
+        ),
+        throwsA(isA<ToolboxSteganographyException>()),
+      );
     });
 
-    test('embeds and reveals text in MP4 container free boxes', () {
-      final carrier = _makeMp4Carrier();
+    test('embeds and reveals text in existing MP4 free padding', () {
+      final carrier = _makeMp4Carrier(freePaddingBytes: 64000);
       final embedded = service.embedText(
         mediaKind: ToolboxSteganographyMediaKind.video,
         carrierBytes: carrier,
-        text: 'video carrier secret',
+        text: 'video payload',
         encryption: ToolboxCryptoAlgorithm.chacha20Poly1305,
         passphrase: 'video-key',
         sourceExtension: 'mp4',
       );
 
       expect(embedded.outputExtension, 'mp4');
-      expect(embedded.outputBytes, greaterThan(embedded.sourceBytes));
-      expect(embedded.bytes.sublist(4, 8), ascii.encode('ftyp'));
+      expect(embedded.outputBytes, carrier.length);
+      expect(embedded.capacityBytes, greaterThan(embedded.payloadBytes));
 
       final revealed = service.revealText(
         mediaKind: ToolboxSteganographyMediaKind.video,
         carrierBytes: embedded.bytes,
         passphrase: 'video-key',
       );
-      expect(revealed.text, 'video carrier secret');
-      expect(revealed.encryption, ToolboxCryptoAlgorithm.chacha20Poly1305);
+      expect(revealed.text, 'video payload');
+    });
+
+    test('embeds and reveals text in ISO BMFF audio free padding', () {
+      final carrier = _makeMp4Carrier(
+        freePaddingBytes: 64000,
+        majorBrand: 'M4A ',
+        compatibleBrands: const <String>['M4A ', 'isom', 'mp42'],
+      );
+      final embedded = service.embedText(
+        mediaKind: ToolboxSteganographyMediaKind.audio,
+        carrierBytes: carrier,
+        text: 'm4a payload',
+        encryption: ToolboxCryptoAlgorithm.aesGcm,
+        passphrase: 'm4a-key',
+        sourceExtension: 'm4a',
+      );
+
+      expect(embedded.outputExtension, 'm4a');
+      expect(embedded.outputBytes, carrier.length);
+
+      final revealed = service.revealText(
+        mediaKind: ToolboxSteganographyMediaKind.audio,
+        carrierBytes: embedded.bytes,
+        passphrase: 'm4a-key',
+      );
+      expect(revealed.text, 'm4a payload');
+    });
+
+    test('embeds and reveals text in ISO BMFF video variants', () {
+      for (final item in <({String brand, String extension})>[
+        (brand: 'M4V ', extension: 'm4v'),
+        (brand: '3gp5', extension: '3gp'),
+      ]) {
+        final carrier = _makeMp4Carrier(
+          freePaddingBytes: 64000,
+          majorBrand: item.brand,
+          compatibleBrands: <String>[item.brand, 'isom', 'mp42'],
+        );
+        final embedded = service.embedText(
+          mediaKind: ToolboxSteganographyMediaKind.video,
+          carrierBytes: carrier,
+          text: '${item.extension} payload',
+          encryption: ToolboxCryptoAlgorithm.aesGcm,
+          passphrase: '${item.extension}-key',
+          sourceExtension: item.extension,
+        );
+
+        expect(embedded.outputExtension, item.extension);
+        expect(embedded.outputBytes, carrier.length);
+
+        final revealed = service.revealText(
+          mediaKind: ToolboxSteganographyMediaKind.video,
+          carrierBytes: embedded.bytes,
+          passphrase: '${item.extension}-key',
+        );
+        expect(revealed.text, '${item.extension} payload');
+      }
+    });
+
+    test('rejects compressed audio formats without bitstream backends', () {
+      for (final carrier in <Uint8List>[
+        Uint8List.fromList(<int>[...ascii.encode('ID3'), 4, 0, 0, 0, 0, 0, 0]),
+        Uint8List.fromList(<int>[0xff, 0xfb, 0x90, 0x64, 0, 0, 0, 0]),
+        Uint8List.fromList(<int>[...ascii.encode('fLaC'), 0, 0, 0, 0]),
+        Uint8List.fromList(<int>[...ascii.encode('OggS'), 0, 2, 0, 0]),
+      ]) {
+        expect(
+          () => service.embedText(
+            mediaKind: ToolboxSteganographyMediaKind.audio,
+            carrierBytes: carrier,
+            text: 'blocked audio',
+            encryption: ToolboxCryptoAlgorithm.aesGcm,
+            passphrase: 'blocked-audio-key',
+          ),
+          throwsA(
+            isA<ToolboxSteganographyException>().having(
+              (error) => error.message,
+              'message',
+              contains('Compressed audio bitstreams cannot be written safely'),
+            ),
+          ),
+        );
+      }
+    });
+
+    test('rejects complex video containers without safe parsers', () {
+      for (final carrier in <Uint8List>[
+        Uint8List.fromList(<int>[0x1a, 0x45, 0xdf, 0xa3, 0x93, 0x42, 0x82]),
+        Uint8List.fromList(<int>[
+          ...ascii.encode('RIFF'),
+          0x24,
+          0,
+          0,
+          0,
+          ...ascii.encode('AVI '),
+          0,
+          0,
+        ]),
+        Uint8List.fromList(<int>[...ascii.encode('FLV'), 1, 5, 0, 0]),
+      ]) {
+        expect(
+          () => service.embedText(
+            mediaKind: ToolboxSteganographyMediaKind.video,
+            carrierBytes: carrier,
+            text: 'blocked video',
+            encryption: ToolboxCryptoAlgorithm.aesGcm,
+            passphrase: 'blocked-video-key',
+          ),
+          throwsA(
+            isA<ToolboxSteganographyException>().having(
+              (error) => error.message,
+              'message',
+              contains(
+                'Compressed or complex video containers cannot be written safely',
+              ),
+            ),
+          ),
+        );
+      }
+    });
+
+    test('audio and video payloads fail after carrier LSB tampering', () {
+      final audio = service.embedText(
+        mediaKind: ToolboxSteganographyMediaKind.audio,
+        carrierBytes: _makeWavCarrier(samples: 160000),
+        text: 'tamper audio',
+        encryption: ToolboxCryptoAlgorithm.aesGcm,
+        passphrase: 'tamper-key',
+      );
+      final tamperedAudio = Uint8List.fromList(audio.bytes);
+      for (var offset = 44; offset < tamperedAudio.length; offset += 2) {
+        tamperedAudio[offset] ^= 1;
+      }
+      expect(
+        () => service.revealText(
+          mediaKind: ToolboxSteganographyMediaKind.audio,
+          carrierBytes: tamperedAudio,
+          passphrase: 'tamper-key',
+        ),
+        throwsA(isA<ToolboxSteganographyException>()),
+      );
+
+      final videoCarrier = _makeMp4Carrier(freePaddingBytes: 64000);
+      final video = service.embedText(
+        mediaKind: ToolboxSteganographyMediaKind.video,
+        carrierBytes: videoCarrier,
+        text: 'tamper video',
+        encryption: ToolboxCryptoAlgorithm.aesGcm,
+        passphrase: 'tamper-key',
+      );
+      final tamperedVideo = Uint8List.fromList(video.bytes);
+      final freeRange = _firstMp4FreeDataRange(tamperedVideo);
+      for (var offset = freeRange.start; offset < freeRange.end; offset += 1) {
+        tamperedVideo[offset] ^= 1;
+      }
+      expect(
+        () => service.revealText(
+          mediaKind: ToolboxSteganographyMediaKind.video,
+          carrierBytes: tamperedVideo,
+          passphrase: 'tamper-key',
+        ),
+        throwsA(isA<ToolboxSteganographyException>()),
+      );
+    });
+
+    test('rejects video carriers without existing free padding', () {
+      expect(
+        () => service.embedText(
+          mediaKind: ToolboxSteganographyMediaKind.video,
+          carrierBytes: _makeMp4Carrier(),
+          text: 'blocked payload',
+          encryption: ToolboxCryptoAlgorithm.aesGcm,
+          passphrase: 'blocked-key',
+        ),
+        throwsA(
+          isA<ToolboxSteganographyException>().having(
+            (error) => error.message,
+            'message',
+            contains('free-space padding'),
+          ),
+        ),
+      );
     });
 
     test('normalizes extensions with shared service rule', () {
@@ -146,27 +528,6 @@ void main() {
       expect(revealed.encryption, ToolboxCryptoAlgorithm.twofishGcm);
     });
 
-    test('rejects writing into an already occupied carrier', () {
-      final embedded = service.embedText(
-        mediaKind: ToolboxSteganographyMediaKind.image,
-        carrierBytes: _makePngCarrier(),
-        text: 'first layer',
-        encryption: ToolboxCryptoAlgorithm.aesGcm,
-        passphrase: 'first-key',
-      );
-
-      expect(
-        () => service.embedText(
-          mediaKind: ToolboxSteganographyMediaKind.image,
-          carrierBytes: embedded.bytes,
-          text: 'second layer',
-          encryption: ToolboxCryptoAlgorithm.aesGcm,
-          passphrase: 'second-key',
-        ),
-        throwsA(isA<ToolboxSteganographyException>()),
-      );
-    });
-
     test('reports image capacity before writing payload', () {
       final check = service.checkTextWriteCapacity(
         mediaKind: ToolboxSteganographyMediaKind.image,
@@ -183,157 +544,65 @@ void main() {
     });
 
     test('embeds dual text layers and reveals only matching layer', () {
-      final cases = <({ToolboxSteganographyMediaKind kind, Uint8List carrier})>[
-        (
-          kind: ToolboxSteganographyMediaKind.image,
-          carrier: _makePngCarrier(width: 180, height: 180),
-        ),
-        (
-          kind: ToolboxSteganographyMediaKind.audio,
-          carrier: _makeWavCarrier(samples: 52000),
-        ),
-        (kind: ToolboxSteganographyMediaKind.video, carrier: _makeMp4Carrier()),
-      ];
-
-      for (final item in cases) {
-        final embedded = service.embedDualText(
-          mediaKind: item.kind,
-          carrierBytes: item.carrier,
-          coverText: 'cover note',
-          hiddenText: 'real note',
-          encryption: ToolboxCryptoAlgorithm.aesGcm,
-          coverPassphrase: 'cover-key',
-          hiddenPassphrase: 'hidden-key',
-          sourceExtension: item.kind == ToolboxSteganographyMediaKind.image
-              ? 'png'
-              : item.kind == ToolboxSteganographyMediaKind.audio
-              ? 'wav'
-              : 'mp4',
-        );
-
-        final cover = service.revealText(
-          mediaKind: item.kind,
-          carrierBytes: embedded.bytes,
-          passphrase: 'cover-key',
-        );
-        final hidden = service.revealText(
-          mediaKind: item.kind,
-          carrierBytes: embedded.bytes,
-          passphrase: 'hidden-key',
-        );
-
-        expect(cover.text, 'cover note');
-        expect(hidden.text, 'real note');
-        expect(
-          () => service.embedText(
-            mediaKind: item.kind,
-            carrierBytes: embedded.bytes,
-            text: 'third layer',
-            encryption: ToolboxCryptoAlgorithm.aesGcm,
-            passphrase: 'third-key',
-          ),
-          throwsA(isA<ToolboxSteganographyException>()),
-        );
-      }
-    });
-
-    test('consumes successful reveal limits and then clears payload', () {
-      final embedded = service.embedText(
+      final embedded = service.embedDualText(
         mediaKind: ToolboxSteganographyMediaKind.image,
-        carrierBytes: _makePngCarrier(),
-        text: 'read twice',
+        carrierBytes: _makePngCarrier(width: 180, height: 180),
+        coverText: 'cover note',
+        hiddenText: 'real note',
         encryption: ToolboxCryptoAlgorithm.aesGcm,
-        passphrase: 'success-key',
-        maxSuccessfulReveals: 2,
+        coverPassphrase: 'cover-key',
+        hiddenPassphrase: 'hidden-key',
+        sourceExtension: 'png',
       );
 
-      expect(
-        service
-            .revealText(
-              mediaKind: ToolboxSteganographyMediaKind.image,
-              carrierBytes: embedded.bytes,
-              passphrase: 'success-key',
-            )
-            .text,
-        'read twice',
-      );
-      final firstConsume = service.applySuccessfulRevealProtection(
+      final cover = service.revealText(
         mediaKind: ToolboxSteganographyMediaKind.image,
         carrierBytes: embedded.bytes,
-        passphrase: 'success-key',
+        passphrase: 'cover-key',
       );
-      expect(firstConsume.changed, isTrue);
-      expect(firstConsume.removed, isFalse);
-      expect(firstConsume.remainingSuccessfulReveals, 1);
-
-      expect(
-        service
-            .revealText(
-              mediaKind: ToolboxSteganographyMediaKind.image,
-              carrierBytes: firstConsume.bytes,
-              passphrase: 'success-key',
-            )
-            .text,
-        'read twice',
-      );
-      final secondConsume = service.applySuccessfulRevealProtection(
+      final hidden = service.revealText(
         mediaKind: ToolboxSteganographyMediaKind.image,
-        carrierBytes: firstConsume.bytes,
-        passphrase: 'success-key',
+        carrierBytes: embedded.bytes,
+        passphrase: 'hidden-key',
       );
-      expect(secondConsume.changed, isTrue);
-      expect(secondConsume.removed, isTrue);
-      expect(secondConsume.remainingSuccessfulReveals, 0);
+
+      expect(cover.text, 'cover note');
+      expect(hidden.text, 'real note');
+    });
+
+    test('rejects plaintext image payload writes', () {
       expect(
-        () => service.revealText(
+        () => service.embedText(
           mediaKind: ToolboxSteganographyMediaKind.image,
-          carrierBytes: secondConsume.bytes,
-          passphrase: 'success-key',
+          carrierBytes: _makePngCarrier(),
+          text: 'plain image secret',
+          encryption: ToolboxCryptoAlgorithm.none,
+          passphrase: '',
+          sourceExtension: 'png',
         ),
         throwsA(isA<ToolboxSteganographyException>()),
       );
     });
 
-    test('embeds and reveals image text without encryption', () {
-      final embedded = service.embedText(
-        mediaKind: ToolboxSteganographyMediaKind.image,
-        carrierBytes: _makePngCarrier(),
-        text: 'plain image secret',
-        encryption: ToolboxCryptoAlgorithm.none,
-        passphrase: '',
-        sourceExtension: 'png',
-      );
-
-      final revealed = service.revealText(
-        mediaKind: ToolboxSteganographyMediaKind.image,
-        carrierBytes: embedded.bytes,
-        passphrase: '',
-      );
-      expect(revealed.text, 'plain image secret');
-      expect(revealed.encryption, ToolboxCryptoAlgorithm.none);
-    });
-
-    test('stores reveal protection policy and strips hidden image payload', () {
+    test('strips hidden image payload only with the current credential', () {
       final embedded = service.embedText(
         mediaKind: ToolboxSteganographyMediaKind.image,
         carrierBytes: _makePngCarrier(),
         text: 'protected secret',
-        encryption: ToolboxCryptoAlgorithm.none,
+        encryption: ToolboxCryptoAlgorithm.aesGcm,
         passphrase: 'locator-key',
-        maxErrorAttempts: 3,
         locatorAlgorithm: ToolboxSteganographyLocatorAlgorithm.sha512,
-        locatorStrength: ToolboxSteganographyLocatorStrength.standard,
+        locatorStrength: ToolboxSteganographyLocatorStrength.strong,
       );
 
-      final policy = service.inspectProtectionPolicy(
+      final revealedWithSelectedLocator = service.revealText(
         mediaKind: ToolboxSteganographyMediaKind.image,
         carrierBytes: embedded.bytes,
-        passphrase: 'wrong-key',
+        passphrase: 'locator-key',
         locatorAlgorithm: ToolboxSteganographyLocatorAlgorithm.sha512,
-        locatorStrength: ToolboxSteganographyLocatorStrength.standard,
+        locatorStrength: ToolboxSteganographyLocatorStrength.strong,
       );
-      expect(policy.maxErrorAttempts, 3);
-      expect(policy.hasTamperCheck, isTrue);
+      expect(revealedWithSelectedLocator.text, 'protected secret');
       expect(
         _readSequentialLsbBytes(embedded.bytes, 6),
         isNot(ascii.encode('VSSGP2')),
@@ -344,67 +613,111 @@ void main() {
         carrierBytes: embedded.bytes,
         passphrase: 'wrong-key',
         locatorAlgorithm: ToolboxSteganographyLocatorAlgorithm.sha512,
-        locatorStrength: ToolboxSteganographyLocatorStrength.standard,
+        locatorStrength: ToolboxSteganographyLocatorStrength.strong,
       );
-      expect(stripped.removed, isTrue);
+      expect(stripped.removed, isFalse);
+      expect(
+        service
+            .revealText(
+              mediaKind: ToolboxSteganographyMediaKind.image,
+              carrierBytes: embedded.bytes,
+              passphrase: 'locator-key',
+              locatorAlgorithm: ToolboxSteganographyLocatorAlgorithm.sha512,
+              locatorStrength: ToolboxSteganographyLocatorStrength.strong,
+            )
+            .text,
+        'protected secret',
+      );
+      final strippedWithKey = service.stripHiddenData(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: embedded.bytes,
+        passphrase: 'locator-key',
+        locatorAlgorithm: ToolboxSteganographyLocatorAlgorithm.sha512,
+        locatorStrength: ToolboxSteganographyLocatorStrength.strong,
+      );
+      expect(strippedWithKey.removed, isTrue);
       expect(
         () => service.revealText(
           mediaKind: ToolboxSteganographyMediaKind.image,
-          carrierBytes: stripped.bytes,
+          carrierBytes: strippedWithKey.bytes,
           passphrase: 'locator-key',
           locatorAlgorithm: ToolboxSteganographyLocatorAlgorithm.sha512,
-          locatorStrength: ToolboxSteganographyLocatorStrength.standard,
+          locatorStrength: ToolboxSteganographyLocatorStrength.strong,
         ),
         throwsA(isA<ToolboxSteganographyException>()),
       );
+    });
+
+    test('legacy public policy wipe is removed', () {
+      final legacyImage = _makeLegacyPublicPolicyPngCarrier();
+      final defaultStrip = service.stripHiddenData(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: legacyImage,
+        passphrase: 'wrong-key',
+      );
+      expect(defaultStrip.removed, isFalse);
+    });
+
+    test('legacy WAV policy wipe has been removed', () {
+      final stripped = service.stripHiddenData(
+        mediaKind: ToolboxSteganographyMediaKind.audio,
+        carrierBytes: _makeLegacyPublicPolicyWavCarrier(),
+        passphrase: 'wrong-key',
+      );
+      expect(stripped.removed, isFalse);
+    });
+
+    test('keeps legacy audio and video reads removed', () {
+      for (final item
+          in <({ToolboxSteganographyMediaKind kind, Uint8List carrier})>[
+            (
+              kind: ToolboxSteganographyMediaKind.audio,
+              carrier: _makeWavCarrier(samples: 22000),
+            ),
+            (
+              kind: ToolboxSteganographyMediaKind.video,
+              carrier: _makeMp4Carrier(),
+            ),
+          ]) {
+        expect(
+          () => service.revealText(
+            mediaKind: item.kind,
+            carrierBytes: item.carrier,
+            passphrase: 'legacy-key',
+          ),
+          throwsA(isA<ToolboxSteganographyException>()),
+        );
+      }
     });
 
     test('embeds and reveals encrypted files in image carriers', () {
       final secretFile = Uint8List.fromList(
         List<int>.generate(48, (index) => (index * 13) & 255),
       );
-      final cases = <({ToolboxSteganographyMediaKind kind, Uint8List carrier})>[
-        (
-          kind: ToolboxSteganographyMediaKind.image,
-          carrier: _makePngCarrier(width: 160, height: 160),
-        ),
-        (
-          kind: ToolboxSteganographyMediaKind.audio,
-          carrier: _makeWavCarrier(samples: 26000),
-        ),
-        (kind: ToolboxSteganographyMediaKind.video, carrier: _makeMp4Carrier()),
-      ];
+      final embedded = service.embedFile(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: _makePngCarrier(width: 160, height: 160),
+        fileBytes: secretFile,
+        fileName: 'payload.bin',
+        encryption: ToolboxCryptoAlgorithm.customCascade,
+        passphrase: 'file-key',
+        sourceExtension: 'png',
+        cascade: const <ToolboxCryptoCascadeCipher>[
+          ToolboxCryptoCascadeCipher.aes,
+          ToolboxCryptoCascadeCipher.twofish,
+        ],
+        keyBits: ToolboxCryptoKeyBits.bits512,
+        macAlgorithm: ToolboxCryptoMacAlgorithm.whirlpool,
+      );
+      final revealed = service.revealFile(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: embedded.bytes,
+        passphrase: 'file-key',
+      );
 
-      for (final item in cases) {
-        final embedded = service.embedFile(
-          mediaKind: item.kind,
-          carrierBytes: item.carrier,
-          fileBytes: secretFile,
-          fileName: 'payload.bin',
-          encryption: ToolboxCryptoAlgorithm.customCascade,
-          passphrase: 'file-key',
-          sourceExtension: item.kind == ToolboxSteganographyMediaKind.image
-              ? 'png'
-              : item.kind == ToolboxSteganographyMediaKind.audio
-              ? 'wav'
-              : 'mp4',
-          cascade: const <ToolboxCryptoCascadeCipher>[
-            ToolboxCryptoCascadeCipher.aes,
-            ToolboxCryptoCascadeCipher.twofish,
-          ],
-          keyBits: ToolboxCryptoKeyBits.bits512,
-          macAlgorithm: ToolboxCryptoMacAlgorithm.whirlpool,
-        );
-        final revealed = service.revealFile(
-          mediaKind: item.kind,
-          carrierBytes: embedded.bytes,
-          passphrase: 'file-key',
-        );
-
-        expect(revealed.bytes, secretFile);
-        expect(revealed.fileName, 'payload.bin');
-        expect(revealed.encryption, ToolboxCryptoAlgorithm.customCascade);
-      }
+      expect(revealed.bytes, secretFile);
+      expect(revealed.fileName, 'payload.bin');
+      expect(revealed.encryption, ToolboxCryptoAlgorithm.customCascade);
     });
 
     test('embeds dual encrypted files and reveals matching file layer', () {
@@ -414,140 +727,136 @@ void main() {
       final hiddenFile = Uint8List.fromList(
         List<int>.generate(40, (index) => (index * 19) & 255),
       );
-      final cases = <({ToolboxSteganographyMediaKind kind, Uint8List carrier})>[
-        (
-          kind: ToolboxSteganographyMediaKind.image,
-          carrier: _makePngCarrier(width: 220, height: 220),
-        ),
-        (
-          kind: ToolboxSteganographyMediaKind.audio,
-          carrier: _makeWavCarrier(samples: 72000),
-        ),
-        (kind: ToolboxSteganographyMediaKind.video, carrier: _makeMp4Carrier()),
-      ];
+      final embedded = service.embedDualFile(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: _makePngCarrier(width: 220, height: 220),
+        coverFileBytes: coverFile,
+        hiddenFileBytes: hiddenFile,
+        coverFileName: 'cover.bin',
+        hiddenFileName: 'hidden.bin',
+        encryption: ToolboxCryptoAlgorithm.aesTwofishGcm,
+        coverPassphrase: 'cover-file-key',
+        hiddenPassphrase: 'hidden-file-key',
+        sourceExtension: 'png',
+      );
 
-      for (final item in cases) {
-        final embedded = service.embedDualFile(
-          mediaKind: item.kind,
-          carrierBytes: item.carrier,
-          coverFileBytes: coverFile,
-          hiddenFileBytes: hiddenFile,
-          coverFileName: 'cover.bin',
-          hiddenFileName: 'hidden.bin',
-          encryption: ToolboxCryptoAlgorithm.aesTwofishGcm,
-          coverPassphrase: 'cover-file-key',
-          hiddenPassphrase: 'hidden-file-key',
-          sourceExtension: item.kind == ToolboxSteganographyMediaKind.image
-              ? 'png'
-              : item.kind == ToolboxSteganographyMediaKind.audio
-              ? 'wav'
-              : 'mp4',
-        );
+      final cover = service.revealFile(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: embedded.bytes,
+        passphrase: 'cover-file-key',
+      );
+      final hidden = service.revealFile(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: embedded.bytes,
+        passphrase: 'hidden-file-key',
+      );
 
-        final cover = service.revealFile(
-          mediaKind: item.kind,
+      expect(cover.bytes, coverFile);
+      expect(cover.fileName, 'cover.bin');
+      expect(hidden.bytes, hiddenFile);
+      expect(hidden.fileName, 'hidden.bin');
+      expect(
+        () => service.revealFile(
+          mediaKind: ToolboxSteganographyMediaKind.image,
           carrierBytes: embedded.bytes,
           passphrase: 'cover-file-key',
+          keyFileBytes: Uint8List.fromList(<int>[1, 2, 3]),
+        ),
+        throwsA(isA<ToolboxSteganographyException>()),
+      );
+    });
+
+    test('embeds and reveals files in audio and video carriers', () {
+      final secretFile = Uint8List.fromList(
+        List<int>.generate(64, (index) => (index * 11) & 255),
+      );
+      for (final item
+          in <({ToolboxSteganographyMediaKind kind, Uint8List carrier})>[
+            (
+              kind: ToolboxSteganographyMediaKind.audio,
+              carrier: _makeWavCarrier(samples: 180000),
+            ),
+            (
+              kind: ToolboxSteganographyMediaKind.video,
+              carrier: _makeMp4Carrier(freePaddingBytes: 64000),
+            ),
+          ]) {
+        final embedded = service.embedFile(
+          mediaKind: item.kind,
+          carrierBytes: item.carrier,
+          fileBytes: secretFile,
+          fileName: 'payload.bin',
+          encryption: ToolboxCryptoAlgorithm.aesGcm,
+          passphrase: 'file-media-key',
         );
-        final hidden = service.revealFile(
+        expect(embedded.outputBytes, item.carrier.length);
+
+        final revealed = service.revealFile(
           mediaKind: item.kind,
           carrierBytes: embedded.bytes,
-          passphrase: 'hidden-file-key',
+          passphrase: 'file-media-key',
         );
-
-        expect(cover.bytes, coverFile);
-        expect(cover.fileName, 'cover.bin');
-        expect(hidden.bytes, hiddenFile);
-        expect(hidden.fileName, 'hidden.bin');
-        expect(
-          () => service.revealFile(
-            mediaKind: item.kind,
-            carrierBytes: embedded.bytes,
-            passphrase: 'cover-file-key',
-            keyFileBytes: Uint8List.fromList(<int>[1, 2, 3]),
-          ),
-          throwsA(isA<ToolboxSteganographyException>()),
-        );
+        expect(revealed.bytes, secretFile);
+        expect(revealed.fileName, 'payload.bin');
       }
     });
 
-    test('cleans WAV payload after successful reveal limit is consumed', () {
-      final embedded = service.embedText(
-        mediaKind: ToolboxSteganographyMediaKind.audio,
-        carrierBytes: _makeWavCarrier(samples: 22000),
-        text: 'single audio reveal',
-        encryption: ToolboxCryptoAlgorithm.aesGcm,
-        passphrase: 'audio-once',
-        maxSuccessfulReveals: 1,
-      );
-
-      expect(
-        service
-            .revealText(
-              mediaKind: ToolboxSteganographyMediaKind.audio,
-              carrierBytes: embedded.bytes,
-              passphrase: 'audio-once',
-            )
-            .text,
-        'single audio reveal',
-      );
-      final consumed = service.applySuccessfulRevealProtection(
-        mediaKind: ToolboxSteganographyMediaKind.audio,
-        carrierBytes: embedded.bytes,
-        passphrase: 'audio-once',
-      );
-      expect(consumed.changed, isTrue);
-      expect(consumed.removed, isTrue);
-      expect(
-        () => service.revealText(
-          mediaKind: ToolboxSteganographyMediaKind.audio,
-          carrierBytes: consumed.bytes,
-          passphrase: 'audio-once',
-        ),
-        throwsA(isA<ToolboxSteganographyException>()),
-      );
-    });
-
-    test('rejects writing into occupied MP4 carriers', () {
-      final embedded = service.embedText(
-        mediaKind: ToolboxSteganographyMediaKind.video,
-        carrierBytes: _makeMp4Carrier(),
-        text: 'first video layer',
-        encryption: ToolboxCryptoAlgorithm.aesGcm,
-        passphrase: 'video-first',
-      );
-
+    test('requires a key file for extreme-strength image writes', () {
       expect(
         () => service.embedText(
-          mediaKind: ToolboxSteganographyMediaKind.video,
-          carrierBytes: embedded.bytes,
-          text: 'second video layer',
+          mediaKind: ToolboxSteganographyMediaKind.image,
+          carrierBytes: _makePngCarrier(),
+          text: 'extreme secret',
           encryption: ToolboxCryptoAlgorithm.aesGcm,
-          passphrase: 'video-second',
+          strength: ToolboxCryptoStrength.extreme,
+          passphrase: 'extreme-key',
         ),
         throwsA(isA<ToolboxSteganographyException>()),
       );
     });
 
-    test('reports WAV capacity before writing payload', () {
-      final check = service.checkTextWriteCapacity(
-        mediaKind: ToolboxSteganographyMediaKind.audio,
-        carrierBytes: _makeWavCarrier(samples: 1200),
-        text: 'capacity' * 100,
-        dualLayerEnabled: false,
-        encryption: ToolboxCryptoAlgorithm.aesGcm,
-        passphrase: 'audio-capacity',
+    test('maps locator strengths to scrypt-backed crypto strengths', () {
+      expect(
+        ToolboxSteganographyLocatorStrength.standard.cryptoStrength,
+        ToolboxCryptoStrength.standard,
       );
-
-      expect(check.mediaKind, ToolboxSteganographyMediaKind.audio);
-      expect(check.fits, isFalse);
-      expect(check.minimumCarrierBytes, greaterThan(0));
+      expect(
+        ToolboxSteganographyLocatorStrength.strong.cryptoStrength,
+        ToolboxCryptoStrength.strong,
+      );
+      expect(
+        ToolboxSteganographyLocatorStrength.extreme.cryptoStrength,
+        ToolboxCryptoStrength.extreme,
+      );
     });
 
-    test('uses hardened locator KDF rounds for new payloads', () {
-      expect(ToolboxSteganographyLocatorStrength.standard.rounds, 4096);
-      expect(ToolboxSteganographyLocatorStrength.strong.rounds, 12000);
-      expect(ToolboxSteganographyLocatorStrength.extreme.rounds, 24000);
+    test('carrier fingerprint round trips and detects modified output', () {
+      final embedded = service.embedText(
+        mediaKind: ToolboxSteganographyMediaKind.image,
+        carrierBytes: _makePngCarrier(),
+        text: 'fingerprinted payload',
+        encryption: ToolboxCryptoAlgorithm.aesGcm,
+        passphrase: 'fingerprint-key',
+      );
+
+      final fingerprint = embedded.fingerprint;
+      expect(fingerprint.matchesBytes(embedded.bytes), isTrue);
+      expect(
+        ToolboxSteganographyService.parseFingerprintBytes(
+          fingerprint.toFileBytes(fileName: 'carrier.png'),
+        ).mixedHex,
+        fingerprint.mixedHex,
+      );
+      expect(
+        ToolboxSteganographyService.parseFingerprintBytes(
+          Uint8List.fromList(utf8.encode(fingerprint.toCopyText())),
+        ).sha256Hex,
+        fingerprint.sha256Hex,
+      );
+
+      final modified = Uint8List.fromList(embedded.bytes);
+      modified[modified.length - 1] ^= 1;
+      expect(fingerprint.matchesBytes(modified), isFalse);
     });
   });
 }
@@ -559,6 +868,37 @@ Uint8List _makePngCarrier({int width = 96, int height = 96}) {
       image.setPixelRgb(x, y, (x * 3) & 255, (y * 5) & 255, 180);
     }
   }
+  return Uint8List.fromList(img.encodePng(image));
+}
+
+Uint8List _makeLegacyPublicPolicyPngCarrier() {
+  final image = img.decodeImage(_makePngCarrier())!;
+  _writeLsbBytesAtPositions(
+    image,
+    _buildLegacyImagePolicyHeader(policyByte: 3),
+    _imagePolicyPositions(image),
+  );
+  return Uint8List.fromList(img.encodePng(image));
+}
+
+Uint8List _makeForgedGuardedPngCarrier() {
+  final image = img.decodeImage(_makePngCarrier())!;
+  _writeLsbBytesAtPositions(
+    image,
+    Uint8List.fromList(<int>[
+      ...ascii.encode('VSSGO2'),
+      ...List<int>.filled(17, 0),
+    ]),
+    _imagePolicyPositions(image),
+  );
+  return Uint8List.fromList(img.encodePng(image));
+}
+
+Uint8List _withDeniableLocatorHintIndex(Uint8List pngBytes, int hintIndex) {
+  final image = img.decodeImage(pngBytes)!;
+  final header = Uint8List.fromList(_readPolicyLsbBytes(pngBytes, 23));
+  header[16] = header[0] ^ hintIndex;
+  _writeLsbBytesAtPositions(image, header, _imagePolicyPositions(image));
   return Uint8List.fromList(img.encodePng(image));
 }
 
@@ -580,6 +920,29 @@ List<int> _readSequentialLsbBytes(Uint8List pngBytes, int byteCount) {
         output[bitIndex >> 3] |= (channel & 1) << (7 - (bitIndex & 7));
         bitIndex += 1;
       }
+    }
+  }
+  return output;
+}
+
+List<int> _readPolicyLsbBytes(Uint8List pngBytes, int byteCount) {
+  final image = img.decodeImage(pngBytes)!;
+  final output = Uint8List(byteCount);
+  final positions = _imagePolicyPositions(image);
+  for (var bitIndex = 0; bitIndex < byteCount * 8; bitIndex += 1) {
+    final position = positions[bitIndex];
+    final pixelIndex = position ~/ 3;
+    final channel = position % 3;
+    final x = pixelIndex % image.width;
+    final y = pixelIndex ~/ image.width;
+    final pixel = image.getPixel(x, y);
+    final value = switch (channel) {
+      0 => pixel.r.toInt(),
+      1 => pixel.g.toInt(),
+      _ => pixel.b.toInt(),
+    };
+    if ((value & 1) != 0) {
+      output[bitIndex >> 3] |= 1 << (7 - (bitIndex & 7));
     }
   }
   return output;
@@ -611,21 +974,57 @@ Uint8List _makeWavCarrier({int samples = 18000}) {
   return bytes;
 }
 
-Uint8List _makeMp4Carrier() {
+Uint8List _makeLegacyPublicPolicyWavCarrier() {
+  final bytes = _makeWavCarrier(samples: 22000);
+  _writeWavBytesAtSamples(
+    bytes,
+    _buildLegacyMediaPolicyHeader(policyByte: 4),
+    _wavPolicySamples(bytes),
+  );
+  return bytes;
+}
+
+Uint8List _makeMp4Carrier({
+  int freePaddingBytes = 0,
+  String majorBrand = 'isom',
+  List<String> compatibleBrands = const <String>['isom', 'mp42'],
+}) {
   final ftypPayload = <int>[
-    ...ascii.encode('isom'),
+    ...ascii.encode(majorBrand.padRight(4).substring(0, 4)),
     0,
     0,
     2,
     0,
-    ...ascii.encode('isom'),
-    ...ascii.encode('mp42'),
+    for (final brand in compatibleBrands)
+      ...ascii.encode(brand.padRight(4).substring(0, 4)),
   ];
   final mdatPayload = List<int>.generate(2048, (index) => (index * 31) & 255);
+  final freePayload = List<int>.generate(
+    freePaddingBytes,
+    (index) => (index * 17 + 23) & 255,
+  );
   return Uint8List.fromList(<int>[
     ..._mp4Box('ftyp', ftypPayload),
+    if (freePaddingBytes > 0) ..._mp4Box('free', freePayload),
     ..._mp4Box('mdat', mdatPayload),
   ]);
+}
+
+({int start, int end}) _firstMp4FreeDataRange(Uint8List bytes) {
+  var offset = 0;
+  while (offset + 8 <= bytes.length) {
+    final size =
+        (bytes[offset] << 24) |
+        (bytes[offset + 1] << 16) |
+        (bytes[offset + 2] << 8) |
+        bytes[offset + 3];
+    final type = ascii.decode(bytes.sublist(offset + 4, offset + 8));
+    if (type == 'free') {
+      return (start: offset + 8, end: offset + size);
+    }
+    offset += size;
+  }
+  throw StateError('No free box in test carrier.');
 }
 
 List<int> _mp4Box(String type, List<int> payload) {
@@ -657,6 +1056,235 @@ void _writeUint32Little(Uint8List bytes, int offset, int value) {
   bytes[offset + 3] = (value >> 24) & 255;
 }
 
+Uint8List _buildLegacyImagePolicyHeader({required int policyByte}) {
+  final prefix = Uint8List.fromList(<int>[
+    ...ascii.encode('VSSGP2'),
+    policyByte,
+  ]);
+  return Uint8List.fromList(<int>[
+    ...prefix,
+    ..._policyChecksum(
+      prefix,
+      versionLabel: 'vocabulary_sleep_stego_public_policy_v2',
+      checksumLength: 16,
+    ),
+  ]);
+}
+
+Uint8List _buildLegacyMediaPolicyHeader({required int policyByte}) {
+  final prefix = Uint8List.fromList(<int>[
+    ...ascii.encode('VSSGM2'),
+    policyByte,
+  ]);
+  return Uint8List.fromList(<int>[
+    ...prefix,
+    ..._policyChecksum(
+      prefix,
+      versionLabel: 'vocabulary_sleep_stego_media_policy_v1',
+      checksumLength: 16,
+    ),
+  ]);
+}
+
+List<int> _policyChecksum(
+  List<int> prefix, {
+  required String versionLabel,
+  required int checksumLength,
+}) {
+  return sha256
+      .convert(<int>[...utf8.encode(versionLabel), 0, ...prefix])
+      .bytes
+      .sublist(0, checksumLength);
+}
+
+List<int> _imagePolicyPositions(img.Image image) {
+  final totalPositions = image.width * image.height * 3;
+  return _selectPositions(
+    total: totalPositions,
+    count: 23 * 8,
+    seed: _imagePolicyPositionSeed(image),
+  );
+}
+
+Uint8List _imagePolicyPositionSeed(img.Image image) {
+  final builder = BytesBuilder(copy: false)
+    ..add(utf8.encode('vocabulary_sleep_stego_public_policy_positions_v2'))
+    ..addByte(0)
+    ..add(_uint32Bytes(image.width))
+    ..add(_uint32Bytes(image.height))
+    ..addByte(0);
+  for (var y = 0; y < image.height; y += 1) {
+    for (var x = 0; x < image.width; x += 1) {
+      final pixel = image.getPixel(x, y);
+      builder
+        ..addByte(pixel.r.toInt() & 0xfe)
+        ..addByte(pixel.g.toInt() & 0xfe)
+        ..addByte(pixel.b.toInt() & 0xfe)
+        ..addByte(pixel.a.toInt());
+    }
+  }
+  return Uint8List.fromList(sha256.convert(builder.takeBytes()).bytes);
+}
+
+List<int> _wavPolicySamples(Uint8List bytes) {
+  return _selectPositions(
+    total: _wavSampleCount(bytes),
+    count: 23 * 8,
+    seed: _wavCarrierDigest(bytes, purpose: 'audio-public-policy'),
+  );
+}
+
+Uint8List _wavCarrierDigest(
+  Uint8List bytes, {
+  String purpose = 'audio-carrier',
+}) {
+  final input = BytesBuilder(copy: false)
+    ..add(<int>[
+      ...utf8.encode('vocabulary_sleep_stego_wav_digest_v1'),
+      0,
+      ...utf8.encode(purpose),
+      0,
+      ..._uint32Bytes(1),
+      ..._uint32Bytes(16),
+      ..._uint32Bytes(2),
+      ..._uint32Bytes(bytes.length - 44),
+      0,
+    ])
+    ..add(bytes.sublist(0, 44));
+  final data = Uint8List.fromList(bytes.sublist(44));
+  for (var offset = 0; offset < data.length; offset += 2) {
+    data[offset] &= 0xfe;
+  }
+  input.add(data);
+  return Uint8List.fromList(sha256.convert(input.takeBytes()).bytes);
+}
+
+int _wavSampleCount(Uint8List bytes) => (bytes.length - 44) ~/ 2;
+
+void _writeLsbBytesAtPositions(
+  img.Image image,
+  Uint8List bytes,
+  List<int> positions,
+) {
+  for (var bitIndex = 0; bitIndex < bytes.length * 8; bitIndex += 1) {
+    _setImageLsbAtPosition(image, positions[bitIndex], _bitAt(bytes, bitIndex));
+  }
+}
+
+void _setImageLsbAtPosition(img.Image image, int position, int bit) {
+  final pixelIndex = position ~/ 3;
+  final channel = position % 3;
+  final x = pixelIndex % image.width;
+  final y = pixelIndex ~/ image.width;
+  final pixel = image.getPixel(x, y);
+  final r = pixel.r.toInt();
+  final g = pixel.g.toInt();
+  final b = pixel.b.toInt();
+  image.setPixelRgba(
+    x,
+    y,
+    channel == 0 ? ((r & 0xfe) | bit) : r,
+    channel == 1 ? ((g & 0xfe) | bit) : g,
+    channel == 2 ? ((b & 0xfe) | bit) : b,
+    pixel.a.toInt(),
+  );
+}
+
+void _writeWavBytesAtSamples(
+  Uint8List bytes,
+  Uint8List payload,
+  List<int> samples,
+) {
+  for (var bitIndex = 0; bitIndex < payload.length * 8; bitIndex += 1) {
+    final offset = 44 + (samples[bitIndex] * 2);
+    bytes[offset] = (bytes[offset] & 0xfe) | _bitAt(payload, bitIndex);
+  }
+}
+
+int _bitAt(Uint8List bytes, int bitIndex) {
+  return (bytes[bitIndex >> 3] >> (7 - (bitIndex & 7))) & 1;
+}
+
+List<int> _selectPositions({
+  required int total,
+  required int count,
+  required Uint8List seed,
+}) {
+  final unavailable = <int>{};
+  final rng = _HmacSha256Csprng(seed);
+  final positions = <int>[];
+  final maxAttempts = count * 8 > 256 ? count * 8 : 256;
+  var attempts = 0;
+  while (positions.length < count && attempts < maxAttempts) {
+    attempts += 1;
+    final candidate = rng.nextInt(total);
+    if (unavailable.add(candidate)) {
+      positions.add(candidate);
+    }
+  }
+  if (positions.length == count) {
+    return positions;
+  }
+
+  final remaining = <int>[];
+  for (var index = 0; index < total; index += 1) {
+    if (!unavailable.contains(index)) {
+      remaining.add(index);
+    }
+  }
+  for (var index = remaining.length - 1; index > 0; index -= 1) {
+    final swapIndex = rng.nextInt(index + 1);
+    final temp = remaining[index];
+    remaining[index] = remaining[swapIndex];
+    remaining[swapIndex] = temp;
+  }
+  positions.addAll(remaining.take(count - positions.length));
+  return positions;
+}
+
+class _HmacSha256Csprng {
+  _HmacSha256Csprng(this._seed);
+
+  final Uint8List _seed;
+  Uint8List _buffer = Uint8List(0);
+  var _offset = 0;
+  var _counter = 0;
+
+  int nextInt(int max) {
+    final bucket = 0x100000000;
+    final limit = bucket - (bucket % max);
+    while (true) {
+      final value = _nextUint32();
+      if (value < limit) {
+        return value % max;
+      }
+    }
+  }
+
+  int _nextUint32() {
+    if (_offset + 4 > _buffer.length) {
+      _buffer = Uint8List.fromList(
+        Hmac(sha256, _seed).convert(_counterBytes(_counter)).bytes,
+      );
+      _counter += 1;
+      _offset = 0;
+    }
+    final value =
+        (_buffer[_offset] << 24) |
+        (_buffer[_offset + 1] << 16) |
+        (_buffer[_offset + 2] << 8) |
+        _buffer[_offset + 3];
+    _offset += 4;
+    return value;
+  }
+
+  Uint8List _counterBytes(int value) {
+    return Uint8List.fromList(
+      List<int>.generate(8, (index) => (value >> ((7 - index) * 8)) & 255),
+    );
+  }
+}
+
 double mathSin(double value) {
   // Small deterministic sine approximation is enough for a non-silent carrier.
   var x = value % 6.283185307179586;
@@ -664,4 +1292,28 @@ double mathSin(double value) {
     x -= 6.283185307179586;
   }
   return x - ((x * x * x) / 6) + ((x * x * x * x * x) / 120);
+}
+
+class _CountingToolboxCryptoService extends ToolboxCryptoService {
+  final locatorStrengths = <ToolboxCryptoStrength>[];
+
+  @override
+  Uint8List deriveSteganographyLocatorSecret({
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required Uint8List salt,
+    required ToolboxCryptoStrength strength,
+    String purpose = 'steganography-locator-v5',
+    int length = 64,
+  }) {
+    locatorStrengths.add(strength);
+    return super.deriveSteganographyLocatorSecret(
+      passphrase: passphrase,
+      keyFileBytes: keyFileBytes,
+      salt: salt,
+      strength: strength,
+      purpose: purpose,
+      length: length,
+    );
+  }
 }

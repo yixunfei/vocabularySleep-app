@@ -13,6 +13,7 @@ import '../wordbook_localization.dart';
 import '../widgets/empty_state_view.dart';
 import '../widgets/page_header.dart';
 import '../widgets/setting_tile.dart';
+import '../widgets/study_wordbook_status.dart';
 import 'follow_along_page.dart';
 import 'practice_notebook_page.dart';
 import 'practice_review_page.dart';
@@ -28,30 +29,45 @@ class PracticePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(appStateProvider);
+    ref.watch(appStateProvider.select(_PracticePageRebuildToken.fromState));
+    final state = ref.read(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
     if (!state.isModuleEnabled(ModuleIds.practice)) {
       return ModuleDisabledView(i18n: i18n, moduleId: ModuleIds.practice);
     }
     final current = state.currentWord;
     if (state.selectedWordbook == null || current == null) {
+      final selectedWordbook = state.selectedWordbook;
+      if (selectedWordbook != null && studyWordbookNeedsExplicitLoad(state)) {
+        return _PracticeWordbookLoadState(
+          i18n: i18n,
+          state: state,
+          onLoad: state.loadSelectedWordbook,
+          onSwitchWordbook: () =>
+              _openPracticeWordbookSheet(context, state, i18n),
+        );
+      }
       return EmptyStateView(
         icon: Icons.fitness_center_rounded,
-        title: i18n.t(
-          'inline.ui.pages.practice_page.no_practice_material_yet_e3df10',
-        ),
-        message: i18n.t('noWordbookYet'),
+        title: i18n.t('study.practice.empty.title'),
+        message: selectedWordbook == null
+            ? i18n.t('noWordbookYet')
+            : i18n.t('study.practice.empty.selected_empty'),
+        actionLabel: i18n.t('study.wordbook.action.choose'),
+        onAction: () => _openPracticeWordbookSheet(context, state, i18n),
       );
     }
 
     final wordbookWords = state.words;
     final scopedWords = state.visibleWords;
-    final taskWords = wordbookWords
-        .where((word) => state.isTaskEntry(word))
-        .toList(growable: false);
-    final favoriteWords = wordbookWords
-        .where((word) => state.isFavoriteEntry(word))
-        .toList(growable: false);
+    final buckets = _PracticeWordBuckets.build(
+      state: state,
+      wordbookWords: wordbookWords,
+      scopedWords: scopedWords,
+      current: current,
+    );
+    final taskWords = buckets.taskWords;
+    final favoriteWords = buckets.favoriteWords;
     final rememberedWords = state.recentRememberedWordEntries;
     final weakWords = state.recentWeakWordEntries;
     final wrongNotebookWords = state.practiceWrongNotebookEntries;
@@ -69,16 +85,13 @@ class PracticePage extends ConsumerWidget {
     final noPracticeToday = state.practiceTodaySessions == 0;
     final needsReinforce =
         !hasWeakWords && !noPracticeToday && state.practiceTodayAccuracy < 0.75;
-    final warmupWords = scopedWords.length <= 7
-        ? scopedWords
-        : scopedWords.take(7).toList(growable: false);
-    final currentSprintSourceWords = _containsWordEntry(scopedWords, current)
-        ? scopedWords
-        : wordbookWords;
+    final warmupWords = buckets.warmupWords;
+    final currentSprintSourceWords = buckets.currentSprintSourceWords;
     final recentHistory = state.practiceSessionHistory;
+    final now = DateTime.now();
     final notebookDueCount = wrongNotebookWords.where((word) {
       final nextReview = state.memoryProgressForWordEntry(word)?.nextReview;
-      return nextReview == null || !nextReview.isAfter(DateTime.now());
+      return nextReview == null || !nextReview.isAfter(now);
     }).length;
 
     return ListView(
@@ -92,6 +105,29 @@ class PracticePage extends ConsumerWidget {
           subtitle: i18n.t(
             'inline.ui.pages.practice_page.move_from_single_word_tools_to_session_based_practice_wi_10cf4e',
           ),
+        ),
+        const SizedBox(height: 16),
+        StudyWordbookStatusBar(
+          state: state,
+          i18n: i18n,
+          visibleCount: scopedWords.length,
+          searching: state.searchQuery.trim().isNotEmpty,
+          currentWordbookEmpty: wordbookWords.isEmpty,
+          onTap: () => _openPracticeWordbookSheet(context, state, i18n),
+          onLoadCurrent: state.loadSelectedWordbook,
+        ),
+        const SizedBox(height: 16),
+        _buildNextPracticeCard(
+          context,
+          i18n: i18n,
+          state: state,
+          current: current,
+          hasWeakWords: hasWeakWords,
+          weakWords: weakWords,
+          noPracticeToday: noPracticeToday,
+          needsReinforce: needsReinforce,
+          scopedWords: scopedWords,
+          wordbookWords: wordbookWords,
         ),
         const SizedBox(height: 16),
         _buildPracticeRoundSetupCard(
@@ -239,140 +275,6 @@ class PracticePage extends ConsumerWidget {
                         'toolbox.sound.soothing.mode_filter_favorites',
                       ),
                     ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  i18n.t(
-                    'inline.ui.pages.practice_page.today_suggestion_868259',
-                  ),
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  hasWeakWords
-                      ? i18n.t(
-                          'inline.ui.pages.practice_page.review_recent_weak_words_first_then_do_a_full_wordbook_s_42b4a4',
-                        )
-                      : noPracticeToday
-                      ? i18n.t(
-                          'inline.ui.pages.practice_page.no_practice_yet_today_start_with_current_scope_session_38aa01',
-                        )
-                      : needsReinforce
-                      ? i18n.t(
-                          'inline.ui.pages.practice_page.today_accuracy_is_lower_than_expected_try_full_wordbook_4d82e3',
-                        )
-                      : i18n.t(
-                          'inline.ui.pages.practice_page.you_are_doing_well_today_continue_with_follow_along_for_edd637',
-                        ),
-                ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: <Widget>[
-                    if (hasWeakWords)
-                      FilledButton.icon(
-                        onPressed: () => _openReviewSession(
-                          context,
-                          i18n,
-                          title: i18n.t(
-                            'inline.ui.pages.practice_page_helpers.recent_weak_words_9759a1',
-                          ),
-                          subtitle: i18n.t(
-                            'inline.ui.pages.practice_page.weakwords_length_weak_words_26454f',
-                            params: <String, Object?>{
-                              'weakWords': weakWords.length,
-                            },
-                          ),
-                          words: weakWords,
-                        ),
-                        icon: const Icon(Icons.psychology_alt_outlined),
-                        label: Text(
-                          i18n.t(
-                            'inline.ui.pages.practice_page.start_weak_word_review_23a89b',
-                          ),
-                        ),
-                      )
-                    else if (noPracticeToday)
-                      FilledButton.icon(
-                        onPressed: () => _openPracticeSession(
-                          context,
-                          title: i18n.t(
-                            'inline.ui.pages.practice_page_sections.current_scope_session_a26a55',
-                          ),
-                          subtitle: i18n.t(
-                            'inline.ui.pages.practice_page.scopedwords_length_words_33fa4f',
-                            params: <String, Object?>{
-                              'scope': scopedWords.length,
-                            },
-                          ),
-                          words: scopedWords,
-                          shuffle: false,
-                          rotationKey: _buildPracticeScopeRotationKey(
-                            state,
-                            slot: 'scope-session',
-                          ),
-                          rotationSourceWords: scopedWords,
-                          rotationBatchSize: scopedWords.length,
-                          rotationCursorAdvance: 1,
-                        ),
-                        icon: const Icon(Icons.play_arrow_rounded),
-                        label: Text(
-                          i18n.t(
-                            'inline.ui.pages.practice_page_sections.start_now_c4829b',
-                          ),
-                        ),
-                      )
-                    else if (needsReinforce)
-                      FilledButton.icon(
-                        onPressed: () => _openPracticeSession(
-                          context,
-                          title: i18n.t(
-                            'inline.ui.pages.practice_page.whole_wordbook_session_43154c',
-                          ),
-                          subtitle: i18n.t(
-                            'inline.ui.pages.practice_page.wordbookwords_length_words_320caa',
-                            params: <String, Object?>{
-                              'wordbookWords': wordbookWords.length,
-                            },
-                          ),
-                          words: wordbookWords,
-                          shuffle: true,
-                        ),
-                        icon: const Icon(Icons.library_books_rounded),
-                        label: Text(
-                          i18n.t(
-                            'inline.ui.pages.practice_page.start_reinforcement_1b31b4',
-                          ),
-                        ),
-                      )
-                    else
-                      FilledButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => FollowAlongPage(word: current),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.mic_external_on_rounded),
-                        label: Text(
-                          i18n.t(
-                            'inline.ui.pages.practice_page.go_follow_along_3af418',
-                          ),
-                        ),
-                      ),
                   ],
                 ),
               ],
@@ -683,6 +585,419 @@ class PracticePage extends ConsumerWidget {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildNextPracticeCard(
+    BuildContext context, {
+    required AppI18n i18n,
+    required AppState state,
+    required WordEntry current,
+    required bool hasWeakWords,
+    required List<WordEntry> weakWords,
+    required bool noPracticeToday,
+    required bool needsReinforce,
+    required List<WordEntry> scopedWords,
+    required List<WordEntry> wordbookWords,
+  }) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              i18n.t('study.practice.next.title'),
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              hasWeakWords
+                  ? i18n.t(
+                      'inline.ui.pages.practice_page.review_recent_weak_words_first_then_do_a_full_wordbook_s_42b4a4',
+                    )
+                  : noPracticeToday
+                  ? i18n.t(
+                      'inline.ui.pages.practice_page.no_practice_yet_today_start_with_current_scope_session_38aa01',
+                    )
+                  : needsReinforce
+                  ? i18n.t(
+                      'inline.ui.pages.practice_page.today_accuracy_is_lower_than_expected_try_full_wordbook_4d82e3',
+                    )
+                  : i18n.t(
+                      'inline.ui.pages.practice_page.you_are_doing_well_today_continue_with_follow_along_for_edd637',
+                    ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: <Widget>[
+                if (hasWeakWords)
+                  FilledButton.icon(
+                    onPressed: () => _openReviewSession(
+                      context,
+                      i18n,
+                      title: i18n.t(
+                        'inline.ui.pages.practice_page_helpers.recent_weak_words_9759a1',
+                      ),
+                      subtitle: i18n.t(
+                        'inline.ui.pages.practice_page.weakwords_length_weak_words_26454f',
+                        params: <String, Object?>{
+                          'weakWords': weakWords.length,
+                        },
+                      ),
+                      words: weakWords,
+                    ),
+                    icon: const Icon(Icons.psychology_alt_outlined),
+                    label: Text(
+                      i18n.t(
+                        'inline.ui.pages.practice_page.start_weak_word_review_23a89b',
+                      ),
+                    ),
+                  )
+                else if (noPracticeToday)
+                  FilledButton.icon(
+                    onPressed: () => _openPracticeSession(
+                      context,
+                      title: i18n.t(
+                        'inline.ui.pages.practice_page_sections.current_scope_session_a26a55',
+                      ),
+                      subtitle: i18n.t(
+                        'inline.ui.pages.practice_page.scopedwords_length_words_33fa4f',
+                        params: <String, Object?>{'scope': scopedWords.length},
+                      ),
+                      words: scopedWords,
+                      shuffle: false,
+                      rotationKey: _buildPracticeScopeRotationKey(
+                        state,
+                        slot: 'scope-session',
+                      ),
+                      rotationSourceWords: scopedWords,
+                      rotationBatchSize: scopedWords.length,
+                      rotationCursorAdvance: 1,
+                    ),
+                    icon: const Icon(Icons.play_arrow_rounded),
+                    label: Text(
+                      i18n.t(
+                        'inline.ui.pages.practice_page_sections.start_now_c4829b',
+                      ),
+                    ),
+                  )
+                else if (needsReinforce)
+                  FilledButton.icon(
+                    onPressed: () => _openPracticeSession(
+                      context,
+                      title: i18n.t(
+                        'inline.ui.pages.practice_page.whole_wordbook_session_43154c',
+                      ),
+                      subtitle: i18n.t(
+                        'inline.ui.pages.practice_page.wordbookwords_length_words_320caa',
+                        params: <String, Object?>{
+                          'wordbookWords': wordbookWords.length,
+                        },
+                      ),
+                      words: wordbookWords,
+                      shuffle: true,
+                    ),
+                    icon: const Icon(Icons.library_books_rounded),
+                    label: Text(
+                      i18n.t(
+                        'inline.ui.pages.practice_page.start_reinforcement_1b31b4',
+                      ),
+                    ),
+                  )
+                else
+                  FilledButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => FollowAlongPage(word: current),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.mic_external_on_rounded),
+                    label: Text(
+                      i18n.t(
+                        'inline.ui.pages.practice_page.go_follow_along_3af418',
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PracticePageRebuildToken {
+  const _PracticePageRebuildToken({
+    required this.uiLanguage,
+    required this.practiceEnabled,
+    required this.selectedWordbookId,
+    required this.selectedWordbookName,
+    required this.selectedWordbookPath,
+    required this.selectedWordbookWordCount,
+    required this.selectedWordbookLoaded,
+    required this.selectedWordbookRequiresOnDemandLoad,
+    required this.wordsVersion,
+    required this.wordsLength,
+    required this.currentWordIndex,
+    required this.searchQuery,
+    required this.searchMode,
+    required this.favoritesIdentity,
+    required this.favoritesCount,
+    required this.taskWordsIdentity,
+    required this.taskWordsCount,
+    required this.todaySessions,
+    required this.todayReviewed,
+    required this.todayRemembered,
+    required this.totalSessions,
+    required this.totalReviewed,
+    required this.totalRemembered,
+    required this.lastSessionTitle,
+    required this.rememberedWordCount,
+    required this.weakWordCount,
+    required this.sessionHistoryCount,
+    required this.latestSessionAt,
+    required this.roundSource,
+    required this.roundStartMode,
+    required this.roundSize,
+    required this.roundShuffle,
+    required this.roundCollapsed,
+  });
+
+  factory _PracticePageRebuildToken.fromState(AppState state) {
+    final selected = state.selectedWordbook;
+    final round = state.practiceRoundSettings;
+    return _PracticePageRebuildToken(
+      uiLanguage: state.uiLanguage,
+      practiceEnabled: state.isModuleEnabled(ModuleIds.practice),
+      selectedWordbookId: selected?.id,
+      selectedWordbookName: selected?.name ?? '',
+      selectedWordbookPath: selected?.path ?? '',
+      selectedWordbookWordCount: selected?.wordCount ?? 0,
+      selectedWordbookLoaded: state.selectedWordbookLoaded,
+      selectedWordbookRequiresOnDemandLoad:
+          state.selectedWordbookRequiresOnDemandLoad,
+      wordsVersion: state.wordsVersion,
+      wordsLength: state.words.length,
+      currentWordIndex: state.currentWordIndex,
+      searchQuery: state.searchQuery,
+      searchMode: state.searchMode,
+      favoritesIdentity: identityHashCode(state.favorites),
+      favoritesCount: state.favorites.length,
+      taskWordsIdentity: identityHashCode(state.taskWords),
+      taskWordsCount: state.taskWords.length,
+      todaySessions: state.practiceTodaySessions,
+      todayReviewed: state.practiceTodayReviewed,
+      todayRemembered: state.practiceTodayRemembered,
+      totalSessions: state.practiceTotalSessions,
+      totalReviewed: state.practiceTotalReviewed,
+      totalRemembered: state.practiceTotalRemembered,
+      lastSessionTitle: state.practiceLastSessionTitle,
+      rememberedWordCount: state.practiceRememberedWordCount,
+      weakWordCount: state.practiceWeakWordCount,
+      sessionHistoryCount: state.practiceSessionHistoryCount,
+      latestSessionAt: state.practiceLatestSessionAt,
+      roundSource: round.source,
+      roundStartMode: round.startMode,
+      roundSize: round.roundSize,
+      roundShuffle: round.shuffle,
+      roundCollapsed: round.collapsed,
+    );
+  }
+
+  final String uiLanguage;
+  final bool practiceEnabled;
+  final int? selectedWordbookId;
+  final String selectedWordbookName;
+  final String selectedWordbookPath;
+  final int selectedWordbookWordCount;
+  final bool selectedWordbookLoaded;
+  final bool selectedWordbookRequiresOnDemandLoad;
+  final int wordsVersion;
+  final int wordsLength;
+  final int currentWordIndex;
+  final String searchQuery;
+  final SearchMode searchMode;
+  final int favoritesIdentity;
+  final int favoritesCount;
+  final int taskWordsIdentity;
+  final int taskWordsCount;
+  final int todaySessions;
+  final int todayReviewed;
+  final int todayRemembered;
+  final int totalSessions;
+  final int totalReviewed;
+  final int totalRemembered;
+  final String lastSessionTitle;
+  final int rememberedWordCount;
+  final int weakWordCount;
+  final int sessionHistoryCount;
+  final DateTime? latestSessionAt;
+  final PracticeRoundSource roundSource;
+  final PracticeRoundStartMode roundStartMode;
+  final int roundSize;
+  final bool roundShuffle;
+  final bool roundCollapsed;
+
+  @override
+  bool operator ==(Object other) {
+    return other is _PracticePageRebuildToken &&
+        other.uiLanguage == uiLanguage &&
+        other.practiceEnabled == practiceEnabled &&
+        other.selectedWordbookId == selectedWordbookId &&
+        other.selectedWordbookName == selectedWordbookName &&
+        other.selectedWordbookPath == selectedWordbookPath &&
+        other.selectedWordbookWordCount == selectedWordbookWordCount &&
+        other.selectedWordbookLoaded == selectedWordbookLoaded &&
+        other.selectedWordbookRequiresOnDemandLoad ==
+            selectedWordbookRequiresOnDemandLoad &&
+        other.wordsVersion == wordsVersion &&
+        other.wordsLength == wordsLength &&
+        other.currentWordIndex == currentWordIndex &&
+        other.searchQuery == searchQuery &&
+        other.searchMode == searchMode &&
+        other.favoritesIdentity == favoritesIdentity &&
+        other.favoritesCount == favoritesCount &&
+        other.taskWordsIdentity == taskWordsIdentity &&
+        other.taskWordsCount == taskWordsCount &&
+        other.todaySessions == todaySessions &&
+        other.todayReviewed == todayReviewed &&
+        other.todayRemembered == todayRemembered &&
+        other.totalSessions == totalSessions &&
+        other.totalReviewed == totalReviewed &&
+        other.totalRemembered == totalRemembered &&
+        other.lastSessionTitle == lastSessionTitle &&
+        other.rememberedWordCount == rememberedWordCount &&
+        other.weakWordCount == weakWordCount &&
+        other.sessionHistoryCount == sessionHistoryCount &&
+        other.latestSessionAt == latestSessionAt &&
+        other.roundSource == roundSource &&
+        other.roundStartMode == roundStartMode &&
+        other.roundSize == roundSize &&
+        other.roundShuffle == roundShuffle &&
+        other.roundCollapsed == roundCollapsed;
+  }
+
+  @override
+  int get hashCode => Object.hashAll(<Object?>[
+    uiLanguage,
+    practiceEnabled,
+    selectedWordbookId,
+    selectedWordbookName,
+    selectedWordbookPath,
+    selectedWordbookWordCount,
+    selectedWordbookLoaded,
+    selectedWordbookRequiresOnDemandLoad,
+    wordsVersion,
+    wordsLength,
+    currentWordIndex,
+    searchQuery,
+    searchMode,
+    favoritesIdentity,
+    favoritesCount,
+    taskWordsIdentity,
+    taskWordsCount,
+    todaySessions,
+    todayReviewed,
+    todayRemembered,
+    totalSessions,
+    totalReviewed,
+    totalRemembered,
+    lastSessionTitle,
+    rememberedWordCount,
+    weakWordCount,
+    sessionHistoryCount,
+    latestSessionAt,
+    roundSource,
+    roundStartMode,
+    roundSize,
+    roundShuffle,
+    roundCollapsed,
+  ]);
+}
+
+class _PracticeWordbookLoadState extends StatelessWidget {
+  const _PracticeWordbookLoadState({
+    required this.i18n,
+    required this.state,
+    required this.onLoad,
+    required this.onSwitchWordbook,
+  });
+
+  final AppI18n i18n;
+  final AppState state;
+  final Future<bool> Function() onLoad;
+  final VoidCallback onSwitchWordbook;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 440),
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                StudyWordbookStatusBar(
+                  state: state,
+                  i18n: i18n,
+                  visibleCount: state.visibleWordCount,
+                  onTap: onSwitchWordbook,
+                  onLoadCurrent: onLoad,
+                ),
+                const SizedBox(height: 18),
+                Icon(
+                  Icons.library_books_rounded,
+                  size: 38,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  i18n.t('study.wordbook.deferred.practice_title'),
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  studyWordbookStatusMessage(
+                    state,
+                    i18n,
+                    visibleCount: state.visibleWordCount,
+                  ),
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 18),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: <Widget>[
+                    FilledButton.icon(
+                      onPressed: () => onLoad(),
+                      icon: const Icon(Icons.download_done_rounded),
+                      label: Text(i18n.t('study.wordbook.action.load_current')),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: onSwitchWordbook,
+                      icon: const Icon(Icons.menu_book_rounded),
+                      label: Text(i18n.t('study.wordbook.action.switch')),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

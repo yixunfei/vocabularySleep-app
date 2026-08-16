@@ -22,7 +22,16 @@ class TrackingPlaybackService implements PlaybackService {
   int playWordsCalls = 0;
   int prepareCalls = 0;
   int startPreparedCalls = 0;
+  int speakTextCalls = 0;
   PlayConfig? lastConfig;
+  PlayConfig? lastSpeakTextConfig;
+  String? lastSpeakText;
+  Object? speakTextError;
+  final List<PlayConfig> speakTextConfigs = <PlayConfig>[];
+  final List<String> speakTextTexts = <String>[];
+  List<Object?> speakTextErrors = <Object?>[];
+  final List<({int current, int total, PlayUnit unit})> unitChangesToEmit =
+      <({int current, int total, PlayUnit unit})>[];
   bool _prepared = false;
 
   @override
@@ -52,6 +61,9 @@ class TrackingPlaybackService implements PlaybackService {
   }) async {
     playWordsCalls += 1;
     _prepared = false;
+    for (final change in unitChangesToEmit) {
+      onUnitChanged?.call(change.current, change.total, change.unit);
+    }
     onFinished?.call();
   }
 
@@ -76,8 +88,6 @@ class TrackingPlaybackService implements PlaybackService {
       onUnitChanged: onUnitChanged,
       onFinished: onFinished,
       indices: const <int>[],
-      resolvedWords: const <WordEntry>[],
-      prebuiltQueues: const <List<PlayUnit>>[],
       runId: 0,
     );
   }
@@ -100,10 +110,32 @@ class TrackingPlaybackService implements PlaybackService {
   }
 
   @override
+  Future<void> dispose() async {
+    _prepared = false;
+  }
+
+  @override
   Future<void> skipCurrentWord() async {}
 
   @override
-  Future<void> speakText(String text, PlayConfig config) async {}
+  Future<void> speakText(String text, PlayConfig config) async {
+    speakTextCalls += 1;
+    lastSpeakText = text;
+    lastSpeakTextConfig = config;
+    speakTextTexts.add(text);
+    speakTextConfigs.add(config);
+    if (speakTextErrors.isNotEmpty) {
+      final error = speakTextErrors.removeAt(0);
+      if (error != null) {
+        throw error;
+      }
+      return;
+    }
+    final error = speakTextError;
+    if (error != null) {
+      throw error;
+    }
+  }
 }
 
 class StubAmbientService implements AmbientService {

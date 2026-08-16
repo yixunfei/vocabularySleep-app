@@ -28,9 +28,12 @@ class StudyPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(appStateProvider);
-    final i18n = AppI18n(state.uiLanguage);
-    if (!state.isModuleEnabled(ModuleIds.study)) {
+    final token = ref.watch(
+      appStateProvider.select(_StudyPageRebuildToken.fromState),
+    );
+    final state = ref.read(appStateProvider);
+    final i18n = AppI18n(token.uiLanguage);
+    if (!token.studyEnabled) {
       return ModuleDisabledView(i18n: i18n, moduleId: ModuleIds.study);
     }
     final studyLocked = state.wordbookImportActive;
@@ -169,6 +172,98 @@ class StudyPage extends ConsumerWidget {
       params: <String, Object?>{'wordbook': selectedWordbookName},
     );
   }
+}
+
+class _StudyPageRebuildToken {
+  const _StudyPageRebuildToken({
+    required this.uiLanguage,
+    required this.studyEnabled,
+    required this.wordbookImportActive,
+    required this.wordbookImportProcessedEntries,
+    required this.wordbookImportTotalEntries,
+    required this.wordbookImportProgress,
+    required this.selectedWordbookId,
+    required this.selectedWordbookName,
+    required this.selectedWordbookPath,
+    required this.selectedWordbookWordCount,
+    required this.selectedWordbookLoaded,
+    required this.wordsVersion,
+    required this.searchQuery,
+    required this.searchMode,
+  });
+
+  factory _StudyPageRebuildToken.fromState(AppState state) {
+    final selected = state.selectedWordbook;
+    return _StudyPageRebuildToken(
+      uiLanguage: state.uiLanguage,
+      studyEnabled: state.isModuleEnabled(ModuleIds.study),
+      wordbookImportActive: state.wordbookImportActive,
+      wordbookImportProcessedEntries: state.wordbookImportProcessedEntries,
+      wordbookImportTotalEntries: state.wordbookImportTotalEntries,
+      wordbookImportProgress: state.wordbookImportProgress,
+      selectedWordbookId: selected?.id,
+      selectedWordbookName: selected?.name ?? '',
+      selectedWordbookPath: selected?.path ?? '',
+      selectedWordbookWordCount: selected?.wordCount ?? 0,
+      selectedWordbookLoaded: state.selectedWordbookLoaded,
+      wordsVersion: state.wordsVersion,
+      searchQuery: state.searchQuery,
+      searchMode: state.searchMode,
+    );
+  }
+
+  final String uiLanguage;
+  final bool studyEnabled;
+  final bool wordbookImportActive;
+  final int wordbookImportProcessedEntries;
+  final int? wordbookImportTotalEntries;
+  final double? wordbookImportProgress;
+  final int? selectedWordbookId;
+  final String selectedWordbookName;
+  final String selectedWordbookPath;
+  final int selectedWordbookWordCount;
+  final bool selectedWordbookLoaded;
+  final int wordsVersion;
+  final String searchQuery;
+  final SearchMode searchMode;
+
+  @override
+  bool operator ==(Object other) {
+    return other is _StudyPageRebuildToken &&
+        other.uiLanguage == uiLanguage &&
+        other.studyEnabled == studyEnabled &&
+        other.wordbookImportActive == wordbookImportActive &&
+        other.wordbookImportProcessedEntries ==
+            wordbookImportProcessedEntries &&
+        other.wordbookImportTotalEntries == wordbookImportTotalEntries &&
+        other.wordbookImportProgress == wordbookImportProgress &&
+        other.selectedWordbookId == selectedWordbookId &&
+        other.selectedWordbookName == selectedWordbookName &&
+        other.selectedWordbookPath == selectedWordbookPath &&
+        other.selectedWordbookWordCount == selectedWordbookWordCount &&
+        other.selectedWordbookLoaded == selectedWordbookLoaded &&
+        other.wordsVersion == wordsVersion &&
+        other.searchQuery == searchQuery &&
+        other.searchMode == searchMode;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    uiLanguage,
+    studyEnabled,
+    wordbookImportActive,
+    wordbookImportProcessedEntries,
+    wordbookImportTotalEntries,
+    wordbookImportProgress,
+    selectedWordbookId,
+    selectedWordbookName,
+    selectedWordbookPath,
+    selectedWordbookWordCount,
+    selectedWordbookLoaded,
+    wordsVersion,
+    searchQuery,
+    searchMode,
+  );
 }
 
 class _StudyEntryCard extends StatelessWidget {

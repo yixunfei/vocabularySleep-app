@@ -7,6 +7,7 @@ import 'package:sqlite3/sqlite3.dart';
 import 'package:vocabulary_sleep_app/src/core/module_system/module_system.dart';
 import 'package:vocabulary_sleep_app/src/models/app_home_tab.dart';
 import 'package:vocabulary_sleep_app/src/models/focus_startup_tab.dart';
+import 'package:vocabulary_sleep_app/src/models/play_config.dart';
 import 'package:vocabulary_sleep_app/src/models/settings_dto.dart';
 import 'package:vocabulary_sleep_app/src/models/weather_snapshot.dart';
 import 'package:vocabulary_sleep_app/src/models/word_entry.dart';
@@ -739,7 +740,7 @@ void main() {
   );
 
   test(
-    'playCurrentWordbook loads deferred large wordbook first and plays only on the next tap',
+    'playCurrentWordbook loads deferred large wordbook and plays on first tap',
     () async {
       final database = _MemoryDatabaseService(
         wordbooks: <Wordbook>[
@@ -793,7 +794,7 @@ void main() {
 
       await state.playCurrentWordbook();
 
-      expect(playback.playWordsCalls, 0);
+      expect(playback.playWordsCalls, 1);
       expect(state.selectedWordbookLoaded, isTrue);
       expect(state.selectedWordbookRequiresOnDemandLoad, isFalse);
       expect(state.currentWord?.word, 'Gamma');
@@ -801,10 +802,67 @@ void main() {
         state.words.map((item) => item.word).toList(growable: false),
         <String>['Gamma', 'Delta'],
       );
+    },
+  );
+
+  test(
+    'playback unit changes do not trigger global AppState notifications',
+    () async {
+      final database = _MemoryDatabaseService(
+        wordbooks: <Wordbook>[
+          Wordbook(
+            id: 3,
+            name: 'Core',
+            path: 'custom:core',
+            wordCount: 2,
+            createdAt: DateTime(2026, 4, 13),
+          ),
+        ],
+        wordsByWordbookId: <int, List<WordEntry>>{
+          3: <WordEntry>[_word(1, 'Alpha'), _word(2, 'Beta')],
+        },
+      );
+      addTearDown(database.dispose);
+      final settings = _settingsFor(database);
+      final playback = TrackingPlaybackService()
+        ..unitChangesToEmit.addAll(
+          const <({int current, int total, PlayUnit unit})>[
+            (current: 1, total: 3, unit: PlayUnit(type: 'word', text: 'Alpha')),
+            (
+              current: 2,
+              total: 3,
+              unit: PlayUnit(type: 'meaning', text: 'first'),
+            ),
+            (
+              current: 3,
+              total: 3,
+              unit: PlayUnit(type: 'spelling', text: 'A-l-p-h-a'),
+            ),
+          ],
+        );
+      final state = AppState(
+        database: database,
+        settings: settings,
+        playback: playback,
+        ambient: StubAmbientService(),
+        asr: StubAsrService(),
+        focusService: StubFocusService(database, settings: settings),
+      );
+
+      await state.init();
+
+      var globalNotifications = 0;
+      var unitNotifications = 0;
+      state.addListener(() => globalNotifications += 1);
+      state.playbackUnitProgressListenable.addListener(
+        () => unitNotifications += 1,
+      );
 
       await state.playCurrentWordbook();
 
       expect(playback.playWordsCalls, 1);
+      expect(unitNotifications, 4);
+      expect(globalNotifications, 2);
     },
   );
 }

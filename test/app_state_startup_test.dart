@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:vocabulary_sleep_app/src/models/play_config.dart';
 import 'package:vocabulary_sleep_app/src/models/todo_item.dart';
 import 'package:vocabulary_sleep_app/src/models/weather_snapshot.dart';
 import 'package:vocabulary_sleep_app/src/models/word_entry.dart';
@@ -155,6 +156,7 @@ AppState _createState({
   StubFocusService? focusService,
   _FakeWeatherService? weatherService,
   _FakeDailyQuoteService? dailyQuoteService,
+  TrackingPlaybackService? playback,
 }) {
   final resolvedDatabase = database ?? _MemoryDatabaseService();
   final resolvedSettings = SettingsService.fromRepository(
@@ -163,7 +165,7 @@ AppState _createState({
   return AppState(
     database: resolvedDatabase,
     settings: resolvedSettings,
-    playback: TrackingPlaybackService(),
+    playback: playback ?? TrackingPlaybackService(),
     ambient: StubAmbientService(),
     asr: StubAsrService(),
     focusService:
@@ -185,6 +187,74 @@ String _todayKey() {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test(
+    'previewPronunciation uses the configured remote TTS provider',
+    () async {
+      final playback = TrackingPlaybackService();
+      final state = _createState(playback: playback);
+      state.updateConfig(
+        PlayConfig.defaults.copyWith(
+          tts: PlayConfig.defaults.tts.copyWith(
+            provider: TtsProviderType.aliyunBailian,
+            apiKey: 'test-key',
+            model: 'qwen3-tts-instruct-flash',
+            remoteVoice: 'Cherry',
+            voice: 'Cherry',
+          ),
+        ),
+      );
+
+      await state.previewPronunciation('abandon');
+
+      expect(playback.speakTextCalls, 1);
+      expect(playback.lastSpeakText, 'abandon');
+      expect(
+        playback.lastSpeakTextConfig?.tts.provider,
+        TtsProviderType.aliyunBailian,
+      );
+      expect(
+        playback.lastSpeakTextConfig?.tts.model,
+        'qwen3-tts-instruct-flash',
+      );
+      expect(playback.lastSpeakTextConfig?.tts.remoteVoice, 'Cherry');
+    },
+  );
+
+  test(
+    'previewPronunciation falls back to local and keeps the remote error visible',
+    () async {
+      final playback = TrackingPlaybackService()
+        ..speakTextErrors = <Object?>[StateError('remote failed'), null];
+      final state = _createState(playback: playback);
+      state.updateConfig(
+        PlayConfig.defaults.copyWith(
+          tts: PlayConfig.defaults.tts.copyWith(
+            provider: TtsProviderType.aliyunBailian,
+            apiKey: 'bad-key',
+            model: 'qwen3-tts-instruct-flash',
+            remoteVoice: 'Cherry',
+            voice: 'Cherry',
+            localVoice: 'LocalSystemVoice',
+          ),
+        ),
+      );
+
+      await state.previewPronunciation('abandon');
+
+      expect(playback.speakTextCalls, 2);
+      expect(
+        playback.speakTextConfigs.first.tts.provider,
+        TtsProviderType.aliyunBailian,
+      );
+      expect(
+        playback.speakTextConfigs.last.tts.provider,
+        TtsProviderType.local,
+      );
+      expect(playback.speakTextConfigs.last.tts.localVoice, 'LocalSystemVoice');
+      expect(state.error, contains('remote failed'));
+    },
+  );
+
   test('todayActiveTodos keeps only active todos due today', () {
     final now = DateTime.now();
     final startOfToday = DateTime(now.year, now.month, now.day);
@@ -203,7 +273,7 @@ void main() {
           content: 'tomorrow',
           dueAt: startOfToday.add(const Duration(days: 1, hours: 2)),
         ),
-        TodoItem(content: 'no due date'),
+        const TodoItem(content: 'no due date'),
         TodoItem(
           content: 'completed today',
           dueAt: startOfToday.add(const Duration(hours: 10)),

@@ -1,17 +1,5 @@
 part of 'database_service.dart';
 
-const List<int> _databaseSchemaMigrationTargets = <int>[
-  1,
-  2,
-  3,
-  4,
-  5,
-  6,
-  7,
-  8,
-  9,
-];
-
 extension AppDatabaseServiceSchema on AppDatabaseService {
   void _createTables() {
     _db.execute('''
@@ -269,7 +257,6 @@ extension AppDatabaseServiceSchema on AppDatabaseService {
   }
 
   void _applySchemaMigrations() {
-    _assertSchemaMigrationPlanIsCurrent();
     final sourceVersion = _readSchemaVersion();
     final targetVersion = AppDatabaseService._currentSchemaVersion;
     if (sourceVersion > targetVersion) {
@@ -277,95 +264,111 @@ extension AppDatabaseServiceSchema on AppDatabaseService {
         'Database schema version $sourceVersion is newer than supported $targetVersion.',
       );
     }
-    if (sourceVersion == targetVersion) {
-      return;
-    }
-    _runInTransaction(() {
-      for (final version in _databaseSchemaMigrationTargets) {
-        if (version <= sourceVersion) {
-          continue;
-        }
-        _applySchemaMigrationStep(version);
-        _setSchemaVersion(version);
-      }
-    });
-  }
-
-  void _assertSchemaMigrationPlanIsCurrent() {
-    final targetVersion = AppDatabaseService._currentSchemaVersion;
-    if (_databaseSchemaMigrationTargets.length != targetVersion) {
+    if (sourceVersion != 0 && sourceVersion != targetVersion) {
       throw StateError(
-        'Schema migration plan length (${_databaseSchemaMigrationTargets.length}) '
-        'does not match current schema version ($targetVersion).',
+        'Database schema version $sourceVersion is below new-only baseline $targetVersion.',
       );
     }
-    for (
-      var index = 0;
-      index < _databaseSchemaMigrationTargets.length;
-      index += 1
-    ) {
-      final expected = index + 1;
-      if (_databaseSchemaMigrationTargets[index] != expected) {
+    _assertCurrentSchemaShape();
+    if (sourceVersion == 0) {
+      _setSchemaVersion(targetVersion);
+    }
+  }
+
+  void _assertCurrentSchemaShape() {
+    const requiredColumnsByTable = <String, Set<String>>{
+      'wordbooks': {
+        'id',
+        'name',
+        'path',
+        'word_count',
+        'schema_version',
+        'metadata_json',
+        'created_at',
+      },
+      'words': {
+        'id',
+        'wordbook_id',
+        'entry_uid',
+        'word',
+        'meaning',
+        'primary_gloss',
+        'search_word',
+        'search_meaning',
+        'search_details',
+        'search_word_compact',
+        'search_details_compact',
+        'schema_version',
+        'source_payload_json',
+        'sort_index',
+        'extension_json',
+        'entry_json',
+      },
+      'word_fields': {
+        'id',
+        'word_id',
+        'field_key',
+        'field_label',
+        'field_value_json',
+        'style_json',
+        'sort_order',
+      },
+      'word_field_styles': {
+        'word_field_id',
+        'background_hex',
+        'border_hex',
+        'text_hex',
+        'accent_hex',
+      },
+      'word_field_tags': {'id', 'word_field_id', 'tag', 'sort_order'},
+      'word_field_media': {
+        'id',
+        'word_field_id',
+        'media_type',
+        'media_source',
+        'media_label',
+        'mime_type',
+        'sort_order',
+      },
+      'progress': {
+        'id',
+        'word_id',
+        'times_played',
+        'times_correct',
+        'last_played',
+        'familiarity',
+        'ease_factor',
+        'interval_days',
+        'next_review',
+        'consecutive_correct',
+        'memory_state',
+      },
+      'word_memory_events': {
+        'id',
+        'word_id',
+        'event_kind',
+        'quality',
+        'weak_reasons_json',
+        'session_title',
+        'created_at',
+      },
+    };
+
+    for (final entry in requiredColumnsByTable.entries) {
+      final rows = _db.select('PRAGMA table_info(${entry.key});');
+      final columns = rows
+          .map((row) => row['name']?.toString())
+          .whereType<String>()
+          .toSet();
+      final missing = entry.value.difference(columns);
+      if (missing.isNotEmpty) {
         throw StateError(
-          'Schema migration plan must include contiguous versions. '
-          'Expected $expected but found ${_databaseSchemaMigrationTargets[index]}.',
+          'Database table ${entry.key} is missing current schema columns: '
+          '${missing.join(', ')}.',
         );
       }
     }
   }
-
-  void _applySchemaMigrationStep(int version) {
-    switch (version) {
-      case 1:
-        _migrateSchemaToV1();
-        return;
-      case 2:
-        _migrateSchemaToV2();
-        return;
-      case 3:
-        _migrateSchemaToV3();
-        return;
-      case 4:
-        _migrateSchemaToV4();
-        return;
-      case 5:
-        _migrateSchemaToV5();
-        return;
-      case 6:
-        _migrateSchemaToV6();
-        return;
-      case 7:
-        _migrateSchemaToV7();
-        return;
-      case 8:
-        _migrateSchemaToV8();
-        return;
-      case 9:
-        _migrateSchemaToV9();
-        return;
-    }
-    throw StateError(
-      'Missing schema migration implementation for version $version.',
-    );
-  }
-
-  void _migrateSchemaToV1() {}
-
-  void _migrateSchemaToV2() {}
-
-  void _migrateSchemaToV3() {}
-
-  void _migrateSchemaToV4() {}
-
-  void _migrateSchemaToV5() {}
-
-  void _migrateSchemaToV6() {}
-
-  void _migrateSchemaToV7() {}
-
-  void _migrateSchemaToV8() {}
-
-  void _migrateSchemaToV9() {}
 
   void _setSchemaVersion(int version) {
     _db.execute('PRAGMA user_version = $version;');

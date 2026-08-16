@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/widgets.dart';
 
 import 'package:vocabulary_sleep_app/src/models/settings_dto.dart';
 import 'package:vocabulary_sleep_app/src/models/word_entry.dart';
@@ -57,10 +58,32 @@ class _MapSettingsStoreRepository implements SettingsStoreRepository {
   }
 }
 
+class _PracticeMemoryEventRecord {
+  const _PracticeMemoryEventRecord({
+    required this.wordId,
+    required this.eventKind,
+    required this.quality,
+    required this.weakReasonIds,
+    required this.sessionTitle,
+  });
+
+  final int wordId;
+  final String eventKind;
+  final int quality;
+  final List<String> weakReasonIds;
+  final String? sessionTitle;
+}
+
 class _MemoryPracticeRepository implements PracticeRepository {
-  const _MemoryPracticeRepository(this._database);
+  _MemoryPracticeRepository(this._database);
 
   final _MemoryDatabaseService _database;
+  final List<_PracticeMemoryEventRecord> memoryEvents =
+      <_PracticeMemoryEventRecord>[];
+  int upsertWordMemoryProgressCalls = 0;
+  int insertWordMemoryEventCalls = 0;
+  bool throwOnNextProgressUpsert = false;
+  bool throwOnNextMemoryEventInsert = false;
 
   @override
   Map<int, WordMemoryProgress> getWordMemoryProgressByWordIds(
@@ -78,6 +101,11 @@ class _MemoryPracticeRepository implements PracticeRepository {
 
   @override
   void upsertWordMemoryProgress(WordMemoryProgress progress) {
+    upsertWordMemoryProgressCalls += 1;
+    if (throwOnNextProgressUpsert) {
+      throwOnNextProgressUpsert = false;
+      throw StateError('planned progress write failure');
+    }
     _database._progressByWordId[progress.wordId] = progress;
   }
 
@@ -89,7 +117,22 @@ class _MemoryPracticeRepository implements PracticeRepository {
     List<String> weakReasonIds = const <String>[],
     String? sessionTitle,
     DateTime? createdAt,
-  }) {}
+  }) {
+    insertWordMemoryEventCalls += 1;
+    if (throwOnNextMemoryEventInsert) {
+      throwOnNextMemoryEventInsert = false;
+      throw StateError('planned memory event failure');
+    }
+    memoryEvents.add(
+      _PracticeMemoryEventRecord(
+        wordId: wordId,
+        eventKind: eventKind,
+        quality: quality,
+        weakReasonIds: List<String>.from(weakReasonIds, growable: false),
+        sessionTitle: sessionTitle,
+      ),
+    );
+  }
 
   @override
   Future<String> writeTextExport({
@@ -230,6 +273,7 @@ void main() {
       remembered: false,
       weakReasonIds: const <String>['meaning'],
     );
+    state.flushPendingPersistence();
 
     final dashboard = settings.loadPracticeDashboard();
     expect(dashboard.trackedEntries, hasLength(1));
@@ -237,6 +281,109 @@ void main() {
     expect(dashboard.trackedEntries.first.meaning, '固定');
     expect(dashboard.trackedEntries.first.fields, isEmpty);
     expect(dashboard.trackedEntries.first.rawContent, isEmpty);
+  });
+
+  test(
+    'recordPracticeAnswer defers progress events and dashboard until flush',
+    () {
+      final database = _MemoryDatabaseService();
+      final settings = settingsFor(database);
+      final repository = _MemoryPracticeRepository(database);
+      final state = AppState(
+        database: database,
+        settings: settings,
+        playback: TrackingPlaybackService(),
+        ambient: StubAmbientService(),
+        asr: StubAsrService(),
+        focusService: StubFocusService(database, settings: settings),
+        practiceRepository: repository,
+      );
+      final alpha = _word('alpha', id: 1);
+
+      state.startPracticeSession(title: 'Debounce');
+      state.recordPracticeAnswer(
+        entry: alpha,
+        remembered: false,
+        weakReasonIds: const <String>['meaning'],
+      );
+      state.recordPracticeAnswer(entry: alpha, remembered: true);
+
+      expect(state.practiceTodayReviewed, 2);
+      expect(settings.loadPracticeDashboard().todayReviewed, 0);
+      expect(database.getWordMemoryProgressByWordIds(<int>[1]), isEmpty);
+      expect(repository.memoryEvents, isEmpty);
+
+      state.flushPendingPersistence();
+
+      final progress = database.getWordMemoryProgressByWordIds(<int>[1])[1];
+      expect(progress, isNotNull);
+      expect(progress!.timesPlayed, 2);
+      expect(progress.timesCorrect, 1);
+      expect(repository.memoryEvents, hasLength(2));
+      expect(repository.memoryEvents.first.eventKind, 'weak');
+      expect(repository.memoryEvents.first.weakReasonIds, <String>['meaning']);
+      expect(repository.memoryEvents.last.eventKind, 'remembered');
+      expect(settings.loadPracticeDashboard().todayReviewed, 2);
+    },
+  );
+
+  test('paused lifecycle flushes pending practice answer persistence', () {
+    final database = _MemoryDatabaseService();
+    final settings = settingsFor(database);
+    final repository = _MemoryPracticeRepository(database);
+    final state = AppState(
+      database: database,
+      settings: settings,
+      playback: TrackingPlaybackService(),
+      ambient: StubAmbientService(),
+      asr: StubAsrService(),
+      focusService: StubFocusService(database, settings: settings),
+      practiceRepository: repository,
+    );
+    final alpha = _word('alpha', id: 1);
+
+    state.startPracticeSession(title: 'Lifecycle');
+    state.recordPracticeAnswer(entry: alpha, remembered: true);
+    expect(repository.memoryEvents, isEmpty);
+
+    state.didChangeAppLifecycleState(AppLifecycleState.paused);
+
+    expect(database.getWordMemoryProgressByWordIds(<int>[1]), contains(1));
+    expect(repository.memoryEvents, hasLength(1));
+    expect(settings.loadPracticeDashboard().todayReviewed, 1);
+  });
+
+  test('flushPendingPersistence retries queued practice answer writes', () {
+    final database = _MemoryDatabaseService();
+    final settings = settingsFor(database);
+    final repository = _MemoryPracticeRepository(database)
+      ..throwOnNextProgressUpsert = true;
+    final state = AppState(
+      database: database,
+      settings: settings,
+      playback: TrackingPlaybackService(),
+      ambient: StubAmbientService(),
+      asr: StubAsrService(),
+      focusService: StubFocusService(database, settings: settings),
+      practiceRepository: repository,
+    );
+    final alpha = _word('alpha', id: 1);
+
+    state.startPracticeSession(title: 'Retry');
+    state.recordPracticeAnswer(entry: alpha, remembered: true);
+
+    state.flushPendingPersistence();
+
+    expect(repository.upsertWordMemoryProgressCalls, 1);
+    expect(database.getWordMemoryProgressByWordIds(<int>[1]), isEmpty);
+    expect(repository.memoryEvents, isEmpty);
+
+    state.flushPendingPersistence();
+
+    expect(repository.upsertWordMemoryProgressCalls, 2);
+    expect(database.getWordMemoryProgressByWordIds(<int>[1]), contains(1));
+    expect(repository.memoryEvents, hasLength(1));
+    expect(repository.memoryEvents.single.eventKind, 'remembered');
   });
 
   test('beginPracticeBatch advances cursor and honors anchor words', () {

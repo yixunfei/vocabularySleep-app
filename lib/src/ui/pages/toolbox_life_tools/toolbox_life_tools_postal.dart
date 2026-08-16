@@ -1,9 +1,11 @@
 part of '../toolbox_life_tools.dart';
 
 const String _postalSourceBaseUrl =
-    'https://www.chinapost.com.cn/html1/folder/181312/9531-1.htm';
+    'https://www.chinapost.com.cn/cn/folder/1813/129531-1.htm';
 const String _postalChinaPostQueryBaseUrl =
-    'https://iframe.chinapost.com.cn/jsp/type/institutionalsite/SiteSearchJT.jsp';
+    'https://iframe.chinapost.com.cn/jsp/type/institutionalsite/SiteSearchJTApi.jsp';
+const String _postalChinaPostApiUrl =
+    'https://iframe.chinapost.com.cn/api/institutionalsite/findlist.do';
 const Duration _postalRemoteTimeout = Duration(seconds: 12);
 
 class _RemotePostalEntry {
@@ -79,6 +81,71 @@ String _postalPageUrlFor(String query) {
   }
   return '$_postalChinaPostQueryBaseUrl?community=ChinaPostJT&sitename=${Uri.encodeQueryComponent(trimmed)}';
 }
+
+List<_RemotePostalEntry> _parsePostalApiEntries(String raw, String sourceUrl) {
+  final decoded = jsonDecode(raw);
+  if (decoded is! Map<String, Object?>) {
+    throw const FormatException('postal response is not an object');
+  }
+  final list = decoded['list'];
+  if (list is! List) {
+    throw const FormatException('postal response list missing');
+  }
+  final entries = <_RemotePostalEntry>[];
+  for (final item in list) {
+    if (item is! Map) {
+      continue;
+    }
+    final code = _jsonText(item['zipcode']).trim();
+    if (!RegExp(r'^\d{6}$').hasMatch(code)) {
+      continue;
+    }
+    final siteName = _jsonText(item['sitename']).trim();
+    final address = _jsonText(item['address']).trim();
+    final province = _jsonText(item['province']).trim();
+    final city = _jsonText(item['cities']).trim();
+    final county = _jsonText(item['county']).trim();
+    final phone = _jsonText(item['phone']).trim();
+    final todayTime = _jsonText(item['todayTime']).trim();
+    final openTime = _jsonText(item['opentime']).trim();
+    final areaParts = <String>[
+      if (siteName.isNotEmpty) siteName,
+      if (address.isNotEmpty) address,
+    ];
+    final detailParts = <String>[
+      if (province.isNotEmpty || city.isNotEmpty || county.isNotEmpty)
+        <String>[
+          if (province.isNotEmpty) province,
+          if (city.isNotEmpty) city,
+          if (county.isNotEmpty) county,
+        ].join(' '),
+      if (todayTime.isNotEmpty) todayTime,
+      if (todayTime.isEmpty && openTime.isNotEmpty) openTime,
+    ];
+    if (areaParts.isEmpty) {
+      continue;
+    }
+    entries.add(
+      _RemotePostalEntry(
+        area: areaParts.join(' · '),
+        code: code,
+        detail: detailParts.join(' · '),
+        phoneCode: phone,
+        sourceUrl: sourceUrl,
+      ),
+    );
+  }
+  final seen = <String>{};
+  return entries
+      .where((entry) {
+        final key = '${entry.area}|${entry.code}|${entry.phoneCode}';
+        return seen.add(key);
+      })
+      .take(80)
+      .toList(growable: false);
+}
+
+String _jsonText(Object? value) => value == null ? '' : '$value';
 
 List<_RemotePostalEntry> _parsePostalEntries(String html, String sourceUrl) {
   final rows = RegExp(
@@ -253,20 +320,31 @@ class _PostalLookupToolPageState extends State<_PostalLookupToolPage> {
     try {
       final sourceUrl = _postalPageUrlFor(query);
       final response = await http
-          .get(
-            Uri.parse(sourceUrl),
+          .post(
+            Uri.parse(_postalChinaPostApiUrl),
             headers: const <String, String>{
-              'Accept':
-                  'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+              'Accept': 'application/json,text/json,*/*',
+              'Content-Type':
+                  'application/x-www-form-urlencoded; charset=UTF-8',
+              'Origin': 'https://iframe.chinapost.com.cn',
+              'Referer':
+                  'https://iframe.chinapost.com.cn/jsp/type/institutionalsite/SiteSearchJTApi.jsp?community=ChinaPostJT',
               'User-Agent': 'Mozilla/5.0 vocabulary-sleep-app',
+            },
+            body: <String, String>{
+              'act': 'list',
+              'page': '1',
+              'size': '80',
+              'community': 'ChinaPostJT',
+              'sitename': query,
             },
           )
           .timeout(_postalRemoteTimeout);
       if (response.statusCode < 200 || response.statusCode >= 300) {
         throw HttpException('HTTP ${response.statusCode}');
       }
-      final html = utf8.decode(response.bodyBytes);
-      final entries = _parsePostalEntries(html, sourceUrl);
+      final raw = utf8.decode(response.bodyBytes);
+      final entries = _parsePostalApiEntries(raw, sourceUrl);
       if (!mounted) {
         return;
       }
@@ -413,10 +491,7 @@ class _PostalLookupToolPageState extends State<_PostalLookupToolPage> {
                 ? _postalSourceBaseUrl
                 : _remoteState.sourceUrl,
             onOpenChinaPost: () {
-              _openExternal(
-                context,
-                'https://www.chinapost.com.cn/html1/folder/181312/9531-1.htm',
-              );
+              _openExternal(context, _postalSourceBaseUrl);
             },
             onOpenSource: () {
               _openExternal(
@@ -570,6 +645,15 @@ class _PostalResultCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
+                    if (entry.detail.trim().isNotEmpty) ...<Widget>[
+                      Text(
+                        entry.detail,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                     Wrap(
                       spacing: 8,
                       runSpacing: 6,

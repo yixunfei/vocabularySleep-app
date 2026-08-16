@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/play_config.dart';
 import '../../services/asr_service.dart';
+import '../../services/speech_remote_model_service.dart';
 import '../../state/app_state_provider.dart';
 import '../../utils/asr_language.dart';
 import '../../utils/speech_api_model_options.dart';
@@ -61,9 +62,12 @@ class _RecognitionSettingsPageState
       <AsrProviderType, AsrOfflineModelStatus>{};
   final Map<PronScoringMethod, PronScoringPackStatus> _scoringPackStatuses =
       <PronScoringMethod, PronScoringPackStatus>{};
+  final ScrollController _scrollController = ScrollController();
 
   final Set<AsrProviderType> _offlineBusyProviders = <AsrProviderType>{};
   final Set<PronScoringMethod> _scoringBusyMethods = <PronScoringMethod>{};
+  final SpeechRemoteModelService _modelService =
+      const SpeechRemoteModelService();
 
   AsrProviderType? _offlineActionProvider;
   AsrProgress? _offlineActionProgress;
@@ -74,11 +78,20 @@ class _RecognitionSettingsPageState
   String? _scoringActionError;
 
   bool _loadingPackages = false;
+  bool _loadingAsrModels = false;
+  List<String> _fetchedAsrModels = const <String>[];
+  String? _asrModelFetchError;
 
   @override
   void initState() {
     super.initState();
     _refreshPackageStatuses();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _refreshPackageStatuses() async {
@@ -342,14 +355,53 @@ class _RecognitionSettingsPageState
                 : asr.engineOrder,
           )
         : asr.engineOrder;
+    final nextModel = isAsrApiProvider(value)
+        ? defaultAsrModelForProvider(value)
+        : asr.model;
 
     ref
         .read(appStateProvider)
         .updateConfig(
           config.copyWith(
-            asr: asr.copyWith(provider: value, engineOrder: nextEngineOrder),
+            asr: asr.copyWith(
+              provider: value,
+              engineOrder: nextEngineOrder,
+              model: nextModel,
+            ),
           ),
         );
+    setState(() {
+      _fetchedAsrModels = const <String>[];
+      _asrModelFetchError = null;
+    });
+  }
+
+  Future<void> _refreshAsrModels(AsrConfig asr) async {
+    if (_loadingAsrModels || !asrProviderCanFetchModels(asr.provider)) {
+      return;
+    }
+    setState(() {
+      _loadingAsrModels = true;
+      _asrModelFetchError = null;
+    });
+    try {
+      final models = await _modelService.fetchAsrModelIds(asr);
+      if (!mounted) return;
+      setState(() {
+        _fetchedAsrModels = models;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _asrModelFetchError = '$error';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingAsrModels = false;
+        });
+      }
+    }
   }
 
   @override
@@ -358,10 +410,24 @@ class _RecognitionSettingsPageState
     final i18n = AppI18n(state.uiLanguage);
     final config = state.config;
     final asr = config.asr;
-    final languageOptions = List<String>.from(kAsrLanguagePresetOptions);
     final language = normalizeAsrLanguageTag(asr.language);
-    final selectedApiModel = normalizeSpeechApiModelValue(asr.model);
-    final apiModelOptions = resolveSpeechApiModelOptions(selectedApiModel);
+    final selectedApiModel = normalizeSpeechApiModelValue(
+      asr.model,
+      provider: asr.provider,
+    );
+    final apiModelOptions = resolveAsrApiModelOptions(
+      provider: asr.provider,
+      selectedModel: selectedApiModel,
+      fetchedModelIds: _fetchedAsrModels,
+    );
+    final selectedModelOption = apiModelOptions.firstWhere(
+      (option) => option.value == selectedApiModel,
+      orElse: () => apiModelOptions.first,
+    );
+    final languageOptions = resolveSpeechLanguageOptions(
+      modelLanguages: selectedModelOption.languageCodes,
+      selectedLanguage: language,
+    );
     if (!languageOptions.contains(language)) {
       languageOptions.add(language);
     }
@@ -374,10 +440,8 @@ class _RecognitionSettingsPageState
           )
         : <AsrProviderType>[asr.provider];
     final selectedScoringMethods = asr.normalizedScoringMethods;
-    final usesApi =
-        asr.provider == AsrProviderType.api ||
-        asr.provider == AsrProviderType.customApi;
-    final usesCustomApi = asr.provider == AsrProviderType.customApi;
+    final usesApi = isAsrApiProvider(asr.provider);
+    final usesCustomApi = asrProviderNeedsBaseUrl(asr.provider);
 
     return Scaffold(
       appBar: AppBar(
@@ -387,419 +451,468 @@ class _RecognitionSettingsPageState
           ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        children: <Widget>[
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  SectionHeader(
-                    title: i18n.t(
-                      'inline.ui.pages.recognition_settings_page.asr_switch_434718',
-                    ),
-                    subtitle: i18n.t(
-                      'inline.ui.pages.recognition_settings_page.follow_along_practice_uses_this_switch_as_the_recognitio_9e4981',
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  SwitchListTile.adaptive(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(i18n.t('enableAsr')),
-                    value: asr.enabled,
-                    onChanged: (value) {
-                      state.updateConfig(
-                        config.copyWith(asr: asr.copyWith(enabled: value)),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<AsrProviderType>(
-                    initialValue: asr.provider,
-                    decoration: InputDecoration(
-                      labelText: i18n.t('asrProvider'),
-                    ),
-                    items: AsrProviderType.values
-                        .map(
-                          (provider) => DropdownMenuItem<AsrProviderType>(
-                            value: provider,
-                            child: Text(asrProviderLabel(i18n, provider)),
-                          ),
-                        )
-                        .toList(growable: false),
-                    onChanged: (value) async {
-                      if (value == null) return;
-                      await _handleAsrProviderChanged(value, config, asr);
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _providerHint(i18n, asr.provider),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  if (asr.provider == AsrProviderType.multiEngine) ...<Widget>[
-                    const SizedBox(height: 12),
-                    Text(
-                      i18n.t(
-                        'inline.ui.pages.recognition_settings_page.multi_engine_pipeline_c377ca',
+      body: Scrollbar(
+        controller: _scrollController,
+        thumbVisibility: true,
+        child: ListView(
+          controller: _scrollController,
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          children: <Widget>[
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    SectionHeader(
+                      title: i18n.t(
+                        'inline.ui.pages.recognition_settings_page.asr_switch_434718',
                       ),
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
+                      subtitle: i18n.t(
+                        'inline.ui.pages.recognition_settings_page.follow_along_practice_uses_this_switch_as_the_recognitio_9e4981',
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      i18n.t(
-                        'inline.ui.pages.recognition_settings_page.offline_recognizers_and_mfcc_dtw_only_no_remote_api_441bc9',
-                      ),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 6),
-                    for (final engine in _multiEngineCandidates)
-                      CheckboxListTile.adaptive(
-                        value: selectedEngines.contains(engine),
-                        contentPadding: EdgeInsets.zero,
-                        dense: true,
-                        title: Text(_engineLabel(i18n, engine)),
-                        onChanged: (checked) {
-                          final next = _toggleEngine(
-                            selectedEngines,
-                            engine,
-                            checked ?? false,
-                          );
-                          state.updateConfig(
-                            config.copyWith(
-                              asr: asr.copyWith(engineOrder: next),
-                            ),
-                          );
-                        },
-                      ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  SectionHeader(
-                    title: i18n.t(
-                      'inline.ui.pages.recognition_settings_page.recognition_tuning_1617c3',
-                    ),
-                    subtitle: i18n.t(
-                      'inline.ui.pages.recognition_settings_page.tune_language_api_fields_and_diagnostics_5787c8',
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  DropdownButtonFormField<String>(
-                    initialValue: language,
-                    decoration: InputDecoration(
-                      labelText: i18n.t(
-                        'inline.ui.pages.recognition_settings_page.recognition_language_0dd524',
-                      ),
-                    ),
-                    items: languageOptions
-                        .map(
-                          (code) => DropdownMenuItem<String>(
-                            value: code,
-                            child: Text(_languageLabel(i18n, code)),
-                          ),
-                        )
-                        .toList(growable: false),
-                    onChanged: (value) {
-                      if (value == null || value.trim().isEmpty) return;
-                      state.updateConfig(
-                        config.copyWith(asr: asr.copyWith(language: value)),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    i18n.t(
-                      'inline.ui.pages.recognition_settings_page.voice_input_is_configured_separately_this_language_now_a_c83fc6',
-                    ),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  if (usesCustomApi) ...<Widget>[
-                    const SizedBox(height: 10),
-                    TextFormField(
-                      initialValue: asr.baseUrl ?? '',
-                      decoration: InputDecoration(
-                        labelText: i18n.t('asrApiBaseUrl'),
-                      ),
+                    const SizedBox(height: 14),
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(i18n.t('enableAsr')),
+                      value: asr.enabled,
                       onChanged: (value) {
                         state.updateConfig(
-                          config.copyWith(
-                            asr: asr.copyWith(baseUrl: value.trim()),
-                          ),
+                          config.copyWith(asr: asr.copyWith(enabled: value)),
                         );
                       },
                     ),
-                  ],
-                  if (usesApi) ...<Widget>[
-                    const SizedBox(height: 10),
-                    DropdownButtonFormField<String>(
-                      initialValue: selectedApiModel,
-                      isExpanded: true,
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<AsrProviderType>(
+                      initialValue: asr.provider,
                       decoration: InputDecoration(
-                        labelText: i18n.t('asrModel'),
+                        labelText: i18n.t('asrProvider'),
                       ),
-                      items: apiModelOptions
+                      items: AsrProviderType.values
                           .map(
-                            (option) => DropdownMenuItem<String>(
-                              value: option.value,
-                              child: Text(
-                                speechApiModelOptionLabel(i18n, option),
-                                overflow: TextOverflow.ellipsis,
+                            (provider) => DropdownMenuItem<AsrProviderType>(
+                              value: provider,
+                              child: Text(asrProviderLabel(i18n, provider)),
+                            ),
+                          )
+                          .toList(growable: false),
+                      onChanged: (value) async {
+                        if (value == null) return;
+                        await _handleAsrProviderChanged(value, config, asr);
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _providerHint(i18n, asr.provider),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    if (asr.provider ==
+                        AsrProviderType.multiEngine) ...<Widget>[
+                      const SizedBox(height: 12),
+                      Text(
+                        i18n.t(
+                          'inline.ui.pages.recognition_settings_page.multi_engine_pipeline_c377ca',
+                        ),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        i18n.t(
+                          'inline.ui.pages.recognition_settings_page.offline_recognizers_and_mfcc_dtw_only_no_remote_api_441bc9',
+                        ),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 6),
+                      for (final engine in _multiEngineCandidates)
+                        CheckboxListTile.adaptive(
+                          value: selectedEngines.contains(engine),
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          title: Text(_engineLabel(i18n, engine)),
+                          onChanged: (checked) {
+                            final next = _toggleEngine(
+                              selectedEngines,
+                              engine,
+                              checked ?? false,
+                            );
+                            state.updateConfig(
+                              config.copyWith(
+                                asr: asr.copyWith(engineOrder: next),
                               ),
+                            );
+                          },
+                        ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    SectionHeader(
+                      title: i18n.t(
+                        'inline.ui.pages.recognition_settings_page.recognition_tuning_1617c3',
+                      ),
+                      subtitle: i18n.t(
+                        'inline.ui.pages.recognition_settings_page.tune_language_api_fields_and_diagnostics_5787c8',
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    DropdownButtonFormField<String>(
+                      initialValue: language,
+                      decoration: InputDecoration(
+                        labelText: i18n.t(
+                          'inline.ui.pages.recognition_settings_page.recognition_language_0dd524',
+                        ),
+                      ),
+                      items: languageOptions
+                          .map(
+                            (code) => DropdownMenuItem<String>(
+                              value: code,
+                              child: Text(_languageLabel(i18n, code)),
                             ),
                           )
                           .toList(growable: false),
                       onChanged: (value) {
                         if (value == null || value.trim().isEmpty) return;
                         state.updateConfig(
-                          config.copyWith(
-                            asr: asr.copyWith(model: value.trim()),
-                          ),
+                          config.copyWith(asr: asr.copyWith(language: value)),
                         );
                       },
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      speechApiModelHelperText(i18n),
+                      i18n.t(
+                        'inline.ui.pages.recognition_settings_page.voice_input_is_configured_separately_this_language_now_a_c83fc6',
+                      ),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    TextFormField(
-                      initialValue: asr.apiKey ?? '',
-                      obscureText: true,
-                      enableSuggestions: false,
-                      autocorrect: false,
-                      decoration: InputDecoration(
-                        labelText: i18n.t('asrApiKey'),
+                    if (usesCustomApi) ...<Widget>[
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        initialValue: asr.baseUrl ?? '',
+                        decoration: InputDecoration(
+                          labelText: i18n.t('asrApiBaseUrl'),
+                        ),
+                        onChanged: (value) {
+                          state.updateConfig(
+                            config.copyWith(
+                              asr: asr.copyWith(baseUrl: value.trim()),
+                            ),
+                          );
+                        },
                       ),
+                    ],
+                    if (usesApi) ...<Widget>[
+                      const SizedBox(height: 10),
+                      DropdownButtonFormField<String>(
+                        initialValue: selectedApiModel,
+                        isExpanded: true,
+                        decoration: InputDecoration(
+                          labelText: i18n.t('asrModel'),
+                          suffixIcon: asrProviderCanFetchModels(asr.provider)
+                              ? IconButton(
+                                  onPressed: _loadingAsrModels
+                                      ? null
+                                      : () => _refreshAsrModels(asr),
+                                  icon: _loadingAsrModels
+                                      ? const SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Icon(Icons.refresh_rounded),
+                                  tooltip: i18n.t(
+                                    'speech.remote.model.refresh',
+                                  ),
+                                )
+                              : null,
+                        ),
+                        items: apiModelOptions
+                            .map(
+                              (option) => DropdownMenuItem<String>(
+                                value: option.value,
+                                child: Text(
+                                  speechApiModelOptionLabel(i18n, option),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            )
+                            .toList(growable: false),
+                        onChanged: (value) {
+                          if (value == null || value.trim().isEmpty) return;
+                          state.updateConfig(
+                            config.copyWith(
+                              asr: asr.copyWith(model: value.trim()),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        speechApiModelHelperText(
+                          i18n,
+                          asrProvider: asr.provider,
+                        ),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      if ((_asrModelFetchError ?? '')
+                          .trim()
+                          .isNotEmpty) ...<Widget>[
+                        const SizedBox(height: 6),
+                        Text(
+                          i18n.t(
+                            'speech.remote.model.fetch_failed',
+                            params: <String, Object?>{
+                              'error': _asrModelFetchError,
+                            },
+                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: Colors.redAccent),
+                        ),
+                      ],
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        initialValue: asr.apiKey ?? '',
+                        obscureText: true,
+                        enableSuggestions: false,
+                        autocorrect: false,
+                        decoration: InputDecoration(
+                          labelText: i18n.t('asrApiKey'),
+                        ),
+                        onChanged: (value) {
+                          state.updateConfig(
+                            config.copyWith(
+                              asr: asr.copyWith(apiKey: value.trim()),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                    if (asr.provider ==
+                        AsrProviderType.multiEngine) ...<Widget>[
+                      const SizedBox(height: 14),
+                      Text(
+                        i18n.t('asrScoringMethods'),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        i18n.t('asrScoringMethodsHint'),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 6),
+                      for (final method in _scoringCandidates)
+                        Builder(
+                          builder: (context) {
+                            final status = _scoringPackStatuses[method];
+                            final installed = status?.installed ?? false;
+                            return CheckboxListTile.adaptive(
+                              value:
+                                  selectedScoringMethods.contains(method) &&
+                                  installed,
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                              title: Text(_scoringMethodLabel(i18n, method)),
+                              subtitle: installed
+                                  ? null
+                                  : Text(i18n.t('asrScoringPackInstallFirst')),
+                              onChanged: installed
+                                  ? (checked) {
+                                      final next = _toggleScoringMethod(
+                                        selectedScoringMethods,
+                                        method,
+                                        checked ?? false,
+                                      );
+                                      state.updateConfig(
+                                        config.copyWith(
+                                          asr: asr.copyWith(
+                                            scoringMethods: next,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  : null,
+                            );
+                          },
+                        ),
+                    ],
+                    const SizedBox(height: 8),
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        i18n.t(
+                          'inline.ui.pages.recognition_settings_page.keep_recognition_debug_audio_e429c7',
+                        ),
+                      ),
+                      subtitle: Text(
+                        i18n.t(
+                          'inline.ui.pages.recognition_settings_page.useful_for_diagnostics_keep_off_for_daily_use_60d03b',
+                        ),
+                      ),
+                      value: asr.dumpRecognitionAudioArtifacts,
                       onChanged: (value) {
                         state.updateConfig(
                           config.copyWith(
-                            asr: asr.copyWith(apiKey: value.trim()),
+                            asr: asr.copyWith(
+                              dumpRecognitionAudioArtifacts: value,
+                            ),
                           ),
                         );
                       },
                     ),
                   ],
-                  if (asr.provider == AsrProviderType.multiEngine) ...<Widget>[
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    SectionHeader(
+                      title: i18n.t('asrOfflineModelManager'),
+                      subtitle: i18n.t(
+                        'inline.ui.pages.recognition_settings_page.manage_offline_models_and_scoring_packs_here_cdf204',
+                      ),
+                    ),
+                    if (_loadingPackages) ...<Widget>[
+                      const SizedBox(height: 10),
+                      const LinearProgressIndicator(minHeight: 2),
+                    ],
+                    const SizedBox(height: 12),
+                    for (final provider in _managedOfflineProviders)
+                      _PackageRow(
+                        title: asrProviderLabel(i18n, provider),
+                        installed:
+                            _offlineStatuses[provider]?.installed ?? false,
+                        busy: _offlineBusyProviders.contains(provider),
+                        onDownload: () =>
+                            _performOfflineModelAction(provider, install: true),
+                        onRemove: () => _performOfflineModelAction(
+                          provider,
+                          install: false,
+                        ),
+                        downloadLabel: i18n.t('download'),
+                        removeLabel: i18n.t('delete'),
+                        busyLabel: i18n.t('processing'),
+                        installedLabel: i18n.t(
+                          'asrModelInstalled',
+                          params: <String, Object?>{
+                            'size': _resolveOfflineSizeText(provider),
+                          },
+                        ),
+                        notInstalledLabel: i18n.t(
+                          'asrModelNotInstalled',
+                          params: <String, Object?>{
+                            'size': _resolveOfflineSizeText(provider),
+                          },
+                        ),
+                      ),
+                    if (_offlineActionProvider != null &&
+                        _offlineActionProgress != null) ...<Widget>[
+                      const SizedBox(height: 4),
+                      Text(
+                        '${asrProviderLabel(i18n, _offlineActionProvider!)} - ${i18n.t(_offlineActionProgress!.messageKey, params: _offlineActionProgress!.messageParams)}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 6),
+                      LinearProgressIndicator(
+                        value: _offlineActionProgress!.progress,
+                      ),
+                    ],
+                    if ((_offlineActionError ?? '')
+                        .trim()
+                        .isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 8),
+                      Text(
+                        _offlineActionError ?? '',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.redAccent,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 14),
                     Text(
-                      i18n.t('asrScoringMethods'),
+                      i18n.t('asrScoringPackManager'),
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      i18n.t('asrScoringMethodsHint'),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     for (final method in _scoringCandidates)
-                      Builder(
-                        builder: (context) {
-                          final status = _scoringPackStatuses[method];
-                          final installed = status?.installed ?? false;
-                          return CheckboxListTile.adaptive(
-                            value:
-                                selectedScoringMethods.contains(method) &&
-                                installed,
-                            contentPadding: EdgeInsets.zero,
-                            dense: true,
-                            title: Text(_scoringMethodLabel(i18n, method)),
-                            subtitle: installed
-                                ? null
-                                : Text(i18n.t('asrScoringPackInstallFirst')),
-                            onChanged: installed
-                                ? (checked) {
-                                    final next = _toggleScoringMethod(
-                                      selectedScoringMethods,
-                                      method,
-                                      checked ?? false,
-                                    );
-                                    state.updateConfig(
-                                      config.copyWith(
-                                        asr: asr.copyWith(scoringMethods: next),
-                                      ),
-                                    );
-                                  }
-                                : null,
-                          );
-                        },
-                      ),
-                  ],
-                  const SizedBox(height: 8),
-                  SwitchListTile.adaptive(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      i18n.t(
-                        'inline.ui.pages.recognition_settings_page.keep_recognition_debug_audio_e429c7',
-                      ),
-                    ),
-                    subtitle: Text(
-                      i18n.t(
-                        'inline.ui.pages.recognition_settings_page.useful_for_diagnostics_keep_off_for_daily_use_60d03b',
-                      ),
-                    ),
-                    value: asr.dumpRecognitionAudioArtifacts,
-                    onChanged: (value) {
-                      state.updateConfig(
-                        config.copyWith(
-                          asr: asr.copyWith(
-                            dumpRecognitionAudioArtifacts: value,
-                          ),
+                      _PackageRow(
+                        title: _scoringMethodLabel(i18n, method),
+                        installed:
+                            _scoringPackStatuses[method]?.installed ?? false,
+                        busy: _scoringBusyMethods.contains(method),
+                        onDownload: () =>
+                            _performScoringPackAction(method, install: true),
+                        onRemove: () =>
+                            _performScoringPackAction(method, install: false),
+                        downloadLabel: i18n.t('download'),
+                        removeLabel: i18n.t('delete'),
+                        busyLabel: i18n.t('processing'),
+                        installedLabel: i18n.t(
+                          'asrModelInstalled',
+                          params: <String, Object?>{
+                            'size': _resolveScoringSizeText(method),
+                          },
                         ),
-                      );
-                    },
-                  ),
-                ],
+                        notInstalledLabel: i18n.t(
+                          'asrModelNotInstalled',
+                          params: <String, Object?>{
+                            'size': _resolveScoringSizeText(method),
+                          },
+                        ),
+                      ),
+                    if (_scoringActionMethod != null &&
+                        _scoringActionProgress != null) ...<Widget>[
+                      const SizedBox(height: 4),
+                      Text(
+                        '${_scoringMethodLabel(i18n, _scoringActionMethod!)} - ${i18n.t(_scoringActionProgress!.messageKey, params: _scoringActionProgress!.messageParams)}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 6),
+                      LinearProgressIndicator(
+                        value: _scoringActionProgress!.progress,
+                      ),
+                    ],
+                    if ((_scoringActionError ?? '')
+                        .trim()
+                        .isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 8),
+                      Text(
+                        _scoringActionError ?? '',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.redAccent,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  SectionHeader(
-                    title: i18n.t('asrOfflineModelManager'),
-                    subtitle: i18n.t(
-                      'inline.ui.pages.recognition_settings_page.manage_offline_models_and_scoring_packs_here_cdf204',
-                    ),
-                  ),
-                  if (_loadingPackages) ...<Widget>[
-                    const SizedBox(height: 10),
-                    const LinearProgressIndicator(minHeight: 2),
-                  ],
-                  const SizedBox(height: 12),
-                  for (final provider in _managedOfflineProviders)
-                    _PackageRow(
-                      title: asrProviderLabel(i18n, provider),
-                      installed: _offlineStatuses[provider]?.installed ?? false,
-                      busy: _offlineBusyProviders.contains(provider),
-                      onDownload: () =>
-                          _performOfflineModelAction(provider, install: true),
-                      onRemove: () =>
-                          _performOfflineModelAction(provider, install: false),
-                      downloadLabel: i18n.t('download'),
-                      removeLabel: i18n.t('delete'),
-                      busyLabel: i18n.t('processing'),
-                      installedLabel: i18n.t(
-                        'asrModelInstalled',
-                        params: <String, Object?>{
-                          'size': _resolveOfflineSizeText(provider),
-                        },
-                      ),
-                      notInstalledLabel: i18n.t(
-                        'asrModelNotInstalled',
-                        params: <String, Object?>{
-                          'size': _resolveOfflineSizeText(provider),
-                        },
-                      ),
-                    ),
-                  if (_offlineActionProvider != null &&
-                      _offlineActionProgress != null) ...<Widget>[
-                    const SizedBox(height: 4),
-                    Text(
-                      '${asrProviderLabel(i18n, _offlineActionProvider!)} - ${i18n.t(_offlineActionProgress!.messageKey, params: _offlineActionProgress!.messageParams)}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 6),
-                    LinearProgressIndicator(
-                      value: _offlineActionProgress!.progress,
-                    ),
-                  ],
-                  if ((_offlineActionError ?? '')
-                      .trim()
-                      .isNotEmpty) ...<Widget>[
-                    const SizedBox(height: 8),
-                    Text(
-                      _offlineActionError ?? '',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: Colors.redAccent),
-                    ),
-                  ],
-                  const SizedBox(height: 14),
-                  Text(
-                    i18n.t('asrScoringPackManager'),
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  for (final method in _scoringCandidates)
-                    _PackageRow(
-                      title: _scoringMethodLabel(i18n, method),
-                      installed:
-                          _scoringPackStatuses[method]?.installed ?? false,
-                      busy: _scoringBusyMethods.contains(method),
-                      onDownload: () =>
-                          _performScoringPackAction(method, install: true),
-                      onRemove: () =>
-                          _performScoringPackAction(method, install: false),
-                      downloadLabel: i18n.t('download'),
-                      removeLabel: i18n.t('delete'),
-                      busyLabel: i18n.t('processing'),
-                      installedLabel: i18n.t(
-                        'asrModelInstalled',
-                        params: <String, Object?>{
-                          'size': _resolveScoringSizeText(method),
-                        },
-                      ),
-                      notInstalledLabel: i18n.t(
-                        'asrModelNotInstalled',
-                        params: <String, Object?>{
-                          'size': _resolveScoringSizeText(method),
-                        },
-                      ),
-                    ),
-                  if (_scoringActionMethod != null &&
-                      _scoringActionProgress != null) ...<Widget>[
-                    const SizedBox(height: 4),
-                    Text(
-                      '${_scoringMethodLabel(i18n, _scoringActionMethod!)} - ${i18n.t(_scoringActionProgress!.messageKey, params: _scoringActionProgress!.messageParams)}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 6),
-                    LinearProgressIndicator(
-                      value: _scoringActionProgress!.progress,
-                    ),
-                  ],
-                  if ((_scoringActionError ?? '')
-                      .trim()
-                      .isNotEmpty) ...<Widget>[
-                    const SizedBox(height: 8),
-                    Text(
-                      _scoringActionError ?? '',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: Colors.redAccent),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

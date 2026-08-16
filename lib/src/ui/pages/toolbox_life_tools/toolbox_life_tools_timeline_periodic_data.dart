@@ -3,6 +3,7 @@ part of '../toolbox_life_tools.dart';
 class _TimelineFact {
   const _TimelineFact({
     required this.id,
+    this.collection = 'core',
     required this.category,
     required this.yearsBeforePresent,
     required this.displayKey,
@@ -10,8 +11,11 @@ class _TimelineFact {
     required this.detailKey,
     required this.sourceName,
     required this.sourceUrl,
+    this.imageLocalPaths = const <String>[],
+    this.imageRemoteUrls = const <String>[],
   });
   final String id;
+  final String collection;
   final String category;
   final double yearsBeforePresent;
   final String displayKey;
@@ -19,6 +23,8 @@ class _TimelineFact {
   final String detailKey;
   final String sourceName;
   final String sourceUrl;
+  final List<String> imageLocalPaths;
+  final List<String> imageRemoteUrls;
 }
 
 class _ElementFact {
@@ -112,10 +118,11 @@ _timelineBackdropAssets = <_TimelineBackdropAsset>[
     id: 'world_wide_web',
     category: 'modern',
     imageUrl:
-        'https://images-assets.nasa.gov/image/as17-148-22727/as17-148-22727~large.jpg',
-    sourceName: 'NASA Image Library: Apollo 17 Earth',
-    sourceUrl: 'https://images.nasa.gov/details/as17-148-22727',
-    credit: 'NASA/JSC',
+        'https://commons.wikimedia.org/wiki/Special:FilePath/NeXTcube_first_webserver.JPG?width=1400',
+    sourceName: 'Wikimedia Commons: NeXTcube first webserver',
+    sourceUrl:
+        'https://commons.wikimedia.org/wiki/File:NeXTcube_first_webserver.JPG',
+    credit: 'Wikimedia Commons media',
   ),
   _TimelineBackdropAsset(
     id: 'human_artifact',

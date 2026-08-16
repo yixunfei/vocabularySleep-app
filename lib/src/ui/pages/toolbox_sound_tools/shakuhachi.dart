@@ -19,27 +19,23 @@ class _ShakuhachiToolState extends State<_ShakuhachiTool> {
     _ShakuhachiHole(
       label: 'F',
       tone: _PianoKey(id: 'F4', label: 'F', frequency: 349.23),
-      alignment: Alignment(0.0, 0.72),
     ),
     _ShakuhachiHole(
       label: 'G',
       tone: _PianoKey(id: 'G4', label: 'G', frequency: 392.0),
-      alignment: Alignment(0.0, 0.46),
     ),
     _ShakuhachiHole(
       label: 'A',
       tone: _PianoKey(id: 'A4', label: 'A', frequency: 440.0),
-      alignment: Alignment(0.0, 0.20),
     ),
     _ShakuhachiHole(
       label: 'C',
       tone: _PianoKey(id: 'C5', label: 'C', frequency: 523.25),
-      alignment: Alignment(0.0, -0.08),
     ),
     _ShakuhachiHole(
       label: 'D',
       tone: _PianoKey(id: 'D5', label: 'D', frequency: 587.33),
-      alignment: Alignment(0.0, -0.54),
+      backHole: true,
     ),
   ];
 
@@ -48,11 +44,12 @@ class _ShakuhachiToolState extends State<_ShakuhachiTool> {
   final Map<String, ToolboxNotePlayer> _players = <String, ToolboxNotePlayer>{};
   final Map<int, int> _holePointers = <int, int>{};
   final Set<int> _coveredHoles = <int>{};
+  final Set<int> _latchedHoles = <int>{};
   int? _airPointer;
   String? _fallbackPlayingNoteId;
   double _airLevel = 0;
-  double _reverb = 0.24;
-  double _tail = 0.76;
+  final double _reverb = 0.24;
+  final double _tail = 0.76;
   bool _sampledReady = false;
   bool _playing = false;
 
@@ -75,7 +72,7 @@ class _ShakuhachiToolState extends State<_ShakuhachiTool> {
 
   _PianoKey get _activeNote {
     for (var index = _holes.length - 1; index >= 0; index -= 1) {
-      if (!_coveredHoles.contains(index)) {
+      if (!_holeIsCovered(index)) {
         return _holes[index].tone;
       }
     }
@@ -83,6 +80,10 @@ class _ShakuhachiToolState extends State<_ShakuhachiTool> {
   }
 
   double get _effectiveAir => _playing ? _airLevel.clamp(0.0, 1.0) : 0.0;
+
+  bool _holeIsCovered(int index) {
+    return _coveredHoles.contains(index) || _latchedHoles.contains(index);
+  }
 
   double get _sampledVelocity {
     return (0.34 + _effectiveAir * 0.62).clamp(0.1, 1.0).toDouble();
@@ -208,6 +209,18 @@ class _ShakuhachiToolState extends State<_ShakuhachiTool> {
     }
   }
 
+  void _toggleHoleLatch(int index) {
+    setState(() {
+      if (!_latchedHoles.remove(index)) {
+        _latchedHoles.add(index);
+      }
+    });
+    HapticFeedback.selectionClick();
+    if (_playing) {
+      unawaited(_syncSustain());
+    }
+  }
+
   @override
   void dispose() {
     _invalidatePlayers();
@@ -308,11 +321,14 @@ class _ShakuhachiToolState extends State<_ShakuhachiTool> {
     final theme = Theme.of(context);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final height = math.max(220.0, constraints.maxHeight);
+        final height = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : 220.0;
+        final visualHeight = math.max(120.0, height);
         return Listener(
           behavior: HitTestBehavior.opaque,
-          onPointerDown: (event) => _startAir(event, height),
-          onPointerMove: (event) => _updateAir(event, height),
+          onPointerDown: (event) => _startAir(event, visualHeight),
+          onPointerMove: (event) => _updateAir(event, visualHeight),
           onPointerUp: _stopAir,
           onPointerCancel: _stopAir,
           child: AnimatedContainer(
@@ -349,7 +365,7 @@ class _ShakuhachiToolState extends State<_ShakuhachiTool> {
                   left: 22,
                   right: 22,
                   bottom: 22,
-                  height: math.max(10, (height - 44) * _effectiveAir),
+                  height: math.max(10, (visualHeight - 44) * _effectiveAir),
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
@@ -403,9 +419,29 @@ class _ShakuhachiToolState extends State<_ShakuhachiTool> {
     final theme = Theme.of(context);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = math.max(160.0, constraints.maxWidth);
-        final height = math.max(360.0, constraints.maxHeight);
-        final holeSize = (math.min(width, height) * 0.22).clamp(56.0, 76.0);
+        final width = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : 340.0;
+        final height = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : 420.0;
+        final compact = height < 380 || width < 250;
+        final topInset = compact ? 46.0 : 54.0;
+        final bottomInset = compact ? 16.0 : 24.0;
+        final playableHeight = math.max(150.0, height - topInset - bottomInset);
+        final holeSize = math
+            .min(width * 0.26, compact ? 58.0 : 68.0)
+            .clamp(50.0, 68.0)
+            .toDouble();
+        final stationWidth = math
+            .min(width * 0.44, math.max(88.0, holeSize + 42.0))
+            .clamp(80.0, 118.0)
+            .toDouble();
+        final stationHeight = holeSize + 58.0;
+        final pipeWidth = math
+            .min(width * 0.28, 92.0)
+            .clamp(48.0, 92.0)
+            .toDouble();
         return Container(
           height: height,
           decoration: BoxDecoration(
@@ -419,11 +455,12 @@ class _ShakuhachiToolState extends State<_ShakuhachiTool> {
           ),
           child: Stack(
             children: <Widget>[
-              Align(
-                alignment: const Alignment(0.0, 0.08),
-                child: Container(
-                  width: width * 0.46,
-                  height: height * 0.86,
+              Positioned(
+                top: topInset + 8,
+                bottom: bottomInset + 8,
+                left: width / 2 - pipeWidth / 2,
+                width: pipeWidth,
+                child: DecoratedBox(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(999),
                     gradient: const LinearGradient(
@@ -445,22 +482,10 @@ class _ShakuhachiToolState extends State<_ShakuhachiTool> {
                   ),
                 ),
               ),
-              for (var index = 0; index < _holes.length; index += 1)
-                Align(
-                  alignment: _holes[index].alignment,
-                  child: _ShakuhachiHolePad(
-                    hole: _holes[index],
-                    covered: _coveredHoles.contains(index),
-                    size: holeSize,
-                    onPointerDown: (event) => _coverHole(index, event),
-                    onPointerUp: _releaseHole,
-                    onPointerCancel: _releaseHole,
-                  ),
-                ),
               Positioned(
                 left: 12,
                 right: 12,
-                bottom: 12,
+                top: 12,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
@@ -483,10 +508,100 @@ class _ShakuhachiToolState extends State<_ShakuhachiTool> {
                   ),
                 ),
               ),
+              for (var index = 0; index < _holes.length; index += 1)
+                _buildVerticalHoleStation(
+                  index: index,
+                  i18n: i18n,
+                  width: width,
+                  topInset: topInset,
+                  playableHeight: playableHeight,
+                  stationWidth: stationWidth,
+                  stationHeight: stationHeight,
+                  holeSize: holeSize,
+                ),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildVerticalHoleStation({
+    required int index,
+    required AppI18n i18n,
+    required double width,
+    required double topInset,
+    required double playableHeight,
+    required double stationWidth,
+    required double stationHeight,
+    required double holeSize,
+  }) {
+    const centers = <Offset>[
+      Offset(0.32, 0.80),
+      Offset(0.68, 0.66),
+      Offset(0.32, 0.52),
+      Offset(0.68, 0.38),
+      Offset(0.32, 0.24),
+    ];
+    final center = centers[index];
+    final left = (width * center.dx - stationWidth / 2)
+        .clamp(8.0, math.max(8.0, width - stationWidth - 8.0))
+        .toDouble();
+    final top = (topInset + playableHeight * center.dy - stationHeight / 2)
+        .clamp(8.0, topInset + playableHeight - stationHeight + 4.0)
+        .toDouble();
+    return Positioned(
+      left: left,
+      top: top,
+      width: stationWidth,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          _buildHoleLockToggle(index, i18n),
+          const SizedBox(height: 6),
+          _buildHolePad(index, holeSize),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHoleLockToggle(int index, AppI18n i18n) {
+    final locked = _latchedHoles.contains(index);
+    final tooltip = i18n.t(
+      'toolbox.sound.shakuhachi.hole_lock_toggle',
+      params: <String, Object?>{'note': _holes[index].label},
+    );
+    return Semantics(
+      label: tooltip,
+      selected: locked,
+      child: IconButton.filledTonal(
+        onPressed: () => _toggleHoleLatch(index),
+        tooltip: tooltip,
+        style: IconButton.styleFrom(
+          fixedSize: const Size.square(48),
+          minimumSize: const Size.square(48),
+          backgroundColor: locked
+              ? const Color(0xFFCCFBF1)
+              : Colors.black.withValues(alpha: 0.28),
+          foregroundColor: locked ? const Color(0xFF0F172A) : Colors.white,
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.28)),
+        ),
+        icon: Icon(
+          locked ? Icons.push_pin_rounded : Icons.push_pin_outlined,
+          size: 20,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHolePad(int index, double holeSize) {
+    return _ShakuhachiHolePad(
+      hole: _holes[index],
+      covered: _holeIsCovered(index),
+      size: holeSize,
+      onPointerDown: (event) => _coverHole(index, event),
+      onPointerUp: _releaseHole,
+      onPointerCancel: _releaseHole,
     );
   }
 
@@ -506,66 +621,83 @@ class _ShakuhachiToolState extends State<_ShakuhachiTool> {
         ),
       ),
       child: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            14 + viewPadding.left,
-            12,
-            14 + viewPadding.right,
-            14,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compactLandscape = constraints.maxHeight < 430;
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                10 + viewPadding.left,
+                compactLandscape ? 8 : 12,
+                10 + viewPadding.right,
+                compactLandscape ? 10 : 14,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              i18n.t('toolbox.sound.shakuhachi.title'),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style:
+                                  (compactLandscape
+                                          ? theme.textTheme.titleMedium
+                                          : theme.textTheme.titleLarge)
+                                      ?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                            ),
+                            if (!compactLandscape)
+                              Text(
+                                i18n.t('toolbox.sound.shakuhachi.full_sub'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: Colors.white70,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      IconButton.filledTonal(
+                        onPressed: () => _showInfoSheet(context, i18n),
+                        icon: const Icon(Icons.help_outline_rounded),
+                        tooltip: i18n.t('toolbox.sound.shakuhachi.info_title'),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton.filledTonal(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close_fullscreen_rounded),
+                        tooltip: i18n.t(
+                          'toolbox.sound.instrument.exit_full_screen',
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: compactLandscape ? 8 : 12),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
-                        Text(
-                          i18n.t('toolbox.sound.shakuhachi.title'),
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                          ),
+                        Expanded(
+                          flex: 7,
+                          child: _buildHolePanel(context, i18n),
                         ),
-                        Text(
-                          i18n.t('toolbox.sound.shakuhachi.full_sub'),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.white70,
-                          ),
-                        ),
+                        const SizedBox(width: 10),
+                        Expanded(flex: 4, child: _buildAirPanel(context, i18n)),
                       ],
-                    ),
-                  ),
-                  IconButton.filledTonal(
-                    onPressed: () => _showInfoSheet(context, i18n),
-                    icon: const Icon(Icons.help_outline_rounded),
-                    tooltip: i18n.t('toolbox.sound.shakuhachi.info_title'),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton.filledTonal(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_fullscreen_rounded),
-                    tooltip: i18n.t(
-                      'toolbox.sound.instrument.exit_full_screen',
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    Expanded(flex: 6, child: _buildHolePanel(context, i18n)),
-                    const SizedBox(width: 12),
-                    Expanded(flex: 5, child: _buildAirPanel(context, i18n)),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
@@ -612,13 +744,11 @@ class _ShakuhachiHole {
   const _ShakuhachiHole({
     required this.label,
     required this.tone,
-    required this.alignment,
     this.backHole = false,
   });
 
   final String label;
   final _PianoKey tone;
-  final Alignment alignment;
   final bool backHole;
 }
 

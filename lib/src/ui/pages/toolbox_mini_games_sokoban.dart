@@ -3,9 +3,9 @@ part of 'toolbox_mini_games.dart';
 enum _SokobanDirection { up, down, left, right }
 
 enum _SokobanDifficulty {
-  easy(boxes: 1, minRoute: 6, maxRoute: 9, extraWalls: 4),
-  medium(boxes: 2, minRoute: 6, maxRoute: 11, extraWalls: 8),
-  hard(boxes: 3, minRoute: 7, maxRoute: 13, extraWalls: 12);
+  easy(boxes: 1, minRoute: 8, maxRoute: 13, extraWalls: 8),
+  medium(boxes: 2, minRoute: 10, maxRoute: 16, extraWalls: 14),
+  hard(boxes: 3, minRoute: 12, maxRoute: 20, extraWalls: 20);
 
   const _SokobanDifficulty({
     required this.boxes,
@@ -28,9 +28,9 @@ class _SokobanGame extends StatefulWidget {
 }
 
 class _SokobanGameState extends State<_SokobanGame> {
-  static const int _rows = 9;
-  static const int _cols = 9;
-  static const int _recentLevelMemory = 10;
+  static const int _rows = 10;
+  static const int _cols = 10;
+  static const int _recentLevelMemory = 40;
   final math.Random _random = math.Random();
   final Queue<String> _recentLevelSignatures = Queue<String>();
 
@@ -130,7 +130,9 @@ class _SokobanGameState extends State<_SokobanGame> {
   }
 
   _SokobanLevel _generateLevel() {
-    for (var attempt = 0; attempt < 320; attempt += 1) {
+    _SokobanLevel? bestLevel;
+    var bestScore = -1;
+    for (var attempt = 0; attempt < 420; attempt += 1) {
       final plans = <_SokobanPushPlan>[];
       final required = <int>{};
       var failed = false;
@@ -162,76 +164,356 @@ class _SokobanGameState extends State<_SokobanGame> {
         ),
       );
       if (_solutionCanPlay(level)) {
-        final signature = _levelSignature(level);
-        if (_recentLevelSignatures.contains(signature) && attempt < 260) {
+        final signature = 'exact:${_levelSignature(level)}';
+        final varietySignature = 'shape:${_levelVarietySignature(level)}';
+        final repeated =
+            _recentLevelSignatures.contains(signature) ||
+            _recentLevelSignatures.contains(varietySignature);
+        if (repeated && attempt < 320) {
           continue;
         }
-        _rememberLevelSignature(signature);
-        return level;
+        final score = _levelQualityScore(level);
+        if (score > bestScore) {
+          bestLevel = level;
+          bestScore = score;
+        }
+        if (score >= _qualityTargetScore && attempt >= 48) {
+          _rememberLevelSignature(signature);
+          _rememberLevelSignature(varietySignature);
+          return level;
+        }
       }
     }
+    if (bestLevel != null) {
+      _rememberLevelSignature('exact:${_levelSignature(bestLevel)}');
+      _rememberLevelSignature('shape:${_levelVarietySignature(bestLevel)}');
+      return bestLevel;
+    }
     final fallback = _fallbackLevel(_difficulty);
-    _rememberLevelSignature(_levelSignature(fallback));
+    _rememberLevelSignature('exact:${_levelSignature(fallback)}');
+    _rememberLevelSignature('shape:${_levelVarietySignature(fallback)}');
     return fallback;
   }
 
   _SokobanPushPlan? _buildNonOverlappingPlan(Set<int> reserved) {
-    for (var attempt = 0; attempt < 120; attempt += 1) {
+    _SokobanRouteDraft? bestRoute;
+    Set<int>? bestRequired;
+    var bestScore = -1;
+    for (var attempt = 0; attempt < 150; attempt += 1) {
       final route = _buildRoute();
       if (route == null) {
         continue;
       }
       final required = _requiredCellsForRoute(route);
-      if (required.any(reserved.contains)) {
+      if (_routeConflictsWithReserved(required, reserved)) {
         continue;
       }
-      return _SokobanPushPlan(
-        cells: route.cells,
-        directions: route.directions,
-        requiredCells: required,
+      final score = _routeQualityScore(route);
+      if (score > bestScore) {
+        bestRoute = route;
+        bestRequired = required;
+        bestScore = score;
+      }
+      if (score >= _routeQualityTarget && attempt >= 24) {
+        return _SokobanPushPlan(
+          cells: route.cells,
+          directions: route.directions,
+          requiredCells: required,
+        );
+      }
+    }
+    if (bestRoute == null || bestRequired == null) {
+      return null;
+    }
+    return _SokobanPushPlan(
+      cells: bestRoute.cells,
+      directions: bestRoute.directions,
+      requiredCells: bestRequired,
+    );
+  }
+
+  bool _routeConflictsWithReserved(Set<int> required, Set<int> reserved) {
+    if (reserved.isEmpty) {
+      return false;
+    }
+    for (final cell in required) {
+      if (reserved.contains(cell)) {
+        return true;
+      }
+      for (final direction in _SokobanDirection.values) {
+        if (reserved.contains(_step(cell, direction))) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  int get _routeQualityTarget {
+    return switch (_difficulty) {
+      _SokobanDifficulty.easy => 18,
+      _SokobanDifficulty.medium => 24,
+      _SokobanDifficulty.hard => 30,
+    };
+  }
+
+  int get _qualityTargetScore {
+    return switch (_difficulty) {
+      _SokobanDifficulty.easy => 30,
+      _SokobanDifficulty.medium => 44,
+      _SokobanDifficulty.hard => 58,
+    };
+  }
+
+  int _routeQualityScore(_SokobanRouteDraft route) {
+    final turns = _turnCount(route.directions);
+    final longestStraight = _longestStraightRun(route.directions);
+    final distance = _manhattan(route.cells.first, route.cells.last);
+    final routeSlack = route.directions.length - distance;
+    final centerSpread =
+        (_rowOf(route.cells.first) - _rowOf(route.cells.last)).abs() +
+        (_colOf(route.cells.first) - _colOf(route.cells.last)).abs();
+    return route.directions.length +
+        turns * 5 +
+        routeSlack * 3 +
+        centerSpread -
+        math.max(0, longestStraight - 3) * 4;
+  }
+
+  int _levelQualityScore(_SokobanLevel level) {
+    final routeScore = level.plans.fold<int>(
+      0,
+      (sum, plan) =>
+          sum +
+          _routeQualityScore(
+            _SokobanRouteDraft(cells: plan.cells, directions: plan.directions),
+          ),
+    );
+    final goalRows = level.goals.map(_rowOf).toList(growable: false);
+    final goalCols = level.goals.map(_colOf).toList(growable: false);
+    final spread = goalRows.isEmpty
+        ? 0
+        : (goalRows.reduce(math.max) - goalRows.reduce(math.min)) +
+              (goalCols.reduce(math.max) - goalCols.reduce(math.min));
+    final wallScore = math.min(
+      18,
+      level.walls.length - (_rows * 2 + _cols * 2 - 4),
+    );
+    return routeScore + spread * 3 + wallScore;
+  }
+
+  int _turnCount(List<_SokobanDirection> directions) {
+    var turns = 0;
+    for (var index = 1; index < directions.length; index += 1) {
+      if (directions[index] != directions[index - 1]) {
+        turns += 1;
+      }
+    }
+    return turns;
+  }
+
+  int _longestStraightRun(List<_SokobanDirection> directions) {
+    if (directions.isEmpty) {
+      return 0;
+    }
+    var longest = 1;
+    var current = 1;
+    for (var index = 1; index < directions.length; index += 1) {
+      if (directions[index] == directions[index - 1]) {
+        current += 1;
+      } else {
+        longest = math.max(longest, current);
+        current = 1;
+      }
+    }
+    return math.max(longest, current);
+  }
+
+  bool _routeMeetsBaseline(_SokobanRouteDraft route) {
+    final turns = _turnCount(route.directions);
+    final longestStraight = _longestStraightRun(route.directions);
+    final slack =
+        route.directions.length -
+        _manhattan(route.cells.first, route.cells.last);
+    final minTurns = switch (_difficulty) {
+      _SokobanDifficulty.easy => 2,
+      _SokobanDifficulty.medium => 3,
+      _SokobanDifficulty.hard => 4,
+    };
+    return turns >= minTurns &&
+        slack >= minTurns - 1 &&
+        longestStraight <= math.max(4, _difficulty.maxRoute ~/ 2);
+  }
+
+  String _levelVarietySignature(_SokobanLevel level) {
+    String routeShape(_SokobanPushPlan plan) {
+      if (plan.directions.isEmpty) {
+        return 'empty';
+      }
+      final buffer = StringBuffer();
+      var last = plan.directions.first;
+      var run = 0;
+      void flush() {
+        buffer
+          ..write(switch (last) {
+            _SokobanDirection.up => 'u',
+            _SokobanDirection.down => 'd',
+            _SokobanDirection.left => 'l',
+            _SokobanDirection.right => 'r',
+          })
+          ..write(math.min(run, 4));
+      }
+
+      for (final direction in plan.directions) {
+        if (direction == last) {
+          run += 1;
+          continue;
+        }
+        flush();
+        last = direction;
+        run = 1;
+      }
+      flush();
+      return buffer.toString();
+    }
+
+    final shapes = level.plans.map(routeShape).toList(growable: false)..sort();
+    return '${_difficulty.name}:${shapes.join('|')}:${level.walls.length ~/ 4}';
+  }
+
+  _SokobanRouteDraft? _buildRoute() {
+    _SokobanRouteDraft? bestRoute;
+    var bestScore = -1;
+    for (var attempt = 0; attempt < 190; attempt += 1) {
+      final start = _randomPlayableCell();
+      final goal = _randomPlayableCell();
+      final directDistance = _manhattan(start, goal);
+      if (start == goal ||
+          directDistance < math.max(4, _difficulty.boxes + 3)) {
+        continue;
+      }
+      final route = _findRouteBetween(start, goal);
+      if (route == null) {
+        continue;
+      }
+      final score = _routeQualityScore(route);
+      if (score > bestScore) {
+        bestRoute = route;
+        bestScore = score;
+      }
+      if (_routeMeetsBaseline(route) && attempt >= 24) {
+        return route;
+      }
+    }
+    return bestRoute;
+  }
+
+  int _randomPlayableCell() {
+    return _indexOf(
+      1 + _random.nextInt(_rows - 2),
+      1 + _random.nextInt(_cols - 2),
+    );
+  }
+
+  int _manhattan(int a, int b) {
+    return (_rowOf(a) - _rowOf(b)).abs() + (_colOf(a) - _colOf(b)).abs();
+  }
+
+  _SokobanRouteDraft? _findRouteBetween(int start, int goal) {
+    final cells = <int>[start];
+    final directions = <_SokobanDirection>[];
+    final visited = <int>{start};
+
+    bool search(int current) {
+      if (current == goal && directions.length >= _difficulty.minRoute) {
+        return true;
+      }
+      if (directions.length >= _difficulty.maxRoute) {
+        return false;
+      }
+      final remaining = _difficulty.maxRoute - directions.length;
+      if (_manhattan(current, goal) > remaining) {
+        return false;
+      }
+
+      final candidates = <_SokobanRouteCandidate>[
+        for (final direction in _SokobanDirection.values)
+          _SokobanRouteCandidate(
+            direction: direction,
+            score: _routeCandidateScore(current, goal, direction, directions),
+          ),
+      ]..sort((a, b) => a.score.compareTo(b.score));
+
+      for (final candidate in candidates) {
+        final direction = candidate.direction;
+        final next = _step(current, direction);
+        final behind = _step(current, _opposite(direction));
+        if (!_insidePlayable(next) ||
+            !_insidePlayable(behind) ||
+            visited.contains(next)) {
+          continue;
+        }
+        if (next == goal && directions.length + 1 < _difficulty.minRoute) {
+          continue;
+        }
+        if (directions.isNotEmpty &&
+            direction == _opposite(directions.last) &&
+            _random.nextBool()) {
+          continue;
+        }
+        visited.add(next);
+        cells.add(next);
+        directions.add(direction);
+        if (search(next)) {
+          return true;
+        }
+        directions.removeLast();
+        cells.removeLast();
+        visited.remove(next);
+      }
+      return false;
+    }
+
+    if (search(start)) {
+      return _SokobanRouteDraft(
+        cells: List<int>.of(cells),
+        directions: List<_SokobanDirection>.of(directions),
       );
     }
     return null;
   }
 
-  _SokobanRouteDraft? _buildRoute() {
-    final targetLength =
-        _difficulty.minRoute +
-        _random.nextInt(_difficulty.maxRoute - _difficulty.minRoute + 1);
-    for (var attempt = 0; attempt < 100; attempt += 1) {
-      final start = _indexOf(1 + _random.nextInt(7), 1 + _random.nextInt(7));
-      final cells = <int>[start];
-      final directions = <_SokobanDirection>[];
-      while (directions.length < targetLength) {
-        final current = cells.last;
-        final candidates = <_SokobanDirection>[];
-        for (final direction in _SokobanDirection.values) {
-          if (directions.isNotEmpty &&
-              direction == _opposite(directions.last)) {
-            continue;
-          }
-          final next = _step(current, direction);
-          final behind = _step(current, _opposite(direction));
-          if (!_insidePlayable(next) || cells.contains(next)) {
-            continue;
-          }
-          if (!_insidePlayable(behind)) {
-            continue;
-          }
-          candidates.add(direction);
-        }
-        if (candidates.isEmpty) {
-          break;
-        }
-        final direction = candidates[_random.nextInt(candidates.length)];
-        directions.add(direction);
-        cells.add(_step(current, direction));
-      }
-      if (directions.length >= _difficulty.minRoute) {
-        return _SokobanRouteDraft(cells: cells, directions: directions);
+  int _routeCandidateScore(
+    int current,
+    int goal,
+    _SokobanDirection direction,
+    List<_SokobanDirection> directions,
+  ) {
+    final next = _step(current, direction);
+    var score = _manhattan(next, goal) * 10 + _random.nextInt(10);
+    if (directions.isNotEmpty) {
+      final last = directions.last;
+      if (direction == last) {
+        score += _longestTailRun(directions) >= 2 ? 8 : 3;
+      } else if (direction != _opposite(last)) {
+        score -= 5;
       }
     }
-    return null;
+    return score;
+  }
+
+  int _longestTailRun(List<_SokobanDirection> directions) {
+    if (directions.isEmpty) {
+      return 0;
+    }
+    var run = 1;
+    for (var index = directions.length - 2; index >= 0; index -= 1) {
+      if (directions[index] != directions.last) {
+        break;
+      }
+      run += 1;
+    }
+    return run;
   }
 
   Set<int> _requiredCellsForRoute(_SokobanRouteDraft route) {
@@ -258,9 +540,30 @@ class _SokobanGameState extends State<_SokobanGame> {
         for (var col = 1; col < _cols - 1; col += 1)
           if (!required.contains(_indexOf(row, col))) _indexOf(row, col),
     ]..shuffle(_random);
-    walls.addAll(
-      candidates.take(math.min(candidates.length, _difficulty.extraWalls)),
-    );
+    final nearRoute =
+        candidates
+            .where(
+              (cell) => _SokobanDirection.values.any(
+                (direction) => required.contains(_step(cell, direction)),
+              ),
+            )
+            .toList(growable: false)
+          ..shuffle(_random);
+    final farRoute =
+        candidates
+            .where((cell) => !nearRoute.contains(cell))
+            .toList(growable: false)
+          ..shuffle(_random);
+    final wallBudget =
+        _difficulty.extraWalls +
+        _random.nextInt(math.max(2, _difficulty.boxes + 3));
+    final nearBudget = (wallBudget * 0.64).round();
+    final ordered = <int>[
+      ...nearRoute.take(nearBudget),
+      ...farRoute,
+      ...nearRoute.skip(nearBudget),
+    ];
+    walls.addAll(ordered.take(math.min(ordered.length, wallBudget)));
     return walls;
   }
 
@@ -887,6 +1190,13 @@ class _SokobanRouteDraft {
 
   final List<int> cells;
   final List<_SokobanDirection> directions;
+}
+
+class _SokobanRouteCandidate {
+  const _SokobanRouteCandidate({required this.direction, required this.score});
+
+  final _SokobanDirection direction;
+  final int score;
 }
 
 class _SokobanPushPlan {

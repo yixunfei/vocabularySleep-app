@@ -86,12 +86,14 @@ class ToolboxFreeChimeHit {
     required this.volume,
     required this.playbackRate,
     required this.variant,
+    this.pan = 0,
   });
 
   final ToolboxFreeChimeLayer layer;
   final double volume;
   final double playbackRate;
   final int variant;
+  final double pan;
 }
 
 class ToolboxFreeChimeTrigger {
@@ -112,38 +114,60 @@ class ToolboxFreeChimeTrigger {
   final double? tempoBpm;
 }
 
+class ToolboxFreeChimePlaybackLimiter {
+  ToolboxFreeChimePlaybackLimiter({required this.maxSlots})
+    : assert(maxSlots > 0);
+
+  final int maxSlots;
+  int _activeSlots = 0;
+
+  int get activeSlots => _activeSlots;
+
+  int claim(int requestedSlots) {
+    if (requestedSlots <= 0) return 0;
+    final available = maxSlots - _activeSlots;
+    if (available <= 0) return 0;
+    final claimed = math.min(requestedSlots, available);
+    _activeSlots += claimed;
+    return claimed;
+  }
+
+  void release(int slots) {
+    if (slots <= 0) return;
+    _activeSlots = math.max(0, _activeSlots - slots);
+  }
+
+  void reset() {
+    _activeSlots = 0;
+  }
+}
+
 class ToolboxFreeChimeController {
   DateTime? _lastTriggerAt;
   DateTime? _lastDirectionChangeAt;
+  DateTime? _lastFreeDirectionChangeAt;
+  ToolboxFreeChimeMotionSample? _lastSample;
   double _smoothedIntensity = 0;
   double _allegroTempoBpm = 120;
   int _lastDirectionCode = 0;
+  int _lastFreeDirectionCode = 0;
   int _sequence = 0;
 
   static const List<ToolboxFreeChimeLayerMix>
   defaultMixes = <ToolboxFreeChimeLayerMix>[
-    ToolboxFreeChimeLayerMix(layer: ToolboxFreeChimeLayer.shaker, amount: 0.62),
-    ToolboxFreeChimeLayerMix(layer: ToolboxFreeChimeLayer.water, amount: 0.48),
+    ToolboxFreeChimeLayerMix(layer: ToolboxFreeChimeLayer.shaker, amount: 0),
+    ToolboxFreeChimeLayerMix(layer: ToolboxFreeChimeLayer.water, amount: 0),
     ToolboxFreeChimeLayerMix(
       layer: ToolboxFreeChimeLayer.windChime,
       amount: 0.82,
     ),
-    ToolboxFreeChimeLayerMix(layer: ToolboxFreeChimeLayer.leaves, amount: 0.36),
-    ToolboxFreeChimeLayerMix(
-      layer: ToolboxFreeChimeLayer.bubbles,
-      amount: 0.42,
-    ),
-    ToolboxFreeChimeLayerMix(layer: ToolboxFreeChimeLayer.rain, amount: 0.44),
-    ToolboxFreeChimeLayerMix(layer: ToolboxFreeChimeLayer.impact, amount: 0.32),
-    ToolboxFreeChimeLayerMix(
-      layer: ToolboxFreeChimeLayer.kuaiban,
-      amount: 0.46,
-    ),
-    ToolboxFreeChimeLayerMix(
-      layer: ToolboxFreeChimeLayer.gongDrum,
-      amount: 0.22,
-    ),
-    ToolboxFreeChimeLayerMix(layer: ToolboxFreeChimeLayer.marble, amount: 0.36),
+    ToolboxFreeChimeLayerMix(layer: ToolboxFreeChimeLayer.leaves, amount: 0),
+    ToolboxFreeChimeLayerMix(layer: ToolboxFreeChimeLayer.bubbles, amount: 0),
+    ToolboxFreeChimeLayerMix(layer: ToolboxFreeChimeLayer.rain, amount: 0),
+    ToolboxFreeChimeLayerMix(layer: ToolboxFreeChimeLayer.impact, amount: 0),
+    ToolboxFreeChimeLayerMix(layer: ToolboxFreeChimeLayer.kuaiban, amount: 0),
+    ToolboxFreeChimeLayerMix(layer: ToolboxFreeChimeLayer.gongDrum, amount: 0),
+    ToolboxFreeChimeLayerMix(layer: ToolboxFreeChimeLayer.marble, amount: 0),
   ];
 
   double intensityForMagnitude(
@@ -174,22 +198,70 @@ class ToolboxFreeChimeController {
     required double sensitivity,
     ToolboxFreeChimePlayMode mode = ToolboxFreeChimePlayMode.free,
   }) {
+    if (!_hasAudibleMixes(mixes)) {
+      return null;
+    }
     if (mode == ToolboxFreeChimePlayMode.allegro) {
       return _evaluateAllegro(sample, mixes: mixes, sensitivity: sensitivity);
     }
+    final previousSample = _lastSample;
+    _lastSample = sample;
     final rawIntensity = normalizedIntensityForMagnitude(
       sample.magnitude,
       sensitivity: sensitivity,
     );
+    final motionDelta = _motionDelta(sample, previousSample);
+    final swingSpeedAccent = _swingSpeedAccent(sample, previousSample);
+    final directionCode = _dominantDirectionCode(sample);
+    final directionChanged =
+        _lastFreeDirectionCode != 0 &&
+        directionCode != 0 &&
+        directionCode != _lastFreeDirectionCode;
+    final directionFlip =
+        directionChanged && directionCode == -_lastFreeDirectionCode;
+    final previousDirectionChangeAt = _lastFreeDirectionChangeAt;
+    final quickTurnAccent =
+        directionChanged && previousDirectionChangeAt != null
+        ? _quickTurnAccent(sample.timestamp, previousDirectionChangeAt)
+        : 0.0;
+    if (directionCode != 0 && directionCode != _lastFreeDirectionCode) {
+      _lastFreeDirectionChangeAt = sample.timestamp;
+      _lastFreeDirectionCode = directionCode;
+    }
+    final motionAccent = (motionDelta / 9.5).clamp(0.0, 1.0).toDouble();
+    final turnWeight = directionFlip ? 1.0 : 0.62;
+    final collisionAccent = directionChanged
+        ? (turnWeight *
+                  (0.22 +
+                      motionAccent * 0.3 +
+                      swingSpeedAccent * 0.34 +
+                      quickTurnAccent * 0.18))
+              .clamp(0.0, 1.0)
+              .toDouble()
+        : 0.0;
     _smoothedIntensity = _smoothedIntensity * 0.55 + rawIntensity * 0.45;
     final intensity = math
-        .max(rawIntensity * 0.72, _smoothedIntensity)
+        .max(
+          math.max(
+            rawIntensity * 0.68 +
+                collisionAccent * 0.28 +
+                swingSpeedAccent * 0.08,
+            rawIntensity * 0.78,
+          ),
+          _smoothedIntensity,
+        )
         .clamp(0.0, 1.0)
         .toDouble();
     if (intensity < 0.06) return null;
 
     final band = _bandForIntensity(intensity);
-    final cooldown = _cooldownFor(band);
+    final cooldown = _dynamicCooldownFor(
+      band,
+      directionChanged: directionChanged,
+      motionAccent: motionAccent,
+      swingSpeedAccent: swingSpeedAccent,
+      quickTurnAccent: quickTurnAccent,
+    );
     final previous = _lastTriggerAt;
     if (previous != null && sample.timestamp.difference(previous) < cooldown) {
       return null;
@@ -202,6 +274,9 @@ class ToolboxFreeChimeController {
       band: band,
       axisBias: sample.axisBias,
       mixes: mixes,
+      motionAccent: motionAccent,
+      collisionAccent: collisionAccent,
+      swingSpeedAccent: swingSpeedAccent,
     );
   }
 
@@ -212,13 +287,16 @@ class ToolboxFreeChimeController {
     ToolboxFreeChimePlayMode mode = ToolboxFreeChimePlayMode.free,
   }) {
     final normalizedIntensity = intensity.clamp(0.08, 1.0).toDouble();
+    final safeMixes = _hasAudibleMixes(mixes)
+        ? mixes
+        : const <ToolboxFreeChimeLayerMix>[];
     return _buildTrigger(
       timestamp: timestamp,
       magnitude: normalizedIntensity * 7.2,
       intensity: normalizedIntensity,
       band: _bandForIntensity(normalizedIntensity),
       axisBias: 0,
-      mixes: mixes,
+      mixes: safeMixes,
       allegroBeat: mode == ToolboxFreeChimePlayMode.allegro,
       tempoBpm: mode == ToolboxFreeChimePlayMode.allegro
           ? (96 + normalizedIntensity * 112)
@@ -229,7 +307,10 @@ class ToolboxFreeChimeController {
   void resetTiming() {
     _lastTriggerAt = null;
     _lastDirectionChangeAt = null;
+    _lastFreeDirectionChangeAt = null;
+    _lastSample = null;
     _lastDirectionCode = 0;
+    _lastFreeDirectionCode = 0;
     _smoothedIntensity = 0;
     _allegroTempoBpm = 120;
   }
@@ -239,6 +320,9 @@ class ToolboxFreeChimeController {
     required Iterable<ToolboxFreeChimeLayerMix> mixes,
     required double sensitivity,
   }) {
+    if (!_hasAudibleMixes(mixes)) {
+      return null;
+    }
     final rawIntensity = normalizedIntensityForMagnitude(
       sample.magnitude,
       sensitivity: sensitivity,
@@ -308,18 +392,24 @@ class ToolboxFreeChimeController {
     required Iterable<ToolboxFreeChimeLayerMix> mixes,
     bool allegroBeat = false,
     double? tempoBpm,
+    double motionAccent = 0,
+    double collisionAccent = 0,
+    double swingSpeedAccent = 0,
   }) {
     final activeMixes = mixes
         .where((mix) => mix.amount > 0.02)
         .toList(growable: false);
-    final sourceMixes = activeMixes.isEmpty
-        ? const <ToolboxFreeChimeLayerMix>[
-            ToolboxFreeChimeLayerMix(
-              layer: ToolboxFreeChimeLayer.windChime,
-              amount: 0.75,
-            ),
-          ]
-        : activeMixes;
+    if (activeMixes.isEmpty) {
+      return ToolboxFreeChimeTrigger(
+        timestamp: timestamp,
+        band: ToolboxFreeChimeIntensityBand.idle,
+        intensity: 0,
+        magnitude: 0,
+        hits: const <ToolboxFreeChimeHit>[],
+        tempoBpm: tempoBpm,
+      );
+    }
+    final sourceMixes = activeMixes;
     final soft = sourceMixes
         .where((mix) => !mix.layer.isRhythmic)
         .toList(growable: false);
@@ -357,11 +447,25 @@ class ToolboxFreeChimeController {
           break;
         case ToolboxFreeChimeIntensityBand.lively:
           selected.addAll(_pick(soft.isEmpty ? sourceMixes : soft, 2));
-          selected.addAll(_pick(rhythmic, 1));
+          selected.addAll(
+            _pick(
+              rhythmic.isEmpty && collisionAccent > 0.26
+                  ? sourceMixes
+                  : rhythmic,
+              1,
+            ),
+          );
           break;
         case ToolboxFreeChimeIntensityBand.strong:
-          selected.addAll(_pick(rhythmic, 2));
-          selected.addAll(_pick(soft.isEmpty ? sourceMixes : soft, 3));
+          selected.addAll(
+            _pick(
+              rhythmic.isEmpty && collisionAccent > 0.26
+                  ? sourceMixes
+                  : rhythmic,
+              2,
+            ),
+          );
+          selected.addAll(_pick(soft.isEmpty ? sourceMixes : soft, 2));
           break;
       }
     }
@@ -369,25 +473,57 @@ class ToolboxFreeChimeController {
       selected.addAll(_pick(sourceMixes, 1));
     }
 
+    final hitLimit = allegroBeat
+        ? 3
+        : switch (band) {
+            ToolboxFreeChimeIntensityBand.strong => 4,
+            ToolboxFreeChimeIntensityBand.lively => 3,
+            _ => 2,
+          };
+    final cappedSelected = selected.take(hitLimit).toList(growable: false);
     final hits = <ToolboxFreeChimeHit>[];
-    for (var i = 0; i < selected.length; i += 1) {
-      final mix = selected[i];
+    for (var i = 0; i < cappedSelected.length; i += 1) {
+      final mix = cappedSelected[i];
       final layerBias = _layerVolumeBias(mix.layer);
       final bandBias = _bandVolumeBias(band);
       final amount = mix.amount.clamp(0.0, 1.0).toDouble();
+      final collisionLayerBoost =
+          collisionAccent > 0 &&
+              (mix.layer.isRhythmic ||
+                  mix.layer == ToolboxFreeChimeLayer.windChime)
+          ? 1 + collisionAccent * 0.22
+          : 1.0;
       final volume =
           amount *
           layerBias *
           bandBias *
-          (0.62 + intensity * 0.46).clamp(0.0, 1.0);
-      final variant = (_sequence + i * 3 + (magnitude * 2).round()) % 8;
+          collisionLayerBoost *
+          (0.56 +
+                  intensity * 0.4 +
+                  motionAccent * 0.08 +
+                  swingSpeedAccent * 0.14 +
+                  collisionAccent * 0.08)
+              .clamp(0.0, 1.14);
+      final variant =
+          (_sequence +
+              i * 3 +
+              (magnitude * 2).round() +
+              (motionAccent * 5).round()) %
+          8;
       final rateJitter = (variant - 3.5) * 0.006;
       final tempoRate = tempoBpm == null
           ? 0.0
           : ((tempoBpm - 120) / 220).clamp(-0.12, 0.28).toDouble();
       final playbackRate =
-          (0.965 + intensity * 0.06 + axisBias * 0.018 + tempoRate + rateJitter)
-              .clamp(0.92, 1.08)
+          (0.965 +
+                  intensity * 0.052 +
+                  axisBias * 0.026 +
+                  motionAccent * 0.018 +
+                  collisionAccent * 0.028 +
+                  swingSpeedAccent * 0.036 +
+                  tempoRate +
+                  rateJitter)
+              .clamp(0.92, 1.1)
               .toDouble();
       hits.add(
         ToolboxFreeChimeHit(
@@ -395,6 +531,7 @@ class ToolboxFreeChimeController {
           volume: volume.clamp(0.0, 1.0).toDouble(),
           playbackRate: playbackRate,
           variant: variant,
+          pan: axisBias,
         ),
       );
     }
@@ -407,6 +544,15 @@ class ToolboxFreeChimeController {
       hits: hits,
       tempoBpm: tempoBpm,
     );
+  }
+
+  bool _hasAudibleMixes(Iterable<ToolboxFreeChimeLayerMix> mixes) {
+    for (final mix in mixes) {
+      if (mix.amount > 0.02) {
+        return true;
+      }
+    }
+    return false;
   }
 
   int _dominantDirectionCode(ToolboxFreeChimeMotionSample sample) {
@@ -423,6 +569,45 @@ class ToolboxFreeChimeController {
       return sample.y >= 0 ? 2 : -2;
     }
     return sample.z >= 0 ? 3 : -3;
+  }
+
+  double _motionDelta(
+    ToolboxFreeChimeMotionSample sample,
+    ToolboxFreeChimeMotionSample? previous,
+  ) {
+    if (previous == null) {
+      return 0;
+    }
+    final dx = sample.x - previous.x;
+    final dy = sample.y - previous.y;
+    final dz = sample.z - previous.z;
+    return math.sqrt(dx * dx + dy * dy + dz * dz);
+  }
+
+  double _swingSpeedAccent(
+    ToolboxFreeChimeMotionSample sample,
+    ToolboxFreeChimeMotionSample? previous,
+  ) {
+    if (previous == null) {
+      return 0;
+    }
+    final elapsedMs = sample.timestamp
+        .difference(previous.timestamp)
+        .inMilliseconds;
+    if (elapsedMs <= 0) {
+      return 0;
+    }
+    final seconds = elapsedMs / 1000;
+    final swingSpeed = _motionDelta(sample, previous) / seconds;
+    return (swingSpeed / 112).clamp(0.0, 1.0).toDouble();
+  }
+
+  double _quickTurnAccent(DateTime timestamp, DateTime previousTurnAt) {
+    final intervalMs = timestamp
+        .difference(previousTurnAt)
+        .inMilliseconds
+        .clamp(55, 420);
+    return ((420 - intervalMs) / 365).clamp(0.0, 1.0).toDouble();
   }
 
   List<ToolboxFreeChimeLayerMix> _pick(
@@ -459,6 +644,57 @@ class ToolboxFreeChimeController {
       ToolboxFreeChimeIntensityBand.lively => const Duration(milliseconds: 210),
       ToolboxFreeChimeIntensityBand.strong => const Duration(milliseconds: 130),
     };
+  }
+
+  Duration _directionChangeCooldownFor(ToolboxFreeChimeIntensityBand band) {
+    return switch (band) {
+      ToolboxFreeChimeIntensityBand.idle => const Duration(milliseconds: 420),
+      ToolboxFreeChimeIntensityBand.gentle => const Duration(milliseconds: 240),
+      ToolboxFreeChimeIntensityBand.flowing => const Duration(
+        milliseconds: 170,
+      ),
+      ToolboxFreeChimeIntensityBand.lively => const Duration(milliseconds: 105),
+      ToolboxFreeChimeIntensityBand.strong => const Duration(milliseconds: 80),
+    };
+  }
+
+  Duration _dynamicCooldownFor(
+    ToolboxFreeChimeIntensityBand band, {
+    required bool directionChanged,
+    required double motionAccent,
+    required double swingSpeedAccent,
+    required double quickTurnAccent,
+  }) {
+    final base = directionChanged
+        ? _directionChangeCooldownFor(band)
+        : _cooldownFor(band);
+    final reduction = directionChanged
+        ? (swingSpeedAccent * 0.36 +
+                  quickTurnAccent * 0.2 +
+                  motionAccent * 0.16)
+              .clamp(0.0, 0.46)
+              .toDouble()
+        : (swingSpeedAccent * 0.16).clamp(0.0, 0.18).toDouble();
+    final minimumMs = directionChanged
+        ? switch (band) {
+            ToolboxFreeChimeIntensityBand.idle => 240,
+            ToolboxFreeChimeIntensityBand.gentle => 128,
+            ToolboxFreeChimeIntensityBand.flowing => 92,
+            ToolboxFreeChimeIntensityBand.lively => 62,
+            ToolboxFreeChimeIntensityBand.strong => 58,
+          }
+        : switch (band) {
+            ToolboxFreeChimeIntensityBand.idle => 560,
+            ToolboxFreeChimeIntensityBand.gentle => 420,
+            ToolboxFreeChimeIntensityBand.flowing => 270,
+            ToolboxFreeChimeIntensityBand.lively => 170,
+            ToolboxFreeChimeIntensityBand.strong => 105,
+          };
+    final milliseconds = math.max(
+      minimumMs,
+      (base.inMilliseconds * (1 - reduction)).round(),
+    );
+    return Duration(milliseconds: milliseconds);
   }
 
   double _bandVolumeBias(ToolboxFreeChimeIntensityBand band) {

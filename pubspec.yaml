@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.11.0
+  sdk: ^3.12.0
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -46,7 +46,7 @@ dependencies:
   audioplayers: ^6.6.0
   audioplayers_platform_interface: ^7.1.1
   http: ^1.6.0
-  record: ^6.2.0
+  record: ^7.0.0
   uuid: ^4.5.3
   provider: ^6.1.5+1
   flutter_riverpod: ^2.6.1
@@ -72,7 +72,9 @@ dependencies:
   qr_flutter: ^4.1.0
   barcode_widget: ^2.0.4
   flutter_midi_engine: ^0.1.3
-
+  local_auth: ^3.0.1
+  video_player: ^2.11.1
+  video_trimmer: 5.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -87,8 +89,16 @@ dependency_overrides:
     path: third_party/audioplayers_android
   audioplayers_windows:
     path: third_party/audioplayers_windows
+  file_picker:
+    path: third_party/file_picker
+  flutter_midi_engine:
+    path: third_party/flutter_midi_engine
   flutter_tts:
     path: third_party/flutter_tts
+  package_info_plus:
+    path: third_party/package_info_plus
+  sensors_plus:
+    path: third_party/sensors_plus
 
 flutter_launcher_icons:
   android: true
@@ -123,7 +133,6 @@ flutter:
     - assets/toolbox/beads/
     - assets/toolbox/colors/
     - assets/toolbox/device_frames/
-    - assets/toolbox/games/roulette/
     - assets/toolbox/instruments/
     - lib/l10n/catalog/
 

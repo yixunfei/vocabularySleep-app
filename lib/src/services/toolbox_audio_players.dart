@@ -74,10 +74,15 @@ class ToolboxLoopController {
 }
 
 class ToolboxEffectPlayer implements ToolboxNotePlayer {
-  ToolboxEffectPlayer(this.bytes, {this.maxPlayers = 6});
+  ToolboxEffectPlayer(
+    this.bytes, {
+    this.maxPlayers = 6,
+    this.allowOverflow = true,
+  });
 
   final Uint8List bytes;
   final int maxPlayers;
+  final bool allowOverflow;
   final AppLogService _log = AppLogService.instance;
 
   final _ToolboxAsyncLock _voiceLock = _ToolboxAsyncLock();
@@ -99,6 +104,9 @@ class ToolboxEffectPlayer implements ToolboxNotePlayer {
         );
         return;
       }
+      if (!allowOverflow) {
+        return;
+      }
       await _playOverflow(
         volume: normalizedVolume,
         playbackRate: normalizedPlaybackRate,
@@ -113,6 +121,7 @@ class ToolboxEffectPlayer implements ToolboxNotePlayer {
         data: <String, Object?>{
           'bytes': bytes.length,
           'strategy': 'reusable_voice_pool',
+          'allowOverflow': allowOverflow,
         },
       );
     }
@@ -128,6 +137,7 @@ class ToolboxEffectPlayer implements ToolboxNotePlayer {
         data: <String, Object?>{
           'error': '$error',
           'strategy': 'reusable_voice_pool',
+          'allowOverflow': allowOverflow,
         },
       );
       _log.e(
@@ -138,6 +148,7 @@ class ToolboxEffectPlayer implements ToolboxNotePlayer {
         data: <String, Object?>{
           'bytes': bytes.length,
           'strategy': 'reusable_voice_pool',
+          'allowOverflow': allowOverflow,
         },
       );
     }
@@ -304,13 +315,20 @@ class ToolboxRealisticEffectPlayer implements ToolboxNotePlayer {
     this.bytesVariants, {
     this.maxPlayers = 6,
     this.volumeJitter = 0.08,
+    this.allowOverflow = true,
   }) {
     assert(
       bytesVariants.isNotEmpty,
       'Must provide at least one audio variant.',
     );
     _players = bytesVariants
-        .map((bytes) => ToolboxEffectPlayer(bytes, maxPlayers: maxPlayers))
+        .map(
+          (bytes) => ToolboxEffectPlayer(
+            bytes,
+            maxPlayers: maxPlayers,
+            allowOverflow: allowOverflow,
+          ),
+        )
         .toList(growable: false);
   }
 
@@ -319,18 +337,21 @@ class ToolboxRealisticEffectPlayer implements ToolboxNotePlayer {
     required Uint8List Function(int variant) bytesForVariant,
     int maxPlayers = 6,
     double volumeJitter = 0.08,
+    bool allowOverflow = true,
   }) {
     assert(variants.isNotEmpty, 'Must provide at least one audio variant.');
     return ToolboxRealisticEffectPlayer(
       <Uint8List>[for (final variant in variants) bytesForVariant(variant)],
       maxPlayers: maxPlayers,
       volumeJitter: volumeJitter,
+      allowOverflow: allowOverflow,
     );
   }
 
   final List<Uint8List> bytesVariants;
   final int maxPlayers;
   final double volumeJitter;
+  final bool allowOverflow;
 
   late final List<ToolboxEffectPlayer> _players;
   final math.Random _random = math.Random();

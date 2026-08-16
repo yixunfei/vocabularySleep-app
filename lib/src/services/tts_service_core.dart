@@ -1,6 +1,20 @@
 part of 'tts_service.dart';
 
 extension TtsServiceCore on TtsService {
+  void validateForPlayback(TtsConfig config) {
+    if (config.provider == TtsProviderType.local) {
+      return;
+    }
+    final apiKey = config.apiKey?.trim() ?? '';
+    if (apiKey.isEmpty) {
+      throw const TtsConfigurationException('TTS API key is missing.');
+    }
+    if (config.provider == TtsProviderType.customApi &&
+        (config.baseUrl == null || config.baseUrl!.trim().isEmpty)) {
+      throw const TtsConfigurationException('Custom API base URL is missing.');
+    }
+  }
+
   Future<List<String>> getLocalVoices() async {
     final voices = await _loadLocalVoiceOptions();
     final names = <String>{};
@@ -40,6 +54,9 @@ extension TtsServiceCore on TtsService {
     TtsConfig config, {
     bool preCacheOnly = false,
   }) async {
+    if (_disposed) {
+      throw StateError('TtsService has been disposed.');
+    }
     final content = text.trim();
     if (content.isEmpty) return;
     try {
@@ -80,6 +97,23 @@ extension TtsServiceCore on TtsService {
     await _runOp<void>('api.stop', () => _apiPlayer.stop(), swallowError: true);
     _completeLocalSpeak();
     _completeApiSpeak(error: const _ApiSpeakInterrupted('stop'));
+  }
+
+  Future<void> dispose() async {
+    if (_disposed) {
+      return;
+    }
+    _disposed = true;
+    await stop();
+    await _runOp<void>(
+      'api.dispose',
+      () => _apiPlayer.dispose(),
+      swallowError: true,
+    );
+    _localCompletionCompleter = null;
+    _apiCompletionCompleter = null;
+    _localVoicesLoadFuture = null;
+    _cachedLocalVoices = null;
   }
 
   Future<void> pause(TtsProviderType provider) async {

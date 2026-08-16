@@ -66,6 +66,8 @@ class _FollowAlongPageState extends ConsumerState<FollowAlongPage> {
     }
     return const <AsrProviderType>[
       AsrProviderType.api,
+      AsrProviderType.aliyunBailian,
+      AsrProviderType.doubao,
       AsrProviderType.customApi,
     ];
   }

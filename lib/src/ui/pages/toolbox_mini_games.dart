@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../i18n/app_i18n.dart';
-import '../../services/toolbox_audio_service.dart';
+import '../../services/app_log_service.dart';
 import '../widgets/section_header.dart';
 import 'toolbox_sudoku_card.dart';
 import 'toolbox_tool_shell.dart';
@@ -20,9 +20,7 @@ part 'toolbox_mini_games_minesweeper.dart';
 part 'toolbox_mini_games_jigsaw.dart';
 part 'toolbox_mini_games_gomoku.dart';
 part 'toolbox_mini_games_slide.dart';
-part 'toolbox_mini_games_roulette.dart';
-part 'toolbox_mini_games_roulette_view.dart';
-part 'toolbox_mini_games_roulette_painters.dart';
+part 'toolbox_mini_games_match3.dart';
 part 'toolbox_mini_games_tetris.dart';
 part 'toolbox_mini_games_sokoban.dart';
 
@@ -34,28 +32,8 @@ class MiniGamesToolPage extends StatelessWidget {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return ToolboxToolPage(
       title: i18n.t('inline.ui.module.module_access.mini_games_e63f5e'),
-      subtitle: i18n.t(
-        'inline.ui.pages.toolbox_mini_games.a_compact_game_module_with_roulette_tetris_sokoban_sudok_d3bb03',
-      ),
+      subtitle: i18n.t('toolbox.miniGames.hub.subtitle.current'),
       child: const _MiniGamesHub(),
-    );
-  }
-}
-
-class RouletteGamePage extends StatelessWidget {
-  const RouletteGamePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-    return ToolboxToolPage(
-      title: i18n.t(
-        'inline.ui.pages.toolbox_mini_games.roulette_trigger_1bb5ec',
-      ),
-      subtitle: i18n.t(
-        'inline.ui.pages.toolbox_mini_games.set_the_bullet_count_spin_the_cylinder_and_pull_chamber_f769c3',
-      ),
-      child: const _ChoiceSpinnerGame(),
     );
   }
 }
@@ -71,6 +49,7 @@ class TetrisGamePage extends StatelessWidget {
       subtitle: i18n.t(
         'inline.ui.pages.toolbox_mini_games.classic_10x20_falling_blocks_with_rotate_soft_drop_hard_512f74',
       ),
+      showPageHeader: false,
       child: const _TetrisGame(),
     );
   }
@@ -88,6 +67,20 @@ class SokobanGamePage extends StatelessWidget {
         'inline.ui.pages.toolbox_mini_games.generates_a_solvable_route_first_then_places_walls_inclu_706ea2',
       ),
       child: const _SokobanGame(),
+    );
+  }
+}
+
+class MatchThreeGamePage extends StatelessWidget {
+  const MatchThreeGamePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
+    return ToolboxToolPage(
+      title: i18n.t('toolbox.miniGames.match3.title'),
+      subtitle: i18n.t('toolbox.miniGames.match3.subtitle'),
+      child: const _MatchThreeGame(),
     );
   }
 }
@@ -180,17 +173,6 @@ class _MiniGamesHub extends StatelessWidget {
     final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     final entries = <_MiniGameEntry>[
       _MiniGameEntry(
-        title: i18n.t(
-          'inline.ui.pages.toolbox_mini_games.roulette_trigger_1bb5ec',
-        ),
-        subtitle: i18n.t(
-          'inline.ui.pages.toolbox_mini_games.set_bullets_and_pull_one_chamber_at_a_time_559d26',
-        ),
-        icon: Icons.shuffle_rounded,
-        accent: const Color(0xFF5E8C61),
-        pageBuilder: RouletteGamePage.new,
-      ),
-      _MiniGameEntry(
         title: i18n.t('inline.ui.pages.toolbox_mini_games.tetris_7fab1e'),
         subtitle: i18n.t(
           'inline.ui.pages.toolbox_mini_games.drop_rotate_clear_lines_and_score_8c5735',
@@ -198,6 +180,13 @@ class _MiniGamesHub extends StatelessWidget {
         icon: Icons.view_module_rounded,
         accent: const Color(0xFF4B8BC8),
         pageBuilder: TetrisGamePage.new,
+      ),
+      _MiniGameEntry(
+        title: i18n.t('toolbox.miniGames.match3.title'),
+        subtitle: i18n.t('toolbox.miniGames.match3.entry_subtitle'),
+        icon: Icons.auto_awesome_rounded,
+        accent: const Color(0xFFD76593),
+        pageBuilder: MatchThreeGamePage.new,
       ),
       _MiniGameEntry(
         title: i18n.t('inline.ui.pages.toolbox_mini_games.sokoban_4ed75c'),

@@ -6,14 +6,71 @@ enum _CryptoWorkspace { steganography, file, hash }
 
 enum _FileCryptoMode { encrypt, decrypt }
 
-class _DecodeFailureStatus {
-  const _DecodeFailureStatus({
-    required this.windowCount,
-    required this.locked,
-    this.remaining,
-  });
+const List<String> _stegoAudioExtensions = <String>[
+  'wav',
+  'wave',
+  'm4a',
+  'm4b',
+  'm4r',
+  'mp4',
+  'aac',
+  'mp3',
+  'mp2',
+  'mpga',
+  'flac',
+  'ogg',
+  'oga',
+  'opus',
+  'weba',
+  'wma',
+  'aiff',
+  'aif',
+  'aifc',
+  'caf',
+  'mka',
+  'ac3',
+  'eac3',
+  'ape',
+  'amr',
+  'au',
+  'snd',
+  'ra',
+  'ram',
+];
 
-  final int windowCount;
+const List<String> _stegoVideoExtensions = <String>[
+  'mp4',
+  'mov',
+  'm4v',
+  'f4v',
+  '3gp',
+  '3g2',
+  'heic',
+  'heif',
+  'mkv',
+  'webm',
+  'avi',
+  'wmv',
+  'flv',
+  'mpeg',
+  'mpg',
+  'mpe',
+  'mpv',
+  'ts',
+  'mts',
+  'm2ts',
+  'vob',
+  'ogv',
+  'asf',
+  'rm',
+  'rmvb',
+  'divx',
+  'mxf',
+];
+
+class _DecodeFailureStatus {
+  const _DecodeFailureStatus({required this.locked, this.remaining});
+
   final bool locked;
   final Duration? remaining;
 }
@@ -35,10 +92,10 @@ class _StegoEmbedTextRequest {
     required this.keyBits,
     required this.macAlgorithm,
     required this.signatureMode,
-    required this.maxErrorAttempts,
-    required this.maxSuccessfulReveals,
     required this.locatorAlgorithm,
     required this.locatorStrength,
+    required this.carrierProtectionMode,
+    required this.allowCarrierOverwrite,
   });
 
   final ToolboxSteganographyMediaKind mediaKind;
@@ -56,10 +113,10 @@ class _StegoEmbedTextRequest {
   final ToolboxCryptoKeyBits keyBits;
   final ToolboxCryptoMacAlgorithm macAlgorithm;
   final ToolboxCryptoSignatureMode signatureMode;
-  final int maxErrorAttempts;
-  final int maxSuccessfulReveals;
   final ToolboxSteganographyLocatorAlgorithm locatorAlgorithm;
   final ToolboxSteganographyLocatorStrength locatorStrength;
+  final ToolboxSteganographyCarrierProtectionMode carrierProtectionMode;
+  final bool allowCarrierOverwrite;
 }
 
 class _StegoRevealTextRequest {
@@ -101,10 +158,10 @@ class _StegoEmbedFileRequest {
     required this.keyBits,
     required this.macAlgorithm,
     required this.signatureMode,
-    required this.maxErrorAttempts,
-    required this.maxSuccessfulReveals,
     required this.locatorAlgorithm,
     required this.locatorStrength,
+    required this.carrierProtectionMode,
+    required this.allowCarrierOverwrite,
   });
 
   final ToolboxSteganographyMediaKind mediaKind;
@@ -126,10 +183,10 @@ class _StegoEmbedFileRequest {
   final ToolboxCryptoKeyBits keyBits;
   final ToolboxCryptoMacAlgorithm macAlgorithm;
   final ToolboxCryptoSignatureMode signatureMode;
-  final int maxErrorAttempts;
-  final int maxSuccessfulReveals;
   final ToolboxSteganographyLocatorAlgorithm locatorAlgorithm;
   final ToolboxSteganographyLocatorStrength locatorStrength;
+  final ToolboxSteganographyCarrierProtectionMode carrierProtectionMode;
+  final bool allowCarrierOverwrite;
 }
 
 class _StegoRevealFileRequest {
@@ -166,8 +223,6 @@ class _StegoTextCapacityRequest {
     required this.keyBits,
     required this.macAlgorithm,
     required this.signatureMode,
-    required this.maxErrorAttempts,
-    required this.maxSuccessfulReveals,
   });
 
   final ToolboxSteganographyMediaKind mediaKind;
@@ -184,8 +239,6 @@ class _StegoTextCapacityRequest {
   final ToolboxCryptoKeyBits keyBits;
   final ToolboxCryptoMacAlgorithm macAlgorithm;
   final ToolboxCryptoSignatureMode signatureMode;
-  final int maxErrorAttempts;
-  final int maxSuccessfulReveals;
 }
 
 class _StegoFileCapacityRequest {
@@ -208,8 +261,6 @@ class _StegoFileCapacityRequest {
     required this.keyBits,
     required this.macAlgorithm,
     required this.signatureMode,
-    required this.maxErrorAttempts,
-    required this.maxSuccessfulReveals,
   });
 
   final ToolboxSteganographyMediaKind mediaKind;
@@ -230,8 +281,6 @@ class _StegoFileCapacityRequest {
   final ToolboxCryptoKeyBits keyBits;
   final ToolboxCryptoMacAlgorithm macAlgorithm;
   final ToolboxCryptoSignatureMode signatureMode;
-  final int maxErrorAttempts;
-  final int maxSuccessfulReveals;
 }
 
 ToolboxSteganographyEmbedResult _runStegoEmbedText(
@@ -253,10 +302,10 @@ ToolboxSteganographyEmbedResult _runStegoEmbedText(
       keyBits: request.keyBits,
       macAlgorithm: request.macAlgorithm,
       signatureMode: request.signatureMode,
-      maxErrorAttempts: request.maxErrorAttempts,
-      maxSuccessfulReveals: request.maxSuccessfulReveals,
       locatorAlgorithm: request.locatorAlgorithm,
       locatorStrength: request.locatorStrength,
+      carrierProtectionMode: request.carrierProtectionMode,
+      allowCarrierOverwrite: request.allowCarrierOverwrite,
     );
   }
   return ToolboxSteganographyService().embedText(
@@ -272,10 +321,10 @@ ToolboxSteganographyEmbedResult _runStegoEmbedText(
     keyBits: request.keyBits,
     macAlgorithm: request.macAlgorithm,
     signatureMode: request.signatureMode,
-    maxErrorAttempts: request.maxErrorAttempts,
-    maxSuccessfulReveals: request.maxSuccessfulReveals,
     locatorAlgorithm: request.locatorAlgorithm,
     locatorStrength: request.locatorStrength,
+    carrierProtectionMode: request.carrierProtectionMode,
+    allowCarrierOverwrite: request.allowCarrierOverwrite,
   );
 }
 
@@ -315,10 +364,10 @@ ToolboxSteganographyEmbedResult _runStegoEmbedFile(
       keyBits: request.keyBits,
       macAlgorithm: request.macAlgorithm,
       signatureMode: request.signatureMode,
-      maxErrorAttempts: request.maxErrorAttempts,
-      maxSuccessfulReveals: request.maxSuccessfulReveals,
       locatorAlgorithm: request.locatorAlgorithm,
       locatorStrength: request.locatorStrength,
+      carrierProtectionMode: request.carrierProtectionMode,
+      allowCarrierOverwrite: request.allowCarrierOverwrite,
     );
   }
   return ToolboxSteganographyService().embedFile(
@@ -336,42 +385,10 @@ ToolboxSteganographyEmbedResult _runStegoEmbedFile(
     keyBits: request.keyBits,
     macAlgorithm: request.macAlgorithm,
     signatureMode: request.signatureMode,
-    maxErrorAttempts: request.maxErrorAttempts,
-    maxSuccessfulReveals: request.maxSuccessfulReveals,
     locatorAlgorithm: request.locatorAlgorithm,
     locatorStrength: request.locatorStrength,
-  );
-}
-
-class _StegoSuccessfulRevealProtectionRequest {
-  const _StegoSuccessfulRevealProtectionRequest({
-    required this.mediaKind,
-    required this.carrierBytes,
-    required this.passphrase,
-    required this.keyFileBytes,
-    required this.locatorAlgorithm,
-    required this.locatorStrength,
-  });
-
-  final ToolboxSteganographyMediaKind mediaKind;
-  final Uint8List carrierBytes;
-  final String passphrase;
-  final Uint8List? keyFileBytes;
-  final ToolboxSteganographyLocatorAlgorithm locatorAlgorithm;
-  final ToolboxSteganographyLocatorStrength locatorStrength;
-}
-
-ToolboxSteganographySuccessfulRevealProtectionResult
-_runStegoSuccessfulRevealProtection(
-  _StegoSuccessfulRevealProtectionRequest request,
-) {
-  return ToolboxSteganographyService().applySuccessfulRevealProtection(
-    mediaKind: request.mediaKind,
-    carrierBytes: request.carrierBytes,
-    passphrase: request.passphrase,
-    keyFileBytes: request.keyFileBytes,
-    locatorAlgorithm: request.locatorAlgorithm,
-    locatorStrength: request.locatorStrength,
+    carrierProtectionMode: request.carrierProtectionMode,
+    allowCarrierOverwrite: request.allowCarrierOverwrite,
   );
 }
 
@@ -406,8 +423,6 @@ ToolboxSteganographyCapacityCheck _runStegoTextCapacityCheck(
     keyBits: request.keyBits,
     macAlgorithm: request.macAlgorithm,
     signatureMode: request.signatureMode,
-    maxErrorAttempts: request.maxErrorAttempts,
-    maxSuccessfulReveals: request.maxSuccessfulReveals,
   );
 }
 
@@ -433,9 +448,101 @@ ToolboxSteganographyCapacityCheck _runStegoFileCapacityCheck(
     keyBits: request.keyBits,
     macAlgorithm: request.macAlgorithm,
     signatureMode: request.signatureMode,
-    maxErrorAttempts: request.maxErrorAttempts,
-    maxSuccessfulReveals: request.maxSuccessfulReveals,
   );
+}
+
+ToolboxSteganographyCarrierFingerprint _runStegoCarrierFingerprint(
+  Uint8List bytes,
+) {
+  return ToolboxSteganographyService.carrierFingerprint(bytes);
+}
+
+@visibleForTesting
+class ToolboxStegoLocalVaultPaths {
+  ToolboxStegoLocalVaultPaths({
+    Future<Directory> Function()? documentsDirectoryProvider,
+  }) : _documentsDirectoryProvider =
+           documentsDirectoryProvider ?? getApplicationDocumentsDirectory;
+
+  final Future<Directory> Function() _documentsDirectoryProvider;
+
+  Future<Directory> directory({required bool create}) async {
+    final appDir = await _documentsDirectoryProvider();
+    final directory = Directory(
+      path.join(appDir.path, 'life_tools', 'steganography'),
+    );
+    if (create && !await directory.exists()) {
+      await directory.create(recursive: true);
+    }
+    return directory;
+  }
+
+  Future<File> file({required bool createDirectory}) async {
+    final vaultDirectory = await directory(create: createDirectory);
+    return File(path.join(vaultDirectory.path, 'local_stego_vault.json'));
+  }
+
+  Future<void> deleteEmptyParents(File vaultFile) async {
+    await _deleteDirectoryIfEmpty(vaultFile.parent);
+    final lifeToolsDirectory = vaultFile.parent.parent;
+    final appDir = await _documentsDirectoryProvider();
+    final isExpectedLifeToolsDirectory =
+        path.basename(lifeToolsDirectory.path) == 'life_tools' &&
+        path.equals(
+          path.normalize(lifeToolsDirectory.parent.path),
+          path.normalize(appDir.path),
+        );
+    if (isExpectedLifeToolsDirectory) {
+      await _deleteDirectoryIfEmpty(lifeToolsDirectory);
+    }
+  }
+
+  Future<void> _deleteDirectoryIfEmpty(Directory directory) async {
+    try {
+      if (!await directory.exists()) {
+        return;
+      }
+      if (await directory.list(followLinks: false).isEmpty) {
+        await directory.delete();
+      }
+    } on Object {
+      // Directory cleanup is best-effort; vault clearing must still succeed.
+    }
+  }
+}
+
+@visibleForTesting
+String? resolveStegoFingerprintSidecarPath({
+  required String? pickedPath,
+  required String? protectedCarrierPath,
+  required String sidecarFileName,
+}) {
+  final normalizedPickedPath = pickedPath?.trim();
+  if (normalizedPickedPath == null || normalizedPickedPath.isEmpty) {
+    return pickedPath;
+  }
+  final normalizedProtectedPath = protectedCarrierPath?.trim();
+  if (normalizedProtectedPath == null || normalizedProtectedPath.isEmpty) {
+    return pickedPath;
+  }
+  if (!_sameFilesystemPath(normalizedPickedPath, normalizedProtectedPath)) {
+    return pickedPath;
+  }
+
+  final protectedDirectory = path.dirname(normalizedProtectedPath);
+  final sidecarPath = path.join(protectedDirectory, sidecarFileName);
+  if (!_sameFilesystemPath(sidecarPath, normalizedProtectedPath)) {
+    return sidecarPath;
+  }
+
+  final carrierBaseName = path.basenameWithoutExtension(
+    normalizedProtectedPath,
+  );
+  return path.join(protectedDirectory, '${carrierBaseName}_fingerprint.vssig');
+}
+
+bool _sameFilesystemPath(String a, String b) {
+  return path.normalize(a).toLowerCase() == path.normalize(b).toLowerCase();
 }
 
 class _SteganographyToolPage extends StatefulWidget {
@@ -446,8 +553,9 @@ class _SteganographyToolPage extends StatefulWidget {
 }
 
 class _SteganographyToolPageState extends State<_SteganographyToolPage> {
-  final ToolboxSteganographyService _service = ToolboxSteganographyService();
   final ToolboxCryptoService _cryptoService = ToolboxCryptoService();
+  final ToolboxStegoLocalVaultPaths _localVaultPaths =
+      ToolboxStegoLocalVaultPaths();
   final TextEditingController _secretController = TextEditingController();
   final TextEditingController _coverSecretController = TextEditingController();
   final TextEditingController _passphraseController = TextEditingController();
@@ -456,10 +564,6 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   final TextEditingController _keyFileLengthController = TextEditingController(
     text: '256',
   );
-  final TextEditingController _maxErrorAttemptsController =
-      TextEditingController(text: '0');
-  final TextEditingController _maxSuccessfulRevealsController =
-      TextEditingController(text: '0');
 
   _CryptoWorkspace _workspace = _CryptoWorkspace.steganography;
   _StegoMode _mode = _StegoMode.embed;
@@ -473,6 +577,13 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   ToolboxCryptoMacAlgorithm _macAlgorithm = ToolboxCryptoMacAlgorithm.sha256;
   ToolboxCryptoSignatureMode _signatureMode = ToolboxCryptoSignatureMode.none;
   bool _dualLayerEnabled = false;
+  bool _allowCarrierOverwrite = false;
+  bool _exportFingerprintFile = false;
+  bool _localStegoVaultEnabled = false;
+  ToolboxSteganographyCarrierProtectionMode _carrierProtectionMode =
+      ToolboxSteganographyCarrierProtectionMode.deniable;
+  ToolboxSteganographyCarrierFingerprint? _expectedFingerprint;
+  String? _expectedFingerprintName;
   ToolboxSteganographyLocatorAlgorithm _locatorAlgorithm =
       ToolboxSteganographyLocatorAlgorithm.sha256;
   ToolboxSteganographyLocatorStrength _locatorStrength =
@@ -511,8 +622,6 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   String? _savedPath;
   String? _statusMessage;
   String? _error;
-  bool _maxErrorRiskPromptShown = false;
-  bool _successfulRevealRiskPromptShown = false;
   Timer? _decodeUnlockTimer;
 
   static const Duration _decodeErrorWindow = Duration(minutes: 5);
@@ -524,8 +633,6 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       <String, List<DateTime>>{};
   static final Map<String, DateTime> _decodeLockedUntilByCarrier =
       <String, DateTime>{};
-  static final Map<String, int> _protectedDecodeFailuresByCarrier =
-      <String, int>{};
 
   @override
   void dispose() {
@@ -535,8 +642,6 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     _passphraseController.dispose();
     _coverPassphraseController.dispose();
     _keyFileLengthController.dispose();
-    _maxErrorAttemptsController.dispose();
-    _maxSuccessfulRevealsController.dispose();
     _decodeUnlockTimer?.cancel();
     _sourcePreview?.dispose();
     _outputPreview?.dispose();
@@ -552,7 +657,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       ),
       subtitle: _lifeI18nText(
         context,
-        'inline.plan295.crypto.encrypt_text_into_media_encrypt_file.6902c8ad0625',
+        'toolbox.crypto.stego.page_subtitle_experimental',
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -662,7 +767,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           ),
         ),
         subtitle: Text(
-          '${_keyBits.bits}-bit · ${_macAlgorithm.id} · ${_signatureMode.label} · ${_locatorAlgorithm.label}/${_locatorStrength.id}',
+          '${_keyBits.bits}-bit · ${_macAlgorithm.id} · ${_signatureModeLabel(context, _signatureMode)} · ${_locatorAlgorithm.label}/${_locatorStrength.id}',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -724,28 +829,25 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               _LifeSegmentedField<ToolboxCryptoSignatureMode>(
                 label: _lifeI18nText(
                   context,
-                  'inline.plan295.crypto.signature.a27f12dbd0aa',
+                  'toolbox.crypto.stego.integrity_check_label',
                 ),
                 value: _signatureMode,
                 options: const <_LifeOption<ToolboxCryptoSignatureMode>>[
                   _LifeOption<ToolboxCryptoSignatureMode>(
                     value: ToolboxCryptoSignatureMode.none,
-                    labelKey: 'ref.wordTransitionStyleNone',
+                    labelKey: 'toolbox.crypto.stego.integrity_check_none',
                   ),
                   _LifeOption<ToolboxCryptoSignatureMode>(
                     value: ToolboxCryptoSignatureMode.weakSha256,
-                    labelKey:
-                        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.weak_fast_df2355',
+                    labelKey: 'toolbox.crypto.stego.integrity_check_hmac',
                   ),
                   _LifeOption<ToolboxCryptoSignatureMode>(
                     value: ToolboxCryptoSignatureMode.rsaSha256,
-                    labelKey:
-                        'literal.services.toolbox_crypto_service.sha_256_rsa_315a26',
+                    labelKey: 'toolbox.crypto.stego.integrity_check_rsa',
                   ),
                   _LifeOption<ToolboxCryptoSignatureMode>(
                     value: ToolboxCryptoSignatureMode.ecdsaSha256,
-                    labelKey:
-                        'literal.services.toolbox_crypto_service.ecdsa_890a3a',
+                    labelKey: 'toolbox.crypto.stego.integrity_check_ecdsa',
                   ),
                 ],
                 onChanged: _busy
@@ -757,7 +859,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                 const SizedBox(height: 10),
                 _buildInlineNotice(
                   context,
-                  icon: Icons.timer_rounded,
+                  icon: Icons.fact_check_rounded,
                   text: _signaturePerformanceText(context),
                 ),
               ],
@@ -794,48 +896,6 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                   ),
                 ),
               ],
-              const SizedBox(height: 12),
-              TextField(
-                key: const ValueKey<String>('life_stego_max_error_attempts'),
-                controller: _maxErrorAttemptsController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.security_update_warning_rounded),
-                  labelText: _lifeI18nText(
-                    context,
-                    'inline.plan295.crypto.max_wrong_attempts.6959d4319854',
-                  ),
-                  helperText: _maxErrorAttemptsRiskText(context),
-                  helperMaxLines: 3,
-                  helperStyle: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                ),
-                onChanged: _handleMaxErrorAttemptsChanged,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                key: const ValueKey<String>(
-                  'life_stego_max_successful_reveals',
-                ),
-                controller: _maxSuccessfulRevealsController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.auto_delete_rounded),
-                  labelText: _lifeI18nText(
-                    context,
-                    'inline.plan295.crypto.max_successful_reveals.a01dd55e3e17',
-                  ),
-                  helperText: _maxSuccessfulRevealsRiskText(context),
-                  helperMaxLines: 4,
-                  helperStyle: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                ),
-                onChanged: _handleMaxSuccessfulRevealsChanged,
-              ),
               const SizedBox(height: 12),
               _LifeSegmentedField<ToolboxSteganographyLocatorAlgorithm>(
                 label: _lifeI18nText(
@@ -887,6 +947,139 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                     ? (_) {}
                     : (value) => setState(() => _locatorStrength = value),
               ),
+              if (!_isRevealMode) ...<Widget>[
+                const SizedBox(height: 12),
+                _LifeSegmentedField<ToolboxSteganographyCarrierProtectionMode>(
+                  label: _lifeI18nText(
+                    context,
+                    'toolbox.crypto.stego.carrier_protection_label',
+                  ),
+                  value: _carrierProtectionMode,
+                  options:
+                      const <
+                        _LifeOption<ToolboxSteganographyCarrierProtectionMode>
+                      >[
+                        _LifeOption<ToolboxSteganographyCarrierProtectionMode>(
+                          value: ToolboxSteganographyCarrierProtectionMode
+                              .deniable,
+                          labelKey:
+                              'toolbox.crypto.stego.carrier_protection_deniable',
+                        ),
+                        _LifeOption<ToolboxSteganographyCarrierProtectionMode>(
+                          value:
+                              ToolboxSteganographyCarrierProtectionMode.guarded,
+                          labelKey:
+                              'toolbox.crypto.stego.carrier_protection_guarded',
+                        ),
+                      ],
+                  onChanged: _busy
+                      ? (_) {}
+                      : (value) =>
+                            setState(() => _carrierProtectionMode = value),
+                ),
+                const SizedBox(height: 10),
+                _buildInlineNotice(
+                  context,
+                  icon:
+                      _carrierProtectionMode ==
+                          ToolboxSteganographyCarrierProtectionMode.guarded
+                      ? Icons.visibility_rounded
+                      : Icons.visibility_off_rounded,
+                  text: _lifeI18nText(
+                    context,
+                    _carrierProtectionMode ==
+                            ToolboxSteganographyCarrierProtectionMode.guarded
+                        ? 'toolbox.crypto.stego.carrier_protection_guarded_notice'
+                        : 'toolbox.crypto.stego.carrier_protection_deniable_notice',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _allowCarrierOverwrite,
+                  onChanged: _busy ? null : _handleCarrierOverwriteChanged,
+                  secondary: const Icon(Icons.warning_amber_rounded),
+                  title: Text(
+                    _lifeI18nText(
+                      context,
+                      'toolbox.crypto.stego.allow_overwrite_label',
+                    ),
+                  ),
+                  subtitle: Text(
+                    _lifeI18nText(
+                      context,
+                      'toolbox.crypto.stego.allow_overwrite_subtitle',
+                    ),
+                  ),
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _exportFingerprintFile,
+                  onChanged: _busy
+                      ? null
+                      : (value) =>
+                            setState(() => _exportFingerprintFile = value),
+                  secondary: const Icon(Icons.fingerprint_rounded),
+                  title: Text(
+                    _lifeI18nText(
+                      context,
+                      'toolbox.crypto.stego.fingerprint_file_label',
+                    ),
+                  ),
+                  subtitle: Text(
+                    _lifeI18nText(
+                      context,
+                      'toolbox.crypto.stego.fingerprint_file_subtitle',
+                    ),
+                  ),
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _localStegoVaultEnabled,
+                  onChanged: _busy
+                      ? null
+                      : (value) =>
+                            setState(() => _localStegoVaultEnabled = value),
+                  secondary: const Icon(Icons.inventory_2_rounded),
+                  title: Text(
+                    _lifeI18nText(
+                      context,
+                      'toolbox.crypto.stego.local_vault_label',
+                    ),
+                  ),
+                  subtitle: Text(
+                    _lifeI18nText(
+                      context,
+                      'toolbox.crypto.stego.local_vault_subtitle',
+                    ),
+                  ),
+                ),
+                if (_exportFingerprintFile ||
+                    _localStegoVaultEnabled) ...<Widget>[
+                  const SizedBox(height: 10),
+                  _buildInlineNotice(
+                    context,
+                    icon: Icons.warning_amber_rounded,
+                    text: _lifeI18nText(
+                      context,
+                      'toolbox.crypto.stego.local_trace_warning',
+                    ),
+                  ),
+                ],
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    onPressed: _busy ? null : _clearLocalStegoVault,
+                    icon: const Icon(Icons.delete_sweep_rounded),
+                    label: Text(
+                      _lifeI18nText(
+                        context,
+                        'toolbox.crypto.stego.local_vault_clear',
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ],
@@ -921,85 +1114,6 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     );
   }
 
-  Widget _buildRevealLocatorPanel(BuildContext context) {
-    return _LifePreviewFrame(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Icon(
-                Icons.explore_rounded,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  _lifeI18nText(
-                    context,
-                    'inline.plan295.crypto.locator.b1be49c6bc09',
-                  ),
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _LifeSegmentedField<ToolboxSteganographyLocatorAlgorithm>(
-            label: _lifeI18nText(
-              context,
-              'inline.plan295.crypto.locator_algorithm.111bf25c9873',
-            ),
-            value: _locatorAlgorithm,
-            options: const <_LifeOption<ToolboxSteganographyLocatorAlgorithm>>[
-              _LifeOption<ToolboxSteganographyLocatorAlgorithm>(
-                value: ToolboxSteganographyLocatorAlgorithm.sha256,
-                labelKey:
-                    'literal.services.toolbox_crypto_service.sha_256_8104c0',
-              ),
-              _LifeOption<ToolboxSteganographyLocatorAlgorithm>(
-                value: ToolboxSteganographyLocatorAlgorithm.sha512,
-                labelKey:
-                    'literal.services.toolbox_crypto_service.sha_512_746cf7',
-              ),
-            ],
-            onChanged: _busy
-                ? (_) {}
-                : (value) => setState(() => _locatorAlgorithm = value),
-          ),
-          const SizedBox(height: 12),
-          _LifeSegmentedField<ToolboxSteganographyLocatorStrength>(
-            label: _lifeI18nText(
-              context,
-              'inline.plan295.crypto.locator_strength.1a07a07caf35',
-            ),
-            value: _locatorStrength,
-            options: const <_LifeOption<ToolboxSteganographyLocatorStrength>>[
-              _LifeOption<ToolboxSteganographyLocatorStrength>(
-                value: ToolboxSteganographyLocatorStrength.standard,
-                labelKey:
-                    'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.standard_4096_4d6ce0',
-              ),
-              _LifeOption<ToolboxSteganographyLocatorStrength>(
-                value: ToolboxSteganographyLocatorStrength.strong,
-                labelKey:
-                    'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.strong_12000_325e9b',
-              ),
-              _LifeOption<ToolboxSteganographyLocatorStrength>(
-                value: ToolboxSteganographyLocatorStrength.extreme,
-                labelKey:
-                    'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.extreme_24000_ad0947',
-              ),
-            ],
-            onChanged: _busy
-                ? (_) {}
-                : (value) => setState(() => _locatorStrength = value),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildStagePanel(BuildContext context) {
     final mediaLabel = _mediaLabel(context, _mediaKind);
     final modeLabel = switch (_workspace) {
@@ -1029,6 +1143,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       ),
     };
     final workspaceLabel = _workspaceLabel(context, _workspace);
+    final mediaOptions = _mediaKindOptions;
     return _LifeSettingsPanel(
       title: _lifeI18nText(
         context,
@@ -1070,6 +1185,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               : (value) {
                   setState(() {
                     _workspace = value;
+                    _mediaKind = ToolboxSteganographyMediaKind.image;
                     _clearSecretInputs();
                     _savedPath = null;
                     _statusMessage = null;
@@ -1169,20 +1285,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               'inline.plan295.crypto.media_type.a93164fdf789',
             ),
             value: _mediaKind,
-            options: const <_LifeOption<ToolboxSteganographyMediaKind>>[
-              _LifeOption<ToolboxSteganographyMediaKind>(
-                value: ToolboxSteganographyMediaKind.image,
-                labelKey: 'inline.plan295.crypto.image.baebdc30e7e4',
-              ),
-              _LifeOption<ToolboxSteganographyMediaKind>(
-                value: ToolboxSteganographyMediaKind.audio,
-                labelKey: 'inline.plan295.crypto.audio.253158c06f3c',
-              ),
-              _LifeOption<ToolboxSteganographyMediaKind>(
-                value: ToolboxSteganographyMediaKind.video,
-                labelKey: 'inline.plan295.crypto.video.2074eae3b2ea',
-              ),
-            ],
+            options: mediaOptions,
             onChanged: _busy
                 ? (_) {}
                 : (value) {
@@ -1193,6 +1296,17 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                   },
           ),
           const SizedBox(height: 12),
+          if (!_isRevealMode) ...<Widget>[
+            _buildInlineNotice(
+              context,
+              icon: Icons.report_problem_rounded,
+              text: _lifeI18nText(
+                context,
+                'toolbox.crypto.stego.write_scope_notice',
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           if (!_isRevealMode) ...<Widget>[
             _LifeSegmentedField<ToolboxCryptoAlgorithm>(
               label: _lifeI18nText(
@@ -1241,26 +1355,6 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                   labelKey:
                       'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.custom_strong_634ee4',
                 ),
-                _LifeOption<ToolboxCryptoAlgorithm>(
-                  value: ToolboxCryptoAlgorithm.sha256RsaSignature,
-                  labelKey:
-                      'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.rsa_signed_9ebb16',
-                ),
-                _LifeOption<ToolboxCryptoAlgorithm>(
-                  value: ToolboxCryptoAlgorithm.ecdsaSignature,
-                  labelKey:
-                      'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.ecdsa_signed_5aa308',
-                ),
-                _LifeOption<ToolboxCryptoAlgorithm>(
-                  value: ToolboxCryptoAlgorithm.whirlpoolDigest,
-                  labelKey:
-                      'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.whirlpool_strong_e1298e',
-                ),
-                _LifeOption<ToolboxCryptoAlgorithm>(
-                  value: ToolboxCryptoAlgorithm.none,
-                  labelKey:
-                      'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.no_encryption_plain_549173',
-                ),
               ],
               onChanged: _busy
                   ? (_) {}
@@ -1303,7 +1397,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             ),
             const SizedBox(height: 12),
             _buildCryptoAdvancedPanel(context),
-          ] else ...<Widget>[_buildRevealLocatorPanel(context)],
+          ],
         ],
       ],
     );
@@ -1450,7 +1544,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                   )
                 : _lifeI18nText(
                     context,
-                    'inline.plan295.crypto.can_be_empty_for_no_encryption.83a3b9d640f9',
+                    'toolbox.crypto.stego.error.aead_required',
                   ),
           ),
         ),
@@ -1478,6 +1572,21 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         ],
         const SizedBox(height: 10),
         _buildKeyFileRow(context),
+        if (_mode == _StegoMode.reveal) ...<Widget>[
+          const SizedBox(height: 10),
+          _buildFingerprintImportRow(context),
+        ],
+        if (_requiresHighSecurityKeyFile) ...<Widget>[
+          const SizedBox(height: 10),
+          _buildInlineNotice(
+            context,
+            icon: Icons.key_rounded,
+            text: _lifeI18nText(
+              context,
+              'toolbox.crypto.stego.high_requires_key_file',
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -1503,7 +1612,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                 onPressed:
                     _busy ||
                         _sourceBytes == null ||
-                        _isUnsupportedMediaWrite ||
+                        _isWriteBlocked ||
                         (_mode == _StegoMode.reveal && _isDecodeLocked)
                     ? null
                     : (_mode == _StegoMode.embed ? _embed : _reveal),
@@ -1558,7 +1667,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             width: double.infinity,
             child: OutlinedButton.icon(
               key: const ValueKey<String>('life_stego_preview_write_button'),
-              onPressed: _busy || _sourceBytes == null
+              onPressed: _busy || _sourceBytes == null || _isWriteBlocked
                   ? null
                   : _previewTextWrite,
               icon: const Icon(Icons.fact_check_rounded),
@@ -1803,6 +1912,21 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         ],
         const SizedBox(height: 10),
         _buildKeyFileRow(context),
+        if (_fileMode == _FileCryptoMode.decrypt) ...<Widget>[
+          const SizedBox(height: 10),
+          _buildFingerprintImportRow(context),
+        ],
+        if (_requiresHighSecurityKeyFile) ...<Widget>[
+          const SizedBox(height: 10),
+          _buildInlineNotice(
+            context,
+            icon: Icons.key_rounded,
+            text: _lifeI18nText(
+              context,
+              'toolbox.crypto.stego.high_requires_key_file',
+            ),
+          ),
+        ],
         if (_fileMode == _FileCryptoMode.decrypt &&
             _decodeLockRemaining != null) ...<Widget>[
           const SizedBox(height: 12),
@@ -1821,7 +1945,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
                 onPressed:
                     _busy ||
                         _sourceBytes == null ||
-                        _isUnsupportedMediaWrite ||
+                        _isWriteBlocked ||
                         (_fileMode == _FileCryptoMode.decrypt &&
                             _isDecodeLocked) ||
                         (_fileMode == _FileCryptoMode.encrypt &&
@@ -1887,6 +2011,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               onPressed:
                   _busy ||
                       _sourceBytes == null ||
+                      _isWriteBlocked ||
                       _fileBytes == null ||
                       (_dualLayerEnabled && _coverFileBytes == null)
                   ? null
@@ -2084,6 +2209,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
             ),
             key: const ValueKey<String>('life_stego_cipher_preview'),
           ),
+          const SizedBox(height: 12),
+          _buildFingerprintPanel(context, embed.fingerprint),
         ],
         if (reveal != null) ...<Widget>[
           Wrap(
@@ -2220,6 +2347,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               params: <String, Object?>{'cipherPreview': embed.cipherPreview},
             ),
           ),
+          const SizedBox(height: 12),
+          _buildFingerprintPanel(context, embed.fingerprint),
         ],
         if (reveal != null && reveal.fileName != null) ...<Widget>[
           const SizedBox(height: 12),
@@ -2232,6 +2361,104 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildFingerprintPanel(
+    BuildContext context,
+    ToolboxSteganographyCarrierFingerprint fingerprint,
+  ) {
+    return _LifePreviewFrame(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              const Icon(Icons.fingerprint_rounded),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  _lifeI18nText(
+                    context,
+                    'toolbox.crypto.stego.fingerprint_ready',
+                  ),
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SelectableText(
+            fingerprint.mixedHex,
+            key: const ValueKey<String>('life_stego_fingerprint_mixed'),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              OutlinedButton.icon(
+                onPressed: _busy ? null : () => _copyFingerprint(fingerprint),
+                icon: const Icon(Icons.copy_rounded),
+                label: Text(
+                  _lifeI18nText(
+                    context,
+                    'toolbox.crypto.stego.fingerprint_copy',
+                  ),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: _busy
+                    ? null
+                    : () => _saveFingerprintFile(fingerprint),
+                icon: const Icon(Icons.save_alt_rounded),
+                label: Text(
+                  _lifeI18nText(
+                    context,
+                    'toolbox.crypto.stego.fingerprint_export',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFingerprintImportRow(BuildContext context) {
+    final name = _expectedFingerprintName;
+    return _LifePreviewFrame(
+      child: Row(
+        children: <Widget>[
+          const Icon(Icons.verified_user_rounded),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              name == null
+                  ? _lifeI18nText(
+                      context,
+                      'toolbox.crypto.stego.fingerprint_import_hint',
+                    )
+                  : _lifeI18nText(
+                      context,
+                      'toolbox.crypto.stego.fingerprint_imported',
+                      params: <String, Object?>{'name': name},
+                    ),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 8),
+          OutlinedButton.icon(
+            onPressed: _busy ? null : _pickFingerprintFile,
+            icon: const Icon(Icons.upload_file_rounded),
+            label: Text(
+              _lifeI18nText(context, 'toolbox.crypto.stego.fingerprint_import'),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -2457,16 +2684,13 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         Text(
           _lifeI18nText(
             context,
-            'inline.plan295.crypto.images_use_lossless_png_randomized_p.268855c6e883',
+            'toolbox.crypto.stego.boundary_low_visibility',
           ),
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 8),
         Text(
-          _lifeI18nText(
-            context,
-            'inline.plan295.crypto.public_policy_headers_tamper_hints_a.77fe1d465c7b',
-          ),
+          _lifeI18nText(context, 'toolbox.crypto.stego.boundary_no_forensic'),
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
@@ -2490,6 +2714,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               setState(() {
                 if (_mode != mode) {
                   _mode = mode;
+                  _mediaKind = ToolboxSteganographyMediaKind.image;
                   _clearSecretInputs();
                   _clearResults();
                 }
@@ -2515,6 +2740,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               setState(() {
                 if (_fileMode != mode) {
                   _fileMode = mode;
+                  _mediaKind = ToolboxSteganographyMediaKind.image;
                   _clearSecretInputs();
                   _clearFileResults();
                 }
@@ -2832,12 +3058,13 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     try {
       final type = switch (_mediaKind) {
         ToolboxSteganographyMediaKind.image => FileType.image,
-        ToolboxSteganographyMediaKind.audio => FileType.audio,
-        ToolboxSteganographyMediaKind.video => FileType.video,
+        ToolboxSteganographyMediaKind.audio => FileType.custom,
+        ToolboxSteganographyMediaKind.video => FileType.custom,
       };
       final picked = await FilePicker.platform.pickFiles(
         allowMultiple: false,
         type: type,
+        allowedExtensions: _mediaAllowedExtensions(_mediaKind),
         withData: false,
         withReadStream: true,
       );
@@ -2878,6 +3105,20 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         }
       });
       oldSource?.dispose();
+      if (!_localStegoVaultEnabled) {
+        return;
+      }
+      final localMatch = await _lookupLocalStegoCarrier(bytes);
+      if (!mounted || !identical(_sourceBytes, bytes) || localMatch == null) {
+        return;
+      }
+      setState(() {
+        _statusMessage = _lifeI18nText(
+          context,
+          'toolbox.crypto.stego.local_vault_match',
+          params: <String, Object?>{'name': localMatch},
+        );
+      });
     } catch (error) {
       if (!mounted) {
         return;
@@ -3279,7 +3520,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         fileName: fileName,
         type: FileType.custom,
         allowedExtensions: <String>[extension],
-        bytes: bytes,
+        bytes: kIsWeb ? bytes : null,
       );
     } on UnimplementedError {
       return null;
@@ -3318,75 +3559,29 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     if (_encryption != ToolboxCryptoAlgorithm.none) {
       return true;
     }
+    setState(() {
+      _error = _lifeI18nText(
+        context,
+        'toolbox.crypto.stego.error.aead_required',
+      );
+    });
+    return false;
+  }
+
+  Future<void> _handleCarrierOverwriteChanged(bool value) async {
+    if (!value) {
+      setState(() => _allowCarrierOverwrite = false);
+      return;
+    }
+    final confirmed = await _confirmCarrierOverwriteOnce();
+    if (!mounted) {
+      return;
+    }
+    setState(() => _allowCarrierOverwrite = confirmed);
+  }
+
+  Future<bool> _confirmCarrierOverwriteOnce() async {
     final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(
-            _lifeI18nText(
-              context,
-              'inline.plan295.crypto.confirm_plaintext.5b54b2c87d91',
-            ),
-          ),
-          content: Text(
-            _lifeI18nText(
-              context,
-              'inline.plan295.crypto.no_encryption_is_selected_the_payloa.d305dc3cb84d',
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(_lifeI18nText(context, 'cancel')),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: Text(
-                _lifeI18nText(
-                  context,
-                  'inline.plan295.crypto.generate_anyway.3cfb2d39c15b',
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-    return confirmed ?? false;
-  }
-
-  void _handleMaxErrorAttemptsChanged(String value) {
-    setState(() {});
-    final attempts = int.tryParse(value.trim());
-    if (attempts == null || attempts <= 0 || _maxErrorRiskPromptShown) {
-      return;
-    }
-    _maxErrorRiskPromptShown = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-      _showMaxErrorAttemptsRiskDialog(attempts);
-    });
-  }
-
-  void _handleMaxSuccessfulRevealsChanged(String value) {
-    setState(() {});
-    final attempts = int.tryParse(value.trim());
-    if (attempts == null || attempts <= 0 || _successfulRevealRiskPromptShown) {
-      return;
-    }
-    _successfulRevealRiskPromptShown = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-      _showMaxSuccessfulRevealsRiskDialog(attempts);
-    });
-  }
-
-  Future<void> _showMaxErrorAttemptsRiskDialog(int attempts) async {
-    await showDialog<void>(
       context: context,
       builder: (dialogContext) {
         final colorScheme = Theme.of(dialogContext).colorScheme;
@@ -3398,8 +3593,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
               Expanded(
                 child: Text(
                   _lifeI18nText(
-                    context,
-                    'inline.plan295.crypto.wrong_passwords_can_wipe_hidden_data.2bca7d0dab83',
+                    dialogContext,
+                    'toolbox.crypto.stego.overwrite_confirm_title',
                   ),
                 ),
               ),
@@ -3407,62 +3602,29 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           ),
           content: Text(
             _lifeI18nText(
-              context,
-              'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.set_to_during_reveal_reaching_this.555dd57402',
-              params: <String, Object?>{'attempts': attempts},
+              dialogContext,
+              'toolbox.crypto.stego.overwrite_confirm_body',
             ),
           ),
           actions: <Widget>[
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(
-                _lifeI18nText(context, 'inline.plan295.crypto.ok.4eccec341e82'),
-              ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(_lifeI18nText(dialogContext, 'cancel')),
             ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _showMaxSuccessfulRevealsRiskDialog(int attempts) async {
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        final colorScheme = Theme.of(dialogContext).colorScheme;
-        return AlertDialog(
-          title: Row(
-            children: <Widget>[
-              Icon(Icons.auto_delete_rounded, color: colorScheme.error),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  _lifeI18nText(
-                    context,
-                    'inline.plan295.crypto.successful_reveals_can_wipe_data.2746005621a5',
-                  ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(
+                _lifeI18nText(
+                  dialogContext,
+                  'toolbox.crypto.stego.overwrite_confirm_action',
                 ),
               ),
-            ],
-          ),
-          content: Text(
-            _lifeI18nText(
-              context,
-              'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.hidden_data_will_be_cleaned_after.a96962c9b7',
-              params: <String, Object?>{'attempts': attempts},
-            ),
-          ),
-          actions: <Widget>[
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(
-                _lifeI18nText(context, 'inline.plan295.crypto.ok.4eccec341e82'),
-              ),
             ),
           ],
         );
       },
     );
+    return confirmed ?? false;
   }
 
   Future<void> _previewTextWrite() async {
@@ -3470,19 +3632,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     if (source == null) {
       return;
     }
-    final maxErrorAttempts = _readMaxErrorAttemptsSetting();
-    if (maxErrorAttempts == null) {
-      return;
-    }
-    final maxSuccessfulReveals = _readMaxSuccessfulRevealsSetting();
-    if (maxSuccessfulReveals == null) {
-      return;
-    }
-    await _ensureTextWriteCapacity(
-      source: source,
-      maxErrorAttempts: maxErrorAttempts,
-      maxSuccessfulReveals: maxSuccessfulReveals,
-    );
+    await _ensureTextWriteCapacity(source: source);
   }
 
   Future<void> _embed() async {
@@ -3490,19 +3640,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     if (source == null) {
       return;
     }
-    final maxErrorAttempts = _readMaxErrorAttemptsSetting();
-    if (maxErrorAttempts == null) {
-      return;
-    }
-    final maxSuccessfulReveals = _readMaxSuccessfulRevealsSetting();
-    if (maxSuccessfulReveals == null) {
-      return;
-    }
-    if (!await _ensureTextWriteCapacity(
-      source: source,
-      maxErrorAttempts: maxErrorAttempts,
-      maxSuccessfulReveals: maxSuccessfulReveals,
-    )) {
+    var shouldAutoSave = false;
+    if (!await _ensureTextWriteCapacity(source: source)) {
       return;
     }
     if (!await _confirmPlaintextIfNeeded()) {
@@ -3534,10 +3673,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           keyBits: _keyBits,
           macAlgorithm: _macAlgorithm,
           signatureMode: _signatureMode,
-          maxErrorAttempts: maxErrorAttempts,
-          maxSuccessfulReveals: maxSuccessfulReveals,
           locatorAlgorithm: _locatorAlgorithm,
           locatorStrength: _locatorStrength,
+          carrierProtectionMode: _carrierProtectionMode,
+          allowCarrierOverwrite: _allowCarrierOverwrite,
         ),
       );
       ui.Image? preview;
@@ -3559,6 +3698,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         );
       });
       oldPreview?.dispose();
+      shouldAutoSave = true;
     } catch (error) {
       if (!mounted) {
         return;
@@ -3572,8 +3712,14 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       });
     } finally {
       if (mounted) {
-        setState(() => _busy = false);
+        setState(() {
+          _busy = false;
+          _allowCarrierOverwrite = false;
+        });
       }
+    }
+    if (shouldAutoSave && mounted) {
+      await _saveOutput();
     }
   }
 
@@ -3582,7 +3728,11 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     if (source == null) {
       return;
     }
+    String? revealedText;
     if (!_ensureDecodeUnlocked()) {
+      return;
+    }
+    if (!await _verifyExpectedFingerprint(source)) {
       return;
     }
     setState(() {
@@ -3615,7 +3765,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         );
       });
       _registerDecodeSuccess(source);
-      await _applySuccessfulRevealProtection(source);
+      revealedText = result.text;
     } catch (error) {
       if (!mounted) {
         return;
@@ -3633,7 +3783,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           context,
           'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.reveal_failed.b7699c69e6',
           params: <String, Object?>{
-            'p0': _friendlyError(context, error),
+            'p0': _genericDecodeFailureText(context),
             'extra': extra,
           },
         );
@@ -3642,6 +3792,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       if (mounted) {
         setState(() => _busy = false);
       }
+    }
+    if (revealedText != null && mounted) {
+      await _showRevealedTextDialog(revealedText);
     }
   }
 
@@ -3661,20 +3814,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       });
       return;
     }
-    final maxErrorAttempts = _readMaxErrorAttemptsSetting();
-    if (maxErrorAttempts == null) {
-      return;
-    }
-    final maxSuccessfulReveals = _readMaxSuccessfulRevealsSetting();
-    if (maxSuccessfulReveals == null) {
-      return;
-    }
-    await _ensureFileWriteCapacity(
-      carrier: carrier,
-      file: file,
-      maxErrorAttempts: maxErrorAttempts,
-      maxSuccessfulReveals: maxSuccessfulReveals,
-    );
+    await _ensureFileWriteCapacity(carrier: carrier, file: file);
   }
 
   Future<void> _encryptFile() async {
@@ -3683,6 +3823,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     if (carrier == null || file == null) {
       return;
     }
+    var shouldAutoSave = false;
     if (_dualLayerEnabled &&
         (_coverFileBytes == null || _coverFileBytes!.isEmpty)) {
       setState(() {
@@ -3693,20 +3834,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       });
       return;
     }
-    final maxErrorAttempts = _readMaxErrorAttemptsSetting();
-    if (maxErrorAttempts == null) {
-      return;
-    }
-    final maxSuccessfulReveals = _readMaxSuccessfulRevealsSetting();
-    if (maxSuccessfulReveals == null) {
-      return;
-    }
-    if (!await _ensureFileWriteCapacity(
-      carrier: carrier,
-      file: file,
-      maxErrorAttempts: maxErrorAttempts,
-      maxSuccessfulReveals: maxSuccessfulReveals,
-    )) {
+    if (!await _ensureFileWriteCapacity(carrier: carrier, file: file)) {
       return;
     }
     if (!await _confirmPlaintextIfNeeded()) {
@@ -3742,10 +3870,10 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           keyBits: _keyBits,
           macAlgorithm: _macAlgorithm,
           signatureMode: _signatureMode,
-          maxErrorAttempts: maxErrorAttempts,
-          maxSuccessfulReveals: maxSuccessfulReveals,
           locatorAlgorithm: _locatorAlgorithm,
           locatorStrength: _locatorStrength,
+          carrierProtectionMode: _carrierProtectionMode,
+          allowCarrierOverwrite: _allowCarrierOverwrite,
         ),
       );
       if (!mounted) {
@@ -3759,6 +3887,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           'inline.plan295.crypto.stego_media_is_ready_export_the_resu.2d6f5c4298f1',
         );
       });
+      shouldAutoSave = true;
     } catch (error) {
       if (!mounted) {
         return;
@@ -3772,8 +3901,14 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       });
     } finally {
       if (mounted) {
-        setState(() => _busy = false);
+        setState(() {
+          _busy = false;
+          _allowCarrierOverwrite = false;
+        });
       }
+    }
+    if (shouldAutoSave && mounted) {
+      await _saveFileOutput();
     }
   }
 
@@ -3782,7 +3917,11 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     if (carrier == null) {
       return;
     }
+    var shouldAutoSave = false;
     if (!_ensureDecodeUnlocked()) {
+      return;
+    }
+    if (!await _verifyExpectedFingerprint(carrier)) {
       return;
     }
     setState(() {
@@ -3823,7 +3962,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         }
       });
       _registerDecodeSuccess(carrier);
-      await _applySuccessfulRevealProtection(carrier);
+      shouldAutoSave = true;
     } catch (error) {
       if (!mounted) {
         return;
@@ -3841,7 +3980,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           context,
           'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.file_decryption_failed.a153daac72',
           params: <String, Object?>{
-            'p0': _friendlyError(context, error),
+            'p0': _genericDecodeFailureText(context),
             'extra': extra,
           },
         );
@@ -3850,6 +3989,9 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       if (mounted) {
         setState(() => _busy = false);
       }
+    }
+    if (shouldAutoSave && mounted) {
+      await _saveFileOutput();
     }
   }
 
@@ -3935,6 +4077,13 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       }
       if (savedPath == null) {
         if (kIsWeb) {
+          if (_exportFingerprintFile) {
+            await _writeFingerprintFile(
+              embed.fingerprint,
+              baseName: '${baseName}_stego',
+              protectedCarrierPath: savedPath,
+            );
+          }
           setState(() {
             _statusMessage = _lifeI18nText(
               context,
@@ -3949,6 +4098,20 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       setState(() {
         _savedPath = savedPath;
       });
+      if (_localStegoVaultEnabled) {
+        await _recordLocalStegoCarrier(
+          fingerprint: embed.fingerprint,
+          fileName: fileName,
+          filePath: savedPath,
+        );
+      }
+      if (_exportFingerprintFile) {
+        await _writeFingerprintFile(
+          embed.fingerprint,
+          baseName: '${baseName}_stego',
+          protectedCarrierPath: savedPath,
+        );
+      }
     } catch (error) {
       if (!mounted) {
         return;
@@ -4025,6 +4188,16 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       }
       if (savedPath == null) {
         if (kIsWeb) {
+          final embed = _fileEmbedResult;
+          if (_fileMode == _FileCryptoMode.encrypt &&
+              embed != null &&
+              _exportFingerprintFile) {
+            await _writeFingerprintFile(
+              embed.fingerprint,
+              baseName: '${baseName}_file_stego',
+              protectedCarrierPath: savedPath,
+            );
+          }
           ui.Image? oldSource;
           setState(() {
             _statusMessage = shouldUnloadCarrier
@@ -4057,6 +4230,23 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         }
       });
       oldSource?.dispose();
+      final embed = _fileEmbedResult;
+      if (_fileMode == _FileCryptoMode.encrypt && embed != null) {
+        if (_localStegoVaultEnabled) {
+          await _recordLocalStegoCarrier(
+            fingerprint: embed.fingerprint,
+            fileName: fileName,
+            filePath: savedPath,
+          );
+        }
+        if (_exportFingerprintFile) {
+          await _writeFingerprintFile(
+            embed.fingerprint,
+            baseName: '${baseName}_file_stego',
+            protectedCarrierPath: savedPath,
+          );
+        }
+      }
     } catch (error) {
       if (!mounted) {
         return;
@@ -4073,6 +4263,371 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         setState(() => _busy = false);
       }
     }
+  }
+
+  Future<void> _copyFingerprint(
+    ToolboxSteganographyCarrierFingerprint fingerprint,
+  ) async {
+    await Clipboard.setData(ClipboardData(text: fingerprint.toCopyText()));
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _statusMessage = _lifeI18nText(
+        context,
+        'toolbox.crypto.stego.fingerprint_copied',
+      );
+    });
+  }
+
+  Future<void> _saveFingerprintFile(
+    ToolboxSteganographyCarrierFingerprint fingerprint,
+  ) async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final saved = await _writeFingerprintFile(
+        fingerprint,
+        baseName: _fingerprintBaseName(),
+        protectedCarrierPath: _fingerprintProtectedCarrierPath(),
+      );
+      if (!mounted || saved == null) {
+        return;
+      }
+      setState(() {
+        _statusMessage = _lifeI18nText(
+          context,
+          'toolbox.crypto.stego.fingerprint_saved',
+        );
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _error = _lifeI18nText(
+          context,
+          'toolbox.crypto.stego.fingerprint_save_failed',
+          params: <String, Object?>{'error': error},
+        );
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
+  Future<String?> _writeFingerprintFile(
+    ToolboxSteganographyCarrierFingerprint fingerprint, {
+    required String baseName,
+    String? protectedCarrierPath,
+  }) async {
+    final fileName = '${baseName}_fingerprint.vssig';
+    final bytes = fingerprint.toFileBytes(fileName: fileName);
+    final pickedPath = await _pickSavePath(
+      dialogTitle: _lifeI18nText(
+        context,
+        'toolbox.crypto.stego.fingerprint_export',
+      ),
+      fileName: fileName,
+      extension: 'vssig',
+      bytes: bytes,
+    );
+    if (!mounted) {
+      return null;
+    }
+    final safePickedPath = resolveStegoFingerprintSidecarPath(
+      pickedPath: pickedPath,
+      protectedCarrierPath: protectedCarrierPath,
+      sidecarFileName: fileName,
+    );
+    return _saveBytesWithFallback(
+      pickedPath: safePickedPath,
+      bytes: bytes,
+      fallbackSegments: <String>['life_tools', 'steganography', 'fingerprints'],
+      fallbackFileName: fileName,
+    );
+  }
+
+  Future<void> _pickFingerprintFile() async {
+    try {
+      final picked = await FilePicker.platform.pickFiles(
+        allowMultiple: false,
+        type: FileType.any,
+        withData: false,
+        withReadStream: true,
+      );
+      final file = (picked != null && picked.files.isNotEmpty)
+          ? picked.files.first
+          : null;
+      if (file == null) {
+        return;
+      }
+      final bytes = await _readPickedFileBytes(file, maxBytes: 64 * 1024);
+      final fingerprint = ToolboxSteganographyService.parseFingerprintBytes(
+        bytes,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _expectedFingerprint = fingerprint;
+        _expectedFingerprintName = file.name;
+        _statusMessage = _lifeI18nText(
+          context,
+          'toolbox.crypto.stego.fingerprint_loaded',
+        );
+        _error = null;
+      });
+      final source = _sourceBytes;
+      if (source != null) {
+        await _verifyExpectedFingerprint(source);
+      }
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _error = _lifeI18nText(
+          context,
+          'toolbox.crypto.stego.fingerprint_load_failed',
+          params: <String, Object?>{'error': _friendlyError(context, error)},
+        );
+      });
+    }
+  }
+
+  Future<bool> _verifyExpectedFingerprint(Uint8List source) async {
+    final expected = _expectedFingerprint;
+    if (expected == null) {
+      return true;
+    }
+    final actual = await compute(_runStegoCarrierFingerprint, source);
+    final matched =
+        expected.byteLength == actual.byteLength &&
+        expected.md5Hex == actual.md5Hex &&
+        expected.sha256Hex == actual.sha256Hex &&
+        expected.mixedHex == actual.mixedHex;
+    if (matched) {
+      return true;
+    }
+    if (!mounted) {
+      return false;
+    }
+    setState(() {
+      _error = _lifeI18nText(
+        context,
+        'toolbox.crypto.stego.fingerprint_mismatch',
+      );
+    });
+    return false;
+  }
+
+  String _fingerprintBaseName() {
+    final name = _sourceName ?? _fileName ?? 'stego_media';
+    final baseName = path.basenameWithoutExtension(name).trim();
+    return baseName.isEmpty ? 'stego_media' : baseName;
+  }
+
+  String? _fingerprintProtectedCarrierPath() {
+    final savedPath = _savedPath?.trim();
+    if (savedPath != null && savedPath.isNotEmpty) {
+      return savedPath;
+    }
+    final sourcePath = _sourcePath?.trim();
+    if (sourcePath != null && sourcePath.isNotEmpty) {
+      return sourcePath;
+    }
+    return null;
+  }
+
+  Future<File> _localStegoVaultFile({required bool createDirectory}) async {
+    return _localVaultPaths.file(createDirectory: createDirectory);
+  }
+
+  Future<void> _recordLocalStegoCarrier({
+    required ToolboxSteganographyCarrierFingerprint fingerprint,
+    required String? fileName,
+    required String? filePath,
+  }) async {
+    if (kIsWeb) {
+      return;
+    }
+    try {
+      final file = await _localStegoVaultFile(createDirectory: true);
+      final entries = await _readLocalStegoVault(file);
+      entries.removeWhere((entry) => entry['mixed'] == fingerprint.mixedHex);
+      entries.insert(0, <String, Object?>{
+        'mixed': fingerprint.mixedHex,
+        'sha256': fingerprint.sha256Hex,
+        'md5': fingerprint.md5Hex,
+        'byteLength': fingerprint.byteLength,
+        'fileName': fileName,
+        'filePath': filePath,
+        'createdAt': DateTime.now().toUtc().toIso8601String(),
+      });
+      final limited = entries.take(100).toList(growable: false);
+      const encoder = JsonEncoder.withIndent('  ');
+      await file.writeAsString(encoder.convert(limited), flush: true);
+    } on Object {
+      // Local vault is advisory only; export must not fail because of it.
+    }
+  }
+
+  Future<void> _clearLocalStegoVault() async {
+    if (kIsWeb) {
+      setState(() {
+        _statusMessage = _lifeI18nText(
+          context,
+          'toolbox.crypto.stego.local_vault_clear_empty',
+        );
+      });
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final file = await _localStegoVaultFile(createDirectory: false);
+      if (await file.exists()) {
+        await file.delete();
+      }
+      await _deleteEmptyLocalStegoVaultParents(file);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _localStegoVaultEnabled = false;
+        _statusMessage = _lifeI18nText(
+          context,
+          'toolbox.crypto.stego.local_vault_cleared',
+        );
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _error = _lifeI18nText(
+          context,
+          'toolbox.crypto.stego.local_vault_clear_failed',
+          params: <String, Object?>{'error': error},
+        );
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
+  Future<String?> _lookupLocalStegoCarrier(Uint8List bytes) async {
+    if (kIsWeb) {
+      return null;
+    }
+    try {
+      final fingerprint = await compute(_runStegoCarrierFingerprint, bytes);
+      final file = await _localStegoVaultFile(createDirectory: false);
+      final entries = await _readLocalStegoVault(file);
+      for (final entry in entries) {
+        if (entry['mixed'] == fingerprint.mixedHex &&
+            entry['sha256'] == fingerprint.sha256Hex &&
+            entry['byteLength'] == fingerprint.byteLength) {
+          final name = entry['fileName'];
+          return name is String && name.trim().isNotEmpty ? name : null;
+        }
+      }
+    } on Object {
+      return null;
+    }
+    return null;
+  }
+
+  Future<void> _deleteEmptyLocalStegoVaultParents(File vaultFile) async {
+    await _localVaultPaths.deleteEmptyParents(vaultFile);
+  }
+
+  Future<List<Map<String, Object?>>> _readLocalStegoVault(File file) async {
+    if (!await file.exists()) {
+      return <Map<String, Object?>>[];
+    }
+    final decoded = jsonDecode(await file.readAsString());
+    if (decoded is! List) {
+      return <Map<String, Object?>>[];
+    }
+    return decoded
+        .whereType<Map>()
+        .map(
+          (entry) => entry.map((key, value) => MapEntry(key.toString(), value)),
+        )
+        .toList(growable: true);
+  }
+
+  Future<void> _showRevealedTextDialog(String text) async {
+    if (!mounted) {
+      return;
+    }
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        final size = MediaQuery.sizeOf(dialogContext);
+        return AlertDialog(
+          title: Text(
+            _lifeI18nText(
+              dialogContext,
+              'toolbox.crypto.stego.reveal_text_dialog_title',
+            ),
+          ),
+          content: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 560,
+              maxHeight: math.max(180.0, size.height * 0.55),
+            ),
+            child: SingleChildScrollView(
+              child: SelectableText(
+                text,
+                key: const ValueKey<String>('life_stego_revealed_text_dialog'),
+              ),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(_lifeI18nText(dialogContext, 'close')),
+            ),
+            FilledButton.icon(
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: text));
+                if (!dialogContext.mounted) {
+                  return;
+                }
+                ScaffoldMessenger.of(dialogContext).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      _lifeI18nText(
+                        dialogContext,
+                        'toolbox.crypto.stego.reveal_text_copied',
+                      ),
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.copy_rounded),
+              label: Text(
+                _lifeI18nText(
+                  dialogContext,
+                  'toolbox.crypto.stego.reveal_text_copy',
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<ui.Image> _decodePreview(Uint8List bytes) async {
@@ -4240,6 +4795,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     _coverSecretController.clear();
     _passphraseController.clear();
     _coverPassphraseController.clear();
+    _expectedFingerprint = null;
+    _expectedFingerprintName = null;
   }
 
   List<ToolboxCryptoCascadeCipher>? get _selectedCascade =>
@@ -4295,49 +4852,34 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     return false;
   }
 
-  int? _readMaxErrorAttemptsSetting() {
-    final raw = _maxErrorAttemptsController.text.trim();
-    final parsed = raw.isEmpty ? 0 : int.tryParse(raw);
-    if (parsed == null || parsed < 0 || parsed > 255) {
-      _maxErrorAttemptsController.text = '0';
-      _maxErrorAttemptsController.selection = TextSelection.collapsed(
-        offset: _maxErrorAttemptsController.text.length,
-      );
-      setState(() {
-        _error = _lifeI18nText(
-          context,
-          'inline.plan295.crypto.max_wrong_attempts_must_be_an_intege.aa06f0b0cb1f',
-        );
-      });
-      return null;
-    }
-    return parsed;
+  bool get _requiresHighSecurityKeyFile {
+    return !_isRevealMode &&
+        _workspace != _CryptoWorkspace.hash &&
+        _strength == ToolboxCryptoStrength.extreme &&
+        _activeKeyFileBytes == null;
   }
 
-  int? _readMaxSuccessfulRevealsSetting() {
-    final raw = _maxSuccessfulRevealsController.text.trim();
-    final parsed = raw.isEmpty ? 0 : int.tryParse(raw);
-    if (parsed == null || parsed < 0 || parsed > 255) {
-      _maxSuccessfulRevealsController.text = '0';
-      _maxSuccessfulRevealsController.selection = TextSelection.collapsed(
-        offset: _maxSuccessfulRevealsController.text.length,
-      );
-      setState(() {
-        _error = _lifeI18nText(
-          context,
-          'inline.plan295.crypto.max_successful_reveals_must_be_an_in.4d51465ac069',
-        );
-      });
-      return null;
-    }
-    return parsed;
+  bool get _isWriteBlocked =>
+      _isUnsupportedMediaWrite || _requiresHighSecurityKeyFile;
+
+  List<_LifeOption<ToolboxSteganographyMediaKind>> get _mediaKindOptions {
+    return const <_LifeOption<ToolboxSteganographyMediaKind>>[
+      _LifeOption<ToolboxSteganographyMediaKind>(
+        value: ToolboxSteganographyMediaKind.image,
+        labelKey: 'inline.plan295.crypto.image.baebdc30e7e4',
+      ),
+      _LifeOption<ToolboxSteganographyMediaKind>(
+        value: ToolboxSteganographyMediaKind.audio,
+        labelKey: 'inline.plan295.crypto.audio.253158c06f3c',
+      ),
+      _LifeOption<ToolboxSteganographyMediaKind>(
+        value: ToolboxSteganographyMediaKind.video,
+        labelKey: 'inline.plan295.crypto.video.2074eae3b2ea',
+      ),
+    ];
   }
 
-  Future<bool> _ensureTextWriteCapacity({
-    required Uint8List source,
-    required int maxErrorAttempts,
-    required int maxSuccessfulReveals,
-  }) async {
+  Future<bool> _ensureTextWriteCapacity({required Uint8List source}) async {
     setState(() {
       _busy = true;
       _savedPath = null;
@@ -4365,8 +4907,6 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           keyBits: _keyBits,
           macAlgorithm: _macAlgorithm,
           signatureMode: _signatureMode,
-          maxErrorAttempts: maxErrorAttempts,
-          maxSuccessfulReveals: maxSuccessfulReveals,
         ),
       );
       if (!mounted) {
@@ -4418,8 +4958,6 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
   Future<bool> _ensureFileWriteCapacity({
     required Uint8List carrier,
     required Uint8List file,
-    required int maxErrorAttempts,
-    required int maxSuccessfulReveals,
   }) async {
     setState(() {
       _busy = true;
@@ -4452,8 +4990,6 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
           keyBits: _keyBits,
           macAlgorithm: _macAlgorithm,
           signatureMode: _signatureMode,
-          maxErrorAttempts: maxErrorAttempts,
-          maxSuccessfulReveals: maxSuccessfulReveals,
         ),
       );
       if (!mounted) {
@@ -4507,6 +5043,17 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     ToolboxSteganographyCapacityCheck check,
   ) {
     final side = math.max(1, math.sqrt(check.minimumPixels).ceil());
+    if (check.carrierLabel?.startsWith('ISO BMFF') ?? false) {
+      return _lifeI18nText(
+        context,
+        'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.the_payload_exceeds_this_mp4_mov.b750508333',
+        params: <String, Object?>{
+          'p0': _formatBytes(check.capacityBytes),
+          'p1': _formatBytes(check.requiredBytes),
+          'p2': _formatBytes(ToolboxSteganographyService.maxTailCarrierBytes),
+        },
+      );
+    }
     if (check.mediaKind == ToolboxSteganographyMediaKind.audio) {
       return _lifeI18nText(
         context,
@@ -4568,63 +5115,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     return switch (check.mediaKind) {
       ToolboxSteganographyMediaKind.image => sourceBytes,
       ToolboxSteganographyMediaKind.audio => sourceBytes,
-      ToolboxSteganographyMediaKind.video =>
-        sourceBytes +
-            (check.dualLayer
-                ? check.requiredBytes
-                : _estimatedMp4Growth(check.requiredBytes)),
+      ToolboxSteganographyMediaKind.video => sourceBytes,
     };
-  }
-
-  int _estimatedMp4Growth(int blockBytes) {
-    const overhead = 8 + 23 + 36 + 255;
-    return blockBytes + overhead;
-  }
-
-  String _maxErrorAttemptsRiskText(BuildContext context) {
-    final raw = _maxErrorAttemptsController.text.trim();
-    final parsed = raw.isEmpty ? 0 : int.tryParse(raw);
-    if (parsed == null || parsed < 0 || parsed > 255) {
-      return _lifeI18nText(
-        context,
-        'inline.plan295.crypto.invalid_input_use_0_255_it_will_rese.2082059fb1e5',
-      );
-    }
-    final current = parsed == 0
-        ? _lifeI18nText(context, 'inline.plan295.crypto.unlimited.f2b082dc2b60')
-        : _lifeI18nText(
-            context,
-            'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.attempt_s.791b90caaa',
-            params: <String, Object?>{'parsed': parsed},
-          );
-    return _lifeI18nText(
-      context,
-      'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.current_maximum_255_reaching_the_limit.c2addfc0a4',
-      params: <String, Object?>{'current': current},
-    );
-  }
-
-  String _maxSuccessfulRevealsRiskText(BuildContext context) {
-    final raw = _maxSuccessfulRevealsController.text.trim();
-    final parsed = raw.isEmpty ? 0 : int.tryParse(raw);
-    if (parsed == null || parsed < 0 || parsed > 255) {
-      return _lifeI18nText(
-        context,
-        'inline.plan295.crypto.invalid_input_use_0_255_it_will_rese.f51193f604ca',
-      );
-    }
-    final current = parsed == 0
-        ? _lifeI18nText(context, 'inline.plan295.crypto.unlimited.7ab81d778468')
-        : _lifeI18nText(
-            context,
-            'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.reveal_s.ef7097bdac',
-            params: <String, Object?>{'parsed': parsed},
-          );
-    return _lifeI18nText(
-      context,
-      'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.current_hidden_data_is_cleaned_after.5d209883f4',
-      params: <String, Object?>{'current': current},
-    );
   }
 
   bool _ensureDecodeUnlocked() {
@@ -4647,98 +5139,13 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     final key = _currentSourceFailureKey(source);
     _decodeErrorTimesByCarrier.remove(key);
     _decodeLockedUntilByCarrier.remove(key);
-    _protectedDecodeFailuresByCarrier.remove(key);
-  }
-
-  Future<void> _applySuccessfulRevealProtection(
-    Uint8List sourceSnapshot,
-  ) async {
-    try {
-      final result = await compute(
-        _runStegoSuccessfulRevealProtection,
-        _StegoSuccessfulRevealProtectionRequest(
-          mediaKind: _mediaKind,
-          carrierBytes: sourceSnapshot,
-          passphrase: _passphraseController.text,
-          keyFileBytes: _activeKeyFileBytes,
-          locatorAlgorithm: _locatorAlgorithm,
-          locatorStrength: _locatorStrength,
-        ),
-      );
-      if (!mounted || !result.changed) {
-        return;
-      }
-      var wroteSource = false;
-      final sourcePath = _sourcePath;
-      if (!kIsWeb && sourcePath != null && sourcePath.trim().isNotEmpty) {
-        await File(sourcePath).writeAsBytes(result.bytes, flush: true);
-        wroteSource = true;
-      }
-      if (result.removed) {
-        if (!mounted) {
-          return;
-        }
-        ui.Image? oldSource;
-        setState(() {
-          oldSource = _detachCarrierState();
-          _statusMessage = wroteSource
-              ? AppI18n(Localizations.localeOf(context).languageCode).t(
-                  'inline.plan295.crypto.successful_reveal_limit_was_reached.5435e8975742',
-                )
-              : AppI18n(Localizations.localeOf(context).languageCode).t(
-                  'inline.plan295.crypto.successful_reveal_limit_was_reached.7384f1352063',
-                );
-        });
-        oldSource?.dispose();
-        return;
-      }
-      ui.Image? preview;
-      if (_mediaKind == ToolboxSteganographyMediaKind.image) {
-        preview = await _decodePreview(result.bytes);
-      }
-      if (!mounted) {
-        preview?.dispose();
-        return;
-      }
-      final oldSource = _sourcePreview;
-      setState(() {
-        _sourceBytes = result.bytes;
-        _sourcePreview = preview;
-        _statusMessage = wroteSource
-            ? AppI18n(Localizations.localeOf(context).languageCode).t(
-                'inline.plan295.crypto.remaining_successful_reveals_result.c34efd72ab27',
-                params: <String, Object?>{
-                  'resultRemainingSuccessfulReveals':
-                      result.remainingSuccessfulReveals,
-                  'result.remainingSuccessfulReveals':
-                      result.remainingSuccessfulReveals,
-                },
-              )
-            : AppI18n(Localizations.localeOf(context).languageCode).t(
-                'inline.plan295.crypto.remaining_successful_reveals_result.d4becbbdd62c',
-                params: <String, Object?>{
-                  'resultRemainingSuccessfulReveals':
-                      result.remainingSuccessfulReveals,
-                  'result.remainingSuccessfulReveals':
-                      result.remainingSuccessfulReveals,
-                },
-              );
-      });
-      oldSource?.dispose();
-    } on Object {
-      // Successful reveal protection is best-effort; the revealed payload stays available.
-    }
   }
 
   _DecodeFailureStatus _registerDecodeFailure(Uint8List source) {
     final key = _currentSourceFailureKey(source);
     final existingLock = _decodeLockRemainingForKey(key);
     if (existingLock != null) {
-      return _DecodeFailureStatus(
-        windowCount: _decodeErrorTimesByCarrier[key]?.length ?? 0,
-        locked: true,
-        remaining: existingLock,
-      );
+      return _DecodeFailureStatus(locked: true, remaining: existingLock);
     }
     final now = DateTime.now();
     final times = _decodeErrorTimesByCarrier.putIfAbsent(
@@ -4759,65 +5166,18 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         setState(() {});
       });
       return const _DecodeFailureStatus(
-        windowCount: _decodeErrorLimit,
         locked: true,
         remaining: _decodeLockDuration,
       );
     }
-    return _DecodeFailureStatus(windowCount: times.length, locked: false);
+    return const _DecodeFailureStatus(locked: false);
   }
 
   Future<String?> _applyDecodeFailureProtection(
     Object error,
     Uint8List source,
   ) async {
-    final key = _currentSourceFailureKey(source);
     final decodeStatus = _registerDecodeFailure(source);
-    final message = switch (error) {
-      ToolboxSteganographyException(:final message) => message,
-      ToolboxCryptoException(:final message) => message,
-      _ => null,
-    };
-    if (message == 'Hidden payload tamper check failed.') {
-      return _wipeCurrentHiddenData(
-        zhReason:
-            '检测到隐写数据被修改；${_decodeFailureStatusText(context, decodeStatus)} 已尝试清理当前载体。',
-        enReason:
-            'Hidden data appears to be tampered with; ${_decodeFailureStatusText(context, decodeStatus)} The current carrier was cleaned when possible.',
-        sourceSnapshot: source,
-        sourceKey: key,
-      );
-    }
-
-    try {
-      final policy = _service.inspectProtectionPolicy(
-        mediaKind: _mediaKind,
-        carrierBytes: source,
-        passphrase: _passphraseController.text,
-        keyFileBytes: _activeKeyFileBytes,
-        locatorAlgorithm: _locatorAlgorithm,
-        locatorStrength: _locatorStrength,
-      );
-      final maxAttempts = policy.maxErrorAttempts;
-      if (maxAttempts > 0) {
-        final count = (_protectedDecodeFailuresByCarrier[key] ?? 0) + 1;
-        _protectedDecodeFailuresByCarrier[key] = count;
-        if (count >= maxAttempts) {
-          _protectedDecodeFailuresByCarrier.remove(key);
-          return _wipeCurrentHiddenData(
-            zhReason:
-                '${_decodeFailureStatusText(context, decodeStatus)} 已达到隐写载荷限制，已尝试清理当前载体。',
-            enReason:
-                '${_decodeFailureStatusText(context, decodeStatus)} The hidden payload attempt limit was reached. The current carrier was cleaned when possible.',
-            sourceSnapshot: source,
-            sourceKey: key,
-          );
-        }
-        return _decodeFailureStatusText(context, decodeStatus);
-      }
-    } on Object {
-      // If the policy cannot be read, the module-level lock still applies.
-    }
     return _decodeFailureStatusText(context, decodeStatus);
   }
 
@@ -4830,8 +5190,7 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     }
     return _lifeI18nText(
       context,
-      'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.current_file_error_count.d454c2a872',
-      params: <String, Object?>{'windowCount': status.windowCount},
+      'toolbox.crypto.stego.decode_failure_local_throttle_notice',
     );
   }
 
@@ -4844,77 +5203,14 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     );
   }
 
+  String _genericDecodeFailureText(BuildContext context) {
+    return _lifeI18nText(context, 'toolbox.crypto.stego.error.no_payload_info');
+  }
+
   String _currentSourceFailureKey(Uint8List source) {
     final digest = sha256.convert(source).toString();
     final sourcePath = _sourcePath;
     return sourcePath == null ? digest : '$sourcePath:$digest';
-  }
-
-  Future<String?> _wipeCurrentHiddenData({
-    required String zhReason,
-    required String enReason,
-    required Uint8List sourceSnapshot,
-    required String sourceKey,
-  }) async {
-    try {
-      final stripped = _service.stripHiddenData(
-        mediaKind: _mediaKind,
-        carrierBytes: sourceSnapshot,
-        passphrase: _passphraseController.text,
-        keyFileBytes: _activeKeyFileBytes,
-        locatorAlgorithm: _locatorAlgorithm,
-        locatorStrength: _locatorStrength,
-      );
-      if (!stripped.removed) {
-        return null;
-      }
-      _decodeErrorTimesByCarrier.remove(sourceKey);
-      _decodeLockedUntilByCarrier.remove(sourceKey);
-      _protectedDecodeFailuresByCarrier.remove(sourceKey);
-      var wroteSource = false;
-      final sourcePath = _sourcePath;
-      if (!kIsWeb && sourcePath != null && sourcePath.trim().isNotEmpty) {
-        await File(sourcePath).writeAsBytes(stripped.bytes, flush: true);
-        wroteSource = true;
-      }
-      if (!mounted) {
-        return null;
-      }
-      final oldOutput = _outputPreview;
-      ui.Image? oldSource;
-      setState(() {
-        oldSource = _detachCarrierState();
-        _outputBytes = null;
-        _outputPreview = null;
-        _embedResult = null;
-        _revealResult = null;
-        _fileOutputBytes = null;
-        _fileEmbedResult = null;
-        _fileRevealResult = null;
-      });
-      oldSource?.dispose();
-      oldOutput?.dispose();
-      final target = wroteSource
-          ? _lifeI18nText(
-              context,
-              'inline.plan295.crypto.source_file_was_overwritten_and_the.fa084b5dac75',
-            )
-          : _lifeI18nText(
-              context,
-              'inline.plan295.crypto.current_in_memory_carrier_was_cleane.42b8531024cf',
-            );
-      return _lifeI18nText(
-        context,
-        'inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.text.6aa573903c',
-        params: <String, Object?>{
-          'zhReason': zhReason,
-          'target': target,
-          'enReason': enReason,
-        },
-      );
-    } on Object {
-      return null;
-    }
   }
 
   IconData _mediaIcon(ToolboxSteganographyMediaKind kind) {
@@ -4922,6 +5218,14 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       ToolboxSteganographyMediaKind.image => Icons.image_rounded,
       ToolboxSteganographyMediaKind.audio => Icons.audiotrack_rounded,
       ToolboxSteganographyMediaKind.video => Icons.movie_rounded,
+    };
+  }
+
+  List<String>? _mediaAllowedExtensions(ToolboxSteganographyMediaKind kind) {
+    return switch (kind) {
+      ToolboxSteganographyMediaKind.image => null,
+      ToolboxSteganographyMediaKind.audio => _stegoAudioExtensions,
+      ToolboxSteganographyMediaKind.video => _stegoVideoExtensions,
     };
   }
 
@@ -4994,14 +5298,38 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     return switch (_effectiveSignatureMode) {
       ToolboxCryptoSignatureMode.weakSha256 => _lifeI18nText(
         context,
-        'inline.plan295.crypto.weak_signature_is_a_fast_lightweight.f453d8022986',
+        'toolbox.crypto.stego.integrity_check_package_local',
       ),
       ToolboxCryptoSignatureMode.rsaSha256 ||
       ToolboxCryptoSignatureMode.ecdsaSha256 => _lifeI18nText(
         context,
-        'inline.plan295.crypto.rsa_ecdsa_are_high_cost_integrity_ch.4d07d07f51af',
+        'toolbox.crypto.stego.integrity_check_derived_key_notice',
       ),
       ToolboxCryptoSignatureMode.none => '',
+    };
+  }
+
+  String _signatureModeLabel(
+    BuildContext context,
+    ToolboxCryptoSignatureMode mode,
+  ) {
+    return switch (mode) {
+      ToolboxCryptoSignatureMode.none => _lifeI18nText(
+        context,
+        'toolbox.crypto.stego.integrity_check_none',
+      ),
+      ToolboxCryptoSignatureMode.weakSha256 => _lifeI18nText(
+        context,
+        'toolbox.crypto.stego.integrity_check_hmac',
+      ),
+      ToolboxCryptoSignatureMode.rsaSha256 => _lifeI18nText(
+        context,
+        'toolbox.crypto.stego.integrity_check_rsa',
+      ),
+      ToolboxCryptoSignatureMode.ecdsaSha256 => _lifeI18nText(
+        context,
+        'toolbox.crypto.stego.integrity_check_ecdsa',
+      ),
     };
   }
 
@@ -5026,6 +5354,14 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         context,
         'literal.services.toolbox_crypto_service.camellia_gcm_55360c',
       ),
+      ToolboxCryptoAlgorithm.serpentGcm => _lifeI18nText(
+        context,
+        'toolbox.crypto.algorithm.serpent_gcm',
+      ),
+      ToolboxCryptoAlgorithm.kuznyechikGcm => _lifeI18nText(
+        context,
+        'toolbox.crypto.algorithm.kuznyechik_gcm',
+      ),
       ToolboxCryptoAlgorithm.aesTwofishGcm => _lifeI18nText(
         context,
         'literal.services.toolbox_crypto_service.aes_twofish_d984ce',
@@ -5038,6 +5374,12 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         context,
         'literal.services.toolbox_crypto_service.aes_twofish_camellia_a9f46e',
       ),
+      ToolboxCryptoAlgorithm.aesSerpentKuznyechikGcm => _lifeI18nText(
+        context,
+        'toolbox.crypto.algorithm.aes_serpent_kuznyechik',
+      ),
+      ToolboxCryptoAlgorithm.aesTwofishCamelliaSerpentKuznyechikGcm =>
+        _lifeI18nText(context, 'toolbox.crypto.algorithm.full_five_cascade'),
       ToolboxCryptoAlgorithm.customCascade => _lifeI18nText(
         context,
         'inline.plan295.crypto.custom_cascade.d93fe5b2930c',
@@ -5078,6 +5420,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
       ToolboxCryptoCascadeCipher.chacha20 => 'ChaCha20',
       ToolboxCryptoCascadeCipher.twofish => 'Twofish',
       ToolboxCryptoCascadeCipher.camellia => 'Camellia',
+      ToolboxCryptoCascadeCipher.serpent => 'Serpent',
+      ToolboxCryptoCascadeCipher.kuznyechik => 'Kuznyechik',
       ToolboxCryptoCascadeCipher.sha256Stream => _lifeI18nText(
         context,
         'inline.plan295.crypto.sha256_stream.497d6a375d82',
@@ -5107,6 +5451,8 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
     ToolboxCryptoHashAlgorithm algorithm,
   ) {
     return switch (algorithm) {
+      ToolboxCryptoHashAlgorithm.md5 => 'MD5',
+      ToolboxCryptoHashAlgorithm.sha1 => 'SHA-1',
       ToolboxCryptoHashAlgorithm.sha256 => 'SHA-256',
       ToolboxCryptoHashAlgorithm.sha512 => 'SHA-512',
       ToolboxCryptoHashAlgorithm.sha3_256 => 'SHA3-256',
@@ -5163,6 +5509,12 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         context,
         'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.this_encryption_mode_requires_a_passphrase_or_key_file_682033',
       ),
+      'Steganography writes require AEAD encryption; plaintext and signature-only modes are disabled.' =>
+        _lifeI18nText(context, 'toolbox.crypto.stego.error.aead_required'),
+      'High security steganography requires a key file.' => _lifeI18nText(
+        context,
+        'toolbox.crypto.stego.error.high_requires_key_file',
+      ),
       'This encryption mode requires a passphrase.' => _lifeI18nText(
         context,
         'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.this_encryption_mode_requires_a_passphrase_ef206a',
@@ -5184,16 +5536,58 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         context,
         'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.sha256_stream_can_only_decrypt_existing_legacy_payloads_6cc0e2',
       ),
-      'Audio steganography requires a frequency-domain backend before new payloads can be generated.' =>
+      'Audio carrier needs more non-silent PCM samples.' => _lifeI18nText(
+        context,
+        'toolbox.crypto.stego.error.audio_pcm_activity_required',
+      ),
+      'Compressed audio bitstreams cannot be written safely. Use WAV/PCM audio or ISO BMFF audio with existing free-space padding.' =>
         _lifeI18nText(
           context,
-          'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.audio_steganography_requires_a_frequency_domain_backend_5d676c',
+          'toolbox.crypto.stego.error.audio_compressed_read_only',
         ),
-      'Video steganography requires a frame-level or motion-vector backend before new payloads can be generated.' =>
+      'Compressed or complex video containers cannot be written safely. Use ISO BMFF video with existing free-space padding.' =>
         _lifeI18nText(
           context,
-          'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.video_steganography_requires_a_frame_level_or_motion_vec_193d4a',
+          'toolbox.crypto.stego.error.video_complex_read_only',
         ),
+      'ISO BMFF carrier needs an existing free-space padding box.' =>
+        _lifeI18nText(
+          context,
+          'toolbox.crypto.stego.error.iso_bmff_free_padding_required',
+        ),
+      'ISO BMFF carrier needs a larger free-space padding box.' =>
+        _lifeI18nText(
+          context,
+          'toolbox.crypto.stego.error.iso_bmff_free_padding_required',
+        ),
+      'Video carrier needs an existing MP4/MOV free-space padding box.' =>
+        _lifeI18nText(
+          context,
+          'toolbox.crypto.stego.error.iso_bmff_free_padding_required',
+        ),
+      'Video carrier needs a larger MP4/MOV free-space padding box.' =>
+        _lifeI18nText(
+          context,
+          'toolbox.crypto.stego.error.iso_bmff_free_padding_required',
+        ),
+      'Unsupported audio format. Use WAV/PCM audio or ISO BMFF audio with existing free-space padding.' =>
+        _lifeI18nText(
+          context,
+          'toolbox.crypto.stego.error.audio_safe_backend_required',
+        ),
+      'Unsupported video format. Use ISO BMFF video with existing free-space padding.' =>
+        _lifeI18nText(
+          context,
+          'toolbox.crypto.stego.error.video_iso_bmff_required',
+        ),
+      'Unsupported audio format. Pick WAV/PCM audio.' => _lifeI18nText(
+        context,
+        'toolbox.crypto.stego.error.audio_safe_backend_required',
+      ),
+      'Unsupported video format. Pick MP4/MOV video.' => _lifeI18nText(
+        context,
+        'toolbox.crypto.stego.error.video_iso_bmff_required',
+      ),
       'Unsupported image format. Pick PNG/JPG/WebP/GIF style images.' =>
         _lifeI18nText(
           context,
@@ -5287,19 +5681,26 @@ class _SteganographyToolPageState extends State<_SteganographyToolPage> {
         context,
         'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.hidden_payload_tamper_check_failed_c1de3f',
       ),
-      'Max error attempts must be between 0 and 255.' => _lifeI18nText(
-        context,
-        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.max_error_attempts_must_be_between_0_and_255_3479c5',
-      ),
-      'Max successful reveals must be between 0 and 255.' => _lifeI18nText(
-        context,
-        'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.max_successful_reveals_must_be_between_0_and_255_5c0d55',
-      ),
       'Carrier already contains hidden data. Use the original carrier, clear the hidden data, or embed the encrypted file as a new payload.' =>
         _lifeI18nText(
           context,
           'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.carrier_already_contains_hidden_data_use_the_original_ca_ebd54f',
         ),
+      'Carrier is guarded against blind overwrite. Enable overwrite only if you intentionally want to replace it.' =>
+        _lifeI18nText(context, 'toolbox.crypto.stego.error.guarded_overwrite'),
+      'Carrier already contains a payload readable with the current credential. Enable overwrite only if you intentionally want to replace it.' =>
+        _lifeI18nText(
+          context,
+          'toolbox.crypto.stego.error.same_credential_overwrite',
+        ),
+      'Legacy steganography compatibility has been removed.' => _lifeI18nText(
+        context,
+        'toolbox.crypto.stego.error.legacy_removed',
+      ),
+      'Fingerprint file is invalid.' => _lifeI18nText(
+        context,
+        'toolbox.crypto.stego.error.fingerprint_invalid',
+      ),
       'Dual-layer mode currently supports image carriers only.' => _lifeI18nText(
         context,
         'literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.dual_layer_mode_currently_supports_image_carriers_only_c8fa28',

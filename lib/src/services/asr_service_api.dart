@@ -34,14 +34,17 @@ extension AsrServiceApi on AsrService {
         stem: '${config.provider.name}_processed',
       );
       final language = _normalizeApiLanguage(config.language);
-      final prompt = config.provider == AsrProviderType.api
-          ? _buildApiPrompt(expectedText)
-          : '';
+      final prompt = config.provider == AsrProviderType.customApi
+          ? ''
+          : _buildApiPrompt(expectedText);
+      final model = config.model.trim().isEmpty
+          ? defaultAsrModelForProvider(config.provider)
+          : config.model.trim();
       final response = await _sendApiTranscriptionRequest(
         client: client,
         endpoint: endpoint,
         apiKey: apiKey,
-        model: config.model,
+        model: model,
         language: language,
         audioPath: processedAudioPath,
         includePrompt: prompt.isNotEmpty,
@@ -451,13 +454,24 @@ extension AsrServiceApi on AsrService {
       }
       throw StateError('asrSimilarityTtsBaseUrlMissing');
     }
+    if (ttsConfig.provider != TtsProviderType.api &&
+        ttsConfig.provider != TtsProviderType.customApi) {
+      final fallback = await _trySynthesizeLocalReferenceFallback(
+        expected: expected,
+        ttsConfig: ttsConfig,
+      );
+      if (fallback != null) {
+        return fallback;
+      }
+      throw StateError('asrSimilarityLocalSynthesisUnsupported');
+    }
     final endpoint = _resolveTtsEndpoint(ttsConfig);
     final model = (ttsConfig.model?.trim().isNotEmpty ?? false)
         ? ttsConfig.model!.trim()
-        : AsrService._defaultTtsModel;
+        : defaultTtsModelForProvider(ttsConfig.provider);
     final voice = ttsConfig.remoteVoice.trim().isNotEmpty
         ? ttsConfig.remoteVoice.trim()
-        : AsrService._defaultTtsVoice;
+        : defaultTtsVoiceForProvider(ttsConfig.provider);
     final response = await client
         .post(
           Uri.parse(endpoint),
@@ -657,7 +671,7 @@ extension AsrServiceApi on AsrService {
         return '$normalized/v1/audio/transcriptions';
       }
     }
-    return AsrService._defaultApiEndpoint;
+    return defaultAsrEndpointForProvider(config.provider);
   }
 
   String? _normalizeApiLanguage(String raw) {
@@ -693,6 +707,37 @@ extension AsrServiceApi on AsrService {
     required String prompt,
     required int requestToken,
   }) async {
+    if (model.trim().isEmpty) {
+      model = defaultAsrModelForProvider(AsrProviderType.api);
+    }
+    if (_usesJsonAudioTranscriptionEndpoint(endpoint)) {
+      final audioBytes = await File(audioPath).readAsBytes();
+      final dataUrl = _audioDataUrl(audioPath: audioPath, bytes: audioBytes);
+      if (endpoint.contains('dashscope.aliyuncs.com')) {
+        return _sendAliyunTranscriptionRequest(
+          client: client,
+          endpoint: endpoint,
+          apiKey: apiKey,
+          model: model,
+          language: language,
+          dataUrl: dataUrl,
+          prompt: prompt,
+          requestToken: requestToken,
+        );
+      }
+      if (endpoint.contains('ark.cn-beijing.volces.com')) {
+        return _sendDoubaoTranscriptionRequest(
+          client: client,
+          endpoint: endpoint,
+          apiKey: apiKey,
+          model: model,
+          language: language,
+          dataUrl: dataUrl,
+          prompt: prompt,
+          requestToken: requestToken,
+        );
+      }
+    }
     final request = http.MultipartRequest('POST', Uri.parse(endpoint));
     request.headers['Authorization'] = 'Bearer $apiKey';
     request.fields['model'] = model;
@@ -713,6 +758,193 @@ extension AsrServiceApi on AsrService {
     return http.Response.fromStream(
       streamed,
     ).timeout(const Duration(seconds: 30));
+  }
+
+  bool _usesJsonAudioTranscriptionEndpoint(String endpoint) {
+    final lower = endpoint.toLowerCase();
+    return lower.contains('dashscope.aliyuncs.com') ||
+        lower.contains('ark.cn-beijing.volces.com');
+  }
+
+  Future<http.Response> _sendAliyunTranscriptionRequest({
+    required http.Client client,
+    required String endpoint,
+    required String apiKey,
+    required String model,
+    required String? language,
+    required String dataUrl,
+    required String prompt,
+    required int requestToken,
+  }) async {
+    final requestPrompt = prompt.trim().isEmpty
+        ? 'Transcribe the audio. Return text only.'
+        : prompt.trim();
+    final response = await client
+        .post(
+          Uri.parse(endpoint),
+          headers: <String, String>{
+            'Authorization': 'Bearer $apiKey',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode(<String, Object?>{
+            'model': model,
+            'input': <String, Object?>{
+              'messages': <Object?>[
+                <String, Object?>{
+                  'role': 'user',
+                  'content': <Object?>[
+                    <String, Object?>{'audio': dataUrl},
+                    <String, Object?>{'text': requestPrompt},
+                  ],
+                },
+              ],
+            },
+            if (language != null)
+              'parameters': <String, Object?>{'language': language},
+          }),
+        )
+        .timeout(const Duration(seconds: 30));
+    if (!_isApiRequestActive(requestToken) || _stopRequested) {
+      return http.Response('', 499);
+    }
+    return _normalizeJsonTranscriptionResponse(response);
+  }
+
+  Future<http.Response> _sendDoubaoTranscriptionRequest({
+    required http.Client client,
+    required String endpoint,
+    required String apiKey,
+    required String model,
+    required String? language,
+    required String dataUrl,
+    required String prompt,
+    required int requestToken,
+  }) async {
+    final requestPrompt = prompt.trim().isEmpty
+        ? 'Transcribe the audio. Return text only.'
+        : prompt.trim();
+    final response = await client
+        .post(
+          Uri.parse(endpoint),
+          headers: <String, String>{
+            'Authorization': 'Bearer $apiKey',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode(<String, Object?>{
+            'model': model,
+            'input': <Object?>[
+              <String, Object?>{
+                'role': 'user',
+                'content': <Object?>[
+                  <String, Object?>{
+                    'type': 'input_text',
+                    'text': language == null
+                        ? requestPrompt
+                        : '$requestPrompt Language hint: $language.',
+                  },
+                  <String, Object?>{
+                    'type': 'input_audio',
+                    'audio_url': dataUrl,
+                  },
+                ],
+              },
+            ],
+          }),
+        )
+        .timeout(const Duration(seconds: 30));
+    if (!_isApiRequestActive(requestToken) || _stopRequested) {
+      return http.Response('', 499);
+    }
+    return _normalizeJsonTranscriptionResponse(response);
+  }
+
+  http.Response _normalizeJsonTranscriptionResponse(http.Response response) {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      return response;
+    }
+    dynamic decoded;
+    try {
+      decoded = jsonDecode(response.body);
+    } catch (_) {
+      return response;
+    }
+    final text = _extractTranscriptText(decoded)?.trim();
+    if (text == null || text.isEmpty) {
+      return response;
+    }
+    return http.Response(
+      jsonEncode(<String, Object?>{'text': text}),
+      200,
+      headers: const <String, String>{'content-type': 'application/json'},
+    );
+  }
+
+  String? _extractTranscriptText(Object? value) {
+    if (value == null) return null;
+    if (value is String) {
+      final trimmed = value.trim();
+      return trimmed.isEmpty ? null : trimmed;
+    }
+    if (value is List) {
+      final parts = <String>[];
+      for (final item in value) {
+        final text = _extractTranscriptText(item);
+        if (text != null && text.trim().isNotEmpty) {
+          parts.add(text.trim());
+        }
+      }
+      return parts.isEmpty ? null : parts.join(' ');
+    }
+    if (value is Map) {
+      for (final key in <String>[
+        'text',
+        'transcript',
+        'output_text',
+        'result',
+      ]) {
+        final text = _extractTranscriptText(value[key]);
+        if (text != null && text.trim().isNotEmpty) return text.trim();
+      }
+      final output = value['output'];
+      if (output != null) {
+        final text = _extractTranscriptText(output);
+        if (text != null && text.trim().isNotEmpty) return text.trim();
+      }
+      final choices = value['choices'];
+      if (choices is List && choices.isNotEmpty) {
+        final text = _extractTranscriptText(choices.first);
+        if (text != null && text.trim().isNotEmpty) return text.trim();
+      }
+      final message = value['message'];
+      if (message != null) {
+        final text = _extractTranscriptText(message);
+        if (text != null && text.trim().isNotEmpty) return text.trim();
+      }
+      final content = value['content'];
+      if (content != null) {
+        final text = _extractTranscriptText(content);
+        if (text != null && text.trim().isNotEmpty) return text.trim();
+      }
+      final response = value['response'];
+      if (response != null) {
+        final text = _extractTranscriptText(response);
+        if (text != null && text.trim().isNotEmpty) return text.trim();
+      }
+    }
+    return null;
+  }
+
+  String _audioDataUrl({required String audioPath, required List<int> bytes}) {
+    final extension = p.extension(audioPath).toLowerCase();
+    final mimeType = switch (extension) {
+      '.mp3' => 'audio/mpeg',
+      '.m4a' => 'audio/mp4',
+      '.aac' => 'audio/aac',
+      '.ogg' => 'audio/ogg',
+      '.flac' => 'audio/flac',
+      _ => 'audio/wav',
+    };
+    return 'data:$mimeType;base64,${base64Encode(bytes)}';
   }
 
   Future<String> _prepareAudioForApi(

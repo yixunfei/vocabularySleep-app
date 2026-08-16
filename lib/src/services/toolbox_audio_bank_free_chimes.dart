@@ -209,7 +209,7 @@ Uint8List _buildFreeChimeBell({
   );
 
   final frequency = baseFrequency * (0.86 + vrand(1) * 0.34);
-  final durationSeconds = 1.6 + tail * 2.6 + normalizedIntensity * 0.5;
+  final durationSeconds = 0.68 + tail * 1.28 + normalizedIntensity * 0.28;
   final totalSamples = (sampleRate * durationSeconds).round();
   final samples = List<double>.filled(totalSamples, 0);
   final ratios = bright

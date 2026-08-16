@@ -203,4 +203,108 @@ void main() {
       expect(ttsSpy.spoken, <String>['abandon', 'to leave behind']);
     },
   );
+
+  test(
+    'preparePlay keeps word resolution lazy until playback starts',
+    () async {
+      final tts = TtsService();
+      final service = PlaybackService(tts);
+      addTearDown(service.stop);
+      var resolveCalls = 0;
+
+      await service.preparePlay(
+        words: const <WordEntry>[
+          WordEntry(wordbookId: 1, word: 'abandon', fields: <WordFieldItem>[]),
+        ],
+        startIndex: 0,
+        config: PlayConfig.defaults.copyWith(delayBetweenUnitsMs: 0),
+        resolveWord: (_, _) {
+          resolveCalls += 1;
+          return const WordEntry(
+            wordbookId: 1,
+            word: 'abandon',
+            meaning: 'to leave behind',
+            rawContent: 'to leave behind',
+            fields: <WordFieldItem>[
+              WordFieldItem(
+                key: 'meaning',
+                label: 'Meaning',
+                value: 'to leave behind',
+              ),
+            ],
+          );
+        },
+      );
+
+      expect(service.isPrepared, isTrue);
+      expect(resolveCalls, 0);
+      expect(ttsSpy.spoken, isEmpty);
+
+      await service.startPreparedPlay();
+
+      expect(resolveCalls, 1);
+      expect(ttsSpy.spoken, <String>['abandon', 'to leave behind']);
+      expect(service.isPrepared, isFalse);
+    },
+  );
+
+  test(
+    'preparePlay keeps sequential playback indices lazy for large wordbooks',
+    () async {
+      final tts = TtsService();
+      final service = PlaybackService(tts);
+      addTearDown(service.stop);
+      final words = List<WordEntry>.generate(
+        100000,
+        (index) => WordEntry(
+          id: index + 1,
+          wordbookId: 1,
+          word: 'Word $index',
+          fields: const <WordFieldItem>[],
+        ),
+      );
+
+      final session = await service.preparePlay(
+        words: words,
+        startIndex: 49998,
+        config: PlayConfig.defaults.copyWith(delayBetweenUnitsMs: 0),
+      );
+
+      expect(session.indices, isNot(isA<List<int>>()));
+      expect(session.indices.take(4).toList(growable: false), <int>[
+        49998,
+        49999,
+        50000,
+        50001,
+      ]);
+      expect(ttsSpy.spoken, isEmpty);
+    },
+  );
+
+  test(
+    'playWords exposes missing remote tts config before word change',
+    () async {
+      final tts = TtsService();
+      final service = PlaybackService(tts);
+      addTearDown(service.stop);
+      var wordChanges = 0;
+      final config = PlayConfig.defaults.copyWith(
+        tts: PlayConfig.defaults.tts.copyWith(provider: TtsProviderType.api),
+      );
+
+      await expectLater(
+        service.playWords(
+          words: const <WordEntry>[WordEntry(wordbookId: 1, word: 'abandon')],
+          startIndex: 0,
+          config: config,
+          onWordChanged: (_, _) => wordChanges += 1,
+        ),
+        throwsA(isA<TtsConfigurationException>()),
+      );
+
+      expect(wordChanges, 0);
+      expect(ttsSpy.spoken, isEmpty);
+      expect(service.isPlaying, isFalse);
+    },
+  );
 }

@@ -322,7 +322,7 @@ void main() {
       addTearDown(sqlite.dispose);
       final row = sqlite.select('PRAGMA user_version;').single;
 
-      expect((row['user_version'] as int?) ?? 0, 9);
+      expect((row['user_version'] as int?) ?? 0, 10);
     },
   );
 
@@ -342,6 +342,56 @@ void main() {
           'message',
           contains('newer than supported'),
         ),
+      ),
+    );
+  });
+
+  test('database init rejects old schema baseline in new-only mode', () async {
+    final dbPath = '${tempDir.path}${Platform.pathSeparator}vocabulary.db';
+    final sqlite = sqlite3.open(dbPath);
+    sqlite.execute('PRAGMA user_version = 9;');
+    sqlite.dispose();
+
+    final database = AppDatabaseService(WordbookImportService());
+    addTearDown(database.dispose);
+
+    await expectLater(
+      database.init(),
+      throwsA(
+        isA<StateError>().having(
+          (error) => error.message,
+          'message',
+          contains('below new-only baseline'),
+        ),
+      ),
+    );
+  });
+
+  test('database init rejects malformed current-baseline tables', () async {
+    final dbPath = '${tempDir.path}${Platform.pathSeparator}vocabulary.db';
+    final sqlite = sqlite3.open(dbPath);
+    sqlite.execute('''
+      CREATE TABLE words (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        wordbook_id INTEGER NOT NULL,
+        word TEXT NOT NULL
+      );
+    ''');
+    sqlite.dispose();
+
+    final database = AppDatabaseService(WordbookImportService());
+    addTearDown(database.dispose);
+
+    await expectLater(
+      database.init(),
+      throwsA(
+        predicate<Object?>((error) {
+          final message = error is StateError
+              ? error.message
+              : error.toString();
+          return message.contains('missing current schema columns') ||
+              message.contains('no such column: search_word');
+        }, 'schema shape rejection'),
       ),
     );
   });
@@ -759,6 +809,61 @@ void main() {
       <String>['Alpha'],
     );
   });
+
+  test(
+    'searchWordsLite keeps lite projection and hydrates on demand',
+    () async {
+      final database = AppDatabaseService(WordbookImportService());
+      await database.init();
+      addTearDown(database.dispose);
+
+      await database.importWordbook(
+        sourcePath: 'custom:test_search_words_lite',
+        name: 'Search words lite test',
+        entries: const <WordEntryPayload>[
+          WordEntryPayload(
+            word: 'Gamma',
+            fields: <WordFieldItem>[
+              WordFieldItem(key: 'meaning', label: 'Meaning', value: 'Third'),
+              WordFieldItem(key: 'usage', label: 'Usage', value: 'Ray burst'),
+            ],
+            rawContent: 'Third',
+            sourcePayloadJson: '{"word":"Gamma"}',
+          ),
+        ],
+      );
+      final wordbook = database.getWordbooks().firstWhere(
+        (item) => item.path == 'custom:test_search_words_lite',
+      );
+
+      final lite = database
+          .searchWordsLite(wordbook.id, query: 'ray', mode: 'meaning')
+          .single;
+      expect(lite.word, 'Gamma');
+      expect(lite.fields.map((field) => field.key), isNot(contains('usage')));
+      expect(lite.sourcePayloadJson, isNull);
+
+      final hydrated = database.hydrateWordEntry(lite)!;
+      expect(hydrated.fields.map((field) => field.key), contains('usage'));
+      expect(hydrated.sourcePayloadJson, '{"word":"Gamma"}');
+    },
+  );
+
+  test(
+    'searchWordsLite source does not regress to full row selection',
+    () async {
+      final source = await File(
+        'lib/src/services/database_service_wordbook_query.dart',
+      ).readAsString();
+      final start = source.indexOf('List<WordEntry> searchWordsLite');
+      final end = source.indexOf('WordEntry? hydrateWordEntry', start);
+      expect(start, greaterThanOrEqualTo(0));
+      expect(end, greaterThan(start));
+
+      final body = source.substring(start, end);
+      expect(body, isNot(contains('SELECT *')));
+    },
+  );
 
   test(
     'special wordbooks can keep duplicate headwords apart by entry_uid and delete a single referenced entry',

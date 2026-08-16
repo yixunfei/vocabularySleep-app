@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart' show kDebugMode;
+
 import 'word_entry.dart';
 import 'word_field.dart';
 import '../services/app_log_service.dart';
@@ -10,12 +12,14 @@ enum SpellingPlaybackMode { letters, pairs }
 
 enum WordPageTransitionStyle { defaultStyle, smooth, fade, pageFlip }
 
-enum TtsProviderType { local, api, customApi }
+enum TtsProviderType { local, api, aliyunBailian, doubao, customApi }
 
-enum VoiceInputProviderType { api, offline, system }
+enum VoiceInputProviderType { api, aliyunBailian, doubao, offline, system }
 
 enum AsrProviderType {
   api,
+  aliyunBailian,
+  doubao,
   customApi,
   offline,
   offlineSmall,
@@ -56,6 +60,8 @@ class FieldPlaybackSetting {
 }
 
 class TtsConfig {
+  static const Object _unset = Object();
+
   const TtsConfig({
     required this.provider,
     required this.voice,
@@ -70,6 +76,8 @@ class TtsConfig {
     this.apiKey,
     this.model,
     this.baseUrl,
+    this.appId,
+    this.stylePrompt,
   });
 
   final TtsProviderType provider;
@@ -85,6 +93,8 @@ class TtsConfig {
   final String? apiKey;
   final String? model;
   final String? baseUrl;
+  final String? appId;
+  final String? stylePrompt;
 
   String get activeVoice =>
       provider == TtsProviderType.local ? localVoice : remoteVoice;
@@ -115,9 +125,11 @@ class TtsConfig {
     double? volume,
     bool? enableApiCache,
     int? maxApiCacheMb,
-    String? apiKey,
-    String? model,
-    String? baseUrl,
+    Object? apiKey = _unset,
+    Object? model = _unset,
+    Object? baseUrl = _unset,
+    Object? appId = _unset,
+    Object? stylePrompt = _unset,
   }) {
     return TtsConfig(
       provider: provider ?? this.provider,
@@ -132,9 +144,13 @@ class TtsConfig {
       volume: volume ?? this.volume,
       enableApiCache: enableApiCache ?? this.enableApiCache,
       maxApiCacheMb: maxApiCacheMb ?? this.maxApiCacheMb,
-      apiKey: apiKey ?? this.apiKey,
-      model: model ?? this.model,
-      baseUrl: baseUrl ?? this.baseUrl,
+      apiKey: identical(apiKey, _unset) ? this.apiKey : apiKey as String?,
+      model: identical(model, _unset) ? this.model : model as String?,
+      baseUrl: identical(baseUrl, _unset) ? this.baseUrl : baseUrl as String?,
+      appId: identical(appId, _unset) ? this.appId : appId as String?,
+      stylePrompt: identical(stylePrompt, _unset)
+          ? this.stylePrompt
+          : stylePrompt as String?,
     );
   }
 
@@ -152,6 +168,8 @@ class TtsConfig {
     'apiKey': apiKey,
     'model': model,
     'baseUrl': baseUrl,
+    'appId': appId,
+    'stylePrompt': stylePrompt,
   };
 
   factory TtsConfig.fromJson(Map<String, Object?> json) {
@@ -199,6 +217,8 @@ class TtsConfig {
       apiKey: json['apiKey']?.toString(),
       model: json['model']?.toString(),
       baseUrl: json['baseUrl']?.toString(),
+      appId: json['appId']?.toString(),
+      stylePrompt: json['stylePrompt']?.toString(),
     );
   }
 }
@@ -395,6 +415,8 @@ class VoiceInputConfig {
 
   AsrProviderType get recordingProvider => switch (provider) {
     VoiceInputProviderType.api => AsrProviderType.api,
+    VoiceInputProviderType.aliyunBailian => AsrProviderType.aliyunBailian,
+    VoiceInputProviderType.doubao => AsrProviderType.doubao,
     VoiceInputProviderType.offline => AsrProviderType.offline,
     VoiceInputProviderType.system => AsrProviderType.api,
   };
@@ -1306,21 +1328,25 @@ List<PlayUnit> buildPlayQueue(WordEntry word, PlayConfig config) {
     if (field.key.isEmpty) continue;
     final enabled = _isFieldEnabled(field.key, config);
     if (!enabled) {
-      AppLogService.instance.i(
-        'playback',
-        'Field disabled: ${field.key}',
-        data: {'word': word.word},
-      );
+      if (kDebugMode) {
+        AppLogService.instance.d(
+          'playback',
+          'Field disabled: ${field.key}',
+          data: {'word': word.word},
+        );
+      }
       continue;
     }
 
     final repeat = _resolveFieldRepeat(field.key, config);
     if (repeat <= 0) {
-      AppLogService.instance.i(
-        'playback',
-        'Field has 0 repeat: ${field.key}',
-        data: {'word': word.word},
-      );
+      if (kDebugMode) {
+        AppLogService.instance.d(
+          'playback',
+          'Field has 0 repeat: ${field.key}',
+          data: {'word': word.word},
+        );
+      }
       continue;
     }
 
@@ -1329,11 +1355,13 @@ List<PlayUnit> buildPlayQueue(WordEntry word, PlayConfig config) {
         _fieldPlaybackSettingForKey(field.key, config)?.label ?? field.label;
     final values = field.asList();
     if (values.isEmpty) {
-      AppLogService.instance.i(
-        'playback',
-        'Field has no values: ${field.key}',
-        data: {'word': word.word},
-      );
+      if (kDebugMode) {
+        AppLogService.instance.d(
+          'playback',
+          'Field has no values: ${field.key}',
+          data: {'word': word.word},
+        );
+      }
       continue;
     }
     for (final value in values) {

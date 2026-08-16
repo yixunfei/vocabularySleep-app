@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:archive/archive.dart';
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:camera/camera.dart';
 import 'package:crypto/crypto.dart';
@@ -13,6 +14,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 import 'package:kinship_calculator/kinship_calculator.dart' as kinship;
@@ -25,16 +27,18 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:sxwnl_spa_dart/sxwnl_spa_dart.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:video_player/video_player.dart';
+import 'package:video_trimmer/video_trimmer.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/todo_item.dart';
 import '../../services/app_log_service.dart';
-import '../../services/toolbox_ai_interview_service.dart';
 import '../../services/toolbox_fake_call_service.dart';
 import '../../services/toolbox_life_notify_service.dart';
 import '../../services/toolbox_meme_service.dart';
 import '../../services/toolbox_bmi_service.dart';
 import '../../services/toolbox_date_calculator_service.dart';
+import '../../services/toolbox_scientific_calculator_service.dart';
 import '../../services/toolbox_image_to_web_service.dart';
 import '../../services/toolbox_id_photo_service.dart';
 import '../../services/toolbox_i18n_text_ref.dart';
@@ -83,6 +87,7 @@ part 'toolbox_life_tools/toolbox_life_tools_offer_select.dart';
 part 'toolbox_life_tools/toolbox_life_tools_mortgage.dart';
 part 'toolbox_life_tools/toolbox_life_tools_city_compare.dart';
 part 'toolbox_life_tools/toolbox_life_tools_timeline_periodic_data.dart';
+part 'toolbox_life_tools/toolbox_life_tools_timeline_periodic_brief_24_history_data.dart';
 part 'toolbox_life_tools/toolbox_life_tools_timeline_periodic_history_dense_premodern_data.dart';
 part 'toolbox_life_tools/toolbox_life_tools_timeline_periodic_history_dense_modern_data.dart';
 part 'toolbox_life_tools/toolbox_life_tools_timeline_periodic_history_data.dart';
@@ -112,7 +117,17 @@ part 'toolbox_life_tools/toolbox_life_tools_relatives.dart';
 part 'toolbox_life_tools/toolbox_life_tools_mind_map.dart';
 part 'toolbox_life_tools/toolbox_life_tools_mind_map_canvas.dart';
 part 'toolbox_life_tools/toolbox_life_tools_mind_map_fullscreen.dart';
-part 'toolbox_life_tools/toolbox_life_tools_ai_interview.dart';
+part 'toolbox_life_tools/toolbox_life_tools_screen_fill_light.dart';
+part 'toolbox_life_tools/toolbox_life_tools_speedometer.dart';
+part 'toolbox_life_tools/toolbox_life_tools_calculator.dart';
+part 'toolbox_life_tools/toolbox_life_tools_calculator_ui.dart';
+part 'toolbox_life_tools/toolbox_life_tools_magnifier.dart';
+part 'toolbox_life_tools/toolbox_life_tools_light_meter.dart';
+part 'toolbox_life_tools/toolbox_life_tools_phone_monitor.dart';
+part 'toolbox_life_tools/toolbox_life_tools_distance_meter.dart';
+part 'toolbox_life_tools/toolbox_life_tools_bio_clock.dart';
+part 'toolbox_life_tools/toolbox_life_tools_gif_maker.dart';
+part 'toolbox_life_tools/toolbox_life_tools_archive.dart';
 
 const MethodChannel _lifeDisplayChannel = MethodChannel(
   'vocabulary_sleep/life_display',
@@ -241,6 +256,46 @@ Future<void> _cancelLifeVibration() async {
   }
 }
 
+Future<Map<String, Object?>> _getLifeLightSnapshot() async {
+  try {
+    final raw = await _lifeDeviceChannel.invokeMethod<Map<Object?, Object?>>(
+      'getLightMeterSnapshot',
+    );
+    if (raw == null) {
+      return <String, Object?>{'supported': false, 'errorCode': 'empty'};
+    }
+    return raw.map((key, value) => MapEntry(key.toString(), value));
+  } on MissingPluginException {
+    return <String, Object?>{'supported': false, 'errorCode': 'unsupported'};
+  } on PlatformException catch (error) {
+    return <String, Object?>{
+      'supported': false,
+      'errorCode': error.code,
+      'errorMessage': error.message,
+    };
+  }
+}
+
+Future<Map<String, Object?>> _getLifeDeviceSnapshot() async {
+  try {
+    final raw = await _lifeDeviceChannel.invokeMethod<Map<Object?, Object?>>(
+      'getDeviceInfoSnapshot',
+    );
+    if (raw == null) {
+      return <String, Object?>{'supported': false, 'errorCode': 'empty'};
+    }
+    return raw.map((key, value) => MapEntry(key.toString(), value));
+  } on MissingPluginException {
+    return <String, Object?>{'supported': false, 'errorCode': 'unsupported'};
+  } on PlatformException catch (error) {
+    return <String, Object?>{
+      'supported': false,
+      'errorCode': error.code,
+      'errorMessage': error.message,
+    };
+  }
+}
+
 Future<void> _enterLifeImmersive({
   required List<DeviceOrientation> orientations,
   double brightness = 1.0,
@@ -282,7 +337,17 @@ String _lifeI18nText(
   Map<String, Object?> params = const <String, Object?>{},
 }) {
   final i18n = AppI18n(Localizations.localeOf(context).languageCode);
-  return i18n.t(key, params: params);
+  return _lifeDecodeEscapedUnicodeText(i18n.t(key, params: params));
+}
+
+String _lifeDecodeEscapedUnicodeText(String value) {
+  if (!value.contains(r'\u')) {
+    return value;
+  }
+  return value.replaceAllMapped(RegExp(r'\\u([0-9a-fA-F]{4})'), (match) {
+    final codeUnit = int.tryParse(match.group(1)!, radix: 16);
+    return codeUnit == null ? match.group(0)! : String.fromCharCode(codeUnit);
+  });
 }
 
 String _lifeI18nRefText(BuildContext context, ToolboxI18nTextRef ref) {
@@ -307,6 +372,107 @@ Map<String, Object?> _lifeResolveI18nParams(
         _ => entry.value,
       },
   };
+}
+
+Future<ui.Image> _decodeLifeUiImage(Uint8List bytes) {
+  final completer = Completer<ui.Image>();
+  ui.decodeImageFromList(bytes, completer.complete);
+  return completer.future;
+}
+
+String _lifeFormatBytes(int bytes) {
+  const units = <String>['B', 'KB', 'MB', 'GB'];
+  var value = bytes.toDouble();
+  var unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+  final digits = unitIndex == 0
+      ? 0
+      : value >= 10
+      ? 1
+      : 2;
+  return '${value.toStringAsFixed(digits)} ${units[unitIndex]}';
+}
+
+String _lifeSafeFileName(String name, {String fallback = 'life_tool_export'}) {
+  final trimmed = name.trim();
+  if (trimmed.isEmpty) {
+    return fallback;
+  }
+  final sanitized = trimmed.replaceAll(RegExp(r'[\\/:*?"<>|]+'), '_');
+  return sanitized.isEmpty ? fallback : sanitized;
+}
+
+Future<String> _saveLifeBytes({
+  required BuildContext context,
+  required Uint8List bytes,
+  required String fileName,
+  required String subdirectory,
+  required String dialogTitleKey,
+  required List<String> allowedExtensions,
+}) async {
+  final safeFileName = _lifeSafeFileName(fileName);
+  final dialogTitle = _lifeI18nText(context, dialogTitleKey);
+  final browserDownloadText = _lifeI18nText(
+    context,
+    'inline.plan295.crypto.browser_download_started_check_your.b28d392515b4',
+  );
+  String? savedPath;
+  try {
+    savedPath = await FilePicker.platform.saveFile(
+      dialogTitle: dialogTitle,
+      fileName: safeFileName,
+      type: FileType.custom,
+      allowedExtensions: allowedExtensions,
+      bytes: bytes,
+    );
+  } on UnimplementedError {
+    savedPath = null;
+  }
+
+  if (savedPath != null && savedPath.trim().isNotEmpty) {
+    return savedPath;
+  }
+  if (kIsWeb) {
+    return browserDownloadText;
+  }
+
+  final appDir = await getApplicationDocumentsDirectory();
+  final exportDir = Directory(
+    path.join(appDir.path, 'life_tools', subdirectory),
+  );
+  if (!await exportDir.exists()) {
+    await exportDir.create(recursive: true);
+  }
+  final timestamp = DateTime.now().millisecondsSinceEpoch;
+  final target = File(
+    path.join(
+      exportDir.path,
+      _lifeTimestampedFileName(safeFileName, timestamp),
+    ),
+  );
+  await target.writeAsBytes(bytes, flush: true);
+  return target.path;
+}
+
+String _lifeTimestampedFileName(String fileName, int timestamp) {
+  final extension = _lifeCompoundExtension(fileName);
+  final baseName = extension.isEmpty
+      ? fileName
+      : fileName.substring(0, fileName.length - extension.length);
+  return '${baseName}_$timestamp$extension';
+}
+
+String _lifeCompoundExtension(String fileName) {
+  final lowerName = fileName.toLowerCase();
+  for (final extension in const <String>['.tar.gz', '.tar.bz2', '.tar.xz']) {
+    if (lowerName.endsWith(extension)) {
+      return fileName.substring(fileName.length - extension.length);
+    }
+  }
+  return path.extension(fileName);
 }
 
 class _LifeToolSource {
@@ -357,11 +523,18 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
     icon: Icons.view_stream_rounded,
   ),
   _LifeTool(
+    id: 'screen_fill_light',
+    titleKey: 'toolbox.life.screen_fill_light.title',
+    summaryKey: 'toolbox.life.screen_fill_light.summary',
+    category: 'display',
+    icon: Icons.light_mode_rounded,
+  ),
+  _LifeTool(
     id: 'ruler',
     titleKey: 'inline.plan295.life.ruler_and_protractor.34ba83f7ca22',
     summaryKey:
         'literal.ui.pages.toolbox_life_tools.screen_ruler_and_protractor_view_10b800',
-    category: 'device',
+    category: 'measure',
     icon: Icons.straighten_rounded,
   ),
   _LifeTool(
@@ -407,7 +580,7 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
     sources: <_LifeToolSource>[
       _LifeToolSource(
         name: 'China Post public page',
-        url: 'https://www.chinapost.com.cn/html1/folder/181312/9531-1.htm',
+        url: 'https://www.chinapost.com.cn/cn/folder/1813/129531-1.htm',
       ),
       _LifeToolSource(name: 'Youbianku', url: 'https://www.youbianku.com/'),
     ],
@@ -456,7 +629,7 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
     titleKey: 'inline.plan295.life.relative_calculator.fc170b634aa5',
     summaryKey:
         'literal.ui.pages.toolbox_life_tools.local_relation_chain_hints_fa3a03',
-    category: 'text',
+    category: 'calc',
     icon: Icons.groups_rounded,
     sources: <_LifeToolSource>[
       _LifeToolSource(
@@ -532,7 +705,7 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
     id: 'compass',
     titleKey: 'inline.plan295.life.compass.64c372418a25',
     summaryKey: 'literal.ui.pages.toolbox_life_tools.compass_dial_panel_9b44bd',
-    category: 'device',
+    category: 'measure',
     icon: Icons.explore_rounded,
   ),
   _LifeTool(
@@ -540,7 +713,7 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
     titleKey: 'inline.plan295.life.level_meter.12381487172b',
     summaryKey:
         'literal.ui.pages.toolbox_life_tools.horizontal_and_vertical_helper_df8e36',
-    category: 'device',
+    category: 'measure',
     icon: Icons.horizontal_split_rounded,
   ),
   _LifeTool(
@@ -548,15 +721,50 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
     titleKey: 'inline.plan295.life.vibration_tool.e1833c0d758f',
     summaryKey:
         'literal.ui.pages.toolbox_life_tools.rhythm_and_duration_pattern_c458ba',
-    category: 'device',
+    category: 'system',
     icon: Icons.vibration_rounded,
+  ),
+  _LifeTool(
+    id: 'speedometer',
+    titleKey: 'toolbox.life.speedometer.title',
+    summaryKey: 'toolbox.life.speedometer.summary',
+    category: 'measure',
+    icon: Icons.speed_rounded,
+  ),
+  _LifeTool(
+    id: 'magnifier',
+    titleKey: 'toolbox.life.magnifier.title',
+    summaryKey: 'toolbox.life.magnifier.summary',
+    category: 'measure',
+    icon: Icons.saved_search_rounded,
+  ),
+  _LifeTool(
+    id: 'light_meter',
+    titleKey: 'toolbox.life.light_meter.title',
+    summaryKey: 'toolbox.life.light_meter.summary',
+    category: 'measure',
+    icon: Icons.wb_sunny_rounded,
+  ),
+  _LifeTool(
+    id: 'phone_monitor',
+    titleKey: 'toolbox.life.phone_monitor.title',
+    summaryKey: 'toolbox.life.phone_monitor.summary',
+    category: 'system',
+    icon: Icons.settings_cell_rounded,
+  ),
+  _LifeTool(
+    id: 'distance_meter',
+    titleKey: 'toolbox.life.distance_meter.title',
+    summaryKey: 'toolbox.life.distance_meter.summary',
+    category: 'measure',
+    icon: Icons.social_distance_rounded,
   ),
   _LifeTool(
     id: 'notify_me',
     titleKey: 'inline.plan295.life.notify_me.a1cb3fafbdd1',
     summaryKey:
         'literal.ui.pages.toolbox_life_tools.schedule_self_reminders_with_notifications_lock_screen_a_96e02b',
-    category: 'device',
+    category: 'system',
     icon: Icons.notifications_active_rounded,
   ),
   _LifeTool(
@@ -564,7 +772,7 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
     titleKey: 'inline.plan295.life.fake_incoming_call.a3cd1b946f9f',
     summaryKey:
         'literal.ui.pages.toolbox_life_tools.schedule_a_full_screen_fake_incoming_call_with_caller_de_adef9f',
-    category: 'device',
+    category: 'system',
     icon: Icons.call_rounded,
   ),
   _LifeTool(
@@ -599,12 +807,40 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
     icon: Icons.phone_iphone_rounded,
   ),
   _LifeTool(
+    id: 'gif_maker',
+    titleKey: 'toolbox.life.gif_maker.title',
+    summaryKey: 'toolbox.life.gif_maker.summary',
+    category: 'image',
+    icon: Icons.gif_box_rounded,
+  ),
+  _LifeTool(
+    id: 'archive_tool',
+    titleKey: 'toolbox.life.archive_tool.title',
+    summaryKey: 'toolbox.life.archive_tool.summary',
+    category: 'system',
+    icon: Icons.folder_zip_rounded,
+  ),
+  _LifeTool(
     id: 'unit_converter',
     titleKey: 'inline.plan295.life.unit_converter.53644e92a340',
     summaryKey:
         'literal.ui.pages.toolbox_life_tools.length_weight_temp_and_more_79d354',
     category: 'calc',
     icon: Icons.swap_horiz_rounded,
+  ),
+  _LifeTool(
+    id: 'advanced_calculator',
+    titleKey: 'toolbox.life.advanced_calculator.title',
+    summaryKey: 'toolbox.life.advanced_calculator.summary',
+    category: 'calc',
+    icon: Icons.calculate_outlined,
+  ),
+  _LifeTool(
+    id: 'bio_clock',
+    titleKey: 'toolbox.life.menstrual_cycle.title',
+    summaryKey: 'toolbox.life.menstrual_cycle.summary',
+    category: 'calc',
+    icon: Icons.favorite_border_rounded,
   ),
   _LifeTool(
     id: 'work_worth',
@@ -781,21 +1017,6 @@ const List<_LifeTool> _lifeTools = <_LifeTool>[
       _LifeToolSource(
         name: 'QQ Browser ID photo',
         url: 'https://tool.browser.qq.com/id_photo.html',
-      ),
-    ],
-  ),
-  _LifeTool(
-    id: 'ai_interview',
-    titleKey: 'inline.plan295.life.ai_interview.0618cad69887',
-    summaryKey:
-        'literal.ui.pages.toolbox_life_tools.local_interview_practice_answer_framing_follow_ups_promp_93dc06',
-    category: 'study',
-    icon: Icons.record_voice_over_rounded,
-    sources: <_LifeToolSource>[
-      _LifeToolSource(
-        name: 'Snap-Solver',
-        url: 'https://github.com/Zippland/Snap-Solver/',
-        copyrightNote: '参考其题目输入、多模型偏好和提示词配置思路；本页落地为本地练习工具，不实现屏幕捕获或实时代答。',
       ),
     ],
   ),

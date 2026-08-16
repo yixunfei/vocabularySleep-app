@@ -14,6 +14,7 @@ class _TimelinePeriodicToolPageState extends State<_TimelinePeriodicToolPage> {
   final TransformationController _elementTransform = TransformationController();
 
   String _view = 'timeline';
+  String _timelineCollection = 'core';
   String _timelineRange = 'all';
   String _timelineCategory = 'all';
   String _timelineMode = 'story';
@@ -112,13 +113,14 @@ class _TimelinePeriodicToolPageState extends State<_TimelinePeriodicToolPage> {
               ),
               value: _timelineRangeLabel(context, _timelineRange),
             ),
-            ToolboxMetricCard(
-              label: _lifeI18nText(
-                context,
-                'inline.plan295.life.sources.eef3aeb8724b',
+            if (_timelineCollection != 'brief_24_history')
+              ToolboxMetricCard(
+                label: _lifeI18nText(
+                  context,
+                  'inline.plan295.life.sources.eef3aeb8724b',
+                ),
+                value: '${_visibleTimelineSources.length}',
               ),
-              value: '${_timelinePeriodicSources.length}',
-            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -132,6 +134,34 @@ class _TimelinePeriodicToolPageState extends State<_TimelinePeriodicToolPage> {
             'inline.plan295.life.a_logarithmic_time_axis_keeps_recent.59130a40553d',
           ),
           children: <Widget>[
+            _LifeSegmentedField<String>(
+              label: _lifeI18nText(
+                context,
+                'toolbox.life.timeline.collection.label',
+              ),
+              value: _timelineCollection,
+              options: const <_LifeOption<String>>[
+                _LifeOption(
+                  value: 'core',
+                  labelKey: 'toolbox.life.timeline.collection.core',
+                ),
+                _LifeOption(
+                  value: 'brief_24_history',
+                  labelKey: 'toolbox.life.timeline.collection.brief_24_history',
+                ),
+              ],
+              onChanged: (value) {
+                setState(() {
+                  _timelineCollection = value;
+                  _timelineCategory = 'all';
+                  if (value == 'brief_24_history') {
+                    _timelineRange = 'civilization';
+                  }
+                  _ensureSelectedTimelineVisible();
+                });
+              },
+            ),
+            const SizedBox(height: 12),
             _LifeSegmentedField<String>(
               label: _lifeI18nText(
                 context,
@@ -160,10 +190,7 @@ class _TimelinePeriodicToolPageState extends State<_TimelinePeriodicToolPage> {
               onChanged: (value) {
                 setState(() {
                   _timelineRange = value;
-                  final next = _visibleTimelineFacts;
-                  if (!next.contains(_selectedTimeline) && next.isNotEmpty) {
-                    _selectedTimeline = next.first;
-                  }
+                  _ensureSelectedTimelineVisible();
                 });
               },
             ),
@@ -201,10 +228,7 @@ class _TimelinePeriodicToolPageState extends State<_TimelinePeriodicToolPage> {
               onChanged: (value) {
                 setState(() {
                   _timelineCategory = value;
-                  final next = _visibleTimelineFacts;
-                  if (!next.contains(_selectedTimeline) && next.isNotEmpty) {
-                    _selectedTimeline = next.first;
-                  }
+                  _ensureSelectedTimelineVisible();
                 });
               },
             ),
@@ -383,6 +407,9 @@ class _TimelinePeriodicToolPageState extends State<_TimelinePeriodicToolPage> {
   }
 
   Widget _buildSourcesPanel(BuildContext context) {
+    if (_view == 'timeline' && _timelineCollection == 'brief_24_history') {
+      return const SizedBox.shrink();
+    }
     return _LifeSettingsPanel(
       title: _lifeI18nText(context, 'inline.plan295.life.sources.26517c8ed67c'),
       subtitle: _lifeI18nText(
@@ -390,16 +417,21 @@ class _TimelinePeriodicToolPageState extends State<_TimelinePeriodicToolPage> {
         'inline.plan295.life.this_module_embeds_consensus_anchors.d5223f1cfa2c',
       ),
       children: <Widget>[
-        for (final source in _timelinePeriodicSources)
+        for (final source in _visibleTimelineSources)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: OutlinedButton.icon(
               icon: const Icon(Icons.open_in_new_rounded),
               label: Align(
                 alignment: Alignment.centerLeft,
-                child: Text(source.name, overflow: TextOverflow.ellipsis),
+                child: Text(
+                  _timelineSourceName(source),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              onPressed: () => _openExternal(context, source.url),
+              onPressed: source.url.isEmpty
+                  ? null
+                  : () => _openExternal(context, source.url),
             ),
           ),
       ],
@@ -409,6 +441,7 @@ class _TimelinePeriodicToolPageState extends State<_TimelinePeriodicToolPage> {
   List<_TimelineFact> get _visibleTimelineFacts {
     final window = _timelineWindow(_timelineRange);
     return _timelineFacts
+        .where((fact) => fact.collection == _timelineCollection)
         .where(
           (fact) =>
               fact.yearsBeforePresent <= window.maxYearsBeforePresent &&
@@ -419,6 +452,16 @@ class _TimelinePeriodicToolPageState extends State<_TimelinePeriodicToolPage> {
               _timelineCategory == 'all' || fact.category == _timelineCategory,
         )
         .toList(growable: false);
+  }
+
+  List<_LifeToolSource> get _visibleTimelineSources {
+    return _view == 'timeline' && _timelineCollection == 'brief_24_history'
+        ? _brief24HistoryTimelineSources
+        : _timelinePeriodicSources;
+  }
+
+  String _timelineSourceName(_LifeToolSource source) {
+    return source.name;
   }
 
   List<_ElementFact> get _visibleElementFacts {
@@ -433,6 +476,13 @@ class _TimelinePeriodicToolPageState extends State<_TimelinePeriodicToolPage> {
           return categoryOk && stateOk;
         })
         .toList(growable: false);
+  }
+
+  void _ensureSelectedTimelineVisible() {
+    final next = _visibleTimelineFacts;
+    if (!next.contains(_selectedTimeline) && next.isNotEmpty) {
+      _selectedTimeline = next.first;
+    }
   }
 
   void _openTimelineImmersive(
@@ -825,16 +875,27 @@ class _TimelineStoryTile extends StatelessWidget {
                                 : theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: TextButton.icon(
-                            onPressed: () =>
-                                _openExternal(context, fact.sourceUrl),
-                            icon: const Icon(Icons.open_in_new_rounded),
-                            label: Text(fact.sourceName),
+                        if (selected &&
+                            (fact.imageLocalPaths.isNotEmpty ||
+                                fact.imageRemoteUrls.isNotEmpty)) ...[
+                          const SizedBox(height: 12),
+                          _TimelineFactImageStrip(
+                            fact: fact,
+                            immersive: immersive,
                           ),
-                        ),
+                        ],
+                        if (fact.sourceUrl.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              onPressed: () =>
+                                  _openExternal(context, fact.sourceUrl),
+                              icon: const Icon(Icons.open_in_new_rounded),
+                              label: Text(_timelineFactSourceName(fact)),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -844,6 +905,101 @@ class _TimelineStoryTile extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _TimelineFactImageStrip extends StatelessWidget {
+  const _TimelineFactImageStrip({required this.fact, required this.immersive});
+
+  final _TimelineFact fact;
+  final bool immersive;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final refs = fact.imageRemoteUrls.isNotEmpty
+        ? fact.imageRemoteUrls
+        : fact.imageLocalPaths;
+    final viewportHeight = math.min(
+      620.0,
+      math.max(360.0, MediaQuery.sizeOf(context).height * 0.62),
+    );
+    final borderColor = immersive
+        ? Colors.white.withValues(alpha: 0.18)
+        : theme.colorScheme.outlineVariant;
+    return Column(
+      children: <Widget>[
+        for (var index = 0; index < refs.length; index += 1) ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              width: double.infinity,
+              height: viewportHeight,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: borderColor),
+              ),
+              child: InteractiveViewer(
+                minScale: 0.8,
+                maxScale: 5,
+                boundaryMargin: const EdgeInsets.all(160),
+                child: _TimelineFactImage(
+                  ref: refs[index],
+                  remote: fact.imageRemoteUrls.isNotEmpty,
+                ),
+              ),
+            ),
+          ),
+          if (index != refs.length - 1) const SizedBox(height: 8),
+        ],
+      ],
+    );
+  }
+}
+
+class _TimelineFactImage extends StatelessWidget {
+  const _TimelineFactImage({required this.ref, required this.remote});
+
+  final String ref;
+  final bool remote;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    if (remote) {
+      return Image.network(
+        ref,
+        fit: BoxFit.contain,
+        width: double.infinity,
+        height: double.infinity,
+        alignment: Alignment.center,
+        errorBuilder: (context, error, stackTrace) =>
+            _TimelineFactImageError(theme: theme),
+      );
+    }
+    return Image.file(
+      _timelineLocalImageFile(ref),
+      fit: BoxFit.contain,
+      width: double.infinity,
+      height: double.infinity,
+      alignment: Alignment.center,
+      errorBuilder: (context, error, stackTrace) =>
+          _TimelineFactImageError(theme: theme),
+    );
+  }
+}
+
+class _TimelineFactImageError extends StatelessWidget {
+  const _TimelineFactImageError({required this.theme});
+
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(
+      Icons.broken_image_outlined,
+      color: theme.colorScheme.onSurfaceVariant,
     );
   }
 }
@@ -888,7 +1044,7 @@ class _TimelineRemoteBackdrop extends StatefulWidget {
 }
 
 class _TimelineRemoteBackdropState extends State<_TimelineRemoteBackdrop> {
-  static final Map<String, Uint8List?> _cache = <String, Uint8List?>{};
+  static final Map<String, Uint8List> _cache = <String, Uint8List>{};
   Uint8List? _bytes;
   bool _failed = false;
 
@@ -914,29 +1070,84 @@ class _TimelineRemoteBackdropState extends State<_TimelineRemoteBackdrop> {
       if (!mounted) return;
       setState(() {
         _bytes = _cache[url];
-        _failed = _bytes == null;
+        _failed = false;
       });
       return;
     }
 
+    Uint8List? loadedBytes;
     try {
       final response = await http
           .get(Uri.parse(url))
           .timeout(const Duration(seconds: 4));
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        _cache[url] = response.bodyBytes;
-      } else {
-        _cache[url] = null;
+      final bytes = response.bodyBytes;
+      if (response.statusCode >= 200 &&
+          response.statusCode < 300 &&
+          _looksLikeImageResponse(response.headers['content-type'], bytes) &&
+          await _canDecodeImage(bytes)) {
+        _cache[url] = bytes;
+        loadedBytes = bytes;
       }
     } on Object {
-      _cache[url] = null;
+      loadedBytes = null;
     }
 
     if (!mounted) return;
+    if (url != widget.asset.imageUrl) return;
     setState(() {
-      _bytes = _cache[url];
-      _failed = _bytes == null;
+      _bytes = loadedBytes;
+      _failed = loadedBytes == null;
     });
+  }
+
+  bool _looksLikeImageResponse(String? contentType, Uint8List bytes) {
+    final normalized = contentType?.toLowerCase() ?? '';
+    if (normalized.startsWith('image/')) {
+      return true;
+    }
+    if (normalized.contains('text/html') ||
+        normalized.contains('application/json') ||
+        normalized.contains('text/plain')) {
+      return false;
+    }
+    return _hasImageMagicBytes(bytes);
+  }
+
+  bool _hasImageMagicBytes(Uint8List bytes) {
+    if (bytes.length < 12) {
+      return false;
+    }
+    final isJpeg = bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF;
+    final isPng =
+        bytes[0] == 0x89 &&
+        bytes[1] == 0x50 &&
+        bytes[2] == 0x4E &&
+        bytes[3] == 0x47;
+    final isGif =
+        bytes[0] == 0x47 &&
+        bytes[1] == 0x49 &&
+        bytes[2] == 0x46 &&
+        bytes[3] == 0x38;
+    final isWebp =
+        bytes[0] == 0x52 &&
+        bytes[1] == 0x49 &&
+        bytes[2] == 0x46 &&
+        bytes[3] == 0x46 &&
+        bytes[8] == 0x57 &&
+        bytes[9] == 0x45 &&
+        bytes[10] == 0x42 &&
+        bytes[11] == 0x50;
+    return isJpeg || isPng || isGif || isWebp;
+  }
+
+  Future<bool> _canDecodeImage(Uint8List bytes) async {
+    try {
+      final codec = await ui.instantiateImageCodec(bytes);
+      codec.dispose();
+      return true;
+    } on Object {
+      return false;
+    }
   }
 
   @override
@@ -949,6 +1160,9 @@ class _TimelineRemoteBackdropState extends State<_TimelineRemoteBackdrop> {
       bytes,
       fit: BoxFit.cover,
       filterQuality: FilterQuality.low,
+      errorBuilder: (context, error, stackTrace) {
+        return _TimelineFallbackBackdrop(asset: widget.asset);
+      },
     );
   }
 }
@@ -1446,11 +1660,12 @@ class _TimelineFactCard extends StatelessWidget {
               color: color,
               label: _timelineCategoryLabel(context, fact.category),
             ),
-            OutlinedButton.icon(
-              onPressed: () => _openExternal(context, fact.sourceUrl),
-              icon: const Icon(Icons.open_in_new_rounded),
-              label: Text(fact.sourceName),
-            ),
+            if (fact.sourceUrl.isNotEmpty)
+              OutlinedButton.icon(
+                onPressed: () => _openExternal(context, fact.sourceUrl),
+                icon: const Icon(Icons.open_in_new_rounded),
+                label: Text(_timelineFactSourceName(fact)),
+              ),
           ],
         ),
       ],
@@ -1907,6 +2122,31 @@ String _timelineCategoryLabel(BuildContext context, String category) {
     ),
     _ => category,
   };
+}
+
+String _timelineFactSourceName(_TimelineFact fact) {
+  return fact.sourceName;
+}
+
+File _timelineLocalImageFile(String ref) {
+  final normalized = ref.replaceAll('/', Platform.pathSeparator);
+  final direct = File(normalized);
+  if (direct.isAbsolute) {
+    return direct;
+  }
+  var directory = Directory.current;
+  for (var depth = 0; depth < 8; depth += 1) {
+    final candidate = File(path.join(directory.path, normalized));
+    if (candidate.existsSync()) {
+      return candidate;
+    }
+    final parent = directory.parent;
+    if (parent.path == directory.path) {
+      break;
+    }
+    directory = parent;
+  }
+  return File(path.join(Directory.current.path, normalized));
 }
 
 String _timelineCategoryShort(String category) {

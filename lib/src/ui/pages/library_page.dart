@@ -7,19 +7,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../models/word_entry.dart';
-import '../../models/wordbook.dart';
 import '../../state/app_state.dart';
 import '../../state/app_state_provider.dart';
 import '../modal_helpers.dart';
 import '../ui_copy.dart';
 import '../widgets/empty_state_view.dart';
 import '../widgets/page_header.dart';
+import '../widgets/study_wordbook_status.dart';
 import '../widgets/word_row.dart';
-import '../widgets/wordbook_switcher.dart';
-import '../wordbook_localization.dart';
 import 'follow_along_page.dart';
 import 'word_detail_page.dart';
 import 'word_editor_page.dart';
+import 'wordbook_management_page.dart';
 
 class LibraryPage extends ConsumerStatefulWidget {
   const LibraryPage({super.key, this.onAttachScrollToTop});
@@ -380,36 +379,6 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     );
   }
 
-  String _wordbookSummary(AppI18n i18n, Wordbook? book, int visibleCount) {
-    final isLazyBuiltIn =
-        book != null &&
-        book.path.startsWith('builtin:dict:') &&
-        book.wordCount <= 0;
-    if (isLazyBuiltIn) {
-      return i18n.t(
-        'inline.ui.pages.library_page.built_in_wordbook_loads_on_first_open_9967f7',
-      );
-    }
-    return i18n.t(
-      'inline.ui.pages.library_page.visiblecount_results_fcc200',
-      params: <String, Object?>{'count': visibleCount},
-    );
-  }
-
-  String _wordbookSheetSubtitle(AppI18n i18n, Wordbook book) {
-    final isLazyBuiltIn =
-        book.path.startsWith('builtin:dict:') && book.wordCount <= 0;
-    if (isLazyBuiltIn) {
-      return i18n.t(
-        'inline.ui.pages.library_page.built_in_wordbook_loads_on_first_tap_93bdfc',
-      );
-    }
-    return i18n.t(
-      'inline.ui.pages.library_page.book_wordcount_words_d7e63b',
-      params: <String, Object?>{'count': book.wordCount},
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(appStateProvider);
@@ -419,10 +388,18 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     if (state.selectedWordbook == null) {
       return EmptyStateView(
         icon: Icons.menu_book_rounded,
-        title: i18n.t(
-          'inline.ui.pages.library_page.your_library_is_empty_93fc87',
-        ),
+        title: i18n.t('study.library.empty.no_wordbooks.title'),
         message: i18n.t('noWordbookYet'),
+        actionLabel: state.wordbooks.isEmpty
+            ? i18n.t('study.wordbook.action.manage')
+            : i18n.t('study.wordbook.action.choose'),
+        onAction: state.wordbooks.isEmpty
+            ? () => _openWordbookManagement()
+            : () => showStudyWordbookSheet(
+                context: context,
+                state: state,
+                i18n: i18n,
+              ),
       );
     }
 
@@ -487,21 +464,21 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                       ),
                     ),
                     const SizedBox(height: 18),
-                    WordbookSwitcher(
-                      wordbook: state.selectedWordbook,
-                      title: localizedWordbookName(
-                        i18n,
-                        state.selectedWordbook,
-                      ),
-                      subtitle: _wordbookSummary(
-                        i18n,
-                        state.selectedWordbook,
-                        totalWords,
-                      ),
+                    StudyWordbookStatusBar(
+                      state: state,
+                      i18n: i18n,
+                      visibleCount: totalWords,
+                      searching: searching,
+                      currentWordbookEmpty: totalWords <= 0 && !searching,
                       onTap: () {
                         _commitSearchQuery(state, _searchController.text);
-                        _openWordbookSheet(state, i18n);
+                        showStudyWordbookSheet(
+                          context: context,
+                          state: state,
+                          i18n: i18n,
+                        );
                       },
+                      onLoadCurrent: state.loadSelectedWordbook,
                     ),
                     const SizedBox(height: 14),
                     TextField(
@@ -612,14 +589,11 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverToBoxAdapter(
-                  child: EmptyStateView(
-                    icon: Icons.search_off_rounded,
-                    title: i18n.t(
-                      'inline.ui.pages.library_page.no_matching_words_1e85c1',
-                    ),
-                    message: i18n.t(
-                      'inline.ui.pages.library_page.try_another_search_mode_or_import_a_new_wordbook_from_mo_a6fb6c',
-                    ),
+                  child: _buildLibraryEmptyWordsState(
+                    context,
+                    state,
+                    i18n,
+                    searching: searching,
                   ),
                 ),
               )
@@ -729,46 +703,93 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     );
   }
 
-  Future<void> _openWordbookSheet(AppState state, AppI18n i18n) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      builder: (context) {
-        return SafeArea(
-          top: false,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-            children: <Widget>[
-              Text(
-                i18n.t('inline.ui.pages.library_page.switch_wordbook_40ff3b'),
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 12),
-              for (final book in state.wordbooks) ...[
-                Card(
-                  child: ListTile(
-                    selected: state.selectedWordbook?.id == book.id,
-                    title: Text(localizedWordbookName(i18n, book)),
-                    subtitle: Text(_wordbookSheetSubtitle(i18n, book)),
-                    onTap: () async {
-                      final confirmed = await _confirmWordbookLoadIfNeeded(
-                        state,
-                        i18n,
-                        book,
-                      );
-                      if (!confirmed) return;
-                      if (context.mounted) {
-                        Navigator.of(context).pop();
-                      }
-                      await state.selectWordbook(book);
+  Widget _buildLibraryEmptyWordsState(
+    BuildContext context,
+    AppState state,
+    AppI18n i18n, {
+    required bool searching,
+  }) {
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(22),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Icon(
+              searching ? Icons.search_off_rounded : Icons.menu_book_outlined,
+              size: 36,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(height: 14),
+            Text(
+              searching
+                  ? i18n.t(
+                      'inline.ui.pages.library_page.no_matching_words_1e85c1',
+                    )
+                  : i18n.t('study.library.empty.selected_empty.title'),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              searching
+                  ? i18n.t('study.library.empty.search_empty.message')
+                  : i18n.t('study.library.empty.selected_empty.message'),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 18),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 10,
+              runSpacing: 10,
+              children: <Widget>[
+                if (searching)
+                  FilledButton.icon(
+                    onPressed: () {
+                      _searchController.clear();
+                      _commitSearchQuery(state, '');
                     },
+                    icon: const Icon(Icons.close_rounded),
+                    label: Text(
+                      i18n.t(
+                        'inline.ui.pages.library_page.clear_search_028a7e',
+                      ),
+                    ),
+                  )
+                else
+                  FilledButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const WordEditorPage(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.add_rounded),
+                    label: Text(i18n.t('addWordTitle')),
                   ),
+                OutlinedButton.icon(
+                  onPressed: () => showStudyWordbookSheet(
+                    context: context,
+                    state: state,
+                    i18n: i18n,
+                  ),
+                  icon: const Icon(Icons.swap_horiz_rounded),
+                  label: Text(i18n.t('study.wordbook.action.switch')),
                 ),
-                const SizedBox(height: 8),
+                if (!searching)
+                  OutlinedButton.icon(
+                    onPressed: _openWordbookManagement,
+                    icon: const Icon(Icons.library_books_rounded),
+                    label: Text(i18n.t('study.wordbook.action.manage')),
+                  ),
               ],
-            ],
-          ),
-        );
-      },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -783,24 +804,9 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     );
   }
 
-  Future<bool> _confirmWordbookLoadIfNeeded(
-    AppState state,
-    AppI18n i18n,
-    Wordbook book,
-  ) {
-    if (!state.requiresWordbookLoadConfirmation(book)) {
-      return Future<bool>.value(true);
-    }
-    return showConfirmDialog(
-      context: context,
-      title: i18n.t('inline.ui.pages.library_page.initialize_wordbook_c30e1d'),
-      message: i18n.t(
-        'inline.ui.pages.library_page.localizedwordbookname_i18n_book_may_be_large_the_first_l_3b46f5',
-        params: <String, Object?>{
-          'wordbook': localizedWordbookName(i18n, book),
-        },
-      ),
-      confirmText: i18n.t('toolbox.breathing.continue_select'),
+  void _openWordbookManagement() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const WordbookManagementPage()),
     );
   }
 

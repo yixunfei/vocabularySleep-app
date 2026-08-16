@@ -158,6 +158,141 @@ class WordCard extends StatelessWidget {
         : const <String>[];
     final enableWordSwipe = onSwipePrevious != null || onSwipeNext != null;
 
+    final mainContent = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: <Widget>[
+            if (isFavorite)
+              StatusBadge(
+                label: i18n.t('toolbox.sound.focus.editor.favorite'),
+                icon: Icons.favorite_rounded,
+                color: const Color(0xFFE25A7A),
+              ),
+            if (isTaskWord)
+              StatusBadge(
+                label: i18n.t('inline.ui.widgets.word_card.task_df1f06'),
+                icon: Icons.task_alt_rounded,
+                color: tokens.success,
+              ),
+          ],
+        ),
+        if (isFavorite || isTaskWord) const SizedBox(height: 14),
+        _WordHeaderBlock(
+          i18n: i18n,
+          word: word.word,
+          titleStyle: titleStyle,
+          visibleMeaning: visibleMeaning,
+          revealPracticeAnswer: revealPracticeAnswer,
+          density: density,
+          visibleExamples: visibleExamples,
+          titleColor:
+              Color.lerp(tokens.textPrimary, tokens.accent, 0.42) ??
+              tokens.textPrimary,
+          textSecondary: tokens.textSecondary,
+          onPreviousWord: onPreviousWord,
+          onNextWord: onNextWord,
+          onPlayPronunciation: onPlayPronunciation,
+          onFollowAlong: onFollowAlong,
+        ),
+        if (showFields) ...<Widget>[
+          const SizedBox(height: 18),
+          Column(
+            children: fields
+                .where(
+                  (item) => item.key != 'meaning' && item.key != 'examples',
+                )
+                .take(density == WordCardDensity.compact ? 2 : 4)
+                .toList(growable: false)
+                .asMap()
+                .entries
+                .map((entry) {
+                  final field = entry.value;
+                  final accentColor = appearance.randomEntryColors
+                      ? seededAccentColor(
+                          '${word.word}:${field.key}:${entry.key}',
+                          fallback: tokens.accent,
+                          saturation: 0.56,
+                          value: tokens.isDark ? 0.92 : 0.78,
+                        )
+                      : tokens.accent;
+                  return Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 10),
+                    constraints: const BoxConstraints(minHeight: 40),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: LegacyStyle.fieldCardDecoration(
+                      accentColor: accentColor,
+                      fieldKey: field.key,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Text(
+                          localizedFieldLabel(i18n, field),
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: accentColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          field.asText(),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: tokens.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                })
+                .toList(growable: false),
+          ),
+        ],
+        const SizedBox(height: 18),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: <Widget>[
+            if (onToggleFavorite != null)
+              OutlinedButton.icon(
+                onPressed: onToggleFavorite,
+                icon: Icon(
+                  isFavorite
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_border_rounded,
+                ),
+                label: Text(_favoriteLabel()),
+              ),
+            if (onToggleTask != null)
+              OutlinedButton.icon(
+                onPressed: onToggleTask,
+                icon: Icon(
+                  isTaskWord
+                      ? Icons.task_alt_rounded
+                      : Icons.playlist_add_check_rounded,
+                ),
+                label: Text(_taskLabel()),
+              ),
+          ],
+        ),
+      ],
+    );
+    final swipeAwareMainContent = enableWordSwipe
+        ? _WordSwipeRegion(
+            onSwipePrevious: onSwipePrevious,
+            onSwipeNext: onSwipeNext,
+            child: mainContent,
+          )
+        : mainContent;
+
     final cardContent = KeyedSubtree(
       key: ValueKey<String>(_wordIdentity(word)),
       child: Card(
@@ -166,130 +301,7 @@ class WordCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: <Widget>[
-                  if (isFavorite)
-                    StatusBadge(
-                      label: i18n.t('toolbox.sound.focus.editor.favorite'),
-                      icon: Icons.favorite_rounded,
-                      color: const Color(0xFFE25A7A),
-                    ),
-                  if (isTaskWord)
-                    StatusBadge(
-                      label: i18n.t('inline.ui.widgets.word_card.task_df1f06'),
-                      icon: Icons.task_alt_rounded,
-                      color: tokens.success,
-                    ),
-                ],
-              ),
-              if (isFavorite || isTaskWord) const SizedBox(height: 14),
-              _WordHeaderBlock(
-                i18n: i18n,
-                word: word.word,
-                titleStyle: titleStyle,
-                visibleMeaning: visibleMeaning,
-                revealPracticeAnswer: revealPracticeAnswer,
-                density: density,
-                visibleExamples: visibleExamples,
-                titleColor:
-                    Color.lerp(tokens.textPrimary, tokens.accent, 0.42) ??
-                    tokens.textPrimary,
-                textSecondary: tokens.textSecondary,
-                onPreviousWord: onPreviousWord,
-                onNextWord: onNextWord,
-                onPlayPronunciation: onPlayPronunciation,
-                onFollowAlong: onFollowAlong,
-                enableWordSwipe: enableWordSwipe,
-              ),
-              if (showFields) ...<Widget>[
-                const SizedBox(height: 18),
-                Column(
-                  children: fields
-                      .where(
-                        (item) =>
-                            item.key != 'meaning' && item.key != 'examples',
-                      )
-                      .take(density == WordCardDensity.compact ? 2 : 4)
-                      .toList(growable: false)
-                      .asMap()
-                      .entries
-                      .map((entry) {
-                        final field = entry.value;
-                        final accentColor = appearance.randomEntryColors
-                            ? seededAccentColor(
-                                '${word.word}:${field.key}:${entry.key}',
-                                fallback: tokens.accent,
-                                saturation: 0.56,
-                                value: tokens.isDark ? 0.92 : 0.78,
-                              )
-                            : tokens.accent;
-                        return Container(
-                          width: double.infinity,
-                          margin: const EdgeInsets.only(bottom: 10),
-                          constraints: const BoxConstraints(minHeight: 40),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          decoration: LegacyStyle.fieldCardDecoration(
-                            accentColor: accentColor,
-                            fieldKey: field.key,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              Text(
-                                localizedFieldLabel(i18n, field),
-                                style: theme.textTheme.labelLarge?.copyWith(
-                                  color: accentColor,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                field.asText(),
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: tokens.textPrimary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      })
-                      .toList(growable: false),
-                ),
-              ],
-              const SizedBox(height: 18),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: <Widget>[
-                  if (onToggleFavorite != null)
-                    OutlinedButton.icon(
-                      onPressed: onToggleFavorite,
-                      icon: Icon(
-                        isFavorite
-                            ? Icons.favorite_rounded
-                            : Icons.favorite_border_rounded,
-                      ),
-                      label: Text(_favoriteLabel()),
-                    ),
-                  if (onToggleTask != null)
-                    OutlinedButton.icon(
-                      onPressed: onToggleTask,
-                      icon: Icon(
-                        isTaskWord
-                            ? Icons.task_alt_rounded
-                            : Icons.playlist_add_check_rounded,
-                      ),
-                      label: Text(_taskLabel()),
-                    ),
-                ],
-              ),
+              swipeAwareMainContent,
               ...?switch (footer) {
                 final footerWidget? => <Widget>[
                   const SizedBox(height: 16),
@@ -326,13 +338,7 @@ class WordCard extends StatelessWidget {
             ),
           );
 
-    if (!enableWordSwipe) return animatedCard;
-
-    return _WordSwipeRegion(
-      onSwipePrevious: onSwipePrevious,
-      onSwipeNext: onSwipeNext,
-      child: animatedCard,
-    );
+    return animatedCard;
   }
 }
 
@@ -351,7 +357,6 @@ class _WordHeaderBlock extends StatelessWidget {
     required this.onNextWord,
     required this.onPlayPronunciation,
     required this.onFollowAlong,
-    required this.enableWordSwipe,
   });
 
   final AppI18n i18n;
@@ -367,7 +372,6 @@ class _WordHeaderBlock extends StatelessWidget {
   final VoidCallback? onNextWord;
   final VoidCallback? onPlayPronunciation;
   final VoidCallback? onFollowAlong;
-  final bool enableWordSwipe;
 
   @override
   Widget build(BuildContext context) {
@@ -473,15 +477,6 @@ class _WordHeaderBlock extends StatelessWidget {
                   .toList(growable: false),
             ),
           ],
-        ],
-        if (enableWordSwipe) ...<Widget>[
-          const SizedBox(height: 10),
-          Text(
-            i18n.t(
-              'inline.ui.widgets.word_card.swipe_anywhere_on_this_card_to_switch_9297c2',
-            ),
-            style: theme.textTheme.bodySmall?.copyWith(color: textSecondary),
-          ),
         ],
       ],
     );

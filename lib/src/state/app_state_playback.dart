@@ -69,13 +69,12 @@ extension _AppStatePlayback on AppState {
     _playbackStore.playingScopeIndex = safeStart;
     _playbackStore.playingWord = words[safeStart].word;
     _rememberPlaybackProgressImpl(words[safeStart]);
-    _playbackStore.currentUnit = 0;
-    _playbackStore.totalUnits = 0;
-    _playbackStore.activeUnit = null;
+    _playbackStore.resetUnitProgress();
     _notifyStateChanged();
 
     _playbackStore.playSessionId += 1;
     await _playback.stop();
+    if (_disposed) return;
     if (syncToken != _playbackStore.wordbookPlaybackSyncToken) return;
     if (_selectedWordbook?.id != wordbook.id) return;
 
@@ -123,9 +122,7 @@ extension _AppStatePlayback on AppState {
     _playbackStore.playingScopeIndex = safeStart;
     _playbackStore.playingWord = words[safeStart].word;
     _rememberPlaybackProgressImpl(words[safeStart]);
-    _playbackStore.currentUnit = 0;
-    _playbackStore.totalUnits = 0;
-    _playbackStore.activeUnit = null;
+    _playbackStore.resetUnitProgress();
     _notifyStateChanged();
 
     try {
@@ -153,6 +150,7 @@ extension _AppStatePlayback on AppState {
           }
           _playbackStore.playingWord = nextWord.word;
           _rememberPlaybackProgressImpl(nextWord);
+          _playbackStore.resetUnitProgress();
           if (_selectedWordbook?.id == _playbackStore.playingWordbookId) {
             _setCurrentWordByEntry(nextWord);
             resetTestModeProgress();
@@ -161,13 +159,11 @@ extension _AppStatePlayback on AppState {
         },
         onUnitChanged: (current, total, unit) {
           if (sessionId != _playbackStore.playSessionId) return;
-          _playbackStore.currentUnit = current;
-          _playbackStore.totalUnits = total;
-          _playbackStore.activeUnit = unit;
-          _notifyStateChanged();
+          _playbackStore.setUnitProgress(current, total, unit);
         },
         onFinished: () {
           if (sessionId != _playbackStore.playSessionId) return;
+          _flushPlaybackProgressPersist();
           _clearPlaybackSession(notify: true);
         },
       );
@@ -261,6 +257,7 @@ extension _AppStatePlayback on AppState {
     required int playingWordbookId,
     required String playingWordbookName,
   }) async {
+    if (_disposed) return;
     if (scopeWords.isEmpty) return;
     final words = List<WordEntry>.from(scopeWords);
     final safeStart = startIndex.clamp(0, words.length - 1);
@@ -274,9 +271,7 @@ extension _AppStatePlayback on AppState {
     _playbackStore.playingScopeIndex = safeStart;
     _playbackStore.playingWord = words[safeStart].word;
     _rememberPlaybackProgressImpl(words[safeStart]);
-    _playbackStore.currentUnit = 0;
-    _playbackStore.totalUnits = 0;
-    _playbackStore.activeUnit = null;
+    _playbackStore.resetUnitProgress();
     _notifyStateChanged();
 
     try {
@@ -304,6 +299,7 @@ extension _AppStatePlayback on AppState {
           }
           _playbackStore.playingWord = nextWord.word;
           _rememberPlaybackProgressImpl(nextWord);
+          _playbackStore.resetUnitProgress();
           if (_selectedWordbook?.id == _playbackStore.playingWordbookId) {
             _setCurrentWordByEntry(nextWord);
             resetTestModeProgress();
@@ -312,13 +308,11 @@ extension _AppStatePlayback on AppState {
         },
         onUnitChanged: (current, total, unit) {
           if (sessionId != _playbackStore.playSessionId) return;
-          _playbackStore.currentUnit = current;
-          _playbackStore.totalUnits = total;
-          _playbackStore.activeUnit = unit;
-          _notifyStateChanged();
+          _playbackStore.setUnitProgress(current, total, unit);
         },
         onFinished: () {
           if (sessionId != _playbackStore.playSessionId) return;
+          _flushPlaybackProgressPersist();
           _clearPlaybackSession(notify: true);
         },
       );
@@ -355,6 +349,7 @@ extension _AppStatePlayback on AppState {
       } else {
         await _playback.pause();
         _playbackStore.isPaused = true;
+        _flushPlaybackProgressPersist();
       }
       _notifyStateChanged();
     } catch (error, stackTrace) {
@@ -379,6 +374,7 @@ extension _AppStatePlayback on AppState {
     } catch (error, stackTrace) {
       _log.e('app_state', 'stop failed', error: error, stackTrace: stackTrace);
     } finally {
+      _flushPlaybackProgressPersist();
       _clearPlaybackSession(notify: true);
     }
   }
@@ -457,8 +453,8 @@ extension _AppStatePlayback on AppState {
   Future<void> _playCurrentWordbookImpl() async {
     if (_selectedWordbook == null) return;
     if (!selectedWordbookLoaded) {
-      await _ensureSelectedWordbookLoadedForPlayback();
-      return;
+      final loaded = await _loadSelectedWordbookImpl();
+      if (!loaded) return;
     }
     if (_playbackStore.isPlaying) {
       await stop();
@@ -466,9 +462,19 @@ extension _AppStatePlayback on AppState {
     await play();
   }
 
+  Future<bool> _loadSelectedWordbookImpl() async {
+    final selected = _selectedWordbook;
+    if (selected == null) {
+      return false;
+    }
+    await _ensureSelectedWordbookLoadedForPlayback();
+    return selectedWordbookLoaded;
+  }
+
   Future<void> _movePlaybackPreviousWordImpl() async {
-    if (!_playbackStore.isPlaying || _playbackStore.playingScopeWords.isEmpty)
+    if (!_playbackStore.isPlaying || _playbackStore.playingScopeWords.isEmpty) {
       return;
+    }
     final current = _playbackStore.playingScopeIndex.clamp(
       0,
       _playbackStore.playingScopeWords.length - 1,
@@ -480,8 +486,9 @@ extension _AppStatePlayback on AppState {
   }
 
   Future<void> _movePlaybackNextWordImpl() async {
-    if (!_playbackStore.isPlaying || _playbackStore.playingScopeWords.isEmpty)
+    if (!_playbackStore.isPlaying || _playbackStore.playingScopeWords.isEmpty) {
       return;
+    }
     final current = _playbackStore.playingScopeIndex.clamp(
       0,
       _playbackStore.playingScopeWords.length - 1,
@@ -490,7 +497,19 @@ extension _AppStatePlayback on AppState {
     await _restartPlaybackFromPlayingScope(target);
   }
 
+  Future<void> _movePlaybackToWordImpl(WordEntry entry) async {
+    if (!_playbackStore.isPlaying || _playbackStore.playingScopeWords.isEmpty) {
+      return;
+    }
+    final target = _indexOfWordEntry(_playbackStore.playingScopeWords, entry);
+    if (target < 0) {
+      return;
+    }
+    await _restartPlaybackFromPlayingScope(target);
+  }
+
   Future<void> _restartPlaybackFromPlayingScope(int targetIndex) async {
+    if (_disposed) return;
     _playbackStore.queuedPlaybackScopeTarget = targetIndex;
     if (_playbackStore.playbackScopeRestarting) {
       return;
@@ -498,9 +517,11 @@ extension _AppStatePlayback on AppState {
     _playbackStore.playbackScopeRestarting = true;
     try {
       while (_playbackStore.queuedPlaybackScopeTarget != null) {
+        if (_disposed) break;
         final pending = _playbackStore.queuedPlaybackScopeTarget!;
         _playbackStore.queuedPlaybackScopeTarget = null;
         await _restartPlaybackFromPlayingScopeInternal(pending);
+        if (_disposed) break;
         if (!_playbackStore.isPlaying) break;
       }
     } finally {
@@ -509,6 +530,7 @@ extension _AppStatePlayback on AppState {
   }
 
   Future<void> _restartPlaybackFromPlayingScopeInternal(int targetIndex) async {
+    if (_disposed) return;
     final playingId = _playbackStore.playingWordbookId;
     final playingName = _playbackStore.playingWordbookName;
     if (playingId == null ||
@@ -527,7 +549,14 @@ extension _AppStatePlayback on AppState {
       _notifyStateChanged();
     }
     _playbackStore.playSessionId += 1;
+    final restartSessionId = _playbackStore.playSessionId;
     await _playback.stop();
+    if (_disposed || restartSessionId != _playbackStore.playSessionId) {
+      return;
+    }
+    if (_playbackStore.playingWordbookId != playingId) {
+      return;
+    }
     unawaited(
       _startPlaySession(
         scopeWords: words,
@@ -541,9 +570,7 @@ extension _AppStatePlayback on AppState {
   void _clearPlaybackSession({required bool notify}) {
     _playbackStore.isPlaying = false;
     _playbackStore.isPaused = false;
-    _playbackStore.currentUnit = 0;
-    _playbackStore.totalUnits = 0;
-    _playbackStore.activeUnit = null;
+    _playbackStore.resetUnitProgress();
     _playbackStore.playingWordbookId = null;
     _playbackStore.playingWordbookName = null;
     _playbackStore.playingWord = null;

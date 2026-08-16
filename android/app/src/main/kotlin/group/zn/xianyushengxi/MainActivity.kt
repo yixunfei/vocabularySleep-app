@@ -1,12 +1,18 @@
 package group.zn.xianyushengxi
 
 import android.Manifest
+import android.app.ActivityManager
 import android.app.AlarmManager
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.Ringtone
@@ -14,6 +20,7 @@ import android.media.RingtoneManager
 import android.app.WallpaperManager
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -30,14 +37,14 @@ import android.speech.tts.TextToSpeech
 import android.view.WindowManager
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
 import java.util.Locale
 import java.util.TimeZone
 
-class MainActivity : FlutterActivity() {
+class MainActivity : FlutterFragmentActivity() {
     private val reminderChannelName = "vocabulary_sleep/reminder"
     private val systemSpeechChannelName = "vocabulary_sleep/system_speech"
     private val systemCalendarChannelName = "vocabulary_sleep/system_calendar"
@@ -72,6 +79,10 @@ class MainActivity : FlutterActivity() {
     private var ignoreNextSpeechIntentResult = false
     private var activeSpeechSessionToken: Long? = null
     private var nextSpeechSessionToken = 0L
+    private var lifeLightLux: Float? = null
+    private var lifeLightTimestampMillis: Long? = null
+    private var lifeLightSensorName: String? = null
+    private var lifeLightSensorListener: SensorEventListener? = null
 
     private var pendingCalendarResult: MethodChannel.Result? = null
     private var pendingCalendarMethod: String? = null
@@ -374,6 +385,14 @@ class MainActivity : FlutterActivity() {
                     result.success(null)
                 }
 
+                "getLightMeterSnapshot" -> {
+                    result.success(buildLifeLightMeterSnapshot())
+                }
+
+                "getDeviceInfoSnapshot" -> {
+                    result.success(buildLifeDeviceInfoSnapshot())
+                }
+
                 else -> result.notImplemented()
             }
         }
@@ -460,6 +479,7 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun onDestroy() {
+        unregisterLifeLightSensor()
         stopReminder()
         cancelSpeechRecognition()
         reminderTts?.shutdown()
@@ -1581,6 +1601,94 @@ class MainActivity : FlutterActivity() {
                     false
                 },
         )
+    }
+
+    private fun buildLifeLightMeterSnapshot(): Map<String, Any?> {
+        val sensorManager = getSystemService(Context.SENSOR_SERVICE) as? SensorManager
+            ?: return mapOf("supported" to false, "errorCode" to "sensor_manager_unavailable")
+        val sensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
+            ?: return mapOf(
+                "supported" to false,
+                "platform" to "android",
+                "errorCode" to "light_sensor_unavailable",
+            )
+        ensureLifeLightSensor(sensorManager, sensor)
+        return mapOf(
+            "supported" to true,
+            "platform" to "android",
+            "lux" to lifeLightLux,
+            "timestampMillis" to lifeLightTimestampMillis,
+            "sensorName" to (lifeLightSensorName ?: sensor.name),
+            "maxRange" to sensor.maximumRange,
+            "minDelayMicros" to sensor.minDelay,
+        )
+    }
+
+    private fun ensureLifeLightSensor(sensorManager: SensorManager, sensor: Sensor) {
+        if (lifeLightSensorListener != null) {
+            return
+        }
+        lifeLightSensorName = sensor.name
+        val listener = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent?) {
+                val value = event?.values?.firstOrNull() ?: return
+                lifeLightLux = value
+                lifeLightTimestampMillis = System.currentTimeMillis()
+            }
+
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
+        }
+        lifeLightSensorListener = listener
+        sensorManager.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_UI)
+    }
+
+    private fun unregisterLifeLightSensor() {
+        val listener = lifeLightSensorListener ?: return
+        val sensorManager = getSystemService(Context.SENSOR_SERVICE) as? SensorManager
+        sensorManager?.unregisterListener(listener)
+        lifeLightSensorListener = null
+    }
+
+    private fun buildLifeDeviceInfoSnapshot(): Map<String, Any?> {
+        val displayMetrics = resources.displayMetrics
+        val memoryInfo = ActivityManager.MemoryInfo()
+        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+        activityManager?.getMemoryInfo(memoryInfo)
+        return mapOf(
+            "supported" to true,
+            "platform" to "android",
+            "manufacturer" to Build.MANUFACTURER,
+            "model" to Build.MODEL,
+            "systemVersion" to Build.VERSION.RELEASE,
+            "sdkInt" to Build.VERSION.SDK_INT,
+            "batteryLevel" to readLifeBatteryLevel(),
+            "batteryStatus" to readLifeBatteryStatus(),
+            "screenWidthPx" to displayMetrics.widthPixels,
+            "screenHeightPx" to displayMetrics.heightPixels,
+            "density" to displayMetrics.density,
+            "scaledDensity" to displayMetrics.scaledDensity,
+            "totalMemoryBytes" to if (memoryInfo.totalMem > 0) memoryInfo.totalMem else null,
+            "freeMemoryBytes" to if (memoryInfo.availMem > 0) memoryInfo.availMem else null,
+            "thermalState" to if (memoryInfo.lowMemory) "lowMemory" else "normal",
+        )
+    }
+
+    private fun readLifeBatteryLevel(): Int? {
+        val batteryManager = getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
+            ?: return null
+        val level = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+        return if (level >= 0) level else null
+    }
+
+    private fun readLifeBatteryStatus(): String {
+        val statusIntent = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        return when (statusIntent?.getIntExtra(BatteryManager.EXTRA_STATUS, -1)) {
+            BatteryManager.BATTERY_STATUS_CHARGING -> "charging"
+            BatteryManager.BATTERY_STATUS_FULL -> "full"
+            BatteryManager.BATTERY_STATUS_DISCHARGING -> "discharging"
+            BatteryManager.BATTERY_STATUS_NOT_CHARGING -> "notCharging"
+            else -> "unknown"
+        }
     }
 
     private fun playLifeVibrationPattern(arguments: Map<*, *>?): Boolean {

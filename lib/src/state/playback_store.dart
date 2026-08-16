@@ -1,6 +1,32 @@
+import 'package:flutter/foundation.dart';
+
 import '../models/play_config.dart';
 import '../models/settings_dto.dart';
 import '../models/word_entry.dart';
+
+class PlaybackUnitProgress {
+  const PlaybackUnitProgress({
+    required this.current,
+    required this.total,
+    required this.activeUnit,
+  });
+
+  static const empty = PlaybackUnitProgress(
+    current: 0,
+    total: 0,
+    activeUnit: null,
+  );
+
+  final int current;
+  final int total;
+  final PlayUnit? activeUnit;
+
+  bool sameAs(int nextCurrent, int nextTotal, PlayUnit? nextActiveUnit) {
+    return current == nextCurrent &&
+        total == nextTotal &&
+        activeUnit == nextActiveUnit;
+  }
+}
 
 /// Owns playback-session domain state.
 ///
@@ -23,4 +49,28 @@ class PlaybackStore {
   int wordbookPlaybackSyncToken = 0;
   Map<String, PlaybackProgressSnapshot> playbackProgressByWordbookPath =
       <String, PlaybackProgressSnapshot>{};
+  final ValueNotifier<PlaybackUnitProgress> unitProgress =
+      ValueNotifier<PlaybackUnitProgress>(PlaybackUnitProgress.empty);
+
+  void setUnitProgress(int current, int total, PlayUnit? activeUnit) {
+    if (unitProgress.value.sameAs(current, total, activeUnit)) {
+      return;
+    }
+    currentUnit = current;
+    totalUnits = total;
+    this.activeUnit = activeUnit;
+    unitProgress.value = PlaybackUnitProgress(
+      current: current,
+      total: total,
+      activeUnit: activeUnit,
+    );
+  }
+
+  void resetUnitProgress() {
+    setUnitProgress(0, 0, null);
+  }
+
+  void dispose() {
+    unitProgress.dispose();
+  }
 }

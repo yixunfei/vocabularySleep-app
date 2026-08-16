@@ -446,6 +446,13 @@ extension _AppStateStartup on AppState {
   void _didChangeAppLifecycleStateImpl(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       unawaited(_pollPendingTodoReminderLaunchImpl());
+      return;
+    }
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.detached) {
+      _flushDeferredPersistence();
     }
   }
 

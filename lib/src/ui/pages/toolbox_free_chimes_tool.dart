@@ -10,6 +10,8 @@ import 'package:sensors_plus/sensors_plus.dart';
 import '../../i18n/app_i18n.dart';
 import '../../services/toolbox_audio_service.dart';
 import '../../services/toolbox_free_chimes_controller.dart';
+import '../../services/toolbox_free_chimes_prefs_service.dart';
+import '../../services/toolbox_free_chimes_wind_mic_service.dart';
 import '../../state/app_state_provider.dart';
 import '../motion/app_motion.dart';
 import '../theme/toolbox_colors.dart';
@@ -29,29 +31,51 @@ class ToolboxFreeChimesToolPage extends ConsumerStatefulWidget {
 class _ToolboxFreeChimesToolPageState
     extends ConsumerState<ToolboxFreeChimesToolPage> {
   static const Color _accent = ToolboxColors.soundAccent;
+  static const int _maxCachedEffectPlayers = 12;
+  static const int _maxConcurrentPlaybackSlots = 3;
 
   final ToolboxFreeChimeController _controller = ToolboxFreeChimeController();
+  final ToolboxFreeChimePlaybackLimiter _playbackLimiter =
+      ToolboxFreeChimePlaybackLimiter(maxSlots: _maxConcurrentPlaybackSlots);
+  final ToolboxFreeChimeWindMicService _windMicService =
+      ToolboxFreeChimeWindMicService();
   final Map<ToolboxFreeChimeLayer, double> _layerAmounts =
       <ToolboxFreeChimeLayer, double>{
         for (final mix in ToolboxFreeChimeController.defaultMixes)
           mix.layer: mix.amount,
       };
   final Map<String, ToolboxNotePlayer> _players = <String, ToolboxNotePlayer>{};
+  Map<ToolboxFreeChimeLayer, double>? _customPresetAmounts;
 
   StreamSubscription<UserAccelerometerEvent>? _motionSub;
+  StreamSubscription<ToolboxFreeChimeWindMicSample>? _windMicSub;
   ToolboxFreeChimeIntensityBand _band = ToolboxFreeChimeIntensityBand.idle;
   ToolboxFreeChimePlayMode _mode = ToolboxFreeChimePlayMode.free;
   DateTime? _lastVisualAt;
+  DateTime? _lastNaturalWindVisualAt;
+  DateTime? _lastNaturalWindTriggerAt;
+  ToolboxFreeChimeWindMicSample? _lastNaturalWindSample;
   String _presetId = 'balanced';
   double _intensity = 0;
   double _magnitude = 0;
+  double _naturalWindLevel = 0;
+  double _naturalWindNoiseFloor = 0;
+  double _naturalWindConfidence = 0;
+  double _naturalWindMix = 0.48;
+  double _naturalWindBreezeBoost = 0.62;
   double _sensitivity = 1.0;
   double _masterVolume = 0.72;
+  double _forceVolumeResponse = 0.72;
   double? _tempoBpm;
   int _lastHitCount = 0;
   int _pulse = 0;
   bool _listening = false;
   bool _sensorsAvailable = true;
+  bool _naturalWindEnabled = false;
+  bool _naturalWindAvailable = true;
+  bool _naturalWindStarting = false;
+  bool _disposed = false;
+  bool _prefsLoaded = false;
 
   List<ToolboxFreeChimeLayerMix> get _mixes {
     return <ToolboxFreeChimeLayerMix>[
@@ -65,10 +89,36 @@ class _ToolboxFreeChimesToolPageState
   }
 
   @override
+  void initState() {
+    super.initState();
+    unawaited(_loadPrefs());
+  }
+
+  @override
   void dispose() {
+    _disposed = true;
     unawaited(_motionSub?.cancel());
+    unawaited(_windMicSub?.cancel());
+    unawaited(_windMicService.dispose());
+    _playbackLimiter.reset();
     _disposePlayers();
     super.dispose();
+  }
+
+  Future<void> _loadPrefs() async {
+    final prefs = await ToolboxFreeChimesPrefsService.load();
+    if (!mounted) return;
+    setState(() {
+      _prefsLoaded = true;
+      if (prefs.hasCustomPreset) {
+        _customPresetAmounts = Map<ToolboxFreeChimeLayer, double>.from(
+          prefs.customLayerAmounts,
+        );
+      }
+      _naturalWindEnabled = prefs.naturalWindEnabled;
+      _naturalWindMix = prefs.naturalWindMix;
+      _naturalWindBreezeBoost = prefs.naturalWindBreezeBoost;
+    });
   }
 
   AppI18n _i18n(BuildContext context) {
@@ -88,18 +138,32 @@ class _ToolboxFreeChimesToolPageState
   }
 
   Future<void> _startListening() async {
+    _controller.resetTiming();
+    final motionStarted = await _startMotionListening();
+    final windStarted = _naturalWindEnabled
+        ? await _startNaturalWindListening()
+        : false;
+    if (!mounted) return;
+    setState(() {
+      _listening = motionStarted || windStarted;
+    });
+    if (motionStarted || windStarted) {
+      unawaited(_warmActivePlayers());
+    }
+  }
+
+  Future<bool> _startMotionListening() async {
     if (kIsWeb ||
         (defaultTargetPlatform != TargetPlatform.android &&
             defaultTargetPlatform != TargetPlatform.iOS)) {
-      if (!mounted) return;
-      setState(() {
-        _sensorsAvailable = false;
-        _listening = false;
-      });
-      return;
+      if (mounted) {
+        setState(() {
+          _sensorsAvailable = false;
+        });
+      }
+      return false;
     }
     await _motionSub?.cancel();
-    _controller.resetTiming();
     try {
       _motionSub =
           userAccelerometerEventStream(
@@ -110,40 +174,96 @@ class _ToolboxFreeChimesToolPageState
               if (!mounted) return;
               setState(() {
                 _sensorsAvailable = false;
-                _listening = false;
+                if (!_windMicService.isRunning) {
+                  _listening = false;
+                }
               });
+              unawaited(_motionSub?.cancel());
+              _motionSub = null;
             },
             cancelOnError: true,
           );
-      if (!mounted) return;
-      setState(() {
-        _sensorsAvailable = true;
-        _listening = true;
-      });
+      if (mounted) {
+        setState(() => _sensorsAvailable = true);
+      }
+      return true;
     } on MissingPluginException {
-      if (!mounted) return;
+      if (mounted) {
+        setState(() => _sensorsAvailable = false);
+      }
+      return false;
+    }
+  }
+
+  Future<bool> _startNaturalWindListening() async {
+    if (_naturalWindStarting || _windMicService.isRunning) {
+      return _windMicService.isRunning;
+    }
+    if (mounted) {
       setState(() {
-        _sensorsAvailable = false;
-        _listening = false;
+        _naturalWindStarting = true;
+        _naturalWindAvailable = true;
       });
     }
+    await _windMicSub?.cancel();
+    _windMicSub = _windMicService.samples.listen(_handleNaturalWindSample);
+    final started = await _windMicService.start();
+    if (!mounted) return started;
+    setState(() {
+      _naturalWindStarting = false;
+      _naturalWindAvailable = started;
+      if (!started) {
+        _naturalWindLevel = 0;
+        _naturalWindNoiseFloor = 0;
+        _naturalWindConfidence = 0;
+      }
+    });
+    if (!started) {
+      await _windMicSub?.cancel();
+      _windMicSub = null;
+    }
+    return started;
   }
 
   Future<void> _stopListening() async {
     await _motionSub?.cancel();
     _motionSub = null;
+    await _stopNaturalWindListening(resetUi: true);
     _controller.resetTiming();
+    _playbackLimiter.reset();
     if (!mounted) return;
     setState(() {
       _listening = false;
       _band = ToolboxFreeChimeIntensityBand.idle;
       _intensity = 0;
       _magnitude = 0;
+      _naturalWindLevel = 0;
+      _naturalWindNoiseFloor = 0;
+      _naturalWindConfidence = 0;
       _tempoBpm = null;
     });
   }
 
+  Future<void> _stopNaturalWindListening({required bool resetUi}) async {
+    await _windMicSub?.cancel();
+    _windMicSub = null;
+    await _windMicService.stop();
+    _lastNaturalWindSample = null;
+    _lastNaturalWindTriggerAt = null;
+    if (resetUi && mounted) {
+      setState(() {
+        _naturalWindStarting = false;
+        _naturalWindLevel = 0;
+        _naturalWindNoiseFloor = 0;
+        _naturalWindConfidence = 0;
+      });
+    }
+  }
+
   void _handleMotion(UserAccelerometerEvent event) {
+    if (!_listening || _disposed) {
+      return;
+    }
     final timestamp = DateTime.now();
     final sample = ToolboxFreeChimeMotionSample(
       timestamp: timestamp,
@@ -172,7 +292,7 @@ class _ToolboxFreeChimesToolPageState
       _lastVisualAt = timestamp;
       setState(() {
         _magnitude = sample.magnitude;
-        _intensity = visualIntensity;
+        _intensity = trigger?.intensity ?? visualIntensity;
         _band = trigger?.band ?? visualBand;
         if (trigger != null) {
           _lastHitCount = trigger.hits.length;
@@ -187,46 +307,278 @@ class _ToolboxFreeChimesToolPageState
     }
   }
 
+  void _handleNaturalWindSample(ToolboxFreeChimeWindMicSample sample) {
+    if (!_listening || !_naturalWindEnabled || _disposed) {
+      return;
+    }
+    _lastNaturalWindSample = sample;
+    final shouldRefreshVisual =
+        _lastNaturalWindVisualAt == null ||
+        sample.timestamp.difference(_lastNaturalWindVisualAt!) >
+            const Duration(milliseconds: 140);
+    if (shouldRefreshVisual && mounted) {
+      _lastNaturalWindVisualAt = sample.timestamp;
+      setState(() {
+        _naturalWindLevel = sample.level;
+        _naturalWindNoiseFloor = sample.noiseFloor;
+        _naturalWindConfidence = sample.confidence;
+        if (_motionSub == null && sample.isWindLike) {
+          _intensity = math.max(_intensity * 0.82, sample.level * 0.72);
+          _band = _controller.bandForIntensity(_intensity);
+        }
+      });
+    }
+
+    final trigger = _naturalWindTriggerFor(sample);
+    if (trigger != null) {
+      _playTrigger(trigger);
+    }
+  }
+
+  ToolboxFreeChimeTrigger? _naturalWindTriggerFor(
+    ToolboxFreeChimeWindMicSample sample,
+  ) {
+    if (!sample.isWindLike || sample.level <= 0.024) {
+      return null;
+    }
+    final previous = _lastNaturalWindTriggerAt;
+    final cooldown = Duration(
+      milliseconds: (880 - sample.level * 420 - sample.gust * 120)
+          .round()
+          .clamp(360, 920),
+    );
+    if (previous != null && sample.timestamp.difference(previous) < cooldown) {
+      return null;
+    }
+    final mixes = _naturalWindMixes();
+    if (mixes.isEmpty) {
+      return null;
+    }
+    final breezeGain = 0.82 + _naturalWindBreezeBoost * 0.48;
+    final intensity =
+        (sample.level * breezeGain + sample.gust * 0.1 + sample.texture * 0.08)
+            .clamp(0.08, 0.72)
+            .toDouble();
+    _lastNaturalWindTriggerAt = sample.timestamp;
+    return _controller.preview(
+      timestamp: sample.timestamp,
+      intensity: intensity,
+      mixes: mixes,
+      mode: ToolboxFreeChimePlayMode.free,
+    );
+  }
+
+  List<ToolboxFreeChimeLayerMix> _naturalWindMixes() {
+    final windAmount = (_layerAmounts[ToolboxFreeChimeLayer.windChime] ?? 0)
+        .clamp(0.0, 1.0);
+    final leavesAmount = (_layerAmounts[ToolboxFreeChimeLayer.leaves] ?? 0)
+        .clamp(0.0, 1.0);
+    final waterAmount = (_layerAmounts[ToolboxFreeChimeLayer.water] ?? 0).clamp(
+      0.0,
+      1.0,
+    );
+    final rainAmount = (_layerAmounts[ToolboxFreeChimeLayer.rain] ?? 0).clamp(
+      0.0,
+      1.0,
+    );
+    final shakerAmount = (_layerAmounts[ToolboxFreeChimeLayer.shaker] ?? 0)
+        .clamp(0.0, 1.0);
+    final mixes = <ToolboxFreeChimeLayerMix>[
+      if (windAmount > 0.02)
+        ToolboxFreeChimeLayerMix(
+          layer: ToolboxFreeChimeLayer.windChime,
+          amount: (windAmount * (0.78 + _naturalWindMix * 0.22))
+              .clamp(0.0, 1.0)
+              .toDouble(),
+        ),
+      if (leavesAmount > 0.02)
+        ToolboxFreeChimeLayerMix(
+          layer: ToolboxFreeChimeLayer.leaves,
+          amount: (leavesAmount * _naturalWindMix * 0.72)
+              .clamp(0.0, 1.0)
+              .toDouble(),
+        ),
+      if (waterAmount > 0.02)
+        ToolboxFreeChimeLayerMix(
+          layer: ToolboxFreeChimeLayer.water,
+          amount: (waterAmount * _naturalWindMix * 0.44)
+              .clamp(0.0, 1.0)
+              .toDouble(),
+        ),
+      if (rainAmount > 0.02)
+        ToolboxFreeChimeLayerMix(
+          layer: ToolboxFreeChimeLayer.rain,
+          amount: (rainAmount * _naturalWindMix * 0.38)
+              .clamp(0.0, 1.0)
+              .toDouble(),
+        ),
+      if (shakerAmount > 0.02)
+        ToolboxFreeChimeLayerMix(
+          layer: ToolboxFreeChimeLayer.shaker,
+          amount: (shakerAmount * _naturalWindMix * 0.34)
+              .clamp(0.0, 1.0)
+              .toDouble(),
+        ),
+    ];
+    return mixes.where((mix) => mix.amount > 0.02).toList(growable: false);
+  }
+
   void _playTrigger(ToolboxFreeChimeTrigger trigger) {
-    if (trigger.hits.isEmpty) return;
+    if (_disposed || trigger.hits.isEmpty) return;
+    final prioritizedHits = trigger.hits.toList(growable: false)
+      ..sort((a, b) => b.volume.compareTo(a.volume));
+    final claimedSlots = _playbackLimiter.claim(prioritizedHits.length);
+    if (claimedSlots <= 0) {
+      return;
+    }
+    final playableHits = prioritizedHits
+        .take(claimedSlots)
+        .toList(growable: false);
     final feedback = switch (trigger.band) {
       ToolboxFreeChimeIntensityBand.strong => HapticFeedback.mediumImpact(),
       ToolboxFreeChimeIntensityBand.lively => HapticFeedback.lightImpact(),
       _ => HapticFeedback.selectionClick(),
     };
     unawaited(feedback);
-    for (final hit in trigger.hits) {
-      unawaited(
-        _playerForHit(hit).play(
-          volume: (hit.volume * _masterVolume).clamp(0.0, 1.0),
-          playbackRate: hit.playbackRate,
-        ),
-      );
-    }
+    Timer(_slotHoldForHits(playableHits), () {
+      _playbackLimiter.release(claimedSlots);
+    });
+    unawaited(
+      Future.wait<void>(<Future<void>>[
+        for (final hit in playableHits)
+          _playerForHit(hit).play(
+            volume: _volumeForHit(hit, trigger),
+            playbackRate: _playbackRateForHit(hit),
+          ),
+      ], eagerError: false).catchError((_) => <void>[]),
+    );
   }
 
-  ToolboxNotePlayer _playerForHit(ToolboxFreeChimeHit hit) {
-    final volumeBucket = (hit.volume * 20).round().clamp(0, 20);
-    final key = '${hit.layer.id}:$volumeBucket:${hit.variant}';
+  Future<void> _warmActivePlayers() async {
+    final activeLayers = _layerAmounts.entries
+        .where((entry) => entry.value > 0.02)
+        .map((entry) => entry.key)
+        .toList(growable: false);
+    if (activeLayers.isEmpty) return;
+    await Future.wait<void>(<Future<void>>[
+      for (final layer in activeLayers.take(4)) _playerForLayer(layer).warmUp(),
+    ], eagerError: false);
+  }
+
+  double _volumeForHit(
+    ToolboxFreeChimeHit hit,
+    ToolboxFreeChimeTrigger trigger,
+  ) {
+    final response = _forceVolumeResponse.clamp(0.0, 1.0).toDouble();
+    final dynamicScale =
+        1 -
+        response * 0.36 +
+        trigger.intensity.clamp(0.0, 1.0) * response * 0.52;
+    final windCorrection = _naturalWindCorrectionFor(hit);
+    return (hit.volume * _masterVolume * dynamicScale * windCorrection).clamp(
+      0.0,
+      1.0,
+    );
+  }
+
+  double _playbackRateForHit(ToolboxFreeChimeHit hit) {
+    final sample = _recentNaturalWindSample();
+    if (sample == null || hit.layer != ToolboxFreeChimeLayer.windChime) {
+      return hit.playbackRate;
+    }
+    final drift =
+        (sample.texture * 0.05 + sample.gust * 0.025 + sample.level * 0.018) *
+        _naturalWindMix;
+    return (hit.playbackRate + drift).clamp(0.92, 1.08).toDouble();
+  }
+
+  double _naturalWindCorrectionFor(ToolboxFreeChimeHit hit) {
+    final sample = _recentNaturalWindSample();
+    if (sample == null || hit.layer != ToolboxFreeChimeLayer.windChime) {
+      return 1.0;
+    }
+    return (1.0 + sample.level * _naturalWindMix * 0.18).clamp(1.0, 1.16);
+  }
+
+  ToolboxFreeChimeWindMicSample? _recentNaturalWindSample() {
+    if (!_naturalWindEnabled) {
+      return null;
+    }
+    final sample = _lastNaturalWindSample;
+    if (sample == null || !sample.isWindLike) {
+      return null;
+    }
+    if (DateTime.now().difference(sample.timestamp) >
+        const Duration(milliseconds: 1600)) {
+      return null;
+    }
+    return sample;
+  }
+
+  Duration _slotHoldForHits(List<ToolboxFreeChimeHit> hits) {
+    var milliseconds = 420;
+    for (final hit in hits) {
+      milliseconds = math.max(milliseconds, _slotHoldForLayer(hit.layer));
+    }
+    return Duration(milliseconds: milliseconds);
+  }
+
+  int _slotHoldForLayer(ToolboxFreeChimeLayer layer) {
+    return switch (layer) {
+      ToolboxFreeChimeLayer.windChime => 420,
+      ToolboxFreeChimeLayer.gongDrum => 1100,
+      ToolboxFreeChimeLayer.water => 720,
+      ToolboxFreeChimeLayer.rain => 680,
+      ToolboxFreeChimeLayer.marble => 620,
+      ToolboxFreeChimeLayer.bubbles => 560,
+      ToolboxFreeChimeLayer.leaves => 520,
+      ToolboxFreeChimeLayer.shaker => 460,
+      ToolboxFreeChimeLayer.impact => 430,
+      ToolboxFreeChimeLayer.kuaiban => 360,
+    };
+  }
+
+  ToolboxNotePlayer _playerForLayer(ToolboxFreeChimeLayer layer) {
+    const variantBucket = 0;
+    final key = layer.id;
     final existing = _players[key];
     if (existing != null) {
       return existing;
     }
+    while (_players.length >= _maxCachedEffectPlayers) {
+      final firstKey = _players.keys.first;
+      final removed = _players.remove(firstKey);
+      if (removed != null) {
+        unawaited(removed.dispose());
+      }
+    }
     final player = ToolboxEffectPlayer(
       ToolboxAudioBank.freeChimeLayer(
-        hit.layer.id,
-        intensity: volumeBucket / 20,
-        variant: hit.variant,
+        layer.id,
+        intensity: 0.86,
+        variant: variantBucket,
       ),
-      maxPlayers: hit.layer.isRhythmic ? 8 : 10,
+      maxPlayers: _maxVoicesForLayer(layer),
+      allowOverflow: false,
     );
     _players[key] = player;
     return player;
   }
 
+  int _maxVoicesForLayer(ToolboxFreeChimeLayer layer) {
+    return switch (layer) {
+      ToolboxFreeChimeLayer.windChime => 4,
+      _ => 1,
+    };
+  }
+
+  ToolboxNotePlayer _playerForHit(ToolboxFreeChimeHit hit) {
+    return _playerForLayer(hit.layer);
+  }
+
   void _disposePlayers() {
     for (final player in _players.values) {
-      unawaited(player.dispose());
+      unawaited(player.stop().whenComplete(player.dispose));
     }
     _players.clear();
   }
@@ -275,17 +627,97 @@ class _ToolboxFreeChimesToolPageState
         ToolboxFreeChimeLayer.gongDrum: 0.58,
         ToolboxFreeChimeLayer.marble: 0.64,
       },
+      'custom' => _customPresetAmounts,
       _ => <ToolboxFreeChimeLayer, double>{
         for (final mix in ToolboxFreeChimeController.defaultMixes)
           mix.layer: mix.amount,
       },
     };
+    if (values == null) {
+      return;
+    }
     setState(() {
       _presetId = id;
       _layerAmounts
         ..clear()
         ..addAll(values);
     });
+    _playbackLimiter.reset();
+  }
+
+  void _saveCustomPreset() {
+    final customAmounts = Map<ToolboxFreeChimeLayer, double>.from(
+      _layerAmounts,
+    );
+    setState(() {
+      _presetId = 'custom';
+      _customPresetAmounts = customAmounts;
+    });
+    unawaited(_savePrefs(customLayerAmounts: customAmounts));
+  }
+
+  Future<void> _savePrefs({
+    Map<ToolboxFreeChimeLayer, double>? customLayerAmounts,
+  }) {
+    final customAmounts =
+        customLayerAmounts ??
+        _customPresetAmounts ??
+        const <ToolboxFreeChimeLayer, double>{};
+    return ToolboxFreeChimesPrefsService.save(
+      FreeChimesPrefsState(
+        customLayerAmounts: customAmounts,
+        naturalWindEnabled: _naturalWindEnabled,
+        naturalWindMix: _naturalWindMix,
+        naturalWindBreezeBoost: _naturalWindBreezeBoost,
+      ),
+    );
+  }
+
+  Future<void> _toggleNaturalWind(bool value) async {
+    setState(() {
+      _naturalWindEnabled = value;
+      _naturalWindAvailable = true;
+    });
+    unawaited(_savePrefs(customLayerAmounts: _customPresetAmounts));
+    if (!_listening) {
+      return;
+    }
+    if (value) {
+      final started = await _startNaturalWindListening();
+      if (!started && mounted) {
+        setState(() => _naturalWindAvailable = false);
+      }
+      return;
+    }
+    await _stopNaturalWindListening(resetUi: true);
+  }
+
+  void _setNaturalWindMix(double value) {
+    setState(() => _naturalWindMix = value.clamp(0.0, 1.0).toDouble());
+    unawaited(_savePrefs(customLayerAmounts: _customPresetAmounts));
+  }
+
+  void _setNaturalWindBreezeBoost(double value) {
+    setState(() {
+      _naturalWindBreezeBoost = value.clamp(0.0, 1.0).toDouble();
+    });
+    unawaited(_savePrefs(customLayerAmounts: _customPresetAmounts));
+  }
+
+  void _turnAllLayersOff() {
+    setState(() {
+      _presetId = 'custom';
+      for (final layer in ToolboxFreeChimeLayer.values) {
+        _layerAmounts[layer] = 0;
+      }
+      _band = ToolboxFreeChimeIntensityBand.idle;
+      _intensity = 0;
+      _magnitude = 0;
+      _tempoBpm = null;
+      _lastHitCount = 0;
+    });
+    _controller.resetTiming();
+    _playbackLimiter.reset();
     _disposePlayers();
   }
 
@@ -294,7 +726,6 @@ class _ToolboxFreeChimesToolPageState
       _presetId = 'custom';
       _layerAmounts[layer] = amount.clamp(0.0, 1.0).toDouble();
     });
-    _disposePlayers();
   }
 
   String _bandLabel(AppI18n i18n, ToolboxFreeChimeIntensityBand band) {
@@ -367,6 +798,8 @@ class _ToolboxFreeChimesToolPageState
           _buildStage(context, i18n),
           const SizedBox(height: ToolboxUiTokens.sectionSpacing),
           _buildModePanel(context, i18n),
+          const SizedBox(height: ToolboxUiTokens.sectionSpacing),
+          _buildNaturalWindPanel(context, i18n),
           const SizedBox(height: ToolboxUiTokens.sectionSpacing),
           _buildPresetPanel(context, i18n),
           const SizedBox(height: ToolboxUiTokens.sectionSpacing),
@@ -447,8 +880,7 @@ class _ToolboxFreeChimesToolPageState
             height: 180,
             width: double.infinity,
             child: AnimatedScale(
-              key: ValueKey<int>(_pulse),
-              scale: 1,
+              scale: 1 + (_pulse.isEven ? 0.018 : 0.034) * _intensity,
               duration: AppDurations.quick,
               curve: AppEasing.snappy,
               child: CustomPaint(
@@ -487,6 +919,11 @@ class _ToolboxFreeChimesToolPageState
                 ToolboxMetricCard(
                   label: i18n.t('toolbox.free_chimes.metric.tempo'),
                   value: _tempoBpm == null ? '--' : '${_tempoBpm!.round()}',
+                ),
+              if (_naturalWindEnabled)
+                ToolboxMetricCard(
+                  label: i18n.t('toolbox.free_chimes.metric.wind'),
+                  value: '${(_naturalWindLevel * 100).round()}%',
                 ),
             ],
           ),
@@ -567,6 +1004,95 @@ class _ToolboxFreeChimesToolPageState
     );
   }
 
+  Widget _buildNaturalWindPanel(BuildContext context, AppI18n i18n) {
+    final theme = Theme.of(context);
+    final statusText = !_naturalWindEnabled
+        ? i18n.t('toolbox.free_chimes.wind.status.off')
+        : _naturalWindStarting
+        ? i18n.t('toolbox.free_chimes.wind.status.starting')
+        : !_naturalWindAvailable
+        ? i18n.t('toolbox.free_chimes.wind.status.unavailable')
+        : _windMicService.isRunning
+        ? i18n.t('toolbox.free_chimes.wind.status.listening')
+        : i18n.t('toolbox.free_chimes.wind.status.ready');
+    final helperText = _naturalWindEnabled
+        ? i18n.t(
+            'toolbox.free_chimes.wind.helper_active',
+            params: <String, Object?>{
+              'level': (_naturalWindLevel * 100).round(),
+              'floor': (_naturalWindNoiseFloor * 100).round(),
+              'confidence': (_naturalWindConfidence * 100).round(),
+            },
+          )
+        : i18n.t('toolbox.free_chimes.wind.helper_idle');
+    return ToolboxSurfaceCard(
+      borderColor: _accent.withValues(alpha: 0.18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          SectionHeader(
+            title: i18n.t('toolbox.free_chimes.wind.title'),
+            subtitle: i18n.t('toolbox.free_chimes.wind.subtitle'),
+          ),
+          const SizedBox(height: 12),
+          SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            secondary: Icon(
+              Icons.air_rounded,
+              color: _naturalWindEnabled
+                  ? _accent
+                  : theme.colorScheme.onSurfaceVariant,
+            ),
+            title: Text(i18n.t('toolbox.free_chimes.wind.enable')),
+            subtitle: Text(statusText),
+            value: _naturalWindEnabled,
+            onChanged: _toggleNaturalWind,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            helperText,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildSliderLabel(
+            context,
+            i18n.t(
+              'toolbox.free_chimes.wind.mix',
+              params: <String, Object?>{
+                'value': (_naturalWindMix * 100).round(),
+              },
+            ),
+          ),
+          Slider(
+            value: _naturalWindMix,
+            min: 0,
+            max: 1,
+            divisions: 20,
+            onChanged: _naturalWindEnabled ? _setNaturalWindMix : null,
+          ),
+          _buildSliderLabel(
+            context,
+            i18n.t(
+              'toolbox.free_chimes.wind.breeze_boost',
+              params: <String, Object?>{
+                'value': (_naturalWindBreezeBoost * 100).round(),
+              },
+            ),
+          ),
+          Slider(
+            value: _naturalWindBreezeBoost,
+            min: 0,
+            max: 1,
+            divisions: 20,
+            onChanged: _naturalWindEnabled ? _setNaturalWindBreezeBoost : null,
+          ),
+        ],
+      ),
+    );
+  }
+
   void _setMode(ToolboxFreeChimePlayMode mode) {
     setState(() {
       _mode = mode;
@@ -607,13 +1133,37 @@ class _ToolboxFreeChimesToolPageState
                 selected: _presetId == 'rhythm',
                 onSelected: () => _applyPreset('rhythm'),
               ),
-              if (_presetId == 'custom')
+              if (_customPresetAmounts != null || _presetId == 'custom')
                 _PresetChip(
                   label: i18n.t('toolbox.free_chimes.preset.custom'),
                   icon: Icons.edit_rounded,
-                  selected: true,
-                  onSelected: () {},
+                  selected: _presetId == 'custom',
+                  onSelected: () => _applyPreset('custom'),
                 ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              FilledButton.tonalIcon(
+                onPressed: _saveCustomPreset,
+                icon: const Icon(Icons.bookmark_add_rounded),
+                label: Text(i18n.t('toolbox.free_chimes.action.save_custom')),
+              ),
+              OutlinedButton.icon(
+                onPressed: !_prefsLoaded || _customPresetAmounts == null
+                    ? null
+                    : () => _applyPreset('custom'),
+                icon: const Icon(Icons.bookmarks_rounded),
+                label: Text(i18n.t('toolbox.free_chimes.action.use_custom')),
+              ),
+              OutlinedButton.icon(
+                onPressed: _turnAllLayersOff,
+                icon: const Icon(Icons.volume_off_rounded),
+                label: Text(i18n.t('toolbox.free_chimes.action.all_off')),
+              ),
             ],
           ),
         ],
@@ -685,6 +1235,22 @@ class _ToolboxFreeChimesToolPageState
             max: 1.0,
             divisions: 16,
             onChanged: (value) => setState(() => _masterVolume = value),
+          ),
+          _buildSliderLabel(
+            context,
+            i18n.t(
+              'toolbox.free_chimes.tuning.force_volume',
+              params: <String, Object?>{
+                'value': (_forceVolumeResponse * 100).round(),
+              },
+            ),
+          ),
+          Slider(
+            value: _forceVolumeResponse,
+            min: 0,
+            max: 1,
+            divisions: 20,
+            onChanged: (value) => setState(() => _forceVolumeResponse = value),
           ),
         ],
       ),

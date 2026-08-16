@@ -286,10 +286,11 @@ extension _AppStatePractice on AppState {
     _updateWordMemoryProgress(
       rememberedEntries: remembered ? <WordEntry>[entry] : const <WordEntry>[],
       weakEntries: !remembered ? <WordEntry>[entry] : const <WordEntry>[],
+      immediate: false,
     );
     final wordId = entry.id;
     if (wordId != null && wordId > 0) {
-      _practiceRepository.insertWordMemoryEvent(
+      _queuePracticeMemoryEvent(
         wordId: wordId,
         eventKind: remembered ? 'remembered' : 'weak',
         quality: remembered ? 4 : 1,
@@ -299,7 +300,7 @@ extension _AppStatePractice on AppState {
     }
     _prunePracticeTrackedEntries();
     _prunePracticeWeakReasons();
-    _persistPracticeDashboard();
+    _persistPracticeDashboard(immediate: false);
     if (writeWatch.elapsedMilliseconds >= _practiceAnswerWriteWarnThresholdMs) {
       _log.w(
         'practice',
@@ -330,6 +331,7 @@ extension _AppStatePractice on AppState {
     if (safeTotal <= 0) {
       return;
     }
+    _flushPracticeAnswerPersistence();
     _practiceStore.lastSessionTitle = title.trim();
     _appendPracticeSessionHistory(
       title: title,
@@ -340,7 +342,7 @@ extension _AppStatePractice on AppState {
         weakReasonIdsByWord.keys.toList(growable: false),
       ),
     );
-    _persistPracticeDashboard();
+    _persistPracticeDashboard(immediate: true);
     _notifyStateChanged();
   }
 
@@ -755,7 +757,7 @@ extension _AppStatePractice on AppState {
     _practiceStore.todayReviewed = 0;
     _practiceStore.todayRemembered = 0;
     if (persist) {
-      _persistPracticeDashboard();
+      _persistPracticeDashboard(immediate: true);
     }
   }
 
@@ -764,52 +766,6 @@ extension _AppStatePractice on AppState {
     final month = now.month.toString().padLeft(2, '0');
     final day = now.day.toString().padLeft(2, '0');
     return '${now.year}-$month-$day';
-  }
-
-  void _persistPracticeDashboard() {
-    final watch = Stopwatch()..start();
-    final trackedEntries = _practiceStore.trackedEntriesByWord.values
-        .map(PracticeTrackedEntrySnapshot.fromWordEntry)
-        .toList(growable: false);
-    _settings.savePracticeDashboard(
-      PracticeDashboardState(
-        date: _practiceStore.dateKey,
-        todaySessions: _practiceStore.todaySessions,
-        todayReviewed: _practiceStore.todayReviewed,
-        todayRemembered: _practiceStore.todayRemembered,
-        totalSessions: _practiceStore.totalSessions,
-        totalReviewed: _practiceStore.totalReviewed,
-        totalRemembered: _practiceStore.totalRemembered,
-        lastSessionTitle: _practiceStore.lastSessionTitle,
-        rememberedWords: _practiceStore.rememberedWords,
-        weakWords: _practiceStore.weakWords,
-        weakReasonIdsByWord: _practiceStore.weakWordReasons,
-        history: _practiceStore.sessionHistory,
-        sessionPrefs: PracticeSessionPreferences(
-          autoAddWeakWordsToTask: _practiceStore.autoAddWeakWordsToTask,
-          autoPlayPronunciation: _practiceStore.autoPlayPronunciation,
-          showHintsByDefault: _practiceStore.showHintsByDefault,
-          showAnswerFeedbackDialog: _practiceStore.showAnswerFeedbackDialog,
-          defaultQuestionType: _practiceStore.defaultQuestionType,
-        ),
-        roundSettings: _practiceStore.roundSettings,
-        launchCursors: _practiceStore.launchCursors,
-        trackedEntries: trackedEntries,
-      ),
-    );
-    if (watch.elapsedMilliseconds >= _practiceDashboardPersistWarnThresholdMs) {
-      _log.w(
-        'practice',
-        'practice dashboard persist slow',
-        data: <String, Object?>{
-          'elapsedMs': watch.elapsedMilliseconds,
-          'trackedEntries': trackedEntries.length,
-          'history': _practiceStore.sessionHistory.length,
-          'rememberedWords': _practiceStore.rememberedWords.length,
-          'weakWords': _practiceStore.weakWords.length,
-        },
-      );
-    }
   }
 
   List<WordEntry> _practiceEntriesFromWords(List<String> trackedWords) {
@@ -1137,6 +1093,7 @@ extension _AppStatePractice on AppState {
   void _updateWordMemoryProgress({
     required List<WordEntry> rememberedEntries,
     required List<WordEntry> weakEntries,
+    bool immediate = true,
   }) {
     if (rememberedEntries.isEmpty && weakEntries.isEmpty) {
       return;
@@ -1171,7 +1128,11 @@ extension _AppStatePractice on AppState {
         consecutiveCorrect: result.consecutiveCorrect,
         memoryState: result.memoryState,
       );
-      _practiceRepository.upsertWordMemoryProgress(nextProgress);
+      if (immediate) {
+        _practiceRepository.upsertWordMemoryProgress(nextProgress);
+      } else {
+        _queuePracticeMemoryProgress(nextProgress);
+      }
       nextProgressByWordId[wordId] = nextProgress;
     }
 

@@ -1,9 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:path/path.dart' as path;
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
@@ -185,6 +190,124 @@ void main() {
     expect(
       PlayConfig.defaults.tts.copyWith(enableApiCache: true).enableApiCache,
       isTrue,
+    );
+  });
+
+  test('api preCacheOnly uses cache without player calls', () async {
+    final audioCalls = <String>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(audioChannel, (call) async {
+          audioCalls.add(call.method);
+          return null;
+        });
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(audioGlobalChannel, (call) async {
+          audioCalls.add('global.${call.method}');
+          return null;
+        });
+
+    final service = TtsService();
+    audioCalls.clear();
+    final config = PlayConfig.defaults.tts.copyWith(
+      provider: TtsProviderType.customApi,
+      apiKey: 'test-key',
+      baseUrl: 'https://tts.example.test',
+      enableApiCache: true,
+      model: 'test-model',
+      remoteVoice: 'test-voice',
+    );
+    final cachePayload = jsonEncode(<String, Object?>{
+      'provider': config.provider.name,
+      'baseUrl': config.baseUrl?.trim() ?? '',
+      'model': 'test-model',
+      'voice': 'test-voice',
+      'speed': config.speed,
+      'text': 'cache me',
+    });
+    final cacheKey = sha256.convert(utf8.encode(cachePayload)).toString();
+    final cacheDir = Directory(path.join(supportDir.path, 'tts_api_cache'));
+    await cacheDir.create(recursive: true);
+    final cacheFile = File(path.join(cacheDir.path, '$cacheKey.mp3'));
+    await cacheFile.writeAsBytes(<int>[1, 2, 3, 4], flush: true);
+
+    await service.speak('cache me', config, preCacheOnly: true);
+
+    expect(
+      audioCalls.where(
+        (method) => method != 'create' && method != 'global.create',
+      ),
+      isEmpty,
+    );
+    expect(await service.getApiCacheSizeBytes(), 4);
+
+    audioCalls.clear();
+    await service.speak('cache me', config, preCacheOnly: true);
+
+    expect(
+      audioCalls.where(
+        (method) => method != 'create' && method != 'global.create',
+      ),
+      isEmpty,
+    );
+  });
+
+  test('api preCacheOnly requests can run in parallel', () async {
+    final requests = <String>[];
+    final service = TtsService(
+      apiClientFactory: () => MockClient((request) async {
+        final decoded = jsonDecode(request.body) as Map<String, Object?>;
+        requests.add(decoded['input']?.toString() ?? '');
+        await Future<void>.delayed(const Duration(milliseconds: 40));
+        return http.Response.bytes(
+          <int>[1, 2, 3, 4, 5],
+          200,
+          headers: const <String, String>{'content-type': 'audio/mpeg'},
+        );
+      }),
+    );
+    final config = PlayConfig.defaults.tts.copyWith(
+      provider: TtsProviderType.customApi,
+      apiKey: 'test-key',
+      baseUrl: 'https://tts.example.test',
+      enableApiCache: true,
+      model: 'test-model',
+      remoteVoice: 'test-voice',
+    );
+
+    await Future.wait(<Future<void>>[
+      service.speak('first item', config, preCacheOnly: true),
+      service.speak('second item', config, preCacheOnly: true),
+    ]);
+
+    expect(requests, unorderedEquals(<String>['first item', 'second item']));
+    final cacheDir = Directory(path.join(supportDir.path, 'tts_api_cache'));
+    final cacheFiles = await cacheDir
+        .list()
+        .where((entity) => entity is File && entity.path.endsWith('.mp3'))
+        .toList();
+    expect(cacheFiles, hasLength(2));
+  });
+
+  test('api tts validates required remote configuration', () async {
+    final service = TtsService();
+
+    await expectLater(
+      service.speak(
+        'missing key',
+        PlayConfig.defaults.tts.copyWith(provider: TtsProviderType.api),
+      ),
+      throwsA(isA<TtsConfigurationException>()),
+    );
+
+    await expectLater(
+      service.speak(
+        'missing base url',
+        PlayConfig.defaults.tts.copyWith(
+          provider: TtsProviderType.customApi,
+          apiKey: 'test-key',
+        ),
+      ),
+      throwsA(isA<TtsConfigurationException>()),
     );
   });
 

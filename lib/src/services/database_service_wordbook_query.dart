@@ -1,5 +1,16 @@
 part of 'database_service.dart';
 
+const String _wordEntryLiteSelectColumns = '''
+  id,
+  wordbook_id,
+  word,
+  meaning,
+  entry_uid,
+  primary_gloss,
+  schema_version,
+  sort_index
+''';
+
 extension AppDatabaseServiceWordbookQuery on AppDatabaseService {
   void ensureSpecialWordbooks() {
     for (final entry in AppDatabaseService._specialWordbooks.entries) {
@@ -294,15 +305,7 @@ extension AppDatabaseServiceWordbookQuery on AppDatabaseService {
   }) {
     final rows = _selectMaps(
       '''
-      SELECT
-        id,
-        wordbook_id,
-        word,
-        meaning,
-        entry_uid,
-        primary_gloss,
-        schema_version,
-        sort_index
+      SELECT $_wordEntryLiteSelectColumns
       FROM words
       WHERE wordbook_id = ?
       ORDER BY ${AppDatabaseService._wordOrderClause}
@@ -398,7 +401,8 @@ extension AppDatabaseServiceWordbookQuery on AppDatabaseService {
 
     final rows = _selectMaps(
       '''
-      SELECT * FROM words
+      SELECT $_wordEntryLiteSelectColumns
+      FROM words
       WHERE $whereClause
       ORDER BY ${AppDatabaseService._wordOrderClause}
       LIMIT ? OFFSET ?

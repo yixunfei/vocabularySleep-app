@@ -791,6 +791,7 @@ final List<_TimelineFact> _timelineFacts = _sortedTimelineFacts(<_TimelineFact>[
   ..._expandedHumanTimelineFacts,
   ..._densePremodernTimelineFacts,
   ..._denseModernTimelineFacts,
+  ..._brief24HistoryTimelineFacts,
 ]);
 
 List<_TimelineFact> _sortedTimelineFacts(List<_TimelineFact> facts) {

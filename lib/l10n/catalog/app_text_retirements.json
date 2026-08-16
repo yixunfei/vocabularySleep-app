@@ -1,5 +1,609 @@
 {
   "schemaVersion": "1.0.0",
   "policy": "Daily i18n work is append-only. Add keys here only when removal is intentional, reviewed, and safe to apply with scripts/maintain_i18n_catalog.js --apply-retirements.",
-  "retirements": []
+  "retirements": [
+    {
+      "key": "inline.plan295.crypto.current_current_hidden_data_is_clean.a5f823cb7957",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "inline.plan295.crypto.current_file_error_count_status_wind.3aa054bc6b1e",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "inline.plan295.crypto.hidden_data_will_be_cleaned_after_at.ee77c18b99ad",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "inline.plan295.crypto.max_successful_reveals.a01dd55e3e17",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "inline.plan295.crypto.max_successful_reveals_must_be_an_in.4d51465ac069",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "inline.plan295.crypto.max_wrong_attempts.6959d4319854",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "inline.plan295.crypto.max_wrong_attempts_must_be_an_intege.aa06f0b0cb1f",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "inline.plan295.crypto.remaining_successful_reveals_result.c34efd72ab27",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "inline.plan295.crypto.remaining_successful_reveals_result.d4becbbdd62c",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "inline.plan295.crypto.successful_reveal_limit_was_reached.5435e8975742",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "inline.plan295.crypto.successful_reveal_limit_was_reached.7384f1352063",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "inline.plan295.crypto.successful_reveals_can_wipe_data.2746005621a5",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.current_file_error_count.d454c2a872",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.current_hidden_data_is_cleaned_after.5d209883f4",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.hidden_data_will_be_cleaned_after.a96962c9b7",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.services.toolbox_steganography_service.hidden_payload_does_not_support_successful_reveal_limits_c3f689",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.services.toolbox_steganography_service.max_error_attempts_must_be_between_0_and_255_14e702",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.services.toolbox_steganography_service.max_successful_reveals_must_be_between_0_and_255_e7f941",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.attempts_0699eb",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.current_71954f",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.current_current_hidden_data_is_cleaned_after_the_limit_i_e4a66b",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.current_file_error_count_status_windowcount_3b2d5b",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.hidden_data_will_be_cleaned_after_attempts_successful_re_c45e3a",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.life_stego_max_error_attempts_73e1c8",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.life_stego_max_successful_reveals_8a87d0",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.max_error_attempts_must_be_between_0_and_255_3479c5",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.max_successful_reveals_ef068b",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.max_successful_reveals_must_be_an_integer_from_0_to_255_ea9671",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.max_successful_reveals_must_be_between_0_and_255_5c0d55",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.max_wrong_attempts_9a5fb4",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.max_wrong_attempts_must_be_an_integer_from_0_to_255_it_h_4f453d",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.remaining_successful_reveals_result_remainingsuccessfulr_a6871c",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.remaining_successful_reveals_result_remainingsuccessfulr_be1683",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.result_remainingsuccessfulreveals_87a596",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.result_remainingsuccessfulreveals_ed8a08",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.status_windowcount_097cdb",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.successful_reveal_limit_was_reached_hidden_data_was_clea_cc54ca",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.successful_reveal_limit_was_reached_hidden_data_was_clea_ebdacc",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.successful_reveals_can_wipe_data_33fd22",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.text_0ca14d",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.text_0d7a9e",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.text_4ca0da",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.text_66d99a",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.text_6be7a6",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.text_82614e",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.text_84e44a",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.text_88637a",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.text_d07d80",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "literal.ui.pages.toolbox_crypto_security.toolbox_crypto_security_steganography.text_ea0cfa",
+      "reason": "PLAN_339 removes forgeable reveal-count and auto-wipe steganography controls from UI/service/tests.",
+      "retiredAt": "2026-06-10",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-10",
+      "appliedAt": "2026-06-10"
+    },
+    {
+      "key": "toolbox.crypto.veracrypt.material_preflight_section",
+      "reason": "PLAN_354 merges VeraCrypt material status into the container decrypt/browse/export panel and removes the standalone material preflight panel.",
+      "retiredAt": "2026-06-15",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-22"
+    },
+    {
+      "key": "toolbox.crypto.veracrypt.material_preflight_subtitle",
+      "reason": "PLAN_354 removes the standalone VeraCrypt material preflight description from the active UI.",
+      "retiredAt": "2026-06-15",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-22"
+    },
+    {
+      "key": "toolbox.crypto.veracrypt.note.material_preflight_only",
+      "reason": "PLAN_354 replaces the preflight-only VeraCrypt note with container decryption and in-app browse/export boundaries.",
+      "retiredAt": "2026-06-15",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-22"
+    },
+    {
+      "key": "toolbox.crypto.veracrypt.next_future_readonly_unlock",
+      "reason": "PLAN_354 removes the obsolete phase-1 preflight next-action path after header unlock, data probe, and file browsing are wired.",
+      "retiredAt": "2026-06-15",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-22"
+    },
+    {
+      "key": "toolbox.crypto.veracrypt.kdf.pbkdf2_sha512_sha256",
+      "reason": "PLAN_355 replaces the VeraCrypt support matrix with explicit cipher/KDF capability rows and removes the system-mount matrix plan.",
+      "retiredAt": "2026-06-15",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-22"
+    },
+    {
+      "key": "toolbox.crypto.veracrypt.support.feature.aes_xts",
+      "reason": "PLAN_355 replaces the VeraCrypt support matrix with explicit cipher/KDF capability rows and removes the system-mount matrix plan.",
+      "retiredAt": "2026-06-15",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-22"
+    },
+    {
+      "key": "toolbox.crypto.veracrypt.note.aes_xts_partial",
+      "reason": "PLAN_355 replaces the VeraCrypt support matrix with explicit cipher/KDF capability rows and removes the system-mount matrix plan.",
+      "retiredAt": "2026-06-15",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-22"
+    },
+    {
+      "key": "toolbox.crypto.veracrypt.support.feature.extra_ciphers",
+      "reason": "PLAN_355 replaces the VeraCrypt support matrix with explicit cipher/KDF capability rows and removes the system-mount matrix plan.",
+      "retiredAt": "2026-06-15",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-22"
+    },
+    {
+      "key": "toolbox.crypto.veracrypt.note.extra_ciphers_planned",
+      "reason": "PLAN_355 replaces the VeraCrypt support matrix with explicit cipher/KDF capability rows and removes the system-mount matrix plan.",
+      "retiredAt": "2026-06-15",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-22"
+    },
+    {
+      "key": "toolbox.crypto.veracrypt.support.feature.pbkdf2",
+      "reason": "PLAN_355 replaces the VeraCrypt support matrix with explicit cipher/KDF capability rows and removes the system-mount matrix plan.",
+      "retiredAt": "2026-06-15",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-22"
+    },
+    {
+      "key": "toolbox.crypto.veracrypt.note.pbkdf2_partial",
+      "reason": "PLAN_355 replaces the VeraCrypt support matrix with explicit cipher/KDF capability rows and removes the system-mount matrix plan.",
+      "retiredAt": "2026-06-15",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-22"
+    },
+    {
+      "key": "toolbox.crypto.veracrypt.support.feature.extra_kdfs",
+      "reason": "PLAN_355 replaces the VeraCrypt support matrix with explicit cipher/KDF capability rows and removes the system-mount matrix plan.",
+      "retiredAt": "2026-06-15",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-22"
+    },
+    {
+      "key": "toolbox.crypto.veracrypt.note.extra_kdfs_planned",
+      "reason": "PLAN_355 replaces the VeraCrypt support matrix with explicit cipher/KDF capability rows and removes the system-mount matrix plan.",
+      "retiredAt": "2026-06-15",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-22"
+    },
+    {
+      "key": "toolbox.crypto.veracrypt.support.feature.system_mount",
+      "reason": "PLAN_355 replaces the VeraCrypt support matrix with explicit cipher/KDF capability rows and removes the system-mount matrix plan.",
+      "retiredAt": "2026-06-15",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-22"
+    },
+    {
+      "key": "toolbox.crypto.veracrypt.note.system_mount_unsupported",
+      "reason": "PLAN_355 replaces the VeraCrypt support matrix with explicit cipher/KDF capability rows and removes the system-mount matrix plan.",
+      "retiredAt": "2026-06-15",
+      "owner": "Codex",
+      "cleanupAfter": "2026-06-22"
+    },
+    {
+      "key": "toolbox.crypto.veracrypt.kdf.pbkdf2_sha512_sha256_whirlpool",
+      "reason": "PLAN_356 wires pure Dart Serpent/Kuznyechik and PBKDF2-BLAKE2s/Streebog, replacing prior VeraCrypt core-gap matrix copy.",
+      "retiredAt": "2026-06-15",
+      "owner": "Codex",
+      "cleanupAfter": "2026-07-15"
+    },
+    {
+      "key": "toolbox.crypto.veracrypt.note.cipher_chains_partial",
+      "reason": "PLAN_356 wires pure Dart Serpent/Kuznyechik and PBKDF2-BLAKE2s/Streebog, replacing prior VeraCrypt core-gap matrix copy.",
+      "retiredAt": "2026-06-15",
+      "owner": "Codex",
+      "cleanupAfter": "2026-07-15"
+    },
+    {
+      "key": "toolbox.crypto.veracrypt.support.feature.cipher_core_gaps",
+      "reason": "PLAN_356 wires pure Dart Serpent/Kuznyechik and PBKDF2-BLAKE2s/Streebog, replacing prior VeraCrypt core-gap matrix copy.",
+      "retiredAt": "2026-06-15",
+      "owner": "Codex",
+      "cleanupAfter": "2026-07-15"
+    },
+    {
+      "key": "toolbox.crypto.veracrypt.note.cipher_core_gaps",
+      "reason": "PLAN_356 wires pure Dart Serpent/Kuznyechik and PBKDF2-BLAKE2s/Streebog, replacing prior VeraCrypt core-gap matrix copy.",
+      "retiredAt": "2026-06-15",
+      "owner": "Codex",
+      "cleanupAfter": "2026-07-15"
+    },
+    {
+      "key": "toolbox.crypto.veracrypt.note.kdf_primary_partial",
+      "reason": "PLAN_356 wires pure Dart Serpent/Kuznyechik and PBKDF2-BLAKE2s/Streebog, replacing prior VeraCrypt core-gap matrix copy.",
+      "retiredAt": "2026-06-15",
+      "owner": "Codex",
+      "cleanupAfter": "2026-07-15"
+    },
+    {
+      "key": "toolbox.crypto.veracrypt.support.feature.kdf_core_gaps",
+      "reason": "PLAN_356 wires pure Dart Serpent/Kuznyechik and PBKDF2-BLAKE2s/Streebog, replacing prior VeraCrypt core-gap matrix copy.",
+      "retiredAt": "2026-06-15",
+      "owner": "Codex",
+      "cleanupAfter": "2026-07-15"
+    },
+    {
+      "key": "toolbox.crypto.veracrypt.note.kdf_core_gaps",
+      "reason": "PLAN_356 wires pure Dart Serpent/Kuznyechik and PBKDF2-BLAKE2s/Streebog, replacing prior VeraCrypt core-gap matrix copy.",
+      "retiredAt": "2026-06-15",
+      "owner": "Codex",
+      "cleanupAfter": "2026-07-15"
+    },
+    {
+      "key": "toolbox.crypto.password_vault.primary_mode",
+      "reason": "PLAN_381 removes visible primary/shadow vault mode disclosure from the password vault UI.",
+      "retiredAt": "2026-06-17",
+      "owner": "Codex",
+      "cleanupAfter": "2026-07-17"
+    },
+    {
+      "key": "toolbox.crypto.password_vault.shadow_mode",
+      "reason": "PLAN_381 removes visible primary/shadow vault mode disclosure from the password vault UI.",
+      "retiredAt": "2026-06-17",
+      "owner": "Codex",
+      "cleanupAfter": "2026-07-17"
+    },
+    {
+      "key": "toolbox.crypto.password_vault.shadow_enabled_short",
+      "reason": "PLAN_381 removes visible shadow-availability disclosure from the password vault selector and status card.",
+      "retiredAt": "2026-06-17",
+      "owner": "Codex",
+      "cleanupAfter": "2026-07-17"
+    },
+    {
+      "key": "toolbox.crypto.password_vault.stage_unlocked_mode",
+      "reason": "PLAN_381 replaces mode-specific unlocked copy with mode-neutral password vault status text.",
+      "retiredAt": "2026-06-17",
+      "owner": "Codex",
+      "cleanupAfter": "2026-07-17"
+    },
+    {
+      "key": "toolbox.crypto.password_vault.unlock_success_mode",
+      "reason": "PLAN_381 replaces mode-specific unlock success copy with mode-neutral password vault status text.",
+      "retiredAt": "2026-06-17",
+      "owner": "Codex",
+      "cleanupAfter": "2026-07-17"
+    },
+    {
+      "key": "toolbox.crypto.password_vault.shadow_purge_triggered",
+      "reason": "PLAN_381 stops showing shadow-limit purge details in visible password vault status messages.",
+      "retiredAt": "2026-06-17",
+      "owner": "Codex",
+      "cleanupAfter": "2026-07-17"
+    },
+    {
+      "key": "toolbox.life.timeline.source.local_epub",
+      "reason": "PLAN_411 follow-up removes visible source/OCR wording from the brief 24 histories timeline UI.",
+      "retiredAt": "2026-07-02",
+      "owner": "Codex",
+      "cleanupAfter": "2026-08-02"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.source_detail",
+      "reason": "PLAN_411 follow-up removes visible source/OCR wording from the brief 24 histories timeline UI.",
+      "retiredAt": "2026-07-02",
+      "owner": "Codex",
+      "cleanupAfter": "2026-08-02"
+    }
+  ],
+  "duplicateKeys": []
 }

@@ -35,22 +35,22 @@ class ModuleIds {
   ];
 
   static const List<String> toolboxModules = <String>[
-    toolboxSleepAssistant,
-    toolboxMiniGames,
     toolboxHumanTests,
-    toolboxSoothingMusic,
-    toolboxSoundDeck,
-    toolboxFreeChimes,
-    toolboxSingingBowls,
-    toolboxFocusBeats,
-    toolboxWoodfish,
-    toolboxSchulteGrid,
-    toolboxBreathing,
-    toolboxPrayerBeads,
-    toolboxZenSand,
-    toolboxDailyDecision,
     toolboxLifeTools,
     toolboxCryptoSecurity,
+    toolboxSoundDeck,
+    toolboxFreeChimes,
+    toolboxZenSand,
+    toolboxDailyDecision,
+    toolboxBreathing,
+    toolboxSoothingMusic,
+    toolboxSingingBowls,
+    toolboxFocusBeats,
+    toolboxSchulteGrid,
+    toolboxPrayerBeads,
+    toolboxWoodfish,
+    toolboxSleepAssistant,
+    toolboxMiniGames,
   ];
 
   static const List<String> allModules = <String>[

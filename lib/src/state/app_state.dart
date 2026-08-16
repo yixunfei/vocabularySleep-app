@@ -78,9 +78,32 @@ class PronunciationComparison {
 
 enum SearchMode { all, word, meaning, fuzzy }
 
+class _PendingPracticeMemoryEvent {
+  const _PendingPracticeMemoryEvent({
+    required this.wordId,
+    required this.eventKind,
+    required this.quality,
+    required this.weakReasonIds,
+    required this.sessionTitle,
+  });
+
+  final int wordId;
+  final String eventKind;
+  final int quality;
+  final List<String> weakReasonIds;
+  final String sessionTitle;
+}
+
 class AppState extends ChangeNotifier with WidgetsBindingObserver {
   static const int _practiceSessionHistoryLimit = 365;
   static const int _startupEagerWordLoadLimit = 1500;
+  static const Duration _playbackProgressPersistDebounce = Duration(seconds: 2);
+  static const Duration _practiceDashboardPersistDebounce = Duration(
+    milliseconds: 800,
+  );
+  static const Duration _practiceAnswerPersistDebounce = Duration(
+    milliseconds: 600,
+  );
 
   static String _resolveSystemUiLanguage() {
     final locale = PlatformDispatcher.instance.locale;
@@ -177,6 +200,16 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   late final bool _ownsStartupStore;
   final PracticeStore _practiceStore;
   final PlaybackStore _playbackStore;
+  Timer? _playbackProgressPersistTimer;
+  Timer? _practiceDashboardPersistTimer;
+  Timer? _practiceAnswerPersistTimer;
+  bool _playbackProgressPersistPending = false;
+  bool _practiceDashboardPersistPending = false;
+  final Map<int, WordMemoryProgress> _pendingPracticeProgressByWordId =
+      <int, WordMemoryProgress>{};
+  final List<_PendingPracticeMemoryEvent> _pendingPracticeMemoryEvents =
+      <_PendingPracticeMemoryEvent>[];
+  bool _disposed = false;
 
   FocusService get focusService => _focusService;
 
@@ -285,11 +318,14 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       !selectedWordbookLoaded &&
       _selectedWordbook!.wordCount > 0;
   int get currentWordIndex => _currentWordIndex;
+  int get wordsVersion => _wordsVersion;
   bool get isPlaying => _playbackStore.isPlaying;
   bool get isPaused => _playbackStore.isPaused;
   int get currentUnit => _playbackStore.currentUnit;
   int get totalUnits => _playbackStore.totalUnits;
   PlayUnit? get activeUnit => _playbackStore.activeUnit;
+  ValueListenable<PlaybackUnitProgress> get playbackUnitProgressListenable =>
+      _playbackStore.unitProgress;
   int? get playingWordbookId => _playbackStore.playingWordbookId;
   String? get playingWordbookName => _playbackStore.playingWordbookName;
   String? get playingWord => _playbackStore.playingWord;
@@ -425,6 +461,11 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _practiceDisplayWords(_practiceStore.rememberedWords);
   List<String> get practiceWeakWords =>
       _practiceDisplayWords(_practiceStore.weakWords);
+  int get practiceRememberedWordCount => _practiceStore.rememberedWords.length;
+  int get practiceWeakWordCount => _practiceStore.weakWords.length;
+  int get practiceSessionHistoryCount => _practiceStore.sessionHistory.length;
+  DateTime? get practiceLatestSessionAt =>
+      _practiceStore.sessionHistory.firstOrNull?.practicedAt;
   List<PracticeSessionRecord> get practiceSessionHistory =>
       List<PracticeSessionRecord>.unmodifiable(_practiceStore.sessionHistory);
   bool get practiceAutoAddWeakWordsToTask =>
@@ -487,7 +528,11 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   bool requiresWordbookLoadConfirmation(Wordbook wordbook) {
-    return false;
+    if (_wordbookRepository.isLazyBuiltInPath(wordbook.path)) {
+      return true;
+    }
+    return _shouldUseLiteWordQueries(wordbook) &&
+        _loadedWordbookId != wordbook.id;
   }
 
   List<WordEntry> get recentWeakWordEntries {
@@ -1479,7 +1524,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     if (selected == null) return false;
     if (word.trim().isEmpty) {
       _setMessage('errorWordEmpty');
-      notifyListeners();
+      _notifyStateChanged();
       return false;
     }
 
@@ -1621,7 +1666,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       optimisticWord: word,
       optimisticAdded: !wasFavorite,
     );
-    notifyListeners();
+    _notifyStateChanged();
 
     try {
       if (wasFavorite) {
@@ -1631,7 +1676,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       }
       _refreshSelectedSpecialWordbook(favoritesBook);
       _persistSpecialWordSet('favorites', _favorites);
-      notifyListeners();
+      _notifyStateChanged();
     } catch (error) {
       _favorites = previousFavorites;
       _persistSpecialWordSet('favorites', _favorites);
@@ -1645,7 +1690,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         'errorFavoriteOperationFailed',
         params: <String, Object?>{'error': error},
       );
-      notifyListeners();
+      _notifyStateChanged();
     }
   }
 
@@ -1678,7 +1723,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       optimisticWord: word,
       optimisticAdded: !wasTaskWord,
     );
-    notifyListeners();
+    _notifyStateChanged();
 
     try {
       if (wasTaskWord) {
@@ -1688,7 +1733,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       }
       _refreshSelectedSpecialWordbook(taskBook);
       _persistSpecialWordSet('taskWords', _taskWords);
-      notifyListeners();
+      _notifyStateChanged();
     } catch (error) {
       _taskWords = previousTaskWords;
       _persistSpecialWordSet('taskWords', _taskWords);
@@ -1702,7 +1747,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         'errorTaskOperationFailed',
         params: <String, Object?>{'error': error},
       );
-      notifyListeners();
+      _notifyStateChanged();
     }
   }
 
@@ -1796,7 +1841,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _favorites = <String>{};
       _taskWords = <String>{};
       await _reloadPersistentStateAfterDatabaseChange();
-      notifyListeners();
+      _notifyStateChanged();
       return true;
     } catch (error, stackTrace) {
       _log.e(
@@ -1809,7 +1854,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         'errorResetUserDataFailed',
         params: <String, Object?>{'error': error},
       );
-      notifyListeners();
+      _notifyStateChanged();
       return false;
     } finally {
       _setBusy(false);
@@ -1820,7 +1865,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _config = config;
     _settings.savePlayConfig(config);
     _playback.updateRuntimeConfig(config);
-    notifyListeners();
+    _notifyStateChanged();
   }
 
   Future<void> play() => _playImpl();
@@ -1843,12 +1888,21 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   Future<void> playCurrentWordbook() => _playCurrentWordbookImpl();
 
+  Future<bool> loadSelectedWordbook() => _loadSelectedWordbookImpl();
+
   Future<void> movePlaybackPreviousWord() => _movePlaybackPreviousWordImpl();
 
   Future<void> movePlaybackNextWord() => _movePlaybackNextWordImpl();
 
+  Future<void> movePlaybackToWord(WordEntry entry) =>
+      _movePlaybackToWordImpl(entry);
+
   void rememberPlaybackProgress([WordEntry? entry]) =>
-      _rememberPlaybackProgressImpl(entry);
+      _rememberPlaybackProgressImpl(entry, immediate: true);
+
+  void flushPendingPersistence() {
+    _flushDeferredPersistence();
+  }
 
   bool restorePlaybackProgressForSelectedWordbook() =>
       _restorePlaybackProgressForSelectedWordbookImpl();
@@ -1865,7 +1919,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     if (entry == null) return false;
     _setCurrentWordByEntry(entry);
     resetTestModeProgress();
-    notifyListeners();
+    _notifyStateChanged();
     return true;
   }
 
@@ -1881,7 +1935,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     if (entry == null) return false;
     _setCurrentWordByEntry(entry);
     resetTestModeProgress();
-    notifyListeners();
+    _notifyStateChanged();
     return true;
   }
 
@@ -1889,6 +1943,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     final target = word.trim();
     if (target.isEmpty) return;
     final configSnapshot = _config;
+    final isRemotePreview =
+        configSnapshot.tts.provider != TtsProviderType.local;
     try {
       await _playback.speakText(target, configSnapshot);
       return;
@@ -1904,45 +1960,47 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         },
       );
 
-      if (configSnapshot.tts.provider != TtsProviderType.local) {
-        final fallbackConfig = configSnapshot.copyWith(
-          tts: configSnapshot.tts.copyWith(
-            provider: TtsProviderType.local,
-            voice: configSnapshot.tts.localVoice,
-          ),
-        );
-        try {
-          _log.w(
-            'app_state',
-            'preview pronunciation fallback to local tts',
-            data: <String, Object?>{'word': target},
-          );
-          await _playback.speakText(target, fallbackConfig);
-          return;
-        } catch (fallbackError, fallbackStackTrace) {
-          _log.e(
-            'app_state',
-            'preview pronunciation local fallback failed',
-            error: fallbackError,
-            stackTrace: fallbackStackTrace,
-            data: <String, Object?>{'word': target},
-          );
-          _setMessage(
-            'errorInitFailed',
-            params: <String, Object?>{
-              'error': 'preview pronunciation: $fallbackError',
-            },
-          );
-          notifyListeners();
-          return;
-        }
-      }
-
       _setMessage(
         'errorInitFailed',
         params: <String, Object?>{'error': 'preview pronunciation: $error'},
       );
-      notifyListeners();
+      _notifyStateChanged();
+      if (!isRemotePreview) {
+        return;
+      }
+
+      final fallbackConfig = configSnapshot.copyWith(
+        tts: configSnapshot.tts.copyWith(
+          provider: TtsProviderType.local,
+          voice: configSnapshot.tts.localVoice,
+          model: null,
+          apiKey: null,
+          baseUrl: null,
+          appId: null,
+        ),
+      );
+      try {
+        await _playback.speakText(target, fallbackConfig);
+      } catch (fallbackError, fallbackStackTrace) {
+        _log.e(
+          'app_state',
+          'preview pronunciation local fallback failed',
+          error: fallbackError,
+          stackTrace: fallbackStackTrace,
+          data: <String, Object?>{
+            'remoteProvider': configSnapshot.tts.provider.name,
+            'word': target,
+          },
+        );
+        _setMessage(
+          'errorInitFailed',
+          params: <String, Object?>{
+            'error':
+                'preview pronunciation: $error; local fallback: $fallbackError',
+          },
+        );
+        _notifyStateChanged();
+      }
     }
   }
 
@@ -2496,7 +2554,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _clearSelectedWordbookWords();
       _currentWordIndex = 0;
     }
-    notifyListeners();
+    _notifyStateChanged();
   }
 
   void _setWords(List<WordEntry> nextWords) {
@@ -2559,7 +2617,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     } else {
       _taskWords = <String>{};
     }
-    notifyListeners();
+    _notifyStateChanged();
   }
 
   void _persistSpecialWordSet(String settingKey, Set<String> values) {
@@ -2739,13 +2797,48 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         (_selectedWordbook?.id == entry.wordbookId ? _selectedWordbook : null);
   }
 
-  void _persistPlaybackProgress() {
+  void _persistPlaybackProgressNow() {
     _settings.savePlaybackProgressByWordbook(
       _playbackStore.playbackProgressByWordbookPath,
     );
   }
 
-  void _rememberPlaybackProgressImpl([WordEntry? entry]) {
+  void _schedulePlaybackProgressPersist() {
+    if (_disposed) return;
+    _playbackProgressPersistPending = true;
+    _playbackProgressPersistTimer?.cancel();
+    _playbackProgressPersistTimer = Timer(
+      AppState._playbackProgressPersistDebounce,
+      _flushPlaybackProgressPersist,
+    );
+  }
+
+  void _flushPlaybackProgressPersist() {
+    _playbackProgressPersistTimer?.cancel();
+    _playbackProgressPersistTimer = null;
+    if (!_playbackProgressPersistPending) {
+      return;
+    }
+    try {
+      _persistPlaybackProgressNow();
+      _playbackProgressPersistPending = false;
+    } catch (error, stackTrace) {
+      _log.e(
+        'app_state',
+        'playback progress persist failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      if (!_disposed) {
+        _schedulePlaybackProgressPersist();
+      }
+    }
+  }
+
+  void _rememberPlaybackProgressImpl(
+    WordEntry? entry, {
+    bool immediate = false,
+  }) {
     final resolvedEntry = entry ?? currentWord;
     if (resolvedEntry == null) {
       return;
@@ -2775,7 +2868,209 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
             updatedAt: DateTime.now(),
           ),
         };
-    _persistPlaybackProgress();
+    if (immediate) {
+      _playbackProgressPersistTimer?.cancel();
+      _playbackProgressPersistTimer = null;
+      _playbackProgressPersistPending = false;
+      _persistPlaybackProgressNow();
+    } else {
+      _schedulePlaybackProgressPersist();
+    }
+  }
+
+  void _persistPracticeDashboard({bool immediate = true}) {
+    if (immediate || _disposed) {
+      _practiceDashboardPersistTimer?.cancel();
+      _practiceDashboardPersistTimer = null;
+      _practiceDashboardPersistPending = false;
+      _persistPracticeDashboardNow();
+      return;
+    }
+    _practiceDashboardPersistPending = true;
+    _practiceDashboardPersistTimer?.cancel();
+    _practiceDashboardPersistTimer = Timer(
+      AppState._practiceDashboardPersistDebounce,
+      _flushPracticeDashboardPersist,
+    );
+  }
+
+  void _flushPracticeDashboardPersist() {
+    _practiceDashboardPersistTimer?.cancel();
+    _practiceDashboardPersistTimer = null;
+    if (!_practiceDashboardPersistPending) {
+      return;
+    }
+    try {
+      _persistPracticeDashboardNow();
+      _practiceDashboardPersistPending = false;
+    } catch (error, stackTrace) {
+      _log.e(
+        'practice',
+        'practice dashboard persist failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      if (!_disposed) {
+        _practiceDashboardPersistTimer = Timer(
+          AppState._practiceDashboardPersistDebounce,
+          _flushPracticeDashboardPersist,
+        );
+      }
+    }
+  }
+
+  void _persistPracticeDashboardNow() {
+    final watch = Stopwatch()..start();
+    final trackedEntries = _practiceStore.trackedEntriesByWord.values
+        .map(PracticeTrackedEntrySnapshot.fromWordEntry)
+        .toList(growable: false);
+    _settings.savePracticeDashboard(
+      PracticeDashboardState(
+        date: _practiceStore.dateKey,
+        todaySessions: _practiceStore.todaySessions,
+        todayReviewed: _practiceStore.todayReviewed,
+        todayRemembered: _practiceStore.todayRemembered,
+        totalSessions: _practiceStore.totalSessions,
+        totalReviewed: _practiceStore.totalReviewed,
+        totalRemembered: _practiceStore.totalRemembered,
+        lastSessionTitle: _practiceStore.lastSessionTitle,
+        rememberedWords: _practiceStore.rememberedWords,
+        weakWords: _practiceStore.weakWords,
+        weakReasonIdsByWord: _practiceStore.weakWordReasons,
+        history: _practiceStore.sessionHistory,
+        sessionPrefs: PracticeSessionPreferences(
+          autoAddWeakWordsToTask: _practiceStore.autoAddWeakWordsToTask,
+          autoPlayPronunciation: _practiceStore.autoPlayPronunciation,
+          showHintsByDefault: _practiceStore.showHintsByDefault,
+          showAnswerFeedbackDialog: _practiceStore.showAnswerFeedbackDialog,
+          defaultQuestionType: _practiceStore.defaultQuestionType,
+        ),
+        roundSettings: _practiceStore.roundSettings,
+        launchCursors: _practiceStore.launchCursors,
+        trackedEntries: trackedEntries,
+      ),
+    );
+    if (watch.elapsedMilliseconds >= _practiceDashboardPersistWarnThresholdMs) {
+      _log.w(
+        'practice',
+        'practice dashboard persist slow',
+        data: <String, Object?>{
+          'elapsedMs': watch.elapsedMilliseconds,
+          'trackedEntries': trackedEntries.length,
+          'history': _practiceStore.sessionHistory.length,
+          'rememberedWords': _practiceStore.rememberedWords.length,
+          'weakWords': _practiceStore.weakWords.length,
+        },
+      );
+    }
+  }
+
+  void _queuePracticeMemoryProgress(WordMemoryProgress progress) {
+    _pendingPracticeProgressByWordId[progress.wordId] = progress;
+    _schedulePracticeAnswerPersistence();
+  }
+
+  void _queuePracticeMemoryEvent({
+    required int wordId,
+    required String eventKind,
+    required int quality,
+    required List<String> weakReasonIds,
+    required String sessionTitle,
+  }) {
+    _pendingPracticeMemoryEvents.add(
+      _PendingPracticeMemoryEvent(
+        wordId: wordId,
+        eventKind: eventKind,
+        quality: quality,
+        weakReasonIds: List<String>.from(weakReasonIds, growable: false),
+        sessionTitle: sessionTitle,
+      ),
+    );
+    _schedulePracticeAnswerPersistence();
+  }
+
+  void _schedulePracticeAnswerPersistence() {
+    if (_disposed) return;
+    _practiceAnswerPersistTimer?.cancel();
+    _practiceAnswerPersistTimer = Timer(
+      AppState._practiceAnswerPersistDebounce,
+      _flushPracticeAnswerPersistence,
+    );
+  }
+
+  void _flushPracticeAnswerPersistence() {
+    _practiceAnswerPersistTimer?.cancel();
+    _practiceAnswerPersistTimer = null;
+    if (_pendingPracticeProgressByWordId.isEmpty &&
+        _pendingPracticeMemoryEvents.isEmpty) {
+      return;
+    }
+
+    final watch = Stopwatch()..start();
+    final progressUpdates = _pendingPracticeProgressByWordId.values.toList(
+      growable: false,
+    )..sort((left, right) => left.wordId.compareTo(right.wordId));
+    var persistedProgressUpdates = 0;
+    var persistedEvents = 0;
+
+    try {
+      for (final progress in progressUpdates) {
+        _practiceRepository.upsertWordMemoryProgress(progress);
+        if (identical(
+          _pendingPracticeProgressByWordId[progress.wordId],
+          progress,
+        )) {
+          _pendingPracticeProgressByWordId.remove(progress.wordId);
+        }
+        persistedProgressUpdates += 1;
+      }
+      while (_pendingPracticeMemoryEvents.isNotEmpty) {
+        final event = _pendingPracticeMemoryEvents.first;
+        _practiceRepository.insertWordMemoryEvent(
+          wordId: event.wordId,
+          eventKind: event.eventKind,
+          quality: event.quality,
+          weakReasonIds: event.weakReasonIds,
+          sessionTitle: event.sessionTitle,
+        );
+        _pendingPracticeMemoryEvents.removeAt(0);
+        persistedEvents += 1;
+      }
+    } catch (error, stackTrace) {
+      _log.e(
+        'practice',
+        'practice answer persistence flush failed',
+        error: error,
+        stackTrace: stackTrace,
+        data: <String, Object?>{
+          'persistedProgressUpdates': persistedProgressUpdates,
+          'remainingProgressUpdates': _pendingPracticeProgressByWordId.length,
+          'persistedEvents': persistedEvents,
+          'remainingEvents': _pendingPracticeMemoryEvents.length,
+        },
+      );
+      if (!_disposed) {
+        _schedulePracticeAnswerPersistence();
+      }
+      return;
+    }
+    if (watch.elapsedMilliseconds >= _practiceAnswerWriteWarnThresholdMs) {
+      _log.w(
+        'practice',
+        'practice answer persistence flush slow',
+        data: <String, Object?>{
+          'elapsedMs': watch.elapsedMilliseconds,
+          'progressUpdates': persistedProgressUpdates,
+          'events': persistedEvents,
+        },
+      );
+    }
+  }
+
+  void _flushDeferredPersistence() {
+    _flushPlaybackProgressPersist();
+    _flushPracticeAnswerPersistence();
+    _flushPracticeDashboardPersist();
   }
 
   int _playbackProgressIndexForWordbook(Wordbook wordbook) {
@@ -2942,7 +3237,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _busyDetail = null;
       _busyProgress = null;
     }
-    notifyListeners();
+    _notifyStateChanged();
   }
 
   double? _busyProgressForWordbookLoad(BuiltInWordbookLoadProgress progress) {
@@ -3044,12 +3339,29 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void _notifyStateChanged() {
+    if (_disposed) {
+      return;
+    }
     notifyListeners();
   }
 
   @override
   void dispose() {
+    if (_disposed) {
+      return;
+    }
+    _disposed = true;
+    _flushDeferredPersistence();
     _ambientSyncDebounceTimer?.cancel();
+    _playbackProgressPersistTimer?.cancel();
+    _playbackProgressPersistTimer = null;
+    _practiceDashboardPersistTimer?.cancel();
+    _practiceDashboardPersistTimer = null;
+    _practiceAnswerPersistTimer?.cancel();
+    _practiceAnswerPersistTimer = null;
+    _playbackStore.playSessionId += 1;
+    _playbackStore.wordbookPlaybackSyncToken += 1;
+    _clearPlaybackSession(notify: false);
     _weatherStore.removeListener(_onWeatherStoreChanged);
     _testModeStore.removeListener(_onTestModeStoreChanged);
     _startupStore.removeListener(_onStartupStoreChanged);
@@ -3063,19 +3375,39 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _startupStore.dispose();
     }
     WidgetsBinding.instance.removeObserver(this);
-    _playback.stop();
+    unawaited(
+      _playback.dispose().catchError((Object error, StackTrace stackTrace) {
+        _log.e(
+          'app_state',
+          'playback dispose failed',
+          error: error,
+          stackTrace: stackTrace,
+        );
+      }),
+    );
     _focusService.dispose();
-    _ambient.stopAll();
-    _asr.dispose();
+    unawaited(
+      _ambient.stopAll().catchError((Object error, StackTrace stackTrace) {
+        _log.e(
+          'app_state',
+          'ambient dispose stop failed',
+          error: error,
+          stackTrace: stackTrace,
+        );
+      }),
+    );
+    unawaited(
+      _asr.dispose().catchError((Object error, StackTrace stackTrace) {
+        _log.e(
+          'app_state',
+          'asr dispose failed',
+          error: error,
+          stackTrace: stackTrace,
+        );
+      }),
+    );
+    _playbackStore.dispose();
     _maintenanceRepository.dispose();
     super.dispose();
-  }
-}
-
-extension<T> on Iterable<T> {
-  T? get firstOrNull {
-    final iterator = this.iterator;
-    if (!iterator.moveNext()) return null;
-    return iterator.current;
   }
 }

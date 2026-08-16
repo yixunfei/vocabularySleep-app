@@ -50,8 +50,7 @@ extension TtsServiceLocal on TtsService {
   }
 
   Future<void> _speakByLocal(String text, TtsConfig config) async {
-    _log.i(
-      'tts',
+    _logVerbose(
       'speakByLocal: BEGIN',
       data: <String, Object?>{
         'textPreview': _preview(text),
@@ -99,8 +98,7 @@ extension TtsServiceLocal on TtsService {
     );
 
     await _configureLocalVoiceAndLanguage(text, config);
-    _log.i(
-      'tts',
+    _logVerbose(
       'speakByLocal: voice/language configured',
       data: <String, Object?>{
         'textPreview': _preview(text),
@@ -114,8 +112,7 @@ extension TtsServiceLocal on TtsService {
 
     // On Windows, prefer completion callbacks and keep polling as a fallback.
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
-      _log.i(
-        'tts',
+      _logVerbose(
         'local speak [win]: invoking platform speak',
         data: <String, Object?>{'textPreview': _preview(text)},
       );
@@ -124,8 +121,7 @@ extension TtsServiceLocal on TtsService {
         () => _flutterTts.speak(text, focus: false),
         data: <String, Object?>{'textPreview': _preview(text)},
       );
-      _log.i(
-        'tts',
+      _logVerbose(
         'local speak [win]: platform returned',
         data: <String, Object?>{
           'textPreview': _preview(text),
@@ -152,8 +148,7 @@ extension TtsServiceLocal on TtsService {
 
     final requestFocus =
         !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
-    _log.i(
-      'tts',
+    _logVerbose(
       'local speak: invoking platform',
       data: <String, Object?>{
         'textPreview': _preview(text),
@@ -166,8 +161,7 @@ extension TtsServiceLocal on TtsService {
       () => _flutterTts.speak(text, focus: requestFocus),
       data: <String, Object?>{'textPreview': _preview(text)},
     );
-    _log.i(
-      'tts',
+    _logVerbose(
       'local speak: platform returned',
       data: <String, Object?>{
         'textPreview': _preview(text),
@@ -199,8 +193,7 @@ extension TtsServiceLocal on TtsService {
     final stopwatch = Stopwatch()..start();
 
     // Initial delay: let SAPI begin rendering audio.
-    _log.i(
-      'tts',
+    _logVerbose(
       'pollWindowsSpeakDone: START (200ms initial delay)',
       data: <String, Object?>{'textPreview': _preview(text)},
     );
@@ -226,8 +219,7 @@ extension TtsServiceLocal on TtsService {
         consecutiveErrors = 0; // Reset error count on success
 
         if (pollCount <= 5 || pollCount % 10 == 0) {
-          _log.i(
-            'tts',
+          _logVerbose(
             'pollWindowsSpeakDone: poll #$pollCount',
             data: <String, Object?>{
               'textPreview': _preview(text),
@@ -238,8 +230,7 @@ extension TtsServiceLocal on TtsService {
         }
         if (!still) {
           _completeLocalSpeak();
-          _log.i(
-            'tts',
+          _logVerbose(
             'pollWindowsSpeakDone: DONE (poll #$pollCount)',
             data: <String, Object?>{
               'textPreview': _preview(text),
@@ -286,8 +277,7 @@ extension TtsServiceLocal on TtsService {
       await Future<void>.delayed(pollInterval);
     }
     if (completion.isCompleted) {
-      _log.i(
-        'tts',
+      _logVerbose(
         'pollWindowsSpeakDone: completion already resolved by callback',
         data: <String, Object?>{
           'textPreview': _preview(text),
@@ -319,8 +309,7 @@ extension TtsServiceLocal on TtsService {
     String text, {
     required Duration timeout,
   }) async {
-    _log.i(
-      'tts',
+    _logVerbose(
       'local speak: waiting for completion',
       data: <String, Object?>{
         'textPreview': _preview(text),
@@ -348,8 +337,7 @@ extension TtsServiceLocal on TtsService {
         throw TimeoutException('Local TTS playback timeout.');
       },
     );
-    _log.i(
-      'tts',
+    _logVerbose(
       'local speak: completion resolved',
       data: <String, Object?>{'textPreview': _preview(text)},
     );
@@ -433,8 +421,7 @@ extension TtsServiceLocal on TtsService {
       if (_isPlatformCallSuccess(result)) {
         _lastLocalVoiceSignature = target.signature;
         _lastLocalLanguage = voice.locale;
-        _log.i(
-          'tts',
+        _logVerbose(
           'windows local voice resolved',
           data: <String, Object?>{
             'voice': voice.name,
@@ -460,8 +447,7 @@ extension TtsServiceLocal on TtsService {
     if (_isPlatformCallSuccess(result)) {
       _lastLocalLanguage = language;
       _lastLocalVoiceSignature = 'lang:${_normalizedLocaleKey(language)}';
-      _log.i(
-        'tts',
+      _logVerbose(
         'windows local language fallback applied',
         data: <String, Object?>{
           'language': language,
@@ -570,6 +556,9 @@ extension TtsServiceLocal on TtsService {
     _localVoicesLoadFuture = future;
     try {
       final voices = await future;
+      if (_disposed) {
+        return const <_LocalTtsVoice>[];
+      }
       if (voices.isNotEmpty) {
         _cachedLocalVoices = voices;
       }

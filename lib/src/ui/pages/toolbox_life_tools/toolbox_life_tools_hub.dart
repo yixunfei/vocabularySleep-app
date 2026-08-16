@@ -15,7 +15,8 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
 
   static const _categoryOrder = <String>[
     'display',
-    'device',
+    'system',
+    'measure',
     'image',
     'web',
     'text',
@@ -27,60 +28,58 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
     'display': _CategoryMeta(
       color: Color(0xFF3D7EC5),
       icon: Icons.tv_rounded,
-      labelKey: 'inline.plan294.life_hub.screen_display_a91ca045',
-      descKey:
-          'inline.plan295.life.clock_barrage_scoreboard_and_fullscr.12e9b5b35c7a',
+      labelKey: 'toolbox.life.hub.category.display.label',
+      descKey: 'toolbox.life.hub.category.display.desc',
     ),
-    'device': _CategoryMeta(
+    'system': _CategoryMeta(
       color: Color(0xFFD4784A),
-      icon: Icons.smartphone_rounded,
-      labelKey: 'inline.plan294.life_hub.device_lab_ca8d729a',
-      descKey:
-          'inline.plan295.life.sensors_level_vibration_and_call_sim.f7db19836168',
+      icon: Icons.settings_suggest_rounded,
+      labelKey: 'toolbox.life.hub.category.system.label',
+      descKey: 'toolbox.life.hub.category.system.desc',
+    ),
+    'measure': _CategoryMeta(
+      color: Color(0xFF537D6B),
+      icon: Icons.explore_rounded,
+      labelKey: 'toolbox.life.hub.category.measure.label',
+      descKey: 'toolbox.life.hub.category.measure.desc',
     ),
     'image': _CategoryMeta(
       color: Color(0xFF7B6EC5),
       icon: Icons.image_rounded,
-      labelKey: 'inline.plan294.life_hub.image_studio_e7c14f78',
-      descKey:
-          'inline.plan295.life.color_picker_compression_framing_and.5efc81e28f98',
+      labelKey: 'toolbox.life.hub.category.image.label',
+      descKey: 'toolbox.life.hub.category.image.desc',
     ),
     'web': _CategoryMeta(
       color: Color(0xFF0C9E98),
       icon: Icons.language_rounded,
-      labelKey: 'inline.plan294.life_hub.web_toolkit_d6d8c505',
-      descKey:
-          'inline.plan295.life.wallpaper_postal_lookup_reverse_sear.33b46d520b54',
+      labelKey: 'toolbox.life.hub.category.web.label',
+      descKey: 'toolbox.life.hub.category.web.desc',
     ),
     'text': _CategoryMeta(
       color: Color(0xFF6B5D93),
       icon: Icons.text_fields_rounded,
-      labelKey: 'inline.plan294.life_hub.text_editor_a34e3c31',
-      descKey:
-          'inline.plan295.life.word_count_format_transform_mind_map.52ffe3c01241',
+      labelKey: 'toolbox.life.hub.category.text.label',
+      descKey: 'toolbox.life.hub.category.text.desc',
     ),
     'study': _CategoryMeta(
       color: Color(0xFF4B8C66),
       icon: Icons.school_rounded,
-      labelKey: 'inline.plan294.life_hub.study_aid_7f02db0c',
-      descKey:
-          'inline.plan295.life.timeline_periodic_table_and_ai_inter.2b719f4d79ec',
+      labelKey: 'toolbox.life.hub.category.study.label',
+      descKey: 'toolbox.life.hub.category.study.desc',
     ),
     'calc': _CategoryMeta(
       color: Color(0xFFCD4B5E),
       icon: Icons.calculate_rounded,
-      labelKey: 'inline.plan294.life_hub.life_calculator_f97e01d2',
-      descKey:
-          'inline.plan295.life.unit_converter_salary_compare_mortga.e1f7eae1b869',
+      labelKey: 'toolbox.life.hub.category.calc.label',
+      descKey: 'toolbox.life.hub.category.calc.desc',
     ),
   };
 
   String _localizedToolSearchText(_LifeTool tool) {
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return <String>[
       tool.id,
-      i18n.t(tool.titleKey),
-      i18n.t(tool.summaryKey),
+      _lifeI18nText(context, tool.titleKey),
+      _lifeI18nText(context, tool.summaryKey),
     ].join(' ').toLowerCase();
   }
 
@@ -377,9 +376,22 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
       ),
       subtitle: _lifeI18nText(
         context,
-        'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.hub.handy_tools_organized_in_7_categories.20f0dca39e',
-        params: <String, Object?>{'length': _lifeTools.length},
+        'toolbox.life.hub.subtitle',
+        params: <String, Object?>{
+          'length': _lifeTools.length,
+          'categories': _categoryMeta.length,
+        },
       ),
+      appBarActions: <Widget>[
+        IconButton(
+          tooltip: _lifeI18nText(
+            context,
+            'toolbox.life.source_references.title',
+          ),
+          onPressed: () => _showLifeSourceReferencesSheet(context),
+          icon: const Icon(Icons.help_outline_rounded),
+        ),
+      ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -508,6 +520,7 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
     return switch (tool.id) {
       'time_screen' => const _TimeScreenToolPage(),
       'barrage' => const _BarrageToolPage(),
+      'screen_fill_light' => const _ScreenFillLightToolPage(),
       'ruler' => const _RulerToolPage(),
       'scoreboard' => const _ScoreboardToolPage(),
       'color_helper' => const _ColorHelperToolPage(),
@@ -521,13 +534,21 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
       'compass' => const _CompassToolPage(),
       'level' => const _LevelToolPage(),
       'vibration' => const _VibrationToolPage(),
+      'speedometer' => const _SpeedometerToolPage(),
+      'magnifier' => const _MagnifierToolPage(),
+      'light_meter' => const _LightMeterToolPage(),
+      'phone_monitor' => const _PhoneMonitorToolPage(),
+      'distance_meter' => const _DistanceMeterToolPage(),
       'device_frame' => const _DeviceFrameToolPage(),
+      'gif_maker' => const _GifMakerToolPage(),
+      'archive_tool' => const _ArchiveToolPage(),
       'notify_me' => const _NotifyMeToolPage(),
       'fake_call' => const _FakeCallToolPage(),
       'id_photo' => const _IdPhotoToolPage(),
-      'ai_interview' => const _AiInterviewToolPage(),
       'sup_sub' => const _NumberMarksPage(),
       'meme_maker' => const _MemeMakerToolPage(),
+      'advanced_calculator' => const _AdvancedCalculatorToolPage(),
+      'bio_clock' => const _BioClockToolPage(),
       'text_count' ||
       'text_encoding' ||
       'unit_converter' ||
@@ -926,34 +947,46 @@ class _CategoryDrawerState extends State<_CategoryDrawer>
                     ? CrossFadeState.showFirst
                     : CrossFadeState.showSecond,
                 firstChild: Padding(
-                  padding: const EdgeInsets.only(top: 10, left: 6, right: 6),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final isExpandedWidth = AppWidthBreakpoints.tierFor(
-                        constraints.maxWidth,
-                      ).isExpanded;
-                      final columns = isExpandedWidth ? 2 : 1;
-                      const spacing = 10.0;
-                      final cardWidth =
-                          (constraints.maxWidth - spacing * (columns - 1)) /
-                          columns;
-                      return Wrap(
-                        spacing: spacing,
-                        runSpacing: spacing,
-                        children: widget.tools
-                            .map((tool) {
-                              return SizedBox(
-                                width: cardWidth,
-                                child: _ToolDrawerCard(
-                                  tool: tool,
-                                  accent: meta.color,
-                                  onTap: () => widget.onToolTap(tool),
-                                ),
-                              );
-                            })
-                            .toList(growable: false),
-                      );
-                    },
+                  padding: const EdgeInsets.only(top: 8, left: 14, right: 4),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: meta.color.withValues(alpha: 0.035),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: meta.color.withValues(alpha: 0.10),
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isExpandedWidth = AppWidthBreakpoints.tierFor(
+                            constraints.maxWidth,
+                          ).isExpanded;
+                          final columns = isExpandedWidth ? 2 : 1;
+                          const spacing = 10.0;
+                          final cardWidth =
+                              (constraints.maxWidth - spacing * (columns - 1)) /
+                              columns;
+                          return Wrap(
+                            spacing: spacing,
+                            runSpacing: spacing,
+                            children: widget.tools
+                                .map((tool) {
+                                  return SizedBox(
+                                    width: cardWidth,
+                                    child: _ToolDrawerCard(
+                                      tool: tool,
+                                      accent: meta.color,
+                                      onTap: () => widget.onToolTap(tool),
+                                    ),
+                                  );
+                                })
+                                .toList(growable: false),
+                          );
+                        },
+                      ),
+                    ),
                   ),
                 ),
                 secondChild: const SizedBox.shrink(),
@@ -1092,6 +1125,409 @@ class _ToolDrawerCardState extends State<_ToolDrawerCard> {
   }
 }
 
+void _showLifeSourceReferencesSheet(BuildContext context) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    backgroundColor: Colors.transparent,
+    builder: (sheetContext) {
+      final colorScheme = Theme.of(sheetContext).colorScheme;
+      return DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.82,
+        minChildSize: 0.42,
+        maxChildSize: 0.94,
+        builder: (context, scrollController) {
+          return ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            child: DecoratedBox(
+              decoration: BoxDecoration(color: colorScheme.surface),
+              child: _LifeSourceReferencesSheet(
+                scrollController: scrollController,
+              ),
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
+class _LifeSourceReferencesSheet extends StatelessWidget {
+  const _LifeSourceReferencesSheet({required this.scrollController});
+
+  final ScrollController scrollController;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return SafeArea(
+      top: false,
+      child: Column(
+        children: <Widget>[
+          const SizedBox(height: 10),
+          Container(
+            width: 36,
+            height: 4,
+            decoration: BoxDecoration(
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.28),
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 14, 10, 14),
+            child: Row(
+              children: <Widget>[
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: colorScheme.secondaryContainer.withValues(
+                      alpha: 0.72,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.help_outline_rounded,
+                    color: colorScheme.onSecondaryContainer,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        _lifeI18nText(
+                          context,
+                          'toolbox.life.source_references.title',
+                        ),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _lifeI18nText(
+                          context,
+                          'toolbox.life.source_references.subtitle',
+                        ),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: colorScheme.outlineVariant),
+          Expanded(
+            child: SingleChildScrollView(
+              controller: scrollController,
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              child: const _LifeSourceReferencesContent(
+                key: ValueKey<String>('life-source-references-page'),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LifeSourceReferencesContent extends StatelessWidget {
+  const _LifeSourceReferencesContent({super.key});
+
+  List<_LifeTool> get _toolsWithSources {
+    return _lifeTools
+        .where((tool) => tool.sources.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tools = _toolsWithSources;
+    final sourceCount = tools.fold<int>(
+      0,
+      (sum, tool) => sum + tool.sources.length,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _LifeSettingsPanel(
+          title: _lifeI18nText(
+            context,
+            'toolbox.life.source_references.overview',
+          ),
+          subtitle: _lifeI18nText(
+            context,
+            'toolbox.life.source_references.overview_subtitle',
+          ),
+          children: <Widget>[
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: <Widget>[
+                ToolboxMetricCard(
+                  label: _lifeI18nText(
+                    context,
+                    'toolbox.life.source_references.metric_tools',
+                  ),
+                  value: '${tools.length}',
+                ),
+                ToolboxMetricCard(
+                  label: _lifeI18nText(
+                    context,
+                    'toolbox.life.source_references.metric_links',
+                  ),
+                  value: '$sourceCount',
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _LifeSourceBoundaryNote(
+              text: _lifeI18nText(
+                context,
+                'toolbox.life.source_references.boundary_note',
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        SectionHeader(
+          title: _lifeI18nText(
+            context,
+            'toolbox.life.source_references.grouped_title',
+          ),
+        ),
+        const SizedBox(height: 8),
+        for (final tool in tools) ...<Widget>[
+          _LifeSourceGroup(tool: tool),
+          const SizedBox(height: 10),
+        ],
+      ],
+    );
+  }
+}
+
+class _LifeSourceBoundaryNote extends StatelessWidget {
+  const _LifeSourceBoundaryNote({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.secondary.withValues(alpha: 0.18),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(
+            Icons.info_outline_rounded,
+            color: theme.colorScheme.onSecondaryContainer,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSecondaryContainer,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LifeSourceGroup extends StatelessWidget {
+  const _LifeSourceGroup({required this.tool});
+
+  final _LifeTool tool;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final meta = _LifeToolsHubPageState._categoryMeta[tool.category]!;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: colorScheme.outlineVariant),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: meta.color.withValues(alpha: 0.07),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: meta.color.withValues(alpha: 0.12),
+                ),
+                child: Icon(tool.icon, color: meta.color, size: 21),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      _lifeI18nText(context, tool.titleKey),
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _lifeI18nText(context, meta.labelKey),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: meta.color,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  color: meta.color.withValues(alpha: 0.10),
+                ),
+                child: Text(
+                  '${tool.sources.length}',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: meta.color,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          for (var index = 0; index < tool.sources.length; index += 1) ...[
+            _LifeSourceLinkTile(
+              key: ValueKey<String>('life_source_${tool.id}_$index'),
+              source: tool.sources[index],
+            ),
+            if (index != tool.sources.length - 1) const SizedBox(height: 8),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _LifeSourceLinkTile extends StatelessWidget {
+  const _LifeSourceLinkTile({super.key, required this.source});
+
+  final _LifeToolSource source;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _openExternal(context, source.url),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.65),
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Icon(
+                Icons.link_rounded,
+                color: colorScheme.onSurfaceVariant,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      source.name,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      source.url,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Tooltip(
+                message: _lifeI18nText(
+                  context,
+                  'toolbox.life.source_references.open_link',
+                ),
+                child: Icon(
+                  Icons.open_in_new_rounded,
+                  size: 18,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _LifeToolInfoPage extends StatelessWidget {
   const _LifeToolInfoPage({required this.tool});
 
@@ -1124,33 +1560,24 @@ class _LifeToolInfoPage extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           if (tool.sources.isNotEmpty) ...<Widget>[
-            SectionHeader(
-              title: _lifeI18nText(
-                context,
-                'inline.plan294.life_hub.sources_and_attribution_19299461',
-              ),
-            ),
-            const SizedBox(height: 8),
-            for (final source in tool.sources)
-              Card(
-                child: ListTile(
-                  title: Text(source.name),
-                  subtitle: Text(
-                    source.copyrightNote.isEmpty
-                        ? source.url
-                        : '${source.url}\n${source.copyrightNote}',
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.travel_explore_rounded),
+                title: Text(
+                  _lifeI18nText(
+                    context,
+                    'toolbox.life.source_references.title',
                   ),
-                  trailing: const Icon(Icons.open_in_new_rounded),
-                  onTap: () => _openExternal(context, source.url),
                 ),
+                subtitle: Text(
+                  _lifeI18nText(
+                    context,
+                    'toolbox.life.source_references.summary',
+                  ),
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => _showLifeSourceReferencesSheet(context),
               ),
-            const SizedBox(height: 6),
-            Text(
-              _lifeI18nText(
-                context,
-                'inline.plan294.life_hub.copyright_and_usage_rights_follow_each_source_we_9e70bef2',
-              ),
-              style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
         ],

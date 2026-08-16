@@ -30,6 +30,20 @@ class MiniPlayer extends StatefulWidget {
 }
 
 class _MiniPlayerState extends State<MiniPlayer> {
+  static const List<double> _playbackSpeedMenuValues = <double>[
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9,
+    1.0,
+    1.1,
+    1.2,
+    1.3,
+    1.4,
+    1.5,
+  ];
+
   Timer? _sleepTimer;
   DateTime? _sleepTimerEndsAt;
   String _lastPresentationSignature = '';
@@ -40,21 +54,55 @@ class _MiniPlayerState extends State<MiniPlayer> {
 
   bool get _hasSleepTimer => _sleepTimer != null && _sleepTimerEndsAt != null;
   bool get _isVisible => _state.isPlaying || _hasSleepTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.state.playbackUnitProgressListenable.addListener(
+      _handlePlaybackUnitProgressChanged,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant MiniPlayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.state == widget.state) {
+      return;
+    }
+    oldWidget.state.playbackUnitProgressListenable.removeListener(
+      _handlePlaybackUnitProgressChanged,
+    );
+    widget.state.playbackUnitProgressListenable.addListener(
+      _handlePlaybackUnitProgressChanged,
+    );
+  }
+
+  void _handlePlaybackUnitProgressChanged() {
+    if (!mounted) return;
+    setState(() {});
+  }
+
   @override
   void dispose() {
+    widget.state.playbackUnitProgressListenable.removeListener(
+      _handlePlaybackUnitProgressChanged,
+    );
     _sleepTimer?.cancel();
     _sleepTimer = null;
     super.dispose();
   }
 
-  double _reservedHeight(bool compact) {
+  double _reservedHeight(bool compact, double viewportHeight) {
     if (!_isVisible || _collapsed) return 0;
-    return compact ? 192 : 208;
+    final target = compact ? 300.0 : 340.0;
+    final maxByViewport = (viewportHeight * 0.52).clamp(190.0, target);
+    return maxByViewport.toDouble();
   }
 
-  void _reportPresentation(bool compact) {
-    final reservedHeight = _reservedHeight(compact);
-    final signature = '$_isVisible|$_collapsed|$reservedHeight';
+  void _reportPresentation(bool compact, double viewportHeight) {
+    final reservedHeight = _reservedHeight(compact, viewportHeight);
+    final signature =
+        '$_isVisible|$_collapsed|${reservedHeight.toStringAsFixed(1)}';
     if (signature == _lastPresentationSignature) return;
     _lastPresentationSignature = signature;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -436,7 +484,12 @@ class _MiniPlayerState extends State<MiniPlayer> {
     final state = _state;
     final i18n = _i18n;
     final compact = state.config.appearance.compactLayout;
-    _reportPresentation(compact);
+    final viewportHeight = MediaQuery.sizeOf(context).height;
+    final expandedMaxHeight = _reservedHeight(
+      compact,
+      viewportHeight,
+    ).clamp(190.0, 360.0);
+    _reportPresentation(compact, viewportHeight);
 
     if (!_isVisible) {
       if (!_collapsed) {
@@ -478,6 +531,7 @@ class _MiniPlayerState extends State<MiniPlayer> {
                 )
               : _ExpandedMiniPlayer(
                   key: const ValueKey<String>('expanded-mini-player'),
+                  maxHeight: expandedMaxHeight,
                   i18n: i18n,
                   title: currentWord.isEmpty ? wordbookName : currentWord,
                   subtitle: subtitle,
@@ -486,7 +540,16 @@ class _MiniPlayerState extends State<MiniPlayer> {
                   isPaused: state.isPaused,
                   hasSleepTimer: _hasSleepTimer,
                   sleepTimerLabel: _sleepTimerLabel(i18n),
+                  speed: state.config.tts.speed,
+                  speedValues: _playbackSpeedMenuValues,
                   onCollapse: _toggleCollapsed,
+                  onSpeedChanged: (value) {
+                    state.updateConfig(
+                      state.config.copyWith(
+                        tts: state.config.tts.copyWith(speed: value),
+                      ),
+                    );
+                  },
                   onPrevious: state.isPlaying
                       ? state.movePlaybackPreviousWord
                       : null,
@@ -577,9 +640,10 @@ class _CollapsedMiniPlayer extends StatelessWidget {
   }
 }
 
-class _ExpandedMiniPlayer extends StatelessWidget {
+class _ExpandedMiniPlayer extends StatefulWidget {
   const _ExpandedMiniPlayer({
     super.key,
+    required this.maxHeight,
     required this.i18n,
     required this.title,
     required this.subtitle,
@@ -588,7 +652,10 @@ class _ExpandedMiniPlayer extends StatelessWidget {
     required this.isPaused,
     required this.hasSleepTimer,
     required this.sleepTimerLabel,
+    required this.speed,
+    required this.speedValues,
     required this.onCollapse,
+    required this.onSpeedChanged,
     this.onPrevious,
     required this.onPlayPause,
     this.onNext,
@@ -598,6 +665,7 @@ class _ExpandedMiniPlayer extends StatelessWidget {
     required this.onTools,
   });
 
+  final double maxHeight;
   final AppI18n i18n;
   final String title;
   final String subtitle;
@@ -606,7 +674,10 @@ class _ExpandedMiniPlayer extends StatelessWidget {
   final bool isPaused;
   final bool hasSleepTimer;
   final String sleepTimerLabel;
+  final double speed;
+  final List<double> speedValues;
   final VoidCallback onCollapse;
+  final ValueChanged<double> onSpeedChanged;
   final VoidCallback? onPrevious;
   final VoidCallback onPlayPause;
   final VoidCallback? onNext;
@@ -616,144 +687,228 @@ class _ExpandedMiniPlayer extends StatelessWidget {
   final VoidCallback onTools;
 
   @override
+  State<_ExpandedMiniPlayer> createState() => _ExpandedMiniPlayerState();
+}
+
+class _ExpandedMiniPlayerState extends State<_ExpandedMiniPlayer> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final tokens = AppThemeTokens.of(context);
+    final maxHeight = widget.maxHeight;
+    final i18n = widget.i18n;
 
     return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 720),
+      constraints: BoxConstraints(maxWidth: 720, maxHeight: maxHeight),
       child: Material(
         color: tokens.surfaceOverlay,
         elevation: 12,
         shadowColor: tokens.glow.withValues(alpha: 0.24),
         borderRadius: BorderRadius.circular(24),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          title.isEmpty ? '-' : title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          subtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ],
+        child: Scrollbar(
+          controller: _scrollController,
+          thumbVisibility: maxHeight < 250,
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            widget.title.isEmpty ? '-' : widget.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            widget.subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    onPressed: onCollapse,
-                    tooltip: i18n.t(
-                      'inline.plan295.daily_choice.collapse.ad0db950964e',
+                    IconButton(
+                      onPressed: widget.onCollapse,
+                      tooltip: i18n.t(
+                        'inline.plan295.daily_choice.collapse.ad0db950964e',
+                      ),
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded),
                     ),
-                    icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(999),
-                child: LinearProgressIndicator(minHeight: 6, value: progress),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: <Widget>[
-                  if (onPrevious != null)
-                    OutlinedButton.icon(
-                      onPressed: onPrevious,
-                      icon: const Icon(Icons.skip_previous_rounded),
-                      label: Text(i18n.t('prev')),
-                    ),
-                  FilledButton.tonalIcon(
-                    onPressed: onPlayPause,
-                    icon: Icon(
-                      isPlaying && !isPaused
-                          ? Icons.pause_rounded
-                          : Icons.play_arrow_rounded,
-                    ),
-                    label: Text(
-                      isPlaying && !isPaused
-                          ? i18n.t('pause')
-                          : (isPaused ? i18n.t('resume') : i18n.t('play')),
-                    ),
-                  ),
-                  if (onNext != null)
-                    OutlinedButton.icon(
-                      onPressed: onNext,
-                      icon: const Icon(Icons.skip_next_rounded),
-                      label: Text(i18n.t('next')),
-                    ),
-                  if (onStop != null)
-                    OutlinedButton.icon(
-                      onPressed: onStop,
-                      icon: const Icon(Icons.stop_rounded),
-                      label: Text(i18n.t('stop')),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: <Widget>[
-                  OutlinedButton.icon(
-                    onPressed: onAmbient,
-                    icon: const Icon(Icons.surround_sound_rounded),
-                    label: Text(
-                      i18n.t('inline.ui.pages.play_page.ambient_6e3e01'),
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: onSleepTimer,
-                    icon: Icon(
-                      hasSleepTimer
-                          ? Icons.bedtime_rounded
-                          : Icons.bedtime_outlined,
-                    ),
-                    label: Text(
-                      i18n.t('toolbox.sound.soothing.v2.timer.button'),
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: onTools,
-                    icon: const Icon(Icons.tune_rounded),
-                    label: Text(
-                      i18n.t('inline.ui.widgets.mini_player.more_tools_3768f4'),
-                    ),
-                  ),
-                ],
-              ),
-              if (hasSleepTimer &&
-                  sleepTimerLabel.trim().isNotEmpty) ...<Widget>[
+                  ],
+                ),
                 const SizedBox(height: 10),
-                Text(
-                  sleepTimerLabel,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.tertiary,
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: LinearProgressIndicator(
+                    minHeight: 6,
+                    value: widget.progress,
                   ),
                 ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: <Widget>[
+                    if (widget.onPrevious != null)
+                      OutlinedButton.icon(
+                        onPressed: widget.onPrevious,
+                        icon: const Icon(Icons.skip_previous_rounded),
+                        label: Text(i18n.t('prev')),
+                      ),
+                    FilledButton.tonalIcon(
+                      onPressed: widget.onPlayPause,
+                      icon: Icon(
+                        widget.isPlaying && !widget.isPaused
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
+                      ),
+                      label: Text(
+                        widget.isPlaying && !widget.isPaused
+                            ? i18n.t('pause')
+                            : (widget.isPaused
+                                  ? i18n.t('resume')
+                                  : i18n.t('play')),
+                      ),
+                    ),
+                    if (widget.onNext != null)
+                      OutlinedButton.icon(
+                        onPressed: widget.onNext,
+                        icon: const Icon(Icons.skip_next_rounded),
+                        label: Text(i18n.t('next')),
+                      ),
+                    if (widget.onStop != null)
+                      OutlinedButton.icon(
+                        onPressed: widget.onStop,
+                        icon: const Icon(Icons.stop_rounded),
+                        label: Text(i18n.t('stop')),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: <Widget>[
+                    OutlinedButton.icon(
+                      onPressed: widget.onAmbient,
+                      icon: const Icon(Icons.surround_sound_rounded),
+                      label: Text(
+                        i18n.t('inline.ui.pages.play_page.ambient_6e3e01'),
+                      ),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: widget.onSleepTimer,
+                      icon: Icon(
+                        widget.hasSleepTimer
+                            ? Icons.bedtime_rounded
+                            : Icons.bedtime_outlined,
+                      ),
+                      label: Text(
+                        i18n.t('toolbox.sound.soothing.v2.timer.button'),
+                      ),
+                    ),
+                    _PlaybackSpeedMenu(
+                      i18n: i18n,
+                      speed: widget.speed,
+                      values: widget.speedValues,
+                      onChanged: widget.onSpeedChanged,
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: widget.onTools,
+                      icon: const Icon(Icons.tune_rounded),
+                      label: Text(
+                        i18n.t(
+                          'inline.ui.widgets.mini_player.more_tools_3768f4',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (widget.hasSleepTimer &&
+                    widget.sleepTimerLabel.trim().isNotEmpty) ...<Widget>[
+                  const SizedBox(height: 10),
+                  Text(
+                    widget.sleepTimerLabel,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.tertiary,
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
     );
+  }
+}
+
+class _PlaybackSpeedMenu extends StatelessWidget {
+  const _PlaybackSpeedMenu({
+    required this.i18n,
+    required this.speed,
+    required this.values,
+    required this.onChanged,
+  });
+
+  final AppI18n i18n;
+  final double speed;
+  final List<double> values;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final currentSpeed = speed.clamp(0.5, 1.5).toDouble();
+    final currentPercent = (currentSpeed * 100).round();
+    return PopupMenuButton<double>(
+      key: const ValueKey<String>('mini-player-speed-menu'),
+      tooltip: i18n.t(
+        'play.playback.speed_label',
+        params: <String, Object?>{'value': currentPercent},
+      ),
+      onSelected: onChanged,
+      itemBuilder: (context) {
+        return values
+            .map(
+              (value) => CheckedPopupMenuItem<double>(
+                value: value,
+                checked: (currentSpeed - value).abs() < 0.01,
+                child: Text(_formatSpeed(value)),
+              ),
+            )
+            .toList(growable: false);
+      },
+      child: InputChip(
+        avatar: const Icon(Icons.speed_rounded, size: 18),
+        label: Text(_formatSpeed(currentSpeed)),
+        labelStyle: theme.textTheme.labelLarge,
+        onPressed: null,
+      ),
+    );
+  }
+
+  String _formatSpeed(double value) {
+    final rounded = (value * 10).round() / 10;
+    return '${rounded.toStringAsFixed(1)}x';
   }
 }

@@ -5,15 +5,21 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:pointycastle/export.dart' as pc;
 
+import 'toolbox_veracrypt_primitives.dart';
+
 enum ToolboxCryptoAlgorithm {
   none,
   aesGcm,
   chacha20Poly1305,
   camelliaGcm,
   twofishGcm,
+  serpentGcm,
+  kuznyechikGcm,
   aesTwofishGcm,
   aesCamelliaGcm,
   aesTwofishCamelliaGcm,
+  aesSerpentKuznyechikGcm,
+  aesTwofishCamelliaSerpentKuznyechikGcm,
   customCascade,
   sha256Stream,
   rc4Legacy,
@@ -30,10 +36,16 @@ extension ToolboxCryptoAlgorithmInfo on ToolboxCryptoAlgorithm {
       ToolboxCryptoAlgorithm.chacha20Poly1305 => 'chacha20_poly1305',
       ToolboxCryptoAlgorithm.camelliaGcm => 'camellia_gcm',
       ToolboxCryptoAlgorithm.twofishGcm => 'twofish_gcm',
+      ToolboxCryptoAlgorithm.serpentGcm => 'serpent_gcm',
+      ToolboxCryptoAlgorithm.kuznyechikGcm => 'kuznyechik_gcm',
       ToolboxCryptoAlgorithm.aesTwofishGcm => 'aes_twofish_gcm',
       ToolboxCryptoAlgorithm.aesCamelliaGcm => 'aes_camellia_gcm',
       ToolboxCryptoAlgorithm.aesTwofishCamelliaGcm =>
         'aes_twofish_camellia_gcm',
+      ToolboxCryptoAlgorithm.aesSerpentKuznyechikGcm =>
+        'aes_serpent_kuznyechik_gcm',
+      ToolboxCryptoAlgorithm.aesTwofishCamelliaSerpentKuznyechikGcm =>
+        'aes_twofish_camellia_serpent_kuznyechik_gcm',
       ToolboxCryptoAlgorithm.customCascade => 'custom_cascade',
       ToolboxCryptoAlgorithm.sha256Stream => 'sha256_stream',
       ToolboxCryptoAlgorithm.rc4Legacy => 'rc4_legacy',
@@ -50,15 +62,21 @@ extension ToolboxCryptoAlgorithmInfo on ToolboxCryptoAlgorithm {
       ToolboxCryptoAlgorithm.chacha20Poly1305 => 'ChaCha20-Poly1305',
       ToolboxCryptoAlgorithm.camelliaGcm => 'Camellia-GCM',
       ToolboxCryptoAlgorithm.twofishGcm => 'Twofish-GCM',
+      ToolboxCryptoAlgorithm.serpentGcm => 'Serpent-GCM',
+      ToolboxCryptoAlgorithm.kuznyechikGcm => 'Kuznyechik-GCM',
       ToolboxCryptoAlgorithm.aesTwofishGcm => 'AES + Twofish',
       ToolboxCryptoAlgorithm.aesCamelliaGcm => 'AES + Camellia',
       ToolboxCryptoAlgorithm.aesTwofishCamelliaGcm =>
         'AES + Twofish + Camellia',
+      ToolboxCryptoAlgorithm.aesSerpentKuznyechikGcm =>
+        'AES + Serpent + Kuznyechik',
+      ToolboxCryptoAlgorithm.aesTwofishCamelliaSerpentKuznyechikGcm =>
+        'AES + Twofish + Camellia + Serpent + Kuznyechik',
       ToolboxCryptoAlgorithm.customCascade => 'Custom cascade',
       ToolboxCryptoAlgorithm.sha256Stream => 'SHA256 stream',
       ToolboxCryptoAlgorithm.rc4Legacy => 'RC4 legacy',
-      ToolboxCryptoAlgorithm.sha256RsaSignature => 'SHA-256/RSA signature',
-      ToolboxCryptoAlgorithm.ecdsaSignature => 'ECDSA signature',
+      ToolboxCryptoAlgorithm.sha256RsaSignature => 'Package-local RSA check',
+      ToolboxCryptoAlgorithm.ecdsaSignature => 'Package-local ECDSA check',
       ToolboxCryptoAlgorithm.whirlpoolDigest => 'Whirlpool digest',
     };
   }
@@ -90,9 +108,13 @@ extension ToolboxCryptoAlgorithmInfo on ToolboxCryptoAlgorithm {
       ToolboxCryptoAlgorithm.chacha20Poly1305 => 256,
       ToolboxCryptoAlgorithm.camelliaGcm => 256,
       ToolboxCryptoAlgorithm.twofishGcm => 256,
+      ToolboxCryptoAlgorithm.serpentGcm => 256,
+      ToolboxCryptoAlgorithm.kuznyechikGcm => 256,
       ToolboxCryptoAlgorithm.aesTwofishGcm => 512,
       ToolboxCryptoAlgorithm.aesCamelliaGcm => 512,
       ToolboxCryptoAlgorithm.aesTwofishCamelliaGcm => 768,
+      ToolboxCryptoAlgorithm.aesSerpentKuznyechikGcm => 768,
+      ToolboxCryptoAlgorithm.aesTwofishCamelliaSerpentKuznyechikGcm => 1024,
       ToolboxCryptoAlgorithm.customCascade => 256,
       ToolboxCryptoAlgorithm.sha256Stream => 256,
       ToolboxCryptoAlgorithm.rc4Legacy => 256,
@@ -108,6 +130,8 @@ enum ToolboxCryptoCascadeCipher {
   chacha20,
   twofish,
   camellia,
+  serpent,
+  kuznyechik,
   sha256Stream,
 }
 
@@ -118,6 +142,8 @@ extension ToolboxCryptoCascadeCipherInfo on ToolboxCryptoCascadeCipher {
       ToolboxCryptoCascadeCipher.chacha20 => 'chacha20_poly1305',
       ToolboxCryptoCascadeCipher.twofish => 'twofish_gcm',
       ToolboxCryptoCascadeCipher.camellia => 'camellia_gcm',
+      ToolboxCryptoCascadeCipher.serpent => 'serpent_gcm',
+      ToolboxCryptoCascadeCipher.kuznyechik => 'kuznyechik_gcm',
       ToolboxCryptoCascadeCipher.sha256Stream => 'sha256_stream',
     };
   }
@@ -128,12 +154,14 @@ extension ToolboxCryptoCascadeCipherInfo on ToolboxCryptoCascadeCipher {
       ToolboxCryptoCascadeCipher.chacha20 => 'ChaCha20-Poly1305',
       ToolboxCryptoCascadeCipher.twofish => 'Twofish-GCM',
       ToolboxCryptoCascadeCipher.camellia => 'Camellia-GCM',
+      ToolboxCryptoCascadeCipher.serpent => 'Serpent-GCM',
+      ToolboxCryptoCascadeCipher.kuznyechik => 'Kuznyechik-GCM',
       ToolboxCryptoCascadeCipher.sha256Stream => 'SHA256 stream (weak)',
     };
   }
 }
 
-enum ToolboxCryptoKeyBits { bits256, bits512, bits1024 }
+enum ToolboxCryptoKeyBits { bits256, bits512, bits1024, bits2048, bits4096 }
 
 extension ToolboxCryptoKeyBitsInfo on ToolboxCryptoKeyBits {
   String get id {
@@ -141,6 +169,8 @@ extension ToolboxCryptoKeyBitsInfo on ToolboxCryptoKeyBits {
       ToolboxCryptoKeyBits.bits256 => '256',
       ToolboxCryptoKeyBits.bits512 => '512',
       ToolboxCryptoKeyBits.bits1024 => '1024',
+      ToolboxCryptoKeyBits.bits2048 => '2048',
+      ToolboxCryptoKeyBits.bits4096 => '4096',
     };
   }
 
@@ -149,6 +179,8 @@ extension ToolboxCryptoKeyBitsInfo on ToolboxCryptoKeyBits {
       ToolboxCryptoKeyBits.bits256 => 256,
       ToolboxCryptoKeyBits.bits512 => 512,
       ToolboxCryptoKeyBits.bits1024 => 1024,
+      ToolboxCryptoKeyBits.bits2048 => 2048,
+      ToolboxCryptoKeyBits.bits4096 => 4096,
     };
   }
 
@@ -169,10 +201,10 @@ extension ToolboxCryptoSignatureModeInfo on ToolboxCryptoSignatureMode {
 
   String get label {
     return switch (this) {
-      ToolboxCryptoSignatureMode.none => 'No signature',
+      ToolboxCryptoSignatureMode.none => 'No package check',
       ToolboxCryptoSignatureMode.weakSha256 => 'Weak SHA-256',
-      ToolboxCryptoSignatureMode.rsaSha256 => 'SHA-256/RSA',
-      ToolboxCryptoSignatureMode.ecdsaSha256 => 'ECDSA',
+      ToolboxCryptoSignatureMode.rsaSha256 => 'Package-local RSA check',
+      ToolboxCryptoSignatureMode.ecdsaSha256 => 'Package-local ECDSA check',
     };
   }
 }
@@ -241,6 +273,8 @@ extension ToolboxCryptoStrengthInfo on ToolboxCryptoStrength {
 }
 
 enum ToolboxCryptoHashAlgorithm {
+  md5,
+  sha1,
   sha256,
   sha512,
   sha3_256,
@@ -253,6 +287,8 @@ enum ToolboxCryptoHashAlgorithm {
 extension ToolboxCryptoHashAlgorithmInfo on ToolboxCryptoHashAlgorithm {
   String get id {
     return switch (this) {
+      ToolboxCryptoHashAlgorithm.md5 => 'md5',
+      ToolboxCryptoHashAlgorithm.sha1 => 'sha1',
       ToolboxCryptoHashAlgorithm.sha256 => 'sha256',
       ToolboxCryptoHashAlgorithm.sha512 => 'sha512',
       ToolboxCryptoHashAlgorithm.sha3_256 => 'sha3_256',
@@ -265,6 +301,8 @@ extension ToolboxCryptoHashAlgorithmInfo on ToolboxCryptoHashAlgorithm {
 
   String get label {
     return switch (this) {
+      ToolboxCryptoHashAlgorithm.md5 => 'MD5',
+      ToolboxCryptoHashAlgorithm.sha1 => 'SHA-1',
       ToolboxCryptoHashAlgorithm.sha256 => 'SHA-256',
       ToolboxCryptoHashAlgorithm.sha512 => 'SHA-512',
       ToolboxCryptoHashAlgorithm.sha3_256 => 'SHA3-256',
@@ -272,6 +310,25 @@ extension ToolboxCryptoHashAlgorithmInfo on ToolboxCryptoHashAlgorithm {
       ToolboxCryptoHashAlgorithm.blake2b256 => 'BLAKE2b-256',
       ToolboxCryptoHashAlgorithm.blake2b512 => 'BLAKE2b-512',
       ToolboxCryptoHashAlgorithm.whirlpool => 'Whirlpool',
+    };
+  }
+}
+
+enum ToolboxCryptoAsymmetricAlgorithm { rsa2048, ecP256 }
+
+extension ToolboxCryptoAsymmetricAlgorithmInfo
+    on ToolboxCryptoAsymmetricAlgorithm {
+  String get id {
+    return switch (this) {
+      ToolboxCryptoAsymmetricAlgorithm.rsa2048 => 'rsa_2048',
+      ToolboxCryptoAsymmetricAlgorithm.ecP256 => 'ec_p256',
+    };
+  }
+
+  String get label {
+    return switch (this) {
+      ToolboxCryptoAsymmetricAlgorithm.rsa2048 => 'RSA-2048',
+      ToolboxCryptoAsymmetricAlgorithm.ecP256 => 'ECC P-256',
     };
   }
 }
@@ -369,13 +426,116 @@ class ToolboxCryptoKeyFileResult {
   final String fileName;
 }
 
+class ToolboxCryptoKeyFileInput {
+  ToolboxCryptoKeyFileInput({required this.name, required Uint8List bytes})
+    : bytes = Uint8List.fromList(bytes) {
+    final digest = crypto.sha256.convert(this.bytes);
+    sha256 = digest.toString();
+    sha256Base64 = base64Encode(digest.bytes);
+  }
+
+  final String name;
+  final Uint8List bytes;
+  late final String sha256;
+  late final String sha256Base64;
+}
+
+class ToolboxCryptoKeyFileEntryInfo {
+  const ToolboxCryptoKeyFileEntryInfo({
+    required this.name,
+    required this.length,
+    required this.sha256,
+  });
+
+  final String name;
+  final int length;
+  final String sha256;
+}
+
+class ToolboxCryptoCombinedKeyFileResult {
+  const ToolboxCryptoCombinedKeyFileResult({
+    required this.bytes,
+    required this.length,
+    required this.sha256,
+    required this.fileName,
+    required this.entries,
+  });
+
+  final Uint8List bytes;
+  final int length;
+  final String sha256;
+  final String fileName;
+  final List<ToolboxCryptoKeyFileEntryInfo> entries;
+}
+
+class ToolboxCryptoAsymmetricKeyPairResult {
+  const ToolboxCryptoAsymmetricKeyPairResult({
+    required this.algorithm,
+    required this.publicKeyText,
+    required this.privateKeyText,
+    required this.publicKeyFingerprint,
+  });
+
+  final ToolboxCryptoAsymmetricAlgorithm algorithm;
+  final String publicKeyText;
+  final String privateKeyText;
+  final String publicKeyFingerprint;
+}
+
+class ToolboxCryptoAsymmetricSignatureResult {
+  const ToolboxCryptoAsymmetricSignatureResult({
+    required this.algorithm,
+    required this.signatureText,
+    required this.publicKeyFingerprint,
+  });
+
+  final ToolboxCryptoAsymmetricAlgorithm algorithm;
+  final String signatureText;
+  final String publicKeyFingerprint;
+}
+
+class ToolboxCryptoAsymmetricVerifyResult {
+  const ToolboxCryptoAsymmetricVerifyResult({
+    required this.algorithm,
+    required this.isValid,
+    required this.publicKeyFingerprint,
+  });
+
+  final ToolboxCryptoAsymmetricAlgorithm algorithm;
+  final bool isValid;
+  final String publicKeyFingerprint;
+}
+
+class ToolboxCryptoAsymmetricCipherResult {
+  const ToolboxCryptoAsymmetricCipherResult({
+    required this.algorithm,
+    required this.cipherText,
+    required this.publicKeyFingerprint,
+    required this.cipherBytes,
+  });
+
+  final ToolboxCryptoAsymmetricAlgorithm algorithm;
+  final String cipherText;
+  final String publicKeyFingerprint;
+  final int cipherBytes;
+}
+
 class ToolboxCryptoService {
-  static const int currentVersion = 4;
+  static const int currentVersion = 5;
+  static const int maxRsaOaepSha256PlainBytes = 190;
+  static const int _legacyJsonVersion = 4;
   static const int maxPlainBytes = 256 * 1024 * 1024;
   static const int maxCipherBytes = maxPlainBytes + 2 * 1024 * 1024;
   static const int maxEnvelopeBytes = 384 * 1024 * 1024;
   static const int maxKeyFileBytes = 1024 * 1024;
+  static const int maxCombinedKeyFileBytes = 8 * maxKeyFileBytes;
+  static const int _maxProtectedMetadataBytes = 64 * 1024;
+  static const int _maxProtectedMetadataCipherBytes =
+      _maxProtectedMetadataBytes + 32;
   static const int _maxStageCount = 8;
+  static const int _minScryptN = 1 << 16;
+  static const int _minScryptR = 8;
+  static const int _minScryptP = 1;
   static const int _maxScryptN = 1 << 18;
   static const int _maxScryptR = 8;
   static const int _maxScryptP = 2;
@@ -383,7 +543,17 @@ class ToolboxCryptoService {
   static const int _maxNonceBytes = 32;
   static const int _maxSignatureBytes = 4096;
   static const int _maxPublicKeyBytes = 4096;
+  static const int _maxAsymmetricJsonChars = 64 * 1024;
+  static const int _maxAsymmetricTextBytes = 128 * 1024;
+  static const String _asymmetricKeyFormat = 'vocabulary_sleep_asymmetric_key';
+  static const String _asymmetricSignatureFormat =
+      'vocabulary_sleep_asymmetric_signature';
+  static const String _asymmetricCipherFormat =
+      'vocabulary_sleep_asymmetric_cipher';
   static final math.Random _secureRandom = math.Random.secure();
+  static final Uint8List _opaqueEnvelopeMagic = Uint8List.fromList(
+    utf8.encode('VSCENC5!'),
+  );
   static final List<int> _weakSignatureDomainKey = utf8.encode(
     'vocabulary_sleep_builtin_weak_signature_v1_not_a_private_key',
   );
@@ -516,37 +686,44 @@ class ToolboxCryptoService {
       mode: effectiveSignatureMode,
       keySeed: signatureSeed,
     );
-    final envelope = <String, Object?>{
-      'format': 'vocabulary_sleep_crypto',
-      'version': currentVersion,
+    final protectedMetadata = <String, Object?>{
       'algorithm': algorithm.id,
       'strength': strength.id,
       'keyBits': keyBits.bits,
       'macAlgorithm': effectiveMacAlgorithm.id,
       'signatureMode': effectiveSignatureMode.id,
-      'kdf': <String, Object?>{
-        'id': 'scrypt',
-        'n': kdfSettings.n,
-        'r': kdfSettings.r,
-        'p': kdfSettings.p,
-      },
       'padding': <String, Object?>{
         'mode': 'random-length-v1',
         'cipherPlainBytes': paddedPlain.length,
       },
-      'salt': base64Encode(salt),
       'stages': stageMaps,
       'encoding': 'bytes',
       'fileName': fileName,
       'mediaType': mediaType,
-      'ciphertext': base64Encode(cipherBytes),
       'mac': mac,
       'signature': signature,
       'signaturePublic': signaturePublic,
     };
+    final headerRootKey =
+        effectiveMacAlgorithm == ToolboxCryptoMacAlgorithm.sha256
+        ? rootKey
+        : _deriveRootKey(
+            passphrase: passphrase,
+            keyFileBytes: keyFileBytes,
+            salt: salt,
+            macAlgorithm: ToolboxCryptoMacAlgorithm.sha256,
+            kdfSettings: kdfSettings,
+          );
+    final envelopeBytes = _encodeOpaqueEnvelopeV5(
+      kdfSettings: kdfSettings,
+      salt: salt,
+      headerRootKey: headerRootKey,
+      protectedMetadata: protectedMetadata,
+      cipherBytes: cipherBytes,
+    );
 
     return ToolboxCryptoEncryptResult(
-      envelopeBytes: Uint8List.fromList(utf8.encode(jsonEncode(envelope))),
+      envelopeBytes: envelopeBytes,
       cipherBytes: cipherBytes,
       algorithm: algorithm,
       strength: strength,
@@ -601,7 +778,7 @@ class ToolboxCryptoService {
       paddingLength: 255,
     );
     return ToolboxCryptoEnvelopeSizeEstimate(
-      minimumBytes: _estimatedEnvelopeJsonBytes(
+      minimumBytes: _estimatedOpaqueEnvelopeBytes(
         algorithm: algorithm,
         strength: strength,
         keyBits: keyBits,
@@ -613,7 +790,7 @@ class ToolboxCryptoService {
         fileName: fileName,
         mediaType: mediaType,
       ),
-      recommendedBytes: _estimatedEnvelopeJsonBytes(
+      recommendedBytes: _estimatedOpaqueEnvelopeBytes(
         algorithm: algorithm,
         strength: strength,
         keyBits: keyBits,
@@ -630,6 +807,29 @@ class ToolboxCryptoService {
     );
   }
 
+  Uint8List deriveSteganographyLocatorSecret({
+    required String passphrase,
+    required Uint8List? keyFileBytes,
+    required Uint8List salt,
+    required ToolboxCryptoStrength strength,
+    String purpose = 'steganography-locator-v5',
+    int length = 64,
+  }) {
+    if (salt.isEmpty || salt.length > _maxSaltBytes) {
+      throw const ToolboxCryptoException('Crypto KDF parameters are invalid.');
+    }
+    final kdfSettings = _KdfSettings.fromStrength(strength);
+    _validateKdfSettings(kdfSettings);
+    final rootKey = _deriveRootKey(
+      passphrase: passphrase,
+      keyFileBytes: keyFileBytes,
+      salt: salt,
+      macAlgorithm: ToolboxCryptoMacAlgorithm.sha256,
+      kdfSettings: kdfSettings,
+    );
+    return _expandRootKey(rootKey, purpose, length);
+  }
+
   ToolboxCryptoDecryptResult decryptBytes({
     required Uint8List envelopeBytes,
     required String passphrase,
@@ -638,10 +838,29 @@ class ToolboxCryptoService {
     if (envelopeBytes.isEmpty) {
       throw const ToolboxCryptoException('Input bytes are empty.');
     }
+    if (_isOpaqueEnvelopeV5(envelopeBytes)) {
+      return _decryptOpaqueEnvelopeV5(
+        envelopeBytes: envelopeBytes,
+        passphrase: passphrase,
+        keyFileBytes: keyFileBytes,
+      );
+    }
+    return _decryptLegacyJsonEnvelopeV4(
+      envelopeBytes: envelopeBytes,
+      passphrase: passphrase,
+      keyFileBytes: keyFileBytes,
+    );
+  }
+
+  ToolboxCryptoDecryptResult _decryptLegacyJsonEnvelopeV4({
+    required Uint8List envelopeBytes,
+    required String passphrase,
+    Uint8List? keyFileBytes,
+  }) {
     final map = _decodeEnvelope(envelopeBytes);
     final rawVersion = map['version'];
     final version = rawVersion is int ? rawVersion : null;
-    if (version != currentVersion) {
+    if (version != _legacyJsonVersion) {
       throw const ToolboxCryptoException('Unsupported crypto version.');
     }
     final algorithm = _algorithmFromId(_readString(map, 'algorithm'));
@@ -670,7 +889,7 @@ class ToolboxCryptoService {
     final mediaType = map['mediaType'] as String?;
     final stageMaps = _readStages(map);
     final associatedData = _associatedData(
-      version: version == 2 ? 3 : version!,
+      version: version!,
       algorithm: algorithm,
       strength: strength,
       keyBits: keyBits,
@@ -775,6 +994,141 @@ class ToolboxCryptoService {
     );
   }
 
+  ToolboxCryptoAsymmetricKeyPairResult generateAsymmetricKeyPair({
+    required ToolboxCryptoAsymmetricAlgorithm algorithm,
+  }) {
+    return switch (algorithm) {
+      ToolboxCryptoAsymmetricAlgorithm.rsa2048 => _generateRsa2048KeyPair(),
+      ToolboxCryptoAsymmetricAlgorithm.ecP256 => _generateEcP256KeyPair(),
+    };
+  }
+
+  ToolboxCryptoAsymmetricSignatureResult signBytes({
+    required Uint8List bytes,
+    required String privateKeyText,
+  }) {
+    _validateAsymmetricPayloadSize(bytes);
+    final key = _decodeAsymmetricKeyText(privateKeyText);
+    if (!key.isPrivate) {
+      throw const ToolboxCryptoException('Private key is required.');
+    }
+    final signature = switch (key.algorithm) {
+      ToolboxCryptoAsymmetricAlgorithm.rsa2048 => _rsaSignBytes(
+        key.rsaPrivateKey!,
+        bytes,
+      ),
+      ToolboxCryptoAsymmetricAlgorithm.ecP256 => _ecSignBytes(
+        key.ecPrivateKey!,
+        bytes,
+      ),
+    };
+    final signatureText = _encodeAsymmetricSignature(
+      algorithm: key.algorithm,
+      publicKeyFingerprint: key.publicKeyFingerprint,
+      signature: signature,
+    );
+    return ToolboxCryptoAsymmetricSignatureResult(
+      algorithm: key.algorithm,
+      signatureText: signatureText,
+      publicKeyFingerprint: key.publicKeyFingerprint,
+    );
+  }
+
+  ToolboxCryptoAsymmetricVerifyResult verifyBytes({
+    required Uint8List bytes,
+    required String publicKeyText,
+    required String signatureText,
+  }) {
+    _validateAsymmetricPayloadSize(bytes);
+    final key = _decodeAsymmetricKeyText(publicKeyText);
+    final signature = _decodeAsymmetricSignatureText(signatureText);
+    if (key.algorithm != signature.algorithm) {
+      throw const ToolboxCryptoException(
+        'Signature and public key algorithms do not match.',
+      );
+    }
+    if (key.publicKeyFingerprint != signature.publicKeyFingerprint) {
+      throw const ToolboxCryptoException(
+        'Signature public key fingerprint does not match.',
+      );
+    }
+    final ok = switch (key.algorithm) {
+      ToolboxCryptoAsymmetricAlgorithm.rsa2048 => _rsaVerifyBytes(
+        key.rsaPublicKey!,
+        signature,
+        bytes,
+      ),
+      ToolboxCryptoAsymmetricAlgorithm.ecP256 => _ecVerifyBytes(
+        key.ecPublicKey!,
+        signature,
+        bytes,
+      ),
+    };
+    return ToolboxCryptoAsymmetricVerifyResult(
+      algorithm: key.algorithm,
+      isValid: ok,
+      publicKeyFingerprint: key.publicKeyFingerprint,
+    );
+  }
+
+  ToolboxCryptoAsymmetricCipherResult encryptBytesWithPublicKey({
+    required Uint8List plainBytes,
+    required String publicKeyText,
+  }) {
+    if (plainBytes.isEmpty) {
+      throw const ToolboxCryptoException('Input bytes are empty.');
+    }
+    final key = _decodeAsymmetricKeyText(publicKeyText);
+    if (key.algorithm != ToolboxCryptoAsymmetricAlgorithm.rsa2048) {
+      throw const ToolboxCryptoException(
+        'ECC keys support signing only; use RSA for small-text encryption.',
+      );
+    }
+    if (plainBytes.length > maxRsaOaepSha256PlainBytes) {
+      throw const ToolboxCryptoException(
+        'RSA small-text encryption supports up to 190 UTF-8 bytes.',
+      );
+    }
+    final cipherBytes = _rsaOaepEncrypt(key.rsaPublicKey!, plainBytes);
+    final cipherText = _encodeAsymmetricCipher(
+      publicKeyFingerprint: key.publicKeyFingerprint,
+      cipherBytes: cipherBytes,
+    );
+    return ToolboxCryptoAsymmetricCipherResult(
+      algorithm: key.algorithm,
+      cipherText: cipherText,
+      publicKeyFingerprint: key.publicKeyFingerprint,
+      cipherBytes: cipherBytes.length,
+    );
+  }
+
+  Uint8List decryptBytesWithPrivateKey({
+    required String cipherText,
+    required String privateKeyText,
+  }) {
+    final key = _decodeAsymmetricKeyText(privateKeyText);
+    if (!key.isPrivate) {
+      throw const ToolboxCryptoException('Private key is required.');
+    }
+    if (key.algorithm != ToolboxCryptoAsymmetricAlgorithm.rsa2048) {
+      throw const ToolboxCryptoException(
+        'ECC keys support signing only; use RSA for small-text encryption.',
+      );
+    }
+    final cipher = _decodeAsymmetricCipherText(cipherText);
+    if (cipher.algorithm != key.algorithm) {
+      throw const ToolboxCryptoException(
+        'Cipher text and private key algorithms do not match.',
+      );
+    }
+    if (key.publicKeyFingerprint != cipher.publicKeyFingerprint) {
+      throw const ToolboxCryptoException(
+        'Cipher text public key fingerprint does not match.',
+      );
+    }
+    return _rsaOaepDecrypt(key.rsaPrivateKey!, cipher.cipherBytes);
+  }
+
   ToolboxCryptoKeyFileResult generateKeyFile({
     required int length,
     String fileName = 'vocabulary_sleep_keyfile.bin',
@@ -790,6 +1144,107 @@ class ToolboxCryptoService {
       length: bytes.length,
       sha256: _hexDigest(crypto.sha256.convert(bytes).bytes),
       fileName: fileName,
+    );
+  }
+
+  ToolboxCryptoKeyFileResult deriveKeyFileFromPassphrase({
+    required String passphrase,
+    required int length,
+    required ToolboxCryptoStrength strength,
+    String saltText = 'vocabulary_sleep_keyfile_derived_v1',
+    String fileName = 'vocabulary_sleep_derived_keyfile.bin',
+  }) {
+    if (passphrase.trim().isEmpty) {
+      throw const ToolboxCryptoException('Passphrase is required.');
+    }
+    if (length < 32 || length > maxKeyFileBytes) {
+      throw const ToolboxCryptoException(
+        'Key file length must be between 32 bytes and 1 MB.',
+      );
+    }
+    final normalizedSalt = saltText.trim().isEmpty
+        ? 'vocabulary_sleep_keyfile_derived_v1'
+        : saltText.trim();
+    final salt = Uint8List.fromList(
+      crypto.sha256.convert(<int>[
+        ...utf8.encode('vocabulary_sleep_keyfile_derivation_v1'),
+        0,
+        ...utf8.encode(normalizedSalt),
+      ]).bytes,
+    );
+    final kdfSettings = _KdfSettings.fromStrength(strength);
+    _validateKdfSettings(kdfSettings);
+    final derivator = pc.Scrypt()
+      ..init(
+        pc.ScryptParameters(
+          kdfSettings.n,
+          kdfSettings.r,
+          kdfSettings.p,
+          length,
+          salt,
+        ),
+      );
+    final bytes = derivator.process(
+      Uint8List.fromList(<int>[
+        ...utf8.encode('vocabulary_sleep_derived_keyfile_secret_v1'),
+        0,
+        ...utf8.encode(passphrase),
+      ]),
+    );
+    return ToolboxCryptoKeyFileResult(
+      bytes: bytes,
+      length: bytes.length,
+      sha256: _hexDigest(crypto.sha256.convert(bytes).bytes),
+      fileName: fileName,
+    );
+  }
+
+  ToolboxCryptoCombinedKeyFileResult combineKeyFiles(
+    List<ToolboxCryptoKeyFileInput> entries, {
+    String fileNamePrefix = 'vocabulary_sleep_key_bundle',
+  }) {
+    if (entries.isEmpty) {
+      throw const ToolboxCryptoException('Key file is required.');
+    }
+    var totalBytes = 0;
+    for (final entry in entries) {
+      if (entry.bytes.isEmpty) {
+        throw const ToolboxCryptoException('Key file is empty.');
+      }
+      if (entry.bytes.length > maxKeyFileBytes) {
+        throw const ToolboxCryptoException(
+          'Key file length must be between 32 bytes and 1 MB.',
+        );
+      }
+      totalBytes += entry.bytes.length;
+      if (totalBytes > maxCombinedKeyFileBytes) {
+        throw const ToolboxCryptoException('Combined key files are too large.');
+      }
+    }
+    final sorted = entries.toList(growable: false)..sort(_compareKeyFileInput);
+    final bytes = sorted.length == 1
+        ? Uint8List.fromList(sorted.first.bytes)
+        : _bundleKeyFileEntries(sorted);
+    if (bytes.length > maxCombinedKeyFileBytes + 4096) {
+      throw const ToolboxCryptoException('Combined key files are too large.');
+    }
+    final digest = _hexDigest(crypto.sha256.convert(bytes).bytes);
+    return ToolboxCryptoCombinedKeyFileResult(
+      bytes: bytes,
+      length: bytes.length,
+      sha256: digest,
+      fileName: sorted.length == 1
+          ? sorted.first.name
+          : '${fileNamePrefix}_${sorted.length}.bin',
+      entries: sorted
+          .map(
+            (entry) => ToolboxCryptoKeyFileEntryInfo(
+              name: entry.name,
+              length: entry.bytes.length,
+              sha256: entry.sha256,
+            ),
+          )
+          .toList(growable: false),
     );
   }
 
@@ -814,6 +1269,317 @@ class ToolboxCryptoService {
     } on FormatException {
       throw const ToolboxCryptoException('Crypto envelope is invalid.');
     }
+  }
+
+  bool _isOpaqueEnvelopeV5(Uint8List envelopeBytes) {
+    if (envelopeBytes.length < _opaqueEnvelopeMagic.length + 1) {
+      return false;
+    }
+    for (var index = 0; index < _opaqueEnvelopeMagic.length; index += 1) {
+      if (envelopeBytes[index] != _opaqueEnvelopeMagic[index]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  Uint8List _encodeOpaqueEnvelopeV5({
+    required _KdfSettings kdfSettings,
+    required Uint8List salt,
+    required Uint8List headerRootKey,
+    required Map<String, Object?> protectedMetadata,
+    required Uint8List cipherBytes,
+  }) {
+    _validateKdfSettings(kdfSettings);
+    if (salt.isEmpty || salt.length > _maxSaltBytes || salt.length > 255) {
+      throw const ToolboxCryptoException('Crypto KDF parameters are invalid.');
+    }
+    if (cipherBytes.isEmpty || cipherBytes.length > maxCipherBytes) {
+      throw const ToolboxCryptoException('Crypto envelope is too large.');
+    }
+    final metadataBytes = Uint8List.fromList(
+      utf8.encode(jsonEncode(protectedMetadata)),
+    );
+    if (metadataBytes.length > _maxProtectedMetadataBytes) {
+      throw const ToolboxCryptoException('Crypto envelope is too large.');
+    }
+    final headerNonce = _randomBytes(12);
+    final metadataCipher = _gcmTransform(
+      engine: pc.AESEngine(),
+      engineId: 'opaque_metadata_v5',
+      encrypt: true,
+      input: metadataBytes,
+      key: _expandRootKey(headerRootKey, 'opaque-metadata-v5', 32),
+      nonce: headerNonce,
+      associatedData: _opaqueBootAssociatedData(
+        kdfSettings: kdfSettings,
+        salt: salt,
+      ),
+    );
+    if (metadataCipher.length > _maxProtectedMetadataCipherBytes) {
+      throw const ToolboxCryptoException('Crypto envelope is too large.');
+    }
+
+    final builder = BytesBuilder(copy: false)
+      ..add(_opaqueEnvelopeMagic)
+      ..addByte(currentVersion)
+      ..add(_uint32Bytes(kdfSettings.n))
+      ..add(_uint32Bytes(kdfSettings.r))
+      ..add(_uint32Bytes(kdfSettings.p))
+      ..addByte(salt.length)
+      ..add(salt)
+      ..addByte(headerNonce.length)
+      ..add(headerNonce)
+      ..add(_uint32Bytes(metadataCipher.length))
+      ..add(metadataCipher)
+      ..add(cipherBytes);
+    final output = builder.takeBytes();
+    if (output.length > maxEnvelopeBytes) {
+      throw const ToolboxCryptoException('Crypto envelope is too large.');
+    }
+    return output;
+  }
+
+  ToolboxCryptoDecryptResult _decryptOpaqueEnvelopeV5({
+    required Uint8List envelopeBytes,
+    required String passphrase,
+    Uint8List? keyFileBytes,
+  }) {
+    final envelope = _readOpaqueEnvelopeV5(envelopeBytes);
+    final headerRootKey = _deriveRootKey(
+      passphrase: passphrase,
+      keyFileBytes: keyFileBytes,
+      salt: envelope.salt,
+      macAlgorithm: ToolboxCryptoMacAlgorithm.sha256,
+      kdfSettings: envelope.kdfSettings,
+    );
+    final metadataPlain = _gcmTransform(
+      engine: pc.AESEngine(),
+      engineId: 'opaque_metadata_v5',
+      encrypt: false,
+      input: envelope.metadataCipher,
+      key: _expandRootKey(headerRootKey, 'opaque-metadata-v5', 32),
+      nonce: envelope.metadataNonce,
+      associatedData: _opaqueBootAssociatedData(
+        kdfSettings: envelope.kdfSettings,
+        salt: envelope.salt,
+      ),
+    );
+    final protectedMetadata = _decodeProtectedMetadataV5(metadataPlain);
+    final algorithm = _algorithmFromId(
+      _readString(protectedMetadata, 'algorithm'),
+    );
+    final strength = _strengthFromId(
+      _readString(protectedMetadata, 'strength'),
+    );
+    final keyBits = _keyBitsFromValue(protectedMetadata['keyBits']);
+    final macAlgorithm = _macAlgorithmFromId(
+      _readString(protectedMetadata, 'macAlgorithm'),
+    );
+    final signatureMode = _signatureModeFromId(
+      _readString(protectedMetadata, 'signatureMode'),
+    );
+    _validateAlgorithmAndSecret(
+      algorithm: algorithm,
+      passphrase: passphrase,
+      keyFileBytes: keyFileBytes,
+    );
+    final fileName = protectedMetadata['fileName'] as String?;
+    final mediaType = protectedMetadata['mediaType'] as String?;
+    final stageMaps = _readStages(protectedMetadata);
+    final paddingMode = _readPaddingMode(protectedMetadata);
+    final associatedData = _associatedData(
+      version: currentVersion,
+      algorithm: algorithm,
+      strength: strength,
+      keyBits: keyBits,
+      macAlgorithm: macAlgorithm,
+      signatureMode: signatureMode,
+      salt: envelope.salt,
+      stages: stageMaps,
+      fileName: fileName,
+      mediaType: mediaType,
+      kdfSettings: envelope.kdfSettings,
+      paddingMode: paddingMode,
+    );
+    final rootKey = macAlgorithm == ToolboxCryptoMacAlgorithm.sha256
+        ? headerRootKey
+        : _deriveRootKey(
+            passphrase: passphrase,
+            keyFileBytes: keyFileBytes,
+            salt: envelope.salt,
+            macAlgorithm: macAlgorithm,
+            kdfSettings: envelope.kdfSettings,
+          );
+    final mac = _readString(protectedMetadata, 'mac');
+    final macBytes = _hexToBytes(mac);
+    final expectedMac = _hmacBytes(
+      algorithm: macAlgorithm,
+      key: _expandRootKey(rootKey, 'mac-${macAlgorithm.id}', 32),
+      bytes: <int>[...associatedData, 0, ...envelope.cipherBytes],
+    );
+    if (macBytes == null || !_constantTimeBytesEquals(macBytes, expectedMac)) {
+      throw const ToolboxCryptoException(
+        'Passphrase mismatch or payload is damaged.',
+      );
+    }
+    final signatureSeed = signatureMode == ToolboxCryptoSignatureMode.none
+        ? null
+        : _expandRootKey(rootKey, 'signature-${macAlgorithm.id}', 64);
+    _verifyEnvelopeSignature(
+      mode: signatureMode,
+      signature: protectedMetadata['signature'],
+      publicKey: protectedMetadata['signaturePublic'],
+      keySeed: signatureSeed,
+      data: <int>[
+        ...associatedData,
+        0,
+        ...envelope.cipherBytes,
+        0,
+        ...utf8.encode(mac),
+      ],
+    );
+
+    final stages = stageMaps
+        .map(
+          (stageMap) => _stageFromId(
+            _readString(stageMap, 'id'),
+            keyBytes: _stageKeyBytesFromMap(stageMap),
+          ),
+        )
+        .toList(growable: false);
+    final keyMaterialLength = stages.fold<int>(
+      0,
+      (sum, stage) => sum + stage.keyBytes,
+    );
+    final keyMaterial = _expandRootKey(
+      rootKey,
+      'stage-key-${macAlgorithm.id}',
+      keyMaterialLength,
+    );
+    var keyOffset = keyMaterial.length;
+    var activeBytes = Uint8List.fromList(envelope.cipherBytes);
+    for (var index = stages.length - 1; index >= 0; index -= 1) {
+      final stage = stages[index];
+      final stageMap = stageMaps[index];
+      final keyLength = stage.keyBytes;
+      keyOffset -= keyLength;
+      final key = Uint8List.sublistView(
+        keyMaterial,
+        keyOffset,
+        keyOffset + keyLength,
+      );
+      activeBytes = stage.transform(
+        encrypt: false,
+        input: activeBytes,
+        key: Uint8List.fromList(key),
+        nonce: _readBase64(stageMap, 'nonce', maxBytes: _maxNonceBytes),
+        strength: strength,
+      );
+    }
+
+    final decryptedPayload = Uint8List.fromList(activeBytes);
+    final output = _unpadPlainPayload(decryptedPayload);
+    return ToolboxCryptoDecryptResult(
+      plainBytes: output,
+      algorithm: algorithm,
+      strength: strength,
+      cipherPreview: previewBase64(envelope.cipherBytes),
+      keyFileSha256: _keyFileHash(keyFileBytes),
+      fileName: fileName,
+      mediaType: mediaType,
+    );
+  }
+
+  _OpaqueEnvelopeV5 _readOpaqueEnvelopeV5(Uint8List envelopeBytes) {
+    if (envelopeBytes.length > maxEnvelopeBytes) {
+      throw const ToolboxCryptoException('Crypto envelope is too large.');
+    }
+    var offset = _opaqueEnvelopeMagic.length;
+    final version = _readEnvelopeByte(envelopeBytes, offset);
+    offset += 1;
+    if (version != currentVersion) {
+      throw const ToolboxCryptoException('Unsupported crypto version.');
+    }
+    final kdfSettings = _KdfSettings(
+      n: _readEnvelopeUint32(envelopeBytes, offset),
+      r: _readEnvelopeUint32(envelopeBytes, offset + 4),
+      p: _readEnvelopeUint32(envelopeBytes, offset + 8),
+    );
+    offset += 12;
+    _validateKdfSettings(kdfSettings);
+    final saltLength = _readEnvelopeByte(envelopeBytes, offset);
+    offset += 1;
+    if (saltLength <= 0 || saltLength > _maxSaltBytes) {
+      throw const ToolboxCryptoException('Crypto KDF parameters are invalid.');
+    }
+    final salt = _readEnvelopeBytes(envelopeBytes, offset, saltLength);
+    offset += saltLength;
+    final nonceLength = _readEnvelopeByte(envelopeBytes, offset);
+    offset += 1;
+    if (nonceLength <= 0 || nonceLength > _maxNonceBytes) {
+      throw const ToolboxCryptoException('Crypto envelope is invalid.');
+    }
+    final metadataNonce = _readEnvelopeBytes(
+      envelopeBytes,
+      offset,
+      nonceLength,
+    );
+    offset += nonceLength;
+    final metadataLength = _readEnvelopeUint32(envelopeBytes, offset);
+    offset += 4;
+    if (metadataLength <= 0 ||
+        metadataLength > _maxProtectedMetadataCipherBytes) {
+      throw const ToolboxCryptoException('Crypto envelope is too large.');
+    }
+    final metadataCipher = _readEnvelopeBytes(
+      envelopeBytes,
+      offset,
+      metadataLength,
+    );
+    offset += metadataLength;
+    final cipherBytes = Uint8List.fromList(envelopeBytes.sublist(offset));
+    if (cipherBytes.isEmpty || cipherBytes.length > maxCipherBytes) {
+      throw const ToolboxCryptoException('Crypto envelope is too large.');
+    }
+    return _OpaqueEnvelopeV5(
+      kdfSettings: kdfSettings,
+      salt: salt,
+      metadataNonce: metadataNonce,
+      metadataCipher: metadataCipher,
+      cipherBytes: cipherBytes,
+    );
+  }
+
+  Map<String, Object?> _decodeProtectedMetadataV5(Uint8List metadataBytes) {
+    if (metadataBytes.isEmpty ||
+        metadataBytes.length > _maxProtectedMetadataBytes) {
+      throw const ToolboxCryptoException('Crypto envelope is invalid.');
+    }
+    try {
+      final decoded = jsonDecode(utf8.decode(metadataBytes));
+      if (decoded is Map) {
+        return Map<String, Object?>.from(decoded);
+      }
+      throw const ToolboxCryptoException('Crypto envelope is invalid.');
+    } on FormatException {
+      throw const ToolboxCryptoException('Crypto envelope is invalid.');
+    }
+  }
+
+  Uint8List _opaqueBootAssociatedData({
+    required _KdfSettings kdfSettings,
+    required Uint8List salt,
+  }) {
+    final builder = BytesBuilder(copy: false)
+      ..add(_opaqueEnvelopeMagic)
+      ..addByte(currentVersion)
+      ..add(_uint32Bytes(kdfSettings.n))
+      ..add(_uint32Bytes(kdfSettings.r))
+      ..add(_uint32Bytes(kdfSettings.p))
+      ..addByte(salt.length)
+      ..add(salt);
+    return builder.takeBytes();
   }
 
   _KdfSettings _readKdfSettings(
@@ -845,10 +1611,11 @@ class ToolboxCryptoService {
     final n = settings.n;
     final isPowerOfTwo = n > 1 && (n & (n - 1)) == 0;
     if (!isPowerOfTwo ||
+        n < _minScryptN ||
         n > _maxScryptN ||
-        settings.r <= 0 ||
+        settings.r < _minScryptR ||
         settings.r > _maxScryptR ||
-        settings.p <= 0 ||
+        settings.p < _minScryptP ||
         settings.p > _maxScryptP) {
       throw const ToolboxCryptoException('Crypto KDF parameters are invalid.');
     }
@@ -943,6 +1710,12 @@ class ToolboxCryptoService {
       ToolboxCryptoAlgorithm.twofishGcm => <_CryptoStage>[
         _CryptoStage.twofishGcm(keyBytes: keyBits.bytes),
       ],
+      ToolboxCryptoAlgorithm.serpentGcm => <_CryptoStage>[
+        _CryptoStage.serpentGcm(keyBytes: keyBits.bytes),
+      ],
+      ToolboxCryptoAlgorithm.kuznyechikGcm => <_CryptoStage>[
+        _CryptoStage.kuznyechikGcm(keyBytes: keyBits.bytes),
+      ],
       ToolboxCryptoAlgorithm.aesTwofishGcm => <_CryptoStage>[
         _CryptoStage.aesGcm(keyBytes: keyBits.bytes),
         _CryptoStage.twofishGcm(keyBytes: keyBits.bytes),
@@ -956,6 +1729,19 @@ class ToolboxCryptoService {
         _CryptoStage.twofishGcm(keyBytes: keyBits.bytes),
         _CryptoStage.camelliaGcm(keyBytes: keyBits.bytes),
       ],
+      ToolboxCryptoAlgorithm.aesSerpentKuznyechikGcm => <_CryptoStage>[
+        _CryptoStage.aesGcm(keyBytes: keyBits.bytes),
+        _CryptoStage.serpentGcm(keyBytes: keyBits.bytes),
+        _CryptoStage.kuznyechikGcm(keyBytes: keyBits.bytes),
+      ],
+      ToolboxCryptoAlgorithm.aesTwofishCamelliaSerpentKuznyechikGcm =>
+        <_CryptoStage>[
+          _CryptoStage.aesGcm(keyBytes: keyBits.bytes),
+          _CryptoStage.twofishGcm(keyBytes: keyBits.bytes),
+          _CryptoStage.camelliaGcm(keyBytes: keyBits.bytes),
+          _CryptoStage.serpentGcm(keyBytes: keyBits.bytes),
+          _CryptoStage.kuznyechikGcm(keyBytes: keyBits.bytes),
+        ],
       ToolboxCryptoAlgorithm.customCascade => _customStages(
         cascade: cascade,
         keyBits: keyBits,
@@ -1011,6 +1797,12 @@ class ToolboxCryptoService {
       ToolboxCryptoCascadeCipher.camellia => _CryptoStage.camelliaGcm(
         keyBytes: keyBytes,
       ),
+      ToolboxCryptoCascadeCipher.serpent => _CryptoStage.serpentGcm(
+        keyBytes: keyBytes,
+      ),
+      ToolboxCryptoCascadeCipher.kuznyechik => _CryptoStage.kuznyechikGcm(
+        keyBytes: keyBytes,
+      ),
       ToolboxCryptoCascadeCipher.sha256Stream => _CryptoStage.sha256Stream(
         keyBytes: keyBytes,
       ),
@@ -1042,10 +1834,12 @@ class ToolboxCryptoService {
     return stage.id == 'aes_gcm' ||
         stage.id == 'chacha20_poly1305' ||
         stage.id == 'camellia_gcm' ||
-        stage.id == 'twofish_gcm';
+        stage.id == 'twofish_gcm' ||
+        stage.id == 'serpent_gcm' ||
+        stage.id == 'kuznyechik_gcm';
   }
 
-  int _estimatedEnvelopeJsonBytes({
+  int _estimatedOpaqueEnvelopeBytes({
     required ToolboxCryptoAlgorithm algorithm,
     required ToolboxCryptoStrength strength,
     required ToolboxCryptoKeyBits keyBits,
@@ -1057,7 +1851,6 @@ class ToolboxCryptoService {
     required String? fileName,
     required String? mediaType,
   }) {
-    final kdfSettings = _KdfSettings.fromStrength(strength);
     final stageMaps = stages
         .map(
           (stage) => <String, Object?>{
@@ -1067,35 +1860,36 @@ class ToolboxCryptoService {
           },
         )
         .toList(growable: false);
-    final envelope = <String, Object?>{
-      'format': 'vocabulary_sleep_crypto',
-      'version': currentVersion,
+    final protectedMetadata = <String, Object?>{
       'algorithm': algorithm.id,
       'strength': strength.id,
       'keyBits': keyBits.bits,
       'macAlgorithm': macAlgorithm.id,
       'signatureMode': signatureMode.id,
-      'kdf': <String, Object?>{
-        'id': 'scrypt',
-        'n': kdfSettings.n,
-        'r': kdfSettings.r,
-        'p': kdfSettings.p,
-      },
       'padding': <String, Object?>{
         'mode': 'random-length-v1',
         'cipherPlainBytes': paddedPlainBytes,
       },
-      'salt': _placeholderBase64(16),
       'stages': stageMaps,
       'encoding': 'bytes',
       'fileName': fileName,
       'mediaType': mediaType,
-      'ciphertext': _placeholderBase64(cipherBytes),
       'mac': _placeholderHex(_macBytesLength(macAlgorithm)),
       'signature': _placeholderSignature(signatureMode),
       'signaturePublic': _placeholderSignaturePublic(signatureMode),
     };
-    return utf8.encode(jsonEncode(envelope)).length;
+    final metadataBytes = utf8.encode(jsonEncode(protectedMetadata)).length;
+    final metadataCipherBytes = metadataBytes + 16;
+    return _opaqueEnvelopeMagic.length +
+        1 +
+        12 +
+        1 +
+        16 +
+        1 +
+        12 +
+        4 +
+        metadataCipherBytes +
+        cipherBytes;
   }
 
   Uint8List _deriveRootKey({
@@ -1218,6 +2012,40 @@ class ToolboxCryptoService {
     return _hexDigest(crypto.sha256.convert(keyFileBytes).bytes);
   }
 
+  int _compareKeyFileInput(
+    ToolboxCryptoKeyFileInput left,
+    ToolboxCryptoKeyFileInput right,
+  ) {
+    final nameCompare = left.name.toLowerCase().compareTo(
+      right.name.toLowerCase(),
+    );
+    if (nameCompare != 0) {
+      return nameCompare;
+    }
+    final hashCompare = left.sha256.compareTo(right.sha256);
+    if (hashCompare != 0) {
+      return hashCompare;
+    }
+    return left.bytes.length.compareTo(right.bytes.length);
+  }
+
+  Uint8List _bundleKeyFileEntries(List<ToolboxCryptoKeyFileInput> entries) {
+    final builder = BytesBuilder(copy: false)
+      ..add(utf8.encode('vocabulary_sleep_keyfile_bundle_v1'))
+      ..addByte(0);
+    for (final entry in entries) {
+      final nameBytes = utf8.encode(entry.name);
+      final digestBytes = base64Decode(entry.sha256Base64);
+      builder
+        ..add(_uint32Bytes(nameBytes.length))
+        ..add(nameBytes)
+        ..add(_uint32Bytes(entry.bytes.length))
+        ..add(digestBytes)
+        ..add(entry.bytes);
+    }
+    return builder.takeBytes();
+  }
+
   Uint8List _associatedData({
     required int version,
     required ToolboxCryptoAlgorithm algorithm,
@@ -1255,6 +2083,12 @@ class ToolboxCryptoService {
 
   Uint8List _hashBytes(ToolboxCryptoHashAlgorithm algorithm, Uint8List bytes) {
     return switch (algorithm) {
+      ToolboxCryptoHashAlgorithm.md5 => Uint8List.fromList(
+        crypto.md5.convert(bytes).bytes,
+      ),
+      ToolboxCryptoHashAlgorithm.sha1 => Uint8List.fromList(
+        crypto.sha1.convert(bytes).bytes,
+      ),
       ToolboxCryptoHashAlgorithm.sha256 => Uint8List.fromList(
         crypto.sha256.convert(bytes).bytes,
       ),
@@ -1384,6 +2218,8 @@ class ToolboxCryptoService {
     return switch (bits) {
       512 => ToolboxCryptoKeyBits.bits512,
       1024 => ToolboxCryptoKeyBits.bits1024,
+      2048 => ToolboxCryptoKeyBits.bits2048,
+      4096 => ToolboxCryptoKeyBits.bits4096,
       _ => ToolboxCryptoKeyBits.bits256,
     };
   }
@@ -1413,6 +2249,8 @@ class ToolboxCryptoService {
       _CryptoStage.chacha20Poly1305(keyBytes: keyBytes ?? 32),
       _CryptoStage.camelliaGcm(keyBytes: keyBytes ?? 32),
       _CryptoStage.twofishGcm(keyBytes: keyBytes ?? 32),
+      _CryptoStage.serpentGcm(keyBytes: keyBytes ?? 32),
+      _CryptoStage.kuznyechikGcm(keyBytes: keyBytes ?? 32),
       _CryptoStage.sha256Stream(keyBytes: keyBytes ?? 32),
       const _CryptoStage.rc4Legacy(),
     ];
@@ -1434,6 +2272,8 @@ class ToolboxCryptoService {
     return switch (bits) {
       512 => 64,
       1024 => 128,
+      2048 => 256,
+      4096 => 512,
       _ => 32,
     };
   }
@@ -1718,21 +2558,540 @@ class ToolboxCryptoService {
     };
   }
 
-  pc.RSAPublicKey _rsaPublicKeyFromMap(Map<String, Object?> map) {
-    return pc.RSAPublicKey(
-      _bigIntFromBase64(_readString(map, 'n')),
-      _bigIntFromBase64(_readString(map, 'e')),
+  ToolboxCryptoAsymmetricKeyPairResult _generateRsa2048KeyPair() {
+    final keyPair = _generateRsaKeyPair(bitStrength: 2048);
+    final publicMap = _rsaPublicKeyMapFromKey(keyPair.publicKey);
+    final privateMap = _rsaPrivateKeyMapFromKey(keyPair.privateKey);
+    final fingerprint = _asymmetricPublicKeyFingerprint(
+      ToolboxCryptoAsymmetricAlgorithm.rsa2048,
+      publicMap,
+    );
+    return ToolboxCryptoAsymmetricKeyPairResult(
+      algorithm: ToolboxCryptoAsymmetricAlgorithm.rsa2048,
+      publicKeyText: _encodeAsymmetricKey(
+        algorithm: ToolboxCryptoAsymmetricAlgorithm.rsa2048,
+        kind: 'public',
+        publicKey: publicMap,
+      ),
+      privateKeyText: _encodeAsymmetricKey(
+        algorithm: ToolboxCryptoAsymmetricAlgorithm.rsa2048,
+        kind: 'private',
+        publicKey: publicMap,
+        privateKey: privateMap,
+      ),
+      publicKeyFingerprint: fingerprint,
     );
   }
 
-  pc.ECPublicKey _ecdsaPublicKeyFromMap(Map<String, Object?> map) {
-    final domain = pc.ECDomainParameters(_readString(map, 'curve'));
-    return pc.ECPublicKey(
-      domain.curve.decodePoint(
-        _readBase64(map, 'q', maxBytes: _maxPublicKeyBytes),
-      ),
-      domain,
+  ToolboxCryptoAsymmetricKeyPairResult _generateEcP256KeyPair() {
+    final keyPair = _generateEcKeyPair(curveName: 'secp256r1');
+    final publicMap = _ecPublicKeyMapFromKey(keyPair.publicKey);
+    final privateMap = _ecPrivateKeyMapFromKey(keyPair.privateKey);
+    final fingerprint = _asymmetricPublicKeyFingerprint(
+      ToolboxCryptoAsymmetricAlgorithm.ecP256,
+      publicMap,
     );
+    return ToolboxCryptoAsymmetricKeyPairResult(
+      algorithm: ToolboxCryptoAsymmetricAlgorithm.ecP256,
+      publicKeyText: _encodeAsymmetricKey(
+        algorithm: ToolboxCryptoAsymmetricAlgorithm.ecP256,
+        kind: 'public',
+        publicKey: publicMap,
+      ),
+      privateKeyText: _encodeAsymmetricKey(
+        algorithm: ToolboxCryptoAsymmetricAlgorithm.ecP256,
+        kind: 'private',
+        publicKey: publicMap,
+        privateKey: privateMap,
+      ),
+      publicKeyFingerprint: fingerprint,
+    );
+  }
+
+  String _encodeAsymmetricKey({
+    required ToolboxCryptoAsymmetricAlgorithm algorithm,
+    required String kind,
+    required Map<String, Object?> publicKey,
+    Map<String, Object?>? privateKey,
+  }) {
+    final map = <String, Object?>{
+      'format': _asymmetricKeyFormat,
+      'version': 1,
+      'kind': kind,
+      'algorithm': algorithm.id,
+      'public': publicKey,
+    };
+    if (privateKey != null) {
+      map['private'] = privateKey;
+    }
+    return const JsonEncoder.withIndent('  ').convert(map);
+  }
+
+  _AsymmetricKeyMaterial _decodeAsymmetricKeyText(String text) {
+    final map = _decodeJsonObject(text);
+    if (_readString(map, 'format') != _asymmetricKeyFormat ||
+        map['version'] != 1) {
+      throw const ToolboxCryptoException('Unsupported key format.');
+    }
+    final kind = _readString(map, 'kind');
+    if (kind != 'public' && kind != 'private') {
+      throw const ToolboxCryptoException('Unsupported key format.');
+    }
+    final algorithm = _asymmetricAlgorithmFromId(_readString(map, 'algorithm'));
+    final publicMap = _jsonObject(map['public']);
+    final publicKeyFingerprint = _asymmetricPublicKeyFingerprint(
+      algorithm,
+      publicMap,
+    );
+    return switch (algorithm) {
+      ToolboxCryptoAsymmetricAlgorithm.rsa2048 => _decodeRsaKeyMaterial(
+        publicMap: publicMap,
+        privateMap: kind == 'private' ? _jsonObject(map['private']) : null,
+        publicKeyFingerprint: publicKeyFingerprint,
+      ),
+      ToolboxCryptoAsymmetricAlgorithm.ecP256 => _decodeEcKeyMaterial(
+        publicMap: publicMap,
+        privateMap: kind == 'private' ? _jsonObject(map['private']) : null,
+        publicKeyFingerprint: publicKeyFingerprint,
+      ),
+    };
+  }
+
+  _AsymmetricKeyMaterial _decodeRsaKeyMaterial({
+    required Map<String, Object?> publicMap,
+    required Map<String, Object?>? privateMap,
+    required String publicKeyFingerprint,
+  }) {
+    final publicKey = _rsaPublicKeyFromMap(publicMap);
+    final privateKey = privateMap == null
+        ? null
+        : _rsaPrivateKeyFromMap(publicKey: publicKey, privateMap: privateMap);
+    return _AsymmetricKeyMaterial(
+      algorithm: ToolboxCryptoAsymmetricAlgorithm.rsa2048,
+      publicKeyFingerprint: publicKeyFingerprint,
+      rsaPublicKey: publicKey,
+      rsaPrivateKey: privateKey,
+    );
+  }
+
+  _AsymmetricKeyMaterial _decodeEcKeyMaterial({
+    required Map<String, Object?> publicMap,
+    required Map<String, Object?>? privateMap,
+    required String publicKeyFingerprint,
+  }) {
+    final publicKey = _ecdsaPublicKeyFromMap(publicMap);
+    final privateKey = privateMap == null
+        ? null
+        : _ecdsaPrivateKeyFromMap(publicKey: publicKey, privateMap: privateMap);
+    return _AsymmetricKeyMaterial(
+      algorithm: ToolboxCryptoAsymmetricAlgorithm.ecP256,
+      publicKeyFingerprint: publicKeyFingerprint,
+      ecPublicKey: publicKey,
+      ecPrivateKey: privateKey,
+    );
+  }
+
+  Map<String, Object?> _rsaSignBytes(
+    pc.RSAPrivateKey privateKey,
+    Uint8List bytes,
+  ) {
+    final signer = pc.Signer('SHA-256/RSA')
+      ..init(true, pc.PrivateKeyParameter<pc.RSAPrivateKey>(privateKey));
+    final signature = signer.generateSignature(bytes) as pc.RSASignature;
+    return <String, Object?>{'bytes': base64Encode(signature.bytes)};
+  }
+
+  bool _rsaVerifyBytes(
+    pc.RSAPublicKey publicKey,
+    _AsymmetricSignatureMaterial signature,
+    Uint8List bytes,
+  ) {
+    final raw = signature.value['bytes'];
+    if (raw is! String) {
+      throw const ToolboxCryptoException('Signature is invalid.');
+    }
+    final signer = pc.Signer('SHA-256/RSA')
+      ..init(false, pc.PublicKeyParameter<pc.RSAPublicKey>(publicKey));
+    try {
+      return signer.verifySignature(
+        bytes,
+        pc.RSASignature(_base64ToBytes(raw, maxBytes: _maxSignatureBytes)),
+      );
+    } on Object {
+      return false;
+    }
+  }
+
+  Map<String, Object?> _ecSignBytes(
+    pc.ECPrivateKey privateKey,
+    Uint8List bytes,
+  ) {
+    final signer = pc.Signer('SHA-256/DET-ECDSA')
+      ..init(true, pc.PrivateKeyParameter<pc.ECPrivateKey>(privateKey));
+    final signature = signer.generateSignature(bytes) as pc.ECSignature;
+    return <String, Object?>{
+      'r': _bigIntToBase64(signature.r),
+      's': _bigIntToBase64(signature.s),
+    };
+  }
+
+  bool _ecVerifyBytes(
+    pc.ECPublicKey publicKey,
+    _AsymmetricSignatureMaterial signature,
+    Uint8List bytes,
+  ) {
+    final r = signature.value['r'];
+    final s = signature.value['s'];
+    if (r is! String || s is! String) {
+      throw const ToolboxCryptoException('Signature is invalid.');
+    }
+    final signer = pc.Signer('SHA-256/DET-ECDSA')
+      ..init(false, pc.PublicKeyParameter<pc.ECPublicKey>(publicKey));
+    try {
+      return signer.verifySignature(
+        bytes,
+        pc.ECSignature(
+          _bigIntFromBase64(r, maxBytes: _maxSignatureBytes),
+          _bigIntFromBase64(s, maxBytes: _maxSignatureBytes),
+        ),
+      );
+    } on Object {
+      return false;
+    }
+  }
+
+  String _encodeAsymmetricSignature({
+    required ToolboxCryptoAsymmetricAlgorithm algorithm,
+    required String publicKeyFingerprint,
+    required Map<String, Object?> signature,
+  }) {
+    return const JsonEncoder.withIndent('  ').convert(<String, Object?>{
+      'format': _asymmetricSignatureFormat,
+      'version': 1,
+      'algorithm': algorithm.id,
+      'digest': 'sha256',
+      'publicKeyFingerprint': publicKeyFingerprint,
+      'signature': signature,
+    });
+  }
+
+  _AsymmetricSignatureMaterial _decodeAsymmetricSignatureText(String text) {
+    final map = _decodeJsonObject(text);
+    if (_readString(map, 'format') != _asymmetricSignatureFormat ||
+        map['version'] != 1) {
+      throw const ToolboxCryptoException('Unsupported signature format.');
+    }
+    final digest = _readString(map, 'digest');
+    if (digest != 'sha256') {
+      throw const ToolboxCryptoException('Unsupported signature digest.');
+    }
+    return _AsymmetricSignatureMaterial(
+      algorithm: _asymmetricAlgorithmFromId(_readString(map, 'algorithm')),
+      publicKeyFingerprint: _readFingerprint(map, 'publicKeyFingerprint'),
+      value: _jsonObject(map['signature']),
+    );
+  }
+
+  Uint8List _rsaOaepEncrypt(pc.RSAPublicKey publicKey, Uint8List plainBytes) {
+    final cipher = pc.OAEPEncoding.withSHA256(pc.RSAEngine())
+      ..init(
+        true,
+        pc.ParametersWithRandom<pc.PublicKeyParameter<pc.RSAPublicKey>>(
+          pc.PublicKeyParameter<pc.RSAPublicKey>(publicKey),
+          _fortuna(_randomBytes(32)),
+        ),
+      );
+    try {
+      return cipher.process(plainBytes);
+    } on Object catch (error) {
+      throw ToolboxCryptoException('RSA encryption failed: $error');
+    }
+  }
+
+  Uint8List _rsaOaepDecrypt(
+    pc.RSAPrivateKey privateKey,
+    Uint8List cipherBytes,
+  ) {
+    final cipher = pc.OAEPEncoding.withSHA256(pc.RSAEngine())
+      ..init(false, pc.PrivateKeyParameter<pc.RSAPrivateKey>(privateKey));
+    try {
+      return cipher.process(cipherBytes);
+    } on Object {
+      throw const ToolboxCryptoException(
+        'Private key mismatch or cipher text is damaged.',
+      );
+    }
+  }
+
+  String _encodeAsymmetricCipher({
+    required String publicKeyFingerprint,
+    required Uint8List cipherBytes,
+  }) {
+    return const JsonEncoder.withIndent('  ').convert(<String, Object?>{
+      'format': _asymmetricCipherFormat,
+      'version': 1,
+      'algorithm': ToolboxCryptoAsymmetricAlgorithm.rsa2048.id,
+      'padding': 'rsa_oaep_sha256_v2_0',
+      'publicKeyFingerprint': publicKeyFingerprint,
+      'ciphertext': base64Encode(cipherBytes),
+    });
+  }
+
+  _AsymmetricCipherMaterial _decodeAsymmetricCipherText(String text) {
+    final map = _decodeJsonObject(text);
+    if (_readString(map, 'format') != _asymmetricCipherFormat ||
+        map['version'] != 1) {
+      throw const ToolboxCryptoException('Unsupported cipher text format.');
+    }
+    if (_readString(map, 'padding') != 'rsa_oaep_sha256_v2_0') {
+      throw const ToolboxCryptoException('Unsupported RSA padding.');
+    }
+    return _AsymmetricCipherMaterial(
+      algorithm: _asymmetricAlgorithmFromId(_readString(map, 'algorithm')),
+      publicKeyFingerprint: _readFingerprint(map, 'publicKeyFingerprint'),
+      cipherBytes: _readBase64(map, 'ciphertext', maxBytes: _maxPublicKeyBytes),
+    );
+  }
+
+  pc.AsymmetricKeyPair<pc.RSAPublicKey, pc.RSAPrivateKey> _generateRsaKeyPair({
+    required int bitStrength,
+  }) {
+    final generator = pc.RSAKeyGenerator()
+      ..init(
+        pc.ParametersWithRandom<pc.RSAKeyGeneratorParameters>(
+          pc.RSAKeyGeneratorParameters(BigInt.from(65537), bitStrength, 12),
+          _fortuna(_randomBytes(32)),
+        ),
+      );
+    return generator.generateKeyPair();
+  }
+
+  pc.AsymmetricKeyPair<pc.ECPublicKey, pc.ECPrivateKey> _generateEcKeyPair({
+    required String curveName,
+  }) {
+    final domain = pc.ECDomainParameters(curveName);
+    final generator = pc.ECKeyGenerator()
+      ..init(
+        pc.ParametersWithRandom<pc.ECKeyGeneratorParameters>(
+          pc.ECKeyGeneratorParameters(domain),
+          _fortuna(_randomBytes(32)),
+        ),
+      );
+    return generator.generateKeyPair();
+  }
+
+  Map<String, Object?> _rsaPublicKeyMapFromKey(pc.RSAPublicKey key) {
+    return <String, Object?>{
+      'n': _bigIntToBase64(key.modulus!),
+      'e': _bigIntToBase64(key.publicExponent!),
+    };
+  }
+
+  Map<String, Object?> _rsaPrivateKeyMapFromKey(pc.RSAPrivateKey key) {
+    return <String, Object?>{
+      'd': _bigIntToBase64(key.privateExponent!),
+      'p': _bigIntToBase64(key.p!),
+      'q': _bigIntToBase64(key.q!),
+    };
+  }
+
+  Map<String, Object?> _ecPublicKeyMapFromKey(pc.ECPublicKey key) {
+    return <String, Object?>{
+      'curve': key.parameters!.domainName,
+      'q': base64Encode(key.Q!.getEncoded(false)),
+    };
+  }
+
+  Map<String, Object?> _ecPrivateKeyMapFromKey(pc.ECPrivateKey key) {
+    return <String, Object?>{
+      'curve': key.parameters!.domainName,
+      'd': _bigIntToBase64(key.d!),
+    };
+  }
+
+  String _asymmetricPublicKeyFingerprint(
+    ToolboxCryptoAsymmetricAlgorithm algorithm,
+    Map<String, Object?> publicKey,
+  ) {
+    final canonical = jsonEncode(<String, Object?>{
+      'format': _asymmetricKeyFormat,
+      'version': 1,
+      'kind': 'public',
+      'algorithm': algorithm.id,
+      'public': publicKey,
+    });
+    return _hexDigest(crypto.sha256.convert(utf8.encode(canonical)).bytes);
+  }
+
+  ToolboxCryptoAsymmetricAlgorithm _asymmetricAlgorithmFromId(String id) {
+    for (final algorithm in ToolboxCryptoAsymmetricAlgorithm.values) {
+      if (algorithm.id == id) {
+        return algorithm;
+      }
+    }
+    throw const ToolboxCryptoException('Unsupported asymmetric algorithm.');
+  }
+
+  void _validateAsymmetricPayloadSize(Uint8List bytes) {
+    if (bytes.isEmpty) {
+      throw const ToolboxCryptoException('Input bytes are empty.');
+    }
+    if (bytes.length > _maxAsymmetricTextBytes) {
+      throw const ToolboxCryptoException('Input text is too large.');
+    }
+  }
+
+  Map<String, Object?> _decodeJsonObject(String text) {
+    if (text.length > _maxAsymmetricJsonChars) {
+      throw const ToolboxCryptoException('JSON payload is too large.');
+    }
+    try {
+      final decoded = jsonDecode(text.trim());
+      return _jsonObject(decoded);
+    } on FormatException {
+      throw const ToolboxCryptoException('JSON payload is invalid.');
+    }
+  }
+
+  Map<String, Object?> _jsonObject(Object? value) {
+    if (value is Map<String, Object?>) {
+      return value;
+    }
+    if (value is Map) {
+      final output = <String, Object?>{};
+      for (final entry in value.entries) {
+        final key = entry.key;
+        if (key is! String) {
+          throw const ToolboxCryptoException('JSON payload is invalid.');
+        }
+        output[key] = entry.value;
+      }
+      return output;
+    }
+    throw const ToolboxCryptoException('JSON payload is invalid.');
+  }
+
+  Uint8List _base64ToBytes(String value, {required int maxBytes}) {
+    final maxBase64Length = ((maxBytes + 2) ~/ 3) * 4;
+    if (value.length > maxBase64Length) {
+      throw const ToolboxCryptoException('Crypto payload is too large.');
+    }
+    try {
+      final bytes = Uint8List.fromList(base64Decode(value));
+      if (bytes.length > maxBytes) {
+        throw const ToolboxCryptoException('Crypto payload is too large.');
+      }
+      return bytes;
+    } on FormatException {
+      throw const ToolboxCryptoException('Crypto payload is invalid.');
+    }
+  }
+
+  pc.RSAPublicKey _rsaPublicKeyFromMap(Map<String, Object?> map) {
+    final modulus = _bigIntFromBase64(_readString(map, 'n'));
+    final exponent = _bigIntFromBase64(_readString(map, 'e'));
+    _validateRsaPublicNumbers(modulus: modulus, exponent: exponent);
+    return pc.RSAPublicKey(modulus, exponent);
+  }
+
+  pc.RSAPrivateKey _rsaPrivateKeyFromMap({
+    required pc.RSAPublicKey publicKey,
+    required Map<String, Object?> privateMap,
+  }) {
+    final modulus = publicKey.modulus!;
+    final exponent = publicKey.publicExponent!;
+    final privateExponent = _bigIntFromBase64(_readString(privateMap, 'd'));
+    final p = _bigIntFromBase64(_readString(privateMap, 'p'));
+    final q = _bigIntFromBase64(_readString(privateMap, 'q'));
+    _validateRsaPrivateNumbers(
+      modulus: modulus,
+      exponent: exponent,
+      privateExponent: privateExponent,
+      p: p,
+      q: q,
+    );
+    return pc.RSAPrivateKey(modulus, privateExponent, p, q);
+  }
+
+  pc.ECPublicKey _ecdsaPublicKeyFromMap(Map<String, Object?> map) {
+    final domain = _p256DomainFromName(_readString(map, 'curve'));
+    final qBytes = _readBase64(map, 'q', maxBytes: _maxPublicKeyBytes);
+    if (qBytes.length != 65 || qBytes.first != 4) {
+      throw const ToolboxCryptoException('Unsupported EC public key.');
+    }
+    final point = domain.curve.decodePoint(qBytes);
+    if (point == null || point.isInfinity) {
+      throw const ToolboxCryptoException('Unsupported EC public key.');
+    }
+    return pc.ECPublicKey(point, domain);
+  }
+
+  pc.ECPrivateKey _ecdsaPrivateKeyFromMap({
+    required pc.ECPublicKey publicKey,
+    required Map<String, Object?> privateMap,
+  }) {
+    final domain = _p256DomainFromName(_readString(privateMap, 'curve'));
+    final d = _bigIntFromBase64(_readString(privateMap, 'd'));
+    final n = domain.n;
+    if (d <= BigInt.zero || d >= n) {
+      throw const ToolboxCryptoException('Unsupported EC private key.');
+    }
+    final expectedPoint = domain.G * d;
+    if (expectedPoint == null ||
+        !_constantTimeBytesEquals(
+          expectedPoint.getEncoded(false),
+          publicKey.Q!.getEncoded(false),
+        )) {
+      throw const ToolboxCryptoException('EC private key does not match.');
+    }
+    return pc.ECPrivateKey(d, domain);
+  }
+
+  void _validateRsaPublicNumbers({
+    required BigInt modulus,
+    required BigInt exponent,
+  }) {
+    if (modulus.bitLength != 2048 || exponent != BigInt.from(65537)) {
+      throw const ToolboxCryptoException('Unsupported RSA public key.');
+    }
+  }
+
+  void _validateRsaPrivateNumbers({
+    required BigInt modulus,
+    required BigInt exponent,
+    required BigInt privateExponent,
+    required BigInt p,
+    required BigInt q,
+  }) {
+    if (p <= BigInt.one ||
+        q <= BigInt.one ||
+        p * q != modulus ||
+        privateExponent <= BigInt.one) {
+      throw const ToolboxCryptoException('Unsupported RSA private key.');
+    }
+    final phiLcm = _lcm(p - BigInt.one, q - BigInt.one);
+    if ((privateExponent * exponent) % phiLcm != BigInt.one) {
+      throw const ToolboxCryptoException('RSA private key does not match.');
+    }
+  }
+
+  BigInt _lcm(BigInt left, BigInt right) {
+    return (left ~/ left.gcd(right)) * right;
+  }
+
+  pc.ECDomainParameters _p256DomainFromName(String curveName) {
+    if (curveName != 'secp256r1' && curveName != 'prime256v1') {
+      throw const ToolboxCryptoException('Unsupported EC curve.');
+    }
+    return pc.ECDomainParameters('secp256r1');
+  }
+
+  String _readFingerprint(Map<String, Object?> map, String key) {
+    final value = _readString(map, key).toLowerCase();
+    if (!RegExp(r'^[0-9a-f]{64}$').hasMatch(value)) {
+      throw const ToolboxCryptoException('Public key fingerprint is invalid.');
+    }
+    return value;
   }
 
   pc.FortunaRandom _fortuna(Uint8List seed) {
@@ -1818,6 +3177,30 @@ class ToolboxCryptoService {
     return value;
   }
 
+  int _readEnvelopeByte(Uint8List bytes, int offset) {
+    if (offset < 0 || offset >= bytes.length) {
+      throw const ToolboxCryptoException('Crypto envelope is invalid.');
+    }
+    return bytes[offset];
+  }
+
+  int _readEnvelopeUint32(Uint8List bytes, int offset) {
+    if (offset < 0 || offset + 4 > bytes.length) {
+      throw const ToolboxCryptoException('Crypto envelope is invalid.');
+    }
+    return (bytes[offset] << 24) |
+        (bytes[offset + 1] << 16) |
+        (bytes[offset + 2] << 8) |
+        bytes[offset + 3];
+  }
+
+  Uint8List _readEnvelopeBytes(Uint8List bytes, int offset, int length) {
+    if (length < 0 || offset < 0 || offset + length > bytes.length) {
+      throw const ToolboxCryptoException('Crypto envelope is invalid.');
+    }
+    return Uint8List.fromList(bytes.sublist(offset, offset + length));
+  }
+
   Uint8List _randomBytes(int length) {
     return Uint8List.fromList(
       List<int>.generate(length, (_) => _secureRandom.nextInt(256)),
@@ -1857,6 +3240,66 @@ class ToolboxCryptoService {
     }
     return buffer.toString();
   }
+}
+
+class _AsymmetricKeyMaterial {
+  const _AsymmetricKeyMaterial({
+    required this.algorithm,
+    required this.publicKeyFingerprint,
+    this.rsaPublicKey,
+    this.rsaPrivateKey,
+    this.ecPublicKey,
+    this.ecPrivateKey,
+  });
+
+  final ToolboxCryptoAsymmetricAlgorithm algorithm;
+  final String publicKeyFingerprint;
+  final pc.RSAPublicKey? rsaPublicKey;
+  final pc.RSAPrivateKey? rsaPrivateKey;
+  final pc.ECPublicKey? ecPublicKey;
+  final pc.ECPrivateKey? ecPrivateKey;
+
+  bool get isPrivate => rsaPrivateKey != null || ecPrivateKey != null;
+}
+
+class _AsymmetricSignatureMaterial {
+  const _AsymmetricSignatureMaterial({
+    required this.algorithm,
+    required this.publicKeyFingerprint,
+    required this.value,
+  });
+
+  final ToolboxCryptoAsymmetricAlgorithm algorithm;
+  final String publicKeyFingerprint;
+  final Map<String, Object?> value;
+}
+
+class _AsymmetricCipherMaterial {
+  const _AsymmetricCipherMaterial({
+    required this.algorithm,
+    required this.publicKeyFingerprint,
+    required this.cipherBytes,
+  });
+
+  final ToolboxCryptoAsymmetricAlgorithm algorithm;
+  final String publicKeyFingerprint;
+  final Uint8List cipherBytes;
+}
+
+class _OpaqueEnvelopeV5 {
+  const _OpaqueEnvelopeV5({
+    required this.kdfSettings,
+    required this.salt,
+    required this.metadataNonce,
+    required this.metadataCipher,
+    required this.cipherBytes,
+  });
+
+  final _KdfSettings kdfSettings;
+  final Uint8List salt;
+  final Uint8List metadataNonce;
+  final Uint8List metadataCipher;
+  final Uint8List cipherBytes;
 }
 
 class _KdfSettings {
@@ -1925,6 +3368,22 @@ class _CryptoStage {
         keyBytes: keyBytes,
         usesNonce: true,
         transform: _twofishGcmTransform,
+      );
+
+  const _CryptoStage.serpentGcm({int keyBytes = 32})
+    : this(
+        id: 'serpent_gcm',
+        keyBytes: keyBytes,
+        usesNonce: true,
+        transform: _serpentGcmTransform,
+      );
+
+  const _CryptoStage.kuznyechikGcm({int keyBytes = 32})
+    : this(
+        id: 'kuznyechik_gcm',
+        keyBytes: keyBytes,
+        usesNonce: true,
+        transform: _kuznyechikGcmTransform,
       );
 
   const _CryptoStage.sha256Stream({int keyBytes = 32})
@@ -2054,6 +3513,40 @@ Uint8List _twofishGcmTransform({
   );
 }
 
+Uint8List _serpentGcmTransform({
+  required bool encrypt,
+  required Uint8List input,
+  required Uint8List key,
+  required Uint8List nonce,
+  required ToolboxCryptoStrength strength,
+}) {
+  return _gcmTransform(
+    engine: ToolboxVeraCryptSerpentEngine(),
+    engineId: 'serpent_gcm',
+    encrypt: encrypt,
+    input: input,
+    key: key,
+    nonce: nonce,
+  );
+}
+
+Uint8List _kuznyechikGcmTransform({
+  required bool encrypt,
+  required Uint8List input,
+  required Uint8List key,
+  required Uint8List nonce,
+  required ToolboxCryptoStrength strength,
+}) {
+  return _gcmTransform(
+    engine: ToolboxVeraCryptKuznyechikEngine(),
+    engineId: 'kuznyechik_gcm',
+    encrypt: encrypt,
+    input: input,
+    key: key,
+    nonce: nonce,
+  );
+}
+
 Uint8List _gcmTransform({
   required pc.BlockCipher engine,
   required String engineId,
@@ -2061,6 +3554,7 @@ Uint8List _gcmTransform({
   required Uint8List input,
   required Uint8List key,
   required Uint8List nonce,
+  List<int> associatedData = const <int>[],
 }) {
   try {
     final cipher = pc.GCMBlockCipher(engine)
@@ -2070,7 +3564,7 @@ Uint8List _gcmTransform({
           pc.KeyParameter(_gcmCipherKey(key, engineId)),
           128,
           nonce,
-          Uint8List(0),
+          Uint8List.fromList(associatedData),
         ),
       );
     return cipher.process(input);
@@ -2167,5 +3661,11 @@ Uint8List _rc4(Uint8List input, Uint8List key) {
 Uint8List _uint64Bytes(int value) {
   return Uint8List.fromList(
     List<int>.generate(8, (index) => (value >> ((7 - index) * 8)) & 255),
+  );
+}
+
+Uint8List _uint32Bytes(int value) {
+  return Uint8List.fromList(
+    List<int>.generate(4, (index) => (value >> ((3 - index) * 8)) & 255),
   );
 }

@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show kDebugMode;
+
 import '../models/play_config.dart';
 import '../models/word_entry.dart';
 import 'app_log_service.dart';
@@ -12,8 +14,17 @@ typedef UnitChangeCallback =
 typedef WordResolveCallback =
     FutureOr<WordEntry> Function(int index, WordEntry word);
 
+class PlaybackPrepareCancelledException implements Exception {
+  const PlaybackPrepareCancelledException();
+
+  @override
+  String toString() => 'Playback prepare was cancelled.';
+}
+
 class PlaybackService {
   PlaybackService(this._ttsService);
+
+  static const int _maxWordPrecacheParallelRequests = 3;
 
   final TtsService _ttsService;
   final AppLogService _log = AppLogService.instance;
@@ -27,6 +38,7 @@ class PlaybackService {
   TtsProviderType _activeSpeakProvider = TtsProviderType.local;
   int _runId = 0;
   PreparedPlaySession? _preparedSession;
+  bool _disposed = false;
 
   bool get isPlaying => _playLoop;
   bool get isPaused => _paused;
@@ -37,6 +49,7 @@ class PlaybackService {
   Future<void> clearApiTtsCache() => _ttsService.clearApiCache();
 
   void updateRuntimeConfig(PlayConfig config) {
+    _ensureNotDisposed();
     _activeConfig = config;
   }
 
@@ -50,69 +63,19 @@ class PlaybackService {
     UnitChangeCallback? onUnitChanged,
     VoidCallback? onFinished,
   }) async {
+    _ensureNotDisposed();
     if (words.isEmpty) throw ArgumentError('Words list cannot be empty');
+    _ttsService.validateForPlayback(config.tts);
     if (_playLoop) await stop();
 
     final runId = ++_runId;
     _activeConfig = config;
 
-    // Build playback indices
     final indices = _buildPlaybackIndices(
       wordCount: words.length,
       startIndex: startIndex,
       order: config.order,
     );
-
-    // Pre-resolve all words and prebuild play queues
-    final resolvedWords = <WordEntry>[];
-    final prebuiltQueues = <List<PlayUnit>>[];
-    for (final index in indices) {
-      final sourceWord = words[index];
-      var word = sourceWord;
-      if (resolveWord != null) {
-        try {
-          word = await Future<WordEntry>.value(resolveWord(index, sourceWord));
-        } catch (error, stackTrace) {
-          _log.e(
-            'playback',
-            'resolve word failed during prepare',
-            error: error,
-            stackTrace: stackTrace,
-            data: <String, Object?>{
-              'wordId': sourceWord.id,
-              'word': sourceWord.word,
-              'index': index,
-            },
-          );
-        }
-      }
-
-      // Prebuild play queue for this word
-      resolvedWords.add(word);
-      final queue = buildPlayQueue(word, config);
-      prebuiltQueues.add(queue);
-
-      // Pre-cache API TTS audio if needed
-      if (config.tts.provider != TtsProviderType.local &&
-          config.tts.enableApiCache) {
-        for (final unit in queue) {
-          try {
-            // This will download and cache the audio without playing
-            await _ttsService.speak(unit.text, config.tts, preCacheOnly: true);
-          } catch (e) {
-            _log.w(
-              'playback',
-              'Failed to pre-cache audio for unit: ${unit.type}',
-              data: {
-                'word': word.word,
-                'text': unit.text,
-                'error': e.toString(),
-              },
-            );
-          }
-        }
-      }
-    }
 
     final session = PreparedPlaySession(
       words: words,
@@ -123,8 +86,6 @@ class PlaybackService {
       onUnitChanged: onUnitChanged,
       onFinished: onFinished,
       indices: indices,
-      resolvedWords: resolvedWords,
-      prebuiltQueues: prebuiltQueues,
       runId: runId,
     );
 
@@ -132,11 +93,7 @@ class PlaybackService {
     _log.i(
       'playback',
       'Playback prepared successfully',
-      data: {
-        'wordCount': words.length,
-        'queueCount': prebuiltQueues.length,
-        'runId': runId,
-      },
+      data: {'wordCount': words.length, 'queueCount': 0, 'runId': runId},
     );
 
     return session;
@@ -144,6 +101,7 @@ class PlaybackService {
 
   /// Start playback from prepared session
   Future<void> startPreparedPlay() async {
+    _ensureNotDisposed();
     final session = _preparedSession;
     if (session == null) {
       _log.w('playback', 'No prepared session to start');
@@ -159,26 +117,49 @@ class PlaybackService {
     _skipCurrentWord = false;
     _preparedSession = null; // Consume the session
 
-    for (var i = 0; i < session.indices.length; i++) {
-      if (!_isRunActive(runId)) break;
-      await _waitIfPaused(runId);
-      if (!_isRunActive(runId)) break;
+    var completed = false;
+    try {
+      for (final index in session.indices) {
+        if (!_isRunActive(runId)) break;
+        await _waitIfPaused(runId);
+        if (!_isRunActive(runId)) break;
 
-      final index = session.indices[i];
-      final word = session.resolvedWords[i];
-      final queue = session.prebuiltQueues[i];
+        final sourceWord = session.words[index];
+        var word = sourceWord;
+        if (session.resolveWord != null) {
+          try {
+            word = await Future<WordEntry>.value(
+              session.resolveWord!(index, sourceWord),
+            );
+          } catch (error, stackTrace) {
+            _log.e(
+              'playback',
+              'resolve word failed',
+              error: error,
+              stackTrace: stackTrace,
+              data: <String, Object?>{
+                'wordId': sourceWord.id,
+                'word': sourceWord.word,
+                'index': index,
+              },
+            );
+          }
+        }
 
-      session.onWordChanged?.call(index, word);
-      await _playSingleWordWithQueue(word, queue, session.onUnitChanged, runId);
+        session.onWordChanged?.call(index, word);
+        await _playSingleWord(word, session.onUnitChanged, runId);
+      }
+      completed = runId == _runId;
+    } finally {
+      if (runId == _runId) {
+        _playLoop = false;
+        _paused = false;
+        _skipCurrentWord = false;
+        if (completed) {
+          session.onFinished?.call();
+        }
+      }
     }
-
-    if (runId != _runId) {
-      return;
-    }
-    _playLoop = false;
-    _paused = false;
-    _skipCurrentWord = false;
-    session.onFinished?.call();
   }
 
   /// Original playWords method (backward compatible)
@@ -191,7 +172,9 @@ class PlaybackService {
     UnitChangeCallback? onUnitChanged,
     VoidCallback? onFinished,
   }) async {
+    _ensureNotDisposed();
     if (words.isEmpty) return;
+    _ttsService.validateForPlayback(config.tts);
     if (_playLoop) await stop();
     _preparedSession = null;
     final runId = ++_runId;
@@ -205,44 +188,52 @@ class PlaybackService {
       startIndex: startIndex,
       order: config.order,
     );
-    for (final index in indices) {
-      if (!_isRunActive(runId)) break;
-      await _waitIfPaused(runId);
-      if (!_isRunActive(runId)) break;
+    var completed = false;
+    try {
+      for (final index in indices) {
+        if (!_isRunActive(runId)) break;
+        await _waitIfPaused(runId);
+        if (!_isRunActive(runId)) break;
 
-      final sourceWord = words[index];
-      var word = sourceWord;
-      if (resolveWord != null) {
-        try {
-          word = await Future<WordEntry>.value(resolveWord(index, sourceWord));
-        } catch (error, stackTrace) {
-          _log.e(
-            'playback',
-            'resolve word failed',
-            error: error,
-            stackTrace: stackTrace,
-            data: <String, Object?>{
-              'wordId': sourceWord.id,
-              'word': sourceWord.word,
-              'index': index,
-            },
-          );
+        final sourceWord = words[index];
+        var word = sourceWord;
+        if (resolveWord != null) {
+          try {
+            word = await Future<WordEntry>.value(
+              resolveWord(index, sourceWord),
+            );
+          } catch (error, stackTrace) {
+            _log.e(
+              'playback',
+              'resolve word failed',
+              error: error,
+              stackTrace: stackTrace,
+              data: <String, Object?>{
+                'wordId': sourceWord.id,
+                'word': sourceWord.word,
+                'index': index,
+              },
+            );
+          }
+        }
+        onWordChanged?.call(index, word);
+        await _playSingleWord(word, onUnitChanged, runId);
+      }
+      completed = runId == _runId;
+    } finally {
+      if (runId == _runId) {
+        _playLoop = false;
+        _paused = false;
+        _skipCurrentWord = false;
+        if (completed) {
+          onFinished?.call();
         }
       }
-      onWordChanged?.call(index, word);
-      await _playSingleWord(word, onUnitChanged, runId);
     }
-
-    if (runId != _runId) {
-      return;
-    }
-    _playLoop = false;
-    _paused = false;
-    _skipCurrentWord = false;
-    onFinished?.call();
   }
 
   Future<void> pause() async {
+    _ensureNotDisposed();
     if (!_playLoop || _paused) return;
     _paused = true;
     final provider = _unitSpeakInProgress
@@ -258,6 +249,7 @@ class PlaybackService {
   }
 
   Future<void> resume() async {
+    _ensureNotDisposed();
     if (!_playLoop || !_paused) return;
     final provider = _unitSpeakInProgress
         ? _activeSpeakProvider
@@ -279,6 +271,7 @@ class PlaybackService {
   }
 
   Future<void> skipCurrentWord() async {
+    _ensureNotDisposed();
     if (!_playLoop) return;
     _skipCurrentWord = true;
     _replayCurrentUnitAfterResume = false;
@@ -286,108 +279,25 @@ class PlaybackService {
   }
 
   Future<void> speakText(String text, PlayConfig config) async {
+    _ensureNotDisposed();
     final content = text.trim();
     if (content.isEmpty) return;
     await _ttsService.speak(content, config.tts);
   }
 
-  Future<void> _playSingleWordWithQueue(
-    WordEntry word,
-    List<PlayUnit> queue,
-    UnitChangeCallback? onUnitChanged,
-    int runId,
-  ) async {
-    _log.i(
-      'playback',
-      'using prebuilt play queue',
-      data: <String, Object?>{
-        'word': word.word,
-        'wordId': word.id,
-        'queueLength': queue.length,
-        'units': queue.map((u) => '${u.type}:${_preview(u.text)}').toList(),
-      },
-    );
-    var i = 0;
-    while (i < queue.length) {
-      if (!_isRunActive(runId)) break;
-      await _waitIfPaused(runId);
-      if (!_isRunActive(runId)) break;
-      if (_skipCurrentWord) {
-        _skipCurrentWord = false;
-        _replayCurrentUnitAfterResume = false;
-        break;
-      }
-
-      final unit = queue[i];
-      onUnitChanged?.call(i + 1, queue.length, unit);
-      _unitSpeakInProgress = true;
-      _log.i(
-        'playback',
-        'unit speak start',
-        data: <String, Object?>{
-          'word': word.word,
-          'unitIndex': i + 1,
-          'unitTotal': queue.length,
-          'unitType': unit.type,
-          'unitPreview': _preview(unit.text),
-        },
-      );
-      try {
-        final ttsConfig = _activeConfig.tts;
-        _activeSpeakProvider = ttsConfig.provider;
-        await _ttsService.speak(unit.text, ttsConfig);
-        _log.i(
-          'playback',
-          'unit speak done',
-          data: <String, Object?>{
-            'word': word.word,
-            'unitIndex': i + 1,
-            'unitType': unit.type,
-          },
-        );
-      } catch (error, stackTrace) {
-        _log.e(
-          'playback',
-          'unit speak failed',
-          error: error,
-          stackTrace: stackTrace,
-          data: <String, Object?>{
-            'wordId': word.id,
-            'word': word.word,
-            'unitIndex': i + 1,
-            'unitType': unit.type,
-            'unitPreview': _preview(unit.text),
-          },
-        );
-        // Keep playing even if one unit fails.
-      } finally {
-        _unitSpeakInProgress = false;
-      }
-
-      if (_replayCurrentUnitAfterResume) {
-        if (_paused) {
-          continue;
-        }
-        _replayCurrentUnitAfterResume = false;
-        continue;
-      }
-      _replayCurrentUnitAfterResume = false;
-
-      final delayMs = _activeConfig.delayBetweenUnitsMs;
-      if (delayMs > 0 && i < queue.length - 1) {
-        await _waitDelayWithPause(Duration(milliseconds: delayMs), runId);
-      }
-      i += 1;
+  Future<void> dispose() async {
+    if (_disposed) {
+      return;
     }
-    _log.i(
-      'playback',
-      'single word done',
-      data: <String, Object?>{
-        'word': word.word,
-        'unitsPlayed': i,
-        'queueLength': queue.length,
-      },
-    );
+    _disposed = true;
+    await stop();
+    await _ttsService.dispose();
+  }
+
+  void _ensureNotDisposed() {
+    if (_disposed) {
+      throw StateError('PlaybackService has been disposed.');
+    }
   }
 
   Future<void> _playSingleWord(
@@ -397,18 +307,21 @@ class PlaybackService {
   ) async {
     final config = _activeConfig;
     final queue = buildPlayQueue(word, config);
-    _log.i(
-      'playback',
-      'play queue built',
-      data: <String, Object?>{
-        'word': word.word,
-        'wordId': word.id,
-        'queueLength': queue.length,
-        'fieldCount': word.playbackFields.length,
-        'fieldKeys': word.playbackFields.map((f) => f.key).toList(),
-        'units': queue.map((u) => '${u.type}:${_preview(u.text)}').toList(),
-      },
-    );
+    if (kDebugMode) {
+      _log.d(
+        'playback',
+        'play queue built',
+        data: <String, Object?>{
+          'word': word.word,
+          'wordId': word.id,
+          'queueLength': queue.length,
+          'fieldCount': word.playbackFields.length,
+          'fieldKeys': word.playbackFields.map((f) => f.key).toList(),
+          'units': queue.map((u) => '${u.type}:${_preview(u.text)}').toList(),
+        },
+      );
+    }
+    await _precacheCurrentWordUnits(word, queue, runId);
     var i = 0;
     while (i < queue.length) {
       if (!_isRunActive(runId)) break;
@@ -423,30 +336,34 @@ class PlaybackService {
       final unit = queue[i];
       onUnitChanged?.call(i + 1, queue.length, unit);
       _unitSpeakInProgress = true;
-      _log.i(
-        'playback',
-        'unit speak start',
-        data: <String, Object?>{
-          'word': word.word,
-          'unitIndex': i + 1,
-          'unitTotal': queue.length,
-          'unitType': unit.type,
-          'unitPreview': _preview(unit.text),
-        },
-      );
+      if (kDebugMode) {
+        _log.d(
+          'playback',
+          'unit speak start',
+          data: <String, Object?>{
+            'word': word.word,
+            'unitIndex': i + 1,
+            'unitTotal': queue.length,
+            'unitType': unit.type,
+            'unitPreview': _preview(unit.text),
+          },
+        );
+      }
       try {
         final ttsConfig = _activeConfig.tts;
         _activeSpeakProvider = ttsConfig.provider;
         await _ttsService.speak(unit.text, ttsConfig);
-        _log.i(
-          'playback',
-          'unit speak done',
-          data: <String, Object?>{
-            'word': word.word,
-            'unitIndex': i + 1,
-            'unitType': unit.type,
-          },
-        );
+        if (kDebugMode) {
+          _log.d(
+            'playback',
+            'unit speak done',
+            data: <String, Object?>{
+              'word': word.word,
+              'unitIndex': i + 1,
+              'unitType': unit.type,
+            },
+          );
+        }
       } catch (error, stackTrace) {
         _log.e(
           'playback',
@@ -461,6 +378,9 @@ class PlaybackService {
             'unitPreview': _preview(unit.text),
           },
         );
+        if (error is TtsConfigurationException) {
+          rethrow;
+        }
         // Keep playing even if one unit fails.
       } finally {
         _unitSpeakInProgress = false;
@@ -481,15 +401,17 @@ class PlaybackService {
       }
       i += 1;
     }
-    _log.i(
-      'playback',
-      'single word done',
-      data: <String, Object?>{
-        'word': word.word,
-        'unitsPlayed': i,
-        'queueLength': queue.length,
-      },
-    );
+    if (kDebugMode) {
+      _log.d(
+        'playback',
+        'single word done',
+        data: <String, Object?>{
+          'word': word.word,
+          'unitsPlayed': i,
+          'queueLength': queue.length,
+        },
+      );
+    }
   }
 
   String _preview(String text) {
@@ -499,6 +421,74 @@ class PlaybackService {
   }
 
   bool _isRunActive(int runId) => _playLoop && runId == _runId;
+
+  Future<void> _precacheCurrentWordUnits(
+    WordEntry word,
+    List<PlayUnit> queue,
+    int runId,
+  ) async {
+    final ttsConfig = _activeConfig.tts;
+    if (ttsConfig.provider == TtsProviderType.local ||
+        !ttsConfig.enableApiCache ||
+        queue.isEmpty) {
+      return;
+    }
+    final seen = <String>{};
+    final texts = <String>[];
+    for (final unit in queue) {
+      final text = unit.text.trim();
+      if (text.isEmpty || !seen.add(text)) continue;
+      texts.add(text);
+    }
+    if (texts.isEmpty) return;
+
+    if (kDebugMode) {
+      _log.d(
+        'playback',
+        'precache current word units',
+        data: <String, Object?>{
+          'word': word.word,
+          'wordId': word.id,
+          'unitCount': queue.length,
+          'requestCount': texts.length,
+        },
+      );
+    }
+
+    for (
+      var start = 0;
+      start < texts.length;
+      start += _maxWordPrecacheParallelRequests
+    ) {
+      if (!_isRunActive(runId)) return;
+      await _waitIfPaused(runId);
+      if (!_isRunActive(runId)) return;
+      final end = math.min(
+        start + _maxWordPrecacheParallelRequests,
+        texts.length,
+      );
+      final batch = texts.sublist(start, end);
+      await Future.wait(
+        batch.map((text) async {
+          try {
+            await _ttsService.speak(text, ttsConfig, preCacheOnly: true);
+          } catch (error, stackTrace) {
+            _log.w(
+              'playback',
+              'precache current word unit failed',
+              data: <String, Object?>{
+                'word': word.word,
+                'wordId': word.id,
+                'unitPreview': _preview(text),
+                'error': '$error',
+                'stackTrace': '$stackTrace',
+              },
+            );
+          }
+        }),
+      );
+    }
+  }
 
   Future<void> _waitIfPaused(int runId) async {
     while (_isRunActive(runId) && _paused) {
@@ -517,21 +507,27 @@ class PlaybackService {
     }
   }
 
-  List<int> _buildPlaybackIndices({
+  Iterable<int> _buildPlaybackIndices({
     required int wordCount,
     required int startIndex,
     required PlayOrder order,
-  }) {
-    final safeStart = startIndex.clamp(0, wordCount - 1);
+  }) sync* {
+    if (wordCount <= 0) {
+      return;
+    }
+    final safeStart = startIndex.clamp(0, wordCount - 1).toInt();
     if (order != PlayOrder.random) {
-      return List<int>.generate(
-        wordCount - safeStart,
-        (index) => index + safeStart,
-      );
+      for (var index = safeStart; index < wordCount; index += 1) {
+        yield index;
+      }
+      return;
     }
     final remaining = List<int>.generate(wordCount, (index) => index)
       ..remove(safeStart);
-    return <int>[safeStart, ...shuffled(remaining)];
+    yield safeStart;
+    for (final index in shuffled(remaining)) {
+      yield index;
+    }
   }
 }
 
@@ -544,9 +540,7 @@ class PreparedPlaySession {
   final WordChangeCallback? onWordChanged;
   final UnitChangeCallback? onUnitChanged;
   final VoidCallback? onFinished;
-  final List<int> indices;
-  final List<WordEntry> resolvedWords;
-  final List<List<PlayUnit>> prebuiltQueues;
+  final Iterable<int> indices;
   final int runId;
 
   PreparedPlaySession({
@@ -558,8 +552,6 @@ class PreparedPlaySession {
     this.onUnitChanged,
     this.onFinished,
     required this.indices,
-    required this.resolvedWords,
-    required this.prebuiltQueues,
     required this.runId,
   });
 }

@@ -22,6 +22,33 @@ part 'practice_session_page_models.dart';
 const int _practiceAnswerTransitionWarnThresholdMs = 120;
 const int _practiceTaskWordSyncWarnThresholdMs = 120;
 
+class _PracticeSessionShell {
+  const _PracticeSessionShell({
+    required this.uiLanguage,
+    required this.practiceEnabled,
+  });
+
+  factory _PracticeSessionShell.fromState(AppState state) {
+    return _PracticeSessionShell(
+      uiLanguage: state.uiLanguage,
+      practiceEnabled: state.isModuleEnabled(ModuleIds.practice),
+    );
+  }
+
+  final String uiLanguage;
+  final bool practiceEnabled;
+
+  @override
+  bool operator ==(Object other) {
+    return other is _PracticeSessionShell &&
+        other.uiLanguage == uiLanguage &&
+        other.practiceEnabled == practiceEnabled;
+  }
+
+  @override
+  int get hashCode => Object.hash(uiLanguage, practiceEnabled);
+}
+
 class PracticeSessionPage extends ConsumerStatefulWidget {
   const PracticeSessionPage({
     super.key,
@@ -129,9 +156,12 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(appStateProvider);
-    final i18n = AppI18n(state.uiLanguage);
-    if (!state.isModuleEnabled(ModuleIds.practice)) {
+    final shell = ref.watch(
+      appStateProvider.select(_PracticeSessionShell.fromState),
+    );
+    final state = ref.read(appStateProvider);
+    final i18n = AppI18n(shell.uiLanguage);
+    if (!shell.practiceEnabled) {
       return Scaffold(
         appBar: AppBar(title: Text(widget.title)),
         body: ModuleDisabledView(i18n: i18n, moduleId: ModuleIds.practice),
@@ -458,32 +488,84 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                 child: LinearProgressIndicator(value: progress),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
                     children: <Widget>[
-                      Text(
-                        i18n.t(
-                          'inline.ui.pages.practice_session_page.session_settings_35f8c2',
+                      Chip(
+                        avatar: Icon(
+                          practiceQuestionTypeIcon(_questionType),
+                          size: 16,
                         ),
-                        style: Theme.of(context).textTheme.titleMedium,
+                        label: Text(
+                          practiceQuestionTypeLabel(i18n, _questionType),
+                        ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        i18n.t(
-                          'inline.ui.pages.practice_session_page.question_mode_automation_toggles_and_answer_popup_behavi_4a6189',
+                      if (_autoAddWeakWordsToTask)
+                        Chip(
+                          avatar: const Icon(
+                            Icons.playlist_add_check_rounded,
+                            size: 16,
+                          ),
+                          label: Text(
+                            i18n.t(
+                              'inline.ui.pages.practice_session_page.auto_task_sync_e022a9',
+                            ),
+                          ),
                         ),
-                        style: Theme.of(context).textTheme.bodySmall,
+                      if (_autoPlayPronunciation)
+                        Chip(
+                          avatar: const Icon(Icons.volume_up_rounded, size: 16),
+                          label: Text(
+                            i18n.t(
+                              'inline.ui.pages.practice_session_page.auto_pronunciation_88fe0a',
+                            ),
+                          ),
+                        ),
+                      if (_hintRevealed)
+                        Chip(
+                          avatar: const Icon(
+                            Icons.lightbulb_outline_rounded,
+                            size: 16,
+                          ),
+                          label: Text(
+                            i18n.t(
+                              'inline.ui.pages.practice_session_page.hints_open_cd49e0',
+                            ),
+                          ),
+                        ),
+                      Chip(
+                        avatar: Icon(
+                          _answerFeedbackDialogEnabled
+                              ? Icons.celebration_rounded
+                              : Icons.notifications_off_outlined,
+                          size: 16,
+                        ),
+                        label: Text(
+                          _answerFeedbackDialogEnabled
+                              ? i18n.t(
+                                  'inline.ui.pages.practice_session_page.answer_popup_on_a723da',
+                                )
+                              : i18n.t(
+                                  'inline.ui.pages.practice_session_page.answer_popup_off_3cbd34',
+                                ),
+                        ),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
                 IconButton.filledTonal(
                   key: const ValueKey<String>(
                     'practice-session-settings-toggle',
+                  ),
+                  tooltip: i18n.t(
+                    'inline.ui.pages.practice_session_page.session_settings_35f8c2',
                   ),
                   onPressed: () {
                     setState(() {
@@ -493,76 +575,26 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                   icon: Icon(
                     _sessionSettingsExpanded
                         ? Icons.expand_less_rounded
-                        : Icons.expand_more_rounded,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: <Widget>[
-                Chip(
-                  avatar: Icon(
-                    practiceQuestionTypeIcon(_questionType),
-                    size: 16,
-                  ),
-                  label: Text(practiceQuestionTypeLabel(i18n, _questionType)),
-                ),
-                if (_autoAddWeakWordsToTask)
-                  Chip(
-                    avatar: const Icon(
-                      Icons.playlist_add_check_rounded,
-                      size: 16,
-                    ),
-                    label: Text(
-                      i18n.t(
-                        'inline.ui.pages.practice_session_page.auto_task_sync_e022a9',
-                      ),
-                    ),
-                  ),
-                if (_autoPlayPronunciation)
-                  Chip(
-                    avatar: const Icon(Icons.volume_up_rounded, size: 16),
-                    label: Text(
-                      i18n.t(
-                        'inline.ui.pages.practice_session_page.auto_pronunciation_88fe0a',
-                      ),
-                    ),
-                  ),
-                if (_hintRevealed)
-                  Chip(
-                    avatar: const Icon(
-                      Icons.lightbulb_outline_rounded,
-                      size: 16,
-                    ),
-                    label: Text(
-                      i18n.t(
-                        'inline.ui.pages.practice_session_page.hints_open_cd49e0',
-                      ),
-                    ),
-                  ),
-                Chip(
-                  avatar: Icon(
-                    _answerFeedbackDialogEnabled
-                        ? Icons.celebration_rounded
-                        : Icons.notifications_off_outlined,
-                    size: 16,
-                  ),
-                  label: Text(
-                    _answerFeedbackDialogEnabled
-                        ? i18n.t(
-                            'inline.ui.pages.practice_session_page.answer_popup_on_a723da',
-                          )
-                        : i18n.t(
-                            'inline.ui.pages.practice_session_page.answer_popup_off_3cbd34',
-                          ),
+                        : Icons.tune_rounded,
                   ),
                 ),
               ],
             ),
             if (_sessionSettingsExpanded) ...<Widget>[
+              const SizedBox(height: 12),
+              Text(
+                i18n.t(
+                  'inline.ui.pages.practice_session_page.session_settings_35f8c2',
+                ),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                i18n.t(
+                  'inline.ui.pages.practice_session_page.question_mode_automation_toggles_and_answer_popup_behavi_4a6189',
+                ),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
@@ -656,7 +688,7 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
                     'inline.ui.pages.practice_session_page.keep_field_hints_expanded_when_a_new_card_opens_useful_f_449fbd',
                   ),
                 ),
-                value: state.practiceShowHintsByDefault,
+                value: _hintRevealed,
                 onChanged: (value) {
                   setState(() {
                     _hintRevealed = value;
@@ -756,8 +788,6 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
         ),
       ),
       const SizedBox(height: 16),
-      _buildWeakReasonSelector(context, i18n),
-      const SizedBox(height: 16),
       Row(
         children: <Widget>[
           Expanded(
@@ -787,6 +817,8 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
           ),
         ],
       ),
+      const SizedBox(height: 16),
+      _buildWeakReasonSelector(context, i18n),
       if (pendingFeedback != null) ...<Widget>[
         const SizedBox(height: 16),
         _buildInlineAnswerFeedbackCard(

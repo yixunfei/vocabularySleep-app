@@ -123,6 +123,65 @@ class CryptoSecurityHubPage extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           _CryptoSecurityModuleCard(
+            icon: Icons.admin_panel_settings_rounded,
+            accent: const Color(0xFF7A3F4D),
+            title: _lifeI18nText(
+              context,
+              'toolbox.crypto.password_vault.title',
+            ),
+            subtitle: _lifeI18nText(
+              context,
+              'toolbox.crypto.password_vault.hub_subtitle',
+            ),
+            chips: <String>[
+              _lifeI18nText(
+                context,
+                'toolbox.crypto.password_vault.hub_chip_crud',
+              ),
+              _lifeI18nText(
+                context,
+                'toolbox.crypto.password_vault.hub_chip_cascade',
+              ),
+              _lifeI18nText(
+                context,
+                'toolbox.crypto.password_vault.hub_chip_export',
+              ),
+            ],
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const _PasswordVaultPage(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          _CryptoSecurityModuleCard(
+            icon: Icons.password_rounded,
+            accent: const Color(0xFF5E6B2D),
+            title: _lifeI18nText(context, 'toolbox.crypto.password.title'),
+            subtitle: _lifeI18nText(
+              context,
+              'toolbox.crypto.password.hub_subtitle',
+            ),
+            chips: <String>[
+              _lifeI18nText(context, 'toolbox.crypto.password.hub_chip_random'),
+              _lifeI18nText(context, 'toolbox.crypto.password.hub_chip_phrase'),
+              _lifeI18nText(
+                context,
+                'toolbox.crypto.password.hub_chip_entropy',
+              ),
+            ],
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const _PasswordGeneratorPage(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          _CryptoSecurityModuleCard(
             icon: Icons.hide_image_rounded,
             accent: _accent,
             title: _lifeI18nText(
@@ -131,26 +190,257 @@ class CryptoSecurityHubPage extends StatelessWidget {
             ),
             subtitle: _lifeI18nText(
               context,
-              'inline.plan295.crypto.hide_encrypted_text_or_files_in_medi.7167c242d3c8',
+              'toolbox.crypto.stego.hub_subtitle_experimental',
             ),
             chips: <String>[
               _lifeI18nText(
                 context,
-                'inline.plan295.crypto.image.baebdc30e7e4',
+                'toolbox.crypto.stego.hub_chip_image_write',
               ),
               _lifeI18nText(
                 context,
-                'inline.plan295.crypto.audio.253158c06f3c',
+                'toolbox.crypto.stego.hub_chip_av_reveal_only',
               ),
               _lifeI18nText(
                 context,
-                'inline.plan295.crypto.video.2074eae3b2ea',
+                'toolbox.crypto.stego.hub_chip_low_visibility',
               ),
             ],
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => const _SteganographyToolPage(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          _CryptoSecurityModuleCard(
+            icon: Icons.lock_rounded,
+            accent: _accent,
+            title: _lifeI18nText(context, 'toolbox.crypto.file.title'),
+            subtitle: _lifeI18nText(
+              context,
+              'toolbox.crypto.file.hub_subtitle',
+            ),
+            chips: <String>[
+              _lifeI18nText(context, 'toolbox.crypto.file.hub_chip_algorithms'),
+              _lifeI18nText(context, 'toolbox.crypto.file.hub_chip_key_files'),
+              _lifeI18nText(context, 'toolbox.crypto.file.hub_chip_auto'),
+            ],
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const _FileCryptoToolPage(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          _CryptoSecurityModuleCard(
+            icon: Icons.text_fields_rounded,
+            accent: _accent,
+            title: _lifeI18nText(context, 'toolbox.crypto.text.title'),
+            subtitle: _lifeI18nText(
+              context,
+              'toolbox.crypto.text.hub_subtitle',
+            ),
+            chips: <String>[
+              _lifeI18nText(context, 'toolbox.crypto.text.hub_chip_v5'),
+              _lifeI18nText(context, 'toolbox.crypto.text.hub_chip_base64'),
+              _lifeI18nText(context, 'toolbox.crypto.text.hub_chip_keyfile'),
+            ],
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const _TextCryptoToolPage(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          _CryptoSecurityModuleCard(
+            icon: Icons.graphic_eq_rounded,
+            accent: const Color(0xFF286F7D),
+            title: _lifeI18nText(context, 'toolbox.crypto.content_media.title'),
+            subtitle: _lifeI18nText(
+              context,
+              'toolbox.crypto.content_media.hub_subtitle',
+            ),
+            chips: <String>[
+              _lifeI18nText(
+                context,
+                'toolbox.crypto.content_media.hub_chip_png',
+              ),
+              _lifeI18nText(
+                context,
+                'toolbox.crypto.content_media.hub_chip_wav',
+              ),
+              _lifeI18nText(
+                context,
+                'toolbox.crypto.content_media.hub_chip_v5',
+              ),
+            ],
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const _ContentMediaToolPage(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          _CryptoSecurityModuleCard(
+            icon: Icons.pin_rounded,
+            accent: const Color(0xFF2F6F5E),
+            title: _lifeI18nText(context, 'toolbox.crypto.otp.title'),
+            subtitle: _lifeI18nText(context, 'toolbox.crypto.otp.hub_subtitle'),
+            chips: <String>[
+              _lifeI18nText(context, 'toolbox.crypto.otp.hub_chip_totp'),
+              _lifeI18nText(context, 'toolbox.crypto.otp.hub_chip_hotp'),
+              _lifeI18nText(context, 'toolbox.crypto.otp.hub_chip_no_store'),
+            ],
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const _OtpToolPage()),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          _CryptoSecurityModuleCard(
+            icon: Icons.tag_rounded,
+            accent: const Color(0xFF4B7A4F),
+            title: _lifeI18nText(context, 'toolbox.crypto.hash.title'),
+            subtitle: _lifeI18nText(
+              context,
+              'toolbox.crypto.hash.hub_subtitle',
+            ),
+            chips: <String>[
+              _lifeI18nText(context, 'toolbox.crypto.hash.hub_chip_text'),
+              _lifeI18nText(context, 'toolbox.crypto.hash.hub_chip_file'),
+              _lifeI18nText(context, 'toolbox.crypto.hash.hub_chip_compare'),
+            ],
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const _HashCheckToolPage(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          _CryptoSecurityModuleCard(
+            icon: Icons.verified_user_rounded,
+            accent: const Color(0xFF8A5A2B),
+            title: _lifeI18nText(context, 'toolbox.crypto.hmac.title'),
+            subtitle: _lifeI18nText(
+              context,
+              'toolbox.crypto.hmac.hub_subtitle',
+            ),
+            chips: <String>[
+              _lifeI18nText(context, 'toolbox.crypto.hmac.hub_chip_text_file'),
+              _lifeI18nText(context, 'toolbox.crypto.hmac.hub_chip_verify'),
+              _lifeI18nText(context, 'toolbox.crypto.hmac.hub_chip_keyed'),
+            ],
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const _HmacToolPage()),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          _CryptoSecurityModuleCard(
+            icon: Icons.vpn_key_rounded,
+            accent: const Color(0xFF6D5E9C),
+            title: _lifeI18nText(context, 'toolbox.crypto.keyfile.title'),
+            subtitle: _lifeI18nText(
+              context,
+              'toolbox.crypto.keyfile.hub_subtitle',
+            ),
+            chips: <String>[
+              _lifeI18nText(context, 'toolbox.crypto.keyfile.hub_chip_random'),
+              _lifeI18nText(context, 'toolbox.crypto.keyfile.hub_chip_derive'),
+              _lifeI18nText(context, 'toolbox.crypto.keyfile.hub_chip_combine'),
+            ],
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const _KeyFileManagerPage(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          _CryptoSecurityModuleCard(
+            icon: Icons.call_split_rounded,
+            accent: const Color(0xFF7A4E86),
+            title: _lifeI18nText(context, 'toolbox.crypto.shamir.title'),
+            subtitle: _lifeI18nText(
+              context,
+              'toolbox.crypto.shamir.hub_subtitle',
+            ),
+            chips: <String>[
+              _lifeI18nText(context, 'toolbox.crypto.shamir.hub_chip_split'),
+              _lifeI18nText(context, 'toolbox.crypto.shamir.hub_chip_recover'),
+              _lifeI18nText(context, 'toolbox.crypto.shamir.hub_chip_local'),
+            ],
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const _ShamirToolPage(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          _CryptoSecurityModuleCard(
+            icon: Icons.key_rounded,
+            accent: const Color(0xFF6D5E9C),
+            title: _lifeI18nText(context, 'toolbox.crypto.asymmetric.title'),
+            subtitle: _lifeI18nText(
+              context,
+              'toolbox.crypto.asymmetric.hub_subtitle',
+            ),
+            chips: <String>[
+              _lifeI18nText(context, 'toolbox.crypto.asymmetric.hub_chip_rsa'),
+              _lifeI18nText(context, 'toolbox.crypto.asymmetric.hub_chip_ecc'),
+              _lifeI18nText(context, 'toolbox.crypto.asymmetric.hub_chip_sign'),
+            ],
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const _AsymmetricCryptoToolPage(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          _CryptoSecurityModuleCard(
+            icon: Icons.enhanced_encryption_rounded,
+            accent: const Color(0xFF315F92),
+            title: _lifeI18nText(context, 'toolbox.crypto.veracrypt.title'),
+            subtitle: _lifeI18nText(
+              context,
+              'toolbox.crypto.veracrypt.hub_subtitle',
+            ),
+            chips: <String>[
+              _lifeI18nText(
+                context,
+                'toolbox.crypto.veracrypt.hub_chip_mobile',
+              ),
+              _lifeI18nText(
+                context,
+                'toolbox.crypto.veracrypt.hub_chip_inspector',
+              ),
+              _lifeI18nText(
+                context,
+                'toolbox.crypto.veracrypt.hub_chip_no_mount',
+              ),
+            ],
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const _VeraCryptToolPage(),
                 ),
               );
             },
@@ -168,10 +458,7 @@ class CryptoSecurityHubPage extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    _lifeI18nText(
-                      context,
-                      'inline.plan295.crypto.future_encryption_decryption_key_cer.dfb97acfd04e',
-                    ),
+                    _lifeI18nText(context, 'toolbox.crypto.hub.boundary_note'),
                     style: theme.textTheme.bodySmall?.copyWith(height: 1.35),
                   ),
                 ),

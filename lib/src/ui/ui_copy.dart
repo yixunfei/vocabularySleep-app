@@ -42,6 +42,8 @@ String ttsProviderLabel(AppI18n i18n, TtsProviderType provider) {
   return switch (provider) {
     TtsProviderType.local => i18n.t('local'),
     TtsProviderType.api => i18n.t('siliconFlowApi'),
+    TtsProviderType.aliyunBailian => i18n.t('speech.remote.provider.aliyun'),
+    TtsProviderType.doubao => i18n.t('speech.remote.provider.doubao'),
     TtsProviderType.customApi => i18n.t('customApi'),
   };
 }
@@ -49,6 +51,8 @@ String ttsProviderLabel(AppI18n i18n, TtsProviderType provider) {
 String asrProviderLabel(AppI18n i18n, AsrProviderType provider) {
   return switch (provider) {
     AsrProviderType.api => i18n.t('siliconFlowApi'),
+    AsrProviderType.aliyunBailian => i18n.t('speech.remote.provider.aliyun'),
+    AsrProviderType.doubao => i18n.t('speech.remote.provider.doubao'),
     AsrProviderType.customApi => i18n.t('customApi'),
     AsrProviderType.offline => i18n.t('offlineWhisperBase'),
     AsrProviderType.offlineSmall => i18n.t('offlineWhisperSmall'),
@@ -60,6 +64,10 @@ String asrProviderLabel(AppI18n i18n, AsrProviderType provider) {
 String voiceInputProviderLabel(AppI18n i18n, VoiceInputProviderType provider) {
   return switch (provider) {
     VoiceInputProviderType.api => i18n.t('siliconFlowApi'),
+    VoiceInputProviderType.aliyunBailian => i18n.t(
+      'speech.remote.provider.aliyun',
+    ),
+    VoiceInputProviderType.doubao => i18n.t('speech.remote.provider.doubao'),
     VoiceInputProviderType.offline => i18n.t(
       'inline.ui.ui_copy.offline_engine_204382',
     ),

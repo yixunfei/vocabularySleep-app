@@ -26,8 +26,7 @@ extension AsrServiceCore on AsrService {
       _activeRecordingPath = filePath;
       return filePath;
     } catch (_) {
-      if (provider == AsrProviderType.api ||
-          provider == AsrProviderType.customApi) {
+      if (isAsrApiProvider(provider)) {
         final fallbackPath = p.join(
           tempDir.path,
           'asr_${DateTime.now().millisecondsSinceEpoch}.webm',

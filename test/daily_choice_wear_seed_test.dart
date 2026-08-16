@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vocabulary_sleep_app/src/i18n/app_i18n.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_daily_choice/daily_choice_models.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_daily_choice/daily_choice_seed_data.dart';
 
@@ -28,19 +29,21 @@ void main() {
       expect(wearTraitGroupById('gender'), isNotNull);
       expect(wearTraitGroupById('age'), isNotNull);
 
+      final zh = AppI18n('zh');
+      final en = AppI18n('en');
       final guideText = wearGuideModules
           .expand(
             (module) => <String>[
-              module.titleZh,
-              module.titleEn,
-              module.subtitleZh,
-              module.subtitleEn,
+              module.title(zh),
+              module.title(en),
+              module.subtitle(zh),
+              module.subtitle(en),
               ...module.entries.expand(
                 (entry) => <String>[
-                  entry.titleZh,
-                  entry.titleEn,
-                  entry.bodyZh,
-                  entry.bodyEn,
+                  entry.title(zh),
+                  entry.title(en),
+                  entry.body(zh),
+                  entry.body(en),
                 ],
               ),
             ],

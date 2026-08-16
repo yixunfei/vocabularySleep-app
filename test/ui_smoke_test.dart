@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'
     show Override, ProviderScope;
@@ -43,6 +44,7 @@ import 'package:vocabulary_sleep_app/src/services/online_ambient_catalog_service
 import 'package:vocabulary_sleep_app/src/services/todo_reminder_service.dart';
 import 'package:vocabulary_sleep_app/src/state/app_state.dart';
 import 'package:vocabulary_sleep_app/src/state/app_state_provider.dart';
+import 'package:vocabulary_sleep_app/src/state/playback_store.dart';
 import 'package:vocabulary_sleep_app/src/ui/app_shell.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/appearance_studio_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/data_management_page.dart';
@@ -60,6 +62,7 @@ import 'package:vocabulary_sleep_app/src/ui/pages/recognition_settings_page.dart
 import 'package:vocabulary_sleep_app/src/ui/pages/settings_home_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_human_tests.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_life_tools.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_crypto_security.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_soothing_music/runtime_store.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_soothing_music_v2_page.dart';
@@ -115,7 +118,7 @@ void main() {
       },
     );
 
-    testWidgets('voice settings localizes preset voice labels in Japanese', (
+    testWidgets('voice settings uses catalog voice labels without mojibake', (
       tester,
     ) async {
       final config = PlayConfig.defaults.copyWith(
@@ -130,9 +133,9 @@ void main() {
       final state = _FakeAppState.sample(uiLanguage: 'ja', config: config);
       await _pumpPage(tester, state: state, child: const VoiceSettingsPage());
 
-      expect(find.text('闊冲０瑷畾'), findsOneWidget);
-      expect(find.textContaining('鐝惧湪銇煶澹帮細Alex'), findsOneWidget);
-      expect(find.text('Voice settings'), findsNothing);
+      expect(find.text('Voice settings'), findsOneWidget);
+      expect(find.text('Alex · calm male'), findsOneWidget);
+      expect(find.textContaining('闂婂'), findsNothing);
     });
 
     testWidgets('voice settings shows API cache controls and clears cache', (
@@ -180,6 +183,23 @@ void main() {
 
       expect(find.textContaining('ASR'), findsWidgets);
       expect(find.byType(SwitchListTile), findsWidgets);
+    });
+
+    testWidgets('recognition settings does not label API models as free', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const RecognitionSettingsPage(),
+      );
+
+      final modelField = find.byType(DropdownButtonFormField<String>);
+      await tester.tap(modelField.first);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Free'), findsNothing);
     });
 
     testWidgets('recognition settings confirms before switching to local ASR', (
@@ -712,6 +732,73 @@ void main() {
       expect(find.textContaining('18'), findsWidgets);
     });
 
+    testWidgets('play page ignores unrelated app notifications', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(
+        tester,
+        state: state,
+        child: PlayPage(onOpenPractice: () {}, onOpenLibrary: () {}),
+      );
+      await tester.pump();
+
+      final readsAfterInitialBuild = state.visibleWordsReadCount;
+      expect(readsAfterInitialBuild, greaterThan(0));
+
+      state.notifyUnrelatedChange();
+      await tester.pump();
+
+      expect(state.visibleWordsReadCount, readsAfterInitialBuild);
+      expect(find.text('Alpha'), findsWidgets);
+    });
+
+    testWidgets('expanded mini player changes reading speed from menu', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(430, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpAppShell(tester, state: state);
+      await state.playCurrentWordbook();
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey<String>('collapsed-mini-player')),
+      );
+      await tester.pumpAndSettle();
+
+      final speedMenu = find.byKey(
+        const ValueKey<String>('mini-player-speed-menu'),
+      );
+      await tester.tap(speedMenu);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('1.5x').last, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(state.config.tts.speed, 1.5);
+    });
+
+    testWidgets('expanded mini player uses playback resume copy in Chinese', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(430, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(uiLanguage: 'zh');
+      await _pumpAppShell(tester, state: state);
+      await state.playCurrentWordbook();
+      await state.pauseOrResume();
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey<String>('collapsed-mini-player')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('继续'), findsWidgets);
+      expect(find.text('简历'), findsNothing);
+    });
+
     testWidgets('ambient sheet opens online ambient catalog actions', (
       tester,
     ) async {
@@ -1061,6 +1148,126 @@ void main() {
       expect(find.text('H · Hydrogen'), findsOneWidget);
     });
 
+    testWidgets('life tools opens archive tool controls', (tester) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'Mobile archive');
+      await tester.pumpAndSettle();
+
+      final archiveCard = find
+          .ancestor(
+            of: find.text('Mobile archive tool'),
+            matching: find.byType(Card),
+          )
+          .first;
+      await tester.ensureVisible(archiveCard);
+      await tester.pumpAndSettle();
+      await tester.tap(archiveCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Compress files'), findsOneWidget);
+      expect(find.text('Extract archive'), findsOneWidget);
+      expect(find.text('Pick files'), findsOneWidget);
+      expect(find.text('Create archive'), findsOneWidget);
+      expect(find.text('Output format'), findsOneWidget);
+      expect(find.text('ZIP compression'), findsOneWidget);
+      expect(find.text('ZIP password'), findsOneWidget);
+      expect(find.text('Read archive'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'TAR'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('ZIP password'), findsNothing);
+      expect(
+        find.textContaining('Only ZIP archives support password protection'),
+        findsOneWidget,
+      );
+      expect(find.text('Information page'), findsNothing);
+    });
+
+    testWidgets('life tools timeline decodes escaped unicode text', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'zh');
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const LifeToolsHubPage(),
+        locale: const Locale('zh'),
+      );
+
+      await tester.enterText(find.byType(TextField).first, '\u5386\u53f2');
+      await tester.pumpAndSettle();
+
+      final timelineCard = find.byKey(
+        const ValueKey<String>('life_tool_card_timeline_periodic'),
+      );
+      await tester.tap(timelineCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('history-timeline-stage')),
+        findsOneWidget,
+      );
+      expect(find.textContaining(RegExp(r'\\u[0-9a-fA-F]{4}')), findsNothing);
+      expect(
+        find.textContaining('\u7ea6 138 \u4ebf\u5e74\u524d'),
+        findsWidgets,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('life tools advanced calculator fits narrow screen', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(375, 812));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'Advanced');
+      await tester.pumpAndSettle();
+
+      final calculatorCard = find
+          .ancestor(
+            of: find.text('Advanced calculator'),
+            matching: find.byType(Card),
+          )
+          .first;
+      await tester.tap(calculatorCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Quick keypad'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('life tools menstrual calendar fits narrow screen', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(375, 812));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'Menstrual');
+      await tester.pumpAndSettle();
+
+      final menstrualCard = find
+          .ancestor(
+            of: find.text('Menstrual cycle'),
+            matching: find.byType(Card),
+          )
+          .first;
+      await tester.tap(menstrualCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Cycle calendar'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('life tools opens work worth calculator and updates score', (
       tester,
     ) async {
@@ -1095,29 +1302,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('PPP daily'), findsOneWidget);
-    });
-
-    testWidgets('life tools opens AI interview practice desk', (tester) async {
-      final state = _FakeAppState.sample(uiLanguage: 'en');
-      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
-
-      await tester.enterText(find.byType(TextField).first, 'AI interview');
-      await tester.pumpAndSettle();
-
-      final aiInterviewCard = find
-          .ancestor(of: find.text('AI interview'), matching: find.byType(Card))
-          .first;
-      await tester.tap(aiInterviewCard, warnIfMissed: false);
-      await tester.pumpAndSettle();
-
-      expect(
-        find.byKey(const ValueKey<String>('life-ai-interview-stage')),
-        findsOneWidget,
-      );
-      expect(find.text('Interview readiness'), findsOneWidget);
-      expect(find.text('Question and material'), findsOneWidget);
-      expect(find.text('Answer frame'), findsOneWidget);
-      expect(find.text('Prompt draft'), findsOneWidget);
     });
 
     testWidgets(
@@ -2410,22 +2594,9 @@ void main() {
     testWidgets('life tools opens postal lookup query', (tester) async {
       await _withMockHttp(_LifeToolsRemoteHttpOverrides(), () async {
         final state = _FakeAppState.sample(uiLanguage: 'en');
-        await _pumpPage(tester, state: state, child: const ToolboxPage());
+        await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
 
-        await tester.scrollUntilVisible(
-          find.text('Life tool hub'),
-          300,
-          scrollable: find.byType(Scrollable).first,
-        );
-        await tester.pumpAndSettle();
-
-        final lifeHubCard = find
-            .ancestor(
-              of: find.text('Life tool hub'),
-              matching: find.byType(InkWell),
-            )
-            .first;
-        await tester.tap(lifeHubCard, warnIfMissed: false);
+        await tester.enterText(find.byType(TextField).first, 'Postal');
         await tester.pumpAndSettle();
 
         await tester.scrollUntilVisible(
@@ -2455,20 +2626,21 @@ void main() {
 
         await tester.enterText(
           find.byKey(const ValueKey<String>('life_postal_search_field')),
-          'Shenzhen',
+          '深圳大学',
         );
         await tester.tap(find.text('Search'));
         await tester.pumpAndSettle();
 
-        expect(find.text('Shenzhen'), findsWidgets);
+        expect(find.text('深圳大学'), findsWidgets);
+        expect(find.text('深圳大学邮政所 · 南山山粤海街道南海大道3688号深圳大学实验楼'), findsOneWidget);
         expect(
-          find.text('娣卞湷澶у閭斂鎵€ 路 鍗楀北灞辩菠娴疯閬撳崡娴峰ぇ閬?688鍙锋繁鍦冲ぇ瀛﹀疄楠屾ゼ'),
+          find.text('广东省 深圳市 南山区 · 09:00-12:00 12:00-17:00'),
           findsOneWidget,
         );
         expect(find.text('518060'), findsWidgets);
         expect(find.text('13556892288'), findsWidgets);
         expect(find.text('Page summary'), findsNothing);
-        expect(find.textContaining('Open source'), findsNothing);
+        expect(find.textContaining('Open source'), findsOneWidget);
       });
     });
 
@@ -2744,26 +2916,17 @@ void main() {
 
     testWidgets('crypto security opens steganography controls', (tester) async {
       final state = _FakeAppState.sample(uiLanguage: 'en');
-      await _pumpPage(tester, state: state, child: const ToolboxPage());
-
-      await tester.scrollUntilVisible(
-        find.text('Crypto security hub'),
-        300,
-        scrollable: find.byType(Scrollable).first,
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const CryptoSecurityHubPage(),
       );
-      await tester.pumpAndSettle();
-
-      final cryptoHubCard = find
-          .ancestor(
-            of: find.text('Crypto security hub'),
-            matching: find.byType(InkWell),
-          )
-          .first;
-      await tester.tap(cryptoHubCard, warnIfMissed: false);
-      await tester.pumpAndSettle();
 
       expect(find.text('Security workspace'), findsOneWidget);
       expect(find.text('Available modules'), findsOneWidget);
+      expect(find.text('Image writes'), findsOneWidget);
+      expect(find.text('Legacy removed'), findsOneWidget);
+      expect(find.text('Low visibility'), findsOneWidget);
 
       await tester.scrollUntilVisible(
         find.text('Media steganography'),
@@ -2783,6 +2946,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Crypto stage'), findsOneWidget);
+      expect(
+        find.textContaining('Experimental low-visibility media hiding'),
+        findsOneWidget,
+      );
       expect(find.text('Carrier and text'), findsOneWidget);
       expect(find.text('Result'), findsOneWidget);
       expect(find.text('Image preview'), findsNothing);
@@ -2791,17 +2958,40 @@ void main() {
       expect(find.text('Hash'), findsOneWidget);
       expect(find.text('Embed'), findsOneWidget);
       expect(find.text('Reveal'), findsOneWidget);
+      await tester.tap(find.text('Reveal'));
+      await tester.pumpAndSettle();
+      expect(find.text('Auto locator'), findsNothing);
+      expect(
+        find.textContaining('Reveal tries the write locator algorithm'),
+        findsNothing,
+      );
+      expect(find.text('Import fingerprint'), findsOneWidget);
+      expect(find.text('Legacy migration mode'), findsNothing);
       expect(find.text('Image'), findsWidgets);
       expect(find.text('Audio'), findsOneWidget);
       expect(find.text('Video'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('life_stego_unsafe_legacy_switch')),
+        findsNothing,
+      );
+      await tester.tap(find.text('Embed'));
+      await tester.pumpAndSettle();
+      expect(find.text('Image'), findsWidgets);
+      expect(find.text('Audio'), findsOneWidget);
+      expect(find.text('Video'), findsOneWidget);
+      expect(
+        find.textContaining('New writes support PNG images'),
+        findsOneWidget,
+      );
       expect(find.text('AES strong'), findsOneWidget);
       expect(find.text('Twofish strong'), findsOneWidget);
       expect(find.text('Camellia strong'), findsOneWidget);
       expect(find.text('AES+Camellia strong+'), findsOneWidget);
+      expect(find.text('AES+Twofish+Camellia+'), findsOneWidget);
       expect(find.text('Custom strong'), findsOneWidget);
-      expect(find.text('RSA signed'), findsOneWidget);
-      expect(find.text('ECDSA signed'), findsOneWidget);
-      expect(find.text('Whirlpool strong'), findsOneWidget);
+      expect(find.text('RSA signed'), findsNothing);
+      expect(find.text('ECDSA signed'), findsNothing);
+      expect(find.text('Whirlpool strong'), findsNothing);
       expect(find.text('Standard 2^16'), findsOneWidget);
       expect(find.text('Strong 2^17'), findsOneWidget);
       expect(find.text('Extreme 2^18'), findsOneWidget);
@@ -2814,11 +3004,23 @@ void main() {
       expect(find.text('256-bit'), findsOneWidget);
       expect(find.text('512-bit'), findsOneWidget);
       expect(find.text('1024-bit'), findsOneWidget);
-      expect(find.text('Signature'), findsOneWidget);
+      expect(find.text('Package integrity check'), findsOneWidget);
+      expect(find.text('Signature'), findsNothing);
       expect(find.text('SHA256 stream'), findsNothing);
       expect(find.text('RC4 legacy'), findsNothing);
-      expect(find.text('No encryption plain'), findsOneWidget);
+      expect(find.text('No encryption plain'), findsNothing);
       expect(find.textContaining('Safety: strong'), findsOneWidget);
+      expect(find.text('Carrier protection mode'), findsOneWidget);
+      expect(find.text('Deniable'), findsOneWidget);
+      expect(find.text('Guarded'), findsOneWidget);
+      expect(find.textContaining('cannot prevent the carrier'), findsOneWidget);
+      expect(
+        find.text('Allow one-time overwrite of existing payload'),
+        findsOneWidget,
+      );
+      expect(find.text('Export integrity fingerprint sidecar'), findsOneWidget);
+      expect(find.text('Record in local vault'), findsOneWidget);
+      expect(find.text('Clear local vault'), findsOneWidget);
       expect(
         find.byKey(const ValueKey<String>('life_stego_pick_button')),
         findsOneWidget,
@@ -2871,8 +3073,8 @@ void main() {
       expect(find.text('Media to reveal'), findsOneWidget);
       expect(find.text('Encryption'), findsNothing);
       expect(find.text('Advanced crypto'), findsNothing);
-      expect(find.text('Locator'), findsOneWidget);
-      expect(find.text('Locator algorithm'), findsOneWidget);
+      expect(find.text('Auto locator'), findsNothing);
+      expect(find.text('Locator algorithm'), findsNothing);
       expect(
         find.byKey(const ValueKey<String>('life_stego_secret_field')),
         findsNothing,
@@ -2916,6 +3118,115 @@ void main() {
       );
     });
 
+    testWidgets(
+      'crypto security opens file encryption settings without ListTile material assertion',
+      (tester) async {
+        final state = _FakeAppState.sample(uiLanguage: 'en');
+        await _pumpPage(
+          tester,
+          state: state,
+          child: const CryptoSecurityHubPage(),
+        );
+
+        final fileCryptoCard = find
+            .ancestor(
+              of: find.text('File encryption').last,
+              matching: find.byType(InkWell),
+            )
+            .first;
+        await tester.ensureVisible(fileCryptoCard);
+        await tester.tap(fileCryptoCard, warnIfMissed: false);
+        await tester.pumpAndSettle();
+
+        expect(find.text('File encryption'), findsWidgets);
+        expect(find.text('Encryption settings'), findsOneWidget);
+
+        await tester.ensureVisible(find.text('Encryption settings'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Encryption settings'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Error and decrypt limits'), findsOneWidget);
+        expect(
+          find.text('Best-effort random overwrite source on limit'),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets('crypto security opens VeraCrypt container workflow', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const CryptoSecurityHubPage(),
+      );
+
+      await tester.scrollUntilVisible(
+        find.text('VeraCrypt container'),
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Mobile first'), findsOneWidget);
+      expect(find.text('Container'), findsOneWidget);
+      expect(find.text('No system mount'), findsOneWidget);
+
+      final veraCryptCard = find
+          .ancestor(
+            of: find.text('VeraCrypt container').last,
+            matching: find.byType(InkWell),
+          )
+          .first;
+      await tester.ensureVisible(veraCryptCard);
+      await tester.tap(veraCryptCard, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('VeraCrypt container'), findsWidgets);
+      expect(find.text('Waiting for container'), findsOneWidget);
+      expect(find.text('Container decrypt browse and export'), findsOneWidget);
+      expect(find.text('Material preflight'), findsNothing);
+      expect(find.text('Material needed'), findsWidgets);
+      expect(find.text('Passphrase not set'), findsOneWidget);
+      expect(
+        find.byKey(
+          const ValueKey<String>('crypto_veracrypt_unlock_header_button'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(
+          const ValueKey<String>('crypto_veracrypt_data_probe_button'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('crypto_veracrypt_pick_button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('crypto_veracrypt_passphrase_field')),
+        findsOneWidget,
+      );
+      // PLAN_354: browsing/export stays in the VeraCrypt container workflow;
+      // the button is present but disabled until a container unlocks.
+      expect(find.text('Read-only filesystem browse'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('crypto_veracrypt_fs_open_button')),
+        findsOneWidget,
+      );
+      expect(find.text('Support matrix'), findsNothing);
+      expect(find.text('Cipher chains'), findsNothing);
+      expect(find.text('Serpent / Kuznyechik core gap'), findsNothing);
+      expect(find.text('PBKDF2 / Argon2id KDF'), findsNothing);
+      expect(find.text('Create encrypted container'), findsOneWidget);
+      expect(find.text('System mount'), findsNothing);
+    });
+
     testWidgets('life tools no longer lists steganography entry', (
       tester,
     ) async {
@@ -2925,6 +3236,42 @@ void main() {
       expect(find.text('Steganography'), findsNothing);
       expect(find.text('Media steganography'), findsNothing);
       expect(find.text('Image compression / upscale'), findsOneWidget);
+    });
+
+    testWidgets('life tools no longer lists sticker camera entry', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'Sticker');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sticker camera'), findsNothing);
+      expect(find.text('No matching tools'), findsOneWidget);
+    });
+
+    testWidgets('life tools opens unified source references from title help', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+
+      await tester.enterText(find.byType(TextField).first, 'Source references');
+      await tester.pumpAndSettle();
+
+      expect(find.text('No matching tools'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Source references'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('life-source-references-page')),
+        findsOneWidget,
+      );
+      expect(find.text('Source overview'), findsOneWidget);
+      expect(find.text('Bing Wallpaper'), findsOneWidget);
+      expect(find.text('WHO obesity and overweight'), findsOneWidget);
     });
 
     testWidgets('life tools opens simple mind map and edits nodes', (
@@ -5869,6 +6216,38 @@ void main() {
       expect(find.text('Shuffle sprint'), findsOneWidget);
     });
 
+    testWidgets('practice page offers explicit loading for deferred wordbook', (
+      tester,
+    ) async {
+      final largeBook = Wordbook(
+        id: 7,
+        name: 'Large Pack',
+        path: 'custom:large-pack',
+        wordCount: 2500,
+        createdAt: DateTime(2026, 6, 21),
+      );
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        words: const <WordEntry>[],
+        selectedWordbook: largeBook,
+        wordbooks: <Wordbook>[largeBook],
+        selectedWordbookLoaded: false,
+        selectedWordbookRequiresOnDemandLoad: true,
+      );
+
+      await _pumpPage(tester, state: state, child: const PracticePage());
+
+      expect(find.text('Load the current wordbook first'), findsOneWidget);
+      expect(find.textContaining('Large Pack'), findsWidgets);
+      expect(find.text('Load current wordbook'), findsOneWidget);
+      expect(find.text('Switch wordbook'), findsOneWidget);
+
+      await tester.tap(find.text('Load current wordbook'));
+      await tester.pumpAndSettle();
+
+      expect(state.loadSelectedWordbookCalls, 1);
+    });
+
     testWidgets('practice page shows clean Chinese labels', (tester) async {
       final state = _FakeAppState.sample(uiLanguage: 'zh');
       await _pumpPage(tester, state: state, child: const PracticePage());
@@ -5927,20 +6306,20 @@ void main() {
 
       expect(find.text('\u663e\u793a\u63d0\u793a'), findsOneWidget);
       await tester.scrollUntilVisible(
-        find.text('\u6ca1\u8bb0\u4f4f'),
+        find.text('\u8fd8\u6ca1\u6709'),
         220,
         scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
-      expect(find.text('\u6ca1\u8bb0\u4f4f'), findsOneWidget);
+      expect(find.text('\u8fd8\u6ca1\u6709'), findsOneWidget);
 
-      await tester.tap(find.text('\u8bb0\u4f4f\u4e86'));
+      await tester.tap(find.text('\u5df2\u8bb0\u4f4f'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('\u5b8c\u6210\u8fd9\u4e00\u8f6e'));
+      await tester.tap(find.text('\u5b8c\u6210\u672c\u8f6e'));
       await tester.pumpAndSettle();
 
-      expect(find.text('\u5df2\u8bb0\u4f4f\u5355\u8bcd'), findsOneWidget);
-      expect(find.text('\u590d\u4e60\u5df2\u8bb0\u4f4f'), findsOneWidget);
+      expect(find.text('\u5df2\u8bb0\u4f4f\u7684\u5355\u8bcd'), findsOneWidget);
+      expect(find.text('\u590d\u4e60\u5df2\u8bb0'), findsOneWidget);
       expect(find.textContaining('\u5bb8\u8336'), findsNothing);
     });
 
@@ -6471,6 +6850,7 @@ Future<void> _pumpPage(
   WidgetTester tester, {
   required _FakeAppState state,
   required Widget child,
+  Locale? locale,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -6478,6 +6858,15 @@ Future<void> _pumpPage(
       child: ChangeNotifierProvider<AppState>.value(
         value: state,
         child: MaterialApp(
+          locale: locale,
+          supportedLocales: AppI18n.supportedLanguages
+              .map((code) => Locale(code))
+              .toList(growable: false),
+          localizationsDelegates: const <LocalizationsDelegate<Object>>[
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
           theme: buildAppTheme(state.config.appearance),
           home: Scaffold(body: child),
         ),
@@ -6567,10 +6956,15 @@ class _FakeAppState extends ChangeNotifier
     required String? asrStoppedRecordingPath,
     required AsrResult asrTranscriptionResult,
     required int apiTtsCacheBytes,
+    required bool selectedWordbookLoaded,
+    required bool selectedWordbookRequiresOnDemandLoad,
   }) : _config = config,
        _uiLanguage = uiLanguage,
        _uiLanguageFollowsSystem = false,
        _selectedWordbook = selectedWordbook,
+       _selectedWordbookLoaded = selectedWordbookLoaded,
+       _selectedWordbookRequiresOnDemandLoad =
+           selectedWordbookRequiresOnDemandLoad,
        _wordbooks = wordbooks,
        _visibleWords = visibleWords,
        _localVoices = localVoices,
@@ -6621,6 +7015,8 @@ class _FakeAppState extends ChangeNotifier
     String practiceLastSessionTitle = 'Scope sprint',
     List<WordEntry>? recentRememberedEntries,
     List<WordEntry>? recentWeakEntries,
+    bool selectedWordbookLoaded = true,
+    bool selectedWordbookRequiresOnDemandLoad = false,
   }) {
     final visibleWords =
         words ??
@@ -6684,6 +7080,9 @@ class _FakeAppState extends ChangeNotifier
             asrTranscriptionResult ??
             const AsrResult(success: false, error: 'recognitionFailed'),
         apiTtsCacheBytes: apiTtsCacheBytes,
+        selectedWordbookLoaded: selectedWordbookLoaded,
+        selectedWordbookRequiresOnDemandLoad:
+            selectedWordbookRequiresOnDemandLoad,
       )
       .._startupPage = startupPage
       .._studyStartupTab = studyStartupTab
@@ -6728,6 +7127,8 @@ class _FakeAppState extends ChangeNotifier
   String _uiLanguage;
   bool _uiLanguageFollowsSystem;
   Wordbook? _selectedWordbook;
+  bool _selectedWordbookLoaded;
+  bool _selectedWordbookRequiresOnDemandLoad;
   List<Wordbook> _wordbooks;
   final List<WordEntry> _visibleWords;
   WordEntry? _currentWord;
@@ -6747,9 +7148,13 @@ class _FakeAppState extends ChangeNotifier
   int _apiTtsCacheBytes;
   bool _isPlaying = false;
   bool _isPaused = false;
+  int loadSelectedWordbookCalls = 0;
+  int visibleWordsReadCount = 0;
   int _currentUnit = 0;
   int _totalUnits = 0;
   PlayUnit? _activeUnit;
+  final ValueNotifier<PlaybackUnitProgress> _playbackUnitProgress =
+      ValueNotifier<PlaybackUnitProgress>(PlaybackUnitProgress.empty);
   int? _playingWordbookId;
   String? _playingWordbookName;
   String? _playingWord;
@@ -6942,6 +7347,10 @@ class _FakeAppState extends ChangeNotifier
   PlayUnit? get activeUnit => _activeUnit;
 
   @override
+  ValueListenable<PlaybackUnitProgress> get playbackUnitProgressListenable =>
+      _playbackUnitProgress;
+
+  @override
   int? get playingWordbookId => _playingWordbookId;
 
   @override
@@ -6978,10 +7387,12 @@ class _FakeAppState extends ChangeNotifier
   bool get initialized => true;
 
   @override
-  bool get selectedWordbookLoaded => _selectedWordbook != null;
+  bool get selectedWordbookLoaded =>
+      _selectedWordbook != null && _selectedWordbookLoaded;
 
   @override
-  bool get selectedWordbookRequiresOnDemandLoad => false;
+  bool get selectedWordbookRequiresOnDemandLoad =>
+      _selectedWordbook != null && _selectedWordbookRequiresOnDemandLoad;
 
   @override
   String? get lastBackupPath => _lastBackupPath;
@@ -7093,8 +7504,14 @@ class _FakeAppState extends ChangeNotifier
       .toList(growable: false);
 
   @override
+  int get practiceRememberedWordCount => _recentRememberedEntries.length;
+
+  @override
   List<String> get practiceWeakWords =>
       recentWeakWordEntries.map((entry) => entry.word).toList(growable: false);
+
+  @override
+  int get practiceWeakWordCount => _recentWeakEntries.length;
 
   @override
   bool get practiceAutoAddWeakWordsToTask => _practiceAutoAddWeakWordsToTask;
@@ -7112,6 +7529,13 @@ class _FakeAppState extends ChangeNotifier
   @override
   List<PracticeSessionRecord> get practiceSessionHistory =>
       List<PracticeSessionRecord>.unmodifiable(_practiceSessionHistory);
+
+  @override
+  int get practiceSessionHistoryCount => _practiceSessionHistory.length;
+
+  @override
+  DateTime? get practiceLatestSessionAt =>
+      _practiceSessionHistory.firstOrNull?.practicedAt;
 
   @override
   int? get pendingTodoReminderLaunchId => null;
@@ -7324,10 +7748,20 @@ class _FakeAppState extends ChangeNotifier
   List<WordEntry> get words => _visibleWords;
 
   @override
-  List<WordEntry> get visibleWords => _visibleWords;
+  int get wordsVersion => _visibleWords.length;
+
+  @override
+  List<WordEntry> get visibleWords {
+    visibleWordsReadCount += 1;
+    return _visibleWords;
+  }
 
   @override
   int get visibleWordCount => _visibleWords.length;
+
+  void notifyUnrelatedChange() {
+    notifyListeners();
+  }
 
   @override
   List<WordEntry> getVisibleWordsPage({required int limit, int offset = 0}) {
@@ -7448,6 +7882,17 @@ class _FakeAppState extends ChangeNotifier
   @override
   Future<void> previewPronunciation(String word) async {}
 
+  void _setPlaybackUnitProgress(int current, int total, PlayUnit? activeUnit) {
+    _currentUnit = current;
+    _totalUnits = total;
+    _activeUnit = activeUnit;
+    _playbackUnitProgress.value = PlaybackUnitProgress(
+      current: current,
+      total: total,
+      activeUnit: activeUnit,
+    );
+  }
+
   @override
   Future<void> play() async {
     _isPlaying = true;
@@ -7455,8 +7900,11 @@ class _FakeAppState extends ChangeNotifier
     _playingWordbookId = _selectedWordbook?.id;
     _playingWordbookName = _selectedWordbook?.name;
     _playingWord = currentWord?.word;
-    _totalUnits = _visibleWords.length;
-    _currentUnit = _visibleWords.isEmpty ? 0 : (_currentWordIndex + 1);
+    _setPlaybackUnitProgress(
+      _visibleWords.isEmpty ? 0 : (_currentWordIndex + 1),
+      _visibleWords.length,
+      null,
+    );
     notifyListeners();
   }
 
@@ -7467,9 +7915,17 @@ class _FakeAppState extends ChangeNotifier
     _playingWordbookId = _selectedWordbook?.id;
     _playingWordbookName = _selectedWordbook?.name;
     _playingWord = currentWord?.word;
-    _currentUnit = 0;
-    _totalUnits = _visibleWords.length;
+    _setPlaybackUnitProgress(0, _visibleWords.length, null);
     notifyListeners();
+  }
+
+  @override
+  Future<bool> loadSelectedWordbook() async {
+    loadSelectedWordbookCalls += 1;
+    _selectedWordbookLoaded = _selectedWordbook != null;
+    _selectedWordbookRequiresOnDemandLoad = false;
+    notifyListeners();
+    return _selectedWordbookLoaded;
   }
 
   @override
@@ -7489,9 +7945,7 @@ class _FakeAppState extends ChangeNotifier
   Future<void> stop() async {
     _isPlaying = false;
     _isPaused = false;
-    _currentUnit = 0;
-    _totalUnits = 0;
-    _activeUnit = null;
+    _setPlaybackUnitProgress(0, 0, null);
     _playingWordbookId = null;
     _playingWordbookName = null;
     _playingWord = null;
@@ -7550,7 +8004,23 @@ class _FakeAppState extends ChangeNotifier
   }
 
   @override
+  Future<void> movePlaybackToWord(WordEntry entry) async {
+    final index = _visibleWords.indexWhere(
+      (item) =>
+          (item.id != null && entry.id != null && item.id == entry.id) ||
+          (item.word == entry.word && item.wordbookId == entry.wordbookId),
+    );
+    if (index < 0) {
+      return;
+    }
+    selectWordIndex(index);
+  }
+
+  @override
   void rememberPlaybackProgress([WordEntry? entry]) {}
+
+  @override
+  void flushPendingPersistence() {}
 
   @override
   bool restorePlaybackProgressForSelectedWordbook() => false;
@@ -9336,7 +9806,10 @@ class _LifeToolsRemoteHttpOverrides extends HttpOverrides {
         );
       }
       if (url.contains('chinapost.com.cn')) {
-        return const _MockHttpResponseData(_postalChinaPostFixtureHtml);
+        return _MockHttpResponseData(
+          _postalChinaPostFixtureJson,
+          contentType: ContentType.json,
+        );
       }
       if (url.contains('uguu.se/upload')) {
         return _MockHttpResponseData(
@@ -9587,39 +10060,26 @@ class _MockHttpHeaders implements HttpHeaders {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-const String _postalChinaPostFixtureHtml = '''
-<!doctype html>
-<html>
-<body>
-<table class="wangd2">
-<tr class="wangd2_tr">
-  <td>鐪?/td><td>甯?/td><td>鍘?/td><td>鏈嶅姟缃戠偣鍚嶇О</td><td>閭紪</td><td>鍦板潃</td><td>鏄惁鍔炵悊閲戣瀺涓氬姟</td><td>鐢佃瘽</td><td>钀ヤ笟鏃堕棿</td>
-</tr>
-<tr>
-  <td align=center>骞夸笢鐪?/td>
-  <td align=center>娣卞湷甯?/td>
-  <td align=center>鍗楀北鍖?/td>
-  <td align=center>娣卞湷澶у閭斂鎵€</td>
-  <td align=center>518060</td>
-  <td align=center>鍗楀北灞辩菠娴疯閬撳崡娴峰ぇ閬?688鍙锋繁鍦冲ぇ瀛﹀疄楠屾ゼ</td>
-  <td align=center>鍚?/td>
-  <td align=center>13556892288</td>
-  <td align=center>09:00-12:00 12:00-17:00</td>
-</tr>
-<tr>
-  <td align=center>璐靛窞鐪?/td>
-  <td align=center>閬典箟甯?/td>
-  <td align=center>姹囧窛鍖?/td>
-  <td align=center>娣卞湷璺偖鏀挎敮灞€</td>
-  <td align=center>563099</td>
-  <td align=center>璐靛窞鐪侀伒涔夊競姹囧窛鍖哄ぇ杩炶矾琛楅亾浣涘北璺奔鑺界ぞ鍖?/td>
-  <td align=center>鏄?/td>
-  <td align=center>15120287923</td>
-  <td align=center>09:00-12:00 12:00-17:00</td>
-</tr>
-</table>
-</body>
-</html>
+const String _postalChinaPostFixtureJson = '''
+{
+  "code": 0,
+  "success": true,
+  "page": 1,
+  "size": 5,
+  "total": 1,
+  "list": [
+    {
+      "province": "广东省",
+      "cities": "深圳市",
+      "county": "南山区",
+      "sitename": "深圳大学邮政所",
+      "zipcode": "518060",
+      "address": "南山山粤海街道南海大道3688号深圳大学实验楼",
+      "phone": "13556892288",
+      "todayTime": "09:00-12:00 12:00-17:00"
+    }
+  ]
+}
 ''';
 
 const String _reverseImageGoogleFixtureHtml = '''

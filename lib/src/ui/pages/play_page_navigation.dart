@@ -87,6 +87,10 @@ extension _PlayPageNavigation on _PlayPageState {
     final normalizedCurrent = currentIndex < 0 ? 0 : currentIndex;
     _setTransitionDirection(normalizedTarget >= normalizedCurrent ? 1 : -1);
     final targetWord = visibleWords[normalizedTarget];
+    if (state.isPlaying) {
+      await state.movePlaybackToWord(targetWord);
+      return;
+    }
     await state.selectWordEntry(targetWord);
     state.rememberPlaybackProgress(targetWord);
   }
@@ -148,79 +152,6 @@ extension _PlayPageNavigation on _PlayPageState {
       MaterialPageRoute<void>(
         builder: (_) => FollowAlongPage(word: resolvedWord),
       ),
-    );
-  }
-
-  Future<void> _openWordbookSheet(
-    BuildContext context,
-    AppState state,
-    AppI18n i18n,
-  ) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      builder: (context) {
-        return SafeArea(
-          top: false,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-            children: <Widget>[
-              Text(
-                i18n.t('inline.ui.pages.library_page.switch_wordbook_40ff3b'),
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 12),
-              for (final book in state.wordbooks) ...<Widget>[
-                Card(
-                  child: ListTile(
-                    selected: state.selectedWordbook?.id == book.id,
-                    title: Text(localizedWordbookName(i18n, book)),
-                    subtitle: Text(
-                      i18n.t(
-                        'inline.ui.pages.library_page.book_wordcount_words_d7e63b',
-                        params: <String, Object?>{'count': book.wordCount},
-                      ),
-                    ),
-                    onTap: () async {
-                      final confirmed = await _confirmWordbookLoadIfNeeded(
-                        state,
-                        i18n,
-                        book,
-                      );
-                      if (!confirmed) return;
-                      if (context.mounted) {
-                        Navigator.of(context).pop();
-                      }
-                      await state.selectWordbook(book);
-                    },
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<bool> _confirmWordbookLoadIfNeeded(
-    AppState state,
-    AppI18n i18n,
-    Wordbook book,
-  ) {
-    if (!state.requiresWordbookLoadConfirmation(book)) {
-      return Future<bool>.value(true);
-    }
-    return showConfirmDialog(
-      context: context,
-      title: i18n.t('inline.ui.pages.library_page.initialize_wordbook_c30e1d'),
-      message: i18n.t(
-        'inline.ui.pages.library_page.localizedwordbookname_i18n_book_may_be_large_the_first_l_3b46f5',
-        params: <String, Object?>{
-          'wordbook': localizedWordbookName(i18n, book),
-        },
-      ),
-      confirmText: i18n.t('toolbox.breathing.continue_select'),
     );
   }
 }

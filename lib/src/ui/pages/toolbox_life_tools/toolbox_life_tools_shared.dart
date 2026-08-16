@@ -58,22 +58,25 @@ class _LifeSettingsPanel extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            title,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
+      child: Material(
+        type: MaterialType.transparency,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
             ),
-          ),
-          if (subtitle != null) ...<Widget>[
-            const SizedBox(height: 4),
-            Text(subtitle!, style: theme.textTheme.bodySmall),
+            if (subtitle != null) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(subtitle!, style: theme.textTheme.bodySmall),
+            ],
+            const SizedBox(height: 14),
+            ...children,
           ],
-          const SizedBox(height: 14),
-          ...children,
-        ],
+        ),
       ),
     );
   }

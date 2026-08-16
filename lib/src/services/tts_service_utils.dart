@@ -1,6 +1,13 @@
 part of 'tts_service.dart';
 
 extension TtsServiceUtils on TtsService {
+  void _logVerbose(String message, {Map<String, Object?>? data}) {
+    if (!kDebugMode) {
+      return;
+    }
+    _log.d('tts', message, data: data);
+  }
+
   Future<T?> _runOp<T>(
     String operation,
     Future<T> Function() task, {
@@ -52,6 +59,15 @@ class _ApiSpeakInterrupted implements Exception {
 
   @override
   String toString() => 'ApiSpeakInterrupted($reason)';
+}
+
+class TtsConfigurationException implements Exception {
+  const TtsConfigurationException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
 }
 
 class _LocalTtsVoice {

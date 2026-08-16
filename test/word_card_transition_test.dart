@@ -23,14 +23,18 @@ void main() {
     expect(find.text('Beta'), findsOneWidget);
   });
 
-  testWidgets('word card supports swipe anywhere to change words', (
-    tester,
-  ) async {
+  testWidgets('word card swipes body but not footer controls', (tester) async {
     await tester.pumpWidget(const _WordCardHarness());
 
     expect(find.text('Alpha'), findsOneWidget);
 
-    await tester.drag(find.byType(WordCard), const Offset(-320, 0));
+    await tester.drag(find.text('Alpha'), const Offset(-320, 0));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('Beta'), findsOneWidget);
+
+    await tester.drag(find.byType(Slider), const Offset(-320, 0));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
@@ -67,6 +71,7 @@ class _WordCardHarnessState extends State<_WordCardHarness> {
 
   int _index = 0;
   int _direction = 1;
+  double _footerValue = 0.5;
 
   void _move(int delta) {
     setState(() {
@@ -92,6 +97,14 @@ class _WordCardHarnessState extends State<_WordCardHarness> {
             onNextWord: () => _move(1),
             onSwipePrevious: () => _move(-1),
             onSwipeNext: () => _move(1),
+            footer: Slider(
+              value: _footerValue,
+              onChanged: (value) {
+                setState(() {
+                  _footerValue = value;
+                });
+              },
+            ),
           ),
         ),
       ),

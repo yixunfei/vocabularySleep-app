@@ -16,6 +16,7 @@ import 'package:sherpa_onnx/sherpa_onnx.dart';
 
 import '../models/play_config.dart';
 import '../utils/asr_language.dart';
+import '../utils/speech_api_model_options.dart';
 import 'cstcloud_resource_cache_service.dart';
 
 part 'asr_service_core.dart';
@@ -205,12 +206,8 @@ abstract class AsrServiceContract {
 class AsrService implements AsrServiceContract {
   AsrService();
 
-  static const String _defaultApiEndpoint =
-      'https://api.siliconflow.cn/v1/audio/transcriptions';
   static const String _defaultTtsApiEndpoint =
       'https://api.siliconflow.cn/v1/audio/speech';
-  static const String _defaultTtsModel = 'FunAudioLLM/CosyVoice2-0.5B';
-  static const String _defaultTtsVoice = 'alex';
   static const int _targetSampleRate = 16000;
   static const double _minAsrSeconds = 0.03;
   static const int _modelCacheVersion = 1;
