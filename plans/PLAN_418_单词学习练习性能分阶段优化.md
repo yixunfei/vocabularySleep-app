@@ -2,7 +2,7 @@
 
 ## 基本信息
 - **创建日期**: 2026-08-25
-- **状态**: 进行中（阶段 1 已完成）
+- **状态**: 进行中（阶段 1-2 已完成）
 - **负责人**: Codex
 
 ## 目标
@@ -36,3 +36,11 @@
 - 播放切词、播放控制和播放结束改用 `PlaybackStore.revision`；普通 `AppState` listener 在连续播放期间不再收到事件。
 - `StudyPage`、`PlayPage`、`LibraryPage` 通过顶层/子 Tab `isActive` gate，隐藏页面不执行播放 revision rebuild；重新进入时刷新一次。
 - 兼容性边界：播放相关的当前词 UI 仅由 Play/Library/MiniPlayer 订阅专用 revision；词本切换、搜索、配置和错误消息仍走全局通知。
+
+## 阶段 2 执行结果
+- `AppState` 增加 64 条上限的 hydrated word LRU；换词本或清空词表时清理，避免详情缓存无界增长。
+- `_syncPlaybackToSelectedWordbook`、`_preparePlayImpl`、`_startPlaySession` 与重启路径复用 `scopeWords`，取消播放期间的整表复制。
+- `_hydrateWordEntryIfNeeded` 只返回当前词的完整详情并写入 LRU，不再替换 `_words`、增加 `wordsVersion` 或调用整本 `_refreshWordMemoryProgressCache`。
+- 播放服务回调直接使用返回的 `word` 与服务提供的 `index`，避免为定位当前词再次扫描整表。
+- 集成测试验证：播放服务收到的列表与 `AppState.words` 为同一实例，播放后列表版本和 memory progress 查询次数不变，当前词仍能读取完整字段。
+- 阶段 2 验证命令：`flutter test test/app_state_init_test.dart test/app_state_logic_test.dart test/app_state_practice_test.dart test/playback_service_test.dart test/memory_lane_selector_test.dart --reporter compact`、目标文件 `flutter analyze`、`dart format`、`git diff --check`。

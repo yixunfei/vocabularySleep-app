@@ -60,7 +60,7 @@ extension _AppStatePlayback on AppState {
         startIndex = scopedIndex;
       }
     }
-    final words = List<WordEntry>.from(scopeWords);
+    final words = scopeWords;
     final safeStart = startIndex.clamp(0, words.length - 1);
     final syncToken = ++_playbackStore.wordbookPlaybackSyncToken;
     _playbackStore.playingWordbookId = wordbook.id;
@@ -110,7 +110,7 @@ extension _AppStatePlayback on AppState {
       final scopedIndex = _indexOfWordEntry(scopeWords, activeWord);
       if (scopedIndex >= 0) startIndex = scopedIndex;
     }
-    final words = List<WordEntry>.from(scopeWords);
+    final words = scopeWords;
     final safeStart = startIndex.clamp(0, words.length - 1);
     final sessionId = ++_playbackStore.playSessionId;
 
@@ -131,22 +131,18 @@ extension _AppStatePlayback on AppState {
         startIndex: safeStart,
         config: _config,
         resolveWord: (index, word) {
-          final resolved = _hydrateWordEntryIfNeeded(word);
-          if (index >= 0 && index < words.length) {
-            words[index] = resolved;
-          }
-          return resolved;
+          return _hydrateWordEntryIfNeeded(word);
         },
         onWordChanged: (index, word) {
           if (sessionId != _playbackStore.playSessionId) return;
-          final nextWord = (index >= 0 && index < words.length)
-              ? words[index]
-              : word;
-          final mappedIndex = _indexOfWordEntry(words, nextWord);
-          if (mappedIndex >= 0) {
-            _playbackStore.playingScopeIndex = mappedIndex;
-          } else if (index >= 0 && index < words.length) {
+          final nextWord = word;
+          if (index >= 0 && index < words.length) {
             _playbackStore.playingScopeIndex = index;
+          } else {
+            _playbackStore.playingScopeIndex = _indexOfWordEntry(
+              words,
+              nextWord,
+            );
           }
           _playbackStore.playingWord = nextWord.word;
           _rememberPlaybackProgressImpl(nextWord);
@@ -259,7 +255,7 @@ extension _AppStatePlayback on AppState {
   }) async {
     if (_disposed) return;
     if (scopeWords.isEmpty) return;
-    final words = List<WordEntry>.from(scopeWords);
+    final words = scopeWords;
     final safeStart = startIndex.clamp(0, words.length - 1);
     final sessionId = ++_playbackStore.playSessionId;
 
@@ -280,22 +276,18 @@ extension _AppStatePlayback on AppState {
         startIndex: safeStart,
         config: _config,
         resolveWord: (index, word) {
-          final resolved = _hydrateWordEntryIfNeeded(word);
-          if (index >= 0 && index < words.length) {
-            words[index] = resolved;
-          }
-          return resolved;
+          return _hydrateWordEntryIfNeeded(word);
         },
         onWordChanged: (index, word) {
           if (sessionId != _playbackStore.playSessionId) return;
-          final nextWord = (index >= 0 && index < words.length)
-              ? words[index]
-              : word;
-          final mappedIndex = _indexOfWordEntry(words, nextWord);
-          if (mappedIndex >= 0) {
-            _playbackStore.playingScopeIndex = mappedIndex;
-          } else if (index >= 0 && index < words.length) {
+          final nextWord = word;
+          if (index >= 0 && index < words.length) {
             _playbackStore.playingScopeIndex = index;
+          } else {
+            _playbackStore.playingScopeIndex = _indexOfWordEntry(
+              words,
+              nextWord,
+            );
           }
           _playbackStore.playingWord = nextWord.word;
           _rememberPlaybackProgressImpl(nextWord);
@@ -538,7 +530,7 @@ extension _AppStatePlayback on AppState {
         _playbackStore.playingScopeWords.isEmpty) {
       return;
     }
-    final words = List<WordEntry>.from(_playbackStore.playingScopeWords);
+    final words = _playbackStore.playingScopeWords;
     final safeTarget = targetIndex.clamp(0, words.length - 1);
     _playbackStore.playingScopeIndex = safeTarget;
     _playbackStore.playingWord = words[safeTarget].word;

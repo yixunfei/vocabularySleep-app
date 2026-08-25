@@ -1,4 +1,22 @@
-# [Unreleased-STUDY-PERF-PHASE1] - 2026-08-25
+# [Unreleased-STUDY-PERF-PHASE2] - 2026-08-26
+
+### 原因
+- 大词本播放过程中，逐词 hydrate 会复制整份词表并重新刷新整本记忆进度缓存，造成额外分配、数据库查询和 GC 抖动。
+
+### 修改
+- `AppState` 增加最多 64 条的 hydrated word LRU 缓存；播放只缓存当前及近期完整词条，切换词本时清空缓存。
+- 播放队列复用现有 `scopeWords` 列表，不再为每次播放/重启/跳词创建整本 `List<WordEntry>` 副本。
+- hydrate 不再替换 `_words`、递增 `wordsVersion` 或刷新整本 memory progress cache；播放回调直接使用解析后的词条和服务提供的 index。
+
+### 修复
+- 播放切词不会再触发整本词表的复制和整本记忆进度查询，保持 lite 词表身份稳定，降低进入其他模块后的持续内存与 UI 压力。
+
+### 验证
+- `flutter test test/app_state_init_test.dart test/app_state_logic_test.dart test/app_state_practice_test.dart test/playback_service_test.dart test/memory_lane_selector_test.dart --reporter compact` 通过。
+- 新增集成回归：`playback hydration keeps the lite word list and memory cache intact`，验证列表实例、`wordsVersion`、记忆进度查询次数和当前词详情均保持预期。
+- `dart format`、`git diff --check` 已执行；本阶段未触达 i18n catalog。
+
+## [Unreleased-STUDY-PERF-PHASE1] - 2026-08-25
 
 ### 原因
 - 播放每个单词都会通过巨型 `AppState` 广播，导致顶层常驻 Tab、Study 内隐藏页和练习页持续重建；用户切到其他模块后仍会被播放切词拖慢。

@@ -18,6 +18,7 @@ import 'package:vocabulary_sleep_app/src/repositories/settings_store_repository.
 import 'package:vocabulary_sleep_app/src/services/app_log_service.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
 import 'package:vocabulary_sleep_app/src/services/settings_service.dart';
+import 'package:vocabulary_sleep_app/src/services/playback_service.dart';
 import 'package:vocabulary_sleep_app/src/services/weather_service.dart';
 import 'package:vocabulary_sleep_app/src/services/wordbook_import_service.dart';
 import 'package:vocabulary_sleep_app/src/state/app_state.dart';
@@ -35,6 +36,7 @@ class _MemoryDatabaseService extends AppDatabaseService {
   final Map<String, String> _settings = <String, String>{};
   bool _seeded = false;
   int initCalls = 0;
+  int memoryProgressQueryCalls = 0;
 
   Map<String, String> get settingsValues => _settings;
 
@@ -138,6 +140,7 @@ class _MemoryDatabaseService extends AppDatabaseService {
   Map<int, WordMemoryProgress> getWordMemoryProgressByWordIds(
     Iterable<int> wordIds,
   ) {
+    memoryProgressQueryCalls += 1;
     return const <int, WordMemoryProgress>{};
   }
 
@@ -156,6 +159,31 @@ class _MemoryDatabaseService extends AppDatabaseService {
         .take(limit)
         .map((item) => item.word)
         .toList(growable: false);
+  }
+}
+
+class _ResolvingPlaybackService extends TrackingPlaybackService {
+  List<WordEntry>? lastWords;
+
+  @override
+  Future<void> playWords({
+    required List<WordEntry> words,
+    required int startIndex,
+    required PlayConfig config,
+    WordResolveCallback? resolveWord,
+    UnitChangeCallback? onUnitChanged,
+    WordChangeCallback? onWordChanged,
+    void Function()? onFinished,
+  }) async {
+    lastWords = words;
+    playWordsCalls += 1;
+    for (var index = 0; index < words.length; index += 1) {
+      final resolved = resolveWord == null
+          ? words[index]
+          : await resolveWord(index, words[index]);
+      onWordChanged?.call(index, resolved);
+    }
+    onFinished?.call();
   }
 }
 
@@ -736,6 +764,72 @@ void main() {
         containsPair('practice:warmup', 2),
       );
       expect(restoredDashboard.trackedEntries, hasLength(1));
+    },
+  );
+
+  test(
+    'playback hydration keeps the lite word list and memory cache intact',
+    () async {
+      final entries = <WordEntry>[
+        WordEntry(
+          id: 401,
+          wordbookId: 4,
+          word: 'Alpha',
+          fields: const <WordFieldItem>[
+            WordFieldItem(key: 'meaning', label: 'Meaning', value: 'first'),
+            WordFieldItem(key: 'detail', label: 'Detail', value: '完整释义'),
+          ],
+        ),
+        WordEntry(
+          id: 402,
+          wordbookId: 4,
+          word: 'Beta',
+          fields: const <WordFieldItem>[
+            WordFieldItem(key: 'meaning', label: 'Meaning', value: 'second'),
+            WordFieldItem(key: 'detail', label: 'Detail', value: '完整释义二'),
+          ],
+        ),
+      ];
+      final database = _MemoryDatabaseService(
+        wordbooks: <Wordbook>[
+          Wordbook(
+            id: 4,
+            name: 'Large',
+            path: 'custom:large_hydration',
+            wordCount: 2500,
+            createdAt: DateTime(2026, 4, 13),
+          ),
+        ],
+        wordsByWordbookId: <int, List<WordEntry>>{4: entries},
+      );
+      addTearDown(database.dispose);
+      final settings = _settingsFor(database);
+      final playback = _ResolvingPlaybackService();
+      final state = AppState(
+        database: database,
+        settings: settings,
+        playback: playback,
+        ambient: StubAmbientService(),
+        asr: StubAsrService(),
+        focusService: StubFocusService(database, settings: settings),
+      );
+
+      await state.init();
+      await state.loadSelectedWordbook();
+      final loadedWords = state.words;
+      final loadedVersion = state.wordsVersion;
+      final memoryQueriesAfterLoad = database.memoryProgressQueryCalls;
+
+      await state.play();
+
+      expect(identical(playback.lastWords, loadedWords), isTrue);
+      expect(identical(state.words, loadedWords), isTrue);
+      expect(state.wordsVersion, loadedVersion);
+      expect(database.memoryProgressQueryCalls, memoryQueriesAfterLoad);
+      expect(
+        state.currentWord?.fields.map((item) => item.key),
+        contains('detail'),
+      );
     },
   );
 

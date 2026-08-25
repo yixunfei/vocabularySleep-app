@@ -97,6 +97,7 @@ class _PendingPracticeMemoryEvent {
 class AppState extends ChangeNotifier with WidgetsBindingObserver {
   static const int _practiceSessionHistoryLimit = 365;
   static const int _startupEagerWordLoadLimit = 1500;
+  static const int _maxHydratedWordCacheEntries = 64;
   static const Duration _playbackProgressPersistDebounce = Duration(seconds: 2);
   static const Duration _practiceDashboardPersistDebounce = Duration(
     milliseconds: 800,
@@ -294,6 +295,12 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   String _currentWordCacheQuery = '';
   SearchMode _currentWordCacheMode = SearchMode.all;
   int? _currentWordCacheWordbookId;
+
+  // Large wordbooks keep lite rows in _words. Hydrated details are retained in
+  // a small LRU so playback can serve the current card without replacing and
+  // copying the full word list on every word change.
+  final Map<String, WordEntry> _hydratedWordCache = <String, WordEntry>{};
+  final List<String> _hydratedWordCacheOrder = <String>[];
 
   bool get initializing => _initializing;
   bool get initialized => _initialized;
@@ -776,6 +783,11 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   WordEntry? _computeCurrentWord() {
+    WordEntry? resolveHydrated(WordEntry? entry) {
+      if (entry == null) return null;
+      return _hydratedWordCache[_hydrationCacheKey(entry)] ?? entry;
+    }
+
     final transient = _transientCurrentWord;
     final searchActive = _searchQuery.trim().isNotEmpty;
     if (transient != null &&
@@ -783,23 +795,23 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
             transient.wordbookId == _selectedWordbook!.id)) {
       if (!searchActive) {
         if (_words.isEmpty || _indexOfWordEntry(_words, transient) < 0) {
-          return transient;
+          return resolveHydrated(transient);
         }
       } else if (visibleWords.any(
         (item) => _isSameWordEntry(item, transient),
       )) {
-        return transient;
+        return resolveHydrated(transient);
       }
     }
     if (_currentWordIndex < 0 || _currentWordIndex >= _words.length) {
-      return _scopeWords.isEmpty ? null : _scopeWords.first;
+      return resolveHydrated(_scopeWords.isEmpty ? null : _scopeWords.first);
     }
     final current = _words[_currentWordIndex];
-    if (!searchActive) return current;
+    if (!searchActive) return resolveHydrated(current);
     if (visibleWords.any((item) => _isSameWordEntry(item, current))) {
-      return current;
+      return resolveHydrated(current);
     }
-    return _scopeWords.isEmpty ? null : _scopeWords.first;
+    return resolveHydrated(_scopeWords.isEmpty ? null : _scopeWords.first);
   }
 
   String _localizedBuiltinWordbookName(String path) {
@@ -2602,6 +2614,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   void _setWords(List<WordEntry> nextWords) {
     final transient = _transientCurrentWord;
+    _clearHydratedWordCache();
     _words = nextWords;
     _loadedWordbookId = _selectedWordbook?.id;
     if (transient != null) {
@@ -2617,6 +2630,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void _clearSelectedWordbookWords() {
+    _clearHydratedWordCache();
     _words = const <WordEntry>[];
     _loadedWordbookId = null;
     _transientCurrentWord = null;
@@ -2825,38 +2839,51 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     if (wordbook == null || !_shouldUseLiteWordQueries(wordbook)) {
       return entry;
     }
+    final cacheKey = _hydrationCacheKey(entry);
+    final cached = _hydratedWordCache[cacheKey];
+    if (cached != null) {
+      _touchHydratedWordCache(cacheKey, cached);
+      return cached;
+    }
     final hydrated = _wordbookRepository.hydrateWordEntry(entry);
     if (hydrated == null) {
       return entry;
     }
-    _replaceLoadedWordEntryIfNeeded(hydrated);
+    _touchHydratedWordCache(cacheKey, hydrated);
     return hydrated;
   }
 
-  void _replaceLoadedWordEntryIfNeeded(WordEntry entry) {
-    final index = _indexOfWordEntry(_words, entry);
-    if (index < 0) {
-      return;
+  String _hydrationCacheKey(WordEntry entry) {
+    final id = entry.id;
+    if (id != null && id > 0) {
+      return 'wb:${entry.wordbookId}|id:$id';
     }
-    final existing = _words[index];
-    if (_isWordEntryHydrationEquivalent(existing, entry)) {
-      return;
+    final entryUid = entry.entryUid?.trim() ?? '';
+    if (entryUid.isNotEmpty) {
+      return 'wb:${entry.wordbookId}|uid:$entryUid';
     }
-    final nextWords = List<WordEntry>.from(_words);
-    nextWords[index] = entry;
-    _words = nextWords;
-    _loadedWordbookId = _selectedWordbook?.id;
-    _transientCurrentWord = null;
-    _refreshWordMemoryProgressCache(nextWords);
-    _wordsVersion += 1;
-    _invalidateVisibleWordsCache();
+    return 'wb:${entry.wordbookId}|word:${entry.word}|gloss:${entry.primaryGloss ?? ''}';
   }
 
-  bool _isWordEntryHydrationEquivalent(WordEntry current, WordEntry next) {
-    return _isSameWordEntry(current, next) &&
-        current.summaryMeaningText == next.summaryMeaningText &&
-        current.rawContent == next.rawContent &&
-        current.fields.length == next.fields.length;
+  void _touchHydratedWordCache(String key, WordEntry entry) {
+    _hydratedWordCache[key] = entry;
+    _hydratedWordCacheOrder
+      ..remove(key)
+      ..add(key);
+    while (_hydratedWordCacheOrder.length > _maxHydratedWordCacheEntries) {
+      final evicted = _hydratedWordCacheOrder.removeAt(0);
+      _hydratedWordCache.remove(evicted);
+    }
+    _currentWordCacheValid = false;
+  }
+
+  void _clearHydratedWordCache() {
+    if (_hydratedWordCache.isEmpty) {
+      return;
+    }
+    _hydratedWordCache.clear();
+    _hydratedWordCacheOrder.clear();
+    _currentWordCacheValid = false;
   }
 
   Wordbook? _resolveWordbookForEntry(WordEntry entry) {
