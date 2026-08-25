@@ -16,6 +16,7 @@ import 'package:vocabulary_sleep_app/src/models/word_memory_progress.dart';
 import 'package:vocabulary_sleep_app/src/models/wordbook.dart';
 import 'package:vocabulary_sleep_app/src/repositories/practice_repository.dart';
 import 'package:vocabulary_sleep_app/src/repositories/settings_store_repository.dart';
+import 'package:vocabulary_sleep_app/src/repositories/wordbook_repository.dart';
 import 'package:vocabulary_sleep_app/src/services/app_log_service.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
 import 'package:vocabulary_sleep_app/src/services/settings_service.dart';
@@ -215,6 +216,52 @@ class _CountingPracticeRepository implements PracticeRepository {
       extension: extension,
       directoryPath: directoryPath,
       fileName: fileName,
+    );
+  }
+}
+
+class _CountingWordbookRepository extends DatabaseWordbookRepository {
+  _CountingWordbookRepository(super.database);
+
+  int liteQueryCalls = 0;
+  int searchLiteQueryCalls = 0;
+
+  @override
+  List<WordEntry> getWordsLite(
+    int wordbookId, {
+    int limit = 100000,
+    int offset = 0,
+  }) {
+    liteQueryCalls += 1;
+    return super.getWordsLite(wordbookId, limit: limit, offset: offset);
+  }
+
+  @override
+  Future<List<WordEntry>> getWordsLiteAsync(
+    int wordbookId, {
+    int limit = 100000,
+    int offset = 0,
+  }) {
+    return Future<List<WordEntry>>.value(
+      getWordsLite(wordbookId, limit: limit, offset: offset),
+    );
+  }
+
+  @override
+  List<WordEntry> searchWordsLite(
+    int wordbookId, {
+    required String query,
+    required String mode,
+    int limit = 100000,
+    int offset = 0,
+  }) {
+    searchLiteQueryCalls += 1;
+    return super.searchWordsLite(
+      wordbookId,
+      query: query,
+      mode: mode,
+      limit: limit,
+      offset: offset,
     );
   }
 }
@@ -821,6 +868,72 @@ void main() {
         containsPair('practice:warmup', 2),
       );
       expect(restoredDashboard.trackedEntries, hasLength(1));
+    },
+  );
+
+  test(
+    'deferred library pages reuse the first page across repeated reads',
+    () async {
+      final database = _MemoryDatabaseService(
+        wordbooks: <Wordbook>[
+          Wordbook(
+            id: 21,
+            name: 'Large page cache',
+            path: 'custom:large_page_cache',
+            wordCount: 2000,
+            createdAt: DateTime(2026, 4, 13),
+          ),
+        ],
+        wordsByWordbookId: <int, List<WordEntry>>{
+          21: <WordEntry>[
+            _word(2101, 'Alpha').copyWith(wordbookId: 21, meaning: 'first'),
+            _word(2102, 'Beta').copyWith(wordbookId: 21, meaning: 'second'),
+          ],
+        },
+      );
+      addTearDown(database.dispose);
+      final settings = _settingsFor(database);
+      final repository = _CountingWordbookRepository(database);
+      final state = AppState(
+        database: database,
+        settings: settings,
+        wordbookRepository: repository,
+        playback: TrackingPlaybackService(),
+        ambient: StubAmbientService(),
+        asr: StubAsrService(),
+        focusService: StubFocusService(database, settings: settings),
+      );
+      addTearDown(state.dispose);
+
+      await state.init();
+      final largeWordbook = state.wordbooks.firstWhere(
+        (item) => item.path == 'custom:large_page_cache',
+      );
+      await state.selectWordbook(largeWordbook);
+      repository.liteQueryCalls = 0;
+
+      final firstPage = state.getVisibleWordsPage(limit: 20);
+      expect(firstPage, hasLength(2));
+      expect(repository.liteQueryCalls, 1);
+
+      final repeatedPage = state.getVisibleWordsPage(limit: 20);
+      expect(repeatedPage, hasLength(2));
+      expect(
+        repeatedPage.map((item) => item.word),
+        firstPage.map((item) => item.word),
+      );
+      expect(repository.liteQueryCalls, 1);
+
+      state.setSearchQuery('Beta');
+      repository.searchLiteQueryCalls = 0;
+      final searchedPage = state.getVisibleWordsPage(limit: 20);
+      expect(searchedPage.map((item) => item.word), <String>['Beta']);
+      expect(repository.searchLiteQueryCalls, 1);
+      expect(
+        state.getVisibleWordsPage(limit: 20).map((item) => item.word),
+        <String>['Beta'],
+      );
+      expect(repository.searchLiteQueryCalls, 1);
     },
   );
 

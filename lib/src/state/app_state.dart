@@ -285,6 +285,16 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   int _visibleWordsCacheVersion = -1;
   String _visibleWordsCacheQuery = '';
   SearchMode _visibleWordsCacheMode = SearchMode.all;
+  // Deferred large books are paged synchronously by the library surface.
+  // Keep a small LRU of already-read pages so unrelated state notifications
+  // do not issue the same SQLite query again on the UI isolate.
+  static const int _maxDeferredWordbookPageCacheEntries = 8;
+  static const int _maxDeferredWordbookPageCacheWords = 240;
+  final LinkedHashMap<String, List<WordEntry>> _deferredWordbookPageCache =
+      LinkedHashMap<String, List<WordEntry>>();
+  final Set<String> _deferredWordbookPageCompleteKeys = <String>{};
+  String _visibleWordCountCacheSignature = '';
+  int? _visibleWordCountCacheValue;
 
   // [性能] _words 的 id → index 索引，惰性构建，随 _wordsVersion 失效。
   // 将热路径 _indexOfWordEntry 对主词表的查找从 O(n) 降为 O(1)。
@@ -658,6 +668,23 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     if (selectedWordbook == null) {
       return 0;
     }
+    final cacheSignature = _visibleWordCountSignature(selectedWordbook);
+    if (_visibleWordCountCacheSignature == cacheSignature &&
+        _visibleWordCountCacheValue != null) {
+      return _visibleWordCountCacheValue!;
+    }
+    final count = _computeVisibleWordCount(selectedWordbook);
+    _visibleWordCountCacheSignature = cacheSignature;
+    _visibleWordCountCacheValue = count;
+    return count;
+  }
+
+  String _visibleWordCountSignature(Wordbook wordbook) {
+    return '${wordbook.id}|${wordbook.wordCount}|$_loadedWordbookId|'
+        '$_wordsVersion|${_searchMode.name}|$_searchQuery';
+  }
+
+  int _computeVisibleWordCount(Wordbook selectedWordbook) {
     if (_searchQuery.trim().isEmpty) {
       return selectedWordbookLoaded
           ? _words.length
@@ -677,7 +704,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     }
     if (_searchQuery.trim().isEmpty) {
       if (!selectedWordbookLoaded) {
-        return _queryWordbookEntries(
+        return _getDeferredWordbookPage(
           selectedWordbook,
           limit: limit,
           offset: offset,
@@ -687,6 +714,13 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       final end = (start + limit).clamp(start, _words.length).toInt();
       return _words.sublist(start, end);
     }
+    if (!selectedWordbookLoaded) {
+      return _getDeferredWordbookPage(
+        selectedWordbook,
+        limit: limit,
+        offset: offset,
+      );
+    }
     return _searchWordbookEntries(
       selectedWordbook,
       query: _searchQuery,
@@ -694,6 +728,97 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       limit: limit,
       offset: offset,
     );
+  }
+
+  List<WordEntry> _getDeferredWordbookPage(
+    Wordbook wordbook, {
+    required int limit,
+    required int offset,
+  }) {
+    final normalizedLimit = limit.clamp(0, 100000).toInt();
+    final normalizedOffset = offset.clamp(0, 100000).toInt();
+    if (normalizedLimit == 0) {
+      return const <WordEntry>[];
+    }
+    final baseKey =
+        '${wordbook.id}|$_wordsVersion|${_searchMode.name}|'
+        '$_searchQuery';
+    if (normalizedOffset == 0) {
+      final cached = _deferredWordbookPageCache[baseKey];
+      if (cached != null &&
+          (cached.length >= normalizedLimit ||
+              _deferredWordbookPageCompleteKeys.contains(baseKey))) {
+        _touchDeferredWordbookPage(baseKey, cached);
+        return cached.sublist(0, normalizedLimit.clamp(0, cached.length));
+      }
+      final existing = cached ?? const <WordEntry>[];
+      final requestedAdditional = normalizedLimit - existing.length;
+      final additional = requestedAdditional <= 0
+          ? const <WordEntry>[]
+          : _queryDeferredWordbookEntries(
+              wordbook,
+              limit: requestedAdditional,
+              offset: existing.length,
+            );
+      final reachedEnd = additional.length < requestedAdditional;
+      final merged = <WordEntry>[...existing, ...additional];
+      final bounded = merged.length > _maxDeferredWordbookPageCacheWords
+          ? merged.sublist(0, _maxDeferredWordbookPageCacheWords)
+          : merged;
+      _touchDeferredWordbookPage(baseKey, bounded);
+      if (reachedEnd) {
+        _deferredWordbookPageCompleteKeys.add(baseKey);
+      } else {
+        _deferredWordbookPageCompleteKeys.remove(baseKey);
+      }
+      return merged.length <= normalizedLimit
+          ? merged
+          : merged.sublist(0, normalizedLimit);
+    }
+
+    final pageKey = '$baseKey|offset:$normalizedOffset|limit:$normalizedLimit';
+    final cached = _deferredWordbookPageCache[pageKey];
+    if (cached != null) {
+      _touchDeferredWordbookPage(pageKey, cached);
+      return cached;
+    }
+    final page = _queryDeferredWordbookEntries(
+      wordbook,
+      limit: normalizedLimit,
+      offset: normalizedOffset,
+    );
+    if (page.length <= _maxDeferredWordbookPageCacheWords) {
+      _touchDeferredWordbookPage(pageKey, page);
+    }
+    return page;
+  }
+
+  List<WordEntry> _queryDeferredWordbookEntries(
+    Wordbook wordbook, {
+    required int limit,
+    required int offset,
+  }) {
+    if (_searchQuery.trim().isNotEmpty) {
+      return _searchWordbookEntries(
+        wordbook,
+        query: _searchQuery,
+        mode: _searchMode.name,
+        limit: limit,
+        offset: offset,
+      );
+    }
+    return _queryWordbookEntries(wordbook, limit: limit, offset: offset);
+  }
+
+  void _touchDeferredWordbookPage(String key, List<WordEntry> page) {
+    _deferredWordbookPageCache.remove(key);
+    _deferredWordbookPageCache[key] = page;
+    while (_deferredWordbookPageCache.length >
+        AppState._maxDeferredWordbookPageCacheEntries) {
+      final oldestKey = _deferredWordbookPageCache.keys.first;
+      _deferredWordbookPageCache.remove(oldestKey);
+      _deferredWordbookPageCompleteKeys.remove(oldestKey);
+    }
   }
 
   List<WordEntry> _queryWordbookEntries(
@@ -2705,6 +2830,10 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _visibleWordsCacheVersion = -1;
     _visibleWordsCacheQuery = '';
     _visibleWordsCacheMode = SearchMode.all;
+    _deferredWordbookPageCache.clear();
+    _deferredWordbookPageCompleteKeys.clear();
+    _visibleWordCountCacheSignature = '';
+    _visibleWordCountCacheValue = null;
   }
 
   Future<void> _syncSpecialWordbooks() async {
@@ -2760,6 +2889,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
           return updated;
         })
         .toList(growable: false);
+    _invalidateVisibleWordsCache();
   }
 
   void _refreshSelectedSpecialWordbook(

@@ -36,6 +36,8 @@ class LibraryPage extends ConsumerStatefulWidget {
 
 class _LibraryPageState extends ConsumerState<LibraryPage> {
   static const int _pageSize = 20;
+  static const int _maxRetainedRowKeys = 240;
+  static const int _maxMeasuredRowHeights = 240;
   static const Duration _searchDebounceDuration = Duration(milliseconds: 160);
 
   final TextEditingController _searchController = TextEditingController();
@@ -126,18 +128,30 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
 
   GlobalKey _rowKeyFor(WordEntry word) {
     final identity = _wordIdentity(word);
-    return _rowKeys.putIfAbsent(
-      identity,
-      () => GlobalKey(debugLabel: 'library_word_$identity'),
-    );
+    final existing = _rowKeys[identity];
+    if (existing != null) return existing;
+    final key = GlobalKey(debugLabel: 'library_word_$identity');
+    _rowKeys[identity] = key;
+    _pruneDetachedRowKeys();
+    return key;
   }
 
-  void _syncRowKeys(List<WordEntry> words) {
-    final activeIdentities = words.map(_wordIdentity).toSet();
-    _rowKeys.removeWhere((key, _) => !activeIdentities.contains(key));
-    _rowHeights.removeWhere((key, _) => !activeIdentities.contains(key));
-    for (final word in words) {
-      _rowKeyFor(word);
+  void _syncRowKeys(List<WordEntry> _) {
+    // SliverList only builds a small viewport window. Keys are created from
+    // the builder, so do not eagerly allocate one for every loaded word.
+    _pruneDetachedRowKeys();
+  }
+
+  void _pruneDetachedRowKeys() {
+    if (_rowKeys.length <= _maxRetainedRowKeys) return;
+    final removable = _rowKeys.entries
+        .where((entry) => entry.value.currentContext == null)
+        .take(_rowKeys.length - _maxRetainedRowKeys)
+        .map((entry) => entry.key)
+        .toList(growable: false);
+    for (final identity in removable) {
+      _rowKeys.remove(identity);
+      _rowHeights.remove(identity);
     }
   }
 
@@ -149,6 +163,9 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       return;
     }
     _rowHeights[identity] = nextHeight;
+    while (_rowHeights.length > _maxMeasuredRowHeights) {
+      _rowHeights.remove(_rowHeights.keys.first);
+    }
   }
 
   String _buildPaginationSignature(AppState state, int totalWords) {
@@ -166,6 +183,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       _visibleItemCount = scopeWordCount == 0
           ? 0
           : min(_pageSize, scopeWordCount);
+      _rowHeights.clear();
       return;
     }
 

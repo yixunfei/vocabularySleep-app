@@ -2,7 +2,7 @@
 
 ## 基本信息
 - **创建日期**: 2026-08-25
-- **状态**: 进行中（阶段 1-5 已完成）
+- **状态**: 进行中（阶段 1-5 已完成，阶段 6 进行中）
 - **负责人**: Codex
 
 ## 目标
@@ -15,7 +15,7 @@
 4. **阶段 3：练习批次收敛**。练习会话只持有当前轮次词条，避免把完整 12000 词本复制并为整表建立派生候选。
 5. **阶段 4：记忆进度增量化**。按进度 revision 更新受影响词，避免答题后反复扫描整表。
 6. **阶段 5：数据库/导入后台化**。评估并实现数据库 actor isolate 或等价后台执行，迁移 JSON 解析和 SQLite 写入；增加集成回归。已完成大词本 lite 只读查询后台化；导入写入暂不迁移。
-7. **阶段 6：轻量模型与列表**。分离摘要/详情模型，收敛 Library 测量与分页常驻对象。
+7. **阶段 6：轻量模型与列表**。分离摘要/详情模型，收敛 Library 测量与分页常驻对象。已完成延迟分页/计数缓存和列表 key/测量有界化；轻量模型进一步拆分待后续切片。
 
 ## 风险评估
 - **风险 1**: 过度收窄监听会导致当前播放词、语言或设置 UI 不更新。缓解：为每个页面保留明确 selector，并以状态 token 测试覆盖真正需要更新的字段。
@@ -65,3 +65,9 @@
 - 选词本和播放按需加载均等待异步结果，并使用 `_wordbookLoadGeneration` 丢弃过期请求；数据库恢复、重置和 `dispose` 会使未完成查询失效，busy 状态只由当前请求关闭。
 - 完整字段查询、搜索、分页同步接口、导入 JSON 解析/SQLite 写入和事务语义本阶段明确不变，留待独立阶段评估。
 - 阶段 5 验证：`flutter test test/app_state_practice_test.dart test/app_state_init_test.dart test/app_state_logic_test.dart test/playback_service_test.dart test/memory_lane_selector_test.dart test/wordbook_query_worker_test.dart --reporter compact`（41 项通过）；目标文件 `flutter analyze` 无 error；`dart format`、`git diff --check` 通过。
+
+## 阶段 6（进行中）执行结果
+- `visibleWordCount` 和延迟大词本的分页查询增加签名缓存；相同词本、搜索条件和词表版本下，播放切词或其他全局通知不会重复执行同步 SQLite count/page 查询。
+- 延迟分页使用最多 8 个 LRU 页面、首段最多 240 条，并记录已到达末尾的短页，避免空结果反复查询；搜索分页仍走原有 `searchWordsLite` 语义。
+- `LibraryPage` 不再在 build 阶段为所有已加载条目预创建 GlobalKey；只为 Sliver 实际构建的窗口创建 key，并将未挂载 key 与高度测量限制在 240 条以内，降低滚动后的常驻对象数量。
+- 阶段 6 当前验证：新增初始化回归覆盖普通分页和搜索分页重复读取；`flutter test test/app_state_init_test.dart test/app_state_logic_test.dart --reporter compact` 通过，`dart format`、`git diff --check` 通过。轻量摘要/详情模型拆分和真机 profile 复测尚未完成。

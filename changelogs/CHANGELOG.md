@@ -16,6 +16,22 @@
 - 目标文件 `flutter analyze` 无 error；`dart format`、`git diff --check` 通过。
 - 本阶段新增/退休 i18n key 均为 0；维护脚本未运行（未触达 catalog）。
 
+## [Unreleased-STUDY-PERF-PHASE6-LIST] - 2026-08-26
+
+### 原因
+- 延迟加载的大词本在 Library build、播放切词和其他全局通知期间会重复执行同步分页/count 查询；滚动加载后还会为整段列表预创建 GlobalKey 和测量状态。
+
+### 修改
+- 为延迟词本的 count/page 查询增加签名缓存与有界 LRU，短页到达末尾后不再重复查询；搜索分页继续使用 `searchWordsLite`。
+- Library 仅在 Sliver 实际构建行时创建 GlobalKey，并限制脱离视口的 key 与行高测量缓存。
+
+### 修复
+- 降低打开学习模块后切到其他模块时由重复 SQLite 查询、列表分配和常驻 row 元数据造成的 UI/GC 压力。
+
+### 验证
+- 新增回归覆盖延迟词本普通分页和搜索分页的重复读取；`flutter test test/app_state_init_test.dart test/app_state_logic_test.dart --reporter compact` 通过。
+- `dart format`、`git diff --check` 通过；本阶段新增/退休 i18n key 均为 0。
+
 ## [Unreleased-STUDY-PERF-PHASE3] - 2026-08-26
 
 ### 原因
