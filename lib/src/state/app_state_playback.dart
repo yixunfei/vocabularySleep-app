@@ -70,7 +70,7 @@ extension _AppStatePlayback on AppState {
     _playbackStore.playingWord = words[safeStart].word;
     _rememberPlaybackProgressImpl(words[safeStart]);
     _playbackStore.resetUnitProgress();
-    _notifyStateChanged();
+    _notifyPlaybackChanged();
 
     _playbackStore.playSessionId += 1;
     await _playback.stop();
@@ -123,7 +123,7 @@ extension _AppStatePlayback on AppState {
     _playbackStore.playingWord = words[safeStart].word;
     _rememberPlaybackProgressImpl(words[safeStart]);
     _playbackStore.resetUnitProgress();
-    _notifyStateChanged();
+    _notifyPlaybackChanged();
 
     try {
       await _playback.preparePlay(
@@ -155,7 +155,7 @@ extension _AppStatePlayback on AppState {
             _setCurrentWordByEntry(nextWord);
             resetTestModeProgress();
           }
-          _notifyStateChanged();
+          _notifyPlaybackChanged();
         },
         onUnitChanged: (current, total, unit) {
           if (sessionId != _playbackStore.playSessionId) return;
@@ -203,7 +203,7 @@ extension _AppStatePlayback on AppState {
     }
     _playbackStore.isPlaying = true;
     _playbackStore.isPaused = false;
-    _notifyStateChanged();
+    _notifyPlaybackChanged();
     try {
       await _playback.startPreparedPlay();
     } catch (error, stackTrace) {
@@ -272,7 +272,7 @@ extension _AppStatePlayback on AppState {
     _playbackStore.playingWord = words[safeStart].word;
     _rememberPlaybackProgressImpl(words[safeStart]);
     _playbackStore.resetUnitProgress();
-    _notifyStateChanged();
+    _notifyPlaybackChanged();
 
     try {
       await _playback.playWords(
@@ -304,7 +304,7 @@ extension _AppStatePlayback on AppState {
             _setCurrentWordByEntry(nextWord);
             resetTestModeProgress();
           }
-          _notifyStateChanged();
+          _notifyPlaybackChanged();
         },
         onUnitChanged: (current, total, unit) {
           if (sessionId != _playbackStore.playSessionId) return;
@@ -351,7 +351,7 @@ extension _AppStatePlayback on AppState {
         _playbackStore.isPaused = true;
         _flushPlaybackProgressPersist();
       }
-      _notifyStateChanged();
+      _notifyPlaybackChanged();
     } catch (error, stackTrace) {
       _log.e(
         'app_state',
@@ -394,7 +394,7 @@ extension _AppStatePlayback on AppState {
     _setCurrentWordByEntry(scopeWords[nextScopeIndex]);
     _rememberPlaybackProgressImpl(scopeWords[nextScopeIndex]);
     resetTestModeProgress();
-    _notifyStateChanged();
+    _notifyPlaybackChanged();
   }
 
   Future<void> _playNextWordImpl() async {
@@ -409,7 +409,7 @@ extension _AppStatePlayback on AppState {
     _setCurrentWordByEntry(scopeWords[nextScopeIndex]);
     _rememberPlaybackProgressImpl(scopeWords[nextScopeIndex]);
     resetTestModeProgress();
-    _notifyStateChanged();
+    _notifyPlaybackChanged();
   }
 
   Future<void> _jumpToPlayingWordbookImpl() async {
@@ -546,7 +546,7 @@ extension _AppStatePlayback on AppState {
     if (_selectedWordbook?.id == playingId) {
       _setCurrentWordByEntry(words[safeTarget]);
       resetTestModeProgress();
-      _notifyStateChanged();
+      _notifyPlaybackChanged();
     }
     _playbackStore.playSessionId += 1;
     final restartSessionId = _playbackStore.playSessionId;
@@ -579,7 +579,7 @@ extension _AppStatePlayback on AppState {
     _playbackStore.queuedPlaybackScopeTarget = null;
     _playbackStore.playbackScopeRestarting = false;
     if (notify) {
-      _notifyStateChanged();
+      _notifyPlaybackChanged();
     }
   }
 }

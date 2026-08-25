@@ -15,12 +15,14 @@ import 'play_page.dart';
 class StudyPage extends ConsumerWidget {
   const StudyPage({
     super.key,
+    this.isActive = true,
     required this.selectedTab,
     required this.onSelectTab,
     required this.onOpenPractice,
     required this.onAttachLibraryScrollToTop,
   });
 
+  final bool isActive;
   final StudyStartupTab selectedTab;
   final ValueChanged<StudyStartupTab> onSelectTab;
   final VoidCallback onOpenPractice;
@@ -110,9 +112,12 @@ class StudyPage extends ConsumerWidget {
                     PlayPage(
                       onOpenPractice: onOpenPractice,
                       onOpenLibrary: () => onSelectTab(StudyStartupTab.library),
+                      isActive: isActive && selectedTab == StudyStartupTab.play,
                     ),
                     LibraryPage(
                       onAttachScrollToTop: onAttachLibraryScrollToTop,
+                      isActive:
+                          isActive && selectedTab == StudyStartupTab.library,
                     ),
                   ],
                 ),

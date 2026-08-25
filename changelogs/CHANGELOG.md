@@ -1,3 +1,21 @@
+# [Unreleased-STUDY-PERF-PHASE1] - 2026-08-25
+
+### 原因
+- 播放每个单词都会通过巨型 `AppState` 广播，导致顶层常驻 Tab、Study 内隐藏页和练习页持续重建；用户切到其他模块后仍会被播放切词拖慢。
+
+### 修改
+- `PlaybackStore` 新增独立的有界 revision `ValueNotifier`；播放开始、暂停、切词、跳词和结束只在该通道通知，不再触发全局 `AppState.notifyListeners()`。
+- `PlayPage`、`LibraryPage`、`MiniPlayer` 订阅播放 revision，并在销毁时可靠解绑；Study/顶层 Tab 通过 `isActive` 只让当前可见页面响应切词。
+- Play 页面在播放 revision 回调中直接读取当前词和播放状态，避免依赖未触发的全局 selector 快照。
+
+### 修复
+- 播放切词不再唤醒 Practice、Toolbox、Focus、More 等无关模块，切断“进入学习后其他模块越来越卡”的第一条重建放大链。
+
+### 验证
+- `flutter test test/app_state_init_test.dart --plain-name "playback changes use the dedicated revision"` 通过：全局通知 `0`，专用播放 revision 正常递增。
+- `flutter test test/ui_smoke_test.dart --plain-name "UI smoke play page"` 通过。
+- 目标文件 `flutter analyze` 无 error；仅保留既有 `prefer_initializing_formals` info。
+
 ## [Unreleased-STUDY-PERF-HOTPATH-OPT] - 2026-08-23
 
 ### 原因

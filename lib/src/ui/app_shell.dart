@@ -398,8 +398,10 @@ class _AppShellState extends ConsumerState<AppShell> {
   }
 
   Widget _buildPageForTab(AppHomeTab tab) {
+    final isActive = _tabAt(_index) == tab;
     return switch (tab) {
       AppHomeTab.study => StudyPage(
+        isActive: isActive,
         selectedTab: _studyTab,
         onSelectTab: _setStudyTab,
         onOpenPractice: () => _setTab(AppHomeTab.practice),

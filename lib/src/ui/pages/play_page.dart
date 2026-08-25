@@ -28,10 +28,12 @@ class PlayPage extends ConsumerStatefulWidget {
     super.key,
     required this.onOpenPractice,
     required this.onOpenLibrary,
+    this.isActive = true,
   });
 
   final VoidCallback onOpenPractice;
   final VoidCallback onOpenLibrary;
+  final bool isActive;
 
   @override
   ConsumerState<PlayPage> createState() => _PlayPageState();
@@ -41,14 +43,40 @@ class _PlayPageState extends ConsumerState<PlayPage> {
   int _transitionDirection = 1;
   double? _progressDragValue;
   bool _continuousPathExpanded = false;
+  late final AppState _appState;
+
+  void _handlePlaybackRevision() {
+    if (!mounted || !widget.isActive) {
+      return;
+    }
+    setState(() {});
+  }
 
   @override
   void initState() {
     super.initState();
+    _appState = ref.read(appStateProvider);
+    _appState.playbackRevisionListenable.addListener(_handlePlaybackRevision);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(appStateProvider).refreshWeatherIfStale();
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant PlayPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive && mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void dispose() {
+    _appState.playbackRevisionListenable.removeListener(
+      _handlePlaybackRevision,
+    );
+    super.dispose();
   }
 
   void _setTransitionDirection(int direction) {
@@ -121,8 +149,8 @@ class _PlayPageState extends ConsumerState<PlayPage> {
     );
     final progressStep = _progressJumpStep(visibleWords.length);
     final mode = experienceModeFromAppearance(state.config.appearance);
-    final weakCount = token.weakWordCount;
-    final todayAccuracy = token.todayAccuracyPercent;
+    final weakCount = state.practiceWeakWordCount;
+    final todayAccuracy = (state.practiceTodayAccuracy * 100).round();
     final isPlaybackPaused = state.isPlaying && state.isPaused;
 
     return ListView(
@@ -149,8 +177,8 @@ class _PlayPageState extends ConsumerState<PlayPage> {
           transitionDirection: _transitionDirection,
           showMeaning: state.config.showText,
           showFields: mode == AppExperienceMode.focus,
-          isFavorite: token.currentWordFavorite,
-          isTaskWord: token.currentWordTask,
+          isFavorite: state.isFavoriteEntry(current),
+          isTaskWord: state.isTaskEntry(current),
           onToggleFavorite: () => state.toggleFavorite(current),
           onToggleTask: () => state.toggleTaskWord(current),
           onPlayPronunciation: () => state.previewPronunciation(current.word),

@@ -21,9 +21,14 @@ import 'word_editor_page.dart';
 import 'wordbook_management_page.dart';
 
 class LibraryPage extends ConsumerStatefulWidget {
-  const LibraryPage({super.key, this.onAttachScrollToTop});
+  const LibraryPage({
+    super.key,
+    this.onAttachScrollToTop,
+    this.isActive = true,
+  });
 
   final ValueChanged<VoidCallback>? onAttachScrollToTop;
+  final bool isActive;
 
   @override
   ConsumerState<LibraryPage> createState() => _LibraryPageState();
@@ -46,12 +51,22 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   String _paginationSignature = '';
   String _autoScrolledSignature = '';
   List<WordEntry> _loadedWords = const <WordEntry>[];
+  late final AppState _appState;
+
+  void _handlePlaybackRevision() {
+    if (!mounted || !widget.isActive) {
+      return;
+    }
+    setState(() {});
+  }
 
   @override
   void initState() {
     super.initState();
     widget.onAttachScrollToTop?.call(_scrollToTop);
     _scrollController.addListener(_handleScrollChanged);
+    _appState = ref.read(appStateProvider);
+    _appState.playbackRevisionListenable.addListener(_handlePlaybackRevision);
   }
 
   @override
@@ -60,10 +75,16 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     if (oldWidget.onAttachScrollToTop != widget.onAttachScrollToTop) {
       widget.onAttachScrollToTop?.call(_scrollToTop);
     }
+    if (widget.isActive && !oldWidget.isActive && mounted) {
+      setState(() {});
+    }
   }
 
   @override
   void dispose() {
+    _appState.playbackRevisionListenable.removeListener(
+      _handlePlaybackRevision,
+    );
     _scrollController.removeListener(_handleScrollChanged);
     _searchDebounce?.cancel();
     _searchController.dispose();

@@ -61,6 +61,9 @@ class _MiniPlayerState extends State<MiniPlayer> {
     widget.state.playbackUnitProgressListenable.addListener(
       _handlePlaybackUnitProgressChanged,
     );
+    widget.state.playbackRevisionListenable.addListener(
+      _handlePlaybackUnitProgressChanged,
+    );
   }
 
   @override
@@ -72,7 +75,13 @@ class _MiniPlayerState extends State<MiniPlayer> {
     oldWidget.state.playbackUnitProgressListenable.removeListener(
       _handlePlaybackUnitProgressChanged,
     );
+    oldWidget.state.playbackRevisionListenable.removeListener(
+      _handlePlaybackUnitProgressChanged,
+    );
     widget.state.playbackUnitProgressListenable.addListener(
+      _handlePlaybackUnitProgressChanged,
+    );
+    widget.state.playbackRevisionListenable.addListener(
       _handlePlaybackUnitProgressChanged,
     );
   }
@@ -85,6 +94,9 @@ class _MiniPlayerState extends State<MiniPlayer> {
   @override
   void dispose() {
     widget.state.playbackUnitProgressListenable.removeListener(
+      _handlePlaybackUnitProgressChanged,
+    );
+    widget.state.playbackRevisionListenable.removeListener(
       _handlePlaybackUnitProgressChanged,
     );
     _sleepTimer?.cancel();

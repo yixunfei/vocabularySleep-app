@@ -344,6 +344,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   PlayUnit? get activeUnit => _playbackStore.activeUnit;
   ValueListenable<PlaybackUnitProgress> get playbackUnitProgressListenable =>
       _playbackStore.unitProgress;
+  ValueListenable<int> get playbackRevisionListenable =>
+      _playbackStore.revision;
   int? get playingWordbookId => _playbackStore.playingWordbookId;
   String? get playingWordbookName => _playbackStore.playingWordbookName;
   String? get playingWord => _playbackStore.playingWord;
@@ -3411,6 +3413,13 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       return;
     }
     notifyListeners();
+  }
+
+  void _notifyPlaybackChanged() {
+    if (_disposed) {
+      return;
+    }
+    _playbackStore.notifyChanged();
   }
 
   @override

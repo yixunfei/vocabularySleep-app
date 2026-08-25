@@ -7155,6 +7155,7 @@ class _FakeAppState extends ChangeNotifier
   PlayUnit? _activeUnit;
   final ValueNotifier<PlaybackUnitProgress> _playbackUnitProgress =
       ValueNotifier<PlaybackUnitProgress>(PlaybackUnitProgress.empty);
+  final ValueNotifier<int> _playbackRevision = ValueNotifier<int>(0);
   int? _playingWordbookId;
   String? _playingWordbookName;
   String? _playingWord;
@@ -7349,6 +7350,9 @@ class _FakeAppState extends ChangeNotifier
   @override
   ValueListenable<PlaybackUnitProgress> get playbackUnitProgressListenable =>
       _playbackUnitProgress;
+
+  @override
+  ValueListenable<int> get playbackRevisionListenable => _playbackRevision;
 
   @override
   int? get playingWordbookId => _playingWordbookId;

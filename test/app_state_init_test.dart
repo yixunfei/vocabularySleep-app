@@ -806,7 +806,7 @@ void main() {
   );
 
   test(
-    'playback unit changes do not trigger global AppState notifications',
+    'playback changes use the dedicated revision without global notifications',
     () async {
       final database = _MemoryDatabaseService(
         wordbooks: <Wordbook>[
@@ -853,16 +853,21 @@ void main() {
 
       var globalNotifications = 0;
       var unitNotifications = 0;
+      var playbackNotifications = 0;
       state.addListener(() => globalNotifications += 1);
       state.playbackUnitProgressListenable.addListener(
         () => unitNotifications += 1,
+      );
+      state.playbackRevisionListenable.addListener(
+        () => playbackNotifications += 1,
       );
 
       await state.playCurrentWordbook();
 
       expect(playback.playWordsCalls, 1);
       expect(unitNotifications, 4);
-      expect(globalNotifications, 2);
+      expect(globalNotifications, 0);
+      expect(playbackNotifications, greaterThanOrEqualTo(2));
     },
   );
 }
