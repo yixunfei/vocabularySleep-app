@@ -6,9 +6,11 @@ extension _AppStatePlayback on AppState {
     if (selected == null || selectedWordbookLoaded) {
       return selected;
     }
+    final loadGeneration = ++_wordbookLoadGeneration;
 
-    final showBusy = !_busy;
+    final showBusy = !_busy || _wordbookLoadBusyGeneration != null;
     if (showBusy) {
+      _wordbookLoadBusyGeneration = loadGeneration;
       _setBusy(
         true,
         messageKey: 'busyLoadingWordbook',
@@ -18,7 +20,13 @@ extension _AppStatePlayback on AppState {
     }
     try {
       _selectedWordbook = selected;
-      _setWords(_queryWordbookEntries(selected));
+      final nextWords = await _queryWordbookEntriesAsync(selected);
+      if (_disposed ||
+          loadGeneration != _wordbookLoadGeneration ||
+          _selectedWordbook?.id != selected.id) {
+        return _selectedWordbook;
+      }
+      _setWords(nextWords);
       final restoredIndex = _playbackProgressIndexForWordbook(selected);
       final restoredEntries = _searchQuery.trim().isEmpty
           ? _words
@@ -32,8 +40,11 @@ extension _AppStatePlayback on AppState {
       resetTestModeProgress();
       _notifyStateChanged();
     } finally {
-      if (showBusy) {
-        _setBusy(false);
+      if (_wordbookLoadBusyGeneration == loadGeneration) {
+        _wordbookLoadBusyGeneration = null;
+        if (!_disposed && loadGeneration == _wordbookLoadGeneration) {
+          _setBusy(false);
+        }
       }
     }
     return _selectedWordbook;

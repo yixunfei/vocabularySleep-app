@@ -1,3 +1,21 @@
+## [Unreleased-STUDY-PERF-PHASE5] - 2026-08-26
+
+### 原因
+- 大词本进入单词表、学习或播放时，SQLite lite 全量扫描和摘要行物化仍在 UI isolate 执行，首帧和切换期间会阻塞其他模块。
+
+### 修改
+- 新增独立的 lite 行解码器和 SQLite query worker；大词本只读摘要查询通过 `Isolate.run` 与独立只读连接执行。
+- 选词本和播放按需加载改为等待异步 lite 查询，加入 load generation 校验，旧请求结果和 busy 状态不会覆盖当前词本请求。
+- worker 异常自动回退同步 repository 路径；完整字段查询、搜索、导入写入和事务语义保持不变。
+
+### 修复
+- 降低加载大词本时 UI isolate 的 SQLite 扫描/行映射阻塞，避免旧的异步结果在切换词本或数据库恢复后污染当前状态。
+
+### 验证
+- `flutter test test/app_state_practice_test.dart test/app_state_init_test.dart test/app_state_logic_test.dart test/playback_service_test.dart test/memory_lane_selector_test.dart test/wordbook_query_worker_test.dart --reporter compact` 通过（41 项）。
+- 目标文件 `flutter analyze` 无 error；`dart format`、`git diff --check` 通过。
+- 本阶段新增/退休 i18n key 均为 0；维护脚本未运行（未触达 catalog）。
+
 ## [Unreleased-STUDY-PERF-PHASE3] - 2026-08-26
 
 ### 原因

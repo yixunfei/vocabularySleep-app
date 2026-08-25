@@ -1,6 +1,8 @@
 import '../models/word_entry.dart';
+import '../models/word_entry_lite_decoder.dart';
 import '../models/wordbook.dart';
 import '../services/database_service.dart';
+import '../services/wordbook_query_worker.dart';
 
 abstract class WordbookRepository {
   String get databasePath;
@@ -19,6 +21,15 @@ abstract class WordbookRepository {
   List<WordEntry> getWords(int wordbookId, {int limit, int offset});
 
   List<WordEntry> getWordsLite(int wordbookId, {int limit, int offset});
+
+  /// Defaults to the synchronous repository path for non-database adapters.
+  Future<List<WordEntry>> getWordsLiteAsync(
+    int wordbookId, {
+    int limit = 100000,
+    int offset = 0,
+  }) async {
+    return getWordsLite(wordbookId, limit: limit, offset: offset);
+  }
 
   List<WordEntry> searchWords(
     int wordbookId, {
@@ -187,6 +198,27 @@ class DatabaseWordbookRepository implements WordbookRepository {
     int offset = 0,
   }) {
     return _database.getWordsLite(wordbookId, limit: limit, offset: offset);
+  }
+
+  @override
+  Future<List<WordEntry>> getWordsLiteAsync(
+    int wordbookId, {
+    int limit = 100000,
+    int offset = 0,
+  }) async {
+    try {
+      final rows = await loadWordbookLiteRowsInBackground(
+        databasePath: _database.dbPath,
+        wordbookId: wordbookId,
+        limit: limit,
+        offset: offset,
+      );
+      return rows.map(wordEntryFromLiteRow).toList(growable: false);
+    } catch (_) {
+      // Isolate/FFI availability varies on web and during database migration.
+      // Preserve the existing behavior as a functional fallback.
+      return getWordsLite(wordbookId, limit: limit, offset: offset);
+    }
   }
 
   @override

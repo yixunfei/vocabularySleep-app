@@ -362,25 +362,7 @@ extension AppDatabaseServiceCore on AppDatabaseService {
   }
 
   WordEntry _wordEntryLiteFromRow(Map<String, Object?> row) {
-    final resolvedMeaning =
-        _sanitizeNullableText(row['primary_gloss']) ??
-        _sanitizeNullableText(row['meaning']);
-    final entry = WordEntry(
-      id: (row['id'] as num?)?.toInt(),
-      wordbookId: ((row['wordbook_id'] as num?) ?? 0).toInt(),
-      word: sanitizeDisplayText('${row['word'] ?? ''}'),
-      meaning: resolvedMeaning,
-      entryUid: _sanitizeNullableText(row['entry_uid']),
-      primaryGloss: _sanitizeNullableText(row['primary_gloss']),
-      schemaVersion: _sanitizeNullableText(row['schema_version']),
-      sortIndex: (row['sort_index'] as num?)?.toInt(),
-      rawContent: resolvedMeaning ?? '',
-    );
-    final summaryMeaning = entry.summaryMeaningText.trim();
-    return entry.copyWith(
-      meaning: summaryMeaning.isEmpty ? entry.meaning : summaryMeaning,
-      rawContent: summaryMeaning.isEmpty ? entry.rawContent : summaryMeaning,
-    );
+    return wordEntryFromLiteRow(row);
   }
 
   String? _sanitizeNullableText(Object? raw) {

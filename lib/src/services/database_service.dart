@@ -10,6 +10,7 @@ import '../models/todo_item.dart';
 import '../models/tomato_timer.dart';
 import '../models/user_data_export.dart';
 import '../models/word_entry.dart';
+import '../models/word_entry_lite_decoder.dart';
 import '../models/word_field.dart';
 import '../models/word_memory_progress.dart';
 import '../models/wordbook.dart';

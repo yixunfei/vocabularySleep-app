@@ -2,7 +2,7 @@
 
 ## 基本信息
 - **创建日期**: 2026-08-25
-- **状态**: 进行中（阶段 1-4 已完成）
+- **状态**: 进行中（阶段 1-5 已完成）
 - **负责人**: Codex
 
 ## 目标
@@ -14,7 +14,7 @@
 3. **阶段 2：播放 hydrate 收敛**。避免切词时复制整份词表和重新查询整本记忆进度，改为当前词详情/有界缓存的增量更新。
 4. **阶段 3：练习批次收敛**。练习会话只持有当前轮次词条，避免把完整 12000 词本复制并为整表建立派生候选。
 5. **阶段 4：记忆进度增量化**。按进度 revision 更新受影响词，避免答题后反复扫描整表。
-6. **阶段 5：数据库/导入后台化**。评估并实现数据库 actor isolate 或等价后台执行，迁移 JSON 解析和 SQLite 写入；增加集成回归。
+6. **阶段 5：数据库/导入后台化**。评估并实现数据库 actor isolate 或等价后台执行，迁移 JSON 解析和 SQLite 写入；增加集成回归。已完成大词本 lite 只读查询后台化；导入写入暂不迁移。
 7. **阶段 6：轻量模型与列表**。分离摘要/详情模型，收敛 Library 测量与分页常驻对象。
 
 ## 风险评估
@@ -22,6 +22,7 @@
 - **风险 2**: hydrate 不再替换主词表可能使详情展示与列表摘要时序不一致。缓解：增加当前词详情 revision/缓存，切换词本时清空并验证 lite/full 两条路径。
 - **风险 3**: 练习批次裁剪可能影响恢复、错题和候选题生成。缓解：保留最小身份/释义快照，补充会话恢复与大词本测试。
 - **风险 4**: 数据库 isolate 改动涉及连接所有权和迁移顺序。缓解：单独提交，先做基准与集成测试，不在前序阶段混入。
+- **风险 5**: worker 与主连接并行访问 SQLite，且 Web/迁移环境可能不支持独立 FFI 连接。缓解：worker 使用独立只读连接和 `PRAGMA query_only`；异常自动回退现有同步查询，写入连接和事务边界保持不变。
 
 ## 验证方式
 - 每个阶段独立提交，运行对应 Dart/Flutter 测试、`dart format`、目标范围 `flutter analyze`。
@@ -57,3 +58,10 @@
 - `AppState` 增加有界 `LinkedHashMap` 进度索引（最多 30,000 条，包含空结果）；换词本时只向仓库查询未命中的词 ID，并保留当前词本快照语义。
 - 进度派生记忆 lane 缓存改用显式 revision 失效；数据库恢复/重置时清空索引，避免跨数据源复用旧进度。
 - 阶段 4 回归验证：两个词本来回切换时第二次访问不再重复查询已加载 ID；既有状态、播放、记忆 lane 测试保持通过。
+
+## 阶段 5 执行结果
+- 大词本（超过启动全量加载阈值）的 lite 查询改由 `Isolate.run` 打开独立 SQLite 连接，仅读取摘要列，不触碰 `word_fields`、styles、tags、media 子表。
+- `WordbookRepository.getWordsLiteAsync` 为数据库适配器提供后台路径，非数据库适配器和 worker 失败时回退原同步查询，保持 Web、迁移和测试适配器的功能语义。
+- 选词本和播放按需加载均等待异步结果，并使用 `_wordbookLoadGeneration` 丢弃过期请求；数据库恢复、重置和 `dispose` 会使未完成查询失效，busy 状态只由当前请求关闭。
+- 完整字段查询、搜索、分页同步接口、导入 JSON 解析/SQLite 写入和事务语义本阶段明确不变，留待独立阶段评估。
+- 阶段 5 验证：`flutter test test/app_state_practice_test.dart test/app_state_init_test.dart test/app_state_logic_test.dart test/playback_service_test.dart test/memory_lane_selector_test.dart test/wordbook_query_worker_test.dart --reporter compact`（41 项通过）；目标文件 `flutter analyze` 无 error；`dart format`、`git diff --check` 通过。

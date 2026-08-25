@@ -240,6 +240,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   Wordbook? _selectedWordbook;
   List<WordEntry> _words = <WordEntry>[];
   int? _loadedWordbookId;
+  int _wordbookLoadGeneration = 0;
+  int? _wordbookLoadBusyGeneration;
   int _currentWordIndex = 0;
   WordEntry? _transientCurrentWord;
   String _searchQuery = '';
@@ -710,6 +712,30 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       );
     }
     return _wordbookRepository.getWordsLite(
+      wordbook.id,
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  Future<List<WordEntry>> _queryWordbookEntriesAsync(
+    Wordbook wordbook, {
+    int limit = 100000,
+    int offset = 0,
+    bool? includeFields,
+  }) {
+    final resolvedIncludeFields =
+        includeFields ?? !_shouldUseLiteWordQueries(wordbook);
+    if (resolvedIncludeFields) {
+      return Future<List<WordEntry>>.sync(
+        () => _wordbookRepository.getWords(
+          wordbook.id,
+          limit: limit,
+          offset: offset,
+        ),
+      );
+    }
+    return _wordbookRepository.getWordsLiteAsync(
       wordbook.id,
       limit: limit,
       offset: offset,
@@ -2626,7 +2652,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     };
 
     if (selectedWordbook != null && shouldLoadSelectedWords) {
-      _setWords(_queryWordbookEntries(selectedWordbook));
+      _setWords(await _queryWordbookEntriesAsync(selectedWordbook));
       final restoredIndex = _playbackProgressIndexForWordbook(selectedWordbook);
       final restoredEntries = _searchQuery.trim().isEmpty
           ? _words
@@ -3288,6 +3314,10 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> _reloadPersistentStateAfterDatabaseChange() async {
+    // Invalidate any in-flight isolate query before replacing the database
+    // snapshot. Its result must never repopulate state from the old database.
+    _wordbookLoadGeneration += 1;
+    _wordbookLoadBusyGeneration = null;
     _clearMemoryProgressIndex();
     _config = _settings.loadPlayConfig();
     _playback.updateRuntimeConfig(_config);
@@ -3513,6 +3543,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       return;
     }
     _disposed = true;
+    _wordbookLoadGeneration += 1;
+    _wordbookLoadBusyGeneration = null;
     _flushDeferredPersistence();
     _ambientSyncDebounceTimer?.cancel();
     _playbackProgressPersistTimer?.cancel();

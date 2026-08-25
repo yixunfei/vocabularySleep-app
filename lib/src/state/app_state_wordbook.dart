@@ -23,6 +23,7 @@ extension _AppStateWordbook on AppState {
     int? focusWordId,
   }) async {
     if (wordbook == null) return;
+    final loadGeneration = ++_wordbookLoadGeneration;
     final shouldFollowPlayingWord =
         (focusWordId == null) &&
         ((focusWord ?? '').trim().isEmpty) &&
@@ -46,17 +47,26 @@ extension _AppStateWordbook on AppState {
       final lazyWordbookName = wordbook.name;
       final lazyPath = wordbook.path;
       final i18n = AppI18n(_uiLanguage);
-      _setBusy(
-        true,
-        messageKey: 'busyLoadingWordbook',
-        params: <String, Object?>{'name': lazyWordbookName},
-        detail: i18n.t('download'),
-        progress: 0,
-      );
+      final ownsLazyLoadBusy = !_busy || _wordbookLoadBusyGeneration != null;
+      if (ownsLazyLoadBusy) {
+        _wordbookLoadBusyGeneration = loadGeneration;
+        _setBusy(
+          true,
+          messageKey: 'busyLoadingWordbook',
+          params: <String, Object?>{'name': lazyWordbookName},
+          detail: i18n.t('download'),
+          progress: 0,
+        );
+      }
       try {
         await _wordbookRepository.ensureBuiltInWordbookLoaded(
           lazyPath,
           onProgress: (progress) {
+            if (!ownsLazyLoadBusy ||
+                _disposed ||
+                loadGeneration != _wordbookLoadGeneration) {
+              return;
+            }
             _setBusy(
               true,
               messageKey: 'busyLoadingWordbook',
@@ -92,7 +102,12 @@ extension _AppStateWordbook on AppState {
         );
         return;
       } finally {
-        _setBusy(false);
+        if (_wordbookLoadBusyGeneration == loadGeneration) {
+          _wordbookLoadBusyGeneration = null;
+          if (!_disposed && loadGeneration == _wordbookLoadGeneration) {
+            _setBusy(false);
+          }
+        }
       }
     }
     final shouldDeferLargeWordbookLoad =
@@ -111,11 +126,14 @@ extension _AppStateWordbook on AppState {
       }
       return;
     }
-    final shouldShowLocalLoadBusy =
-        !_busy &&
+    final shouldLoadWordbookBusy =
         _loadedWordbookId != wordbook.id &&
         wordbook.wordCount > AppState._startupEagerWordLoadLimit;
-    if (shouldShowLocalLoadBusy) {
+    final ownsLocalLoadBusy =
+        shouldLoadWordbookBusy &&
+        (!_busy || _wordbookLoadBusyGeneration != null);
+    if (ownsLocalLoadBusy) {
+      _wordbookLoadBusyGeneration = loadGeneration;
       _setBusy(
         true,
         messageKey: 'busyLoadingWordbook',
@@ -125,10 +143,17 @@ extension _AppStateWordbook on AppState {
     }
     try {
       _selectedWordbook = wordbook;
-      _setWords(_queryWordbookEntries(wordbook));
+      final nextWords = await _queryWordbookEntriesAsync(wordbook);
+      if (_disposed || loadGeneration != _wordbookLoadGeneration) {
+        return;
+      }
+      _setWords(nextWords);
     } finally {
-      if (shouldShowLocalLoadBusy) {
-        _setBusy(false);
+      if (_wordbookLoadBusyGeneration == loadGeneration) {
+        _wordbookLoadBusyGeneration = null;
+        if (!_disposed && loadGeneration == _wordbookLoadGeneration) {
+          _setBusy(false);
+        }
       }
     }
     final restoredProgressIndex =
