@@ -891,11 +891,13 @@ extension _AppStatePractice on AppState {
     final memoryIdentity = identityHashCode(
       _practiceStore.wordMemoryProgressByWordId,
     );
+    final memoryRevision = _practiceStore.wordMemoryProgressRevision;
     final rememberedIdentity = identityHashCode(_practiceStore.rememberedWords);
     final weakIdentity = identityHashCode(_practiceStore.weakWords);
     final legacyRememberedIdentity = identityHashCode(_rememberedWords);
     if (_practiceDerivedWordsVersion == _wordsVersion &&
         _practiceDerivedMemoryIdentity == memoryIdentity &&
+        _practiceDerivedMemoryRevision == memoryRevision &&
         _practiceDerivedRememberedIdentity == rememberedIdentity &&
         _practiceDerivedWeakIdentity == weakIdentity &&
         _practiceDerivedLegacyRememberedIdentity == legacyRememberedIdentity &&
@@ -915,6 +917,7 @@ extension _AppStatePractice on AppState {
     );
     _practiceDerivedWordsVersion = _wordsVersion;
     _practiceDerivedMemoryIdentity = memoryIdentity;
+    _practiceDerivedMemoryRevision = memoryRevision;
     _practiceDerivedRememberedIdentity = rememberedIdentity;
     _practiceDerivedWeakIdentity = weakIdentity;
     _practiceDerivedLegacyRememberedIdentity = legacyRememberedIdentity;
@@ -953,8 +956,68 @@ extension _AppStatePractice on AppState {
           .whereType<int>()
           .where((id) => id > 0),
     };
-    _practiceStore.wordMemoryProgressByWordId = _practiceRepository
-        .getWordMemoryProgressByWordIds(wordIds);
+    if (wordIds.isEmpty) {
+      _practiceStore.replaceWordMemoryProgress(
+        const <int, WordMemoryProgress>{},
+      );
+      return;
+    }
+
+    final resolved = <int, WordMemoryProgress>{};
+    final missing = <int>[];
+    for (final wordId in wordIds) {
+      final cached = _lookupMemoryProgressIndex(wordId);
+      if (cached.found) {
+        final progress = cached.value;
+        if (progress != null) {
+          resolved[wordId] = progress;
+        }
+      } else {
+        missing.add(wordId);
+      }
+    }
+
+    if (missing.isNotEmpty) {
+      final fetched = _practiceRepository.getWordMemoryProgressByWordIds(
+        missing,
+      );
+      for (final wordId in missing) {
+        final progress = fetched[wordId];
+        _rememberMemoryProgressIndex(wordId, progress);
+        if (progress != null) {
+          resolved[wordId] = progress;
+        }
+      }
+    }
+    _practiceStore.replaceWordMemoryProgress(resolved);
+  }
+
+  ({bool found, WordMemoryProgress? value}) _lookupMemoryProgressIndex(
+    int wordId,
+  ) {
+    if (!_memoryProgressIndex.containsKey(wordId)) {
+      return (found: false, value: null);
+    }
+    final value = _memoryProgressIndex.remove(wordId);
+    _memoryProgressIndex[wordId] = value;
+    return (found: true, value: value);
+  }
+
+  void _rememberMemoryProgressIndex(int wordId, WordMemoryProgress? progress) {
+    if (wordId <= 0) {
+      return;
+    }
+    _memoryProgressIndex.remove(wordId);
+    _memoryProgressIndex[wordId] = progress;
+    while (_memoryProgressIndex.length >
+        AppState._maxMemoryProgressIndexEntries) {
+      _memoryProgressIndex.remove(_memoryProgressIndex.keys.first);
+    }
+  }
+
+  void _clearMemoryProgressIndex() {
+    _memoryProgressIndex.clear();
+    _practiceStore.replaceWordMemoryProgress(const <int, WordMemoryProgress>{});
   }
 
   List<WordEntry> _resolveTrackedPracticeEntries({
@@ -1197,10 +1260,9 @@ extension _AppStatePractice on AppState {
       return;
     }
 
-    final nextProgressByWordId = Map<int, WordMemoryProgress>.from(
-      _practiceStore.wordMemoryProgressByWordId,
-    );
+    final progressByWordId = _practiceStore.wordMemoryProgressByWordId;
     final updatedAt = DateTime.now();
+    var changed = false;
 
     void persistProgress(WordEntry entry, {required bool remembered}) {
       final wordId = entry.id;
@@ -1208,7 +1270,7 @@ extension _AppStatePractice on AppState {
         return;
       }
       final previous =
-          nextProgressByWordId[wordId] ?? WordMemoryProgress(wordId: wordId);
+          progressByWordId[wordId] ?? WordMemoryProgress(wordId: wordId);
       final result = MemoryAlgorithm.sm2(
         quality: remembered ? 4 : 1,
         previousEaseFactor: previous.easeFactor,
@@ -1231,7 +1293,9 @@ extension _AppStatePractice on AppState {
       } else {
         _queuePracticeMemoryProgress(nextProgress);
       }
-      nextProgressByWordId[wordId] = nextProgress;
+      progressByWordId[wordId] = nextProgress;
+      _rememberMemoryProgressIndex(wordId, nextProgress);
+      changed = true;
     }
 
     for (final entry in rememberedEntries) {
@@ -1241,7 +1305,9 @@ extension _AppStatePractice on AppState {
       persistProgress(entry, remembered: false);
     }
 
-    _practiceStore.wordMemoryProgressByWordId = nextProgressByWordId;
+    if (changed) {
+      _practiceStore.markWordMemoryProgressChanged();
+    }
   }
 
   String? _wordEntryIdentity(WordEntry entry) {

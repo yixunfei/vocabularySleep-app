@@ -14,6 +14,7 @@ import 'package:vocabulary_sleep_app/src/models/word_entry.dart';
 import 'package:vocabulary_sleep_app/src/models/word_field.dart';
 import 'package:vocabulary_sleep_app/src/models/word_memory_progress.dart';
 import 'package:vocabulary_sleep_app/src/models/wordbook.dart';
+import 'package:vocabulary_sleep_app/src/repositories/practice_repository.dart';
 import 'package:vocabulary_sleep_app/src/repositories/settings_store_repository.dart';
 import 'package:vocabulary_sleep_app/src/services/app_log_service.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
@@ -159,6 +160,62 @@ class _MemoryDatabaseService extends AppDatabaseService {
         .take(limit)
         .map((item) => item.word)
         .toList(growable: false);
+  }
+}
+
+class _CountingPracticeRepository implements PracticeRepository {
+  _CountingPracticeRepository(this._database);
+
+  final AppDatabaseService _database;
+  int progressQueryCalls = 0;
+
+  @override
+  Map<int, WordMemoryProgress> getWordMemoryProgressByWordIds(
+    Iterable<int> wordIds,
+  ) {
+    progressQueryCalls += 1;
+    return _database.getWordMemoryProgressByWordIds(wordIds);
+  }
+
+  @override
+  void upsertWordMemoryProgress(WordMemoryProgress progress) {
+    _database.upsertWordMemoryProgress(progress);
+  }
+
+  @override
+  void insertWordMemoryEvent({
+    required int wordId,
+    required String eventKind,
+    required int quality,
+    List<String> weakReasonIds = const <String>[],
+    String? sessionTitle,
+    DateTime? createdAt,
+  }) {
+    _database.insertWordMemoryEvent(
+      wordId: wordId,
+      eventKind: eventKind,
+      quality: quality,
+      weakReasonIds: weakReasonIds,
+      sessionTitle: sessionTitle,
+      createdAt: createdAt,
+    );
+  }
+
+  @override
+  Future<String> writeTextExport({
+    required String contents,
+    required String defaultFileStem,
+    required String extension,
+    String? directoryPath,
+    String? fileName,
+  }) {
+    return _database.writeTextExport(
+      contents: contents,
+      defaultFileStem: defaultFileStem,
+      extension: extension,
+      directoryPath: directoryPath,
+      fileName: fileName,
+    );
   }
 }
 
@@ -896,6 +953,68 @@ void main() {
         state.words.map((item) => item.word).toList(growable: false),
         <String>['Gamma', 'Delta'],
       );
+    },
+  );
+
+  test(
+    'memory progress index reuses loaded ids across wordbook switches',
+    () async {
+      final database = _MemoryDatabaseService(
+        wordbooks: <Wordbook>[
+          Wordbook(
+            id: 11,
+            name: 'First',
+            path: 'custom:first',
+            wordCount: 2,
+            createdAt: DateTime(2026, 4, 13),
+          ),
+          Wordbook(
+            id: 12,
+            name: 'Second',
+            path: 'custom:second',
+            wordCount: 2,
+            createdAt: DateTime(2026, 4, 13),
+          ),
+        ],
+        wordsByWordbookId: <int, List<WordEntry>>{
+          11: <WordEntry>[
+            _word(1101, 'Alpha').copyWith(wordbookId: 11),
+            _word(1102, 'Bravo').copyWith(wordbookId: 11),
+          ],
+          12: <WordEntry>[
+            _word(1201, 'Charlie').copyWith(wordbookId: 12),
+            _word(1202, 'Delta').copyWith(wordbookId: 12),
+          ],
+        },
+      );
+      addTearDown(database.dispose);
+      final settings = _settingsFor(database);
+      final practiceRepository = _CountingPracticeRepository(database);
+      final state = AppState(
+        database: database,
+        settings: settings,
+        playback: TrackingPlaybackService(),
+        ambient: StubAmbientService(),
+        asr: StubAsrService(),
+        focusService: StubFocusService(database, settings: settings),
+        practiceRepository: practiceRepository,
+      );
+      addTearDown(state.dispose);
+
+      await state.init();
+      final initiallySelected = state.selectedWordbook!;
+      final otherBook = state.wordbooks.firstWhere(
+        (book) =>
+            book.path.startsWith('custom:') && book.id != initiallySelected.id,
+      );
+      final queriesAfterFirstLoad = practiceRepository.progressQueryCalls;
+
+      await state.selectWordbook(otherBook);
+      final queriesAfterSecondLoad = practiceRepository.progressQueryCalls;
+      expect(queriesAfterSecondLoad, queriesAfterFirstLoad + 1);
+
+      await state.selectWordbook(initiallySelected);
+      expect(practiceRepository.progressQueryCalls, queriesAfterSecondLoad);
     },
   );
 

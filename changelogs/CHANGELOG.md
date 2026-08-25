@@ -16,6 +16,24 @@
 - `flutter test test/app_state_practice_test.dart test/app_state_init_test.dart test/ui_smoke_test.dart --plain-name "practice" --reporter compact` 通过。
 - `dart format`、目标文件 `flutter analyze`、`git diff --check` 已执行；本阶段未触达 i18n catalog。
 
+## [Unreleased-STUDY-PERF-PHASE4] - 2026-08-26
+
+### 原因
+- 换词本时 `_setWords` 会为整本词表重复查询记忆进度；答题更新进度还会复制整张进度 map，导致大词本下额外 CPU、分配和 GC。
+
+### 修改
+- `PracticeStore` 增加显式 `wordMemoryProgressRevision`，答题对现有 map 原地更新受影响词并只递增一次 revision。
+- `AppState` 增加最多 30,000 条的跨词本进度 LRU；只查询未命中的 ID，空结果也缓存，换词本复用已加载进度。
+- 记忆 lane 派生缓存按进度 revision 失效；恢复/重置数据库时清空进度索引。
+
+### 修复
+- 往返打开词本和连续答题不再反复执行整本进度查询或复制 12,000 条 map，降低进入其他模块后的持续内存压力。
+
+### 验证
+- `flutter test test/app_state_init_test.dart --plain-name "memory progress index" --reporter compact` 通过。
+- `flutter test test/app_state_practice_test.dart test/app_state_init_test.dart test/app_state_logic_test.dart test/playback_service_test.dart test/memory_lane_selector_test.dart --reporter compact` 通过。
+- `dart format`、目标文件 `flutter analyze`、`git diff --check` 已执行；本阶段未触达 i18n catalog。
+
 ## [Unreleased-STUDY-PERF-PHASE2] - 2026-08-26
 
 ### 原因

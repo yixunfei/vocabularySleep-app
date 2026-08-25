@@ -33,6 +33,7 @@ class PracticeStore {
   final Map<String, WordEntry> trackedEntriesByWord = <String, WordEntry>{};
   Map<int, WordMemoryProgress> wordMemoryProgressByWordId =
       <int, WordMemoryProgress>{};
+  int wordMemoryProgressRevision = 0;
 
   bool autoAddWeakWordsToTask = false;
   bool autoPlayPronunciation = false;
@@ -47,5 +48,14 @@ class PracticeStore {
 
   void dispose() {
     revision.dispose();
+  }
+
+  void replaceWordMemoryProgress(Map<int, WordMemoryProgress> next) {
+    wordMemoryProgressByWordId = next;
+    wordMemoryProgressRevision += 1;
+  }
+
+  void markWordMemoryProgressChanged() {
+    wordMemoryProgressRevision += 1;
   }
 }

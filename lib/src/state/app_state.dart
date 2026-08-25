@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
@@ -98,6 +99,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   static const int _practiceSessionHistoryLimit = 365;
   static const int _startupEagerWordLoadLimit = 1500;
   static const int _maxHydratedWordCacheEntries = 64;
+  // Progress rows are tiny compared with WordEntry details, but an app can
+  // visit many wordbooks in one process. Keep the cross-wordbook index bounded.
+  static const int _maxMemoryProgressIndexEntries = 30000;
   static const Duration _playbackProgressPersistDebounce = Duration(seconds: 2);
   static const Duration _practiceDashboardPersistDebounce = Duration(
     milliseconds: 800,
@@ -210,6 +214,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       <int, WordMemoryProgress>{};
   final List<_PendingPracticeMemoryEvent> _pendingPracticeMemoryEvents =
       <_PendingPracticeMemoryEvent>[];
+  final LinkedHashMap<int, WordMemoryProgress?> _memoryProgressIndex =
+      LinkedHashMap<int, WordMemoryProgress?>();
   bool _disposed = false;
 
   FocusService get focusService => _focusService;
@@ -309,6 +315,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   List<WordEntry>? _practiceWrongNotebookEntriesCache;
   int _practiceDerivedWordsVersion = -1;
   int _practiceDerivedMemoryIdentity = 0;
+  int _practiceDerivedMemoryRevision = -1;
   int _practiceDerivedRememberedIdentity = 0;
   int _practiceDerivedWeakIdentity = 0;
   int _practiceDerivedLegacyRememberedIdentity = 0;
@@ -3281,6 +3288,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> _reloadPersistentStateAfterDatabaseChange() async {
+    _clearMemoryProgressIndex();
     _config = _settings.loadPlayConfig();
     _playback.updateRuntimeConfig(_config);
 
