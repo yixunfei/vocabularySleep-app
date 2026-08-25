@@ -51,6 +51,15 @@ void main() {
       final entry = wordEntryFromLiteRow(rows.single);
       expect(entry.summaryMeaningText, '后台读取');
       expect(entry.fields.map((field) => field.key), <String>['meaning']);
+
+      final entries = await loadWordbookLiteEntriesInBackground(
+        databasePath: databasePath,
+        wordbookId: 7,
+      );
+      expect(entries, hasLength(1));
+      expect(entries.single.id, 1);
+      expect(entries.single.word, 'background');
+      expect(entries.single.summaryMeaningText, '后台读取');
     },
   );
 }

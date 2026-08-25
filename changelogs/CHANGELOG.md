@@ -1,3 +1,20 @@
+## [Unreleased-STUDY-PERF-PHASE8-WORKER-DECODE] - 2026-08-26
+
+### 原因
+- 大词本查询已在 isolate 执行，但旧路径把 12000 个摘要 Map 返回 UI isolate 后才构造 `WordEntry`，真实基准仍有约 128-135ms 连续 UI 解码占用。
+
+### 修改
+- SQLite worker 直接从 ResultSet 构造最终摘要模型并返回，Repository 不再在 UI isolate 二次遍历 Map。
+- worker 解码不再同时保留完整 Map 列表与最终模型列表；异常场景继续使用同步查询 fallback。
+
+### 修复
+- 移除显式加载/播放 12000 词本时 UI isolate 上的大批量字符串清洗和模型构造，降低加载完成瞬间的掉帧。
+
+### 验证
+- `flutter test test/app_state_init_test.dart test/app_state_logic_test.dart test/wordbook_query_worker_test.dart --reporter compact` 通过（22 项）。
+- 真实 12000 词本三轮基准：旧 UI 解码约 128-135ms；新 worker 端到端约 163-168ms，模型解码全部在 worker。
+- 目标文件 `flutter analyze`、`dart format`、`git diff --check` 通过；本阶段新增/退休 i18n key 均为 0。
+
 ## [Unreleased-STUDY-PERF-PHASE7-INACTIVE-TREE] - 2026-08-26
 
 ### 原因

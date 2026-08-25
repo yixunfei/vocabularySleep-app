@@ -2,7 +2,7 @@
 
 ## 基本信息
 - **创建日期**: 2026-08-25
-- **状态**: 进行中（阶段 1-6 已完成，阶段 7 进行中）
+- **状态**: 进行中（阶段 1-8 已完成，阶段 9 待真机复测）
 - **负责人**: Codex
 
 ## 目标
@@ -16,6 +16,8 @@
 5. **阶段 4：记忆进度增量化**。按进度 revision 更新受影响词，避免答题后反复扫描整表。
 6. **阶段 5：数据库/导入后台化**。评估并实现数据库 actor isolate 或等价后台执行，迁移 JSON 解析和 SQLite 写入；增加集成回归。已完成大词本 lite 只读查询后台化；导入写入暂不迁移。
 7. **阶段 6：轻量模型与列表**。分离摘要/详情模型，收敛 Library 测量与分页常驻对象。已完成延迟分页/计数缓存和列表 key/测量有界化；轻量模型进一步拆分待后续切片。
+8. **阶段 7：隐藏页面释放**。其他顶层模块活动时释放 Study/Play/Library 展示树及监听，阻断跨模块重建与闭包引用。
+9. **阶段 8：摘要模型后台物化**。SQLite worker 直接构造并返回最终 `WordEntry`，取消 UI isolate 的 12000 行 Map 解码。
 
 ## 风险评估
 - **风险 1**: 过度收窄监听会导致当前播放词、语言或设置 UI 不更新。缓解：为每个页面保留明确 selector，并以状态 token 测试覆盖真正需要更新的字段。
@@ -72,8 +74,14 @@
 - `LibraryPage` 不再在 build 阶段为所有已加载条目预创建 GlobalKey；只为 Sliver 实际构建的窗口创建 key，并将未挂载 key 与高度测量限制在 240 条以内，降低滚动后的常驻对象数量。行高测量改为 layout 阶段尺寸变化回调，避免每次 rebuild 追加 post-frame 测量任务。
 - 阶段 6 验证：新增初始化回归覆盖普通分页和搜索分页重复读取；`flutter test test/app_state_init_test.dart test/app_state_logic_test.dart --reporter compact` 通过，`dart format`、`git diff --check` 通过。轻量摘要/详情模型拆分和真机 profile 复测尚未完成。
 
-## 阶段 7（进行中）执行结果
+## 阶段 7 执行结果
 - `StudyPage`、`PlayPage`、`LibraryPage` 在顶层 Tab 非活动时返回轻量占位，不再订阅全局 AppState 或保留词卡/分页的展示树；重新进入时按当前状态重建。
 - 离开 Study Tab 时清理 Library 滚动回调，避免 AppShell 保留已销毁列表 State 的闭包引用。
 - 真实 `dict/中文-英语_12000词单词本.json` 基准：摘要 SQLite 同步查询约 31ms，独立 worker 端到端约 60ms（包含 isolate 启动与只读连接开销）。因此 worker 的主要收益是把阻塞移出 UI isolate，而不是降低 SQL 绝对耗时。
 - 阶段 7 验证：`flutter test test/ui_smoke_test.dart --plain-name "library page" --reporter compact`、`flutter test test/ui_smoke_test.dart --plain-name "practice" --reporter compact`、`dart format`、`git diff --check` 通过。
+
+## 阶段 8 执行结果
+- `loadWordbookLiteEntriesInBackground` 在只读 SQLite worker 内逐行解码摘要并通过 `Isolate.run` 返回最终模型；Repository 不再在 UI isolate 二次遍历 12000 个 Map。
+- worker 直接从 ResultSet 构造最终列表，不同时常驻完整 Map 列表与模型列表，降低后台物化峰值；异常仍回退同步 `getWordsLite`。
+- 真实 12000 词本三轮基准：同步查询+模型物化约 161-196ms；旧 worker 查询约 33-45ms，随后 UI 解码仍需约 128-135ms；新 worker 端到端约 163-168ms，但模型解码已完全离开 UI isolate。
+- 阶段 8 验证：`flutter test test/app_state_init_test.dart test/app_state_logic_test.dart test/wordbook_query_worker_test.dart --reporter compact`（22 项通过）；目标文件 `flutter analyze`、`dart format`、`git diff --check` 通过。
