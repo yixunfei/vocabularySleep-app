@@ -27,6 +27,7 @@
 
 ### 修复
 - 降低打开学习模块后切到其他模块时由重复 SQLite 查询、列表分配和常驻 row 元数据造成的 UI/GC 压力。
+- 行高测量改为 `RenderProxyBox` 在 layout 尺寸变化时回调，避免播放切词或其他状态通知下为每一行重复排队测量任务。
 
 ### 验证
 - 新增回归覆盖延迟词本普通分页和搜索分页的重复读取；`flutter test test/app_state_init_test.dart test/app_state_logic_test.dart --reporter compact` 通过。

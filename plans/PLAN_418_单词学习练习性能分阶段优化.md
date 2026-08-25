@@ -69,5 +69,5 @@
 ## 阶段 6（进行中）执行结果
 - `visibleWordCount` 和延迟大词本的分页查询增加签名缓存；相同词本、搜索条件和词表版本下，播放切词或其他全局通知不会重复执行同步 SQLite count/page 查询。
 - 延迟分页使用最多 8 个 LRU 页面、首段最多 240 条，并记录已到达末尾的短页，避免空结果反复查询；搜索分页仍走原有 `searchWordsLite` 语义。
-- `LibraryPage` 不再在 build 阶段为所有已加载条目预创建 GlobalKey；只为 Sliver 实际构建的窗口创建 key，并将未挂载 key 与高度测量限制在 240 条以内，降低滚动后的常驻对象数量。
+- `LibraryPage` 不再在 build 阶段为所有已加载条目预创建 GlobalKey；只为 Sliver 实际构建的窗口创建 key，并将未挂载 key 与高度测量限制在 240 条以内，降低滚动后的常驻对象数量。行高测量改为 layout 阶段尺寸变化回调，避免每次 rebuild 追加 post-frame 测量任务。
 - 阶段 6 当前验证：新增初始化回归覆盖普通分页和搜索分页重复读取；`flutter test test/app_state_init_test.dart test/app_state_logic_test.dart --reporter compact` 通过，`dart format`、`git diff --check` 通过。轻量摘要/详情模型拆分和真机 profile 复测尚未完成。

@@ -256,6 +256,12 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     final averageExtent = _averageRowExtent(words);
     final listTopOffset = _scrollOffsetForKey(_listTopKey) ?? 0;
 
+    // Before any row has been laid out there is no useful anchor to inspect;
+    // avoid scanning the entire deferred wordbook just to discover that.
+    if (_rowKeys.isEmpty) {
+      return listTopOffset + averageExtent * targetIndex;
+    }
+
     int? nearestBuiltIndex;
     double? nearestBuiltOffset;
     var nearestDistance = words.length + 1;
@@ -861,28 +867,42 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   }
 }
 
-class _MeasuredSize extends StatefulWidget {
-  const _MeasuredSize({required this.child, required this.onSizeChanged});
+class _MeasuredSize extends SingleChildRenderObjectWidget {
+  const _MeasuredSize({required Widget child, required this.onSizeChanged})
+    : super(child: child);
 
-  final Widget child;
   final ValueChanged<Size> onSizeChanged;
 
   @override
-  State<_MeasuredSize> createState() => _MeasuredSizeState();
+  RenderObject createRenderObject(BuildContext context) {
+    return _MeasuredSizeRenderObject(onSizeChanged);
+  }
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    covariant _MeasuredSizeRenderObject renderObject,
+  ) {
+    renderObject.onSizeChanged = onSizeChanged;
+  }
 }
 
-class _MeasuredSizeState extends State<_MeasuredSize> {
+class _MeasuredSizeRenderObject extends RenderProxyBox {
+  _MeasuredSizeRenderObject(this.onSizeChanged);
+
+  ValueChanged<Size> onSizeChanged;
   Size? _lastSize;
 
   @override
-  Widget build(BuildContext context) {
+  void performLayout() {
+    super.performLayout();
+    final nextSize = size;
+    if (nextSize == _lastSize) return;
+    _lastSize = nextSize;
+    final callback = onSizeChanged;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final size = context.size;
-      if (size == null || size == _lastSize) return;
-      _lastSize = size;
-      widget.onSizeChanged(size);
+      if (!attached) return;
+      callback(nextSize);
     });
-    return widget.child;
   }
 }
