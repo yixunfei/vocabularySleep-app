@@ -1,3 +1,13 @@
+## [Unreleased-STUDY-PERF-PHASE11-DEVICE-SMOKE] - 2026-08-26
+
+### 验证
+- Android Profile APK 在 `emulator-5554` 通过系统文件选择器导入真实 `中文-英语_12000词单词本.json`，界面确认 `Imported 12000 words` 和 `12000 words · custom`。
+- 完成 12000 词加载、连续播放及 Study/Toolbox/Life tools 交替切换；返回 Study 后仍显示 `Playing`/`Pause`，播放位置由 `6/12000` 推进至 `12/12000`，未见 Flutter fatal 或 SQLite 异常。
+- 6 轮跨模块切换期间进程 PSS 约 `471-483 MB`，未观察到单调增长；该结果仅为模拟器手工 smoke，不替代真机内存基线。
+
+### 未完成
+- 自动 `integration_test` 因 Gradle 无法访问 `storage.googleapis.com` 的 `androidx.test:runner` 元数据仍未执行；完整帧时间、真机 RSS/heap 和练习答题流程待网络恢复后补测。
+
 ## [Unreleased-STUDY-PERF-PHASE10-IMPORT-WRITE] - 2026-08-26
 
 ### 原因

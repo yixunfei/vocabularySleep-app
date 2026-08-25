@@ -2,7 +2,7 @@
 
 ## 基本信息
 - **创建日期**: 2026-08-25
-- **状态**: 进行中（阶段 1-10 已完成，阶段 11 待设备跨模块复测）
+- **状态**: 进行中（阶段 1-10 已完成，阶段 11 手工设备复测完成，自动 integration smoke 待网络恢复）
 - **负责人**: Codex
 
 ## 目标
@@ -102,3 +102,9 @@
 - 真实 12000 词完整导入基准：旧路径总计约 21.25s、UI 事件循环最大停顿约 1116.7ms；worker 路径总计约 17.82s、最大停顿约 11.7ms。数据库文件、字段和替换语义回归通过。
 - 验证：`flutter test test/database_service_test.dart --reporter compact`（33 项通过，含进度、原子替换和自定义 importer 回归）；目标文件 `flutter analyze`、`dart format`、`git diff --check` 通过；`flutter build apk --profile --target-platform android-arm64` 成功。
 - Android integration smoke 尝试因 Gradle 无法访问 `storage.googleapis.com` 的 `androidx.test:runner` 元数据而未执行，阶段 11 保留设备验证任务。
+
+## 阶段 11 执行结果（部分）
+- 使用 Android Profile APK 在 `emulator-5554` 完成真实文件选择器导入：`中文-英语_12000词单词本.json` 显示 `Imported 12000 words`，管理页显示 `12000 words · custom`。
+- 完成词本加载、连续播放和跨模块操作；Study 页显示 `Playing`/`Pause`，切换 Toolbox、Life tools 后返回 Study，播放位置从 `6/12000` 推进到 `12/12000`，进程保持存活且未观察到 Flutter fatal、SQLite 异常。
+- 连续执行 Study/Toolbox/Life tools 交替切换 6 轮，Android 进程 PSS 约 `471-483 MB`（包含 12000 词已加载模型、Profile runtime 和模拟器开销），未见随切换单调增长；该数值不是泄漏结论，需真机基线对照。
+- 自动 `integration_test` 仍因 Gradle 无法访问 `storage.googleapis.com` 的 `androidx.test:runner` 元数据未执行；完整帧时间、真机 RSS/heap 和练习答题流程留待网络可用后补测。
