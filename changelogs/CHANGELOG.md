@@ -1,3 +1,23 @@
+## [Unreleased-STUDY-PERF-PHASE9-IMPORT-PARSE] - 2026-08-26
+
+### 原因
+- JSON 导入入口先在 UI isolate 执行 `inspectJsonText`，随后再次执行标准格式探测和正式解析；真实 12000 词文件会重复承担完整 JSON 解码和动态字段物化成本。
+
+### 修改
+- 新增独立 JSON preparation worker，在后台一次完成 JSON 解码、格式 descriptor 和 `WordEntryPayload` 构造。
+- `parseJsonTextAsync`、`processJsonTextAsync` 与数据库异步导入复用同一准备结果；保留同步 API 和 JSON/JSONL 兼容行为。
+
+### 修复
+- 真实 27.9MB/12000 词文件同步解析约 4.12s 且 UI 计时器无响应；worker 解析约 4.03s，期间 UI 计时器约 403 次，避免导入时冻结其他模块。
+- 数据库导入不再重复调用 `inspectJsonText` 与 `processJsonTextAsync`，降低重复 CPU 和短期对象分配。
+
+### 风险变更
+- 本阶段仍在 UI isolate 使用现有 SQLite 连接执行写入；事务回滚、prepared statements 和 upsert 语义未改变。大 payload batch 的峰值内存与写入耗时将在下一阶段单独评估。
+
+### 验证
+- `flutter test test/database_service_test.dart --reporter compact` 通过（32 项）。
+- 目标文件 `flutter analyze`、`dart format`、`git diff --check` 通过；新增/退休 i18n key 均为 0。
+
 ## [Unreleased-STUDY-PERF-PHASE8-WORKER-DECODE] - 2026-08-26
 
 ### 原因

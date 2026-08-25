@@ -62,10 +62,11 @@ extension AppDatabaseServiceWordbookImport on AppDatabaseService {
     void Function(int processedEntries, int? totalEntries)? onProgress,
     int yieldEvery = 180,
   }) async {
-    final descriptor = _importService.inspectJsonText(
+    final prepared = await _importService.prepareJsonImportAsync(
       content,
       fallbackName: name,
     );
+    final descriptor = prepared.descriptor;
     final resolvedName = _resolveImportedWordbookName(
       sourcePath: sourcePath,
       requestedName: name,
@@ -84,8 +85,8 @@ extension AppDatabaseServiceWordbookImport on AppDatabaseService {
           : null;
       var imported = 0;
       try {
-        await _importService.processJsonTextAsync(
-          content,
+        await _importService.processPreparedJsonImportAsync(
+          prepared,
           onPayload: (payload) {
             final accepted = replaceExisting
                 ? _insertWordWithStatements(

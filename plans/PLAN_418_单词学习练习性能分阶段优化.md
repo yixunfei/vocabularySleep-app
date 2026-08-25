@@ -2,7 +2,7 @@
 
 ## 基本信息
 - **创建日期**: 2026-08-25
-- **状态**: 进行中（阶段 1-8 已完成，阶段 9 待真机复测）
+- **状态**: 进行中（阶段 1-9 已完成，阶段 10 待 SQLite 写入评估与真机复测）
 - **负责人**: Codex
 
 ## 目标
@@ -18,6 +18,8 @@
 7. **阶段 6：轻量模型与列表**。分离摘要/详情模型，收敛 Library 测量与分页常驻对象。已完成延迟分页/计数缓存和列表 key/测量有界化；轻量模型进一步拆分待后续切片。
 8. **阶段 7：隐藏页面释放**。其他顶层模块活动时释放 Study/Play/Library 展示树及监听，阻断跨模块重建与闭包引用。
 9. **阶段 8：摘要模型后台物化**。SQLite worker 直接构造并返回最终 `WordEntry`，取消 UI isolate 的 12000 行 Map 解码。
+10. **阶段 9：导入 JSON 单次后台解析**。异步导入在 worker 中一次完成 JSON 解码、descriptor 和 payload 物化，数据库入口复用同一结果，不重复解析。
+11. **阶段 10：导入 SQLite 写入评估**。在不破坏当前连接所有权、事务回滚和进度回调的前提下，基于真实 12000 词本决定是否引入独立写入 actor。
 
 ## 风险评估
 - **风险 1**: 过度收窄监听会导致当前播放词、语言或设置 UI 不更新。缓解：为每个页面保留明确 selector，并以状态 token 测试覆盖真正需要更新的字段。
@@ -85,3 +87,10 @@
 - worker 直接从 ResultSet 构造最终列表，不同时常驻完整 Map 列表与模型列表，降低后台物化峰值；异常仍回退同步 `getWordsLite`。
 - 真实 12000 词本三轮基准：同步查询+模型物化约 161-196ms；旧 worker 查询约 33-45ms，随后 UI 解码仍需约 128-135ms；新 worker 端到端约 163-168ms，但模型解码已完全离开 UI isolate。
 - 阶段 8 验证：`flutter test test/app_state_init_test.dart test/app_state_logic_test.dart test/wordbook_query_worker_test.dart --reporter compact`（22 项通过）；目标文件 `flutter analyze`、`dart format`、`git diff --check` 通过。
+
+## 阶段 9 执行结果
+- 新增 `PreparedWordbookJsonImport` 和独立 JSON preparation worker；标准 JSON、动态 JSON、JSONL 兼容路径均在 worker 中一次解码并完成 descriptor/payload 构造。
+- `parseJsonTextAsync`、`processJsonTextAsync` 和数据库异步导入复用同一准备结果；数据库不再先执行 `inspectJsonText`，再重复执行 `tryParseStandardWordbook`/正式处理。
+- 真实 `dict/中文-英语_12000词单词本.json` 基准：旧同步解析约 4.12s，UI 10ms 计时器触发 0 次；新 worker 端到端约 4.03s，计时器触发约 403 次。CPU 总量近似不变，但不再冻结 UI isolate。
+- 本阶段明确未迁移 SQLite 写入；当前事务、prepared statements、replace/upsert 语义保持不变，留待阶段 10 独立评估。
+- 验证：`flutter test test/database_service_test.dart --reporter compact`（32 项通过，含动态导入与旧入口不调用回归）、目标文件 `flutter analyze`、`dart format`、`git diff --check`；本阶段新增/退休 i18n key 均为 0。

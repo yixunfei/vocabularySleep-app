@@ -17,6 +17,46 @@ import 'package:vocabulary_sleep_app/src/services/app_log_service.dart';
 import 'package:vocabulary_sleep_app/src/services/database_service.dart';
 import 'package:vocabulary_sleep_app/src/services/wordbook_import_service.dart';
 
+class _TrackingWordbookImportService extends WordbookImportService {
+  int inspectCalls = 0;
+  int processCalls = 0;
+  int prepareCalls = 0;
+
+  @override
+  WordbookImportDescriptor inspectJsonText(
+    String content, {
+    String fallbackName = '',
+  }) {
+    inspectCalls += 1;
+    return super.inspectJsonText(content, fallbackName: fallbackName);
+  }
+
+  @override
+  Future<int> processJsonTextAsync(
+    String content, {
+    required void Function(WordEntryPayload payload) onPayload,
+    void Function(int processed, int? total)? onProgress,
+    int yieldEvery = 180,
+  }) {
+    processCalls += 1;
+    return super.processJsonTextAsync(
+      content,
+      onPayload: onPayload,
+      onProgress: onProgress,
+      yieldEvery: yieldEvery,
+    );
+  }
+
+  @override
+  Future<PreparedWordbookJsonImport> prepareJsonImportAsync(
+    String content, {
+    String fallbackName = '',
+  }) {
+    prepareCalls += 1;
+    return super.prepareJsonImportAsync(content, fallbackName: fallbackName);
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -522,6 +562,52 @@ void main() {
         ),
         isTrue,
       );
+    },
+  );
+
+  test(
+    'async dynamic import prepares JSON once and keeps progress metadata',
+    () async {
+      final importService = _TrackingWordbookImportService();
+      final database = AppDatabaseService(importService);
+      await database.init();
+      addTearDown(database.dispose);
+
+      final progress = <(int, int?)>[];
+      final imported = await database.importWordbookJsonTextAsync(
+        sourcePath: 'custom:test_dynamic_worker_import',
+        name: 'Dynamic worker import',
+        content: jsonEncode(<String, Object?>{
+          '元数据': <String, Object?>{'名称': '动态词本'},
+          '词条列表': <Map<String, Object?>>[
+            <String, Object?>{
+              '单词': 'alpha',
+              '释义': '第一项',
+              'tags': <String>['频率高'],
+            },
+            <String, Object?>{'单词': 'beta', '释义': '第二项'},
+          ],
+        }),
+        onProgress: (processed, total) {
+          progress.add((processed, total));
+        },
+        yieldEvery: 1,
+      );
+
+      expect(imported, 2);
+      expect(importService.prepareCalls, 1);
+      expect(importService.inspectCalls, 0);
+      expect(importService.processCalls, 0);
+      expect(progress.first, (0, 2));
+      expect(progress.last, (2, 2));
+
+      final wordbook = database.getWordbooks().firstWhere(
+        (item) => item.path == 'custom:test_dynamic_worker_import',
+      );
+      final words = database.getWords(wordbook.id);
+      expect(words.map((item) => item.word), <String>['alpha', 'beta']);
+      expect(words.first.summaryMeaningText, '第一项');
+      expect(words.first.fields.any((field) => field.key == 'tags'), isTrue);
     },
   );
 
