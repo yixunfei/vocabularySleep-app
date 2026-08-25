@@ -409,7 +409,7 @@ class _AppShellState extends ConsumerState<AppShell> {
           _scrollLibraryToTop = callback;
         },
       ),
-      AppHomeTab.practice => const PracticePage(),
+      AppHomeTab.practice => PracticePage(isActive: isActive),
       AppHomeTab.focus => const FocusPage(),
       AppHomeTab.toolbox => const ToolboxPage(),
       AppHomeTab.more => const MorePage(),

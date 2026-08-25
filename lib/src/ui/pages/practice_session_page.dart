@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/module_system/module_id.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/practice_question_type.dart';
+import '../../models/settings_dto.dart';
 import '../../models/word_entry.dart';
 import '../../services/app_log_service.dart';
 import '../../state/app_state.dart';
@@ -57,7 +58,8 @@ class PracticeSessionPage extends ConsumerStatefulWidget {
     this.subtitle,
     this.shuffle = false,
     this.rotationKey,
-    this.rotationSourceWords,
+    this.rotationSource,
+    this.rotationSourceCount,
     this.rotationBatchSize,
     this.rotationCursorAdvance,
   });
@@ -67,7 +69,8 @@ class PracticeSessionPage extends ConsumerStatefulWidget {
   final String? subtitle;
   final bool shuffle;
   final String? rotationKey;
-  final List<WordEntry>? rotationSourceWords;
+  final PracticeRoundSource? rotationSource;
+  final int? rotationSourceCount;
   final int? rotationBatchSize;
   final int? rotationCursorAdvance;
 
@@ -78,6 +81,7 @@ class PracticeSessionPage extends ConsumerStatefulWidget {
 
 class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
   final AppLogService _log = AppLogService.instance;
+  AppState? _appState;
   late List<WordEntry> _sessionWords;
   Map<String, String> _sessionMeaningByEntryKey = <String, String>{};
   List<_PracticeMeaningCandidate> _sessionMeaningCandidates =
@@ -138,6 +142,7 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
       return;
     }
     final state = ref.read(appStateProvider);
+    _appState = state;
     _autoAddWeakWordsToTask = state.practiceAutoAddWeakWordsToTask;
     _autoPlayPronunciation = state.practiceAutoPlayPronunciation;
     _hintRevealed = state.practiceShowHintsByDefault;
@@ -149,6 +154,7 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
 
   @override
   void dispose() {
+    _appState?.refreshPracticeViews();
     _spellingController.dispose();
     _spellingFocusNode.dispose();
     super.dispose();
@@ -1446,14 +1452,15 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
 
   bool get _supportsNextBatch =>
       widget.rotationKey != null &&
-      widget.rotationSourceWords != null &&
+      widget.rotationSource != null &&
+      widget.rotationSourceCount != null &&
       widget.rotationBatchSize != null &&
       widget.rotationBatchSize! > 0 &&
-      widget.rotationSourceWords!.isNotEmpty;
+      widget.rotationSourceCount! > 0;
 
   bool get _rotationCoversWholeSource =>
       _supportsNextBatch &&
-      widget.rotationBatchSize! >= widget.rotationSourceWords!.length;
+      widget.rotationBatchSize! >= widget.rotationSourceCount!;
 
   bool get _showsNewRoundPrimaryAction =>
       _rotationCoversWholeSource || (!_supportsNextBatch && widget.shuffle);
@@ -1487,9 +1494,10 @@ class _PracticeSessionPageState extends ConsumerState<PracticeSessionPage> {
       _restart(widget.words, shuffle: widget.shuffle);
       return;
     }
+    final sourceWords = state.practiceBatchSourceWords(widget.rotationSource!);
     final nextWords = state.beginPracticeBatch(
       cursorKey: widget.rotationKey!,
-      sourceWords: widget.rotationSourceWords!,
+      sourceWords: sourceWords,
       batchSize: widget.rotationBatchSize!,
       cursorAdvance: widget.rotationCursorAdvance,
     );

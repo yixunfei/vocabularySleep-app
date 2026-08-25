@@ -7220,6 +7220,7 @@ class _FakeAppState extends ChangeNotifier
   int _practiceTotalReviewed = 28;
   int _practiceTotalRemembered = 22;
   String _practiceLastSessionTitle = 'Scope sprint';
+  final ValueNotifier<int> _practiceRevision = ValueNotifier<int>(0);
   List<WordEntry> _recentRememberedEntries = <WordEntry>[];
   List<WordEntry> _recentWeakEntries = <WordEntry>[];
   final Map<String, List<String>> _practiceWeakReasonsByWord =
@@ -7503,6 +7504,9 @@ class _FakeAppState extends ChangeNotifier
   String get practiceLastSessionTitle => _practiceLastSessionTitle;
 
   @override
+  ValueListenable<int> get practiceRevisionListenable => _practiceRevision;
+
+  @override
   List<String> get practiceRememberedWords => recentRememberedWordEntries
       .map((entry) => entry.word)
       .toList(growable: false);
@@ -7556,6 +7560,14 @@ class _FakeAppState extends ChangeNotifier
       List<WordEntry>.unmodifiable(_recentWeakEntries);
 
   @override
+  List<WordEntry> get practiceTaskEntries =>
+      List<WordEntry>.unmodifiable(_visibleWords.where(isTaskEntry));
+
+  @override
+  List<WordEntry> get practiceFavoriteEntries =>
+      List<WordEntry>.unmodifiable(_visibleWords.where(isFavoriteEntry));
+
+  @override
   int get practiceTodayReviewed => _practiceTodayReviewed;
 
   @override
@@ -7593,6 +7605,23 @@ class _FakeAppState extends ChangeNotifier
 
   @override
   WordMemoryProgress? memoryProgressForWordEntry(WordEntry entry) => null;
+
+  @override
+  List<WordEntry> practiceBatchSourceWords(PracticeRoundSource source) {
+    return switch (source) {
+      PracticeRoundSource.currentScope ||
+      PracticeRoundSource.wholeWordbook => _visibleWords,
+      PracticeRoundSource.wrongNotebook ||
+      PracticeRoundSource.recentWeak => _recentWeakEntries,
+      PracticeRoundSource.taskWords => practiceTaskEntries,
+      PracticeRoundSource.favorites => practiceFavoriteEntries,
+    };
+  }
+
+  @override
+  void refreshPracticeViews() {
+    _practiceRevision.value += 1;
+  }
 
   @override
   List<String> practiceWeakReasonsForWord(WordEntry entry) {

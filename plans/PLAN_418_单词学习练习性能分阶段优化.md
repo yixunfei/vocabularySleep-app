@@ -2,7 +2,7 @@
 
 ## 基本信息
 - **创建日期**: 2026-08-25
-- **状态**: 进行中（阶段 1-2 已完成）
+- **状态**: 进行中（阶段 1-3 已完成）
 - **负责人**: Codex
 
 ## 目标
@@ -44,3 +44,10 @@
 - 播放服务回调直接使用返回的 `word` 与服务提供的 `index`，避免为定位当前词再次扫描整表。
 - 集成测试验证：播放服务收到的列表与 `AppState.words` 为同一实例，播放后列表版本和 memory progress 查询次数不变，当前词仍能读取完整字段。
 - 阶段 2 验证命令：`flutter test test/app_state_init_test.dart test/app_state_logic_test.dart test/app_state_practice_test.dart test/playback_service_test.dart test/memory_lane_selector_test.dart --reporter compact`、目标文件 `flutter analyze`、`dart format`、`git diff --check`。
+
+## 阶段 3 执行结果
+- `PracticeStore` 增加独立 revision；练习设置、完成、错题清理等仪表盘变更只通知练习订阅者。
+- 答题过程不再逐题广播全局 `AppState`，会话页本地维护当前题、反馈和统计，完成或路由销毁时再刷新练习面板。
+- `PracticePage` 在非活动 Tab 直接卸载展示树且不订阅全局/练习 revision；练习派生候选按词表版本、集合身份和记忆进度身份缓存。
+- 轮次会话改为持有 `PracticeRoundSource` 描述和有界 batch；下一批从 `AppState` 动态解析，避免 session widget 长期持有完整 12000 词源列表。
+- 阶段 3 验证：练习状态测试、初始化测试、练习 UI smoke 全部通过；新增回归确认答题期间全局通知为 0，完成时练习 revision 递增。

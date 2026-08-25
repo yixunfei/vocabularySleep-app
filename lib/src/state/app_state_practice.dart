@@ -37,7 +37,7 @@ extension _AppStatePractice on AppState {
     _practiceStore.showAnswerFeedbackDialog = nextShowAnswerFeedbackDialog;
     _practiceStore.defaultQuestionType = nextQuestionType;
     _persistPracticeDashboard();
-    _notifyStateChanged();
+    _notifyPracticeChanged();
   }
 
   bool _dismissPracticeWeakWordImpl(WordEntry entry) {
@@ -203,7 +203,7 @@ extension _AppStatePractice on AppState {
       weakReasonIdsByWord: normalizedWeakReasonsByWord,
     );
     _persistPracticeDashboard();
-    _notifyStateChanged();
+    _notifyPracticeChanged();
   }
 
   void _startPracticeSessionImpl({required String title}) {
@@ -212,7 +212,6 @@ extension _AppStatePractice on AppState {
     _practiceStore.totalSessions += 1;
     _practiceStore.lastSessionTitle = title.trim();
     _persistPracticeDashboard();
-    _notifyStateChanged();
   }
 
   void _recordPracticeAnswerImpl({
@@ -317,7 +316,8 @@ extension _AppStatePractice on AppState {
         },
       );
     }
-    _notifyStateChanged();
+    // The active session owns its visible state locally. Defer dashboard
+    // invalidation until the session finishes or its route is closed.
   }
 
   void _finishPracticeSessionImpl({
@@ -343,7 +343,7 @@ extension _AppStatePractice on AppState {
       ),
     );
     _persistPracticeDashboard(immediate: true);
-    _notifyStateChanged();
+    _notifyPracticeChanged();
   }
 
   void _updatePracticeRoundSettingsImpl({
@@ -369,7 +369,7 @@ extension _AppStatePractice on AppState {
     }
     _practiceStore.roundSettings = nextSettings;
     _persistPracticeDashboard();
-    _notifyStateChanged();
+    _notifyPracticeChanged();
   }
 
   int _previewPracticeBatchStartIndexImpl({
@@ -822,6 +822,104 @@ extension _AppStatePractice on AppState {
     ]);
   }
 
+  List<WordEntry> _practiceTaskEntriesForWords(List<WordEntry> words) {
+    if (!identical(words, _words)) {
+      return List<WordEntry>.unmodifiable(
+        words.where(isTaskEntry).toList(growable: false),
+      );
+    }
+    final taskIdentity = identityHashCode(_taskWords);
+    if (_practiceCollectionWordsVersion == _wordsVersion &&
+        _practiceCollectionTaskIdentity == taskIdentity &&
+        _practiceTaskEntriesCache != null) {
+      return _practiceTaskEntriesCache!;
+    }
+    _ensurePracticeCollectionCaches(taskIdentity: taskIdentity);
+    return _practiceTaskEntriesCache!;
+  }
+
+  List<WordEntry> _practiceFavoriteEntriesForWords(List<WordEntry> words) {
+    if (!identical(words, _words)) {
+      return List<WordEntry>.unmodifiable(
+        words.where(isFavoriteEntry).toList(growable: false),
+      );
+    }
+    final favoriteIdentity = identityHashCode(_favorites);
+    if (_practiceCollectionWordsVersion == _wordsVersion &&
+        _practiceCollectionFavoriteIdentity == favoriteIdentity &&
+        _practiceFavoriteEntriesCache != null) {
+      return _practiceFavoriteEntriesCache!;
+    }
+    _ensurePracticeCollectionCaches(favoriteIdentity: favoriteIdentity);
+    return _practiceFavoriteEntriesCache!;
+  }
+
+  void _ensurePracticeCollectionCaches({
+    int? taskIdentity,
+    int? favoriteIdentity,
+  }) {
+    final resolvedTaskIdentity = taskIdentity ?? identityHashCode(_taskWords);
+    final resolvedFavoriteIdentity =
+        favoriteIdentity ?? identityHashCode(_favorites);
+    if (_practiceCollectionWordsVersion == _wordsVersion &&
+        _practiceCollectionTaskIdentity == resolvedTaskIdentity &&
+        _practiceCollectionFavoriteIdentity == resolvedFavoriteIdentity &&
+        _practiceTaskEntriesCache != null &&
+        _practiceFavoriteEntriesCache != null) {
+      return;
+    }
+    final taskEntries = <WordEntry>[];
+    final favoriteEntries = <WordEntry>[];
+    for (final entry in _words) {
+      if (isTaskEntry(entry)) {
+        taskEntries.add(entry);
+      }
+      if (isFavoriteEntry(entry)) {
+        favoriteEntries.add(entry);
+      }
+    }
+    _practiceCollectionWordsVersion = _wordsVersion;
+    _practiceCollectionTaskIdentity = resolvedTaskIdentity;
+    _practiceCollectionFavoriteIdentity = resolvedFavoriteIdentity;
+    _practiceTaskEntriesCache = List<WordEntry>.unmodifiable(taskEntries);
+    _practiceFavoriteEntriesCache = List<WordEntry>.unmodifiable(
+      favoriteEntries,
+    );
+  }
+
+  void _ensurePracticeDerivedEntriesCache() {
+    final memoryIdentity = identityHashCode(
+      _practiceStore.wordMemoryProgressByWordId,
+    );
+    final rememberedIdentity = identityHashCode(_practiceStore.rememberedWords);
+    final weakIdentity = identityHashCode(_practiceStore.weakWords);
+    final legacyRememberedIdentity = identityHashCode(_rememberedWords);
+    if (_practiceDerivedWordsVersion == _wordsVersion &&
+        _practiceDerivedMemoryIdentity == memoryIdentity &&
+        _practiceDerivedRememberedIdentity == rememberedIdentity &&
+        _practiceDerivedWeakIdentity == weakIdentity &&
+        _practiceDerivedLegacyRememberedIdentity == legacyRememberedIdentity &&
+        _practiceRememberedEntriesCache != null &&
+        _practiceWeakEntriesCache != null &&
+        _practiceWrongNotebookEntriesCache != null) {
+      return;
+    }
+    _practiceRememberedEntriesCache = List<WordEntry>.unmodifiable(
+      _memoryStableEntries(_words),
+    );
+    _practiceWeakEntriesCache = List<WordEntry>.unmodifiable(
+      _memoryRecoveryEntries(_words),
+    );
+    _practiceWrongNotebookEntriesCache = List<WordEntry>.unmodifiable(
+      _practiceEntriesFromWords(_practiceStore.weakWords),
+    );
+    _practiceDerivedWordsVersion = _wordsVersion;
+    _practiceDerivedMemoryIdentity = memoryIdentity;
+    _practiceDerivedRememberedIdentity = rememberedIdentity;
+    _practiceDerivedWeakIdentity = weakIdentity;
+    _practiceDerivedLegacyRememberedIdentity = legacyRememberedIdentity;
+  }
+
   List<WordEntry> _memoryRecoveryEntries(List<WordEntry> words) {
     final tracked = MemoryLaneSelector.selectRecoveryEntries(
       words: words,
@@ -938,7 +1036,7 @@ extension _AppStatePractice on AppState {
     _prunePracticeTrackedEntries();
     _prunePracticeWeakReasons();
     _persistPracticeDashboard();
-    _notifyStateChanged();
+    _notifyPracticeChanged();
     return removed;
   }
 

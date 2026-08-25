@@ -1,4 +1,22 @@
-# [Unreleased-STUDY-PERF-PHASE2] - 2026-08-26
+## [Unreleased-STUDY-PERF-PHASE3] - 2026-08-26
+
+### 原因
+- 练习逐题作答仍会更新巨型 `AppState`，唤醒顶层常驻页面；练习入口还会为整本大词表重复构建候选并让会话路由持有整本列表。
+
+### 修改
+- 新增练习专用 `PracticeStore.revision` 通道；答题过程延迟练习仪表盘刷新，完成或路由销毁时统一刷新。
+- 非活动练习 Tab 不再订阅全局状态或练习 revision；练习任务、收藏、记忆/错题派生集合按版本与集合身份缓存。
+- 练习轮次使用来源描述和有界批次，下一批按需从 `AppState` 解析，取消会话页对完整词本源列表的长期持有。
+
+### 修复
+- 连续答题不再逐题触发全局 `notifyListeners()`，降低切换到其他模块后的重建和 GC 压力。
+- 修正练习派生缓存对旧版已记忆集合变化的失效条件，并避免当前词范围判断重复扫描。
+
+### 验证
+- `flutter test test/app_state_practice_test.dart test/app_state_init_test.dart test/ui_smoke_test.dart --plain-name "practice" --reporter compact` 通过。
+- `dart format`、目标文件 `flutter analyze`、`git diff --check` 已执行；本阶段未触达 i18n catalog。
+
+## [Unreleased-STUDY-PERF-PHASE2] - 2026-08-26
 
 ### 原因
 - 大词本播放过程中，逐词 hydrate 会复制整份词表并重新刷新整本记忆进度缓存，造成额外分配、数据库查询和 GC 抖动。

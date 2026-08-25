@@ -242,6 +242,45 @@ void main() {
     },
   );
 
+  test(
+    'practice answers stay off the global AppState notification channel',
+    () {
+      final database = _MemoryDatabaseService();
+      final settings = settingsFor(database);
+      final state = AppState(
+        database: database,
+        settings: settings,
+        playback: TrackingPlaybackService(),
+        ambient: StubAmbientService(),
+        asr: StubAsrService(),
+        focusService: StubFocusService(database, settings: settings),
+        practiceRepository: _MemoryPracticeRepository(database),
+      );
+      addTearDown(state.dispose);
+
+      var globalNotifications = 0;
+      var practiceNotifications = 0;
+      state.addListener(() => globalNotifications += 1);
+      state.practiceRevisionListenable.addListener(
+        () => practiceNotifications += 1,
+      );
+
+      state.startPracticeSession(title: 'isolated');
+      state.recordPracticeAnswer(
+        entry: _word('alpha', id: 1),
+        remembered: true,
+      );
+
+      expect(globalNotifications, 0);
+      expect(practiceNotifications, 0);
+
+      state.finishPracticeSession(title: 'isolated', total: 1, remembered: 1);
+
+      expect(globalNotifications, 0);
+      expect(practiceNotifications, 1);
+    },
+  );
+
   test('recordPracticeAnswer keeps tracked practice snapshot lightweight', () {
     final database = _MemoryDatabaseService();
     final settings = settingsFor(database);

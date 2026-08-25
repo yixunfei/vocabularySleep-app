@@ -296,6 +296,23 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   SearchMode _currentWordCacheMode = SearchMode.all;
   int? _currentWordCacheWordbookId;
 
+  // Practice dashboard collections are read repeatedly by several cards during
+  // one AppState notification. Cache them by the immutable wordbook version
+  // and the practice collections' identities so a 12k-word scan happens once.
+  List<WordEntry>? _practiceTaskEntriesCache;
+  List<WordEntry>? _practiceFavoriteEntriesCache;
+  int _practiceCollectionWordsVersion = -1;
+  int _practiceCollectionTaskIdentity = 0;
+  int _practiceCollectionFavoriteIdentity = 0;
+  List<WordEntry>? _practiceRememberedEntriesCache;
+  List<WordEntry>? _practiceWeakEntriesCache;
+  List<WordEntry>? _practiceWrongNotebookEntriesCache;
+  int _practiceDerivedWordsVersion = -1;
+  int _practiceDerivedMemoryIdentity = 0;
+  int _practiceDerivedRememberedIdentity = 0;
+  int _practiceDerivedWeakIdentity = 0;
+  int _practiceDerivedLegacyRememberedIdentity = 0;
+
   // Large wordbooks keep lite rows in _words. Hydrated details are retained in
   // a small LRU so playback can serve the current card without replacing and
   // copying the full word list on every word change.
@@ -353,6 +370,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _playbackStore.unitProgress;
   ValueListenable<int> get playbackRevisionListenable =>
       _playbackStore.revision;
+  ValueListenable<int> get practiceRevisionListenable =>
+      _practiceStore.revision;
   int? get playingWordbookId => _playbackStore.playingWordbookId;
   String? get playingWordbookName => _playbackStore.playingWordbookName;
   String? get playingWord => _playbackStore.playingWord;
@@ -509,8 +528,15 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   int? get pendingTodoReminderLaunchId =>
       _startupStore.pendingTodoReminderLaunchId;
   List<WordEntry> get practiceWrongNotebookEntries {
-    return _practiceEntriesFromWords(_practiceStore.weakWords);
+    _ensurePracticeDerivedEntriesCache();
+    return _practiceWrongNotebookEntriesCache!;
   }
+
+  List<WordEntry> get practiceTaskEntries =>
+      _practiceTaskEntriesForWords(_words);
+
+  List<WordEntry> get practiceFavoriteEntries =>
+      _practiceFavoriteEntriesForWords(_words);
 
   double get practiceTodayAccuracy => _practiceStore.todayReviewed <= 0
       ? 0
@@ -563,11 +589,13 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   List<WordEntry> get recentWeakWordEntries {
-    return _memoryRecoveryEntries(_words);
+    _ensurePracticeDerivedEntriesCache();
+    return _practiceWeakEntriesCache!;
   }
 
   List<WordEntry> get recentRememberedWordEntries {
-    return _memoryStableEntries(_words);
+    _ensurePracticeDerivedEntriesCache();
+    return _practiceRememberedEntriesCache!;
   }
 
   WordMemoryProgress? memoryProgressForWordEntry(WordEntry entry) {
@@ -2760,6 +2788,17 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     return visibleWords;
   }
 
+  List<WordEntry> practiceBatchSourceWords(PracticeRoundSource source) {
+    return switch (source) {
+      PracticeRoundSource.currentScope => visibleWords,
+      PracticeRoundSource.wholeWordbook => _words,
+      PracticeRoundSource.wrongNotebook => practiceWrongNotebookEntries,
+      PracticeRoundSource.taskWords => practiceTaskEntries,
+      PracticeRoundSource.favorites => practiceFavoriteEntries,
+      PracticeRoundSource.recentWeak => recentWeakWordEntries,
+    };
+  }
+
   void _setCurrentWordByEntry(WordEntry entry) {
     final index = _indexOfWordEntry(_words, entry);
     if (index >= 0) {
@@ -3449,6 +3488,17 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _playbackStore.notifyChanged();
   }
 
+  void _notifyPracticeChanged() {
+    if (_disposed) {
+      return;
+    }
+    _practiceStore.notifyChanged();
+  }
+
+  /// Refresh practice surfaces after a session route is closed. Answer writes
+  /// remain local to the session and do not rebuild the hidden tab per word.
+  void refreshPracticeViews() => _notifyPracticeChanged();
+
   @override
   void dispose() {
     if (_disposed) {
@@ -3511,6 +3561,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       }),
     );
     _playbackStore.dispose();
+    _practiceStore.dispose();
     _maintenanceRepository.dispose();
     super.dispose();
   }

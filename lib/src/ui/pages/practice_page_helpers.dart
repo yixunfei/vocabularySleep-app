@@ -140,6 +140,7 @@ class _PracticeWordBuckets {
     required this.favoriteWords,
     required this.warmupWords,
     required this.currentSprintSourceWords,
+    required this.currentSprintSource,
   });
 
   factory _PracticeWordBuckets.build({
@@ -148,29 +149,30 @@ class _PracticeWordBuckets {
     required List<WordEntry> scopedWords,
     required WordEntry current,
   }) {
-    final taskWords = <WordEntry>[];
-    final favoriteWords = <WordEntry>[];
-    for (final word in wordbookWords) {
-      if (state.isTaskEntry(word)) {
-        taskWords.add(word);
-      }
-      if (state.isFavoriteEntry(word)) {
-        favoriteWords.add(word);
-      }
-    }
+    final taskWords = identical(wordbookWords, state.words)
+        ? state.practiceTaskEntries
+        : wordbookWords.where(state.isTaskEntry).toList(growable: false);
+    final favoriteWords = identical(wordbookWords, state.words)
+        ? state.practiceFavoriteEntries
+        : wordbookWords.where(state.isFavoriteEntry).toList(growable: false);
 
     final warmupWords = scopedWords.length <= 7
         ? scopedWords
         : scopedWords.take(7).toList(growable: false);
-    final currentSprintSourceWords = _containsWordEntry(scopedWords, current)
+    final currentInScope = _containsWordEntry(scopedWords, current);
+    final currentSprintSourceWords = currentInScope
         ? scopedWords
         : wordbookWords;
+    final currentSprintSource = currentInScope
+        ? PracticeRoundSource.currentScope
+        : PracticeRoundSource.wholeWordbook;
 
     return _PracticeWordBuckets(
-      taskWords: List<WordEntry>.unmodifiable(taskWords),
-      favoriteWords: List<WordEntry>.unmodifiable(favoriteWords),
+      taskWords: taskWords,
+      favoriteWords: favoriteWords,
       warmupWords: warmupWords,
       currentSprintSourceWords: currentSprintSourceWords,
+      currentSprintSource: currentSprintSource,
     );
   }
 
@@ -178,6 +180,7 @@ class _PracticeWordBuckets {
   final List<WordEntry> favoriteWords;
   final List<WordEntry> warmupWords;
   final List<WordEntry> currentSprintSourceWords;
+  final PracticeRoundSource currentSprintSource;
 }
 
 Future<void> _openPracticeWordbookSheet(
@@ -195,7 +198,8 @@ Future<void> _openPracticeSession(
   required List<WordEntry> words,
   required bool shuffle,
   String? rotationKey,
-  List<WordEntry>? rotationSourceWords,
+  PracticeRoundSource? rotationSource,
+  int? rotationSourceCount,
   int? rotationBatchSize,
   WordEntry? rotationAnchorWord,
   int? rotationCursorAdvance,
@@ -216,13 +220,18 @@ Future<void> _openPracticeSession(
   var sessionWords = words;
   final canRotate =
       rotationKey != null &&
-      rotationSourceWords != null &&
+      rotationSource != null &&
+      rotationSourceCount != null &&
       rotationBatchSize != null;
   if (canRotate) {
+    final source = rotationSource;
+    final key = rotationKey;
+    final batchSize = rotationBatchSize;
+    final sourceWords = appState.practiceBatchSourceWords(source);
     sessionWords = appState.beginPracticeBatch(
-      cursorKey: rotationKey,
-      sourceWords: rotationSourceWords,
-      batchSize: rotationBatchSize,
+      cursorKey: key,
+      sourceWords: sourceWords,
+      batchSize: batchSize,
       anchorWord: rotationAnchorWord,
       cursorAdvance: rotationCursorAdvance,
     );
@@ -240,7 +249,8 @@ Future<void> _openPracticeSession(
       words: sessionWords,
       shuffle: shuffle,
       rotationKey: rotationKey,
-      rotationSourceWords: rotationSourceWords,
+      rotationSource: rotationSource,
+      rotationSourceCount: rotationSourceCount,
       rotationBatchSize: rotationBatchSize,
       rotationCursorAdvance: rotationCursorAdvance,
     ),

@@ -25,12 +25,26 @@ part 'practice_page_helpers.dart';
 part 'practice_page_sections.dart';
 
 class PracticePage extends ConsumerWidget {
-  const PracticePage({super.key});
+  const PracticePage({super.key, this.isActive = true});
+
+  final bool isActive;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(appStateProvider.select(_PracticePageRebuildToken.fromState));
     final state = ref.read(appStateProvider);
+    // AppShell keeps tabs alive. An inactive practice tab must not subscribe to
+    // either the global AppState channel or the practice dashboard revision.
+    if (!isActive) {
+      return const SizedBox.shrink();
+    }
+    ref.watch(appStateProvider.select(_PracticePageRebuildToken.fromState));
+    return ValueListenableBuilder<int>(
+      valueListenable: state.practiceRevisionListenable,
+      builder: (context, revision, child) => _buildContent(context, ref, state),
+    );
+  }
+
+  Widget _buildContent(BuildContext context, WidgetRef ref, AppState state) {
     final i18n = AppI18n(state.uiLanguage);
     if (!state.isModuleEnabled(ModuleIds.practice)) {
       return ModuleDisabledView(i18n: i18n, moduleId: ModuleIds.practice);
@@ -326,7 +340,8 @@ class PracticePage extends ConsumerWidget {
                           state,
                           slot: 'current-word',
                         ),
-                        rotationSourceWords: currentSprintSourceWords,
+                        rotationSource: buckets.currentSprintSource,
+                        rotationSourceCount: currentSprintSourceWords.length,
                         rotationBatchSize: 1,
                         rotationAnchorWord: current,
                       ),
@@ -359,7 +374,8 @@ class PracticePage extends ConsumerWidget {
                                 state,
                                 slot: 'warmup-7',
                               ),
-                              rotationSourceWords: scopedWords,
+                              rotationSource: PracticeRoundSource.currentScope,
+                              rotationSourceCount: scopedWords.length,
                               rotationBatchSize: 7,
                             ),
                     ),
@@ -387,6 +403,16 @@ class PracticePage extends ConsumerWidget {
                               ),
                               words: scopedWords,
                               shuffle: true,
+                              rotationKey: _buildPracticeScopeRotationKey(
+                                state,
+                                slot: 'shuffle-sprint',
+                              ),
+                              rotationSource: PracticeRoundSource.currentScope,
+                              rotationSourceCount: scopedWords.length,
+                              rotationBatchSize:
+                                  state.practiceRoundSettings.roundSize,
+                              rotationCursorAdvance:
+                                  state.practiceRoundSettings.roundSize,
                             ),
                     ),
                     _buildQuickLaunchCard(
@@ -436,7 +462,8 @@ class PracticePage extends ConsumerWidget {
                 state,
                 slot: 'current-word',
               ),
-              rotationSourceWords: currentSprintSourceWords,
+              rotationSource: buckets.currentSprintSource,
+              rotationSourceCount: currentSprintSourceWords.length,
               rotationBatchSize: 1,
               rotationAnchorWord: current,
             ),
@@ -470,9 +497,10 @@ class PracticePage extends ConsumerWidget {
                   state,
                   slot: 'scope-session',
                 ),
-                rotationSourceWords: scopedWords,
-                rotationBatchSize: scopedWords.length,
-                rotationCursorAdvance: 1,
+                rotationSource: PracticeRoundSource.currentScope,
+                rotationSourceCount: scopedWords.length,
+                rotationBatchSize: state.practiceRoundSettings.roundSize,
+                rotationCursorAdvance: state.practiceRoundSettings.roundSize,
               );
             },
           ),
@@ -498,6 +526,14 @@ class PracticePage extends ConsumerWidget {
               ),
               words: wordbookWords,
               shuffle: true,
+              rotationKey: _buildPracticeRoundRotationKey(
+                state,
+                source: PracticeRoundSource.wholeWordbook,
+              ),
+              rotationSource: PracticeRoundSource.wholeWordbook,
+              rotationSourceCount: wordbookWords.length,
+              rotationBatchSize: state.practiceRoundSettings.roundSize,
+              rotationCursorAdvance: state.practiceRoundSettings.roundSize,
             ),
           ),
           const SizedBox(height: 12),
@@ -673,9 +709,11 @@ class PracticePage extends ConsumerWidget {
                         state,
                         slot: 'scope-session',
                       ),
-                      rotationSourceWords: scopedWords,
-                      rotationBatchSize: scopedWords.length,
-                      rotationCursorAdvance: 1,
+                      rotationSource: PracticeRoundSource.currentScope,
+                      rotationSourceCount: scopedWords.length,
+                      rotationBatchSize: state.practiceRoundSettings.roundSize,
+                      rotationCursorAdvance:
+                          state.practiceRoundSettings.roundSize,
                     ),
                     icon: const Icon(Icons.play_arrow_rounded),
                     label: Text(
@@ -699,6 +737,15 @@ class PracticePage extends ConsumerWidget {
                       ),
                       words: wordbookWords,
                       shuffle: true,
+                      rotationKey: _buildPracticeRoundRotationKey(
+                        state,
+                        source: PracticeRoundSource.wholeWordbook,
+                      ),
+                      rotationSource: PracticeRoundSource.wholeWordbook,
+                      rotationSourceCount: wordbookWords.length,
+                      rotationBatchSize: state.practiceRoundSettings.roundSize,
+                      rotationCursorAdvance:
+                          state.practiceRoundSettings.roundSize,
                     ),
                     icon: const Icon(Icons.library_books_rounded),
                     label: Text(
