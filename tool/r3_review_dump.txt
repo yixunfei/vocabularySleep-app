@@ -1,0 +1,1213 @@
+==== toolbox.sleep.library (45) ====
+toolbox.sleep.library.advice_assessment_caffeine.title
+  zh: 优化您的咖啡因截止时间
+  en: Optimize your caffeine cutoff
+toolbox.sleep.library.advice_assessment_environment.title
+  zh: 优化您的卧室环境
+  en: Optimize your bedroom environment
+toolbox.sleep.library.advice_assessment_rhythm.title
+  zh: 开始为期7天的节律重置计划
+  en: Start a 7-day rhythm reset
+toolbox.sleep.library.advice_assessment_risk.title
+  zh: 考虑进行医学评估
+  en: Consider a medical evaluation
+toolbox.sleep.library.advice_assessment_temp.title
+  zh: 利用温度帮助入睡
+  en: Use temperature to aid sleep onset
+toolbox.sleep.library.advice_assessment_wind_down.title
+  zh: 建立一个简短的放松程序
+  en: Build a tiny wind-down routine
+toolbox.sleep.library.advice_daily_caffeine.title
+  zh: 注意晚间咖啡因摄入模式
+  en: Watch the late caffeine pattern
+toolbox.sleep.library.advice_daily_environment.title
+  zh: 调整你的卧室环境
+  en: Tweak your bedroom environment
+toolbox.sleep.library.advice_daily_light.title
+  zh: 优先考虑晨光
+  en: Prioritize morning light
+toolbox.sleep.library.advice_daily_minimal_log.title
+  zh: 继续记录——持续性比细节更重要
+  en: Keep logging — consistency beats detail
+toolbox.sleep.library.advice_daily_nap.title
+  zh: 优化你的打盹策略
+  en: Optimize your nap strategy
+toolbox.sleep.library.advice_daily_rescue.title
+  zh: 随手准备好夜间应急工具
+  en: Keep the night rescue tool handy
+toolbox.sleep.library.advice_daily_screen.title
+  zh: 今晚尝试数字日落
+  en: Try a digital sunset tonight
+toolbox.sleep.library.advice_daily_worry.title
+  zh: 尝试进行担忧释放练习
+  en: Try the worry unload exercise
+toolbox.sleep.library.advice_weekly_caffeine.title
+  zh: 你的咖啡因摄入模式可能在降低睡眠质量
+  en: Your caffeine pattern may be reducing sleep quality
+toolbox.sleep.library.advice_weekly_environment.title
+  zh: 你的睡眠环境需要关注。
+  en: Your sleep environment needs attention
+toolbox.sleep.library.advice_weekly_light.title
+  zh: 早晨光照是你最强大的节律工具。
+  en: Morning light is your strongest rhythm tool
+toolbox.sleep.library.advice_weekly_rescue.title
+  zh: 夜间醒来：准备一份应对计划
+  en: Night awakenings: prepare a response plan
+toolbox.sleep.library.advice_weekly_screen.title
+  zh: 晚间使用屏幕正在影响你的睡眠
+  en: Late screen use is affecting your sleep
+toolbox.sleep.library.advice_weekly_sleep_amount.title
+  zh: 你的总睡眠时间显示出一定的模式
+  en: Your total sleep time shows a pattern
+toolbox.sleep.library.advice_weekly_worry.title
+  zh: 睡前担忧：一个简单的写作练习可以帮助
+  en: Pre-sleep worry: a simple writing exercise can help
+toolbox.sleep.library.topic.bedroom.summary
+  zh: 温度、噪音和光线是影响睡眠质量的三大环境因素。
+  en: Temperature, noise, and light are the three main environmental factors affecting sleep quality.
+toolbox.sleep.library.topic.bedroom.title
+  zh: 卧室环境优化
+  en: Bedroom environment optimization
+toolbox.sleep.library.topic.caffeine.summary
+  zh: 咖啡因通过阻断腺苷受体起作用。它的半衰期为3-7小时，这意味着下午2点喝的咖啡到午夜仍可能影响睡眠。
+  en: Caffeine works by blocking adenosine receptors. Its half-life is 3-7 hours, meaning a 2pm coffee can still affect sleep at midnight.
+toolbox.sleep.library.topic.caffeine.title
+  zh: 咖啡因的时间安排与腺苷阻断
+  en: Caffeine timing and adenosine blockade
+toolbox.sleep.library.topic.diary_trends.summary
+  zh: 30秒的睡眠记录能揭示即使是详细睡眠追踪器也会错过的模式。
+  en: A 30-second sleep log reveals patterns that even detailed sleep trackers miss.
+toolbox.sleep.library.topic.diary_trends.title
+  zh: 简单睡眠日记的力量
+  en: The power of a simple sleep diary
+toolbox.sleep.library.topic.digital_sunset.summary
+  zh: 晚间屏幕光，尤其是蓝色波长，通过激活与早晨光线响应相同的ipRGC细胞，可抑制褪黑素。
+  en: Evening screen light, especially blue wavelengths, can suppress melatonin by activating the same ipRGC cells that respond to morning light.
+toolbox.sleep.library.topic.digital_sunset.title
+  zh: 数字日落与蓝光
+  en: Digital sunset and blue light
+toolbox.sleep.library.topic.light.summary
+  zh: 起床后 30 分钟内的强光是对你体内时钟最强的信号。
+  en: Bright light within 30 minutes of waking is the single strongest signal for your internal clock.
+toolbox.sleep.library.topic.light.title
+  zh: 晨光与昼夜节律的固定
+  en: Morning light and circadian anchoring
+toolbox.sleep.library.topic.nap.summary
+  zh: 20 分钟以下的短午睡可以提高警觉性，不会引起睡眠惯性或干扰夜间睡眠。
+  en: Short naps under 20 minutes can boost alertness without causing sleep inertia or disrupting nighttime sleep.
+toolbox.sleep.library.topic.nap.title
+  zh: 午睡：策略性使用与时间安排
+  en: Naps: strategic use and timing
+toolbox.sleep.library.topic.red_flags.summary
+  zh: 一些睡眠症状在自行调理前需要医学评估。
+  en: Some sleep symptoms warrant medical evaluation before self-guided approaches.
+toolbox.sleep.library.topic.red_flags.title
+  zh: 何时就医
+  en: When to see a doctor
+toolbox.sleep.library.topic.sleep_cycles.summary
+  zh: 睡眠周期平均约为90分钟，但范围是70-120分钟，并且随着夜间的推移会有所变化。
+  en: Sleep cycles average about 90 minutes, but the range is 70-120 minutes, and they change across the night.
+toolbox.sleep.library.topic.sleep_cycles.title
+  zh: 睡眠周期与90分钟的传说
+  en: Sleep cycles and the 90-minute myth
+toolbox.sleep.library.topic.stimulus_control.summary
+  zh: 最有效的认知行为疗法-失眠 (CBT-I) 技巧之一：将床与睡眠重新关联。
+  en: One of the most effective CBT-I techniques: re-associate the bed with sleep only.
+toolbox.sleep.library.topic.stimulus_control.title
+  zh: 刺激控制：床 = 睡眠
+  en: Stimulus control: bed = sleep
+toolbox.sleep.library.topic.temperature.summary
+  zh: 需要核心体温下降约1°C才能启动和维持睡眠。
+  en: A drop in core body temperature of about 1°C is required to initiate and maintain sleep.
+toolbox.sleep.library.topic.temperature.title
+  zh: 核心体温与入睡
+  en: Core body temperature and sleep onset
+toolbox.sleep.library.topic.white_noise.summary
+  zh: 白噪音可以通过掩盖引起微觉醒的突发环境噪音来起到帮助作用。
+  en: White noise can help by masking sudden environmental noises that cause micro-arousals.
+toolbox.sleep.library.topic.white_noise.title
+  zh: 白噪音与听觉掩蔽
+  en: White noise and auditory masking
+toolbox.sleep.library.topic.worry_unload.summary
+  zh: 睡前进行简短的结构化写作练习可以减少睡前认知激活。
+  en: A brief structured writing exercise before bed can reduce pre-sleep cognitive arousal.
+toolbox.sleep.library.topic.worry_unload.title
+  zh: 睡前卸载担忧
+  en: Unloading worry before bedtime
+==== toolbox.life.timeline (44) ====
+toolbox.life.timeline.brief24.brief24_002_deb83f4c49.title
+  zh: 史记：五帝世系
+  en: Records of the Grand Historian: Lineage of the Five Emperors
+toolbox.life.timeline.brief24.brief24_003_1e542f8599.title
+  zh: 史记：夏王世系
+  en: Records of the Grand Historian: Lineage of the Xia Kings
+toolbox.life.timeline.brief24.brief24_004_06faa253be.title
+  zh: 史记：商王世系
+  en: Records of the Grand Historian: Lineage of the Shang Kings
+toolbox.life.timeline.brief24.brief24_005_5c014495d8.title
+  zh: 史记：周王世系
+  en: Records of the Grand Historian: Lineage of the Zhou Kings
+toolbox.life.timeline.brief24.brief24_006_788958f3df.title
+  zh: 史记：夏商周断代工程阶段成果·夏商周年表
+  en: Records of the Grand Historian: Xia–Shang–Zhou Chronology Project Chronological Table
+toolbox.life.timeline.brief24.brief24_007_5aa07a250c.title
+  zh: 史记：春秋战国君主世系
+  en: Records of the Grand Historian: Lineages of Spring and Autumn and Warring States Rulers
+toolbox.life.timeline.brief24.brief24_008_48e630ab9c.title
+  zh: 史记：秦帝系
+  en: Records of the Grand Historian: Qin Imperial Lineage
+toolbox.life.timeline.brief24.brief24_012_c6d3d5e9b7.title
+  zh: 汉书：西汉帝系
+  en: Book of Han: Western Han Imperial Lineage
+toolbox.life.timeline.brief24.brief24_013_3e97b3d9b9.title
+  zh: 后汉书：东汉帝系
+  en: Book of the Later Han: Eastern Han Imperial Lineage
+toolbox.life.timeline.brief24.brief24_014_a79a7f1b61.title
+  zh: 三国志：曹魏帝系
+  en: Records of the Three Kingdoms: Cao Wei Imperial Lineage
+toolbox.life.timeline.brief24.brief24_015_577003fe77.title
+  zh: 三国志：蜀汉帝系
+  en: Records of the Three Kingdoms: Shu Han Imperial Lineage
+toolbox.life.timeline.brief24.brief24_016_4906eee1bd.title
+  zh: 三国志：孙吴帝系
+  en: Records of the Three Kingdoms: Sun Wu Imperial Lineage
+toolbox.life.timeline.brief24.brief24_017_3670a318f1.title
+  zh: 西晋书　东晋书：西晋帝系
+  en: Book of Jin: Western Jin Imperial Lineage
+toolbox.life.timeline.brief24.brief24_019_6a058ca7e6.title
+  zh: 西晋书　东晋书：东晋帝系
+  en: Book of Jin: Eastern Jin Imperial Lineage
+toolbox.life.timeline.brief24.brief24_020_67d7f6bceb.title
+  zh: 西晋书　东晋书：十六国兴亡
+  en: Book of Jin: Rise and Fall of the Sixteen Kingdoms
+toolbox.life.timeline.brief24.brief24_021_ea53f421b3.title
+  zh: 宋书　南齐书　梁书　陈书：南朝宋帝系
+  en: Book of Song, Southern Qi, Liang and Chen: Liu Song Imperial Lineage
+toolbox.life.timeline.brief24.brief24_022_3a7515cdf7.title
+  zh: 宋书　南齐书　梁书　陈书：南朝齐帝系
+  en: Book of Song, Southern Qi, Liang and Chen: Southern Qi Imperial Lineage
+toolbox.life.timeline.brief24.brief24_023_42e9ec0f21.title
+  zh: 宋书　南齐书　梁书　陈书：南朝梁帝系
+  en: Book of Song, Southern Qi, Liang and Chen: Liang Imperial Lineage
+toolbox.life.timeline.brief24.brief24_024_becc944e7d.title
+  zh: 宋书　南齐书　梁书　陈书：南朝后梁帝系
+  en: Book of Song, Southern Qi, Liang and Chen: Later Liang Imperial Lineage
+toolbox.life.timeline.brief24.brief24_025_668f2a4c41.title
+  zh: 宋书　南齐书　梁书　陈书：南朝陈帝系
+  en: Book of Song, Southern Qi, Liang and Chen: Chen Imperial Lineage
+toolbox.life.timeline.brief24.brief24_026_6666ddc31a.title
+  zh: 魏书　北齐书　周书　隋书：北魏帝系
+  en: Book of Wei, Northern Qi, Zhou and Sui: Northern Wei Imperial Lineage
+toolbox.life.timeline.brief24.brief24_027_081f637bec.title
+  zh: 魏书　北齐书　周书　隋书：东魏帝系
+  en: Book of Wei, Northern Qi, Zhou and Sui: Eastern Wei Imperial Lineage
+toolbox.life.timeline.brief24.brief24_028_dfbe86910b.title
+  zh: 魏书　北齐书　周书　隋书：西魏帝系
+  en: Book of Wei, Northern Qi, Zhou and Sui: Western Wei Imperial Lineage
+toolbox.life.timeline.brief24.brief24_029_017c58f3c8.title
+  zh: 魏书　北齐书　周书　隋书：北齐帝系
+  en: Book of Wei, Northern Qi, Zhou and Sui: Northern Qi Imperial Lineage
+toolbox.life.timeline.brief24.brief24_030_ea36fe756c.title
+  zh: 魏书　北齐书　周书　隋书：周帝系
+  en: Book of Wei, Northern Qi, Zhou and Sui: Northern Zhou Imperial Lineage
+toolbox.life.timeline.brief24.brief24_031_88e00dec78.title
+  zh: 魏书　北齐书　周书　隋书：隋帝系
+  en: Book of Wei, Northern Qi, Zhou and Sui: Sui Imperial Lineage
+toolbox.life.timeline.brief24.brief24_032_0c17c67151.title
+  zh: 唐书：唐帝系
+  en: Book of Tang: Tang Imperial Lineage
+toolbox.life.timeline.brief24.brief24_033_c433be87a5.title
+  zh: 五代史：五代帝系
+  en: History of the Five Dynasties: Five Dynasties Imperial Lineages
+toolbox.life.timeline.brief24.brief24_034_61dba1cc97.title
+  zh: 五代史：十国君主世系
+  en: History of the Five Dynasties: Lineages of the Ten Kingdoms Rulers
+toolbox.life.timeline.brief24.brief24_035_2c67ebcdc4.title
+  zh: 北宋史　南宋史：北宋帝系
+  en: Histories of the Northern and Southern Song: Northern Song Imperial Lineage
+toolbox.life.timeline.brief24.brief24_036_a126f0e8d0.title
+  zh: 北宋史　南宋史：南宋帝系
+  en: Histories of the Northern and Southern Song: Southern Song Imperial Lineage
+toolbox.life.timeline.brief24.brief24_037_232927fe4b.title
+  zh: 辽史　金史　西夏史：辽帝系
+  en: Histories of Liao, Jin and Western Xia: Liao Imperial Lineage
+toolbox.life.timeline.brief24.brief24_038_8b86bd5ba6.title
+  zh: 辽史　金史　西夏史：金帝系
+  en: Histories of Liao, Jin and Western Xia: Jin Imperial Lineage
+toolbox.life.timeline.brief24.brief24_039_e86062722b.title
+  zh: 辽史　金史　西夏史：西夏帝系
+  en: Histories of Liao, Jin and Western Xia: Western Xia Imperial Lineage
+toolbox.life.timeline.brief24.brief24_040_09f7c4a3cd.title
+  zh: 元史：元帝系
+  en: History of Yuan: Yuan Imperial Lineage
+toolbox.life.timeline.brief24.brief24_041_cc0c037e38.title
+  zh: 元史：窝阔台汗国
+  en: History of Yuan: Ogedei Khanate
+toolbox.life.timeline.brief24.brief24_042_aeeed22a90.title
+  zh: 元史：察合台汗国
+  en: History of Yuan: Chagatai Khanate
+toolbox.life.timeline.brief24.brief24_043_8ce4e71a4a.title
+  zh: 元史：钦察汗国
+  en: History of Yuan: Kipchak Khanate
+toolbox.life.timeline.brief24.brief24_044_855bf538f7.title
+  zh: 元史：伊利汗国
+  en: History of Yuan: Ilkhanate
+toolbox.life.timeline.brief24.brief24_045_4abace39a3.title
+  zh: 明史：明帝系
+  en: History of Ming: Ming Imperial Lineage
+toolbox.life.timeline.brief24.brief24_046_49dc78bb6c.title
+  zh: 清史　一八四〇年前：清帝系
+  en: History of Qing before 1840: Qing Imperial Lineage
+toolbox.life.timeline.brief24.brief24_047_3dadbfd358.title
+  zh: 晚清史：晚清帝系
+  en: History of the Late Qing: Late Qing Imperial Lineage
+toolbox.life.timeline.brief24.brief24_048_0723c773dc.title
+  zh: 晚清史：晚清通商口岸
+  en: History of the Late Qing: Late Qing Treaty Ports
+toolbox.life.timeline.collection.label
+  zh: 年表
+  en: Timeline set
+==== toolbox.hub.entry (32) ====
+toolbox.hub.entry.beads.subtitle
+  zh: 轻轻滑动每颗珠子，让心灵在平静的节奏中安定。
+  en: Gently slide each bead and settle your mind in a calming rhythm.
+toolbox.hub.entry.beads.title
+  zh: 静心念珠
+  en: Mindful Beads
+toolbox.hub.entry.beats.subtitle
+  zh: 用节奏音频提示，为限时专注打拍子。
+  en: Rhythmic audio cues for timed focus sessions.
+toolbox.hub.entry.beats.title
+  zh: 专注节拍
+  en: Focus Beats
+toolbox.hub.entry.bowls.subtitle
+  zh: 十一种自然调频和四种钵声。
+  en: Eleven nature-tuned frequencies and four bowl voices.
+toolbox.hub.entry.bowls.title
+  zh: 疗愈音钵
+  en: Singing Bowls
+toolbox.hub.entry.breathing.subtitle
+  zh: 视觉引导的呼吸练习。
+  en: Guided breathing exercises with visual pacing.
+toolbox.hub.entry.breathing.title
+  zh: 呼吸引导
+  en: Breathing Guide
+toolbox.hub.entry.crypto.subtitle
+  zh: 加密、哈希与数据安全工具。
+  en: Encryption, hashing, and data security tools.
+toolbox.hub.entry.crypto.title
+  zh: 加密安全
+  en: Crypto Security
+toolbox.hub.entry.decision.subtitle
+  zh: 将日常犹豫不决变为可随机、可编辑、可复查的选择。
+  en: Turn everyday indecision into randomized, editable, reviewable choices.
+toolbox.hub.entry.decision.title
+  zh: 每日决策
+  en: Daily Decision
+toolbox.hub.entry.free_chimes.subtitle
+  zh: 摇晃手机混合风铃、环境声与鼓劲节拍。
+  en: Shake your phone to blend chimes, textures, and energizing beats.
+toolbox.hub.entry.free_chimes.title
+  zh: 自由风铃
+  en: Free Chimes
+toolbox.hub.entry.games.subtitle
+  zh: 转移注意力的快速认知小游戏合集。
+  en: Quick cognitive mini-games for focus shifting.
+toolbox.hub.entry.games.title
+  zh: 游戏中心
+  en: Mini Games
+toolbox.hub.entry.harp.subtitle
+  zh: 演奏竖琴、钢琴、长笛、尺八、鼓垫、吉他、三角铁、拇指琴、排钟等模拟乐器。
+  en: Play simulated harp, piano, flute, shakuhachi, drum pad, guitar, triangle, kalimba, chimes and more.
+toolbox.hub.entry.harp.title
+  zh: 模拟乐器
+  en: Instrument Deck
+toolbox.hub.entry.life.subtitle
+  zh: 日常实用工具。
+  en: Practical utilities for daily routines.
+toolbox.hub.entry.life.title
+  zh: 生活工具
+  en: Life Tools
+toolbox.hub.entry.schulte.subtitle
+  zh: 经典的注意力训练，记录速度与准确度。
+  en: Classic attention training with speed and accuracy tracking.
+toolbox.hub.entry.schulte.title
+  zh: 舒尔特方格
+  en: Schulte Grid
+toolbox.hub.entry.sleep_assistant.subtitle
+  zh: 个性化评估、计划与夜间指导。
+  en: Personalized assessment, plans, and nightly guidance.
+toolbox.hub.entry.sleep_assistant.title
+  zh: 睡眠助手
+  en: Sleep Assistant
+toolbox.hub.entry.soothing.subtitle
+  zh: 精选平静循环配合呼吸灯效果。
+  en: Curated calming loops with breathing light effects.
+toolbox.hub.entry.soothing.title
+  zh: 舒缓轻音乐
+  en: Soothing Music
+toolbox.hub.entry.tests.subtitle
+  zh: 认知与行为自我评估。
+  en: Cognitive and behavioral self-assessments.
+toolbox.hub.entry.tests.title
+  zh: 人类测试
+  en: Human Tests
+toolbox.hub.entry.woodfish.subtitle
+  zh: 敲击电子木鱼，专注又减压。
+  en: A digital wooden fish for mindful tapping and stress relief.
+toolbox.hub.entry.woodfish.title
+  zh: 电子木鱼
+  en: Digital Wooden Fish
+toolbox.hub.entry.zen.subtitle
+  zh: 用手指在沙子上绘画——一个口袋大小的平静时刻。
+  en: Draw with your fingertip on sand — a pocket-sized moment of calm.
+toolbox.hub.entry.zen.title
+  zh: 随心沙盘
+  en: Finger Sand Art
+==== toolbox.hub.edit (24) ====
+toolbox.hub.edit.confirm_remove_desc
+  zh: 该工具将在工具箱中隐藏。您可以随时从编辑面板恢复它。
+  en: This tool will be hidden from the toolbox. You can restore it anytime from the edit panel.
+toolbox.hub.edit.confirm_remove_title
+  zh: 隐藏 {title}？
+  en: Hide {title}?
+toolbox.hub.edit.drag_tooltip
+  zh: 拖动以重新排序
+  en: Drag to reorder
+toolbox.hub.edit.empty_desc_has_hidden
+  zh: 某些工具当前被隐藏。使用下面的隐藏部分来恢复它们。
+  en: Some tools are currently hidden. Use the hidden section below to restore them.
+toolbox.hub.edit.empty_desc_no_hidden
+  zh: 所有可用工具当前均可见。要隐藏工具，请点击其名称旁边的眼睛图标。
+  en: All available tools are currently visible. To hide a tool, tap the eye icon next to its name.
+toolbox.hub.edit.empty_edit_button
+  zh: 打开编辑面板
+  en: Open edit panel
+toolbox.hub.edit.empty_hidden_count
+  zh: {count} 个隐藏工具可恢复显示
+  en: {count} hidden tools can be unhidden
+toolbox.hub.edit.empty_title
+  zh: 无可见工具
+  en: No visible tools
+toolbox.hub.edit.exit_button
+  zh: 退出编辑
+  en: Exit edit
+toolbox.hub.edit.layout_instructions
+  zh: 点击眼睛图标以隐藏或显示工具。拖动手柄以重新排序。
+  en: Tap the eye icon to hide or show a tool. Drag the handle to reorder.
+toolbox.hub.edit.remove_action
+  zh: 隐藏
+  en: Hide
+toolbox.hub.edit.remove_tooltip
+  zh: 隐藏此工具
+  en: Hide this tool
+toolbox.hub.edit.reset_button
+  zh: 重置布局
+  en: Reset layout
+toolbox.hub.edit.restore_action
+  zh: 恢复
+  en: Restore
+toolbox.hub.edit.restore_button
+  zh: 恢复全部
+  en: Restore all
+toolbox.hub.edit.restore_notice
+  zh: 点击眼睛图标以恢复隐藏的工具。
+  en: Tap the eye icon to restore a hidden tool.
+toolbox.hub.edit.restore_section_title
+  zh: 隐藏的工具
+  en: Hidden tools
+toolbox.hub.edit.section_title
+  zh: 工具箱布局
+  en: Toolbox layout
+toolbox.hub.edit.snackbar_hidden
+  zh: {title} 已隐藏
+  en: {title} hidden
+toolbox.hub.edit.snackbar_restore
+  zh: 撤销
+  en: Undo
+toolbox.hub.edit.status_hidden
+  zh: 隐藏
+  en: Hidden
+toolbox.hub.edit.status_visible
+  zh: 可见
+  en: Visible
+toolbox.hub.edit.toggle_enter
+  zh: 自定义
+  en: Customize
+toolbox.hub.edit.toggle_exit
+  zh: 完成
+  en: Done
+==== daily_choice.wear.advisor (21) ====
+daily_choice.wear.advisor.audit.care.title
+  zh: 维护与细节
+  en: Care details
+daily_choice.wear.advisor.audit.movement.title
+  zh: 行动自由
+  en: Movement
+daily_choice.wear.advisor.audit.proportion.title
+  zh: 比例收口
+  en: Proportion
+daily_choice.wear.advisor.audit.scene.title
+  zh: 场景合适
+  en: Scene fit
+daily_choice.wear.advisor.audit.shoes_bag.title
+  zh: 鞋包统一
+  en: Shoes and bag
+daily_choice.wear.advisor.audit.temperature.title
+  zh: 温度与体感
+  en: Temperature
+daily_choice.wear.advisor.color.accent.title
+  zh: 彩色亮点
+  en: Accent
+daily_choice.wear.advisor.color.black.title
+  zh: 黑色单品
+  en: Black
+daily_choice.wear.advisor.color.khaki.title
+  zh: 卡其米色
+  en: Khaki
+daily_choice.wear.advisor.color.navy.title
+  zh: 海军蓝
+  en: Navy
+daily_choice.wear.advisor.color.white.title
+  zh: 白色单品
+  en: White
+daily_choice.wear.advisor.layer.cold.title
+  zh: 冷天
+  en: Cold
+daily_choice.wear.advisor.layer.hot.title
+  zh: 炎热
+  en: Hot
+daily_choice.wear.advisor.layer.mild.title
+  zh: 温和
+  en: Mild
+daily_choice.wear.advisor.layer.rain.title
+  zh: 雨天
+  en: Rain
+daily_choice.wear.advisor.quick_fixes.title
+  zh: 临门修正
+  en: Quick fixes
+daily_choice.wear.advisor.scene.business.title
+  zh: 正式
+  en: Business
+daily_choice.wear.advisor.scene.commute.title
+  zh: 通勤
+  en: Commute
+daily_choice.wear.advisor.scene.date.title
+  zh: 约会
+  en: Date
+daily_choice.wear.advisor.scene.exercise.title
+  zh: 运动
+  en: Exercise
+daily_choice.wear.advisor.scene.rain.title
+  zh: 雨天
+  en: Rain
+==== toolbox.hub.section (18) ====
+toolbox.hub.section.calm.subtitle
+  zh: 静心念珠、随心沙盘和冥想工具。
+  en: Mindful beads, finger sand art, and meditation tools.
+toolbox.hub.section.calm.title
+  zh: 平静与冥想
+  en: Calm & Meditation
+toolbox.hub.section.crypto.subtitle
+  zh: 加密、哈希和安全工具。
+  en: Encryption, hashing, and security utilities.
+toolbox.hub.section.crypto.title
+  zh: 加密与安全
+  en: Crypto & Security
+toolbox.hub.section.decision.subtitle
+  zh: 将日常困境变成轻松、可以反复做出的选择。
+  en: Turn daily dilemmas into light, replayable choices.
+toolbox.hub.section.decision.title
+  zh: 决策助手
+  en: Decision Helper
+toolbox.hub.section.focus.subtitle
+  zh: 舒尔特方格、呼吸练习等注意力训练工具。
+  en: Schulte grid, breathing exercises, and attention training.
+toolbox.hub.section.focus.title
+  zh: 注意力与专注
+  en: Focus & Attention
+toolbox.hub.section.games.subtitle
+  zh: 用轻松的认知小游戏转移注意力、放松身心。
+  en: Light cognitive activities to shift focus and unwind.
+toolbox.hub.section.games.title
+  zh: 游戏中心
+  en: Mini Games
+toolbox.hub.section.life.subtitle
+  zh: 实用的日常工具和生活助手。
+  en: Practical daily utilities and lifestyle helpers.
+toolbox.hub.section.life.title
+  zh: 生活工具
+  en: Life Tools
+toolbox.hub.section.sleep.subtitle
+  zh: 睡眠评估、记录、放松与夜间应对指南。
+  en: Assessment, logging, wind-down, and night rescue guides.
+toolbox.hub.section.sleep.title
+  zh: 睡眠
+  en: Sleep
+toolbox.hub.section.sound.subtitle
+  zh: 舒缓音乐、音钵、竖琴、吉他、长笛等声音工具。
+  en: Soothing audio, singing bowls, harp, guitar, flute, and more.
+toolbox.hub.section.sound.title
+  zh: 声音与音乐
+  en: Sound & Music
+toolbox.hub.section.tests.subtitle
+  zh: 自我评估认知和行为模式的工具。
+  en: Self-assessment tools for cognitive and behavioral patterns.
+toolbox.hub.section.tests.title
+  zh: 人类测试
+  en: Human Tests
+==== toolbox.life.hub (17) ====
+toolbox.life.hub.category.calc.desc
+  zh: 单位、科学计算、周期、工作性价比、城市薪资、房贷、日期、世界时钟、BMI、亲属称谓和 Offer 决策。
+  en: Unit, scientific, cycle, work-worth, city salary, mortgage, date, world clock, BMI, kinship, and offer calculators.
+toolbox.life.hub.category.calc.label
+  zh: 计算工具
+  en: Calculators
+toolbox.life.hub.category.display.desc
+  zh: 时钟、弹幕、补光和计分等直接面向屏幕展示的工具。
+  en: Clock, barrage, fill light, and scoreboard tools for direct screen display.
+toolbox.life.hub.category.display.label
+  zh: 屏幕展示
+  en: Display tools
+toolbox.life.hub.category.image.desc
+  zh: 取色、图片处理、表情包、设备外框、视频转 GIF、证件照和网页图片导出。
+  en: Color picking, image processing, memes, device frames, video to GIF, ID photos, and image-to-web export.
+toolbox.life.hub.category.image.label
+  zh: 图片与媒体
+  en: Image and media
+toolbox.life.hub.category.measure.desc
+  zh: 尺子、指南针、水平仪、测速、放大镜、照度和测距等传感器工具。
+  en: Sensor tools for ruler, compass, level, speed, magnifier, light, and distance measurement.
+toolbox.life.hub.category.measure.label
+  zh: 测量工具
+  en: Measurement tools
+toolbox.life.hub.category.study.desc
+  zh: 历史年表、元素周期表与知识图谱资料。
+  en: Timelines, periodic table, and knowledge reference data.
+toolbox.life.hub.category.study.label
+  zh: 知识参考
+  en: Knowledge references
+toolbox.life.hub.category.system.desc
+  zh: 手机状态、震动、压缩归档、提醒和模拟来电等系统辅助工具。
+  en: System helpers for phone status, vibration, archives, reminders, and fake calls.
+toolbox.life.hub.category.system.label
+  zh: 系统工具
+  en: System tools
+toolbox.life.hub.category.text.desc
+  zh: 字数统计、文本转换、上下标和简易脑图等文本编辑辅助。
+  en: Text helpers for counting, transforms, superscript/subscript, and simple mind maps.
+toolbox.life.hub.category.text.label
+  zh: 文本工具
+  en: Text tools
+toolbox.life.hub.category.web.desc
+  zh: 壁纸、邮编、以图搜图、垃圾分类、短链和二维码等联网或跳转工具。
+  en: Wallpaper, postal codes, reverse image search, recycling lookup, short links, and QR tools.
+toolbox.life.hub.category.web.label
+  zh: 查询与网络
+  en: Query and web
+toolbox.life.hub.subtitle
+  zh: {length} 个实用工具，按 {categories} 个精准分类整理，支持搜索、快捷入口和统一来源页。
+  en: {length} handy tools organized into {categories} focused categories with search, quick access, and a unified source page.
+==== daily_choice.place.map (12) ====
+daily_choice.place.map.provider.carto_light.description
+  zh: 更克制的浅色底图，适合降低视觉噪声；通常需要可访问国际网络的环境，作为非默认备用源保留。
+  en: A quieter light basemap that keeps dense place markers easier to scan; usually requires access to the international network.
+daily_choice.place.map.provider.carto_light.title
+  zh: CARTO Light
+  en: CARTO Light
+daily_choice.place.map.provider.carto_voyager.description
+  zh: CARTO 真实街区样式；通常需要可访问国际网络的环境，在部分地区可能不可用。
+  en: CARTO street basemap that usually requires access to the international network and may be unavailable in some regions.
+daily_choice.place.map.provider.carto_voyager.title
+  zh: CARTO Voyager
+  en: CARTO Voyager
+daily_choice.place.map.provider.osm_de.description
+  zh: 德国 OSM 社区样式；通常需要可访问国际网络的环境，默认源不稳定时可手动切换。
+  en: German OSM community style; usually requires access to the international network and can be selected when the default source is unstable.
+daily_choice.place.map.provider.osm_de.title
+  zh: OpenStreetMap.de
+  en: OpenStreetMap.de
+daily_choice.place.map.provider.osm_france_fallback.description
+  zh: OSM France 社区瓦片；作为备用源保留，通常需要可访问国际网络的环境。
+  en: OSM France community tiles kept as a fallback; usually requires access to the international network.
+daily_choice.place.map.provider.osm_france_fallback.title
+  zh: OSM France
+  en: OSM France
+daily_choice.place.map.provider.osm_hot.description
+  zh: 默认地图源，使用 OSM 人道主义样式；地名和道路层级更醒目，适合作为受限网络下的优先尝试源。
+  en: Default tile source using the OSM humanitarian style, with more visible labels and road hierarchy for restricted networks.
+daily_choice.place.map.provider.osm_hot.title
+  zh: OSM HOT
+  en: OSM HOT
+daily_choice.place.map.provider.osm_standard.description
+  zh: OpenStreetMap 官方标准瓦片；通常需要可访问国际网络的环境，仅在需要核对标准样式时手动切换。
+  en: Official OpenStreetMap standard tiles; usually requires access to the international network and should be selected only when the standard style is needed.
+daily_choice.place.map.provider.osm_standard.title
+  zh: OSM Standard
+  en: OSM Standard
+==== toolbox.hub.intro (11) ====
+toolbox.hub.intro.details_editing
+  zh: 点击眼睛图标隐藏或恢复。拖动手柄重新排序。置顶条目显示在顶部。
+  en: Tap the eye icon to hide or restore. Drag the handle to reorder. Pinned entries appear at the top.
+toolbox.hub.intro.details_idle
+  zh: 点击任意工具打开。将条目拖到快速面板以实现一键访问。
+  en: Tap any tool to open it. Drag entries onto the Quick panel for one-tap access.
+toolbox.hub.intro.help_tooltip
+  zh: 如何使用工具箱
+  en: How to use the toolbox
+toolbox.hub.intro.highlight_edit
+  zh: 隐藏或显示工具以匹配您的日常习惯。
+  en: Hide or show tools to match your daily routine.
+toolbox.hub.intro.highlight_reorder
+  zh: 拖拽调整顺序，常用工具触手可及。
+  en: Drag-and-drop reordering for quick access.
+toolbox.hub.intro.highlight_restorable
+  zh: 隐藏的工具只是隐藏，并未删除——轻点即可恢复。
+  en: Hidden tools are hidden, not deleted — one tap restores them.
+toolbox.hub.intro.highlight_shortcuts
+  zh: 将最常用的工具固定到快速入口面板。
+  en: Pin your most-used tools to the Quick entry panel.
+toolbox.hub.intro.summary_editing
+  zh: 隐藏不常用的工具，重新排列您的收藏，并固定快捷方式。
+  en: Hide tools you rarely use, reorder your favorites, and pin shortcuts.
+toolbox.hub.intro.summary_idle
+  zh: 快速访问睡眠、专注、声音和放松工具。
+  en: Quick access to sleep, focus, sound, and calm tools.
+toolbox.hub.intro.title_editing
+  zh: 自定义您的工具箱
+  en: Customize your toolbox
+toolbox.hub.intro.title_idle
+  zh: 您的健康工具包
+  en: Your wellness toolkit
+==== life.offer_select.flag (9) ====
+life.offer_select.flag.commute_risk.title
+  zh: 通勤风险
+  en: Commute risk
+life.offer_select.flag.high_health_load.title
+  zh: 健康负荷高
+  en: High health load
+life.offer_select.flag.high_time_cost.title
+  zh: 时间成本高
+  en: High time cost
+life.offer_select.flag.negative_cashflow.title
+  zh: 现金流为负
+  en: Negative cash flow
+life.offer_select.flag.offer_certainty.title
+  zh: 录用不确定
+  en: Offer uncertain
+life.offer_select.flag.rejected.title
+  zh: 已排除
+  en: Excluded
+life.offer_select.flag.stability_check.title
+  zh: 稳定性需确认
+  en: Stability needs checking
+life.offer_select.flag.thin_cash_buffer.title
+  zh: 现金缓冲薄
+  en: Thin cash buffer
+life.offer_select.flag.variable_pay.title
+  zh: 浮动收入风险
+  en: Variable pay risk
+==== toolbox.hub.quick (8) ====
+toolbox.hub.quick.choose_desc
+  zh: 选择您希望出现在快速面板中的工具。
+  en: Select the tools you want to appear in the Quick panel.
+toolbox.hub.quick.choose_title
+  zh: 选择快速条目
+  en: Choose quick entries
+toolbox.hub.quick.clear
+  zh: 清除所有
+  en: Clear all
+toolbox.hub.quick.empty_hint
+  zh: 将工具拖到此处以便一键访问。点击“管理”以选择您的快捷方式。
+  en: Drag tools here for one-tap access. Tap "Manage" to pick your shortcuts.
+toolbox.hub.quick.manage
+  zh: 管理
+  en: Manage
+toolbox.hub.quick.release_hint
+  zh: 拖到此处以固定
+  en: Drop here to pin
+toolbox.hub.quick.save
+  zh: 保存
+  en: Save
+toolbox.hub.quick.title
+  zh: 快速访问
+  en: Quick Access
+==== toolbox.sound.focus (8) ====
+toolbox.sound.focus.quick_presets.deep.subtitle
+  zh: 慢速双细分，适合呼吸、阅读和长时间稳定跟拍。
+  en: Slow double subdivision for breathing
+toolbox.sound.focus.quick_presets.deep.title
+  zh: 深稳
+  en: Deep steady
+toolbox.sound.focus.quick_presets.sprint.subtitle
+  zh: 更快节奏和短段循环，适合收尾冲刺或整理动作。
+  en: Faster tempo with short sections for closing sprints or cleanup routines.
+toolbox.sound.focus.quick_presets.sprint.title
+  zh: 冲刺
+  en: Sprint
+toolbox.sound.focus.quick_presets.steady.subtitle
+  zh: 一拍一声，低干扰，适合快速进入专注。
+  en: One click per beat with low distraction for quick focus.
+toolbox.sound.focus.quick_presets.steady.title
+  zh: 安定
+  en: Steady
+toolbox.sound.focus.quick_presets.subtitle
+  zh: 一键切换速度、拍号、细分、音色和视觉，先开始再细调。
+  en: Switch tempo
+toolbox.sound.focus.quick_presets.title
+  zh: 快速节拍预设
+  en: Quick beat presets
+==== life.offer_select.strength (7) ====
+life.offer_select.strength.balanced_baseline.title
+  zh: 均衡基线
+  en: Balanced baseline
+life.offer_select.strength.city_fit.title
+  zh: 城市匹配
+  en: City fit
+life.offer_select.strength.growth_fit.title
+  zh: 成长匹配
+  en: Growth fit
+life.offer_select.strength.healthy_boundaries.title
+  zh: 边界健康
+  en: Healthy boundaries
+life.offer_select.strength.stable_option.title
+  zh: 稳定选择
+  en: Stable option
+life.offer_select.strength.strong_cashflow.title
+  zh: 现金流强
+  en: Strong cash flow
+life.offer_select.strength.time_friendly.title
+  zh: 时间友好
+  en: Time friendly
+==== life.work_worth.reference (6) ====
+life.work_worth.reference.annual_leave.title
+  zh: 年假参考
+  en: Annual leave reference
+life.work_worth.reference.commute.title
+  zh: 通勤参考
+  en: Commute reference
+life.work_worth.reference.health.title
+  zh: 健康成本
+  en: Health cost
+life.work_worth.reference.public_holidays.title
+  zh: 公共假期
+  en: Public holidays
+life.work_worth.reference.surplus.title
+  zh: 结余安全线
+  en: Surplus safety line
+life.work_worth.reference.work_week.title
+  zh: 工作周参考
+  en: Workweek reference
+==== life.city_compare.insight (4) ====
+life.city_compare.insight.biggest_delta.title
+  zh: 最大成本差异
+  en: Largest cost difference
+life.city_compare.insight.reference_note.title
+  zh: 参考数据说明
+  en: Reference note
+life.city_compare.insight.salary_needed.title
+  zh: 目标薪资估算
+  en: Target salary estimate
+life.city_compare.insight.same_salary.title
+  zh: 同薪资迁移
+  en: Same-salary move
+==== study.play.empty (3) ====
+study.play.empty.search_empty.title
+  zh: 当前搜索没有可播放单词
+  en: No playable words in this search
+study.play.empty.selected_empty.title
+  zh: 当前词书没有可播放单词
+  en: Current wordbook has no playable words
+study.play.empty.title
+  zh: 还没有可播放的词书
+  en: No wordbook ready to play yet
+==== toolbox.hub.page (3) ====
+toolbox.hub.page.section_title
+  zh: 可用工具
+  en: Available tools
+toolbox.hub.page.subtitle
+  zh: 浏览、配置并个性化您的健康工具包。
+  en: Browse, configure, and personalize your wellness toolkit.
+toolbox.hub.page.title
+  zh: 工具箱
+  en: Toolbox
+==== toolbox.human.balance (3) ====
+toolbox.human.balance.report.title
+  zh: 平衡测试报告
+  en: Balance test report
+toolbox.human.balance.subtitle
+  zh: 倾斜手机改变平台坡度，抵消开局随机风动量，球掉落即结束。
+  en: Tilt the phone to slope the platform, counter the random starting wind impulse, and keep the ball from falling.
+toolbox.human.balance.title
+  zh: 平衡测试
+  en: Balance test
+==== toolbox.life.advanced_calculator (3) ====
+toolbox.life.advanced_calculator.subtitle
+  zh: 输入表达式或切换专业面板，完成科学计算、矩阵运算和概率分布估算。
+  en: Enter expressions or switch professional panels for scientific math, matrix operations, and probability estimates.
+toolbox.life.advanced_calculator.summary
+  zh: 专业科学计算器，支持表达式、数值积分、导数、极限、方程求根、线性代数和概率计算。
+  en: Professional scientific calculator for expressions, numerical integrals, derivatives, limits, root solving, linear algebra, and probability.
+toolbox.life.advanced_calculator.title
+  zh: 高级计算器
+  en: Advanced calculator
+==== toolbox.life.archive_tool (3) ====
+toolbox.life.archive_tool.subtitle
+  zh: 适合移动端临时打包和解压；可创建 ZIP、TAR、tar.gz、tar.bz2、tar.xz、gz、bz2、xz，并识别 RAR/7z 限制。
+  en: Useful for temporary mobile packing and extraction. Create ZIP, TAR, tar.gz, tar.bz2, tar.xz, gz, bz2, or xz archives, with clear RAR/7z limitation notices.
+toolbox.life.archive_tool.summary
+  zh: 本地创建 ZIP/TAR/GZip/BZip2/XZ 归档，并预览或解压常见归档。
+  en: Create ZIP, TAR, GZip, BZip2, or XZ archives locally, and preview or extract common archives.
+toolbox.life.archive_tool.title
+  zh: 移动压缩解压工具
+  en: Mobile archive tool
+==== toolbox.life.distance_meter (3) ====
+toolbox.life.distance_meter.subtitle
+  zh: 用定位标记两点距离，或输入目标高度后通过手机倾角粗估距离。
+  en: Mark two GPS points, or enter target height and estimate distance from phone tilt.
+toolbox.life.distance_meter.summary
+  zh: 支持 GPS 两点距离和基于倾角的近距离估算。
+  en: Supports GPS two-point distance and tilt-based close-range estimation.
+toolbox.life.distance_meter.title
+  zh: 测距仪
+  en: Distance meter
+==== toolbox.life.gif_maker (3) ====
+toolbox.life.gif_maker.subtitle
+  zh: 选择视频后拖动裁剪范围，设置帧率、宽度和质量，再生成 GIF。
+  en: Pick a video, drag the trim range, set FPS, width, and quality, then create a GIF.
+toolbox.life.gif_maker.summary
+  zh: 导入视频，截取指定片段并压缩导出为 GIF。
+  en: Import a video, trim a selected range, and export a compressed GIF.
+toolbox.life.gif_maker.title
+  zh: 视频转 GIF 制作
+  en: Video to GIF maker
+==== toolbox.life.light_meter (3) ====
+toolbox.life.light_meter.subtitle
+  zh: 使用设备光线传感器估算环境照度；不支持的设备会显示降级状态。
+  en: Estimate ambient illuminance from the device light sensor; unsupported devices show a fallback state.
+toolbox.life.light_meter.summary
+  zh: 读取环境光传感器，显示 lux、最小/最大值和光照等级。
+  en: Read the ambient light sensor and show lux, min/max values, and light bands.
+toolbox.life.light_meter.title
+  zh: 照度计
+  en: Light meter
+==== toolbox.life.magnifier (3) ====
+toolbox.life.magnifier.subtitle
+  zh: 用摄像头放大小字、纹理和细节，可冻结画面便于查看。
+  en: Use the camera to enlarge small text, texture, and details, with freeze frame for inspection.
+toolbox.life.magnifier.summary
+  zh: 相机实时放大，支持变焦、补光灯、冻结画面和摄像头切换。
+  en: Live camera magnifier with zoom, torch, freeze frame, and camera switching.
+toolbox.life.magnifier.title
+  zh: 放大镜
+  en: Magnifier
+==== toolbox.life.menstrual_cycle (3) ====
+toolbox.life.menstrual_cycle.subtitle
+  zh: 基于最近一次经期和周期长度进行本地估算，适合作为生活辅助记录。
+  en: Estimate locally from the last period date and cycle length as a lifestyle aid.
+toolbox.life.menstrual_cycle.summary
+  zh: 女性生理周期辅助工具，估算经期、排卵日、易孕窗口和下次经期。
+  en: Menstrual cycle assistant for estimating period dates, ovulation, fertile window, and next period.
+toolbox.life.menstrual_cycle.title
+  zh: 生理周期
+  en: Menstrual cycle
+==== toolbox.life.phone_monitor (3) ====
+toolbox.life.phone_monitor.subtitle
+  zh: 按周期刷新关键设备状态，便于排查电量、屏幕和系统信息。
+  en: Refresh key device state periodically to inspect battery, screen, and system information.
+toolbox.life.phone_monitor.summary
+  zh: 查看系统、屏幕、电量、充电状态、内存和热状态快照。
+  en: View system, screen, battery, charging, memory, and thermal snapshots.
+toolbox.life.phone_monitor.title
+  zh: 手机信息监控
+  en: Phone information monitor
+==== toolbox.life.screen_fill_light (3) ====
+toolbox.life.screen_fill_light.subtitle
+  zh: 用手机屏幕提供可控纯色补光，适合拍照、临时照明和氛围打光。
+  en: Use the phone screen as a controllable solid fill light for photos, temporary lighting, and soft ambience.
+toolbox.life.screen_fill_light.summary
+  zh: 纯色全屏补光，支持亮度、色温、色板和柔和呼吸模式。
+  en: Full-screen solid color fill light with brightness, warmth, presets, and a gentle breathing mode.
+toolbox.life.screen_fill_light.title
+  zh: 屏幕补光
+  en: Screen fill light
+==== toolbox.life.source_references (3) ====
+toolbox.life.source_references.subtitle
+  zh: 按工具集中查看外部链接；实际版权、可用性和服务条款以原站为准。
+  en: Review external links by tool; copyright, availability, and terms follow the original sites.
+toolbox.life.source_references.summary
+  zh: 统一查看生活工具使用的第三方页面、公开数据与实现参考。
+  en: Unified list of third-party pages, public data, and implementation references used by life tools.
+toolbox.life.source_references.title
+  zh: 参考来源
+  en: Source references
+==== toolbox.life.speedometer (3) ====
+toolbox.life.speedometer.subtitle
+  zh: 适合步行、骑行和车内临时测速；精度取决于定位信号。
+  en: Useful for walking, cycling, and temporary in-vehicle speed checks; accuracy depends on location signal.
+toolbox.life.speedometer.summary
+  zh: 基于定位流显示实时速度、最高速度、里程和定位精度。
+  en: Show live speed, max speed, distance, and GPS accuracy from the location stream.
+toolbox.life.speedometer.title
+  zh: 测速仪
+  en: Speedometer
+==== study.library.empty (2) ====
+study.library.empty.no_wordbooks.title
+  zh: 还没有词书
+  en: No wordbooks yet
+study.library.empty.selected_empty.title
+  zh: 当前词书为空
+  en: Current wordbook is empty
+==== toolbox.crypto.asymmetric (2) ====
+toolbox.crypto.asymmetric.subtitle
+  zh: 生成本地 RSA/ECC 密钥，完成签名验签，并用 RSA-OAEP 处理小文本加解密。
+  en: Generate local RSA/ECC keys, sign and verify messages, and use RSA-OAEP for small-text encryption.
+toolbox.crypto.asymmetric.title
+  zh: 公私钥工具
+  en: Public/private key tools
+==== toolbox.crypto.content_media (2) ====
+toolbox.crypto.content_media.subtitle
+  zh: 先封装为 v5 加密信封，再无损排列成 PNG 色块或 PCM WAV 采样。
+  en: Encrypt into a v5 envelope, then arrange it losslessly as PNG color blocks or PCM WAV samples.
+toolbox.crypto.content_media.title
+  zh: 内容转图片/音频
+  en: Content to image/audio
+==== toolbox.crypto.file (2) ====
+toolbox.crypto.file.subtitle
+  zh: 面向本地高性能的多算法文件加密工具，输出可导出的 .vsc 加密信封文件。
+  en: A local high-performance multi-algorithm file encryption tool that outputs exportable .vsc encrypted envelope files.
+toolbox.crypto.file.title
+  zh: 文件加密
+  en: File encryption
+==== toolbox.crypto.hash (2) ====
+toolbox.crypto.hash.subtitle
+  zh: 计算文本或文件的 MD5、SHA、SHA3、BLAKE2b 与 Whirlpool 摘要，并与可信来源提供的期望摘要比对。
+  en: Calculate MD5, SHA, SHA3, BLAKE2b, and Whirlpool digests for text or files and compare them with expected digests from a trusted source.
+toolbox.crypto.hash.title
+  zh: 散列校验
+  en: Hash check
+==== toolbox.crypto.hmac (2) ====
+toolbox.crypto.hmac.subtitle
+  zh: 使用共享密钥为文本或文件生成消息认证码，并可粘贴摘要做常量时间格式校验。
+  en: Generate a message authentication code for text or files with a shared secret, then paste a digest for constant-time format-aware verification.
+toolbox.crypto.hmac.title
+  zh: HMAC / MAC
+  en: HMAC / MAC
+==== toolbox.crypto.keyfile (2) ====
+toolbox.crypto.keyfile.subtitle
+  zh: 独立生成、口令派生和无序组合密钥文件，供文件加密模块叠加使用。
+  en: Generate, passphrase-derive, and order-insensitively combine standalone key files for the file encryption module.
+toolbox.crypto.keyfile.title
+  zh: 密钥文件管理
+  en: Key file manager
+==== toolbox.crypto.otp (2) ====
+toolbox.crypto.otp.subtitle
+  zh: 本地计算一次性验证码，支持 Base32 密钥、TOTP 时间步和 HOTP 计数器。
+  en: Calculate one-time codes locally with Base32 secrets, TOTP time steps, and HOTP counters.
+toolbox.crypto.otp.title
+  zh: TOTP/HOTP 验证码
+  en: TOTP/HOTP codes
+==== toolbox.crypto.password (2) ====
+toolbox.crypto.password.subtitle
+  zh: 离线批量生成随机密码，也可生成口令短语并估算熵强度；结果不写入本地存储。
+  en: Generate random password batches offline or create passphrases with entropy estimates; results are not written to local storage.
+toolbox.crypto.password.title
+  zh: 密码生成器
+  en: Password generator
+==== toolbox.crypto.password_vault (2) ====
+toolbox.crypto.password_vault.subtitle
+  zh: 本地加密保存账号记录；选择保险库后输入对应凭据解锁。
+  en: Store account records in a local encrypted vault; select a vault and unlock it with the matching credentials.
+toolbox.crypto.password_vault.title
+  zh: 我的密码
+  en: My passwords
+==== toolbox.crypto.shamir (2) ====
+toolbox.crypto.shamir.subtitle
+  zh: 把文本秘密或加盐密码定义拆分为阈值分片，或用足够分片恢复；分片请分开保存。
+  en: Split a text secret or salted password definition into threshold shares or recover it from enough shares; store shares separately.
+toolbox.crypto.shamir.title
+  zh: Shamir 密钥分片
+  en: Shamir secret sharing
+==== toolbox.crypto.text (2) ====
+toolbox.crypto.text.subtitle
+  zh: 直接加密或解密文本内容，输出可复制的 Base64 v5 加密信封。
+  en: Encrypt or decrypt text content directly and copy the Base64 v5 envelope.
+toolbox.crypto.text.title
+  zh: 文本加密
+  en: Text encryption
+==== toolbox.crypto.veracrypt (2) ====
+toolbox.crypto.veracrypt.subtitle
+  zh: 移动端优先的 VeraCrypt 容器解密、浏览、导出与创建工具。
+  en: Mobile-first VeraCrypt container tool for decrypting browsing exporting and creating containers.
+toolbox.crypto.veracrypt.title
+  zh: VeraCrypt容器
+  en: VeraCrypt container
+==== toolbox.free_chimes.layers (2) ====
+toolbox.free_chimes.layers.subtitle
+  zh: 开启或降低每个声部，轻摇时柔和，强摇时更有拍点。
+  en: Enable or lower each layer; soft shakes stay gentle, strong shakes gain punch.
+toolbox.free_chimes.layers.title
+  zh: 声部组合
+  en: Sound layers
+==== toolbox.free_chimes.mode (2) ====
+toolbox.free_chimes.mode.subtitle
+  zh: 自由模式按强度组合声部；快板模式用方向翻转触发清脆木板拍击。
+  en: Free mode layers by intensity; Allegro mode uses direction flips for crisp wooden clapper hits.
+toolbox.free_chimes.mode.title
+  zh: 演奏模式
+  en: Play mode
+==== toolbox.free_chimes.presets (2) ====
+toolbox.free_chimes.presets.subtitle
+  zh: 从舒缓、均衡或鼓劲组合开始，再单独调整声部。
+  en: Start from calm, balanced, or driving mixes, then tune each layer.
+toolbox.free_chimes.presets.title
+  zh: 组合预设
+  en: Mix presets
+==== toolbox.free_chimes.tuning (2) ====
+toolbox.free_chimes.tuning.subtitle
+  zh: 提高灵敏度会让轻微摇晃更容易发声。
+  en: Higher sensitivity makes smaller shakes speak sooner.
+toolbox.free_chimes.tuning.title
+  zh: 响应调节
+  en: Response
+==== toolbox.free_chimes.wind (2) ====
+toolbox.free_chimes.wind.subtitle
+  zh: 使用麦克风估算风感，只轻量补充风铃发音，不改变当前演奏模式。
+  en: Use the microphone to estimate wind feel and lightly supplement chime playback without changing the current play mode.
+toolbox.free_chimes.wind.title
+  zh: 自然风辅助
+  en: Natural wind assist
+==== toolbox.sleep.assessment (2) ====
+toolbox.sleep.assessment.intro
+  zh: 一个简短的问卷，用于了解你的睡眠模式并提供个性化指导。
+  en: A short questionnaire to understand your sleep patterns and get personalized guidance.
+toolbox.sleep.assessment.title
+  zh: 睡眠评估
+  en: Sleep assessment
+==== toolbox.sleep.log (2) ====
+toolbox.sleep.log.intro
+  zh: 详细记录每晚的结构化睡眠日记
+  en: A structured sleep diary to track each night in detail.
+toolbox.sleep.log.title
+  zh: 每日睡眠日志
+  en: Daily sleep log
+==== toolbox.sleep.report (2) ====
+toolbox.sleep.report.intro
+  zh: 可视化你的睡眠趋势和模式随时间的变化。
+  en: Visualize your sleep trends and patterns over time.
+toolbox.sleep.report.title
+  zh: 睡眠报告
+  en: Sleep report
+==== toolbox.sleep.rescue (2) ====
+toolbox.sleep.rescue.intro
+  zh: 半夜醒来时该做什么。选择你的状态并获得逐步指导。
+  en: What to do when you wake up in the middle of the night. Choose your state and get step-by-step guidance.
+toolbox.sleep.rescue.title
+  zh: 夜间救援
+  en: Night rescue
+==== toolbox.sleep.rhythm (2) ====
+toolbox.sleep.rhythm.intro
+  zh: 通过晨光、咖啡摄入时间和晚间习惯，七天计划稳定你的昼夜节律。
+  en: A 7-day program to stabilize your circadian rhythm through morning light, caffeine timing, and evening habits.
+toolbox.sleep.rhythm.title
+  zh: 日间节律
+  en: Day rhythm
+==== toolbox.sleep.routine (2) ====
+toolbox.sleep.routine.intro
+  zh: 构建你的个性化晚间放松流程。
+  en: Build your personalized evening wind-down routine.
+toolbox.sleep.routine.title
+  zh: 放松编辑器
+  en: Wind-down editor
+==== toolbox.sleep.science (2) ====
+toolbox.sleep.science.intro
+  zh: 基于证据的睡眠知识、参考资料和实用原则。
+  en: Evidence-based sleep knowledge, references, and practical principles.
+toolbox.sleep.science.title
+  zh: 睡眠科学
+  en: Sleep science
+==== toolbox.sleep.support (2) ====
+toolbox.sleep.support.mode.brief
+  zh: 短暂醒来
+  en: Brief awakening
+toolbox.sleep.support.mode_body.brief
+  zh: 你短暂醒来，想要快速重新入睡。
+  en: You woke briefly and want to fall back asleep quickly.
+==== toolbox.sleep.winddown (2) ====
+toolbox.sleep.winddown.intro
+  zh: 一个引导的夜间例行程序，帮助你的身心为睡眠做好准备。
+  en: A guided evening routine to prepare your body and mind for sleep.
+toolbox.sleep.winddown.title
+  zh: 放松
+  en: Wind-down
+==== toolbox.sound.soothing (2) ====
+toolbox.sound.soothing.v2.mode.sleep.title
+  zh: 助眠
+  en: Sleep
+toolbox.sound.soothing.v2.mode.study.title
+  zh: 学习
+  en: Study
+==== daily_choice.wear.weather (1) ====
+daily_choice.wear.weather.suggestion.summary
+  zh: 根据当前体感 {temperature}°C，默认推荐“{category}”档位。
+  en: Based on a feels-like temperature of {temperature}°C, the default suggestion is {category}.
+==== life.offer_select.field (1) ====
+life.offer_select.field.title
+  zh: 标题
+  en: Title
+==== onboarding.first_run.subtitle (1) ====
+onboarding.first_run.subtitle
+  zh: 先选好语言、主题和常用场景；权限会在你使用对应功能时再按需申请。
+  en: Choose language, theme, and common scenarios first. Permissions are requested later only when a matching feature needs them.
+==== onboarding.first_run.title (1) ====
+onboarding.first_run.title
+  zh: 初始设置
+  en: Initial setup
+==== study.library.wordbook (1) ====
+study.library.wordbook.deferred.summary
+  zh: 已选中《{wordbook}》。列表可轻量浏览；播放或练习前会完整加载 {count} 个单词
+  en: Selected {wordbook}. Browsing uses a light list. Playback or practice will load {count} words first
+==== study.play.deferred (1) ====
+study.play.deferred.title
+  zh: 词书已选中但尚未加载
+  en: Wordbook selected but not loaded yet
+==== study.practice.empty (1) ====
+study.practice.empty.title
+  zh: 还没有可练习的单词
+  en: No words ready for practice yet
+==== study.practice.next (1) ====
+study.practice.next.title
+  zh: 下一次练习
+  en: Next practice
+==== study.wordbook.load_confirm (1) ====
+study.wordbook.load_confirm.title
+  zh: 加载这个词书？
+  en: Load this wordbook?
+==== study.wordbook.sheet (1) ====
+study.wordbook.sheet.title
+  zh: 选择练习词书
+  en: Choose a practice wordbook
+==== toolbox.free_chimes.sensor_fallback (1) ====
+toolbox.free_chimes.sensor_fallback.title
+  zh: 请在实体手机上使用摇晃演奏
+  en: Use shake play on a physical phone
+==== toolbox.free_chimes.subtitle (1) ====
+toolbox.free_chimes.subtitle
+  zh: 用摇晃强度、方向和声部组合演奏舒缓或鼓劲的声音。
+  en: Use shake intensity, direction, and layered sounds to play calm or driving motion audio.
+==== toolbox.free_chimes.title (1) ====
+toolbox.free_chimes.title
+  zh: 自由风铃
+  en: Free Chimes
+==== toolbox.sleep.assist (1) ====
+toolbox.sleep.assist.subtitle
+  zh: 你的个人睡眠指南——评估、追踪和每晚支持。
+  en: Your personal sleep guide — assessment, tracking, and nightly support.
+==== toolbox.sleep.core (1) ====
+toolbox.sleep.core.title
+  zh: 睡眠支持
+  en: Sleep Support
+==== toolbox.sound.shakuhachi (1) ====
+toolbox.sound.shakuhachi.title
+  zh: 尺八
+  en: Shakuhachi

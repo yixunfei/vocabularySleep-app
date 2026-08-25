@@ -1,3 +1,101 @@
+## [Unreleased-STUDY-PERF-HOTPATH-OPT] - 2026-08-23
+
+### 原因
+- 单词表/学习/练习模块在移动端加载大词本卡顿，且播放/练习后即便切到其他模块也越来越卡。经定位为三类问题叠加：主线程同步加载、`WordEntry.fields` 无缓存重复解析、`currentWord`/`_indexOfWordEntry` 在每次全量 `notifyListeners` 时被所有常驻页面重复 O(n) 计算。
+
+### 新增
+- 无新增/退休 i18n key（本轮不涉及用户可见文案）。
+- `AppState`：新增 `_words` 的 `id→index` 惰性索引（随 `_wordsVersion` 失效）与 `currentWord` 结果缓存字段。
+- `WordEntry`：新增 `fields` 合并结果 `Expando` 缓存（不破坏 `const` 构造）。
+
+### 修改
+- `lib/src/models/word_entry.dart`：`fields` getter 首次解析合并后按实例缓存，消除 `displayMeaning`/`summaryMeaningText`/`sameEntryAs` 等热路径重复 `jsonDecode`。
+- `lib/src/state/app_state.dart`：
+  - `_indexOfWordEntry` 对主词表 `_words` 且目标带稳定 `id` 时走 O(1) 索引（与 `sameEntryAs` 的 id 相等语义一致），否则保持线性回退。
+  - `currentWord` 拆为缓存包装 + `_computeCurrentWord`，按 `_wordsVersion`/`_currentWordIndex`/`_transientCurrentWord`(identity)/搜索词/搜索模式/词本 id 签名命中缓存，避免每次 `notifyListeners` 被各页面 rebuild token 重复 O(n) 计算。
+- 删除死代码 `lib/src/state/wordbook_state.dart`（`WordbookState` 独立 ChangeNotifier，全仓无实例化引用）。
+
+### 修复
+- 缓解“越用越卡”：播放切词/练习作答触发的全量广播，其每页重建前的 token 计算由 O(n) 降为 O(1)，词本规模不再是放大因子。
+- 缓解渲染/判题重复解析：词条字段解析结果按实例复用。
+
+### 风险变更（未改动，明确不处理）
+- 播放切词广播节流/分级（计划阶段 A-3）：因上述优化已令每次广播成本降为 O(1)，节流收益边际且可能引入 UI 同步延迟，暂不改动。
+- `_setWords` 内 `_refreshWordMemoryProgressCache` 异步化（计划阶段 B-7）：其为单次批量查询，异步化会造成记忆徽标短暂错位的时序风险，暂缓。
+- 词本加载移出主线程（isolate，计划阶段 B-5）与 `IndexedStack` 常驻页卸载（计划阶段 A-4）：属高风险结构性改动（sqlite3 FFI 跨 isolate、导航/后台播放连续性），需真机回归，作为独立切片待用户确认后推进。
+- 保留：播放状态机语义、判题逻辑、持久化时机、i18n 文案均未改动。
+
+### 验证
+- `flutter analyze lib`：本次触达文件无 error/warning（全仓 137 项均为既有 toolbox 等模块 warning/info，与本轮无关）。
+- `flutter test`（word_card_transition / app_state_logic / app_state_practice / app_state_init / app_state_startup / playback_service）：44 项全部通过。
+- 通过 `git stash` 回退本轮改动复跑 `ui_smoke_test.dart`，43 项失败为既有问题（集中于 toolbox/focus/soothing），与本轮无关。
+- `.fields` 返回值全仓均为只读使用（map/length/for 迭代），`Expando` 缓存无并发写入风险。
+- lite 词条查询列含 `id`，`id→index` 索引可覆盖大词本路径。
+
+## [Unreleased-PLAN_417-TITLE-DESC-ACCURACY-ROUND3] - 2026-08-23
+
+### 原因
+- 用户要求全面逐条审查标题/副标题/描述类文案的表达准确性，不单纯依赖现有内容，模糊不清处深入代码核实后修改。
+
+### 新增
+- 无新增/退休 key（本轮不增删改名 key）。
+
+### 修改
+- `lib/l10n/catalog/app_texts.csv` 共 114 行修复（`tool/r3_fix.js` + `tool/r3_fix2.js` 基线重放整行替换）：
+  - 结构性损坏 2 行：`toolbox.sound.focus.quick_presets.subtitle` 与 `.deep.subtitle` 的 en 列含未加引号逗号导致列错位（恰好凑满 8 列逃过列数检查），重写整行并补齐七语言。
+  - 准确性修复 9 条（均经代码核实）：calm 分区副标题去掉不实的“冥想工具”（实际只有念珠+沙盘）；睡眠建议标题由模糊的“显示出一定的模式”改为“你的总睡眠时间偏短”（触发条件 averageSleep<360）；两条建议标题去句末句号；“临门修正”→“出门前修正”；wordbook deferred summary 补句末标点；VeraCrypt 标题空格与副标题标点。
+  - ja/de/fr/es/ru 英文回退补译 103 key：crypto 域 19、life 工具与 hub 分类 41、wear.advisor 审计/颜色/分层/场景标题 25、sound.focus 预设 6 等。
+- `plans/PLAN_417_标题描述文案准确性第三轮逐条审查.md` 更新为已完成并追加执行结果。
+- 新增诊断/修复脚本：`tool/r3_scan.js`、`r3_integrity.js`、`r3_frag_runtime.js`、`r3_enfallback.js`、`r3_regy_diff.js`、`r3_export_src.js`、`r3_export_src2.js`、`r3_fix.js`、`r3_fix2.js`、`r3_sample_verify.js`、`r3_remain_check.js`。
+
+### 修复
+- CSV 隐蔽列错位损坏（2 行，git HEAD 即存在）：英文含逗号未加引号导致后续语言列整体右移，中文等语言列实际装的是英语片段；重写后含逗号字段按 RFC4180 自动加引号。
+- 脚本自查修复：sprint.subtitle 修复数组缺 fr 列、日文列混入简体字“锚/跳转”3 处。
+
+### 风险变更
+- 地图源品牌名（CARTO/OSM 系列 6 key）、HMAC/MAC、VeraCrypt 标题七语言保持品牌/技术专名一致，为有意设计，不补译（英文回退残留仅剩此 8 项）。
+- “您的健康工具包”品牌定位措辞保留；非标题/描述类运行时英文回退（约 930 个）不属本轮范围。
+- 历史债务（40,094 未引用 key、30 待退休、622 stale source）继续保留为独立整理项；`maintain_i18n_catalog.js` 默认只读，未执行 `--apply-retirements`。
+
+### 验证
+- RFC4180 回读：records=51,756 不变、坏列 0；标题/描述类 380 条全部逐条通读审查。
+- `node scripts/audit_i18n_placeholders.js` 通过：missing=0、placeholderMismatch=0、missingParams=0。
+- `node scripts/maintain_i18n_catalog.js --limit 20` 通过：duplicateCsvKeys=0、missingLocaleColumns=0。
+- 旧 helper 扫描（pickUiText 等）与 catalog Dart 插值扫描均 0 命中。
+- 抽样回读 11 个关键修复 key（含结构损坏行、结构修复后引号转义、七语言齐全）全部正确。
+- 本轮未改动任何 dart 代码，key 集合不变，无运行时行为风险。
+
+## [Unreleased-PLAN_416-I18N-QUALITY-ROUND2] - 2026-08-23
+
+### 原因
+- 用户要求继续按 PLAN_416 全模块文案质量整理：第一轮（222 key）之后，对剩余被引用 key 做第二轮 zh/en 质量扫描与修复，仍只改文案数据、不改代码。
+
+### 新增
+- 无新增 key（本轮不增删改名 key）。
+
+### 修改
+- `lib/l10n/catalog/app_texts.csv` 共 131 个 key 的 zh/en 文本（含一组七语言占位符改名）：
+  - daily_choice 21 条：食材候选池说明、距离/场景筛选提示、温度建议、`去哪儿`/`干什么`/`吃什么` 面板标题等 zh 错置英文句式改为中文，占位符名不变。
+  - 禅意沙盘预设应用/叠加提示、预热进度提示、管理页加载提示、反图引擎结果中文句式；数独详情折叠按钮 zh「??」→「隐藏/显示」；图片压缩算法标签 zh→「压缩算法」。
+  - 打字语料 15 条：英文语料 9 条 + 日文语料 6 条的 zh 列补中文译文（运行时按语料语言取列，属 catalog 一致性整理）。
+  - brief24 历史时间线 86 条：43 组 display 年份格式（如「前2500-前2034」→「2500–2034 BC」）+ 43 组 title 书名英译（史记/汉书/三国志等标准英译）。
+  - `plans/PLAN_416_全模块文案质量整理.md` 追加第二轮执行结果。
+
+### 修复
+- `remove_from_quick_access` 运行时占位符 bug：调用点传 `title` 但七语言模板均为 `{titleEn}`，导致占位符不被替换直接显示；七语言同步改名 `{titleEn}`→`{title}` 并本地化句式。
+
+### 风险变更
+- 七语言占位符集合约束下，`{p3}`（预热提示）与 `{p1}`/`{p4}`（代码传入的固定英文参数值）保持原名，中文语境仍会显示代码传入的英文片段；彻底解决需代码改动，本轮禁改代码。
+- brief24 `detail` 长文英译、其余五语言历史英文残留、`staleRegistrySources=622`/`unreferencedCatalogKeys=40094` 历史债务继续保留为独立整理项。
+- 新增/退休 key 均为 0；`maintain_i18n_catalog.js` 默认只读报告，未执行 `--apply-retirements`。
+
+### 验证
+- RFC4180 解析回读：records=51756、坏列 0、无 key 增删；`git diff --stat` 单文件恰 131 insertions/131 deletions。
+- `node scripts/audit_i18n_placeholders.js` 通过：missing=0、placeholderMismatch=0、missingParams=0。
+- `node scripts/maintain_i18n_catalog.js --limit 20` 通过：duplicateCsvKeys=0、missingLocaleColumns=0。
+- 旧 helper 扫描（pickUiText 等）与 catalog Dart 插值扫描均 0 命中。
+- 质量扫描标记 291→202，剩余已逐条核实为不改项（技术专名/单位/符号模板/地图源专名/史料专名/纯数字年份）。
+
 ## [Unreleased-PLAN_313-PROGRESS-ARCHIVE-PUSH] - 2026-06-01
 
 ### 原因

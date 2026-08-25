@@ -1,0 +1,91 @@
+== toolbox.sound.focus.quick_presets.subtitle (cols=8)
+  key: toolbox.sound.focus.quick_presets.subtitle
+  zh: 一键切换速度、拍号、细分、音色和视觉，先开始再细调。
+  en: Switch tempo, meter, subdivision, tone, and visuals in one tap.
+  ja: テンポ、拍子、细分、音色、ビジュアルをワンタップで切り替え。まず始めてから細調整。
+  de: Tempo, Taktart, Unterteilung, Klang und Visuals mit einem Tippen wechseln – erst starten, dann feinjustieren.
+  fr: Changez tempo, mesure, subdivision, timbre et visuels en un geste ; commencez d’abord, ajustez ensuite.
+  es: Cambia tempo, compás, subdivisión, timbre y visuales con un toque; empieza primero y ajusta después.
+  ru: Переключайте темп, размер, доли, тембр и визуал одним касанием — начните, а потом подстраивайте.
+ref.toolbox.sound.focus.quick_presets.subtitle MISSING
+== toolbox.sound.focus.quick_presets.deep.subtitle (cols=8)
+  key: toolbox.sound.focus.quick_presets.deep.subtitle
+  zh: 慢速双细分，适合呼吸、阅读和长时间稳定跟拍。
+  en: Slow double subdivision for breathing, reading, and longer steady sessions.
+  ja: ゆっくりした二分割で、呼吸や読書、長時間の安定したテンポ維持に最適。
+  de: Langsame Doppelunterteilung für Atmung, Lesen und lange, ruhige Sessions.
+  fr: Double subdivision lente pour la respiration, la lecture et les longues sessions régulières.
+  es: Doble subdivisión lenta para respirar, leer y sesiones largas y constantes.
+  ru: Медленное двойное деление для дыхания, чтения и долгих ровных сессий.
+== toolbox.hub.section.calm.subtitle (cols=8)
+  key: toolbox.hub.section.calm.subtitle
+  zh: 静心念珠与随心沙盘，随手可得的平静时刻。
+  en: Mindful beads and finger sand art — quick moments of calm.
+  ja: マインドフルビーズとフィンガーサンドアートで、いつでも穏やかなひとときを。
+  de: Achtsamkeitsperlen und Fingersandkunst – ruhige Momente jederzeit.
+  fr: Perles de pleine conscience et art du sable au doigt : des instants de calme à portée de main.
+  es: Cuentas conscientes y arte de arena con los dedos: momentos de calma al instante.
+  ru: Осознанные бусины и песочное искусство пальцами — спокойствие под рукой.
+== toolbox.sleep.library.advice_weekly_sleep_amount.title (cols=8)
+  key: toolbox.sleep.library.advice_weekly_sleep_amount.title
+  zh: 你的总睡眠时间偏短
+  en: Your total sleep time is on the short side
+  ja: 総睡眠時間がやや短めです
+  de: Ihre Gesamtschlafzeit ist eher kurz
+  fr: Votre temps de sommeil total est un peu court
+  es: Tu tiempo total de sueño es algo corto
+  ru: Ваше общее время сна коротковато
+== toolbox.sleep.library.advice_weekly_sleep_amount.body (cols=8)
+  key: toolbox.sleep.library.advice_weekly_sleep_amount.body
+  zh: 你的平均睡眠时间不足 6 小时。关注固定的起床时间而不是就寝时间——这是调节昼夜节律的更强锚点。
+  en: Your average sleep is under six hours. Focus on a consistent wake time rather than bedtime — it is the stronger anchor for your circadian rhythm.
+  ja: 平均睡眠時間が6時間未満です。就寝時刻より固定の起床時刻を意識しましょう。概日リズムを整える、より強力な錨です。
+  de: Ihr durchschnittlicher Schlaf liegt unter sechs Stunden. Achten Sie auf eine feste Aufwachzeit statt der Schlafenszeit – sie ist der stärkere Anker für Ihren circadianen Rhythmus.
+  fr: Votre sommeil moyen est inférieur à six heures. Misez sur une heure de réveil régulière plutôt que l’heure du coucher : c’est l’ancre la plus forte de votre rythme circadien.
+  es: Duermes menos de seis horas de media. Céntrate en una hora de despertar constante en vez de la de acostarte: es el ancla más fuerte de tu ritmo circadiano.
+  ru: Ваш средний сон меньше шести часов. Сосредоточьтесь на постоянном времени подъёма, а не отбоя — это более сильный якорь для циркадного ритма.
+== toolbox.crypto.veracrypt.title (cols=8)
+  key: toolbox.crypto.veracrypt.title
+  zh: VeraCrypt 容器
+  en: VeraCrypt container
+  ja: VeraCrypt container
+  de: VeraCrypt container
+  fr: VeraCrypt container
+  es: VeraCrypt container
+  ru: VeraCrypt container
+== toolbox.crypto.veracrypt.subtitle (cols=8)
+  key: toolbox.crypto.veracrypt.subtitle
+  zh: 移动端优先的 VeraCrypt 容器解密、浏览、导出与创建工具。
+  en: Mobile-first VeraCrypt container tool for decrypting, browsing, exporting, and creating containers.
+  ja: モバイル優先の VeraCrypt コンテナツール。復号、閲覧、エクスポート、作成に対応します。
+  de: Mobile-First-Tool für VeraCrypt-Container: entschlüsseln, durchsuchen, exportieren und erstellen.
+  fr: Outil VeraCrypt pensé pour mobile : déchiffrer, parcourir, exporter et créer des conteneurs.
+  es: Herramienta VeraCrypt para móvil: descifrar, explorar, exportar y crear contenedores.
+  ru: Инструмент для контейнеров VeraCrypt с упором на мобильные: расшифровка, просмотр, экспорт и создание.
+== daily_choice.wear.advisor.quick_fixes.title (cols=8)
+  key: daily_choice.wear.advisor.quick_fixes.title
+  zh: 出门前修正
+  en: Quick fixes
+  ja: 出かける前のクイック修正
+  de: Letzte Korrekturen
+  fr: Corrections de dernière minute
+  es: Ajustes de última hora
+  ru: Быстрые правки перед выходом
+== study.library.wordbook.deferred.summary (cols=8)
+  key: study.library.wordbook.deferred.summary
+  zh: 已选中《{wordbook}》。列表可轻量浏览；播放或练习前会完整加载 {count} 个单词。
+  en: Selected {wordbook}. Browsing uses a light list. Playback or practice will load {count} words first.
+  ja: {wordbook} を選択中です。軽量リストで閲覧できます。再生や練習の前に {count} 語を完全に読み込みます
+  de: {wordbook} ist ausgewählt. Die Liste nutzt eine leichte Ansicht. Wiedergabe oder Übung lädt zuerst {count} Wörter
+  fr: {wordbook} est sélectionné. La liste reste légère. La lecture ou l’exercice chargera d’abord {count} mots
+  es: {wordbook} está seleccionado. La lista usa una vista ligera. La reproducción o la práctica cargará primero {count} palabras
+  ru: {wordbook} выбран. Список открыт в легком режиме. Перед воспроизведением или тренировкой будут загружены {count} слов
+== toolbox.sound.focus.quick_presets.sprint.subtitle (cols=8)
+  key: toolbox.sound.focus.quick_presets.sprint.subtitle
+  zh: 更快节奏和短段循环，适合收尾冲刺或整理动作。
+  en: Faster tempo with short sections for closing sprints or cleanup routines.
+  ja: 速めのテンポと短いループで、仕上げのスプリントや片付け作業に最適です。
+  de: Schnelleres Tempo mit kurzen Abschnitten für Schlussspurts oder Aufräumarbeiten.
+  fr: Tempo rapide avec sections courtes pour les sprints finaux ou les tâches de rangement.
+  es: Tempo más rápido con secciones cortas para sprints finales o tareas de orden.
+  ru: Темп побыстрее и короткие циклы — для финального рывка или наведения порядка.

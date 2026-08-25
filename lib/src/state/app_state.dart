@@ -277,6 +277,24 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   String _visibleWordsCacheQuery = '';
   SearchMode _visibleWordsCacheMode = SearchMode.all;
 
+  // [性能] _words 的 id → index 索引，惰性构建，随 _wordsVersion 失效。
+  // 将热路径 _indexOfWordEntry 对主词表的查找从 O(n) 降为 O(1)。
+  Map<int, int>? _wordsIdIndex;
+  int _wordsIdIndexVersion = -1;
+
+  // [性能] currentWord 结果缓存：
+  // 该 getter 会在每次 notifyListeners 时被所有存活页面的 rebuild token 重算，
+  // 内部又依赖 O(n) 的 _indexOfWordEntry。按影响其结果的关键输入做签名比较，
+  // 未变化时直接返回缓存，避免跨页面的重复 O(n) 计算。
+  bool _currentWordCacheValid = false;
+  WordEntry? _currentWordCacheValue;
+  int _currentWordCacheWordsVersion = -1;
+  int _currentWordCacheIndex = -1;
+  WordEntry? _currentWordCacheTransient;
+  String _currentWordCacheQuery = '';
+  SearchMode _currentWordCacheMode = SearchMode.all;
+  int? _currentWordCacheWordbookId;
+
   bool get initializing => _initializing;
   bool get initialized => _initialized;
   bool get busy => _busy;
@@ -733,6 +751,29 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   WordEntry? get currentWord {
+    // [性能] 签名命中则直接返回缓存，避免每次 notifyListeners 被各页面 token 重复 O(n) 计算。
+    if (_currentWordCacheValid &&
+        _currentWordCacheWordsVersion == _wordsVersion &&
+        _currentWordCacheIndex == _currentWordIndex &&
+        identical(_currentWordCacheTransient, _transientCurrentWord) &&
+        _currentWordCacheQuery == _searchQuery &&
+        _currentWordCacheMode == _searchMode &&
+        _currentWordCacheWordbookId == _selectedWordbook?.id) {
+      return _currentWordCacheValue;
+    }
+    final value = _computeCurrentWord();
+    _currentWordCacheValid = true;
+    _currentWordCacheValue = value;
+    _currentWordCacheWordsVersion = _wordsVersion;
+    _currentWordCacheIndex = _currentWordIndex;
+    _currentWordCacheTransient = _transientCurrentWord;
+    _currentWordCacheQuery = _searchQuery;
+    _currentWordCacheMode = _searchMode;
+    _currentWordCacheWordbookId = _selectedWordbook?.id;
+    return value;
+  }
+
+  WordEntry? _computeCurrentWord() {
     final transient = _transientCurrentWord;
     final searchActive = _searchQuery.trim().isNotEmpty;
     if (transient != null &&
@@ -2737,7 +2778,34 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _setCurrentWordByEntry(scoped.first);
   }
 
+  Map<int, int> _ensureWordsIdIndex() {
+    if (_wordsIdIndex != null && _wordsIdIndexVersion == _wordsVersion) {
+      return _wordsIdIndex!;
+    }
+    final index = <int, int>{};
+    for (var i = 0; i < _words.length; i += 1) {
+      final id = _words[i].id;
+      if (id != null && id > 0) {
+        index.putIfAbsent(id, () => i);
+      }
+    }
+    _wordsIdIndex = index;
+    _wordsIdIndexVersion = _wordsVersion;
+    return index;
+  }
+
   int _indexOfWordEntry(List<WordEntry> entries, WordEntry target) {
+    // [性能] 对主词表 _words 且 target 带稳定 id 时走 O(1) 索引；
+    // sameEntryAs 在双方 id>0 时即为 id 相等判断，故按 id 命中与其语义一致。
+    if (identical(entries, _words)) {
+      final targetId = target.id;
+      if (targetId != null && targetId > 0) {
+        final hit = _ensureWordsIdIndex()[targetId];
+        if (hit != null) {
+          return hit;
+        }
+      }
+    }
     for (var i = 0; i < entries.length; i += 1) {
       if (_isSameWordEntry(entries[i], target)) {
         return i;

@@ -1,0 +1,180 @@
+toolbox.crypto.asymmetric.title
+  zh: 公私钥工具
+  en: Public/private key tools
+toolbox.crypto.asymmetric.subtitle
+  zh: 生成本地 RSA/ECC 密钥，完成签名验签，并用 RSA-OAEP 处理小文本加解密。
+  en: Generate local RSA/ECC keys, sign and verify messages, and use RSA-OAEP for small-text encryption.
+toolbox.crypto.content_media.title
+  zh: 内容转图片/音频
+  en: Content to image/audio
+toolbox.crypto.content_media.subtitle
+  zh: 先封装为 v5 加密信封，再无损排列成 PNG 色块或 PCM WAV 采样。
+  en: Encrypt into a v5 envelope, then arrange it losslessly as PNG color blocks or PCM WAV samples.
+toolbox.crypto.file.subtitle
+  zh: 面向本地高性能的多算法文件加密工具，输出可导出的 .vsc 加密信封文件。
+  en: A local high-performance multi-algorithm file encryption tool that outputs exportable .vsc encrypted envelope files.
+toolbox.crypto.hash.subtitle
+  zh: 计算文本或文件的 MD5、SHA、SHA3、BLAKE2b 与 Whirlpool 摘要，并与可信来源提供的期望摘要比对。
+  en: Calculate MD5, SHA, SHA3, BLAKE2b, and Whirlpool digests for text or files and compare them with expected digests from a trusted source.
+toolbox.crypto.hmac.subtitle
+  zh: 使用共享密钥为文本或文件生成消息认证码，并可粘贴摘要做常量时间格式校验。
+  en: Generate a message authentication code for text or files with a shared secret, then paste a digest for constant-time format-aware verification.
+toolbox.crypto.password.title
+  zh: 密码生成器
+  en: Password generator
+toolbox.crypto.keyfile.title
+  zh: 密钥文件管理
+  en: Key file manager
+toolbox.crypto.shamir.title
+  zh: Shamir 密钥分片
+  en: Shamir secret sharing
+toolbox.crypto.veracrypt.title
+  zh: VeraCrypt容器
+  en: VeraCrypt container
+toolbox.crypto.keyfile.subtitle
+  zh: 独立生成、口令派生和无序组合密钥文件，供文件加密模块叠加使用。
+  en: Generate, passphrase-derive, and order-insensitively combine standalone key files for the file encryption module.
+toolbox.crypto.otp.subtitle
+  zh: 本地计算一次性验证码，支持 Base32 密钥、TOTP 时间步和 HOTP 计数器。
+  en: Calculate one-time codes locally with Base32 secrets, TOTP time steps, and HOTP counters.
+toolbox.crypto.password.subtitle
+  zh: 离线批量生成随机密码，也可生成口令短语并估算熵强度；结果不写入本地存储。
+  en: Generate random password batches offline or create passphrases with entropy estimates; results are not written to local storage.
+toolbox.crypto.password_vault.subtitle
+  zh: 本地加密保存账号记录；选择保险库后输入对应凭据解锁。
+  en: Store account records in a local encrypted vault; select a vault and unlock it with the matching credentials.
+toolbox.crypto.shamir.subtitle
+  zh: 把文本秘密或加盐密码定义拆分为阈值分片，或用足够分片恢复；分片请分开保存。
+  en: Split a text secret or salted password definition into threshold shares or recover it from enough shares; store shares separately.
+toolbox.crypto.text.subtitle
+  zh: 直接加密或解密文本内容，输出可复制的 Base64 v5 加密信封。
+  en: Encrypt or decrypt text content directly and copy the Base64 v5 envelope.
+toolbox.crypto.veracrypt.subtitle
+  zh: 移动端优先的 VeraCrypt 容器解密、浏览、导出与创建工具。
+  en: Mobile-first VeraCrypt container tool for decrypting browsing exporting and creating containers.
+daily_choice.wear.weather.suggestion.summary
+  zh: 根据当前体感 {temperature}°C，默认推荐“{category}”档位。
+  en: Based on a feels-like temperature of {temperature}°C, the default suggestion is {category}.
+toolbox.life.archive_tool.title
+  zh: 移动压缩解压工具
+  en: Mobile archive tool
+toolbox.life.archive_tool.subtitle
+  zh: 适合移动端临时打包和解压；可创建 ZIP、TAR、tar.gz、tar.bz2、tar.xz、gz、bz2、xz，并识别 RAR/7z 限制。
+  en: Useful for temporary mobile packing and extraction. Create ZIP, TAR, tar.gz, tar.bz2, tar.xz, gz, bz2, or xz archives, with clear RAR/7z limitation notices.
+toolbox.life.menstrual_cycle.subtitle
+  zh: 基于最近一次经期和周期长度进行本地估算，适合作为生活辅助记录。
+  en: Estimate locally from the last period date and cycle length as a lifestyle aid.
+toolbox.life.advanced_calculator.title
+  zh: 高级计算器
+  en: Advanced calculator
+toolbox.life.advanced_calculator.subtitle
+  zh: 输入表达式或切换专业面板，完成科学计算、矩阵运算和概率分布估算。
+  en: Enter expressions or switch professional panels for scientific math, matrix operations, and probability estimates.
+toolbox.life.distance_meter.subtitle
+  zh: 用定位标记两点距离，或输入目标高度后通过手机倾角粗估距离。
+  en: Mark two GPS points, or enter target height and estimate distance from phone tilt.
+toolbox.life.gif_maker.title
+  zh: 视频转 GIF 制作
+  en: Video to GIF maker
+toolbox.life.gif_maker.subtitle
+  zh: 选择视频后拖动裁剪范围，设置帧率、宽度和质量，再生成 GIF。
+  en: Pick a video, drag the trim range, set FPS, width, and quality, then create a GIF.
+toolbox.life.hub.category.display.desc
+  zh: 时钟、弹幕、补光和计分等直接面向屏幕展示的工具。
+  en: Clock, barrage, fill light, and scoreboard tools for direct screen display.
+toolbox.life.hub.category.system.desc
+  zh: 手机状态、震动、压缩归档、提醒和模拟来电等系统辅助工具。
+  en: System helpers for phone status, vibration, archives, reminders, and fake calls.
+toolbox.life.hub.category.measure.label
+  zh: 测量工具
+  en: Measurement tools
+toolbox.life.hub.category.measure.desc
+  zh: 尺子、指南针、水平仪、测速、放大镜、照度和测距等传感器工具。
+  en: Sensor tools for ruler, compass, level, speed, magnifier, light, and distance measurement.
+toolbox.life.hub.category.image.desc
+  zh: 取色、图片处理、表情包、设备外框、视频转 GIF、证件照和网页图片导出。
+  en: Color picking, image processing, memes, device frames, video to GIF, ID photos, and image-to-web export.
+toolbox.life.hub.category.web.desc
+  zh: 壁纸、邮编、以图搜图、垃圾分类、短链和二维码等联网或跳转工具。
+  en: Wallpaper, postal codes, reverse image search, recycling lookup, short links, and QR tools.
+toolbox.life.hub.category.text.desc
+  zh: 字数统计、文本转换、上下标和简易脑图等文本编辑辅助。
+  en: Text helpers for counting, transforms, superscript/subscript, and simple mind maps.
+toolbox.life.hub.category.study.label
+  zh: 知识参考
+  en: Knowledge references
+toolbox.life.hub.category.calc.desc
+  zh: 单位、科学计算、周期、工作性价比、城市薪资、房贷、日期、世界时钟、BMI、亲属称谓和 Offer 决策。
+  en: Unit, scientific, cycle, work-worth, city salary, mortgage, date, world clock, BMI, kinship, and offer calculators.
+toolbox.life.hub.subtitle
+  zh: {length} 个实用工具，按 {categories} 个精准分类整理，支持搜索、快捷入口和统一来源页。
+  en: {length} handy tools organized into {categories} focused categories with search, quick access, and a unified source page.
+toolbox.life.source_references.title
+  zh: 参考来源
+  en: Source references
+toolbox.life.source_references.subtitle
+  zh: 按工具集中查看外部链接；实际版权、可用性和服务条款以原站为准。
+  en: Review external links by tool; copyright, availability, and terms follow the original sites.
+toolbox.life.source_references.summary
+  zh: 统一查看生活工具使用的第三方页面、公开数据与实现参考。
+  en: Unified list of third-party pages, public data, and implementation references used by life tools.
+toolbox.life.light_meter.subtitle
+  zh: 使用设备光线传感器估算环境照度；不支持的设备会显示降级状态。
+  en: Estimate ambient illuminance from the device light sensor; unsupported devices show a fallback state.
+toolbox.life.magnifier.subtitle
+  zh: 用摄像头放大小字、纹理和细节，可冻结画面便于查看。
+  en: Use the camera to enlarge small text, texture, and details, with freeze frame for inspection.
+toolbox.life.phone_monitor.title
+  zh: 手机信息监控
+  en: Phone information monitor
+toolbox.life.phone_monitor.subtitle
+  zh: 按周期刷新关键设备状态，便于排查电量、屏幕和系统信息。
+  en: Refresh key device state periodically to inspect battery, screen, and system information.
+toolbox.life.screen_fill_light.title
+  zh: 屏幕补光
+  en: Screen fill light
+toolbox.life.screen_fill_light.subtitle
+  zh: 用手机屏幕提供可控纯色补光，适合拍照、临时照明和氛围打光。
+  en: Use the phone screen as a controllable solid fill light for photos, temporary lighting, and soft ambience.
+toolbox.life.speedometer.subtitle
+  zh: 适合步行、骑行和车内临时测速；精度取决于定位信号。
+  en: Useful for walking, cycling, and temporary in-vehicle speed checks; accuracy depends on location signal.
+toolbox.life.screen_fill_light.summary
+  zh: 纯色全屏补光，支持亮度、色温、色板和柔和呼吸模式。
+  en: Full-screen solid color fill light with brightness, warmth, presets, and a gentle breathing mode.
+toolbox.life.speedometer.summary
+  zh: 基于定位流显示实时速度、最高速度、里程和定位精度。
+  en: Show live speed, max speed, distance, and GPS accuracy from the location stream.
+toolbox.life.magnifier.summary
+  zh: 相机实时放大，支持变焦、补光灯、冻结画面和摄像头切换。
+  en: Live camera magnifier with zoom, torch, freeze frame, and camera switching.
+toolbox.life.light_meter.summary
+  zh: 读取环境光传感器，显示 lux、最小/最大值和光照等级。
+  en: Read the ambient light sensor and show lux, min/max values, and light bands.
+toolbox.life.phone_monitor.summary
+  zh: 查看系统、屏幕、电量、充电状态、内存和热状态快照。
+  en: View system, screen, battery, charging, memory, and thermal snapshots.
+toolbox.life.distance_meter.summary
+  zh: 支持 GPS 两点距离和基于倾角的近距离估算。
+  en: Supports GPS two-point distance and tilt-based close-range estimation.
+toolbox.life.gif_maker.summary
+  zh: 导入视频，截取指定片段并压缩导出为 GIF。
+  en: Import a video, trim a selected range, and export a compressed GIF.
+toolbox.life.archive_tool.summary
+  zh: 本地创建 ZIP/TAR/GZip/BZip2/XZ 归档，并预览或解压常见归档。
+  en: Create ZIP, TAR, GZip, BZip2, or XZ archives locally, and preview or extract common archives.
+toolbox.life.advanced_calculator.summary
+  zh: 专业科学计算器，支持表达式、数值积分、导数、极限、方程求根、线性代数和概率计算。
+  en: Professional scientific calculator for expressions, numerical integrals, derivatives, limits, root solving, linear algebra, and probability.
+toolbox.life.menstrual_cycle.summary
+  zh: 女性生理周期辅助工具，估算经期、排卵日、易孕窗口和下次经期。
+  en: Menstrual cycle assistant for estimating period dates, ovulation, fertile window, and next period.
+toolbox.sound.focus.quick_presets.steady.subtitle
+  zh: 一拍一声，低干扰，适合快速进入专注。
+  en: One click per beat with low distraction for quick focus.
+toolbox.sound.focus.quick_presets.sprint.subtitle
+  zh: 更快节奏和短段循环，适合收尾冲刺或整理动作。
+  en: Faster tempo with short sections for closing sprints or cleanup routines.
+toolbox.sound.focus.quick_presets.title
+  zh: 快速节拍预设
+  en: Quick beat presets

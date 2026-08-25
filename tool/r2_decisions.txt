@@ -1,0 +1,264 @@
+
+inline.plan295.life.algorithm.1f86c487e91d
+  zh = Compression algorithm
+  en = Algorithm
+  ja = アルゴリズム
+  de = Algorithm
+  fr = Algorithm
+  es = Algorithm
+  ru = Algorithm
+
+inline.plan296.ui.app.shell.complete_current.eb38379612
+  zh = {remotePrewarmCompletedCount} / {remotePrewarmTotalCount} complete. Current: {p3}
+  en = {remotePrewarmCompletedCount} / {remotePrewarmTotalCount} complete. Current: {p3}
+  ja = {remotePrewarmCompletedCount} / {remotePrewarmTotalCount} complete. Current: {p3}
+  de = {remotePrewarmCompletedCount} / {remotePrewarmTotalCount} complete. Current: {p3}
+  fr = {remotePrewarmCompletedCount} / {remotePrewarmTotalCount} complete. Current: {p3}
+  es = {remotePrewarmCompletedCount} / {remotePrewarmTotalCount} complete. Current: {p3}
+  ru = {remotePrewarmCompletedCount} / {remotePrewarmTotalCount} complete. Current: {p3}
+
+inline.plan296.ui.pages.toolbox.daily.choice.daily.choice.manager.sheet.more_are_ready_to_load.a79fa6572b
+  zh = {length} more {p1} are ready to load.
+  en = {length} more {p1} are ready to load.
+  ja = {length} more {p1} are ready to load.
+  de = {length} more {p1} are ready to load.
+  fr = {length} more {p1} are ready to load.
+  es = {length} more {p1} are ready to load.
+  ru = {length} more {p1} are ready to load.
+
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.hub.remove_from_quick_access.c39e2e9b07
+  zh = Remove "{titleEn}" from quick access?
+  en = Remove "{titleEn}" from quick access?
+  ja = Remove "{titleEn}" from quick access?
+  de = Remove "{titleEn}" from quick access?
+  fr = Remove "{titleEn}" from quick access?
+  es = Remove "{titleEn}" from quick access?
+  ru = Remove "{titleEn}" from quick access?
+
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.reverse.image.engines_succeeded_with_entries.d49d89aaaf
+  zh = {_successCount}/{length} engines succeeded with {_totalEntries} entries{p4}.
+  en = {_successCount}/{length} engines succeeded with {_totalEntries} entries{p4}.
+  ja = {_successCount}/{length} engines succeeded with {_totalEntries} entries{p4}.
+  de = {_successCount}/{length} engines succeeded with {_totalEntries} entries{p4}.
+  fr = {_successCount}/{length} engines succeeded with {_totalEntries} entries{p4}.
+  es = {_successCount}/{length} engines succeeded with {_totalEntries} entries{p4}.
+  ru = {_successCount}/{length} engines succeeded with {_totalEntries} entries{p4}.
+
+literal.ui.pages.toolbox_life_tools.toolbox_life_tools_reverse_image.successcount_results_length_engines_succeeded_with_total_f13766
+  zh = {successCount}/{results} engines succeeded with {totalEntries} entries{uploadFallbackUsed}.
+  en = {successCount}/{results} engines succeeded with {totalEntries} entries{uploadFallbackUsed}.
+  ja = {successCount}/{results} engines succeeded with {totalEntries} entries{uploadFallbackUsed}.
+  de = {successCount}/{results} engines succeeded with {totalEntries} entries{uploadFallbackUsed}.
+  fr = {successCount}/{results} engines succeeded with {totalEntries} entries{uploadFallbackUsed}.
+  es = {successCount}/{results} engines succeeded with {totalEntries} entries{uploadFallbackUsed}.
+  ru = {successCount}/{results} engines succeeded with {totalEntries} entries{uploadFallbackUsed}.
+
+toolbox.sudoku.details.hide
+  zh = ??
+  en = Hide
+  ja = Hide
+  de = Hide
+  fr = Hide
+  es = Hide
+  ru = Hide
+
+toolbox.sudoku.details.show
+  zh = ??
+  en = Show
+  ja = Show
+  de = Show
+  fr = Show
+  es = Show
+  ru = Show
+
+inline.plan297.human_tests.typing.passage.a_calm_mind_can_move_quickly_without_feeling_rus.8573264db4
+  zh = A calm mind can move quickly without feeling rushed.
+  en = A calm mind can move quickly without feeling rushed.
+
+inline.plan297.human_tests.typing.passage.a_clear_mind_moves_better_when_each_task_has_a_v.33817dca3d
+  zh = 头脑清醒时，每项任务有了可见的边界，进展会更顺。
+  en = A clear mind moves better when each task has a visible edge.
+
+inline.plan297.human_tests.typing.passage.a_good_log_explains_the_failure_without_filling_.da6d54ce94
+  zh = 好的日志能解释失败，而不是把屏幕塞满噪音。
+  en = A good log explains the failure without filling the screen with noise.
+
+inline.plan297.human_tests.typing.passage.a_new_word_needs_sound_image_and_use_before_it_s.80e6fb5283
+  zh = 一个新词要有声音、画面和用法，才能真正记住。
+  en = A new word needs sound, image, and use before it stays.
+
+inline.plan297.human_tests.typing.passage.a_useful_word_becomes_stronger_each_time_it_appe.c707bf7a73
+  zh = A useful word becomes stronger each time it appears in a new context.
+  en = A useful word becomes stronger each time it appears in a new context.
+
+inline.plan297.human_tests.typing.passage.at_the_rainy_station_only_the_old_ticket_remembe.c594bc3b1e
+  zh = 雨の駅で、古い切符だけが旅の続きを覚えていた。
+  en = At the rainy station, only the old ticket remembered the journey.
+
+inline.plan297.human_tests.typing.passage.before_sleep_one_slow_sentence_can_put_the_whole.c7b512ad3f
+  zh = 睡前写下一句舒缓的话，就能把一整天理顺。
+  en = Before sleep, one slow sentence can put the whole day in order.
+
+inline.plan297.human_tests.typing.passage.clean_code_keeps_fast_ideas_from_becoming_expens.dabdfb7c93
+  zh = Clean code keeps fast ideas from becoming expensive noise.
+  en = Clean code keeps fast ideas from becoming expensive noise.
+
+inline.plan297.human_tests.typing.passage.flutter_widget_tree_state_first_layout_second_po.47ec49ada6
+  zh = Flutter widget tree: state first, layout second, polish last.
+  en = Flutter widget tree: state first, layout second, polish last.
+
+inline.plan297.human_tests.typing.passage.focus_25_minutes_rest_5_minutes_then_review_one_.c80a46ff7f
+  zh = Focus 25 minutes, rest 5 minutes, then review one small win.
+  en = Focus 25 minutes, rest 5 minutes, then review one small win.
+
+inline.plan297.human_tests.typing.passage.focused_attention_comes_from_steady_breathing_a_.3992ca32ff
+  zh = 清醒的注意力来自稳定的呼吸、明确的目标和可持续的节奏。
+  en = Focused attention comes from steady breathing, a clear goal, and a sustainable rhythm.
+
+inline.plan297.human_tests.typing.passage.gate_b12_opens_at_08_40_keep_luggage_left_coffee.98ebf6c9c2
+  zh = Gate B12 opens at 08:40, 行李放左侧, coffee stays sealed.
+  en = Gate B12 opens at 08:40, keep luggage left, coffee sealed.
+
+inline.plan297.human_tests.typing.passage.in_the_harbor_morning_a_white_ship_quietly_untie.ba575a8fb8
+  zh = 港の朝、白い船が静かにロープをほどいて出発した。
+  en = In the harbor morning, a white ship quietly untied and left.
+
+inline.plan297.human_tests.typing.passage.lights_rose_outside_the_window_and_the_sentence_.0815612dcc
+  zh = 窗外的灯光慢慢亮起，纸上的句子像小船一样靠岸。
+  en = Lights rose outside the window, and the sentence on paper drifted gently ashore.
+
+inline.plan297.human_tests.typing.passage.memory_improves_when_attention_has_a_gentle_rhyt.a28836ac59
+  zh = Memory improves when attention has a gentle rhythm.
+  en = Memory improves when attention has a gentle rhythm.
+
+inline.plan297.human_tests.typing.passage.new_words_slowly_take_shape_inside_example_sente.855a3dcc93
+  zh = 新しい言葉は、例文の中で少しずつ自分の形になる。
+  en = New words slowly take shape inside example sentences.
+
+inline.plan297.human_tests.typing.passage.professional_typing_practice_measures_speed_erro.7eb7ddc04c
+  zh = 专业的输入训练不只看速度，也看错误密度、回退次数和稳定性。
+  en = Professional typing practice measures speed, error density, corrections, and stability.
+
+inline.plan297.human_tests.typing.passage.quiet_focus_grows_from_short_breaks_and_small_ch.ac1b5542b6
+  zh = 静かな集中は、短い休憩と小さな確認から生まれる。
+  en = Quiet focus grows from short breaks and small checks.
+
+inline.plan297.human_tests.typing.passage.read_the_night_words_slowly_and_recall_them_agai.5231376cd9
+  zh = 夜の単語はゆっくり読み、朝にもう一度思い出す。
+  en = Read the night words slowly and recall them again in the morning.
+
+inline.plan297.human_tests.typing.passage.read_the_whole_sentence_first_then_store_meaning.0551684fad
+  zh = 遇到生词时先读完整句，再把意思、声音和场景一起存进记忆。
+  en = Read the whole sentence first, then store meaning, sound, and scene together.
+
+inline.plan297.human_tests.typing.passage.review_steady_then_use_both_languages_in_one_sen.b0fa9fd564
+  zh = Review "steady", 复习「稳定」, then use both in one sentence.
+  en = Review "steady", then use both languages in one sentence.
+
+inline.plan297.human_tests.typing.passage.sleep_mode_dim_light_soft_voice_zero_pressure.604f0fd0e0
+  zh = Sleep mode: dim light, soft voice, zero pressure.
+  en = Sleep mode: dim light, soft voice, zero pressure.
+
+inline.plan297.human_tests.typing.passage.slow_the_words_down_tonight_and_memory_will_leav.48214cd486
+  zh = 今晚把单词放慢一点，记忆会在安静的间隔里留下痕迹。
+  en = Slow the words down tonight, and memory will leave traces in the quiet gaps.
+
+inline.plan297.human_tests.typing.passage.small_functions_become_kind_guides_for_the_next_.bf71c48128
+  zh = 小さな関数は、あとで読む人への親切な案内になる。
+  en = Small functions become kind guides for the next reader.
+
+inline.plan297.human_tests.typing.passage.split_complex_work_into_smaller_steps_and_your_h.c85d58bab9
+  zh = 把复杂任务切成几段，手指会更快找到下一个落点。
+  en = Split complex work into smaller steps, and your hands find the next move faster.
+
+inline.plan297.human_tests.typing.passage.the_morning_station_woke_up_while_the_map_folded.1207f3e5b4
+  zh = 清晨的车站正在苏醒，背包里的路线图被折成整齐的小方块。
+  en = The morning station woke up while the map folded into neat squares.
+
+inline.plan297.human_tests.typing.passage.the_note_said_see_you_tomorrow_and_the_platform_.0bfc1633b5
+  zh = The note said: 明天见, and the platform became quiet again.
+  en = The note said: see you tomorrow, and the platform became quiet again.
+
+inline.plan297.human_tests.typing.passage.the_quiet_station_clock_counted_every_suitcase_a.a4da437e92
+  zh = The quiet station clock counted every suitcase and every goodbye.
+  en = The quiet station clock counted every suitcase and every goodbye.
+
+inline.plan297.human_tests.typing.passage.the_square_was_empty_but_the_music_kept_turning_.3aee3020df
+  zh = 广场空了，音乐却还在街角回荡。
+  en = The square was empty, but the music kept turning the corner.
+
+inline.plan297.human_tests.typing.passage.the_train_crossed_the_river_just_as_the_city_ope.12a131898a
+  zh = The train crossed the river just as the city opened its windows.
+  en = The train crossed the river just as the city opened its windows.
+
+inline.plan297.human_tests.typing.passage.the_train_left_early_and_drew_a_golden_line_over.573e850a74
+  zh = 列车早早出发，在河面上留下一道金色的线。
+  en = The train left early and drew a golden line over the river.
+
+inline.ui.pages.toolbox_human_tests_typing_copy.type_a_formatted_short_passage_with_brackets_indentation_a29688
+  zh = 输入带有括号、缩进、大小写和标点的格式化短文。
+  en = Type a formatted short passage with brackets, indentation, case, and punctuation.
+
+inline.ui.pages.toolbox_human_tests_typing_copy.type_the_full_passage_to_build_a_stable_baseline_dc25ec
+  zh = 输入完整文本以建立稳定基线。
+  en = Type the full passage to build a stable baseline.
+
+inline.ui.pages.toolbox_human_tests_typing.new_passage_0882a0
+  zh = 新段落
+  en = New passage
+
+literal.ui.pages.toolbox_human_tests_typing.text_069783
+  zh = ！
+  en = ！
+
+literal.ui.pages.toolbox_human_tests_typing.text_2f8f3d
+  zh = )}
+  en = )}
+
+literal.ui.pages.toolbox_human_tests_typing.text_43b0df
+  zh = .
+  en = .
+
+literal.ui.pages.toolbox_human_tests_typing.text_5af676
+  zh = '
+  en = '
+
+literal.ui.pages.toolbox_human_tests_typing.text_739061
+  zh = !
+  en = !
+
+literal.ui.pages.toolbox_human_tests_typing.text_a49214
+  zh = "
+  en = "
+
+literal.ui.pages.toolbox_human_tests_typing.text_a60691
+  zh = 
+  en = 
+
+literal.ui.pages.toolbox_human_tests_typing.text_c9f859
+  zh = )}
+  en = )}
+
+literal.ui.pages.toolbox_human_tests_typing.text_cb61fe
+  zh = -
+  en = -
+
+literal.ui.pages.toolbox_human_tests_typing.text_cc6abd
+  zh = -
+  en = -
+
+literal.ui.pages.toolbox_human_tests_typing.text_dd44ee
+  zh = 。
+  en = 。
+
+literal.ui.pages.toolbox_human_tests_typing.text_df4c49
+  zh = -
+  en = -
+
+literal.ui.pages.toolbox_human_tests_typing.text_eb9c59
+  zh = ？
+  en = ？
+
+literal.ui.pages.toolbox_human_tests_typing.text_f2b5a5
+  zh = ?
+  en = ?

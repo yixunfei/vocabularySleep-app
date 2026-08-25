@@ -1,0 +1,86 @@
+toolbox.life.timeline.brief24.brief24_002_deb83f4c49.display	zh=前2500-前2034	en=前2500-前2034
+toolbox.life.timeline.brief24.brief24_002_deb83f4c49.title	zh=史记：五帝世系	en=史记：五帝世系
+toolbox.life.timeline.brief24.brief24_003_1e542f8599.display	zh=前2033-前1562	en=前2033-前1562
+toolbox.life.timeline.brief24.brief24_003_1e542f8599.title	zh=史记：夏王世系	en=史记：夏王世系
+toolbox.life.timeline.brief24.brief24_004_06faa253be.display	zh=前1562-前1066	en=前1562-前1066
+toolbox.life.timeline.brief24.brief24_004_06faa253be.title	zh=史记：商王世系	en=史记：商王世系
+toolbox.life.timeline.brief24.brief24_005_5c014495d8.display	zh=前1066-前256	en=前1066-前256
+toolbox.life.timeline.brief24.brief24_005_5c014495d8.title	zh=史记：周王世系	en=史记：周王世系
+toolbox.life.timeline.brief24.brief24_006_788958f3df.display	zh=前2070-前256	en=前2070-前256
+toolbox.life.timeline.brief24.brief24_006_788958f3df.title	zh=史记：夏商周断代工程阶段成果·夏商周年表	en=史记：夏商周断代工程阶段成果·夏商周年表
+toolbox.life.timeline.brief24.brief24_007_5aa07a250c.display	zh=前770-前221	en=前770-前221
+toolbox.life.timeline.brief24.brief24_007_5aa07a250c.title	zh=史记：春秋战国君主世系	en=史记：春秋战国君主世系
+toolbox.life.timeline.brief24.brief24_008_48e630ab9c.display	zh=前221-前206	en=前221-前206
+toolbox.life.timeline.brief24.brief24_008_48e630ab9c.title	zh=史记：秦帝系	en=史记：秦帝系
+toolbox.life.timeline.brief24.brief24_012_c6d3d5e9b7.display	zh=前202-8	en=前202-8
+toolbox.life.timeline.brief24.brief24_012_c6d3d5e9b7.title	zh=汉书：西汉帝系	en=汉书：西汉帝系
+toolbox.life.timeline.brief24.brief24_013_3e97b3d9b9.display	zh=25-220	en=25-220
+toolbox.life.timeline.brief24.brief24_013_3e97b3d9b9.title	zh=后汉书：东汉帝系	en=后汉书：东汉帝系
+toolbox.life.timeline.brief24.brief24_014_a79a7f1b61.display	zh=220-265	en=220-265
+toolbox.life.timeline.brief24.brief24_014_a79a7f1b61.title	zh=三国志：曹魏帝系	en=三国志：曹魏帝系
+toolbox.life.timeline.brief24.brief24_015_577003fe77.display	zh=221-263	en=221-263
+toolbox.life.timeline.brief24.brief24_015_577003fe77.title	zh=三国志：蜀汉帝系	en=三国志：蜀汉帝系
+toolbox.life.timeline.brief24.brief24_016_4906eee1bd.display	zh=229-280	en=229-280
+toolbox.life.timeline.brief24.brief24_016_4906eee1bd.title	zh=三国志：孙吴帝系	en=三国志：孙吴帝系
+toolbox.life.timeline.brief24.brief24_017_3670a318f1.display	zh=265-317	en=265-317
+toolbox.life.timeline.brief24.brief24_017_3670a318f1.title	zh=西晋书　东晋书：西晋帝系	en=西晋书　东晋书：西晋帝系
+toolbox.life.timeline.brief24.brief24_019_6a058ca7e6.display	zh=317-420	en=317-420
+toolbox.life.timeline.brief24.brief24_019_6a058ca7e6.title	zh=西晋书　东晋书：东晋帝系	en=西晋书　东晋书：东晋帝系
+toolbox.life.timeline.brief24.brief24_020_67d7f6bceb.display	zh=304-439	en=304-439
+toolbox.life.timeline.brief24.brief24_020_67d7f6bceb.title	zh=西晋书　东晋书：十六国兴亡	en=西晋书　东晋书：十六国兴亡
+toolbox.life.timeline.brief24.brief24_021_ea53f421b3.display	zh=420-479	en=420-479
+toolbox.life.timeline.brief24.brief24_021_ea53f421b3.title	zh=宋书　南齐书　梁书　陈书：南朝宋帝系	en=宋书　南齐书　梁书　陈书：南朝宋帝系
+toolbox.life.timeline.brief24.brief24_022_3a7515cdf7.display	zh=479-502	en=479-502
+toolbox.life.timeline.brief24.brief24_022_3a7515cdf7.title	zh=宋书　南齐书　梁书　陈书：南朝齐帝系	en=宋书　南齐书　梁书　陈书：南朝齐帝系
+toolbox.life.timeline.brief24.brief24_023_42e9ec0f21.display	zh=502-557	en=502-557
+toolbox.life.timeline.brief24.brief24_023_42e9ec0f21.title	zh=宋书　南齐书　梁书　陈书：南朝梁帝系	en=宋书　南齐书　梁书　陈书：南朝梁帝系
+toolbox.life.timeline.brief24.brief24_024_becc944e7d.display	zh=555-587	en=555-587
+toolbox.life.timeline.brief24.brief24_024_becc944e7d.title	zh=宋书　南齐书　梁书　陈书：南朝后梁帝系	en=宋书　南齐书　梁书　陈书：南朝后梁帝系
+toolbox.life.timeline.brief24.brief24_025_668f2a4c41.display	zh=557-589	en=557-589
+toolbox.life.timeline.brief24.brief24_025_668f2a4c41.title	zh=宋书　南齐书　梁书　陈书：南朝陈帝系	en=宋书　南齐书　梁书　陈书：南朝陈帝系
+toolbox.life.timeline.brief24.brief24_026_6666ddc31a.display	zh=386-534	en=386-534
+toolbox.life.timeline.brief24.brief24_026_6666ddc31a.title	zh=魏书　北齐书　周书　隋书：北魏帝系	en=魏书　北齐书　周书　隋书：北魏帝系
+toolbox.life.timeline.brief24.brief24_027_081f637bec.display	zh=534-550	en=534-550
+toolbox.life.timeline.brief24.brief24_027_081f637bec.title	zh=魏书　北齐书　周书　隋书：东魏帝系	en=魏书　北齐书　周书　隋书：东魏帝系
+toolbox.life.timeline.brief24.brief24_028_dfbe86910b.display	zh=535-557	en=535-557
+toolbox.life.timeline.brief24.brief24_028_dfbe86910b.title	zh=魏书　北齐书　周书　隋书：西魏帝系	en=魏书　北齐书　周书　隋书：西魏帝系
+toolbox.life.timeline.brief24.brief24_029_017c58f3c8.display	zh=550-577	en=550-577
+toolbox.life.timeline.brief24.brief24_029_017c58f3c8.title	zh=魏书　北齐书　周书　隋书：北齐帝系	en=魏书　北齐书　周书　隋书：北齐帝系
+toolbox.life.timeline.brief24.brief24_030_ea36fe756c.display	zh=557-581	en=557-581
+toolbox.life.timeline.brief24.brief24_030_ea36fe756c.title	zh=魏书　北齐书　周书　隋书：周帝系	en=魏书　北齐书　周书　隋书：周帝系
+toolbox.life.timeline.brief24.brief24_031_88e00dec78.display	zh=581-618	en=581-618
+toolbox.life.timeline.brief24.brief24_031_88e00dec78.title	zh=魏书　北齐书　周书　隋书：隋帝系	en=魏书　北齐书　周书　隋书：隋帝系
+toolbox.life.timeline.brief24.brief24_032_0c17c67151.display	zh=618-907	en=618-907
+toolbox.life.timeline.brief24.brief24_032_0c17c67151.title	zh=唐书：唐帝系	en=唐书：唐帝系
+toolbox.life.timeline.brief24.brief24_033_c433be87a5.display	zh=907-960	en=907-960
+toolbox.life.timeline.brief24.brief24_033_c433be87a5.title	zh=五代史：五代帝系	en=五代史：五代帝系
+toolbox.life.timeline.brief24.brief24_034_61dba1cc97.display	zh=902-979	en=902-979
+toolbox.life.timeline.brief24.brief24_034_61dba1cc97.title	zh=五代史：十国君主世系	en=五代史：十国君主世系
+toolbox.life.timeline.brief24.brief24_035_2c67ebcdc4.display	zh=960-1127	en=960-1127
+toolbox.life.timeline.brief24.brief24_035_2c67ebcdc4.title	zh=北宋史　南宋史：北宋帝系	en=北宋史　南宋史：北宋帝系
+toolbox.life.timeline.brief24.brief24_036_a126f0e8d0.display	zh=1127-1279	en=1127-1279
+toolbox.life.timeline.brief24.brief24_036_a126f0e8d0.title	zh=北宋史　南宋史：南宋帝系	en=北宋史　南宋史：南宋帝系
+toolbox.life.timeline.brief24.brief24_037_232927fe4b.display	zh=907-1125	en=907-1125
+toolbox.life.timeline.brief24.brief24_037_232927fe4b.title	zh=辽史　金史　西夏史：辽帝系	en=辽史　金史　西夏史：辽帝系
+toolbox.life.timeline.brief24.brief24_038_8b86bd5ba6.display	zh=1115-1234	en=1115-1234
+toolbox.life.timeline.brief24.brief24_038_8b86bd5ba6.title	zh=辽史　金史　西夏史：金帝系	en=辽史　金史　西夏史：金帝系
+toolbox.life.timeline.brief24.brief24_039_e86062722b.display	zh=1032-1227	en=1032-1227
+toolbox.life.timeline.brief24.brief24_039_e86062722b.title	zh=辽史　金史　西夏史：西夏帝系	en=辽史　金史　西夏史：西夏帝系
+toolbox.life.timeline.brief24.brief24_040_09f7c4a3cd.display	zh=1206-1370	en=1206-1370
+toolbox.life.timeline.brief24.brief24_040_09f7c4a3cd.title	zh=元史：元帝系	en=元史：元帝系
+toolbox.life.timeline.brief24.brief24_041_cc0c037e38.display	zh=1251-1310	en=1251-1310
+toolbox.life.timeline.brief24.brief24_041_cc0c037e38.title	zh=元史：窝阔台汗国	en=元史：窝阔台汗国
+toolbox.life.timeline.brief24.brief24_042_aeeed22a90.display	zh=1225-1370	en=1225-1370
+toolbox.life.timeline.brief24.brief24_042_aeeed22a90.title	zh=元史：察合台汗国	en=元史：察合台汗国
+toolbox.life.timeline.brief24.brief24_043_8ce4e71a4a.display	zh=1243-1361	en=1243-1361
+toolbox.life.timeline.brief24.brief24_043_8ce4e71a4a.title	zh=元史：钦察汗国	en=元史：钦察汗国
+toolbox.life.timeline.brief24.brief24_044_855bf538f7.display	zh=1264-1265	en=1264-1265
+toolbox.life.timeline.brief24.brief24_044_855bf538f7.title	zh=元史：伊利汗国	en=元史：伊利汗国
+toolbox.life.timeline.brief24.brief24_045_4abace39a3.display	zh=1368-1644	en=1368-1644
+toolbox.life.timeline.brief24.brief24_045_4abace39a3.title	zh=明史：明帝系	en=明史：明帝系
+toolbox.life.timeline.brief24.brief24_046_49dc78bb6c.display	zh=1644-1850	en=1644-1850
+toolbox.life.timeline.brief24.brief24_046_49dc78bb6c.title	zh=清史　一八四〇年前：清帝系	en=清史　一八四〇年前：清帝系
+toolbox.life.timeline.brief24.brief24_047_3dadbfd358.display	zh=1840-1912	en=1840-1912
+toolbox.life.timeline.brief24.brief24_047_3dadbfd358.title	zh=晚清史：晚清帝系	en=晚清史：晚清帝系
+toolbox.life.timeline.brief24.brief24_048_0723c773dc.display	zh=1842-1911	en=1842-1911
+toolbox.life.timeline.brief24.brief24_048_0723c773dc.title	zh=晚清史：晚清通商口岸	en=晚清史：晚清通商口岸

@@ -1,0 +1,256 @@
+inline.plan294.zen_sand.applied_value_3041c0f2
+  zh ph=[presetTitleEn] Applied "{presetTitleEn}".
+  en ph=[presetTitleEn] Applied "{presetTitleEn}".
+  ja ph=[presetTitleEn] 「{presetTitleEn}」を適用しました。
+  de ph=[presetTitleEn] "{presetTitleEn}" angewendet.
+  fr ph=[presetTitleEn] "{presetTitleEn}" appliqué.
+  es ph=[presetTitleEn] Se aplicó "{presetTitleEn}".
+  ru ph=[presetTitleEn] Пресет «{presetTitleEn}» применен.
+inline.plan294.zen_sand.layered_value_onto_the_current_tray_2f704183
+  zh ph=[presetTitleEn] Layered "{presetTitleEn}" onto the current tray.
+  en ph=[presetTitleEn] Layered "{presetTitleEn}" onto the current tray.
+  ja ph=[presetTitleEn] 「{presetTitleEn}」を現在の砂盤に重ねました。
+  de ph=[presetTitleEn] "{presetTitleEn}" über die aktuelle Sandfläche gelegt.
+  fr ph=[presetTitleEn] "{presetTitleEn}" ajouté sur le plateau actuel.
+  es ph=[presetTitleEn] Se superpuso "{presetTitleEn}" a la bandeja actual.
+  ru ph=[presetTitleEn] «{presetTitleEn}» добавлен поверх текущего лотка.
+inline.plan295.daily_choice.category_subtitleen_current_set_coll.912e0bcfb629
+  zh ph=[categorySubtitleEn,collectionTitle] {categorySubtitleEn}. Current set: {collectionTitle}.
+  en ph=[categorySubtitleEn,collectionTitle] {categorySubtitleEn}. Current set: {collectionTitle}.
+  ja ph=[categorySubtitleEn,collectionTitle] {categorySubtitleEn}。現在のセット: {collectionTitle}。
+  de ph=[categorySubtitleEn,collectionTitle] {categorySubtitleEn}. Current set: {collectionTitle}.
+  fr ph=[categorySubtitleEn,collectionTitle] {categorySubtitleEn}. Current set: {collectionTitle}.
+  es ph=[categorySubtitleEn,collectionTitle] {categorySubtitleEn}. Current set: {collectionTitle}.
+  ru ph=[categorySubtitleEn,collectionTitle] {categorySubtitleEn}. Current set: {collectionTitle}.
+inline.plan295.daily_choice.category_subtitleen_then_randomize_a.ef4bd170b52d
+  zh ph=[categorySubtitleEn] {categorySubtitleEn}, then randomize across the whole set.
+  en ph=[categorySubtitleEn] {categorySubtitleEn}, then randomize across the whole set.
+  ja ph=[categorySubtitleEn] {categorySubtitleEn}, then randomize across the whole set.
+  de ph=[categorySubtitleEn] {categorySubtitleEn}, then randomize across the whole set.
+  fr ph=[categorySubtitleEn] {categorySubtitleEn}, then randomize across the whole set.
+  es ph=[categorySubtitleEn] {categorySubtitleEn}, then randomize across the whole set.
+  ru ph=[categorySubtitleEn] {categorySubtitleEn}, then randomize across the whole set.
+inline.plan295.daily_choice.category_titleen_scene_titleen.9cb81855c227
+  zh ph=[categoryTitleEn,sceneTitleEn] {categoryTitleEn} · {sceneTitleEn}
+  en ph=[categoryTitleEn,sceneTitleEn] {categoryTitleEn} · {sceneTitleEn}
+  ja ph=[categoryTitleEn,sceneTitleEn] {categoryTitleEn} · {sceneTitleEn}
+  de ph=[categoryTitleEn,sceneTitleEn] {categoryTitleEn} · {sceneTitleEn}
+  fr ph=[categoryTitleEn,sceneTitleEn] {categoryTitleEn} · {sceneTitleEn}
+  es ph=[categoryTitleEn,sceneTitleEn] {categoryTitleEn} · {sceneTitleEn}
+  ru ph=[categoryTitleEn,sceneTitleEn] {categoryTitleEn} · {sceneTitleEn}
+inline.plan295.daily_choice.distance_selecteddistance_titleen.d2dae2086fe7
+  zh ph=[selectedDistanceTitleEn] Distance {selectedDistanceTitleEn}
+  en ph=[selectedDistanceTitleEn] Distance {selectedDistanceTitleEn}
+  ja ph=[selectedDistanceTitleEn] 距離 {selectedDistanceTitleEn}
+  de ph=[selectedDistanceTitleEn] Distance {selectedDistanceTitleEn}
+  fr ph=[selectedDistanceTitleEn] Distance {selectedDistanceTitleEn}
+  es ph=[selectedDistanceTitleEn] Distance {selectedDistanceTitleEn}
+  ru ph=[selectedDistanceTitleEn] Distance {selectedDistanceTitleEn}
+inline.plan295.daily_choice.exact_ingredient_matches_lead_the_po.503206b0115c
+  zh ph=[] Exact ingredient matches lead the pool.
+  en ph=[] Exact ingredient matches lead the pool.
+  ja ph=[] Exact ingredient matches lead the pool.
+  de ph=[] Exact ingredient matches lead the pool.
+  fr ph=[] Exact ingredient matches lead the pool.
+  es ph=[] Exact ingredient matches lead the pool.
+  ru ph=[] Exact ingredient matches lead the pool.
+inline.plan295.daily_choice.exact_ingredient_matches_lead_the_po.6f5398af9222
+  zh ph=[] Exact ingredient matches lead the pool, then strong overlaps are added for variety.
+  en ph=[] Exact ingredient matches lead the pool, then strong overlaps are added for variety.
+  ja ph=[] Exact ingredient matches lead the pool, then strong overlaps are added for variety.
+  de ph=[] Exact ingredient matches lead the pool, then strong overlaps are added for variety.
+  fr ph=[] Exact ingredient matches lead the pool, then strong overlaps are added for variety.
+  es ph=[] Exact ingredient matches lead the pool, then strong overlaps are added for variety.
+  ru ph=[] Exact ingredient matches lead the pool, then strong overlaps are added for variety.
+inline.plan295.daily_choice.filter_by_contextlabelen.301714535181
+  zh ph=[contextLabelEn] Filter by {contextLabelEn}
+  en ph=[contextLabelEn] Filter by {contextLabelEn}
+  ja ph=[contextLabelEn] {contextLabelEn}でフィルター
+  de ph=[contextLabelEn] Filter by {contextLabelEn}
+  fr ph=[contextLabelEn] Filter by {contextLabelEn}
+  es ph=[contextLabelEn] Filter by {contextLabelEn}
+  ru ph=[contextLabelEn] Filter by {contextLabelEn}
+inline.plan295.daily_choice.filter_by_group_titleen.a79a5a261df1
+  zh ph=[groupTitleEn] Filter by {groupTitleEn}
+  en ph=[groupTitleEn] Filter by {groupTitleEn}
+  ja ph=[groupTitleEn] {groupTitleEn} でフィルター
+  de ph=[groupTitleEn] Filter by {groupTitleEn}
+  fr ph=[groupTitleEn] Filter by {groupTitleEn}
+  es ph=[groupTitleEn] Filter by {groupTitleEn}
+  ru ph=[groupTitleEn] Filter by {groupTitleEn}
+inline.plan295.daily_choice.manual_selection_temperature_titleen.645fc37db6a4
+  zh ph=[suggestionTemperatureIdTitleEn,temperatureTitleEn] Manual selection: {temperatureTitleEn}. Weather suggests {suggestionTemperatureIdTitleEn}.
+  en ph=[suggestionTemperatureIdTitleEn,temperatureTitleEn] Manual selection: {temperatureTitleEn}. Weather suggests {suggestionTemperatureIdTitleEn}.
+  ja ph=[suggestionTemperatureIdTitleEn,temperatureTitleEn] Manual selection: {temperatureTitleEn}. Weather suggests {suggestionTemperatureIdTitleEn}.
+  de ph=[suggestionTemperatureIdTitleEn,temperatureTitleEn] Manual selection: {temperatureTitleEn}. Weather suggests {suggestionTemperatureIdTitleEn}.
+  fr ph=[suggestionTemperatureIdTitleEn,temperatureTitleEn] Manual selection: {temperatureTitleEn}. Weather suggests {suggestionTemperatureIdTitleEn}.
+  es ph=[suggestionTemperatureIdTitleEn,temperatureTitleEn] Manual selection: {temperatureTitleEn}. Weather suggests {suggestionTemperatureIdTitleEn}.
+  ru ph=[suggestionTemperatureIdTitleEn,temperatureTitleEn] Manual selection: {temperatureTitleEn}. Weather suggests {suggestionTemperatureIdTitleEn}.
+inline.plan295.daily_choice.no_exact_match_yet_so_the_pool_prefe.493be8d1e1d1
+  zh ph=[] No exact match yet, so the pool prefers strong ingredient overlaps.
+  en ph=[] No exact match yet, so the pool prefers strong ingredient overlaps.
+  ja ph=[] No exact match yet, so the pool prefers strong ingredient overlaps.
+  de ph=[] No exact match yet, so the pool prefers strong ingredient overlaps.
+  fr ph=[] No exact match yet, so the pool prefers strong ingredient overlaps.
+  es ph=[] No exact match yet, so the pool prefers strong ingredient overlaps.
+  ru ph=[] No exact match yet, so the pool prefers strong ingredient overlaps.
+inline.plan295.daily_choice.no_ingredient_hit_yet_so_the_full_fi.fb50bf11239e
+  zh ph=[] No ingredient hit yet, so the full filtered pool stays available.
+  en ph=[] No ingredient hit yet, so the full filtered pool stays available.
+  ja ph=[] No ingredient hit yet, so the full filtered pool stays available.
+  de ph=[] No ingredient hit yet, so the full filtered pool stays available.
+  fr ph=[] No ingredient hit yet, so the full filtered pool stays available.
+  es ph=[] No ingredient hit yet, so the full filtered pool stays available.
+  ru ph=[] No ingredient hit yet, so the full filtered pool stays available.
+inline.plan295.daily_choice.no_strong_overlap_yet_so_the_pool_ke.ba302e738567
+  zh ph=[] No strong overlap yet, so the pool keeps recipes that match at least one ingredient.
+  en ph=[] No strong overlap yet, so the pool keeps recipes that match at least one ingredient.
+  ja ph=[] No strong overlap yet, so the pool keeps recipes that match at least one ingredient.
+  de ph=[] No strong overlap yet, so the pool keeps recipes that match at least one ingredient.
+  fr ph=[] No strong overlap yet, so the pool keeps recipes that match at least one ingredient.
+  es ph=[] No strong overlap yet, so the pool keeps recipes that match at least one ingredient.
+  ru ph=[] No strong overlap yet, so the pool keeps recipes that match at least one ingredient.
+inline.plan295.daily_choice.place_kinden_about_dailychoicedistan.950e9d6994e3
+  zh ph=[dailyChoiceDistanceLabelEnPlaceDistanceMeters,placeKindEn] {placeKindEn} · about {dailyChoiceDistanceLabelEnPlaceDistanceMeters}
+  en ph=[dailyChoiceDistanceLabelEnPlaceDistanceMeters,placeKindEn] {placeKindEn} · about {dailyChoiceDistanceLabelEnPlaceDistanceMeters}
+  ja ph=[dailyChoiceDistanceLabelEnPlaceDistanceMeters,placeKindEn] {placeKindEn} · about {dailyChoiceDistanceLabelEnPlaceDistanceMeters}
+  de ph=[dailyChoiceDistanceLabelEnPlaceDistanceMeters,placeKindEn] {placeKindEn} · about {dailyChoiceDistanceLabelEnPlaceDistanceMeters}
+  fr ph=[dailyChoiceDistanceLabelEnPlaceDistanceMeters,placeKindEn] {placeKindEn} · about {dailyChoiceDistanceLabelEnPlaceDistanceMeters}
+  es ph=[dailyChoiceDistanceLabelEnPlaceDistanceMeters,placeKindEn] {placeKindEn} · about {dailyChoiceDistanceLabelEnPlaceDistanceMeters}
+  ru ph=[dailyChoiceDistanceLabelEnPlaceDistanceMeters,placeKindEn] {placeKindEn} · about {dailyChoiceDistanceLabelEnPlaceDistanceMeters}
+inline.plan295.daily_choice.scene_selectedscene_titleen.36a46f133169
+  zh ph=[selectedSceneTitleEn] Scene {selectedSceneTitleEn}
+  en ph=[selectedSceneTitleEn] Scene {selectedSceneTitleEn}
+  ja ph=[selectedSceneTitleEn] シーン {selectedSceneTitleEn}
+  de ph=[selectedSceneTitleEn] Scene {selectedSceneTitleEn}
+  fr ph=[selectedSceneTitleEn] Scene {selectedSceneTitleEn}
+  es ph=[selectedSceneTitleEn] Scene {selectedSceneTitleEn}
+  ru ph=[selectedSceneTitleEn] Scene {selectedSceneTitleEn}
+inline.plan295.daily_choice.suggest_recommendedtemperature_title.9edbb2638d54
+  zh ph=[recommendedTemperatureTitleEn] Suggest {recommendedTemperatureTitleEn}
+  en ph=[recommendedTemperatureTitleEn] Suggest {recommendedTemperatureTitleEn}
+  ja ph=[recommendedTemperatureTitleEn] {recommendedTemperatureTitleEn}を提案
+  de ph=[recommendedTemperatureTitleEn] Suggest {recommendedTemperatureTitleEn}
+  fr ph=[recommendedTemperatureTitleEn] Suggest {recommendedTemperatureTitleEn}
+  es ph=[recommendedTemperatureTitleEn] Suggest {recommendedTemperatureTitleEn}
+  ru ph=[recommendedTemperatureTitleEn] Suggest {recommendedTemperatureTitleEn}
+inline.plan295.daily_choice.the_current_selecteddistance_titleen.c289a8372f20
+  zh ph=[distanceCount,sceneCoverageCount,selectedDistanceTitleEn] The current {selectedDistanceTitleEn} tier contains {distanceCount} places across {sceneCo
+  en ph=[distanceCount,sceneCoverageCount,selectedDistanceTitleEn] The current {selectedDistanceTitleEn} tier contains {distanceCount} places across {sceneCo
+  ja ph=[distanceCount,sceneCoverageCount,selectedDistanceTitleEn] The current {selectedDistanceTitleEn} tier contains {distanceCount} places across {sceneCo
+  de ph=[distanceCount,sceneCoverageCount,selectedDistanceTitleEn] The current {selectedDistanceTitleEn} tier contains {distanceCount} places across {sceneCo
+  fr ph=[distanceCount,sceneCoverageCount,selectedDistanceTitleEn] The current {selectedDistanceTitleEn} tier contains {distanceCount} places across {sceneCo
+  es ph=[distanceCount,sceneCoverageCount,selectedDistanceTitleEn] The current {selectedDistanceTitleEn} tier contains {distanceCount} places across {sceneCo
+  ru ph=[distanceCount,sceneCoverageCount,selectedDistanceTitleEn] The current {selectedDistanceTitleEn} tier contains {distanceCount} places across {sceneCo
+inline.plan295.daily_choice.the_current_selecteddistance_titleen.c5724f7be4ad
+  zh ph=[candidateCount,selectedDistanceTitleEn,selectedSceneTitleEn] The current {selectedDistanceTitleEn} × {selectedSceneTitleEn} filter gives {candidateCoun
+  en ph=[candidateCount,selectedDistanceTitleEn,selectedSceneTitleEn] The current {selectedDistanceTitleEn} × {selectedSceneTitleEn} filter gives {candidateCoun
+  ja ph=[candidateCount,selectedDistanceTitleEn,selectedSceneTitleEn] The current {selectedDistanceTitleEn} × {selectedSceneTitleEn} filter gives {candidateCoun
+  de ph=[candidateCount,selectedDistanceTitleEn,selectedSceneTitleEn] The current {selectedDistanceTitleEn} × {selectedSceneTitleEn} filter gives {candidateCoun
+  fr ph=[candidateCount,selectedDistanceTitleEn,selectedSceneTitleEn] The current {selectedDistanceTitleEn} × {selectedSceneTitleEn} filter gives {candidateCoun
+  es ph=[candidateCount,selectedDistanceTitleEn,selectedSceneTitleEn] The current {selectedDistanceTitleEn} × {selectedSceneTitleEn} filter gives {candidateCoun
+  ru ph=[candidateCount,selectedDistanceTitleEn,selectedSceneTitleEn] The current {selectedDistanceTitleEn} × {selectedSceneTitleEn} filter gives {candidateCoun
+inline.plan295.daily_choice.there_are_no_candidates_for_selected.02201253e526
+  zh ph=[selectedDistanceTitleEn,selectedSceneTitleEn] There are no candidates for {selectedDistanceTitleEn} × {selectedSceneTitleEn} yet. Switch
+  en ph=[selectedDistanceTitleEn,selectedSceneTitleEn] There are no candidates for {selectedDistanceTitleEn} × {selectedSceneTitleEn} yet. Switch
+  ja ph=[selectedDistanceTitleEn,selectedSceneTitleEn] There are no candidates for {selectedDistanceTitleEn} × {selectedSceneTitleEn} yet. Switch
+  de ph=[selectedDistanceTitleEn,selectedSceneTitleEn] There are no candidates for {selectedDistanceTitleEn} × {selectedSceneTitleEn} yet. Switch
+  fr ph=[selectedDistanceTitleEn,selectedSceneTitleEn] There are no candidates for {selectedDistanceTitleEn} × {selectedSceneTitleEn} yet. Switch
+  es ph=[selectedDistanceTitleEn,selectedSceneTitleEn] There are no candidates for {selectedDistanceTitleEn} × {selectedSceneTitleEn} yet. Switch
+  ru ph=[selectedDistanceTitleEn,selectedSceneTitleEn] There are no candidates for {selectedDistanceTitleEn} × {selectedSceneTitleEn} yet. Switch
+inline.plan295.daily_choice.tool_titleen_category_titleen.ca8660c39c29
+  zh ph=[categoryTitleEn,toolTitleEn] {toolTitleEn} · {categoryTitleEn}
+  en ph=[categoryTitleEn,toolTitleEn] {toolTitleEn} · {categoryTitleEn}
+  ja ph=[categoryTitleEn,toolTitleEn] {toolTitleEn} · {categoryTitleEn}
+  de ph=[categoryTitleEn,toolTitleEn] {toolTitleEn} · {categoryTitleEn}
+  fr ph=[categoryTitleEn,toolTitleEn] {toolTitleEn} · {categoryTitleEn}
+  es ph=[categoryTitleEn,toolTitleEn] {toolTitleEn} · {categoryTitleEn}
+  ru ph=[categoryTitleEn,toolTitleEn] {toolTitleEn} · {categoryTitleEn}
+inline.plan295.daily_choice.what_for_category_titleen_tolowercas.4b9f52de36d4
+  zh ph=[categoryTitleEn] What for {categoryTitleEn}
+  en ph=[categoryTitleEn] What for {categoryTitleEn}
+  ja ph=[categoryTitleEn] What for {categoryTitleEn}
+  de ph=[categoryTitleEn] What for {categoryTitleEn}
+  fr ph=[categoryTitleEn] What for {categoryTitleEn}
+  es ph=[categoryTitleEn] What for {categoryTitleEn}
+  ru ph=[categoryTitleEn] What for {categoryTitleEn}
+inline.plan295.daily_choice.what_to_do.f2157bc059ce
+  zh ph=[] What to do
+  en ph=[] What to do
+  ja ph=[] やること
+  de ph=[] What to do
+  fr ph=[] What to do
+  es ph=[] What to do
+  ru ph=[] What to do
+inline.plan295.daily_choice.where_to_go.5e249f9e8d96
+  zh ph=[] Where to go
+  en ph=[] Where to go
+  ja ph=[] Where to go
+  de ph=[] Where to go
+  fr ph=[] Where to go
+  es ph=[] Where to go
+  ru ph=[] Where to go
+inline.plan295.life.algorithm.1f86c487e91d
+  zh ph=[] Compression algorithm
+  en ph=[] Algorithm
+  ja ph=[] アルゴリズム
+  de ph=[] Algorithm
+  fr ph=[] Algorithm
+  es ph=[] Algorithm
+  ru ph=[] Algorithm
+inline.plan296.ui.app.shell.complete_current.eb38379612
+  zh ph=[p3,remotePrewarmCompletedCount,remotePrewarmTotalCount] {remotePrewarmCompletedCount} / {remotePrewarmTotalCount} complete. Current: {p3}
+  en ph=[p3,remotePrewarmCompletedCount,remotePrewarmTotalCount] {remotePrewarmCompletedCount} / {remotePrewarmTotalCount} complete. Current: {p3}
+  ja ph=[p3,remotePrewarmCompletedCount,remotePrewarmTotalCount] {remotePrewarmCompletedCount} / {remotePrewarmTotalCount} complete. Current: {p3}
+  de ph=[p3,remotePrewarmCompletedCount,remotePrewarmTotalCount] {remotePrewarmCompletedCount} / {remotePrewarmTotalCount} complete. Current: {p3}
+  fr ph=[p3,remotePrewarmCompletedCount,remotePrewarmTotalCount] {remotePrewarmCompletedCount} / {remotePrewarmTotalCount} complete. Current: {p3}
+  es ph=[p3,remotePrewarmCompletedCount,remotePrewarmTotalCount] {remotePrewarmCompletedCount} / {remotePrewarmTotalCount} complete. Current: {p3}
+  ru ph=[p3,remotePrewarmCompletedCount,remotePrewarmTotalCount] {remotePrewarmCompletedCount} / {remotePrewarmTotalCount} complete. Current: {p3}
+inline.plan296.ui.pages.toolbox.daily.choice.daily.choice.manager.sheet.more_are_ready_to_load.a79fa6572b
+  zh ph=[length,p1] {length} more {p1} are ready to load.
+  en ph=[length,p1] {length} more {p1} are ready to load.
+  ja ph=[length,p1] {length} more {p1} are ready to load.
+  de ph=[length,p1] {length} more {p1} are ready to load.
+  fr ph=[length,p1] {length} more {p1} are ready to load.
+  es ph=[length,p1] {length} more {p1} are ready to load.
+  ru ph=[length,p1] {length} more {p1} are ready to load.
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.hub.remove_from_quick_access.c39e2e9b07
+  zh ph=[titleEn] Remove "{titleEn}" from quick access?
+  en ph=[titleEn] Remove "{titleEn}" from quick access?
+  ja ph=[titleEn] Remove "{titleEn}" from quick access?
+  de ph=[titleEn] Remove "{titleEn}" from quick access?
+  fr ph=[titleEn] Remove "{titleEn}" from quick access?
+  es ph=[titleEn] Remove "{titleEn}" from quick access?
+  ru ph=[titleEn] Remove "{titleEn}" from quick access?
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.reverse.image.engines_succeeded_with_entries.d49d89aaaf
+  zh ph=[_successCount,_totalEntries,length,p4] {_successCount}/{length} engines succeeded with {_totalEntries} entries{p4}.
+  en ph=[_successCount,_totalEntries,length,p4] {_successCount}/{length} engines succeeded with {_totalEntries} entries{p4}.
+  ja ph=[_successCount,_totalEntries,length,p4] {_successCount}/{length} engines succeeded with {_totalEntries} entries{p4}.
+  de ph=[_successCount,_totalEntries,length,p4] {_successCount}/{length} engines succeeded with {_totalEntries} entries{p4}.
+  fr ph=[_successCount,_totalEntries,length,p4] {_successCount}/{length} engines succeeded with {_totalEntries} entries{p4}.
+  es ph=[_successCount,_totalEntries,length,p4] {_successCount}/{length} engines succeeded with {_totalEntries} entries{p4}.
+  ru ph=[_successCount,_totalEntries,length,p4] {_successCount}/{length} engines succeeded with {_totalEntries} entries{p4}.
+toolbox.sleep.rhythm.ok
+  zh ph=[] OK
+  en ph=[] OK
+  ja ph=[] OK
+  de ph=[] OK
+  fr ph=[] OK
+  es ph=[] OK
+  ru ph=[] OK
+toolbox.sudoku.details.hide
+  zh ph=[] ??
+  en ph=[] Hide
+  ja ph=[] Hide
+  de ph=[] Hide
+  fr ph=[] Hide
+  es ph=[] Hide
+  ru ph=[] Hide
+toolbox.sudoku.details.show
+  zh ph=[] ??
+  en ph=[] Show
+  ja ph=[] Show
+  de ph=[] Show
+  fr ph=[] Show
+  es ph=[] Show
+  ru ph=[] Show

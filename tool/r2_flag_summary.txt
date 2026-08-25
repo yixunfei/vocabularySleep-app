@@ -1,0 +1,883 @@
+total=291
+ZH_NO_CJK+SAME_LONG	73
+ZH_NO_CJK	124
+EN_HAS_CJK	73
+EN_HAS_CJK+SAME_LONG	21
+
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.veracrypt.kdf.pbkdf2_sha512
+  zh: PBKDF2-SHA512
+  en: PBKDF2-SHA512
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.veracrypt.kdf.pbkdf2_sha256
+  zh: PBKDF2-SHA256
+  en: PBKDF2-SHA256
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.veracrypt.kdf.pbkdf2_whirlpool
+  zh: PBKDF2-Whirlpool
+  en: PBKDF2-Whirlpool
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.veracrypt.kdf.pbkdf2_blake2s
+  zh: PBKDF2-BLAKE2s
+  en: PBKDF2-BLAKE2s
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.veracrypt.kdf.pbkdf2_streebog
+  zh: PBKDF2-Streebog
+  en: PBKDF2-Streebog
+[ZH_NO_CJK] toolbox.crypto.veracrypt.kdf.argon2id
+  zh: Argon2id
+  en: Argon2id
+[ZH_NO_CJK] toolbox.crypto.veracrypt.cipher.aes
+  zh: AES
+  en: AES
+[ZH_NO_CJK] toolbox.crypto.veracrypt.cipher.serpent
+  zh: Serpent
+  en: Serpent
+[ZH_NO_CJK] toolbox.crypto.veracrypt.cipher.twofish
+  zh: Twofish
+  en: Twofish
+[ZH_NO_CJK] toolbox.crypto.veracrypt.cipher.camellia
+  zh: Camellia
+  en: Camellia
+[ZH_NO_CJK] toolbox.crypto.veracrypt.cipher.kuznyechik
+  zh: Kuznyechik
+  en: Kuznyechik
+[ZH_NO_CJK] toolbox.crypto.veracrypt.cipher.aes_twofish
+  zh: AES-Twofish
+  en: AES-Twofish
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.veracrypt.cipher.aes_twofish_serpent
+  zh: AES-Twofish-Serpent
+  en: AES-Twofish-Serpent
+[ZH_NO_CJK] toolbox.crypto.veracrypt.cipher.serpent_aes
+  zh: Serpent-AES
+  en: Serpent-AES
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.veracrypt.cipher.serpent_twofish_aes
+  zh: Serpent-Twofish-AES
+  en: Serpent-Twofish-AES
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.veracrypt.cipher.twofish_serpent
+  zh: Twofish-Serpent
+  en: Twofish-Serpent
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.veracrypt.cipher.camellia_kuznyechik
+  zh: Camellia-Kuznyechik
+  en: Camellia-Kuznyechik
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.veracrypt.cipher.kuznyechik_twofish
+  zh: Kuznyechik-Twofish
+  en: Kuznyechik-Twofish
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.veracrypt.cipher.camellia_serpent
+  zh: Camellia-Serpent
+  en: Camellia-Serpent
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.veracrypt.cipher.kuznyechik_aes
+  zh: Kuznyechik-AES
+  en: Kuznyechik-AES
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.veracrypt.cipher.kuznyechik_serpent_camellia
+  zh: Kuznyechik-Serpent-Camellia
+  en: Kuznyechik-Serpent-Camellia
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.veracrypt.support.feature.kdf_primary
+  zh: PBKDF2 / Argon2id KDF
+  en: PBKDF2 / Argon2id KDF
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.veracrypt.kdf.pbkdf2_all
+  zh: PBKDF2-SHA512 / SHA256 / Whirlpool / BLAKE2s / Streebog
+  en: PBKDF2-SHA512 / SHA256 / Whirlpool / BLAKE2s / Streebog
+[ZH_NO_CJK+SAME_LONG] inline.plan296.ui.app.shell.complete_current.eb38379612
+  zh: {remotePrewarmCompletedCount} / {remotePrewarmTotalCount} complete. Current: {p3}
+  en: {remotePrewarmCompletedCount} / {remotePrewarmTotalCount} complete. Current: {p3}
+[ZH_NO_CJK] toolbox.sleep.rhythm.ok
+  zh: OK
+  en: OK
+[ZH_NO_CJK] toolbox.breathing.bolt
+  zh: BOLT
+  en: BOLT
+[ZH_NO_CJK] toolbox.crypto.asymmetric.algorithm.rsa_2048
+  zh: RSA-2048
+  en: RSA-2048
+[ZH_NO_CJK] toolbox.crypto.asymmetric.algorithm.ec_p256
+  zh: ECC P-256
+  en: ECC P-256
+[ZH_NO_CJK] toolbox.crypto.algorithm.aes_gcm
+  zh: AES-GCM
+  en: AES-GCM
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.algorithm.chacha20_poly1305
+  zh: ChaCha20-Poly1305
+  en: ChaCha20-Poly1305
+[ZH_NO_CJK] toolbox.crypto.algorithm.twofish_gcm
+  zh: Twofish-GCM
+  en: Twofish-GCM
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.algorithm.camellia_gcm
+  zh: Camellia-GCM
+  en: Camellia-GCM
+[ZH_NO_CJK] toolbox.crypto.algorithm.serpent_gcm
+  zh: Serpent-GCM
+  en: Serpent-GCM
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.algorithm.kuznyechik_gcm
+  zh: Kuznyechik-GCM
+  en: Kuznyechik-GCM
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.algorithm.full_five_cascade
+  zh: AES + Twofish + Camellia + Serpent + Kuznyechik
+  en: AES + Twofish + Camellia + Serpent + Kuznyechik
+[ZH_NO_CJK] toolbox.crypto.mac.sha256
+  zh: SHA-256
+  en: SHA-256
+[ZH_NO_CJK] toolbox.crypto.mac.whirlpool
+  zh: Whirlpool
+  en: Whirlpool
+[ZH_NO_CJK] toolbox.crypto.signature.rsa_sha256
+  zh: RSA-SHA256
+  en: RSA-SHA256
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.signature.ecdsa_sha256
+  zh: ECDSA-SHA256
+  en: ECDSA-SHA256
+[ZH_NO_CJK] toolbox.crypto.common.sha256
+  zh: SHA-256
+  en: SHA-256
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.content_media.selected_file
+  zh: {name} · {size}
+  en: {name} · {size}
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.content_media.network_image_url_hint
+  zh: https://.../encrypted_media.png
+  en: https://.../encrypted_media.png
+[ZH_NO_CJK] toolbox.crypto.content_media.image_min_512
+  zh: 512 x 512
+  en: 512 x 512
+[ZH_NO_CJK] toolbox.crypto.content_media.image_min_1024
+  zh: 1024 x 1024
+  en: 1024 x 1024
+[ZH_NO_CJK] toolbox.crypto.file.selected_source
+  zh: {name}，{size}
+  en: {name}, {size}
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.common.key_file_entry
+  zh: {size} · SHA-256 {hash}
+  en: {size} · SHA-256 {hash}
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.algorithm.aes_serpent_kuznyechik
+  zh: AES + Serpent + Kuznyechik
+  en: AES + Serpent + Kuznyechik
+[ZH_NO_CJK] toolbox.crypto.signature.rsa
+  zh: RSA-SHA256
+  en: RSA-SHA256
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.signature.ecdsa
+  zh: ECDSA-SHA256
+  en: ECDSA-SHA256
+[ZH_NO_CJK+SAME_LONG] toolbox.crypto.hash.file_ready
+  zh: {name} · {size}
+  en: {name} · {size}
+[ZH_NO_CJK] toolbox.crypto.hash.algorithm.md5
+  zh: MD5
+  en: MD5
+[ZH_NO_CJK] toolbox.crypto.hash.algorithm.sha1
+  zh: SHA-1
+  en: SHA-1
+[ZH_NO_CJK] toolbox.crypto.hash.algorithm.sha256
+  zh: SHA-256
+  en: SHA-256
+[ZH_NO_CJK] toolbox.crypto.hash.algorithm.sha512
+  zh: SHA-512
+  en: SHA-512
+[ZH_NO_CJK] toolbox.crypto.hash.algorithm.sha3_256
+  zh: SHA3-256
+  en: SHA3-256
+[ZH_NO_CJK] toolbox.crypto.hash.algorithm.blake2b_256
+  zh: BLAKE2b-256
+  en: BLAKE2b-256
+[ZH_NO_CJK] toolbox.crypto.hash.algorithm.whirlpool
+  zh: Whirlpool
+  en: Whirlpool
+[ZH_NO_CJK] toolbox.crypto.hash.hex_label
+  zh: Hex
+  en: Hex
+[ZH_NO_CJK] toolbox.crypto.hash.base64_label
+  zh: Base64
+  en: Base64
+[ZH_NO_CJK] toolbox.crypto.hmac.title
+  zh: HMAC / MAC
+  en: HMAC / MAC
+[ZH_NO_CJK] toolbox.crypto.hmac.hex_label
+  zh: Hex HMAC
+  en: Hex HMAC
+[ZH_NO_CJK] toolbox.crypto.content_media.hub_chip_wav
+  zh: PCM WAV
+  en: PCM WAV
+[ZH_NO_CJK] toolbox.crypto.otp.hub_chip_totp
+  zh: TOTP
+  en: TOTP
+[ZH_NO_CJK] toolbox.crypto.otp.hub_chip_hotp
+  zh: HOTP
+  en: HOTP
+[ZH_NO_CJK] toolbox.crypto.asymmetric.hub_chip_rsa
+  zh: RSA-2048
+  en: RSA-2048
+[ZH_NO_CJK] toolbox.crypto.asymmetric.hub_chip_ecc
+  zh: ECC P-256
+  en: ECC P-256
+[ZH_NO_CJK] toolbox.crypto.otp.mode_totp
+  zh: TOTP
+  en: TOTP
+[ZH_NO_CJK] toolbox.crypto.otp.mode_hotp
+  zh: HOTP
+  en: HOTP
+[ZH_NO_CJK] toolbox.crypto.password.entropy_value
+  zh: {bits} bits
+  en: {bits} bits
+[ZH_NO_CJK] toolbox.crypto.hash.algorithm.sha3_512
+  zh: SHA3-512
+  en: SHA3-512
+[ZH_NO_CJK] toolbox.crypto.hash.algorithm.blake2b_512
+  zh: BLAKE2b-512
+  en: BLAKE2b-512
+[ZH_NO_CJK+SAME_LONG] inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.text.9286016a39
+  zh: {errorEn}: {p1}
+  en: {errorEn}: {p1}
+[ZH_NO_CJK] toolbox.crypto.veracrypt.pim
+  zh: PIM
+  en: PIM
+[ZH_NO_CJK] toolbox.crypto.veracrypt.selected_keyfile
+  zh: Keyfile：{name}
+  en: Keyfile: {name}
+[ZH_NO_CJK] toolbox.crypto.veracrypt.header_unlock_kdf
+  zh: KDF
+  en: KDF
+[ZH_NO_CJK] toolbox.crypto.veracrypt.fs.sha256
+  zh: SHA-256
+  en: SHA-256
+[ZH_NO_CJK+SAME_LONG] inline.plan295.daily_choice.what_for_category_titleen_tolowercas.4b9f52de36d4
+  zh: What for {categoryTitleEn}
+  en: What for {categoryTitleEn}
+[ZH_NO_CJK+SAME_LONG] inline.plan295.daily_choice.tool_titleen_category_titleen.ca8660c39c29
+  zh: {toolTitleEn} · {categoryTitleEn}
+  en: {toolTitleEn} · {categoryTitleEn}
+[ZH_NO_CJK+SAME_LONG] inline.plan295.daily_choice.exact_ingredient_matches_lead_the_po.6f5398af9222
+  zh: Exact ingredient matches lead the pool, then strong overlaps are added for variety.
+  en: Exact ingredient matches lead the pool, then strong overlaps are added for variety.
+[ZH_NO_CJK+SAME_LONG] inline.plan295.daily_choice.exact_ingredient_matches_lead_the_po.503206b0115c
+  zh: Exact ingredient matches lead the pool.
+  en: Exact ingredient matches lead the pool.
+[ZH_NO_CJK+SAME_LONG] inline.plan295.daily_choice.no_exact_match_yet_so_the_pool_prefe.493be8d1e1d1
+  zh: No exact match yet, so the pool prefers strong ingredient overlaps.
+  en: No exact match yet, so the pool prefers strong ingredient overlaps.
+[ZH_NO_CJK+SAME_LONG] inline.plan295.daily_choice.no_strong_overlap_yet_so_the_pool_ke.ba302e738567
+  zh: No strong overlap yet, so the pool keeps recipes that match at least one ingredient.
+  en: No strong overlap yet, so the pool keeps recipes that match at least one ingredient.
+[ZH_NO_CJK+SAME_LONG] inline.plan295.daily_choice.no_ingredient_hit_yet_so_the_full_fi.fb50bf11239e
+  zh: No ingredient hit yet, so the full filtered pool stays available.
+  en: No ingredient hit yet, so the full filtered pool stays available.
+[ZH_NO_CJK+SAME_LONG] inline.plan295.daily_choice.filter_by_group_titleen.a79a5a261df1
+  zh: Filter by {groupTitleEn}
+  en: Filter by {groupTitleEn}
+[ZH_NO_CJK+SAME_LONG] inline.plan295.daily_choice.filter_by_contextlabelen.301714535181
+  zh: Filter by {contextLabelEn}
+  en: Filter by {contextLabelEn}
+[ZH_NO_CJK+SAME_LONG] inline.plan296.ui.pages.toolbox.daily.choice.daily.choice.manager.sheet.more_are_ready_to_load.a79fa6572b
+  zh: {length} more {p1} are ready to load.
+  en: {length} more {p1} are ready to load.
+[ZH_NO_CJK+SAME_LONG] inline.plan295.daily_choice.category_subtitleen_then_randomize_a.ef4bd170b52d
+  zh: {categorySubtitleEn}, then randomize across the whole set.
+  en: {categorySubtitleEn}, then randomize across the whole set.
+[ZH_NO_CJK] inline.plan295.daily_choice.where_to_go.5e249f9e8d96
+  zh: Where to go
+  en: Where to go
+[ZH_NO_CJK+SAME_LONG] inline.plan295.daily_choice.category_titleen_scene_titleen.9cb81855c227
+  zh: {categoryTitleEn} · {sceneTitleEn}
+  en: {categoryTitleEn} · {sceneTitleEn}
+[ZH_NO_CJK+SAME_LONG] inline.plan295.daily_choice.the_current_selecteddistance_titleen.c289a8372f20
+  zh: The current {selectedDistanceTitleEn} tier contains {distanceCount} places across {sceneCoverageCount} scenes. Distance-first randomizing works well when you just want to get moving.
+  en: The current {selectedDistanceTitleEn} tier contains {distanceCount} places across {sceneCoverageCount} scenes. Distance-first randomizing works well when you just want to get moving.
+[ZH_NO_CJK+SAME_LONG] inline.plan295.daily_choice.there_are_no_candidates_for_selected.02201253e526
+  zh: There are no candidates for {selectedDistanceTitleEn} × {selectedSceneTitleEn} yet. Switch the scene or add your own place in Manage.
+  en: There are no candidates for {selectedDistanceTitleEn} × {selectedSceneTitleEn} yet. Switch the scene or add your own place in Manage.
+[ZH_NO_CJK+SAME_LONG] inline.plan295.daily_choice.the_current_selecteddistance_titleen.c5724f7be4ad
+  zh: The current {selectedDistanceTitleEn} × {selectedSceneTitleEn} filter gives {candidateCount} candidates. Details include a map query, and the data model already leaves room for coarse location and open geo data later.
+  en: The current {selectedDistanceTitleEn} × {selectedSceneTitleEn} filter gives {candidateCount} candidates. Details include a map query, and the data model already leaves room for coarse location and open geo data later.
+[ZH_NO_CJK+SAME_LONG] inline.plan295.daily_choice.distance_selecteddistance_titleen.d2dae2086fe7
+  zh: Distance {selectedDistanceTitleEn}
+  en: Distance {selectedDistanceTitleEn}
+[ZH_NO_CJK+SAME_LONG] inline.plan295.daily_choice.scene_selectedscene_titleen.36a46f133169
+  zh: Scene {selectedSceneTitleEn}
+  en: Scene {selectedSceneTitleEn}
+[ZH_NO_CJK] inline.plan295.daily_choice.what_to_do.f2157bc059ce
+  zh: What to do
+  en: What to do
+[ZH_NO_CJK+SAME_LONG] inline.plan295.daily_choice.category_subtitleen_current_set_coll.912e0bcfb629
+  zh: {categorySubtitleEn}. Current set: {collectionTitle}.
+  en: {categorySubtitleEn}. Current set: {collectionTitle}.
+[ZH_NO_CJK+SAME_LONG] inline.plan295.daily_choice.place_kinden_about_dailychoicedistan.950e9d6994e3
+  zh: {placeKindEn} · about {dailyChoiceDistanceLabelEnPlaceDistanceMeters}
+  en: {placeKindEn} · about {dailyChoiceDistanceLabelEnPlaceDistanceMeters}
+[ZH_NO_CJK] daily_choice.place.map.provider.osm_hot.title
+  zh: OSM HOT
+  en: OSM HOT
+[ZH_NO_CJK] daily_choice.place.map.provider.osm_france_fallback.title
+  zh: OSM France
+  en: OSM France
+[ZH_NO_CJK+SAME_LONG] daily_choice.place.map.provider.osm_de.title
+  zh: OpenStreetMap.de
+  en: OpenStreetMap.de
+[ZH_NO_CJK+SAME_LONG] daily_choice.place.map.provider.osm_standard.title
+  zh: OSM Standard
+  en: OSM Standard
+[ZH_NO_CJK+SAME_LONG] daily_choice.place.map.provider.carto_voyager.title
+  zh: CARTO Voyager
+  en: CARTO Voyager
+[ZH_NO_CJK] daily_choice.place.map.provider.carto_light.title
+  zh: CARTO Light
+  en: CARTO Light
+[ZH_NO_CJK+SAME_LONG] inline.plan295.daily_choice.manual_selection_temperature_titleen.645fc37db6a4
+  zh: Manual selection: {temperatureTitleEn}. Weather suggests {suggestionTemperatureIdTitleEn}.
+  en: Manual selection: {temperatureTitleEn}. Weather suggests {suggestionTemperatureIdTitleEn}.
+[ZH_NO_CJK+SAME_LONG] inline.plan295.daily_choice.suggest_recommendedtemperature_title.9edbb2638d54
+  zh: Suggest {recommendedTemperatureTitleEn}
+  en: Suggest {recommendedTemperatureTitleEn}
+[ZH_NO_CJK] toolbox.free_chimes.metric.tempo
+  zh: BPM
+  en: BPM
+[ZH_NO_CJK] inline.plan297.human_tests.auditory.stimulus.degrees
+  zh: {p0}°
+  en: {p0}°
+[ZH_NO_CJK+SAME_LONG] inline.plan296.ui.pages.toolbox.human.tests.cognition.goal_total_luck_score_is_expectation.0f68e11d26
+  zh: {summary}
+Goal: {goalText}. Total luck score is {p4} expectation by {p3}.
+  en: {summary}
+Goal: {goalText}. Total luck score is {p4} expectation by {p3}.
+[ZH_NO_CJK] platform.linux.cmakelists.txt.release_82546b
+  zh: Release
+  en: Release
+[ZH_NO_CJK+SAME_LONG] inline.plan297.human_tests.typing.passage.a_calm_mind_can_move_quickly_without_feeling_rus.8573264db4
+  zh: A calm mind can move quickly without feeling rushed.
+  en: A calm mind can move quickly without feeling rushed.
+[ZH_NO_CJK+SAME_LONG] inline.plan297.human_tests.typing.passage.memory_improves_when_attention_has_a_gentle_rhyt.a28836ac59
+  zh: Memory improves when attention has a gentle rhythm.
+  en: Memory improves when attention has a gentle rhythm.
+[ZH_NO_CJK+SAME_LONG] inline.plan297.human_tests.typing.passage.clean_code_keeps_fast_ideas_from_becoming_expens.dabdfb7c93
+  zh: Clean code keeps fast ideas from becoming expensive noise.
+  en: Clean code keeps fast ideas from becoming expensive noise.
+[ZH_NO_CJK+SAME_LONG] inline.plan297.human_tests.typing.passage.the_quiet_station_clock_counted_every_suitcase_a.a4da437e92
+  zh: The quiet station clock counted every suitcase and every goodbye.
+  en: The quiet station clock counted every suitcase and every goodbye.
+[ZH_NO_CJK+SAME_LONG] inline.plan297.human_tests.typing.passage.a_useful_word_becomes_stronger_each_time_it_appe.c707bf7a73
+  zh: A useful word becomes stronger each time it appears in a new context.
+  en: A useful word becomes stronger each time it appears in a new context.
+[ZH_NO_CJK+SAME_LONG] inline.plan297.human_tests.typing.passage.the_train_crossed_the_river_just_as_the_city_ope.12a131898a
+  zh: The train crossed the river just as the city opened its windows.
+  en: The train crossed the river just as the city opened its windows.
+[ZH_NO_CJK+SAME_LONG] inline.plan297.human_tests.typing.passage.focus_25_minutes_rest_5_minutes_then_review_one_.c80a46ff7f
+  zh: Focus 25 minutes, rest 5 minutes, then review one small win.
+  en: Focus 25 minutes, rest 5 minutes, then review one small win.
+[ZH_NO_CJK+SAME_LONG] inline.plan297.human_tests.typing.passage.flutter_widget_tree_state_first_layout_second_po.47ec49ada6
+  zh: Flutter widget tree: state first, layout second, polish last.
+  en: Flutter widget tree: state first, layout second, polish last.
+[ZH_NO_CJK+SAME_LONG] inline.plan297.human_tests.typing.passage.sleep_mode_dim_light_soft_voice_zero_pressure.604f0fd0e0
+  zh: Sleep mode: dim light, soft voice, zero pressure.
+  en: Sleep mode: dim light, soft voice, zero pressure.
+[ZH_NO_CJK] toolbox.life.archive_tool.format_zip
+  zh: ZIP
+  en: ZIP
+[ZH_NO_CJK] toolbox.life.archive_tool.format_tar
+  zh: TAR
+  en: TAR
+[ZH_NO_CJK] toolbox.life.archive_tool.format_tar_gzip
+  zh: TAR.GZ
+  en: TAR.GZ
+[ZH_NO_CJK] toolbox.life.archive_tool.format_tar_bzip2
+  zh: TAR.BZ2
+  en: TAR.BZ2
+[ZH_NO_CJK] toolbox.life.archive_tool.format_tar_xz
+  zh: TAR.XZ
+  en: TAR.XZ
+[ZH_NO_CJK] toolbox.life.archive_tool.format_gzip
+  zh: GZip
+  en: GZip
+[ZH_NO_CJK] toolbox.life.archive_tool.format_bzip2
+  zh: BZip2
+  en: BZip2
+[ZH_NO_CJK] toolbox.life.archive_tool.format_xz
+  zh: XZ
+  en: XZ
+[ZH_NO_CJK] toolbox.life.archive_tool.algorithm_deflate
+  zh: Deflate
+  en: Deflate
+[ZH_NO_CJK] toolbox.life.archive_tool.algorithm_bzip2
+  zh: BZip2
+  en: BZip2
+[ZH_NO_CJK+SAME_LONG] toolbox.life.advanced_calculator.result_determinant
+  zh: det(A) = {value}
+  en: det(A) = {value}
+[ZH_NO_CJK+SAME_LONG] toolbox.life.advanced_calculator.result_inverse
+  zh: A⁻¹ =
+{value}
+  en: A⁻¹ =
+{value}
+[ZH_NO_CJK] toolbox.life.advanced_calculator.prob_n
+  zh: n
+  en: n
+[ZH_NO_CJK] toolbox.life.advanced_calculator.prob_k
+  zh: k
+  en: k
+[ZH_NO_CJK] toolbox.life.gif_maker.fps_value
+  zh: {fps} fps
+  en: {fps} fps
+[ZH_NO_CJK] toolbox.life.gif_maker.pixels
+  zh: {px} px
+  en: {px} px
+[ZH_NO_CJK] toolbox.life.gif_maker.quality_value
+  zh: {quality}%
+  en: {quality}%
+[ZH_NO_CJK+SAME_LONG] inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.hub.remove_from_quick_access.c39e2e9b07
+  zh: Remove "{titleEn}" from quick access?
+  en: Remove "{titleEn}" from quick access?
+[ZH_NO_CJK+SAME_LONG] inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.compress.x.ef519271df
+  zh: {_sourceWidth}x{_sourceHeight} · {p2}
+  en: {_sourceWidth}x{_sourceHeight} · {p2}
+[ZH_NO_CJK] inline.plan295.life.algorithm.1f86c487e91d
+  zh: Compression algorithm
+  en: Algorithm
+[ZH_NO_CJK] toolbox.life.light_meter.lux
+  zh: lux
+  en: lux
+[ZH_NO_CJK] life.offer_select.copy.joiner
+  zh: 、
+  en: , 
+[ZH_NO_CJK+SAME_LONG] inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.text.1d74c2fc23
+  zh: {label} · {p1}
+  en: {label} · {p1}
+[ZH_NO_CJK+SAME_LONG] inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.qr_v.33a7886cc0
+  zh: QR V{p0} · {label} · {p2}
+  en: QR V{p0} · {label} · {p2}
+[ZH_NO_CJK+SAME_LONG] inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.reverse.image.engines_succeeded_with_entries.d49d89aaaf
+  zh: {_successCount}/{length} engines succeeded with {_totalEntries} entries{p4}.
+  en: {_successCount}/{length} engines succeeded with {_totalEntries} entries{p4}.
+[ZH_NO_CJK] toolbox.life.speedometer.kmh
+  zh: km/h
+  en: km/h
+[ZH_NO_CJK] toolbox.life.speedometer.metric_ms
+  zh: m/s
+  en: m/s
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_002_deb83f4c49.display
+  zh: 前2500-前2034
+  en: 前2500-前2034
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_002_deb83f4c49.title
+  zh: 史记：五帝世系
+  en: 史记：五帝世系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_002_deb83f4c49.detail
+  zh: 史记：五帝世系，时段为 前2500-前2034。主要内容：（前2500—前2034）*；黄帝；玄嚣；昌意；额项；穷蝉；骆明；极；帝；敬康；帝尧；句望；桥牛；叟；帝舜；伯；夏禹；※五帝世系、年代无定说，此为一家之说，仅供参考。
+  en: 史记：五帝世系; span 前2500-前2034. Main contents: （前2500—前2034）*；黄帝；玄嚣；昌意；额项；穷蝉；骆明；极；帝；敬康；帝尧；句望；桥牛；叟；帝舜；伯；夏禹；※五帝世系、年代无定说，此为一家之说，仅供参考.
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_003_1e542f8599.display
+  zh: 前2033-前1562
+  en: 前2033-前1562
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_003_1e542f8599.title
+  zh: 史记：夏王世系
+  en: 史记：夏王世系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_003_1e542f8599.detail
+  zh: 史记：夏王世系，时段为 前2033-前1562。主要内容：（姒姓，前2033一前1562）*；禹(文命)；（前2033—前1989）；启；（前1988—前1979）；太康；（前1978—前1950）；仲康；（前1949—前1937）；相；（前1936—前1909）；少康；（前1968—前1948）※※；予；（前1847—前1831）；槐；（前1830—前1805）；芒（荒）。
+  en: 史记：夏王世系; span 前2033-前1562. Main contents: （姒姓，前2033一前1562）*；禹(文命)；（前2033—前1989）；启；（前1988—前1979）；太康；（前1978—前1950）；仲康；（前1949—前1937）；相；（前1936—前1909）；少康；（前1968—前1948）※※；予；（前1847—前1831）；槐；（前1830—前1805）；芒（荒）.
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_004_06faa253be.display
+  zh: 前1562-前1066
+  en: 前1562-前1066
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_004_06faa253be.title
+  zh: 史记：商王世系
+  en: 史记：商王世系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_004_06faa253be.detail
+  zh: 史记：商王世系，时段为 前1562-前1066。主要内容：（子姓，前1562—前1066）*；汤（天乙）；（前1579—前1551）；太丁；外丙；1（前1550—前1549）；仲壬；（前1548—前1545）；太甲；（前1544—前1533）；沃丁；（前1532—前1514）；太庚；（前1513—前1509）；小甲；（前1508—前1492）；雍己；（前1491—前1480）。
+  en: 史记：商王世系; span 前1562-前1066. Main contents: （子姓，前1562—前1066）*；汤（天乙）；（前1579—前1551）；太丁；外丙；1（前1550—前1549）；仲壬；（前1548—前1545）；太甲；（前1544—前1533）；沃丁；（前1532—前1514）；太庚；（前1513—前1509）；小甲；（前1508—前1492）；雍己；（前1491—前1480）.
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_005_5c014495d8.display
+  zh: 前1066-前256
+  en: 前1066-前256
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_005_5c014495d8.title
+  zh: 史记：周王世系
+  en: 史记：周王世系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_005_5c014495d8.detail
+  zh: 史记：周王世系，时段为 前1066-前256。主要内容：（姬姓，前1066—前256。西周，前1066—前771；东周，前770—前256）*；昌；武王发；（前1069一前1064）；成王诵；（前1063—前1027）；康王钊；（前1026一前1001）；昭王瑕；（前1000—前977）；穆王满；（前976—前922；共王繁扈；（前921—前910）；懿王艰；（前909—前885）；孝王辟方；（前884—前870）。
+  en: 史记：周王世系; span 前1066-前256. Main contents: （姬姓，前1066—前256。西周，前1066—前771；东周，前770—前256）*；昌；武王发；（前1069一前1064）；成王诵；（前1063—前1027）；康王钊；（前1026一前1001）；昭王瑕；（前1000—前977）；穆王满；（前976—前922；共王繁扈；（前921—前910）；懿王艰；（前909—前885）；孝王辟方；（前884—前870）.
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_006_788958f3df.display
+  zh: 前2070-前256
+  en: 前2070-前256
+[EN_HAS_CJK+SAME_LONG] toolbox.life.timeline.brief24.brief24_006_788958f3df.title
+  zh: 史记：夏商周断代工程阶段成果·夏商周年表
+  en: 史记：夏商周断代工程阶段成果·夏商周年表
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_006_788958f3df.detail
+  zh: 史记：夏商周断代工程阶段成果·夏商周年表，时段为 前2070-前256。主要内容：朝代；年代(公元前)；年数；王；禹；启；太康；仲康；相；少康；夏；予；槐；芒；泄；不降；扁；厘。
+  en: 史记：夏商周断代工程阶段成果·夏商周年表; span 前2070-前256. Main contents: 朝代；年代(公元前)；年数；王；禹；启；太康；仲康；相；少康；夏；予；槐；芒；泄；不降；扁；厘.
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_007_5aa07a250c.display
+  zh: 前770-前221
+  en: 前770-前221
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_007_5aa07a250c.title
+  zh: 史记：春秋战国君主世系
+  en: 史记：春秋战国君主世系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_007_5aa07a250c.detail
+  zh: 史记：春秋战国君主世系，时段为 前770-前221。主要内容：（前770—前221）；鲁君世系；（姬姓，前768一前249）；惠公；（前768—前723）；隐公息姑；（前722—前712）；桓公允；（前711—前694）；庄公同；（前693—前662）；闵公启方；■（前661—前660）；公申；（前659—前627）；文公兴；（前626—前609；宣公傻。
+  en: 史记：春秋战国君主世系; span 前770-前221. Main contents: （前770—前221）；鲁君世系；（姬姓，前768一前249）；惠公；（前768—前723）；隐公息姑；（前722—前712）；桓公允；（前711—前694）；庄公同；（前693—前662）；闵公启方；■（前661—前660）；公申；（前659—前627）；文公兴；（前626—前609；宣公傻.
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_008_48e630ab9c.display
+  zh: 前221-前206
+  en: 前221-前206
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_008_48e630ab9c.title
+  zh: 史记：秦帝系
+  en: 史记：秦帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_008_48e630ab9c.detail
+  zh: 史记：秦帝系，时段为 前221-前206。主要内容：（赢姓，前221一前206）；庄襄王子楚；始皇帝政；（前246—前210）；二世皇帝胡亥；（前209一前207）；王子婴；（前206）※；※秦王子婴在位仅四十六日，降刘邦时为十月，秦以十月为岁首，故标为前206年。
+  en: 史记：秦帝系; span 前221-前206. Main contents: （赢姓，前221一前206）；庄襄王子楚；始皇帝政；（前246—前210）；二世皇帝胡亥；（前209一前207）；王子婴；（前206）※；※秦王子婴在位仅四十六日，降刘邦时为十月，秦以十月为岁首，故标为前206年.
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_012_c6d3d5e9b7.display
+  zh: 前202-8
+  en: 前202-8
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_012_c6d3d5e9b7.title
+  zh: 汉书：西汉帝系
+  en: 汉书：西汉帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_012_c6d3d5e9b7.detail
+  zh: 汉书：西汉帝系，时段为 前202-8。主要内容：高祖刘邦；（前206—前195）；惠帝刘盈；（前194—前188）；高后吕雉；（前187—前180）；（少帝刘恭、少帝刘弘）；文帝刘恒；（前179—前157）；景帝刘启；（前156—前141）；武帝刘彻；（前140—前87）；戾太子刘据；昌邑王刘；昭帝刘弗陵；（前86—前74）；昌邑王刘贺（废帝）。
+  en: 汉书：西汉帝系; span 前202-8. Main contents: 高祖刘邦；（前206—前195）；惠帝刘盈；（前194—前188）；高后吕雉；（前187—前180）；（少帝刘恭、少帝刘弘）；文帝刘恒；（前179—前157）；景帝刘启；（前156—前141）；武帝刘彻；（前140—前87）；戾太子刘据；昌邑王刘；昭帝刘弗陵；（前86—前74）；昌邑王刘贺（废帝）.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_013_3e97b3d9b9.display
+  zh: 25-220
+  en: 25-220
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_013_3e97b3d9b9.title
+  zh: 后汉书：东汉帝系
+  en: 后汉书：东汉帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_013_3e97b3d9b9.detail
+  zh: 后汉书：东汉帝系，时段为 25-220。主要内容：光武帝刘秀；明帝刘庄；章帝刘烂；和帝刘肇；殇帝刘隆；刘庆；安帝刘祜；顺帝刘保；冲帝刘炳；刘伉；刘宠；刘鸿；质帝刘；刘开；刘翼；桓帝刘志；刘淑；刘。
+  en: 后汉书：东汉帝系; span 25-220. Main contents: 光武帝刘秀；明帝刘庄；章帝刘烂；和帝刘肇；殇帝刘隆；刘庆；安帝刘祜；顺帝刘保；冲帝刘炳；刘伉；刘宠；刘鸿；质帝刘；刘开；刘翼；桓帝刘志；刘淑；刘.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_014_a79a7f1b61.display
+  zh: 220-265
+  en: 220-265
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_014_a79a7f1b61.title
+  zh: 三国志：曹魏帝系
+  en: 三国志：曹魏帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_014_a79a7f1b61.detail
+  zh: 三国志：曹魏帝系，时段为 220-265。主要内容：武帝曹操；文帝曹不；燕王曹宇；明帝曹；东海王曹霖；废帝（齐王）曹芳；废帝（高贵乡公）曹髦；元帝曹负。
+  en: 三国志：曹魏帝系; span 220-265. Main contents: 武帝曹操；文帝曹不；燕王曹宇；明帝曹；东海王曹霖；废帝（齐王）曹芳；废帝（高贵乡公）曹髦；元帝曹负.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_015_577003fe77.display
+  zh: 221-263
+  en: 221-263
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_015_577003fe77.title
+  zh: 三国志：蜀汉帝系
+  en: 三国志：蜀汉帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_015_577003fe77.detail
+  zh: 三国志：蜀汉帝系，时段为 221-263。主要内容：昭烈帝刘备；后主刘禅。
+  en: 三国志：蜀汉帝系; span 221-263. Main contents: 昭烈帝刘备；后主刘禅.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_016_4906eee1bd.display
+  zh: 229-280
+  en: 229-280
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_016_4906eee1bd.title
+  zh: 三国志：孙吴帝系
+  en: 三国志：孙吴帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_016_4906eee1bd.detail
+  zh: 三国志：孙吴帝系，时段为 229-280。主要内容：大帝 孙权；废帝（会稽王）孙亮；景帝 孙休；南阳王 孙和；末帝 孙皓；三国时期中心区域图；作；乐；拓；乌；侯；跋；东；部；鲜；卑；秦；凉。
+  en: 三国志：孙吴帝系; span 229-280. Main contents: 大帝 孙权；废帝（会稽王）孙亮；景帝 孙休；南阳王 孙和；末帝 孙皓；三国时期中心区域图；作；乐；拓；乌；侯；跋；东；部；鲜；卑；秦；凉.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_017_3670a318f1.display
+  zh: 265-317
+  en: 265-317
+[EN_HAS_CJK+SAME_LONG] toolbox.life.timeline.brief24.brief24_017_3670a318f1.title
+  zh: 西晋书　东晋书：西晋帝系
+  en: 西晋书　东晋书：西晋帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_017_3670a318f1.detail
+  zh: 西晋书　东晋书：西晋帝系，时段为 265-317。主要内容：宣帝司马懿；景帝司马师；文帝司马昭；武帝司马炎；惠帝司马衷；怀帝司马炽；吴王司马晏；帝司马邺。
+  en: 西晋书　东晋书：西晋帝系; span 265-317. Main contents: 宣帝司马懿；景帝司马师；文帝司马昭；武帝司马炎；惠帝司马衷；怀帝司马炽；吴王司马晏；帝司马邺.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_019_6a058ca7e6.display
+  zh: 317-420
+  en: 317-420
+[EN_HAS_CJK+SAME_LONG] toolbox.life.timeline.brief24.brief24_019_6a058ca7e6.title
+  zh: 西晋书　东晋书：东晋帝系
+  en: 西晋书　东晋书：东晋帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_019_6a058ca7e6.detail
+  zh: 西晋书　东晋书：东晋帝系，时段为 317-420。主要内容：宣帝司马懿；琅邪王司马；琅邪王司马觐；元帝司马睿；明帝司马绍；成帝司马衍；康帝司马岳；穆帝司马；哀帝司马不；废帝司马奕；简文帝司马昱；孝武帝司马曜；安帝司马德宗；恭帝司马德文。
+  en: 西晋书　东晋书：东晋帝系; span 317-420. Main contents: 宣帝司马懿；琅邪王司马；琅邪王司马觐；元帝司马睿；明帝司马绍；成帝司马衍；康帝司马岳；穆帝司马；哀帝司马不；废帝司马奕；简文帝司马昱；孝武帝司马曜；安帝司马德宗；恭帝司马德文.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_020_67d7f6bceb.display
+  zh: 304-439
+  en: 304-439
+[EN_HAS_CJK+SAME_LONG] toolbox.life.timeline.brief24.brief24_020_67d7f6bceb.title
+  zh: 西晋书　东晋书：十六国兴亡
+  en: 西晋书　东晋书：十六国兴亡
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_020_67d7f6bceb.detail
+  zh: 西晋书　东晋书：十六国兴亡，时段为 304-439。主要内容：统治；灭于；国名；创建者；民族；都城；统治地区；时间；何国；成都(今属四；今四川东部、云；西；成汉；李雄；巴氏；东晋；川)；晋末。
+  en: 西晋书　东晋书：十六国兴亡; span 304-439. Main contents: 统治；灭于；国名；创建者；民族；都城；统治地区；时间；何国；成都(今属四；今四川东部、云；西；成汉；李雄；巴氏；东晋；川)；晋末.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_021_ea53f421b3.display
+  zh: 420-479
+  en: 420-479
+[EN_HAS_CJK+SAME_LONG] toolbox.life.timeline.brief24.brief24_021_ea53f421b3.title
+  zh: 宋书　南齐书　梁书　陈书：南朝宋帝系
+  en: 宋书　南齐书　梁书　陈书：南朝宋帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_021_ea53f421b3.detail
+  zh: 宋书　南齐书　梁书　陈书：南朝宋帝系，时段为 420-479。主要内容：武帝刘裕；少帝刘义符；文帝刘义隆；太子刘劭；孝武帝刘骏；前废帝刘子业；明帝刘或；后废帝刘昱；顺帝刘准。
+  en: 宋书　南齐书　梁书　陈书：南朝宋帝系; span 420-479. Main contents: 武帝刘裕；少帝刘义符；文帝刘义隆；太子刘劭；孝武帝刘骏；前废帝刘子业；明帝刘或；后废帝刘昱；顺帝刘准.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_022_3a7515cdf7.display
+  zh: 479-502
+  en: 479-502
+[EN_HAS_CJK+SAME_LONG] toolbox.life.timeline.brief24.brief24_022_3a7515cdf7.title
+  zh: 宋书　南齐书　梁书　陈书：南朝齐帝系
+  en: 宋书　南齐书　梁书　陈书：南朝齐帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_022_3a7515cdf7.detail
+  zh: 宋书　南齐书　梁书　陈书：南朝齐帝系，时段为 479-502。主要内容：高帝萧道成；武帝萧；文惠太子长懋；郁林王萧昭业；海陵王萧昭文；始安贞工道生；明帝萧鸾；东昏侯萧宝卷；和帝萧宝融。
+  en: 宋书　南齐书　梁书　陈书：南朝齐帝系; span 479-502. Main contents: 高帝萧道成；武帝萧；文惠太子长懋；郁林王萧昭业；海陵王萧昭文；始安贞工道生；明帝萧鸾；东昏侯萧宝卷；和帝萧宝融.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_023_42e9ec0f21.display
+  zh: 502-557
+  en: 502-557
+[EN_HAS_CJK+SAME_LONG] toolbox.life.timeline.brief24.brief24_023_42e9ec0f21.title
+  zh: 宋书　南齐书　梁书　陈书：南朝梁帝系
+  en: 宋书　南齐书　梁书　陈书：南朝梁帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_023_42e9ec0f21.detail
+  zh: 宋书　南齐书　梁书　陈书：南朝梁帝系，时段为 502-557。主要内容：武帝萧衍；简文帝萧纲；豫章王萧栋；元帝萧绎；长沙王萧懿；贞阳侯萧渊明；敬帝萧方智。
+  en: 宋书　南齐书　梁书　陈书：南朝梁帝系; span 502-557. Main contents: 武帝萧衍；简文帝萧纲；豫章王萧栋；元帝萧绎；长沙王萧懿；贞阳侯萧渊明；敬帝萧方智.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_024_becc944e7d.display
+  zh: 555-587
+  en: 555-587
+[EN_HAS_CJK+SAME_LONG] toolbox.life.timeline.brief24.brief24_024_becc944e7d.title
+  zh: 宋书　南齐书　梁书　陈书：南朝后梁帝系
+  en: 宋书　南齐书　梁书　陈书：南朝后梁帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_024_becc944e7d.detail
+  zh: 宋书　南齐书　梁书　陈书：南朝后梁帝系，时段为 555-587。主要内容：萧衍；萧统；宣帝萧警；明帝萧；后主萧琮。
+  en: 宋书　南齐书　梁书　陈书：南朝后梁帝系; span 555-587. Main contents: 萧衍；萧统；宣帝萧警；明帝萧；后主萧琮.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_025_668f2a4c41.display
+  zh: 557-589
+  en: 557-589
+[EN_HAS_CJK+SAME_LONG] toolbox.life.timeline.brief24.brief24_025_668f2a4c41.title
+  zh: 宋书　南齐书　梁书　陈书：南朝陈帝系
+  en: 宋书　南齐书　梁书　陈书：南朝陈帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_025_668f2a4c41.detail
+  zh: 宋书　南齐书　梁书　陈书：南朝陈帝系，时段为 557-589。主要内容：武帝陈霸先；始兴王陈道谭；文帝陈；废帝陈伯宗；宣帝陈项；后主陈叔宝；元；失；宋魏时期中心区域图；完；乌；水；难；高；车；（敕；勒）；洛。
+  en: 宋书　南齐书　梁书　陈书：南朝陈帝系; span 557-589. Main contents: 武帝陈霸先；始兴王陈道谭；文帝陈；废帝陈伯宗；宣帝陈项；后主陈叔宝；元；失；宋魏时期中心区域图；完；乌；水；难；高；车；（敕；勒）；洛.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_026_6666ddc31a.display
+  zh: 386-534
+  en: 386-534
+[EN_HAS_CJK+SAME_LONG] toolbox.life.timeline.brief24.brief24_026_6666ddc31a.title
+  zh: 魏书　北齐书　周书　隋书：北魏帝系
+  en: 魏书　北齐书　周书　隋书：北魏帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_026_6666ddc31a.detail
+  zh: 魏书　北齐书　周书　隋书：北魏帝系，时段为 386-534。主要内容：道武帝拓跋；明元帝拓跋嗣；太武帝拓跋焘；景穆太子拓跋晃；文成帝拓跋溶；南安王拓跋桢；献文帝拓跋弘；元怡；章武王元彬；彭城王元；广陵王元羽；孝文帝元宏；宣武帝元恪；广平王元怀；章武王元融；孝明帝元翊；孝庄帝元子攸；长广王元哗。
+  en: 魏书　北齐书　周书　隋书：北魏帝系; span 386-534. Main contents: 道武帝拓跋；明元帝拓跋嗣；太武帝拓跋焘；景穆太子拓跋晃；文成帝拓跋溶；南安王拓跋桢；献文帝拓跋弘；元怡；章武王元彬；彭城王元；广陵王元羽；孝文帝元宏；宣武帝元恪；广平王元怀；章武王元融；孝明帝元翊；孝庄帝元子攸；长广王元哗.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_027_081f637bec.display
+  zh: 534-550
+  en: 534-550
+[EN_HAS_CJK+SAME_LONG] toolbox.life.timeline.brief24.brief24_027_081f637bec.title
+  zh: 魏书　北齐书　周书　隋书：东魏帝系
+  en: 魏书　北齐书　周书　隋书：东魏帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_027_081f637bec.detail
+  zh: 魏书　北齐书　周书　隋书：东魏帝系，时段为 534-550。主要内容：北魏孝文帝元宏；孝静帝元善见。
+  en: 魏书　北齐书　周书　隋书：东魏帝系; span 534-550. Main contents: 北魏孝文帝元宏；孝静帝元善见.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_028_dfbe86910b.display
+  zh: 535-557
+  en: 535-557
+[EN_HAS_CJK+SAME_LONG] toolbox.life.timeline.brief24.brief24_028_dfbe86910b.title
+  zh: 魏书　北齐书　周书　隋书：西魏帝系
+  en: 魏书　北齐书　周书　隋书：西魏帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_028_dfbe86910b.detail
+  zh: 魏书　北齐书　周书　隋书：西魏帝系，时段为 535-557。主要内容：北魏孝文帝元宏；文帝元宝炬；废帝元钦；恭帝元廓。
+  en: 魏书　北齐书　周书　隋书：西魏帝系; span 535-557. Main contents: 北魏孝文帝元宏；文帝元宝炬；废帝元钦；恭帝元廓.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_029_017c58f3c8.display
+  zh: 550-577
+  en: 550-577
+[EN_HAS_CJK+SAME_LONG] toolbox.life.timeline.brief24.brief24_029_017c58f3c8.title
+  zh: 魏书　北齐书　周书　隋书：北齐帝系
+  en: 魏书　北齐书　周书　隋书：北齐帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_029_017c58f3c8.detail
+  zh: 魏书　北齐书　周书　隋书：北齐帝系，时段为 550-577。主要内容：高欢；文宣帝高洋；废帝高殷；孝昭帝高演；武成帝高湛；后主高纬；幼主高恒。
+  en: 魏书　北齐书　周书　隋书：北齐帝系; span 550-577. Main contents: 高欢；文宣帝高洋；废帝高殷；孝昭帝高演；武成帝高湛；后主高纬；幼主高恒.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_030_ea36fe756c.display
+  zh: 557-581
+  en: 557-581
+[EN_HAS_CJK+SAME_LONG] toolbox.life.timeline.brief24.brief24_030_ea36fe756c.title
+  zh: 魏书　北齐书　周书　隋书：周帝系
+  en: 魏书　北齐书　周书　隋书：周帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_030_ea36fe756c.detail
+  zh: 魏书　北齐书　周书　隋书：周帝系，时段为 557-581。主要内容：宇文泰；孝闵帝宇文觉；明帝宇文毓；武帝宇文邕；宣帝宇文赞；静帝宇文阐。
+  en: 魏书　北齐书　周书　隋书：周帝系; span 557-581. Main contents: 宇文泰；孝闵帝宇文觉；明帝宇文毓；武帝宇文邕；宣帝宇文赞；静帝宇文阐.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_031_88e00dec78.display
+  zh: 581-618
+  en: 581-618
+[EN_HAS_CJK+SAME_LONG] toolbox.life.timeline.brief24.brief24_031_88e00dec78.title
+  zh: 魏书　北齐书　周书　隋书：隋帝系
+  en: 魏书　北齐书　周书　隋书：隋帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_031_88e00dec78.detail
+  zh: 魏书　北齐书　周书　隋书：隋帝系，时段为 581-618。主要内容：文帝杨坚；炀帝杨广；元德太子杨昭；恭帝（代王）杨；失；宋魏时期中心区域图；完；乌；水；难；高；车；（敕；勒）；洛；燕；安贝；韦。
+  en: 魏书　北齐书　周书　隋书：隋帝系; span 581-618. Main contents: 文帝杨坚；炀帝杨广；元德太子杨昭；恭帝（代王）杨；失；宋魏时期中心区域图；完；乌；水；难；高；车；（敕；勒）；洛；燕；安贝；韦.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_032_0c17c67151.display
+  zh: 618-907
+  en: 618-907
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_032_0c17c67151.title
+  zh: 唐书：唐帝系
+  en: 唐书：唐帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_032_0c17c67151.detail
+  zh: 唐书：唐帝系，时段为 618-907。主要内容：高祖李渊；太宗李世民；高宗李治；中宗李显；睿宗李旦；武则天；殇帝李重茂；玄宗李隆基；肃宗李亨；代宗李豫；德宗李适；顺宗李诵；※中宗李显、睿宗李旦均两次为帝。；宪宗李纯；穆宗李恒；敬宗李湛；文宗李昂；武宗李炎（）。
+  en: 唐书：唐帝系; span 618-907. Main contents: 高祖李渊；太宗李世民；高宗李治；中宗李显；睿宗李旦；武则天；殇帝李重茂；玄宗李隆基；肃宗李亨；代宗李豫；德宗李适；顺宗李诵；※中宗李显、睿宗李旦均两次为帝。；宪宗李纯；穆宗李恒；敬宗李湛；文宗李昂；武宗李炎（）.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_033_c433be87a5.display
+  zh: 907-960
+  en: 907-960
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_033_c433be87a5.title
+  zh: 五代史：五代帝系
+  en: 五代史：五代帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_033_c433be87a5.detail
+  zh: 五代史：五代帝系，时段为 907-960。主要内容：后梁；太祖朱温；郢王朱友；末帝朱友贞；后唐；李克用；庄宗李存；明宗李嗣源；帝李从厚；废帝李从珂；后晋；高祖石敬塘；出帝石重贵；后汉；高祖刘知远；隐帝刘承祐；后周；太祖郭威。
+  en: 五代史：五代帝系; span 907-960. Main contents: 后梁；太祖朱温；郢王朱友；末帝朱友贞；后唐；李克用；庄宗李存；明宗李嗣源；帝李从厚；废帝李从珂；后晋；高祖石敬塘；出帝石重贵；后汉；高祖刘知远；隐帝刘承祐；后周；太祖郭威.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_034_61dba1cc97.display
+  zh: 902-979
+  en: 902-979
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_034_61dba1cc97.title
+  zh: 五代史：十国君主世系
+  en: 五代史：十国君主世系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_034_61dba1cc97.detail
+  zh: 五代史：十国君主世系，时段为 902-979。主要内容：吴；太祖杨行密；烈祖杨渥；高祖杨隆演；睿帝杨溥；南唐；烈祖 李昇；元宗 李璟；后主 李煜；前蜀；高祖王建；后主王衍；后蜀；高祖孟知祥；后主孟昶；南汉；高祖刘陟；殇帝刘洪度。
+  en: 五代史：十国君主世系; span 902-979. Main contents: 吴；太祖杨行密；烈祖杨渥；高祖杨隆演；睿帝杨溥；南唐；烈祖 李昇；元宗 李璟；后主 李煜；前蜀；高祖王建；后主王衍；后蜀；高祖孟知祥；后主孟昶；南汉；高祖刘陟；殇帝刘洪度.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_035_2c67ebcdc4.display
+  zh: 960-1127
+  en: 960-1127
+[EN_HAS_CJK+SAME_LONG] toolbox.life.timeline.brief24.brief24_035_2c67ebcdc4.title
+  zh: 北宋史　南宋史：北宋帝系
+  en: 北宋史　南宋史：北宋帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_035_2c67ebcdc4.detail
+  zh: 北宋史　南宋史：北宋帝系，时段为 960-1127。主要内容：太祖赵匡胤；太宗赵光义；真宗赵恒；商王赵元份；仁宗赵祯；濮王赵允让；英宗赵曙；神宗赵项；哲宗赵煦；徽宗赵佶；钦宗赵桓；康王赵构（南宋高宗）。
+  en: 北宋史　南宋史：北宋帝系; span 960-1127. Main contents: 太祖赵匡胤；太宗赵光义；真宗赵恒；商王赵元份；仁宗赵祯；濮王赵允让；英宗赵曙；神宗赵项；哲宗赵煦；徽宗赵佶；钦宗赵桓；康王赵构（南宋高宗）.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_036_a126f0e8d0.display
+  zh: 1127-1279
+  en: 1127-1279
+[EN_HAS_CJK+SAME_LONG] toolbox.life.timeline.brief24.brief24_036_a126f0e8d0.title
+  zh: 北宋史　南宋史：南宋帝系
+  en: 北宋史　南宋史：南宋帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_036_a126f0e8d0.detail
+  zh: 北宋史　南宋史：南宋帝系，时段为 1127-1279。主要内容：太祖；太宗；燕王 赵德昭；秦王 赵德芳；高宗赵构；赵子；孝宗赵；光宗赵惊；宁宗赵扩；荣王赵希；理宗赵昀；嗣荣王赵与芮；度宗赵；恭帝赵；端宗赵是；赵；辽北宋；西夏时期中心区域图。
+  en: 北宋史　南宋史：南宋帝系; span 1127-1279. Main contents: 太祖；太宗；燕王 赵德昭；秦王 赵德芳；高宗赵构；赵子；孝宗赵；光宗赵惊；宁宗赵扩；荣王赵希；理宗赵昀；嗣荣王赵与芮；度宗赵；恭帝赵；端宗赵是；赵；辽北宋；西夏时期中心区域图.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_037_232927fe4b.display
+  zh: 907-1125
+  en: 907-1125
+[EN_HAS_CJK+SAME_LONG] toolbox.life.timeline.brief24.brief24_037_232927fe4b.title
+  zh: 辽史　金史　西夏史：辽帝系
+  en: 辽史　金史　西夏史：辽帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_037_232927fe4b.detail
+  zh: 辽史　金史　西夏史：辽帝系，时段为 907-1125。主要内容：太祖耶律阿保机；耶律倍；太宗耶律德光；世宗耶律阮；穆宗耶律璟；景宗耶律贤；圣宗耶律隆绪；兴宗耶律宗真；道宗耶律洪基（弘基）；耶律；天祚帝耶律延禧。
+  en: 辽史　金史　西夏史：辽帝系; span 907-1125. Main contents: 太祖耶律阿保机；耶律倍；太宗耶律德光；世宗耶律阮；穆宗耶律璟；景宗耶律贤；圣宗耶律隆绪；兴宗耶律宗真；道宗耶律洪基（弘基）；耶律；天祚帝耶律延禧.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_038_8b86bd5ba6.display
+  zh: 1115-1234
+  en: 1115-1234
+[EN_HAS_CJK+SAME_LONG] toolbox.life.timeline.brief24.brief24_038_8b86bd5ba6.title
+  zh: 辽史　金史　西夏史：金帝系
+  en: 辽史　金史　西夏史：金帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_038_8b86bd5ba6.detail
+  zh: 辽史　金史　西夏史：金帝系，时段为 1115-1234。主要内容：劾里钵；太祖完颜（阿骨打）；太宗完颜晟（吴乞买）；完颜宗峻；熙宗完颜；完颜宗幹；海陵王完颜亮；完颜宗辅；世宗完颜雍；完颜允恭；章宗完颜璟；卫绍王完颜允济；宣宗完颜珣；哀宗完颜守绪；末帝完颜承麟；※系劾里钵诸孙。
+  en: 辽史　金史　西夏史：金帝系; span 1115-1234. Main contents: 劾里钵；太祖完颜（阿骨打）；太宗完颜晟（吴乞买）；完颜宗峻；熙宗完颜；完颜宗幹；海陵王完颜亮；完颜宗辅；世宗完颜雍；完颜允恭；章宗完颜璟；卫绍王完颜允济；宣宗完颜珣；哀宗完颜守绪；末帝完颜承麟；※系劾里钵诸孙.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_039_e86062722b.display
+  zh: 1032-1227
+  en: 1032-1227
+[EN_HAS_CJK+SAME_LONG] toolbox.life.timeline.brief24.brief24_039_e86062722b.title
+  zh: 辽史　金史　西夏史：西夏帝系
+  en: 辽史　金史　西夏史：西夏帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_039_e86062722b.detail
+  zh: 辽史　金史　西夏史：西夏帝系，时段为 1032-1227。主要内容：太宗德明；景宗元昊皇帝；毅宗谅祚；惠宗秉常；崇宗乾顺；仁宗仁孝；桓宗纯祐；越王仁友；襄宗安全；某；齐国忠武王彦宗；神宗遵项；献宗德旺；清平郡王某；末帝；※改姓名始称大夏。；辽北宋；西夏时期中心区域图。
+  en: 辽史　金史　西夏史：西夏帝系; span 1032-1227. Main contents: 太宗德明；景宗元昊皇帝；毅宗谅祚；惠宗秉常；崇宗乾顺；仁宗仁孝；桓宗纯祐；越王仁友；襄宗安全；某；齐国忠武王彦宗；神宗遵项；献宗德旺；清平郡王某；末帝；※改姓名始称大夏。；辽北宋；西夏时期中心区域图.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_040_09f7c4a3cd.display
+  zh: 1206-1370
+  en: 1206-1370
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_040_09f7c4a3cd.title
+  zh: 元史：元帝系
+  en: 元史：元帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_040_09f7c4a3cd.detail
+  zh: 元史：元帝系，时段为 1206-1370。主要内容：元太祖成吉思汗；拖雷监国；元太宗窝阔台；乃马真后监国；元定宗贵由；海迷失后监国；元宪宗蒙哥；元世祖忽必烈；真金；元成宗铁穆耳；答刺麻八刺；甘麻剌；元武宗海山；元仁宗爱育黎拔力八达；元英宗硕德八刺；元泰定帝也孙铁木儿；天顺帝阿刺吉八；元文宗图帖睦尔。
+  en: 元史：元帝系; span 1206-1370. Main contents: 元太祖成吉思汗；拖雷监国；元太宗窝阔台；乃马真后监国；元定宗贵由；海迷失后监国；元宪宗蒙哥；元世祖忽必烈；真金；元成宗铁穆耳；答刺麻八刺；甘麻剌；元武宗海山；元仁宗爱育黎拔力八达；元英宗硕德八刺；元泰定帝也孙铁木儿；天顺帝阿刺吉八；元文宗图帖睦尔.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_041_cc0c037e38.display
+  zh: 1251-1310
+  en: 1251-1310
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_041_cc0c037e38.title
+  zh: 元史：窝阔台汗国
+  en: 元史：窝阔台汗国
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_041_cc0c037e38.detail
+  zh: 元史：窝阔台汗国，时段为 1251-1310。主要内容：成吉思汗；术赤；察合台；拖雷；窝阔台；哈刺察儿；贵由；合失；合丹；灭里；察忽；脑忽；禾忽；海都；察八儿；仰吉察儿；斡罗思。
+  en: 元史：窝阔台汗国; span 1251-1310. Main contents: 成吉思汗；术赤；察合台；拖雷；窝阔台；哈刺察儿；贵由；合失；合丹；灭里；察忽；脑忽；禾忽；海都；察八儿；仰吉察儿；斡罗思.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_042_aeeed22a90.display
+  zh: 1225-1370
+  en: 1225-1370
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_042_aeeed22a90.title
+  zh: 元史：察合台汗国
+  en: 元史：察合台汗国
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_042_aeeed22a90.detail
+  zh: 元史：察合台汗国，时段为 1225-1370。主要内容：成吉思汗；术赤；窝阔台；拖雷；察合台；抹土干；拜答里；撒班；合刺旭烈；也速蒙哥；（妃）兀鲁忽乃（监国）；阿鲁忽；木八刺沙；也孙脱；八刺；不里一合答海；聂古伯；不合帖木儿。
+  en: 元史：察合台汗国; span 1225-1370. Main contents: 成吉思汗；术赤；窝阔台；拖雷；察合台；抹土干；拜答里；撒班；合刺旭烈；也速蒙哥；（妃）兀鲁忽乃（监国）；阿鲁忽；木八刺沙；也孙脱；八刺；不里一合答海；聂古伯；不合帖木儿.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_043_8ce4e71a4a.display
+  zh: 1243-1361
+  en: 1243-1361
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_043_8ce4e71a4a.title
+  zh: 元史：钦察汗国
+  en: 元史：钦察汗国
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_043_8ce4e71a4a.detail
+  zh: 元史：钦察汗国，时段为 1243-1361。主要内容：成占思汗；察合台；窝阔台；拖雷；术赤；斡儿答；撒都不花（首代白帐汗）；额儿曾（白账汗）；木八刺火者（白帐汗）；沉白（白帐汗）；昔班；塔塔儿；那海；脱花帖木儿；秃里火者；儿鲁思汗（白帐汗）；拔都；托托罕。
+  en: 元史：钦察汗国; span 1243-1361. Main contents: 成占思汗；察合台；窝阔台；拖雷；术赤；斡儿答；撒都不花（首代白帐汗）；额儿曾（白账汗）；木八刺火者（白帐汗）；沉白（白帐汗）；昔班；塔塔儿；那海；脱花帖木儿；秃里火者；儿鲁思汗（白帐汗）；拔都；托托罕.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_044_855bf538f7.display
+  zh: 1264-1265
+  en: 1264-1265
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_044_855bf538f7.title
+  zh: 元史：伊利汗国
+  en: 元史：伊利汗国
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_044_855bf538f7.detail
+  zh: 元史：伊利汗国，时段为 1264-1265。主要内容：成吉思汗；术赤；察合台；窝阔台；拖雷；蒙哥（宪宗）；忽必烈（世祖)；旭烈兀；阿里不哥；阿八哈；阿合马；阿鲁浑；海合都；塔刺海；拜都；合赞；完者都；不赛因。
+  en: 元史：伊利汗国; span 1264-1265. Main contents: 成吉思汗；术赤；察合台；窝阔台；拖雷；蒙哥（宪宗）；忽必烈（世祖)；旭烈兀；阿里不哥；阿八哈；阿合马；阿鲁浑；海合都；塔刺海；拜都；合赞；完者都；不赛因.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_045_4abace39a3.display
+  zh: 1368-1644
+  en: 1368-1644
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_045_4abace39a3.title
+  zh: 明史：明帝系
+  en: 明史：明帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_045_4abace39a3.detail
+  zh: 明史：明帝系，时段为 1368-1644。主要内容：太祖朱元璋；（洪武1368—1398）；朱标（懿文太子）；惠帝朱允；（建文1399—1402）；成祖朱棣；（永乐1403—1424）；仁宗朱高炽；■（洪熙1425）；宣宗朱瞻基；（宣德1426—1435）；英宗朱祁镇；（正统1436—1449）；景帝朱祁钰；（景泰1450—1456）；（天顺1457—1464）；宪宗朱见深；（成化1465—1487）。
+  en: 明史：明帝系; span 1368-1644. Main contents: 太祖朱元璋；（洪武1368—1398）；朱标（懿文太子）；惠帝朱允；（建文1399—1402）；成祖朱棣；（永乐1403—1424）；仁宗朱高炽；■（洪熙1425）；宣宗朱瞻基；（宣德1426—1435）；英宗朱祁镇；（正统1436—1449）；景帝朱祁钰；（景泰1450—1456）；（天顺1457—1464）；宪宗朱见深；（成化1465—1487）.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_046_49dc78bb6c.display
+  zh: 1644-1850
+  en: 1644-1850
+[EN_HAS_CJK+SAME_LONG] toolbox.life.timeline.brief24.brief24_046_49dc78bb6c.title
+  zh: 清史　一八四〇年前：清帝系
+  en: 清史　一八四〇年前：清帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_046_49dc78bb6c.detail
+  zh: 清史　一八四〇年前：清帝系，时段为 1644-1850。主要内容：太祖爱新觉罗·努尔哈赤；太宗皇太极；世祖福临；（顺治1644—1661）；圣祖玄烨；（康熙1662—1722）；世宗胤；（雍正1723—1735）；高宗弘历；（乾隆1736一1795）；仁宗琰；（嘉庆1796—1820）；宣宗曼宁；（道光1821—1850）；※本表截止宣宗，宣宗以下帝系列入《晚清史》。；池；子塔尔巴哈台；多。
+  en: 清史　一八四〇年前：清帝系; span 1644-1850. Main contents: 太祖爱新觉罗·努尔哈赤；太宗皇太极；世祖福临；（顺治1644—1661）；圣祖玄烨；（康熙1662—1722）；世宗胤；（雍正1723—1735）；高宗弘历；（乾隆1736一1795）；仁宗琰；（嘉庆1796—1820）；宣宗曼宁；（道光1821—1850）；※本表截止宣宗，宣宗以下帝系列入《晚清史》。；池；子塔尔巴哈台；多.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_047_3dadbfd358.display
+  zh: 1840-1912
+  en: 1840-1912
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_047_3dadbfd358.title
+  zh: 晚清史：晚清帝系
+  en: 晚清史：晚清帝系
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_047_3dadbfd358.detail
+  zh: 晚清史：晚清帝系，时段为 1840-1912。主要内容：宣宗曼宁；（道光1820—1850）；文宗奕泞；（咸丰1850—1861）；醇亲王奕；穆宗载淳；（同治*1861—1875**）；德宗载活；（光绪1875一1908***）；醇亲王载沣；溥仪；（宣统1908—1912****）；咸丰十一年七月二十九日（1861，9，3）定年号为祺祥，十月初五日（11，7）；改年号为同治。；即位之初由慈安、慈禧两宫皇太后垂帘听政，同治十二年一月二十六日（1873，；2，23）亲政。；即位之初由慈禧太后垂帘听政，光绪十五年二月初三日（1889，3，4）亲政;；光绪二十四年八月初六日（1898，9，21）被囚禁，由慈禧太后重新训政。
+  en: 晚清史：晚清帝系; span 1840-1912. Main contents: 宣宗曼宁；（道光1820—1850）；文宗奕泞；（咸丰1850—1861）；醇亲王奕；穆宗载淳；（同治*1861—1875**）；德宗载活；（光绪1875一1908***）；醇亲王载沣；溥仪；（宣统1908—1912****）；咸丰十一年七月二十九日（1861，9，3）定年号为祺祥，十月初五日（11，7）；改年号为同治。；即位之初由慈安、慈禧两宫皇太后垂帘听政，同治十二年一月二十六日（1873，；2，23）亲政。；即位之初由慈禧太后垂帘听政，光绪十五年二月初三日（1889，3，4）亲政;；光绪二十四年八月初六日（1898，9，21）被囚禁，由慈禧太后重新训政.
+[ZH_NO_CJK] toolbox.life.timeline.brief24.brief24_048_0723c773dc.display
+  zh: 1842-1911
+  en: 1842-1911
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_048_0723c773dc.title
+  zh: 晚清史：晚清通商口岸
+  en: 晚清史：晚清通商口岸
+[EN_HAS_CJK] toolbox.life.timeline.brief24.brief24_048_0723c773dc.detail
+  zh: 晚清史：晚清通商口岸，时段为 1842-1911。主要内容：地点；开埠年；条约名称；备注；广州；《中英南京条约》；福州；同上；厦门；宁波；上海；《中俄伊犁塔尔巴哈台通商章；伊犁；程》；塔尔巴哈台；今塔城；台湾；《中俄天津条约》。
+  en: 晚清史：晚清通商口岸; span 1842-1911. Main contents: 地点；开埠年；条约名称；备注；广州；《中英南京条约》；福州；同上；厦门；宁波；上海；《中俄伊犁塔尔巴哈台通商章；伊犁；程》；塔尔巴哈台；今塔城；台湾；《中俄天津条约》.
+[ZH_NO_CJK] inline.plan295.life.kilobyte.aac0dfe8c4d6
+  zh: KB
+  en: Kilobyte
+[ZH_NO_CJK] inline.plan295.life.megabyte.606a4379513b
+  zh: MB
+  en: Megabyte
+[ZH_NO_CJK] inline.plan295.life.gigabyte.bdc580a612ed
+  zh: GB
+  en: Gigabyte
+[ZH_NO_CJK] inline.plan295.life.terabyte.9f9b2d8a5ff7
+  zh: TB
+  en: Terabyte
+[ZH_NO_CJK] inline.plan295.life.kibibyte.95d03d1627a6
+  zh: KiB
+  en: Kibibyte
+[ZH_NO_CJK] inline.plan295.life.mebibyte.cc784ed0ac16
+  zh: MiB
+  en: Mebibyte
+[ZH_NO_CJK] inline.plan295.life.gibibyte.a18d7c01420c
+  zh: GiB
+  en: Gibibyte
+[ZH_NO_CJK] inline.plan295.life.tebibyte.6377168d14e0
+  zh: TiB
+  en: Tebibyte
+[ZH_NO_CJK] inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.wallpaper.http.f4827c8db9
+  zh: HTTP {p0}
+  en: HTTP {p0}
+[ZH_NO_CJK] toolbox.sound.focus.quick_presets.meter
+  zh: {bpm} BPM · {beats}/4 ×{subdivision}
+  en: {bpm} BPM · {beats}/4 x{subdivision}
+[ZH_NO_CJK] toolbox.sudoku.details.hide
+  zh: ??
+  en: Hide
+[ZH_NO_CJK] toolbox.sudoku.details.show
+  zh: ??
+  en: Show
+[ZH_NO_CJK+SAME_LONG] inline.plan294.zen_sand.applied_value_3041c0f2
+  zh: Applied "{presetTitleEn}".
+  en: Applied "{presetTitleEn}".
+[ZH_NO_CJK+SAME_LONG] inline.plan294.zen_sand.layered_value_onto_the_current_tray_2f704183
+  zh: Layered "{presetTitleEn}" onto the current tray.
+  en: Layered "{presetTitleEn}" onto the current tray.
+[ZH_NO_CJK] speech.remote.app_id
+  zh: App ID
+  en: App ID
+[ZH_NO_CJK+SAME_LONG] speech.remote.voice.doubao_amanda
+  zh: Doubao · Amanda
+  en: Doubao · Amanda
+[ZH_NO_CJK+SAME_LONG] speech.remote.voice.doubao_adam
+  zh: Doubao · Adam
+  en: Doubao · Adam

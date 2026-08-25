@@ -1,0 +1,120 @@
+daily_choice.wear.advisor.audit.care.title
+  zh: 维护与细节
+  en: Care details
+daily_choice.wear.advisor.audit.movement.title
+  zh: 行动自由
+  en: Movement
+daily_choice.wear.advisor.audit.proportion.title
+  zh: 比例收口
+  en: Proportion
+daily_choice.wear.advisor.audit.scene.title
+  zh: 场景合适
+  en: Scene fit
+daily_choice.wear.advisor.audit.shoes_bag.title
+  zh: 鞋包统一
+  en: Shoes and bag
+daily_choice.wear.advisor.audit.temperature.title
+  zh: 温度与体感
+  en: Temperature
+daily_choice.wear.advisor.color.accent.title
+  zh: 彩色亮点
+  en: Accent
+daily_choice.wear.advisor.color.black.title
+  zh: 黑色单品
+  en: Black
+daily_choice.wear.advisor.color.khaki.title
+  zh: 卡其米色
+  en: Khaki
+daily_choice.wear.advisor.color.navy.title
+  zh: 海军蓝
+  en: Navy
+daily_choice.wear.advisor.color.white.title
+  zh: 白色单品
+  en: White
+daily_choice.wear.advisor.layer.cold.title
+  zh: 冷天
+  en: Cold
+daily_choice.wear.advisor.layer.hot.title
+  zh: 炎热
+  en: Hot
+daily_choice.wear.advisor.layer.mild.title
+  zh: 温和
+  en: Mild
+daily_choice.wear.advisor.layer.rain.title
+  zh: 雨天
+  en: Rain
+daily_choice.wear.advisor.scene.business.title
+  zh: 正式
+  en: Business
+daily_choice.wear.advisor.scene.commute.title
+  zh: 通勤
+  en: Commute
+daily_choice.wear.advisor.scene.date.title
+  zh: 约会
+  en: Date
+daily_choice.wear.advisor.scene.exercise.title
+  zh: 运动
+  en: Exercise
+daily_choice.wear.advisor.scene.rain.title
+  zh: 雨天
+  en: Rain
+toolbox.crypto.file.title
+  zh: 文件加密
+  en: File encryption
+toolbox.crypto.hash.title
+  zh: 散列校验
+  en: Hash check
+toolbox.crypto.hmac.title
+  zh: HMAC / MAC
+  en: HMAC / MAC
+toolbox.crypto.otp.title
+  zh: TOTP/HOTP 验证码
+  en: TOTP/HOTP codes
+toolbox.crypto.password_vault.title
+  zh: 我的密码
+  en: My passwords
+toolbox.crypto.text.title
+  zh: 文本加密
+  en: Text encryption
+toolbox.life.distance_meter.title
+  zh: 测距仪
+  en: Distance meter
+toolbox.life.hub.category.calc.label
+  zh: 计算工具
+  en: Calculators
+toolbox.life.hub.category.display.label
+  zh: 屏幕展示
+  en: Display tools
+toolbox.life.hub.category.image.label
+  zh: 图片与媒体
+  en: Image and media
+toolbox.life.hub.category.system.label
+  zh: 系统工具
+  en: System tools
+toolbox.life.hub.category.text.label
+  zh: 文本工具
+  en: Text tools
+toolbox.life.hub.category.web.label
+  zh: 查询与网络
+  en: Query and web
+toolbox.life.light_meter.title
+  zh: 照度计
+  en: Light meter
+toolbox.life.magnifier.title
+  zh: 放大镜
+  en: Magnifier
+toolbox.life.menstrual_cycle.title
+  zh: 生理周期
+  en: Menstrual cycle
+toolbox.life.speedometer.title
+  zh: 测速仪
+  en: Speedometer
+toolbox.sound.focus.quick_presets.deep.title
+  zh: 深稳
+  en: Deep steady
+toolbox.sound.focus.quick_presets.sprint.title
+  zh: 冲刺
+  en: Sprint
+toolbox.sound.focus.quick_presets.steady.title
+  zh: 安定
+  en: Steady

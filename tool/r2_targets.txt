@@ -1,0 +1,549 @@
+daily_choice.place.map.provider.carto_light.description
+  zh: 更克制的浅色底图，适合降低视觉噪声；通常需要可访问国际网络的环境，作为非默认备用源保留。
+  en: A quieter light basemap that keeps dense place markers easier to scan; usually requires access to the international network.
+daily_choice.place.map.provider.carto_light.title
+  zh: CARTO Light
+  en: CARTO Light
+daily_choice.place.map.provider.carto_voyager.description
+  zh: CARTO 真实街区样式；通常需要可访问国际网络的环境，在部分地区可能不可用。
+  en: CARTO street basemap that usually requires access to the international network and may be unavailable in some regions.
+daily_choice.place.map.provider.carto_voyager.title
+  zh: CARTO Voyager
+  en: CARTO Voyager
+daily_choice.place.map.provider.osm_de.description
+  zh: 德国 OSM 社区样式；通常需要可访问国际网络的环境，默认源不稳定时可手动切换。
+  en: German OSM community style; usually requires access to the international network and can be selected when the default source is unstable.
+daily_choice.place.map.provider.osm_de.title
+  zh: OpenStreetMap.de
+  en: OpenStreetMap.de
+daily_choice.place.map.provider.osm_france_fallback.description
+  zh: OSM France 社区瓦片；作为备用源保留，通常需要可访问国际网络的环境。
+  en: OSM France community tiles kept as a fallback; usually requires access to the international network.
+daily_choice.place.map.provider.osm_france_fallback.title
+  zh: OSM France
+  en: OSM France
+daily_choice.place.map.provider.osm_hot.description
+  zh: 默认地图源，使用 OSM 人道主义样式；地名和道路层级更醒目，适合作为受限网络下的优先尝试源。
+  en: Default tile source using the OSM humanitarian style, with more visible labels and road hierarchy for restricted networks.
+daily_choice.place.map.provider.osm_hot.title
+  zh: OSM HOT
+  en: OSM HOT
+daily_choice.place.map.provider.osm_standard.description
+  zh: OpenStreetMap 官方标准瓦片；通常需要可访问国际网络的环境，仅在需要核对标准样式时手动切换。
+  en: Official OpenStreetMap standard tiles; usually requires access to the international network and should be selected only when the standard style is needed.
+daily_choice.place.map.provider.osm_standard.title
+  zh: OSM Standard
+  en: OSM Standard
+inline.plan296.ui.app.shell.complete_current.eb38379612
+  zh: {remotePrewarmCompletedCount} / {remotePrewarmTotalCount} complete. Current: {p3}
+  en: {remotePrewarmCompletedCount} / {remotePrewarmTotalCount} complete. Current: {p3}
+inline.plan296.ui.pages.settings.home.page.playback.4c5292ccff
+  zh: 播放：{p0} · {p1}
+  en: Playback: {p0} · {p1}
+inline.plan296.ui.pages.sleep.assistant.ui.support.h_min.9bfae5b952
+  zh: {hours} 小时 {remain} 分钟
+  en: {hours} h {remain} min
+inline.plan296.ui.pages.sleep.assistant.ui.support.hours.ac8ec21634
+  zh: {hours} 小时
+  en: {hours} hours
+inline.plan296.ui.pages.sleep.assistant.ui.support.min_sec.27e3b4811c
+  zh: {minutes} 分 {p1} 秒
+  en: {minutes} min {p1} sec
+inline.plan296.ui.pages.sleep.assistant.ui.support.minutes.07e42c7d92
+  zh: {remain} 分钟
+  en: {remain} minutes
+inline.plan296.ui.pages.sleep.assistant.ui.support.sec.eff736ba6b
+  zh: {seconds} 秒
+  en: {seconds} sec
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.attempt_s.791b90caaa
+  zh: {parsed} 次
+  en: {parsed} attempt(s)
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.cipher_preview.0d704547d0
+  zh: 密文预览: {cipherPreview}
+  en: Cipher preview: {cipherPreview}
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.current_a_key_file_can_be.08fe5bc36b
+  zh: 当前: {workspaceLabel} / {modeLabel} / {mediaLabel}。密钥文件可与口令叠加使用。
+  en: Current: {workspaceLabel} / {modeLabel} / {mediaLabel}. A key file can be combined with the passphrase.
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.current_maximum_255_reaching_the_limit.c2addfc0a4
+  zh: 当前为 {current}，最大 255 次。这是本地尽力清理提示；离线复制、备份或其他客户端不受此限制。
+  en: Current: {current}, maximum 255. This is a local best-effort cleanup hint; offline copies, backups, or other clients are not limited.
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.failed_to_pick_key_file.bfbd8e09ee
+  zh: 选择密钥文件失败: {p0}
+  en: Failed to pick key file: {p0}
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.failed_to_pick_media.49d8cb7a65
+  zh: 选择媒体失败: {p0}
+  en: Failed to pick media: {p0}
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.file_decryption_failed.a153daac72
+  zh: 文件解密失败: {p0}{extra}
+  en: File decryption failed: {p0}{extra}
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.file_encryption_failed.d42af41ff1
+  zh: 文件加密失败: {p0}
+  en: File encryption failed: {p0}
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.file_name.a83051dc77
+  zh: 文件名: {fileName}
+  en: File name: {fileName}
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.generate_failed.9051755c17
+  zh: 生成失败: {p0}
+  en: Generate failed: {p0}
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.hash_failed.127db70632
+  zh: 哈希计算失败: {p0}
+  en: Hash failed: {p0}
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.key_file_generation_failed.0330236fb2
+  zh: 生成密钥文件失败: {p0}
+  en: Key file generation failed: {p0}
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.key_file_s.83f8e7cf6c
+  zh: {count} 个密钥文件 · {p1} · {names}{suffix}
+  en: {count} key file(s) · {p1} · {names}{suffix}
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.output_media_size.1a32d280bd
+  zh: 结果媒体大小: {p0}
+  en: Output media size: {p0}
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.per_layer.1bb9c04354
+  zh: 每层 {p0}
+  en: {p0} per layer
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.preflight_check_failed.c49c74dffb
+  zh: 写入前检查失败: {p0}
+  en: Preflight check failed: {p0}
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.reveal_failed.b7699c69e6
+  zh: 还原失败: {p0}{extra}
+  en: Reveal failed: {p0}{extra}
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.reveal_for_the_current_file_is.c2ac6b41df
+  zh: 当前文件还原已锁定，约 {minutes} 分钟后可重试。
+  en: Reveal for the current file is locked. Try again in about {minutes} minute(s).
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.reveal_s.ef7097bdac
+  zh: {parsed} 次
+  en: {parsed} reveal(s)
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.save_failed.733e2f2246
+  zh: 保存失败: {error}
+  en: Save failed: {error}
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.save_key_file_failed.011bfe5571
+  zh: 保存密钥文件失败: {error}
+  en: Save key file failed: {error}
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.saved.7b5e2b53bc
+  zh: 已保存: {_savedPath}
+  en: Saved: {_savedPath}
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.set_to_during_reveal_reaching_this.555dd57402
+  zh: 已设置为 {attempts} 次。还原文件时如果密码错误达到该次数，当前文件中的隐藏内容会被清空。
+  en: Set to {attempts}. During reveal, reaching this many wrong passwords wipes hidden data in the current file.
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.text.6aa573903c
+  zh: {enReason} {target}
+  en: {enReason} {target}
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.text.9286016a39
+  zh: {errorEn}: {p1}
+  en: {errorEn}: {p1}
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.the_payload_exceeds_this_image_capacity.6da5ecf7a2
+  zh: 载荷超过当前图片容量。当前图片 {width}x{height}，最大 {p2}；当前设置需要预留 {p3}。请减少内容，或换用至少 {side} x {side} 像素、总像素不超过 {maxImagePixels}、文件不超过 {p6} 的图片。
+  en: The payload exceeds this image capacity. Current image: {width}x{height}, max: {p2}; current settings need {p3}. Reduce the content or use an image of at least {side} x {side} pixels, no more than {maxImagePixels} total pixels, and under {p6}.
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.the_payload_exceeds_this_image_capacity.b5e206c196
+  zh: 载荷超过当前图片容量。当前图片 {width}x{height}，每层最大 {p2}；表层需要 {p3}，深层需要 {p4}。请减少内容，或换用至少 {side} x {side} 像素、总像素不超过 {maxImagePixels}、文件不超过 {p7} 的图片。
+  en: The payload exceeds this image capacity. Current image: {width}x{height}, max per layer: {p2}; cover needs {p3}, hidden needs {p4}. Reduce the content or use an image of at least {side} x {side} pixels, no more than {maxImagePixels} total pixels, and under {p7}.
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.the_payload_exceeds_this_mp4_mov.b750508333
+  zh: 载荷超过当前 ISO BMFF 既有 free padding 容量。当前可用 {p0}，当前设置需要 {p1}。请减少内容，或换用保留更大 free padding 的原始媒体；文件仍需不超过 {p2}。
+  en: The payload exceeds this ISO BMFF existing free-padding capacity. Available: {p0}; current settings need {p1}. Reduce the content or use original media with larger retained free padding; the file must stay under {p2}.
+inline.plan296.ui.pages.toolbox.crypto.security.toolbox.crypto.security.steganography.the_payload_exceeds_this_wav_pcm.357a1e2e89
+  zh: 载荷超过当前 WAV/PCM 音频容量。当前最大 {p0}，当前设置需要 {p1}。请减少内容，或换用更长的未压缩 WAV 音频；建议载体至少 {p2}，文件不超过 {p3}。
+  en: The payload exceeds this WAV/PCM audio capacity. Max: {p0}; current settings need {p1}. Reduce the content or use a longer uncompressed WAV file; suggested carrier size is at least {p2} and under {p3}.
+inline.plan296.ui.pages.toolbox.daily.choice.daily.choice.decision.assistant.effective_success_gain_loss.e0d883d32c
+  zh: 有效成功率 {p0} · 期望收益 {p1} · 期望损失 {p2}
+  en: Effective success {p0} · gain {p1} · loss {p2}
+inline.plan296.ui.pages.toolbox.daily.choice.daily.choice.decision.assistant.joint_success_downside.923a9e726e
+  zh: 联合成功率 {p0} · 下行暴露 {p1}
+  en: Joint success {p0} · downside {p1}
+inline.plan296.ui.pages.toolbox.daily.choice.daily.choice.decision.assistant.opt_base_pess.dde87ae645
+  zh: 乐/基/悲 {p0} / {p1} / {p2}
+  en: Opt/base/pess {p0} / {p1} / {p2}
+inline.plan296.ui.pages.toolbox.daily.choice.daily.choice.decision.assistant.passed_4_guardrails_fallback.4a279bacb6
+  zh: 已过 {p0}/4 道守门线 · 同档综合 {p1}
+  en: Passed {p0}/4 guardrails · fallback {p1}
+inline.plan296.ui.pages.toolbox.daily.choice.daily.choice.decision.assistant.positive_pull_penalties.9259c1b658
+  zh: 正向拉力 {p0} · 惩罚 {p1}
+  en: Positive pull {p0} · penalties {p1}
+inline.plan296.ui.pages.toolbox.daily.choice.daily.choice.decision.assistant.raw_expected_calibrated.7e45ff7c23
+  zh: 原始预期 {p0} → 校准后 {p1}
+  en: Raw expected {p0} -> calibrated {p1}
+inline.plan296.ui.pages.toolbox.daily.choice.daily.choice.decision.assistant.realized_upside_regret_opportunity_cost.f7abb5c8c3
+  zh: 已实现潜力 {p0} · 后悔暴露 {p1} · 机会成本 {p2}
+  en: Realized upside {p0} · regret {p1} · opportunity cost {p2}
+inline.plan296.ui.pages.toolbox.daily.choice.daily.choice.manager.sheet.more_are_ready_to_load.a79fa6572b
+  zh: {length} more {p1} are ready to load.
+  en: {length} more {p1} are ready to load.
+inline.plan296.ui.pages.toolbox.human.tests.auditory.estimated_high_frequency_cutoff.e8dfdd2adc
+  zh: 高频截止估计: {p0}
+  en: Estimated high-frequency cutoff: {p0}
+inline.plan296.ui.pages.toolbox.human.tests.cognition.goal_total_luck_score_is_expectation.0f68e11d26
+  zh: {summary}
+Goal: {goalText}. Total luck score is {p4} expectation by {p3}.
+  en: {summary}
+Goal: {goalText}. Total luck score is {p4} expectation by {p3}.
+inline.plan296.ui.pages.toolbox.human.tests.cognition.winning_numbers.8439a6780e
+  zh: 中奖号码 {p0}
+  en: Winning numbers {p0}
+inline.plan296.ui.pages.toolbox.human.tests.memory.assists_enabled_treat_this_as_practice.2f4835b9fc
+  zh: 已开启辅助：{p0}。这次成绩适合自己复盘，不建议和无辅助成绩直接比较。
+  en: Assists enabled: {p0}. Treat this as practice feedback, not a clean-score comparison.
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.bmi.to_return_near_the_midpoint_of.8adb82e824
+  zh: 若以所选成人健康区间中位为目标，约需增重 {p0} kg。
+  en: To return near the midpoint of the selected adult healthy range, gain about {p0} kg.
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.bmi.to_return_near_the_midpoint_of.e730e0c4b6
+  zh: 若以所选成人健康区间中位为目标，约需减重 {p0} kg。
+  en: To return near the midpoint of the selected adult healthy range, lose about {p0} kg.
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.city.compare.to_keep_the_same_lifestyle_and.db6853b616
+  zh: 想在 {city} 维持你现在在 {city1} 的同等生活方式和月度结余，大致需要这个税前月薪。
+  en: To keep the same lifestyle and monthly buffer when moving from {city1} to {city}, this is the rough gross salary you need.
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.color.copied.9321f48be5
+  zh: 已复制{label}: {text}
+  en: Copied {label}: {text}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.color.widgets.colors.dd27afe12e
+  zh: {filtered} / {total} 色
+  en: {filtered} / {total} colors
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.compass.text.b4c5a7ea65
+  zh: {direction} · {p2}
+  en: {direction} · {p2}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.compass.tilt.e423ee6c8e
+  zh: 倾斜 {p0}°
+  en: Tilt {p0}°
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.date.calculator.actual_offset.19216c7ed2
+  zh: 实际偏移 {p0}
+  en: Actual offset {p0}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.date.calculator.burned.5707697670
+  zh: 已燃 {p0}
+  en: Burned {p0}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.date.calculator.estimated_left.c791d75a00
+  zh: 预计还剩 {p0}
+  en: {p0} estimated left
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.date.calculator.left.e9e7ca90ca
+  zh: 剩余 {p0}
+  en: {p0} left
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.device.frame.failed_to_pick_screenshot.70461507aa
+  zh: 选择截图失败: {error}
+  en: Failed to pick screenshot: {error}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.display.calibration_px_cm.5686fdab5f
+  zh: 校准参数：{p0} px/cm
+  en: Calibration: {p0} px/cm
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.garbage.remote_category.89f188c568
+  zh: 远程分类码 {rawCategory}
+  en: Remote category {rawCategory}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.garbage.remote_sorting_records_loaded.7256467f49
+  zh: 已加载 {totalCount} 条远程分类记录
+  en: {totalCount} remote sorting records loaded
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.hub.handy_tools_organized_in_7_categories.20f0dca39e
+  zh: {length} 个实用工具，按 7 大分类整理，支持搜索和快捷入口。
+  en: {length} handy tools organized in 7 categories with search and quick access.
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.hub.remove_from_quick_access.c39e2e9b07
+  zh: Remove "{titleEn}" from quick access?
+  en: Remove "{titleEn}" from quick access?
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.hub.unable_to_open_link.fd0fc474f3
+  zh: 无法打开链接：{url}
+  en: Unable to open link: {url}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.id.photo.failed_to_pick_photo.bf6cfec218
+  zh: 选择照片失败: {error}
+  en: Failed to pick photo: {error}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.id.photo.generation_failed.9cae90229b
+  zh: 生成失败: {error}
+  en: Generation failed: {error}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.compress.compression_failed.e559f85464
+  zh: 压缩失败: {error}
+  en: Compression failed: {error}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.compress.expected_output_size.d89f044c2f
+  zh: 预期输出尺寸: {targetSizeText}
+  en: Expected output size: {targetSizeText}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.compress.failed_to_pick_image.6e0bad236d
+  zh: 选择图片失败: {error}
+  en: Failed to pick image: {error}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.compress.x.ef519271df
+  zh: {_sourceWidth}x{_sourceHeight} · {p2}
+  en: {_sourceWidth}x{_sourceHeight} · {p2}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.to.web.copied.e89207e2d2
+  zh: 已复制 {label}
+  en: {label} copied
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.to.web.failed_to_save_html.b0261ecb82
+  zh: 保存 HTML 失败: {error}
+  en: Failed to save HTML: {error}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.to.web.saved_to.a70708f829
+  zh: 保存位置: {_savedPath}
+  en: Saved to: {_savedPath}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.to.web.upload_failed.97b5ae72f7
+  zh: 上传失败: {error}
+  en: Upload failed: {error}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.upscale.expected_output_x.ae4ed3378c
+  zh: 预期输出: {p0}x{p1}
+  en: Expected output: {p0}x{p1}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.upscale.upscale_failed.78f8fb476d
+  zh: 扩大失败: {error}
+  en: Upscale failed: {error}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.mind.map.new_branch.e05996182d
+  zh: 新分支 {next}
+  en: New branch {next}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.mortgage.first_payment.2b587166c3
+  zh: 首次还款 {p0}
+  en: First payment {p0}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.mortgage.months.0cf3168e08
+  zh: {rest} 个月
+  en: {rest} months
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.mortgage.paid_periods.34008aaa6e
+  zh: 已还期数{p0}
+  en: Paid periods{p0}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.mortgage.years_months.fe86338e06
+  zh: {years} 年 {rest} 个月
+  en: {years} years {rest} months
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.mortgage.years.0b8d36650d
+  zh: {years} 年
+  en: {years} years
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.notify.me.h_earlier.d373fb6390
+  zh: 提前 {hours} 小时
+  en: {hours} h earlier
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.notify.me.in_h.5b681a51ba
+  zh: {hours} 小时后
+  en: In {hours} h
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.notify.me.in_min.d14647b3ba
+  zh: {value} 分钟后
+  en: In {value} min
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.notify.me.min_earlier.2126919029
+  zh: 提前 {value} 分钟
+  en: {value} min earlier
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.offer.select.raise_to_match.637a3c4320
+  zh: {company} 追平需加
+  en: {company} raise to match
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.offer.select.rejected.2af7780d38
+  zh: 已婉拒: {length}
+  en: Rejected: {length}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.postal.results_parsed.72c3d609ff
+  zh: 已解析 {length} 条结果
+  en: {length} results parsed
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.postal.try_a_fuller_address_keyword_or.5b714b384e
+  zh: 可以换更完整的地址关键词，或打开来源页面继续查询「{query}」。
+  en: Try a fuller address keyword, or open the source page for "{query}".
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.cannot_render.9cf9b9f55e
+  zh: 无法生成: {error}
+  en: Cannot render: {error}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.end.74a94b5373
+  zh: 结束 {p0}
+  en: End {p0}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.failed_to_import_center_image.1b274a0daa
+  zh: 导入中心图片失败: {error}
+  en: Failed to import center image: {error}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.failed_to_import_image_payload.4069bafebf
+  zh: 导入图片二维码内容失败: {error}
+  en: Failed to import image payload: {error}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.failed_to_import_visual_image.7a2ee65c23
+  zh: 导入艺术图片失败: {error}
+  en: Failed to import visual image: {error}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.failed_to_qr_encode_image.d24ed38c7b
+  zh: 图片二维码化失败: {error}
+  en: Failed to QR-encode image: {error}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.imported_images_are_auto_compressed_toward.8134915aa8
+  zh: 导入后会自动压缩到约 {p0} 的二维码友好体积；超过 {p1} 的超大源图仍需先裁切或压缩。
+  en: Imported images are auto-compressed toward a QR-friendly {p0} payload. Sources above {p1} still need cropping or compression first.
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.qr_v.33a7886cc0
+  zh: QR V{p0} · {label} · {p2}
+  en: QR V{p0} · {label} · {p2}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.source_x_art_image_x_sha.d3229ff047
+  zh: {p0}：源图 {sourceWidth}x{sourceHeight} / {p3}，艺术图 {width}x{height} / {p6}，{compressionNote}，SHA {sha256Short}
+  en: {p0}: source {sourceWidth}x{sourceHeight} / {p3}, art image {width}x{height} / {p6}, {compressionNote}, SHA {sha256Short}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.source_x_compressed_to_x_data.7b9ab906df
+  zh: {p0}：源图 {sourceWidth}x{sourceHeight} / {p3}，已压缩为 {width}x{height} / {p6}，Data URL {p7}，{compressionNote}，SHA {sha256Short}
+  en: {p0}: source {sourceWidth}x{sourceHeight} / {p3}, compressed to {width}x{height} / {p6}, Data URL {p7}, {compressionNote}, SHA {sha256Short}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.start.50af5bb2b9
+  zh: 开始 {p0}
+  en: Start {p0}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.qr.text.1d74c2fc23
+  zh: {label} · {p1}
+  en: {label} · {p1}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.relatives.more_candidate_s.70dc288504
+  zh: 另有 {p0} 个候选称呼
+  en: {p0} more candidate(s)
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.reverse.image.aggregation_failed.59ef2d5565
+  zh: 聚合失败：{_lastError}
+  en: Aggregation failed: {_lastError}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.reverse.image.elapsed.8cdbd72443
+  zh: 耗时 {elapsedText}
+  en: Elapsed {elapsedText}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.reverse.image.engines_succeeded_with_entries.d49d89aaaf
+  zh: {_successCount}/{length} engines succeeded with {_totalEntries} entries{p4}.
+  en: {_successCount}/{length} engines succeeded with {_totalEntries} entries{p4}.
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.reverse.image.selected.5f7dbaecc6
+  zh: 已选择：{p0}
+  en: Selected: {p0}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.scoreboard.per_tap.7260235428
+  zh: 每次增减 {value} 分
+  en: +/- {value} per tap
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.short.link.public_short_link_returned_by.b564f951df
+  zh: {label} 返回的公网短链接
+  en: Public short link returned by {label}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.short.link.redirects_final_url_is_shown_below.d38584a55b
+  zh: 共 {redirectCount} 次跳转，最终地址如下。
+  en: {redirectCount} redirects; final URL is shown below.
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.short.link.resolve_failed.6d15e64163
+  zh: 还原失败: {error}
+  en: Resolve failed: {error}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.short.link.shorten_failed.5a82904b2f
+  zh: 生成失败: {error}
+  en: Shorten failed: {error}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.short.link.step_http.dee4f01093
+  zh: 第 {index} 步 · HTTP {statusCode}
+  en: Step {index} · HTTP {statusCode}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.text.counter.chunk_copied.f830e8d908
+  zh: 第 {p0} 块已复制
+  en: Chunk {p0} copied
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.text.counter.chunk.2c7eda6e36
+  zh: 第 {index} 块
+  en: Chunk {index}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.text.counter.preferred_endings.f989e11f88
+  zh: 句末优先符号: {sentenceHint}
+  en: Preferred endings: {sentenceHint}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.text.counter.raw.7f7b0f8770
+  zh: 原始 {rawLength} 字 | {metricLabel} {effectiveLength} 字
+  en: Raw {rawLength} | {metricLabel} {effectiveLength}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.text.counter.using_there_are_effective_characters_in.650f97f4b7
+  zh: 当前按 {p0} 统计，共 {totalEffective} 个有效字符，预计分成 {length} 块。
+  en: Using {p0}, there are {totalEffective} effective characters in {length} chunk(s).
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.text.counter.using_with_chunk_s.9a90aaa3a7
+  zh: 当前按 {p0} 统计，预计 {length} 块。
+  en: Using {p0} with {length} chunk(s).
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.text.transform.date.d8491956c9
+  zh: 日期: {p0}
+  en: Date: {p0}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.text.transform.style.76d78f39ab
+  zh: 样式 {p0}
+  en: Style {p0}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.text.transform.text.9144a09d99
+  zh: {fromEn} -> {toEn}
+  en: {fromEn} -> {toEn}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.text.transform.time.6d0c32848b
+  zh: 时间: {p0}
+  en: Time: {p0}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.timeline.periodic.atomic_number_period_group.5c824123ee
+  zh: 原子序数 {atomicNumber} · 第 {period} 周期 · 第 {group} 族
+  en: Atomic number {atomicNumber} · Period {period} · Group {group}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.timeline.periodic.events.f1556d04a2
+  zh: {eventCount} 个节点
+  en: {eventCount} events
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.vibration.pulses_sent.dcf0cf3233
+  zh: 已触发 {_pulseCount} 次脉冲
+  en: {_pulseCount} pulses sent
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.vibration.pulses.e5e97bd848
+  zh: 约 {preview} 次脉冲
+  en: ~{preview} pulses
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.wallpaper.current_screen_is_about_x_px.0b0150fe3f
+  zh: 当前屏幕约 {p0} x {p1} px，可优先匹配接近比例和尺寸的图片。
+  en: Current screen is about {p0} x {p1} px; matching can prioritize similar ratio and size.
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.wallpaper.http.f4827c8db9
+  zh: HTTP {p0}
+  en: HTTP {p0}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.wallpaper.saved.cb776c173a
+  zh: 已保存: {messagePath}
+  en: Saved: {messagePath}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.wallpaper.source_snapshots_images.62adf851d8
+  zh: 来源快照 {sourceSnapshots} 组 · 图片 {imageFiles} 张 · {p2}
+  en: {sourceSnapshots} source snapshots · {imageFiles} images · {p2}
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.world.clock.cities_match_the_current_filters.fe05b6b405
+  zh: {length} 个城市符合当前条件。
+  en: {length} cities match the current filters.
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.world.clock.days.a1d8e337fe
+  zh: +{dayShift} 天
+  en: +{dayShift} days
+inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.world.clock.days.f9d76126a1
+  zh: {dayShift} 天
+  en: {dayShift} days
+inline.plan296.ui.pages.toolbox.sound.tools.drum.pad.current_step.7960ac9bf2
+  zh: 当前步 {p0}
+  en: Current step {p0}
+inline.plan296.ui.pages.toolbox.sound.tools.woodfish.accent_boost.564091967c
+  zh: 重音增强 +{p0}%
+  en: Accent boost +{p0}%
+inline.plan296.ui.pages.toolbox.sound.tools.woodfish.accent_every_pulses.35ff5bf751
+  zh: 每 {_accentEvery} 拍重音一次
+  en: Accent every {_accentEvery} pulses
+inline.plan296.ui.pages.toolbox.sound.tools.woodfish.beats_per_cycle.a464d0ba81
+  zh: 每轮拍数 {_beatsPerCycle}
+  en: Beats per cycle {_beatsPerCycle}
+inline.plan296.ui.pages.toolbox.sound.tools.woodfish.bpm.271cc19fc9
+  zh: 每分钟拍数 {_bpm}
+  en: BPM {_bpm}
+inline.plan296.ui.pages.toolbox.sound.tools.woodfish.brightness.2f3768e106
+  zh: 亮度 {p0}%
+  en: Brightness {p0}%
+inline.plan296.ui.pages.toolbox.sound.tools.woodfish.gesture_floating_text.c6fcfc8c42
+  zh: 当前手势：{p0} · 愿词：{_resolvedFloatingText}
+  en: Gesture: {p0} · Floating text: {_resolvedFloatingText}
+inline.plan296.ui.pages.toolbox.sound.tools.woodfish.master_volume.b0dfec8847
+  zh: 主音量 {p0}%
+  en: Master volume {p0}%
+inline.plan296.ui.pages.toolbox.sound.tools.woodfish.pitch_st.1ddac5d669
+  zh: 音高 {p0}{p1} 半音
+  en: Pitch {p0}{p1} st
+inline.plan296.ui.pages.toolbox.sound.tools.woodfish.resonance.7f5257d79f
+  zh: 共鸣 {p0}%
+  en: Resonance {p0}%
+inline.plan296.ui.pages.toolbox.sound.tools.woodfish.strike_hardness.cb2da80843
+  zh: 击打硬度 {p0}%
+  en: Strike hardness {p0}%
+inline.plan296.ui.pages.toolbox.sound.tools.woodfish.subdivision.aeae0851ac
+  zh: 子拍细分 {_subdivision}
+  en: Subdivision {_subdivision}
+inline.plan296.ui.pages.toolbox.sound.tools.woodfish.target.d022d113ed
+  zh: 目标 {_targetCount} · 轮拍 {p1}/{_cyclePulses}
+  en: Target {_targetCount} · {p1}/{_cyclePulses}
+
+=== typing passages ===
+passage.a_calm_mind_can_move_quickly_without_feeling_rus.8573264db4
+  zh: A calm mind can move quickly without feeling rushed.
+passage.a_clear_mind_moves_better_when_each_task_has_a_v.33817dca3d
+  zh: 头脑清醒时，每项任务有了可见的边界，进展会更顺。
+passage.a_good_log_explains_the_failure_without_filling_.da6d54ce94
+  zh: 好的日志能解释失败，而不是把屏幕塞满噪音。
+passage.a_new_word_needs_sound_image_and_use_before_it_s.80e6fb5283
+  zh: 一个新词要有声音、画面和用法，才能真正记住。
+passage.a_useful_word_becomes_stronger_each_time_it_appe.c707bf7a73
+  zh: A useful word becomes stronger each time it appears in a new context.
+passage.at_the_rainy_station_only_the_old_ticket_remembe.c594bc3b1e
+  zh: 雨の駅で、古い切符だけが旅の続きを覚えていた。
+passage.before_sleep_one_slow_sentence_can_put_the_whole.c7b512ad3f
+  zh: 睡前写下一句舒缓的话，就能把一整天理顺。
+passage.clean_code_keeps_fast_ideas_from_becoming_expens.dabdfb7c93
+  zh: Clean code keeps fast ideas from becoming expensive noise.
+passage.flutter_widget_tree_state_first_layout_second_po.47ec49ada6
+  zh: Flutter widget tree: state first, layout second, polish last.
+passage.focus_25_minutes_rest_5_minutes_then_review_one_.c80a46ff7f
+  zh: Focus 25 minutes, rest 5 minutes, then review one small win.
+passage.focused_attention_comes_from_steady_breathing_a_.3992ca32ff
+  zh: 清醒的注意力来自稳定的呼吸、明确的目标和可持续的节奏。
+passage.gate_b12_opens_at_08_40_keep_luggage_left_coffee.98ebf6c9c2
+  zh: Gate B12 opens at 08:40, 行李放左侧, coffee stays sealed.
+passage.in_the_harbor_morning_a_white_ship_quietly_untie.ba575a8fb8
+  zh: 港の朝、白い船が静かにロープをほどいて出発した。
+passage.lights_rose_outside_the_window_and_the_sentence_.0815612dcc
+  zh: 窗外的灯光慢慢亮起，纸上的句子像小船一样靠岸。
+passage.memory_improves_when_attention_has_a_gentle_rhyt.a28836ac59
+  zh: Memory improves when attention has a gentle rhythm.
+passage.new_words_slowly_take_shape_inside_example_sente.855a3dcc93
+  zh: 新しい言葉は、例文の中で少しずつ自分の形になる。
+passage.professional_typing_practice_measures_speed_erro.7eb7ddc04c
+  zh: 专业的输入训练不只看速度，也看错误密度、回退次数和稳定性。
+passage.quiet_focus_grows_from_short_breaks_and_small_ch.ac1b5542b6
+  zh: 静かな集中は、短い休憩と小さな確認から生まれる。
+passage.read_the_night_words_slowly_and_recall_them_agai.5231376cd9
+  zh: 夜の単語はゆっくり読み、朝にもう一度思い出す。
+passage.read_the_whole_sentence_first_then_store_meaning.0551684fad
+  zh: 遇到生词时先读完整句，再把意思、声音和场景一起存进记忆。
+passage.review_steady_then_use_both_languages_in_one_sen.b0fa9fd564
+  zh: Review "steady", 复习「稳定」, then use both in one sentence.
+passage.sleep_mode_dim_light_soft_voice_zero_pressure.604f0fd0e0
+  zh: Sleep mode: dim light, soft voice, zero pressure.
+passage.slow_the_words_down_tonight_and_memory_will_leav.48214cd486
+  zh: 今晚把单词放慢一点，记忆会在安静的间隔里留下痕迹。
+passage.small_functions_become_kind_guides_for_the_next_.bf71c48128
+  zh: 小さな関数は、あとで読む人への親切な案内になる。
+passage.split_complex_work_into_smaller_steps_and_your_h.c85d58bab9
+  zh: 把复杂任务切成几段，手指会更快找到下一个落点。
+passage.the_morning_station_woke_up_while_the_map_folded.1207f3e5b4
+  zh: 清晨的车站正在苏醒，背包里的路线图被折成整齐的小方块。
+passage.the_note_said_see_you_tomorrow_and_the_platform_.0bfc1633b5
+  zh: The note said: 明天见, and the platform became quiet again.
+passage.the_quiet_station_clock_counted_every_suitcase_a.a4da437e92
+  zh: The quiet station clock counted every suitcase and every goodbye.
+passage.the_square_was_empty_but_the_music_kept_turning_.3aee3020df
+  zh: 广场空了，音乐却还在街角回荡。
+passage.the_train_crossed_the_river_just_as_the_city_ope.12a131898a
+  zh: The train crossed the river just as the city opened its windows.
+passage.the_train_left_early_and_drew_a_golden_line_over.573e850a74
+  zh: 列车早早出发，在河面上留下一道金色的线。

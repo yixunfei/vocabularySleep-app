@@ -1,0 +1,38 @@
+inline.plan295.daily_choice.category_subtitleen_then_randomize_a.ef4bd170b52d
+  {categorySubtitleEn}, then randomize across the whole set.
+inline.plan295.daily_choice.category_titleen_scene_titleen.9cb81855c227
+  {categoryTitleEn} · {sceneTitleEn}
+inline.plan295.daily_choice.daily_choice_place_location_diagnost.f1c2ff798157
+  daily_choice.place.location_diagnostic.try_again_later
+inline.plan295.daily_choice.exact_ingredient_matches_lead_the_po.503206b0115c
+  Exact ingredient matches lead the pool.
+inline.plan295.daily_choice.exact_ingredient_matches_lead_the_po.6f5398af9222
+  Exact ingredient matches lead the pool, then strong overlaps are added for variety.
+inline.plan295.daily_choice.from_nearby_map_kinden_about_distanc.99a40d8e9ecf
+  From nearby map · {kindEn} · about {distanceLabelEn}
+inline.plan295.daily_choice.manual_selection_temperature_titleen.645fc37db6a4
+  Manual selection: {temperatureTitleEn}. Weather suggests {suggestionTemperatureIdTitleEn}.
+inline.plan295.daily_choice.metrics.8e56494d177f
+  } / {metrics[
+inline.plan295.daily_choice.no_exact_match_yet_so_the_pool_prefe.493be8d1e1d1
+  No exact match yet, so the pool prefers strong ingredient overlaps.
+inline.plan295.daily_choice.no_ingredient_hit_yet_so_the_full_fi.fb50bf11239e
+  No ingredient hit yet, so the full filtered pool stays available.
+inline.plan295.daily_choice.no_strong_overlap_yet_so_the_pool_ke.ba302e738567
+  No strong overlap yet, so the pool keeps recipes that match at least one ingredient.
+inline.plan295.daily_choice.place_kinden_about_dailychoicedistan.950e9d6994e3
+  {placeKindEn} · about {dailyChoiceDistanceLabelEnPlaceDistanceMeters}
+inline.plan295.daily_choice.the_current_selecteddistance_titleen.c289a8372f20
+  The current {selectedDistanceTitleEn} tier contains {distanceCount} places across {sceneCoverageCount} scenes. Distance-first randomizing works well when you just want to get moving.
+inline.plan295.daily_choice.the_current_selecteddistance_titleen.c5724f7be4ad
+  The current {selectedDistanceTitleEn} × {selectedSceneTitleEn} filter gives {candidateCount} candidates. Details include a map query, and the data model already leaves room for coarse location and open geo data later.
+inline.plan295.daily_choice.there_are_no_candidates_for_selected.02201253e526
+  There are no candidates for {selectedDistanceTitleEn} × {selectedSceneTitleEn} yet. Switch the scene or add your own place in Manage.
+inline.plan295.daily_choice.tool_titleen_category_titleen.ca8660c39c29
+  {toolTitleEn} · {categoryTitleEn}
+inline.plan295.daily_choice.tostringasfixed_0.cd257b892fa8
+  ]?.toStringAsFixed(0) ?? 
+inline.plan295.daily_choice.what_for_category_titleen_tolowercas.4b9f52de36d4
+  What for {categoryTitleEn}
+inline.plan295.daily_choice.where_to_go.5e249f9e8d96
+  Where to go
