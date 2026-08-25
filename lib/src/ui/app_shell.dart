@@ -271,6 +271,11 @@ class _AppShellState extends ConsumerState<AppShell> {
       }
       return;
     }
+    if (currentTab == AppHomeTab.study && nextTab != AppHomeTab.study) {
+      // The study subtree is intentionally released while hidden.  Do not
+      // retain a callback closure that captures the disposed LibraryPage.
+      _scrollLibraryToTop = null;
+    }
     setState(() {
       _index = index;
     });

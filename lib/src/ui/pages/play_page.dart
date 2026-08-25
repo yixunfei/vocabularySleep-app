@@ -88,6 +88,12 @@ class _PlayPageState extends ConsumerState<PlayPage> {
 
   @override
   Widget build(BuildContext context) {
+    // The parent AppShell retains this tab for navigation, but an inactive
+    // playback page should not evaluate its rebuild token or keep its full
+    // word-card tree mounted while another module is active.
+    if (!widget.isActive) {
+      return const SizedBox.shrink();
+    }
     final token = ref.watch(
       appStateProvider.select(_PlayPageRebuildToken.fromState),
     );

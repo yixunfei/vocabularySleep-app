@@ -1,3 +1,21 @@
+## [Unreleased-STUDY-PERF-PHASE7-INACTIVE-TREE] - 2026-08-26
+
+### 原因
+- 顶层 `IndexedStack` 会保留 Study Tab；切到 Toolbox、Focus 等其他模块后，隐藏的 Play/Library 仍会订阅 AppState 并重建词卡与分页树，造成跨模块持续卡顿和额外内存占用。
+
+### 修改
+- Study、Play、Library 在非活动 Tab 返回轻量占位，释放隐藏的列表元素、行测量对象和全局状态订阅；再次进入时按当前状态恢复。
+- 离开 Study Tab 时清理 Library 滚动回调，避免保留已销毁页面 State 的闭包引用。
+
+### 修复
+- 切换到其他模块后，学习/单词表页面不再因全局状态通知重复构建，降低大词本场景的 UI 重建和 GC 压力。
+
+### 验证
+- `flutter test test/ui_smoke_test.dart --plain-name "library page" --reporter compact` 通过。
+- `flutter test test/ui_smoke_test.dart --plain-name "practice" --reporter compact` 通过。
+- 真实 12000 词本摘要查询：同步约 31ms，worker 端到端约 60ms；worker 主要用于隔离 UI 阻塞。
+- 本阶段新增/退休 i18n key 均为 0；未触达 catalog。
+
 ## [Unreleased-STUDY-PERF-PHASE5] - 2026-08-26
 
 ### 原因

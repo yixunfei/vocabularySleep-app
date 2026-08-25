@@ -426,6 +426,11 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Avoid rebuilding the deferred page and retaining its visible row
+    // elements on every global AppState notification while Study is hidden.
+    if (!widget.isActive) {
+      return const SizedBox.shrink();
+    }
     final state = ref.watch(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
     _syncSearchField(state);

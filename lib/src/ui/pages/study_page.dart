@@ -30,6 +30,12 @@ class StudyPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // AppShell keeps the top-level tabs alive for navigation.  A hidden study
+    // tree must not keep its wordbook cards, list delegates, or global
+    // AppState subscription alive while another module is on screen.
+    if (!isActive) {
+      return const SizedBox.shrink();
+    }
     final token = ref.watch(
       appStateProvider.select(_StudyPageRebuildToken.fromState),
     );
