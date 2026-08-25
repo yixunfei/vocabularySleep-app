@@ -375,6 +375,17 @@ class WordbookImportService {
     );
   }
 
+  PreparedWordbookJsonImport prepareJsonImport(
+    String content, {
+    String fallbackName = '',
+  }) {
+    return _prepareWordbookJsonImport(
+      this,
+      content,
+      fallbackName: fallbackName,
+    );
+  }
+
   Future<int> processPreparedJsonImportAsync(
     PreparedWordbookJsonImport prepared, {
     required void Function(WordEntryPayload payload) onPayload,

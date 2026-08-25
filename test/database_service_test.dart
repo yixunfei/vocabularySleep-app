@@ -443,6 +443,7 @@ void main() {
       await database.init();
       addTearDown(database.dispose);
 
+      final progress = <(int, int?)>[];
       final imported = await database.importWordbookJsonTextAsync(
         sourcePath: 'custom:test_standard_wordbook',
         name: 'Standard import test',
@@ -495,9 +496,14 @@ void main() {
             },
           ],
         }),
+        onProgress: (processed, total) {
+          progress.add((processed, total));
+        },
       );
 
       expect(imported, 1);
+      expect(progress.first, (0, 1));
+      expect(progress.last, (1, 1));
 
       final wordbook = database.getWordbooks().firstWhere(
         (item) => item.path == 'custom:test_standard_wordbook',
@@ -595,6 +601,8 @@ void main() {
       );
 
       expect(imported, 2);
+      // Custom import services stay on the injectable/main-isolate path;
+      // the production base service parses and writes in its worker.
       expect(importService.prepareCalls, 1);
       expect(importService.inspectCalls, 0);
       expect(importService.processCalls, 0);
@@ -610,6 +618,41 @@ void main() {
       expect(words.first.fields.any((field) => field.key == 'tags'), isTrue);
     },
   );
+
+  test('background JSON import keeps replaceExisting atomic', () async {
+    final database = AppDatabaseService(WordbookImportService());
+    await database.init();
+    addTearDown(database.dispose);
+
+    Future<int> importContent(List<Map<String, Object?>> entries) {
+      return database.importWordbookJsonTextAsync(
+        sourcePath: 'custom:test_background_replace',
+        name: 'Background replace test',
+        content: jsonEncode(<String, Object?>{'words': entries}),
+      );
+    }
+
+    expect(
+      await importContent(<Map<String, Object?>>[
+        <String, Object?>{'word': 'alpha', 'meaning': '第一项'},
+        <String, Object?>{'word': 'beta', 'meaning': '第二项'},
+      ]),
+      2,
+    );
+    expect(
+      await importContent(<Map<String, Object?>>[
+        <String, Object?>{'word': 'gamma', 'meaning': '第三项'},
+      ]),
+      1,
+    );
+
+    final wordbook = database.getWordbooks().firstWhere(
+      (item) => item.path == 'custom:test_background_replace',
+    );
+    final words = database.getWords(wordbook.id);
+    expect(words, hasLength(1));
+    expect(words.single.word, 'gamma');
+  });
 
   test(
     'standard wordbook byte stream import persists schema metadata and words',

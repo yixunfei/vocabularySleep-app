@@ -62,6 +62,51 @@ extension AppDatabaseServiceWordbookImport on AppDatabaseService {
     void Function(int processedEntries, int? totalEntries)? onProgress,
     int yieldEvery = 180,
   }) async {
+    final canUseBackgroundImport =
+        replaceExisting &&
+        !kIsWeb &&
+        _importService.runtimeType == WordbookImportService;
+    if (canUseBackgroundImport) {
+      final progressPort = ReceivePort();
+      var lastProgress = 0;
+      int? lastTotal;
+      final progressSubscription = progressPort.listen((message) {
+        if (message is! List || message.length < 2) return;
+        final processed = message[0];
+        final total = message[1];
+        if (processed is int && (total is int || total == null)) {
+          lastProgress = processed;
+          lastTotal = total;
+          onProgress?.call(processed, total);
+        }
+      });
+      try {
+        final result =
+            await compute<
+              _WordbookJsonImportWorkerRequest,
+              _WordbookJsonImportWorkerResult
+            >(_runWordbookJsonImportWorker, (
+              dbPath: dbPath,
+              sourcePath: sourcePath,
+              name: name,
+              content: content,
+              progressPort: progressPort.sendPort,
+            ), debugLabel: 'wordbook-json-import-write');
+        if (onProgress != null &&
+            (lastProgress != result.total || lastTotal != result.total)) {
+          onProgress(result.total, result.total);
+        }
+        return result.imported;
+      } catch (_) {
+        // The worker transaction rolls back on failure. Continue through the
+        // compatibility path so unsupported FFI/platform configurations keep
+        // the existing import behavior.
+      } finally {
+        await progressSubscription.cancel();
+        progressPort.close();
+      }
+    }
+
     final prepared = await _importService.prepareJsonImportAsync(
       content,
       fallbackName: name,

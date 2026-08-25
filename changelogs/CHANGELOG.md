@@ -1,3 +1,25 @@
+## [Unreleased-STUDY-PERF-PHASE10-IMPORT-WRITE] - 2026-08-26
+
+### 原因
+- 阶段 9 已将 JSON 解析移出 UI isolate，但完整导入仍在 UI isolate 执行 12000 条 SQLite 多表写入；实测单次事件循环停顿超过 1 秒，其他模块会同步卡顿。
+
+### 修改
+- 默认 `WordbookImportService` 且 `replaceExisting=true` 的 JSON 导入改为独立 isolate 内一次完成解析、descriptor 构造和 SQLite 单事务写入。
+- 通过 `SendPort` 转发进度；worker 复用现有词本 upsert、prepared statements、字段子表和词数刷新逻辑。
+- Web、自定义 importer、`replaceExisting=false` 保留原兼容路径；worker 失败时回退原路径。
+
+### 修复
+- 真实 12000 词完整导入由约 21.25s 降至约 17.82s，UI 事件循环最大停顿由约 1116.7ms 降至约 11.7ms。
+- 保持标准元数据、source payload、字段/样式/标签/媒体和 `replaceExisting` 原子语义。
+
+### 风险变更
+- worker 与主 isolate 对同一 SQLite 文件各持有独立 WAL 连接；设置 busy timeout，主连接仍可读。自定义和合并导入不改变连接所有权。
+
+### 验证
+- `flutter test test/database_service_test.dart --reporter compact` 通过（33 项，含进度、原子替换和自定义 importer 回归）。
+- 目标文件 `flutter analyze`、`dart format`、`git diff --check` 通过；`flutter build apk --profile --target-platform android-arm64` 成功。
+- Android integration smoke 因 Gradle 无法访问 `storage.googleapis.com` 的 `androidx.test:runner` 元数据未执行，设备跨模块复测留待下一阶段。
+
 ## [Unreleased-STUDY-PERF-PHASE9-IMPORT-PARSE] - 2026-08-26
 
 ### 原因
