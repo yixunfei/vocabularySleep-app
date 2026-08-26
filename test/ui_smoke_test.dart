@@ -46,6 +46,7 @@ import 'package:vocabulary_sleep_app/src/state/app_state.dart';
 import 'package:vocabulary_sleep_app/src/state/app_state_provider.dart';
 import 'package:vocabulary_sleep_app/src/state/playback_store.dart';
 import 'package:vocabulary_sleep_app/src/state/wordbook_import_store.dart';
+import 'package:vocabulary_sleep_app/src/state/wordbook_load_store.dart';
 import 'package:vocabulary_sleep_app/src/ui/app_shell.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/appearance_studio_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/data_management_page.dart';
@@ -61,6 +62,7 @@ import 'package:vocabulary_sleep_app/src/ui/pages/practice_review_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/practice_session_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/recognition_settings_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/settings_home_page.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/study_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_human_tests.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_life_tools.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_crypto_security.dart';
@@ -250,6 +252,60 @@ void main() {
 
       expect(find.text('Prefix jump'), findsOneWidget);
       expect(find.text('Open index'), findsNothing);
+    });
+
+    testWidgets('library reuses its loaded page across playback revisions', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LibraryPage());
+      final readsAfterInitialBuild = state.visibleWordsPageReadCount;
+      expect(readsAfterInitialBuild, greaterThan(0));
+
+      state.emitPlaybackRevision(1);
+      await tester.pump();
+
+      expect(state.visibleWordsPageReadCount, readsAfterInitialBuild);
+      expect(state.currentWord?.word, 'Beta');
+    });
+
+    testWidgets('study import progress rebuilds only the lock panel', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      state.emitWordbookImportProgress(
+        const WordbookImportProgressSnapshot(
+          active: true,
+          name: 'Large import',
+          processedEntries: 0,
+          totalEntries: 100,
+        ),
+      );
+      await _pumpPage(
+        tester,
+        state: state,
+        child: StudyPage(
+          selectedTab: StudyStartupTab.play,
+          onSelectTab: (_) {},
+          onOpenPractice: _noop,
+          onAttachLibraryScrollToTop: (_) {},
+        ),
+      );
+      var globalNotifications = 0;
+      state.addListener(() => globalNotifications += 1);
+
+      state.emitWordbookImportProgress(
+        const WordbookImportProgressSnapshot(
+          active: true,
+          name: 'Large import',
+          processedEntries: 50,
+          totalEntries: 100,
+        ),
+      );
+      await tester.pump();
+
+      expect(find.textContaining('50 / 100'), findsOneWidget);
+      expect(globalNotifications, 0);
     });
 
     testWidgets('library page hides alphabet index for non-Latin words', (
@@ -614,6 +670,35 @@ void main() {
       state.emitWordbookImportProgress(WordbookImportProgressSnapshot.idle);
       await tester.pump();
       expect(find.textContaining('Large import'), findsNothing);
+    });
+
+    testWidgets('wordbook load progress updates without a global rebuild', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpAppShell(tester, state: state);
+      var globalNotifications = 0;
+      state.addListener(() => globalNotifications += 1);
+
+      state.emitWordbookLoadProgress(
+        const WordbookLoadProgressSnapshot(
+          active: true,
+          name: 'Large built-in',
+          detail: '50 / 100',
+          progress: 0.5,
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('50 / 100'), findsOneWidget);
+      expect(globalNotifications, 0);
+
+      state.emitWordbookLoadProgress(WordbookLoadProgressSnapshot.idle);
+      await tester.pump();
+      expect(find.text('50 / 100'), findsNothing);
     });
 
     testWidgets('app shell opens the configured startup tab after init', (
@@ -7181,6 +7266,7 @@ class _FakeAppState extends ChangeNotifier
   bool _isPaused = false;
   int loadSelectedWordbookCalls = 0;
   int visibleWordsReadCount = 0;
+  int visibleWordsPageReadCount = 0;
   int _currentUnit = 0;
   int _totalUnits = 0;
   PlayUnit? _activeUnit;
@@ -7190,6 +7276,10 @@ class _FakeAppState extends ChangeNotifier
   final ValueNotifier<WordbookImportProgressSnapshot> _wordbookImportProgress =
       ValueNotifier<WordbookImportProgressSnapshot>(
         WordbookImportProgressSnapshot.idle,
+      );
+  final ValueNotifier<WordbookLoadProgressSnapshot> _wordbookLoadProgress =
+      ValueNotifier<WordbookLoadProgressSnapshot>(
+        WordbookLoadProgressSnapshot.idle,
       );
   int? _playingWordbookId;
   String? _playingWordbookName;
@@ -7367,6 +7457,14 @@ class _FakeAppState extends ChangeNotifier
   @override
   ValueListenable<WordbookImportProgressSnapshot>
   get wordbookImportListenable => _wordbookImportProgress;
+
+  @override
+  ValueListenable<WordbookLoadProgressSnapshot> get wordbookLoadListenable =>
+      _wordbookLoadProgress;
+
+  void emitWordbookLoadProgress(WordbookLoadProgressSnapshot snapshot) {
+    _wordbookLoadProgress.value = snapshot;
+  }
 
   void emitWordbookImportProgress(WordbookImportProgressSnapshot snapshot) {
     _wordbookImportProgress.value = snapshot;
@@ -7843,9 +7941,19 @@ class _FakeAppState extends ChangeNotifier
 
   @override
   List<WordEntry> getVisibleWordsPage({required int limit, int offset = 0}) {
+    visibleWordsPageReadCount += 1;
     final start = offset.clamp(0, _visibleWords.length).toInt();
     final end = (start + limit).clamp(start, _visibleWords.length).toInt();
     return _visibleWords.sublist(start, end);
+  }
+
+  void emitPlaybackRevision(int index) {
+    if (_visibleWords.isEmpty) {
+      return;
+    }
+    _currentWordIndex = index.clamp(0, _visibleWords.length - 1);
+    _currentWord = _visibleWords[_currentWordIndex];
+    _playbackRevision.value += 1;
   }
 
   @override

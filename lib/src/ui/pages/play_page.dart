@@ -142,7 +142,7 @@ class _PlayPageState extends ConsumerState<PlayPage> {
     }
 
     final visibleWords = state.visibleWords;
-    final index = _indexOfWord(visibleWords, current);
+    final index = _indexOfWord(state, visibleWords, current);
     final position = visibleWords.isEmpty
         ? 0.0
         : ((index + 1) / visibleWords.length);

@@ -261,7 +261,26 @@ class WordEntry {
     return merged;
   }
 
+  bool get _canUseMeaningFastPath => _fields.isEmpty && _rawFieldsJson.isEmpty;
+
+  String get _legacyDisplayMeaning {
+    final legacyMeaning = sanitizeDisplayText(meaning ?? '');
+    if (legacyMeaning.isNotEmpty) {
+      return legacyMeaning;
+    }
+    return sanitizeDisplayText(primaryGloss ?? '');
+  }
+
   WordFieldItem? get primaryMeaningField {
+    if (_canUseMeaningFastPath) {
+      final fallback = _legacyDisplayMeaning;
+      if (fallback.isEmpty) return null;
+      return WordFieldItem(
+        key: 'meaning',
+        label: legacyFieldLabels['meaning'] ?? 'Meaning',
+        value: fallback,
+      );
+    }
     for (final field in fields) {
       if (field.key == 'meaning' && field.asList().isNotEmpty) {
         return field;
@@ -285,7 +304,9 @@ class WordEntry {
     return null;
   }
 
-  String get displayMeaning => primaryMeaningField?.asText() ?? '';
+  String get displayMeaning => _canUseMeaningFastPath
+      ? _legacyDisplayMeaning
+      : primaryMeaningField?.asText() ?? '';
 
   List<String> get displayExamples =>
       primaryExampleField?.asList() ?? const <String>[];

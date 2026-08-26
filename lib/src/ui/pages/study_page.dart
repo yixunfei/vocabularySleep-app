@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,6 +7,7 @@ import '../../i18n/app_i18n.dart';
 import '../../models/study_startup_tab.dart';
 import '../../state/app_state.dart';
 import '../../state/app_state_provider.dart';
+import '../../state/wordbook_import_store.dart';
 import '../module/module_access.dart';
 import '../ui_copy.dart';
 import '../wordbook_localization.dart';
@@ -111,7 +113,10 @@ class StudyPage extends ConsumerWidget {
         ),
         Expanded(
           child: studyLocked
-              ? _StudyImportLockPanel(state: state, i18n: i18n)
+              ? _StudyImportLockPanel(
+                  progressListenable: state.wordbookImportListenable,
+                  i18n: i18n,
+                )
               : IndexedStack(
                   index: selectedTab == StudyStartupTab.play ? 0 : 1,
                   children: <Widget>[
@@ -190,9 +195,6 @@ class _StudyPageRebuildToken {
     required this.uiLanguage,
     required this.studyEnabled,
     required this.wordbookImportActive,
-    required this.wordbookImportProcessedEntries,
-    required this.wordbookImportTotalEntries,
-    required this.wordbookImportProgress,
     required this.selectedWordbookId,
     required this.selectedWordbookName,
     required this.selectedWordbookPath,
@@ -209,9 +211,6 @@ class _StudyPageRebuildToken {
       uiLanguage: state.uiLanguage,
       studyEnabled: state.isModuleEnabled(ModuleIds.study),
       wordbookImportActive: state.wordbookImportActive,
-      wordbookImportProcessedEntries: state.wordbookImportProcessedEntries,
-      wordbookImportTotalEntries: state.wordbookImportTotalEntries,
-      wordbookImportProgress: state.wordbookImportProgress,
       selectedWordbookId: selected?.id,
       selectedWordbookName: selected?.name ?? '',
       selectedWordbookPath: selected?.path ?? '',
@@ -226,9 +225,6 @@ class _StudyPageRebuildToken {
   final String uiLanguage;
   final bool studyEnabled;
   final bool wordbookImportActive;
-  final int wordbookImportProcessedEntries;
-  final int? wordbookImportTotalEntries;
-  final double? wordbookImportProgress;
   final int? selectedWordbookId;
   final String selectedWordbookName;
   final String selectedWordbookPath;
@@ -244,10 +240,6 @@ class _StudyPageRebuildToken {
         other.uiLanguage == uiLanguage &&
         other.studyEnabled == studyEnabled &&
         other.wordbookImportActive == wordbookImportActive &&
-        other.wordbookImportProcessedEntries ==
-            wordbookImportProcessedEntries &&
-        other.wordbookImportTotalEntries == wordbookImportTotalEntries &&
-        other.wordbookImportProgress == wordbookImportProgress &&
         other.selectedWordbookId == selectedWordbookId &&
         other.selectedWordbookName == selectedWordbookName &&
         other.selectedWordbookPath == selectedWordbookPath &&
@@ -263,9 +255,6 @@ class _StudyPageRebuildToken {
     uiLanguage,
     studyEnabled,
     wordbookImportActive,
-    wordbookImportProcessedEntries,
-    wordbookImportTotalEntries,
-    wordbookImportProgress,
     selectedWordbookId,
     selectedWordbookName,
     selectedWordbookPath,
@@ -435,55 +424,68 @@ class _StudyEntryCard extends StatelessWidget {
 }
 
 class _StudyImportLockPanel extends StatelessWidget {
-  const _StudyImportLockPanel({required this.state, required this.i18n});
+  const _StudyImportLockPanel({
+    required this.progressListenable,
+    required this.i18n,
+  });
 
-  final AppState state;
+  final ValueListenable<WordbookImportProgressSnapshot> progressListenable;
   final AppI18n i18n;
 
   @override
   Widget build(BuildContext context) {
-    final progress = state.wordbookImportProgress;
-    final processed = state.wordbookImportProcessedEntries;
-    final total = state.wordbookImportTotalEntries;
-    final detail = total == null || total <= 0
-        ? i18n.t('inline.ui.app_shell.parsing_and_importing_please_wait_1b254d')
-        : i18n.t(
-            'inline.ui.app_shell.processed_processed_total_11a7cb',
-            params: <String, Object?>{'processed': processed, 'total': total},
-          );
-
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: Card(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  i18n.t(
-                    'inline.ui.pages.study_page.study_import_in_progress_4938fd',
-                  ),
-                  style: Theme.of(context).textTheme.titleLarge,
+    return ValueListenableBuilder<WordbookImportProgressSnapshot>(
+      valueListenable: progressListenable,
+      builder: (context, snapshot, _) {
+        final total = snapshot.totalEntries;
+        final detail = total == null || total <= 0
+            ? i18n.t(
+                'inline.ui.app_shell.parsing_and_importing_please_wait_1b254d',
+              )
+            : i18n.t(
+                'inline.ui.app_shell.processed_processed_total_11a7cb',
+                params: <String, Object?>{
+                  'processed': snapshot.processedEntries,
+                  'total': total,
+                },
+              );
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      i18n.t(
+                        'inline.ui.pages.study_page.study_import_in_progress_4938fd',
+                      ),
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      i18n.t(
+                        'inline.ui.pages.study_page.wordbook_is_importing_in_background_study_modules_will_a_dbf110',
+                      ),
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(detail, style: Theme.of(context).textTheme.bodySmall),
+                    const SizedBox(height: 10),
+                    LinearProgressIndicator(
+                      value: snapshot.progress,
+                      minHeight: 6,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  i18n.t(
-                    'inline.ui.pages.study_page.wordbook_is_importing_in_background_study_modules_will_a_dbf110',
-                  ),
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 12),
-                Text(detail, style: Theme.of(context).textTheme.bodySmall),
-                const SizedBox(height: 10),
-                LinearProgressIndicator(value: progress, minHeight: 6),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

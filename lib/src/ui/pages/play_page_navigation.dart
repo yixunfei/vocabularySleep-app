@@ -1,7 +1,19 @@
 part of 'play_page.dart';
 
 extension _PlayPageNavigation on _PlayPageState {
-  int _indexOfWord(List<WordEntry> words, WordEntry target) {
+  int _indexOfWord(AppState state, List<WordEntry> words, WordEntry target) {
+    if (identical(words, state.words)) {
+      final currentIndex = state.currentWordIndex;
+      if (currentIndex >= 0 && currentIndex < words.length) {
+        final current = words[currentIndex];
+        if (identical(current, target) ||
+            (current.id != null &&
+                target.id != null &&
+                current.id == target.id)) {
+          return currentIndex;
+        }
+      }
+    }
     for (var index = 0; index < words.length; index += 1) {
       final item = words[index];
       if (item.id != null && target.id != null && item.id == target.id) {

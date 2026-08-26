@@ -51,6 +51,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   int _visibleItemCount = _pageSize;
   int _currentScopeWordCount = 0;
   String _paginationSignature = '';
+  String _loadedWordsSignature = '';
   String _autoScrolledSignature = '';
   List<WordEntry> _loadedWords = const <WordEntry>[];
   late final AppState _appState;
@@ -171,7 +172,8 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   String _buildPaginationSignature(AppState state, int totalWords) {
     final selectedWordbookId = state.selectedWordbook?.id.toString() ?? 'none';
     final searchQuery = state.searchQuery.trim();
-    return '$selectedWordbookId|${state.searchMode.name}|$searchQuery|$totalWords';
+    return '$selectedWordbookId|${state.wordsVersion}|'
+        '${state.searchMode.name}|$searchQuery|$totalWords';
   }
 
   void _syncPaginationState(AppState state, int totalWords) {
@@ -194,6 +196,21 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     if (scopeWordCount > 0 && _visibleItemCount == 0) {
       _visibleItemCount = min(_pageSize, scopeWordCount);
     }
+  }
+
+  List<WordEntry> _resolveDisplayedWords(AppState state, int totalWords) {
+    final limit = totalWords <= 0
+        ? 0
+        : _visibleItemCount.clamp(0, totalWords).toInt();
+    final signature = '$_paginationSignature|limit:$limit';
+    if (_loadedWordsSignature == signature) {
+      return _loadedWords;
+    }
+    _loadedWordsSignature = signature;
+    _loadedWords = limit <= 0
+        ? const <WordEntry>[]
+        : state.getVisibleWordsPage(limit: limit, offset: 0);
+    return _loadedWords;
   }
 
   void _maybeScrollToCurrentWord(AppState state) {
@@ -455,13 +472,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
 
     final totalWords = state.visibleWordCount;
     _syncPaginationState(state, totalWords);
-    final displayedWords = totalWords <= 0
-        ? const <WordEntry>[]
-        : state.getVisibleWordsPage(
-            limit: _visibleItemCount.clamp(0, totalWords).toInt(),
-            offset: 0,
-          );
-    _loadedWords = displayedWords;
+    final displayedWords = _resolveDisplayedWords(state, totalWords);
     _syncRowKeys(displayedWords);
     final currentWord = state.currentWord;
     final selectedIdentity = currentWord == null

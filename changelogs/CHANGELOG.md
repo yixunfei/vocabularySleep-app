@@ -1,3 +1,29 @@
+## [Unreleased-STUDY-PERF-PHASE14-HOT-PATHS] - 2026-08-26
+
+### 原因
+- 第二轮基准确认轻量词条首次释义访问、Library 已加载分页复制、Play 当前词定位及内置词本加载进度广播仍会叠加 UI/GC 压力。
+
+### 修改
+- lite `WordEntry` 在没有结构化字段时直接读取 legacy meaning/primary gloss，跳过字段 Map 构造与合并。
+- Library 缓存已加载分页结果；Play 无搜索时优先使用 `currentWordIndex`。
+- 内置词本下载/处理进度迁移到独立 `WordbookLoadStore`，AppShell BusyOverlay 局部监听；Study 导入锁定面板同样局部监听导入进度。
+- 词本加载 generation 覆盖快速切换和销毁边界，过期进度、结果与错误不再回写当前状态。
+
+### 修复
+- 12000 条 lite 释义冷访问约从 82ms 降至 34ms，RSS 增量约从 35MB 降至 20-21MB。
+- 12000 词播放索引完整轮转约从 192-208ms 降至 0.55ms；101 次内置加载进度不再触发全局状态广播。
+- 修复阶段 13 后 Study 导入锁定面板进度停留在初始值，以及快速切换词本可能遗留 BusyOverlay 的竞态。
+
+### 风险变更
+- 新增专用加载进度 notifier，由 `AppState` 统一持有与销毁；开始/结束仍保留必要的全局 busy 语义。
+- 搜索仍是剩余 P0：真实 12000 词查询 `a` 会在 UI isolate 同步物化约 11996 条、耗时约 210ms，阶段 15 单独迁移到只读 SQLite worker。
+
+### 验证
+- `flutter test test/word_entry_test.dart test/app_state_init_test.dart test/app_state_logic_test.dart test/app_state_practice_test.dart test/playback_service_test.dart test/wordbook_query_worker_test.dart --reporter compact` 通过（47 项）。
+- 阶段目标 UI smoke 5 项通过；目标 `flutter analyze` 无 error；`dart format`、`git diff --check` 通过。
+- 完整 `test/ui_smoke_test.dart` 存在 43 个与本轮无关的既有失败（旧文案断言及 toolbox `ListTile`/`DecoratedBox` 断言），已记录但未在本切片处理。
+- 本阶段新增/退休 i18n key 均为 0，未触达 catalog。
+
 ## [Unreleased-STUDY-PERF-PHASE13-IMPORT-PROGRESS] - 2026-08-26
 
 ### 原因

@@ -51,6 +51,7 @@ import '../services/weather_service.dart';
 import 'playback_store.dart';
 import 'practice_store.dart';
 import 'wordbook_import_store.dart';
+import 'wordbook_load_store.dart';
 import 'weather_store.dart';
 import 'test_mode_store.dart';
 import 'startup_store.dart';
@@ -140,6 +141,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     PracticeStore? practiceStore,
     PlaybackStore? playbackStore,
     WordbookImportStore? wordbookImportStore,
+    WordbookLoadStore? wordbookLoadStore,
     DailyQuoteService? dailyQuoteService,
   }) : _maintenanceRepository =
            maintenanceRepository ?? DatabaseMaintenanceRepository(database),
@@ -164,7 +166,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
        _dailyQuoteService = dailyQuoteService ?? DailyQuoteService(),
        _practiceStore = practiceStore ?? PracticeStore(),
        _playbackStore = playbackStore ?? PlaybackStore(),
-       _wordbookImportStore = wordbookImportStore ?? WordbookImportStore() {
+       _wordbookImportStore = wordbookImportStore ?? WordbookImportStore(),
+       _wordbookLoadStore = wordbookLoadStore ?? WordbookLoadStore() {
     _weatherStore =
         weatherStore ??
         WeatherStore(
@@ -209,6 +212,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   final PracticeStore _practiceStore;
   final PlaybackStore _playbackStore;
   final WordbookImportStore _wordbookImportStore;
+  final WordbookLoadStore _wordbookLoadStore;
   Timer? _playbackProgressPersistTimer;
   Timer? _practiceDashboardPersistTimer;
   Timer? _practiceAnswerPersistTimer;
@@ -359,6 +363,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   double? get wordbookImportProgress => _wordbookImportStore.value.progress;
   ValueListenable<WordbookImportProgressSnapshot>
   get wordbookImportListenable => _wordbookImportStore;
+  ValueListenable<WordbookLoadProgressSnapshot> get wordbookLoadListenable =>
+      _wordbookLoadStore;
 
   String? get error {
     final key = _message;
@@ -3713,6 +3719,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _playbackStore.dispose();
     _practiceStore.dispose();
     _wordbookImportStore.dispose();
+    _wordbookLoadStore.dispose();
     _maintenanceRepository.dispose();
     super.dispose();
   }

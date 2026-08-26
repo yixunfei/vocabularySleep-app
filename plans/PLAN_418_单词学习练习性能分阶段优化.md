@@ -2,7 +2,7 @@
 
 ## 基本信息
 - **创建日期**: 2026-08-25
-- **状态**: 进行中（阶段 1-13 已完成，阶段 14 进行第二轮性能收口）
+- **状态**: 进行中（阶段 1-14 已完成，阶段 15 处理大词本后台搜索）
 - **负责人**: Codex
 
 ## 目标
@@ -24,6 +24,7 @@
 13. **阶段 12：压缩与字节导入后台化**。将 `.json.gz` 解压、UTF-8 解码、JSON 解析和 SQLite 写入合并到同一 worker；远程字节流使用可转移字节容器，避免在 UI isolate 构造 20MB 级 JSON 字符串。
 14. **阶段 13：导入进度广播隔离**。导入进度改用独立有界状态通道，进度帧只重建进度浮层，不再触发 `MaterialApp`、整个 `AppShell` 和所有存活 Tab 的全局 rebuild；导入开始、完成和错误语义保持不变。
 15. **阶段 14：第二轮热路径收口与设备回归**。优化轻量词条首屏释义的无效字段合并，补充练习实际答题、跨模块切换和真实 12000 词导入回归；对未实施候选记录基准与取舍。
+16. **阶段 15：大词本后台搜索**。将延迟大词本的搜索计数与结果物化迁移到 SQLite 只读 worker；输入使用 generation/签名去重，丢弃过期结果，Library 仅消费已完成快照，不在 build 中同步执行大范围搜索。
 
 ## 风险评估
 - **风险 1**: 过度收窄监听会导致当前播放词、语言或设置 UI 不更新。缓解：为每个页面保留明确 selector，并以状态 token 测试覆盖真正需要更新的字段。
@@ -33,6 +34,7 @@
 - **风险 5**: worker 与主连接并行访问 SQLite，且 Web/迁移环境可能不支持独立 FFI 连接。缓解：仅默认 importer 的 `replaceExisting=true` 使用独立 WAL 写入连接并设置 busy timeout；Web、自定义 importer、合并导入继续走原路径，事务失败自动由原路径兜底。
 - **风险 6**: `TransferableTypedData` 只能物化一次，worker 失败后不能直接复用同一传输对象。缓解：文件导入回退时重新打开文件，流导入在进入 worker 前保留原始字节到调用结束；测试覆盖压缩与非压缩流以及事务原子性。
 - **风险 7**: 进度状态拆出全局 `AppState` 后，BusyOverlay 或导入横幅可能丢失刷新。缓解：使用不可变快照和专用 `ValueListenable`，增加全局通知次数与进度末值回归测试。
+- **风险 8**: 搜索改为异步后，快速输入、切换词本或搜索模式时旧结果可能覆盖新条件。缓解：搜索请求使用不可变签名与 generation；状态应用前同时校验词本 ID、词表版本、模式和规范化查询，过期 worker 结果只释放不提交。
 
 ## 验证方式
 - 每个阶段独立提交，运行对应 Dart/Flutter 测试、`dart format`、目标范围 `flutter analyze`。
@@ -128,3 +130,11 @@
 - `VocabularySleepApp` 只监听 UI 语言与外观配置，导入、播放、练习等普通全局状态变化不再重建整个 `MaterialApp`。
 - 定向回归验证连续进度更新时全局通知为 0、横幅与 `50 / 100` 进度正常刷新；101 次模拟进度由专用通道接收，导入全流程全局通知保持个位数。
 - 验证：定向 AppShell smoke 通过；`flutter test test/app_state_init_test.dart test/database_service_test.dart test/app_state_logic_test.dart test/app_state_practice_test.dart --reporter compact`（69 项通过）；目标分析无 error，仅保留 `AppState` 5 条既有 `prefer_initializing_formals` info；`git diff --check` 通过。本阶段新增/退休 i18n key 均为 0，未触达 catalog。
+
+## 阶段 14 执行结果
+- `WordEntry` 对无结构化字段的 lite 摘要增加释义快路径，不再为每条摘要构造 legacy 字段 Map、合并字段并写入 Expando；真实 12000 条冷访问由约 82ms 降至约 34ms，RSS 增量由约 35MB 降至约 20-21MB，热访问约 24ms。
+- Library 缓存当前已加载分页，播放 revision 不再按滚动深度重复 `sublist`；Play 在无搜索且列表即主词表时直接使用 `currentWordIndex`，12000 词完整轮转索引定位由约 192-208ms 降至约 0.55ms。
+- 导入锁定面板与内置词本加载进度改用局部 `ValueListenable`；101 次加载进度不再进入全局 `AppState` 通知，避免打开 Study 后拖慢其他常驻模块。
+- 快速切换词本会结束上一轮加载 UI 所有权；generation 同时拦截过期进度、结果和错误，`dispose` 后迟到回调不访问已释放 notifier。
+- 12000 个 ID 的记忆进度空查询首次约 15.7ms、后续约 5.4-6.1ms，当前不引入异步状态竞态。新 P0 为大词本搜索：查询 `a` 的计数约 43ms、20 条分页约 1ms，但同步全量物化 11996 条约 210ms；`ab` 全量物化 3244 条约 105ms，需由阶段 15 独立后台化。
+- 验证：核心 `WordEntry`/状态/练习/播放/查询回归 47 项通过；阶段目标 UI smoke 5 项通过；目标 `flutter analyze` 无 error，`dart format`、`git diff --check` 通过。完整 `ui_smoke_test.dart` 有 43 个与本阶段无关的既有失败，集中在旧文案断言与 toolbox `ListTile`/`DecoratedBox` 框架断言，未在本性能切片中扩展处理。本阶段新增/退休 i18n key 均为 0，未触达 catalog。

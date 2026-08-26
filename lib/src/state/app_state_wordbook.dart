@@ -22,8 +22,15 @@ extension _AppStateWordbook on AppState {
     String? focusWord,
     int? focusWordId,
   }) async {
-    if (wordbook == null) return;
+    if (wordbook == null || _disposed) return;
     final loadGeneration = ++_wordbookLoadGeneration;
+    if (_wordbookLoadBusyGeneration != null) {
+      _wordbookLoadBusyGeneration = null;
+      _wordbookLoadStore.finish();
+      if (_busy) {
+        _setBusy(false);
+      }
+    }
     final shouldFollowPlayingWord =
         (focusWordId == null) &&
         ((focusWord ?? '').trim().isEmpty) &&
@@ -49,12 +56,14 @@ extension _AppStateWordbook on AppState {
       final i18n = AppI18n(_uiLanguage);
       final ownsLazyLoadBusy = !_busy || _wordbookLoadBusyGeneration != null;
       if (ownsLazyLoadBusy) {
+        final initialDetail = i18n.t('download');
         _wordbookLoadBusyGeneration = loadGeneration;
+        _wordbookLoadStore.start(name: lazyWordbookName, detail: initialDetail);
         _setBusy(
           true,
           messageKey: 'busyLoadingWordbook',
           params: <String, Object?>{'name': lazyWordbookName},
-          detail: i18n.t('download'),
+          detail: initialDetail,
           progress: 0,
         );
       }
@@ -67,16 +76,19 @@ extension _AppStateWordbook on AppState {
                 loadGeneration != _wordbookLoadGeneration) {
               return;
             }
-            _setBusy(
-              true,
-              messageKey: 'busyLoadingWordbook',
-              params: <String, Object?>{'name': lazyWordbookName},
+            _wordbookLoadStore.update(
               detail: _busyDetailForWordbookLoadProgress(progress),
               progress: _busyProgressForWordbookLoad(progress),
             );
           },
         );
+        if (_disposed || loadGeneration != _wordbookLoadGeneration) {
+          return;
+        }
         await _reloadWordbooks(keepCurrentSelection: false);
+        if (_disposed || loadGeneration != _wordbookLoadGeneration) {
+          return;
+        }
         wordbook =
             _wordbooks
                 .where((item) => item.path == lazyPath)
@@ -84,6 +96,9 @@ extension _AppStateWordbook on AppState {
                 .firstOrNull ??
             wordbook;
       } catch (error, stackTrace) {
+        if (_disposed || loadGeneration != _wordbookLoadGeneration) {
+          return;
+        }
         _log.e(
           'app_state',
           'lazy built-in wordbook load failed',
@@ -104,6 +119,9 @@ extension _AppStateWordbook on AppState {
       } finally {
         if (_wordbookLoadBusyGeneration == loadGeneration) {
           _wordbookLoadBusyGeneration = null;
+          if (!_disposed) {
+            _wordbookLoadStore.finish();
+          }
           if (!_disposed && loadGeneration == _wordbookLoadGeneration) {
             _setBusy(false);
           }

@@ -13,6 +13,7 @@ import '../models/weather_snapshot.dart';
 import '../state/app_state.dart';
 import '../state/app_state_provider.dart';
 import '../state/wordbook_import_store.dart';
+import '../state/wordbook_load_store.dart';
 import 'module/module_access.dart';
 import 'pages/focus_page.dart';
 import 'pages/more_page.dart';
@@ -1204,17 +1205,31 @@ class _AppShellState extends ConsumerState<AppShell> {
                     ValueListenableBuilder<WordbookImportProgressSnapshot>(
                       valueListenable: state.wordbookImportListenable,
                       builder: (context, importProgress, _) {
-                        return BusyOverlay(
-                          visible: state.busy || importProgress.active,
-                          message: importProgress.active
-                              ? i18n.t('busyImportingWordbook')
-                              : state.busyMessage ?? i18n.t('processing'),
-                          detail: importProgress.active
-                              ? _wordbookImportBusyDetail(importProgress)
-                              : _busyDetail(i18n, state),
-                          progress: importProgress.active
-                              ? importProgress.progress
-                              : state.busyProgress,
+                        return ValueListenableBuilder<
+                          WordbookLoadProgressSnapshot
+                        >(
+                          valueListenable: state.wordbookLoadListenable,
+                          builder: (context, loadProgress, _) {
+                            return BusyOverlay(
+                              visible:
+                                  state.busy ||
+                                  importProgress.active ||
+                                  loadProgress.active,
+                              message: importProgress.active
+                                  ? i18n.t('busyImportingWordbook')
+                                  : state.busyMessage ?? i18n.t('processing'),
+                              detail: importProgress.active
+                                  ? _wordbookImportBusyDetail(importProgress)
+                                  : loadProgress.active
+                                  ? loadProgress.detail
+                                  : _busyDetail(i18n, state),
+                              progress: importProgress.active
+                                  ? importProgress.progress
+                                  : loadProgress.active
+                                  ? loadProgress.progress
+                                  : state.busyProgress,
+                            );
+                          },
                         );
                       },
                     ),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -25,6 +26,7 @@ import 'package:vocabulary_sleep_app/src/services/weather_service.dart';
 import 'package:vocabulary_sleep_app/src/services/wordbook_import_service.dart';
 import 'package:vocabulary_sleep_app/src/state/app_state.dart';
 import 'package:vocabulary_sleep_app/src/state/wordbook_import_store.dart';
+import 'package:vocabulary_sleep_app/src/state/wordbook_load_store.dart';
 import 'test_support/app_state_test_doubles.dart';
 
 class _MemoryDatabaseService extends AppDatabaseService {
@@ -280,6 +282,72 @@ class _ProgressWordbookRepository extends DatabaseWordbookRepository {
       onProgress?.call(processed, 100);
     }
     return 100;
+  }
+}
+
+class _LazyProgressWordbookRepository extends DatabaseWordbookRepository {
+  _LazyProgressWordbookRepository(super.database);
+
+  bool progressEnabled = false;
+
+  @override
+  bool isLazyBuiltInPath(String path) =>
+      progressEnabled && path == 'dict:builtin:large';
+
+  @override
+  Future<int> ensureBuiltInWordbookLoaded(
+    String path, {
+    BuiltInWordbookLoadProgressCallback? onProgress,
+  }) async {
+    for (var processed = 0; processed <= 100; processed += 1) {
+      onProgress?.call(
+        BuiltInWordbookLoadProgress(
+          stage: BuiltInWordbookLoadStage.processing,
+          progress: processed / 100,
+          processedEntries: processed,
+          totalEntries: 100,
+        ),
+      );
+    }
+    return 1;
+  }
+}
+
+class _ControllableLazyWordbookRepository extends DatabaseWordbookRepository {
+  _ControllableLazyWordbookRepository(super.database);
+
+  final Completer<void> started = Completer<void>();
+  final Completer<void> release = Completer<void>();
+
+  @override
+  bool isLazyBuiltInPath(String path) => path == 'dict:builtin:large';
+
+  @override
+  Future<int> ensureBuiltInWordbookLoaded(
+    String path, {
+    BuiltInWordbookLoadProgressCallback? onProgress,
+  }) async {
+    onProgress?.call(
+      const BuiltInWordbookLoadProgress(
+        stage: BuiltInWordbookLoadStage.downloading,
+        progress: 0.1,
+        processedEntries: 1,
+        totalEntries: 10,
+      ),
+    );
+    if (!started.isCompleted) {
+      started.complete();
+    }
+    await release.future;
+    onProgress?.call(
+      const BuiltInWordbookLoadProgress(
+        stage: BuiltInWordbookLoadStage.completed,
+        progress: 1,
+        processedEntries: 10,
+        totalEntries: 10,
+      ),
+    );
+    return 10;
   }
 }
 
@@ -1253,4 +1321,147 @@ void main() {
       expect(state.wordbookImportActive, isFalse);
     },
   );
+
+  test(
+    'lazy wordbook load progress stays off the global notification channel',
+    () async {
+      const lazyWordbook = Wordbook(
+        id: 41,
+        name: 'Large built-in',
+        path: 'dict:builtin:large',
+        wordCount: 0,
+        createdAt: null,
+      );
+      final database = _MemoryDatabaseService(
+        wordbooks: const <Wordbook>[lazyWordbook],
+      );
+      final settings = _settingsFor(database);
+      final repository = _LazyProgressWordbookRepository(database);
+      final state = AppState(
+        database: database,
+        settings: settings,
+        playback: TrackingPlaybackService(),
+        ambient: StubAmbientService(),
+        asr: StubAsrService(),
+        focusService: StubFocusService(database, settings: settings),
+        wordbookRepository: repository,
+      );
+      addTearDown(state.dispose);
+      await state.init();
+      repository.progressEnabled = true;
+
+      var globalNotifications = 0;
+      var loadNotifications = 0;
+      final snapshots = <WordbookLoadProgressSnapshot>[];
+      state.addListener(() => globalNotifications += 1);
+      state.wordbookLoadListenable.addListener(() {
+        loadNotifications += 1;
+        snapshots.add(state.wordbookLoadListenable.value);
+      });
+
+      await state.selectWordbook(lazyWordbook);
+
+      expect(loadNotifications, greaterThanOrEqualTo(102));
+      expect(
+        snapshots.any(
+          (snapshot) => snapshot.active && (snapshot.progress ?? 0) > 0.8,
+        ),
+        isTrue,
+      );
+      expect(globalNotifications, lessThan(10));
+      expect(state.wordbookLoadListenable.value.active, isFalse);
+    },
+  );
+
+  test('new selection supersedes an in-flight lazy wordbook load', () async {
+    const lazyWordbook = Wordbook(
+      id: 41,
+      name: 'Large built-in',
+      path: 'dict:builtin:large',
+      wordCount: 0,
+      createdAt: null,
+    );
+    const regularWordbook = Wordbook(
+      id: 42,
+      name: 'Regular',
+      path: 'custom:regular',
+      wordCount: 1,
+      createdAt: null,
+    );
+    final database = _MemoryDatabaseService(
+      wordbooks: const <Wordbook>[lazyWordbook, regularWordbook],
+      wordsByWordbookId: <int, List<WordEntry>>{
+        42: <WordEntry>[_word(4201, 'Current')],
+      },
+    );
+    addTearDown(database.dispose);
+    final repository = _ControllableLazyWordbookRepository(database);
+    final state = AppState(
+      database: database,
+      settings: _settingsFor(database),
+      playback: TrackingPlaybackService(),
+      ambient: StubAmbientService(),
+      asr: StubAsrService(),
+      focusService: StubFocusService(database),
+      wordbookRepository: repository,
+    );
+    addTearDown(state.dispose);
+    await state.init();
+    final selectableLazyWordbook = state.wordbooks.firstWhere(
+      (item) => item.path == lazyWordbook.path,
+    );
+    final selectableRegularWordbook = state.wordbooks.firstWhere(
+      (item) => item.path == regularWordbook.path,
+    );
+
+    final lazyLoad = state.selectWordbook(selectableLazyWordbook);
+    await repository.started.future;
+    expect(state.wordbookLoadListenable.value.active, isTrue);
+
+    await state.selectWordbook(selectableRegularWordbook);
+    expect(state.selectedWordbook?.path, regularWordbook.path);
+    expect(state.currentWord?.word, 'Current');
+    expect(state.wordbookLoadListenable.value.active, isFalse);
+    expect(state.busy, isFalse);
+
+    repository.release.complete();
+    await lazyLoad;
+    expect(state.selectedWordbook?.path, regularWordbook.path);
+    expect(state.currentWord?.word, 'Current');
+  });
+
+  test('disposing during a lazy load ignores late progress', () async {
+    const lazyWordbook = Wordbook(
+      id: 41,
+      name: 'Large built-in',
+      path: 'dict:builtin:large',
+      wordCount: 0,
+      createdAt: null,
+    );
+    final database = _MemoryDatabaseService(
+      wordbooks: const <Wordbook>[lazyWordbook],
+    );
+    addTearDown(database.dispose);
+    final repository = _ControllableLazyWordbookRepository(database);
+    final state = AppState(
+      database: database,
+      settings: _settingsFor(database),
+      playback: TrackingPlaybackService(),
+      ambient: StubAmbientService(),
+      asr: StubAsrService(),
+      focusService: StubFocusService(database),
+      wordbookRepository: repository,
+    );
+    await state.init();
+    final selectableLazyWordbook = state.wordbooks.firstWhere(
+      (item) => item.path == lazyWordbook.path,
+    );
+
+    final lazyLoad = state.selectWordbook(selectableLazyWordbook);
+    await repository.started.future;
+    state.dispose();
+    repository.release.complete();
+
+    await expectLater(lazyLoad, completes);
+  });
 }
