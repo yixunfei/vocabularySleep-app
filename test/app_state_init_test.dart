@@ -24,6 +24,7 @@ import 'package:vocabulary_sleep_app/src/services/playback_service.dart';
 import 'package:vocabulary_sleep_app/src/services/weather_service.dart';
 import 'package:vocabulary_sleep_app/src/services/wordbook_import_service.dart';
 import 'package:vocabulary_sleep_app/src/state/app_state.dart';
+import 'package:vocabulary_sleep_app/src/state/wordbook_import_store.dart';
 import 'test_support/app_state_test_doubles.dart';
 
 class _MemoryDatabaseService extends AppDatabaseService {
@@ -263,6 +264,22 @@ class _CountingWordbookRepository extends DatabaseWordbookRepository {
       limit: limit,
       offset: offset,
     );
+  }
+}
+
+class _ProgressWordbookRepository extends DatabaseWordbookRepository {
+  _ProgressWordbookRepository(super.database);
+
+  @override
+  Future<int> importWordbookFileAsync({
+    required String filePath,
+    required String name,
+    void Function(int processedEntries, int? totalEntries)? onProgress,
+  }) async {
+    for (var processed = 0; processed <= 100; processed += 1) {
+      onProgress?.call(processed, 100);
+    }
+    return 100;
   }
 }
 
@@ -1194,6 +1211,46 @@ void main() {
       expect(unitNotifications, 4);
       expect(globalNotifications, 0);
       expect(playbackNotifications, greaterThanOrEqualTo(2));
+    },
+  );
+
+  test(
+    'wordbook import progress stays off the global notification channel',
+    () async {
+      final database = _MemoryDatabaseService();
+      final settings = _settingsFor(database);
+      final state = AppState(
+        database: database,
+        settings: settings,
+        playback: TrackingPlaybackService(),
+        ambient: StubAmbientService(),
+        asr: StubAsrService(),
+        focusService: StubFocusService(database, settings: settings),
+        wordbookRepository: _ProgressWordbookRepository(database),
+      );
+      addTearDown(state.dispose);
+      await state.init();
+
+      var globalNotifications = 0;
+      var importNotifications = 0;
+      final snapshots = <WordbookImportProgressSnapshot>[];
+      state.addListener(() => globalNotifications += 1);
+      state.wordbookImportListenable.addListener(() {
+        importNotifications += 1;
+        snapshots.add(state.wordbookImportListenable.value);
+      });
+
+      await state.importWordbookFile('ignored.json', 'Large import');
+
+      expect(importNotifications, greaterThanOrEqualTo(102));
+      expect(
+        snapshots.any(
+          (snapshot) => snapshot.active && snapshot.processedEntries == 50,
+        ),
+        isTrue,
+      );
+      expect(globalNotifications, lessThan(10));
+      expect(state.wordbookImportActive, isFalse);
     },
   );
 }

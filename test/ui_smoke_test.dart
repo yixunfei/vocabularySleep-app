@@ -45,6 +45,7 @@ import 'package:vocabulary_sleep_app/src/services/todo_reminder_service.dart';
 import 'package:vocabulary_sleep_app/src/state/app_state.dart';
 import 'package:vocabulary_sleep_app/src/state/app_state_provider.dart';
 import 'package:vocabulary_sleep_app/src/state/playback_store.dart';
+import 'package:vocabulary_sleep_app/src/state/wordbook_import_store.dart';
 import 'package:vocabulary_sleep_app/src/ui/app_shell.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/appearance_studio_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/data_management_page.dart';
@@ -583,6 +584,36 @@ void main() {
 
       expect(find.text('Exit app?'), findsOneWidget);
       expect(find.textContaining('Focus lock is active.'), findsNothing);
+    });
+
+    testWidgets('wordbook import progress updates without a global rebuild', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpAppShell(tester, state: state);
+      var globalNotifications = 0;
+      state.addListener(() => globalNotifications += 1);
+
+      state.emitWordbookImportProgress(
+        const WordbookImportProgressSnapshot(
+          active: true,
+          name: 'Large import',
+          processedEntries: 50,
+          totalEntries: 100,
+        ),
+      );
+      await tester.pump();
+
+      expect(find.textContaining('Large import'), findsWidgets);
+      expect(find.text('50 / 100'), findsWidgets);
+      expect(globalNotifications, 0);
+
+      state.emitWordbookImportProgress(WordbookImportProgressSnapshot.idle);
+      await tester.pump();
+      expect(find.textContaining('Large import'), findsNothing);
     });
 
     testWidgets('app shell opens the configured startup tab after init', (
@@ -7156,6 +7187,10 @@ class _FakeAppState extends ChangeNotifier
   final ValueNotifier<PlaybackUnitProgress> _playbackUnitProgress =
       ValueNotifier<PlaybackUnitProgress>(PlaybackUnitProgress.empty);
   final ValueNotifier<int> _playbackRevision = ValueNotifier<int>(0);
+  final ValueNotifier<WordbookImportProgressSnapshot> _wordbookImportProgress =
+      ValueNotifier<WordbookImportProgressSnapshot>(
+        WordbookImportProgressSnapshot.idle,
+      );
   int? _playingWordbookId;
   String? _playingWordbookName;
   String? _playingWord;
@@ -7313,19 +7348,29 @@ class _FakeAppState extends ChangeNotifier
   double? get busyProgress => null;
 
   @override
-  bool get wordbookImportActive => false;
+  bool get wordbookImportActive => _wordbookImportProgress.value.active;
 
   @override
-  String get wordbookImportName => '';
+  String get wordbookImportName => _wordbookImportProgress.value.name;
 
   @override
-  int get wordbookImportProcessedEntries => 0;
+  int get wordbookImportProcessedEntries =>
+      _wordbookImportProgress.value.processedEntries;
 
   @override
-  int? get wordbookImportTotalEntries => null;
+  int? get wordbookImportTotalEntries =>
+      _wordbookImportProgress.value.totalEntries;
 
   @override
-  double? get wordbookImportProgress => null;
+  double? get wordbookImportProgress => _wordbookImportProgress.value.progress;
+
+  @override
+  ValueListenable<WordbookImportProgressSnapshot>
+  get wordbookImportListenable => _wordbookImportProgress;
+
+  void emitWordbookImportProgress(WordbookImportProgressSnapshot snapshot) {
+    _wordbookImportProgress.value = snapshot;
+  }
 
   @override
   WordEntry? get currentWord => _currentWord ?? _visibleWords.firstOrNull;

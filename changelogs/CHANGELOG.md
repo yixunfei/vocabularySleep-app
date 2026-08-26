@@ -1,3 +1,25 @@
+## [Unreleased-STUDY-PERF-PHASE13-IMPORT-PROGRESS] - 2026-08-26
+
+### 原因
+- 导入 worker 已移除 SQLite/JSON 的 UI isolate 阻塞，但每个百分比进度仍通过巨型 `AppState` 全局广播，约 101 次重建 `AppShell` 和存活页面；根 `MaterialApp` 也订阅了全部状态。
+
+### 修改
+- 新增独立的词本导入进度 store 与不可变快照，进度回调只更新专用 `ValueListenable`。
+- 导入横幅和 BusyOverlay 改为局部监听；导入开始、完成、错误及 Study 锁定保持原语义。
+- 应用根节点只选择 UI 语言和外观配置，其他 AppState 通知不再重建整个 `MaterialApp`。
+
+### 修复
+- 101 次模拟导入进度不再进入全局通知通道；定向 UI smoke 验证进度仍能更新且全局通知为 0。
+- 降低真实 12000 词导入期间其他模块的无关 build、selector 计算和对象分配。
+
+### 风险变更
+- 进度展示从全局 AppState 字段迁移到专用快照；开始与结束仍各自触发必要的全局 busy/锁定状态更新。
+
+### 验证
+- `flutter test test/ui_smoke_test.dart --plain-name "wordbook import progress updates without a global rebuild" --reporter compact` 通过。
+- `flutter test test/app_state_init_test.dart test/database_service_test.dart test/app_state_logic_test.dart test/app_state_practice_test.dart --reporter compact` 通过（69 项）。
+- 目标文件 `flutter analyze` 无 error，仅有 5 条既有 info；`dart format`、`git diff --check` 通过。本阶段新增/退休 i18n key 均为 0，未触达 catalog。
+
 ## [Unreleased-STUDY-PERF-PHASE12-COMPRESSED-IMPORT] - 2026-08-26
 
 ### 原因

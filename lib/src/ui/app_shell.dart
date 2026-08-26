@@ -12,6 +12,7 @@ import '../models/todo_item.dart';
 import '../models/weather_snapshot.dart';
 import '../state/app_state.dart';
 import '../state/app_state_provider.dart';
+import '../state/wordbook_import_store.dart';
 import 'module/module_access.dart';
 import 'pages/focus_page.dart';
 import 'pages/more_page.dart';
@@ -1167,34 +1168,55 @@ class _AppShellState extends ConsumerState<AppShell> {
                           bottomClearance: ambientLauncherBottomClearance,
                         ),
                       ),
-                    if (!isInitializing &&
-                        (state.wordbookImportActive ||
-                            state.remotePrewarmActive ||
-                            state.remotePrewarmFailed))
-                      Positioned(
-                        top: media.padding.top + 10,
-                        left: 16,
-                        right: 16,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            if (state.wordbookImportActive)
-                              _buildWordbookImportBanner(i18n, state),
-                            if (state.wordbookImportActive &&
-                                (state.remotePrewarmActive ||
-                                    state.remotePrewarmFailed))
-                              const SizedBox(height: 8),
-                            if (state.remotePrewarmActive ||
-                                state.remotePrewarmFailed)
-                              _buildRemotePrewarmBanner(i18n, state),
-                          ],
-                        ),
-                      ),
-                    BusyOverlay(
-                      visible: state.busy,
-                      message: state.busyMessage ?? i18n.t('processing'),
-                      detail: _busyDetail(i18n, state),
-                      progress: state.busyProgress,
+                    ValueListenableBuilder<WordbookImportProgressSnapshot>(
+                      valueListenable: state.wordbookImportListenable,
+                      builder: (context, importProgress, _) {
+                        if (isInitializing ||
+                            (!importProgress.active &&
+                                !state.remotePrewarmActive &&
+                                !state.remotePrewarmFailed)) {
+                          return const SizedBox.shrink();
+                        }
+                        return Positioned(
+                          top: media.padding.top + 10,
+                          left: 16,
+                          right: 16,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              if (importProgress.active)
+                                _buildWordbookImportBanner(
+                                  i18n,
+                                  importProgress,
+                                ),
+                              if (importProgress.active &&
+                                  (state.remotePrewarmActive ||
+                                      state.remotePrewarmFailed))
+                                const SizedBox(height: 8),
+                              if (state.remotePrewarmActive ||
+                                  state.remotePrewarmFailed)
+                                _buildRemotePrewarmBanner(i18n, state),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    ValueListenableBuilder<WordbookImportProgressSnapshot>(
+                      valueListenable: state.wordbookImportListenable,
+                      builder: (context, importProgress, _) {
+                        return BusyOverlay(
+                          visible: state.busy || importProgress.active,
+                          message: importProgress.active
+                              ? i18n.t('busyImportingWordbook')
+                              : state.busyMessage ?? i18n.t('processing'),
+                          detail: importProgress.active
+                              ? _wordbookImportBusyDetail(importProgress)
+                              : _busyDetail(i18n, state),
+                          progress: importProgress.active
+                              ? importProgress.progress
+                              : state.busyProgress,
+                        );
+                      },
                     ),
                     ValueListenableBuilder<int>(
                       valueListenable: state.focusService.viewRevision,
@@ -1280,10 +1302,23 @@ class _AppShellState extends ConsumerState<AppShell> {
     );
   }
 
-  Widget _buildWordbookImportBanner(AppI18n i18n, AppState state) {
-    final progress = state.wordbookImportProgress;
-    final processed = state.wordbookImportProcessedEntries;
-    final total = state.wordbookImportTotalEntries;
+  String _wordbookImportBusyDetail(WordbookImportProgressSnapshot progress) {
+    final total = progress.totalEntries;
+    if (total == null || total <= 0) {
+      return progress.processedEntries <= 0
+          ? progress.name
+          : '${progress.processedEntries}';
+    }
+    return '${progress.processedEntries} / $total';
+  }
+
+  Widget _buildWordbookImportBanner(
+    AppI18n i18n,
+    WordbookImportProgressSnapshot importProgress,
+  ) {
+    final progress = importProgress.progress;
+    final processed = importProgress.processedEntries;
+    final total = importProgress.totalEntries;
     final subtitle = total == null || total <= 0
         ? i18n.t('inline.ui.app_shell.parsing_and_importing_please_wait_1b254d')
         : i18n.t(
@@ -1319,7 +1354,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                       i18n.t(
                         'inline.ui.app_shell.importing_in_background_state_wordbookimportname_57cc79',
                         params: <String, Object?>{
-                          'wordbookImportName': state.wordbookImportName,
+                          'wordbookImportName': importProgress.name,
                         },
                       ),
                       style: Theme.of(context).textTheme.titleSmall,

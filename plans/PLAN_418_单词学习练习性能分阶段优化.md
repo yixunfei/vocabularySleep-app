@@ -2,7 +2,7 @@
 
 ## 基本信息
 - **创建日期**: 2026-08-25
-- **状态**: 进行中（阶段 1-12 已完成，阶段 13-14 进行第二轮性能收口）
+- **状态**: 进行中（阶段 1-13 已完成，阶段 14 进行第二轮性能收口）
 - **负责人**: Codex
 
 ## 目标
@@ -121,3 +121,10 @@
 - 真实 `中文-英语_12000词单词本.json` 生成的 6.06MB gzip（解压后约 27.9MB）完整导入 12000 词约 17.90s；10ms UI 计时器触发 1799 次，最大间隔约 13.1ms，峰值进程 RSS 约 315MB（Windows Flutter test，仅作同机基准）。
 - 单独旧流式解压基线约 135ms、最大事件循环间隔约 12ms，说明本阶段主要收益是收敛跨 isolate 大字符串和 UI heap 峰值，而不是显著缩短总导入时间。
 - 验证：`flutter test test/database_service_test.dart --reporter compact`（35 项通过，新增 gzip 流与本地 gzip 文件回归）；目标文件 `flutter analyze`、`dart format`、`git diff --check` 通过；本阶段未触达 i18n catalog。
+
+## 阶段 13 执行结果
+- 新增独立 `WordbookImportStore` 与不可变进度快照；导入 worker 的 101 次百分比回调只通知进度订阅者，不再逐次调用 `AppState.notifyListeners()`。
+- `AppShell` 的导入横幅与 BusyOverlay 改为局部 `ValueListenableBuilder`；导入开始、完成、失败和 Study 锁定仍保留原全局通知语义。
+- `VocabularySleepApp` 只监听 UI 语言与外观配置，导入、播放、练习等普通全局状态变化不再重建整个 `MaterialApp`。
+- 定向回归验证连续进度更新时全局通知为 0、横幅与 `50 / 100` 进度正常刷新；101 次模拟进度由专用通道接收，导入全流程全局通知保持个位数。
+- 验证：定向 AppShell smoke 通过；`flutter test test/app_state_init_test.dart test/database_service_test.dart test/app_state_logic_test.dart test/app_state_practice_test.dart --reporter compact`（69 项通过）；目标分析无 error，仅保留 `AppState` 5 条既有 `prefer_initializing_formals` info；`git diff --check` 通过。本阶段新增/退休 i18n key 均为 0，未触达 catalog。

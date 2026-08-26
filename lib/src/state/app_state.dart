@@ -50,6 +50,7 @@ import '../services/settings_service.dart';
 import '../services/weather_service.dart';
 import 'playback_store.dart';
 import 'practice_store.dart';
+import 'wordbook_import_store.dart';
 import 'weather_store.dart';
 import 'test_mode_store.dart';
 import 'startup_store.dart';
@@ -138,6 +139,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     StartupStore? startupStore,
     PracticeStore? practiceStore,
     PlaybackStore? playbackStore,
+    WordbookImportStore? wordbookImportStore,
     DailyQuoteService? dailyQuoteService,
   }) : _maintenanceRepository =
            maintenanceRepository ?? DatabaseMaintenanceRepository(database),
@@ -161,7 +163,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
        _weatherService = weatherService ?? WeatherService(),
        _dailyQuoteService = dailyQuoteService ?? DailyQuoteService(),
        _practiceStore = practiceStore ?? PracticeStore(),
-       _playbackStore = playbackStore ?? PlaybackStore() {
+       _playbackStore = playbackStore ?? PlaybackStore(),
+       _wordbookImportStore = wordbookImportStore ?? WordbookImportStore() {
     _weatherStore =
         weatherStore ??
         WeatherStore(
@@ -205,6 +208,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   late final bool _ownsStartupStore;
   final PracticeStore _practiceStore;
   final PlaybackStore _playbackStore;
+  final WordbookImportStore _wordbookImportStore;
   Timer? _playbackProgressPersistTimer;
   Timer? _practiceDashboardPersistTimer;
   Timer? _practiceAnswerPersistTimer;
@@ -228,10 +232,6 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   String? _busyDetail;
   double? _busyProgress;
   List<AmbientPreset> _ambientPresets = const <AmbientPreset>[];
-  bool _wordbookImportActive = false;
-  String _wordbookImportName = '';
-  int _wordbookImportProcessedEntries = 0;
-  int? _wordbookImportTotalEntries;
   String? _message;
   Map<String, Object?> _messageParams = const <String, Object?>{};
 
@@ -350,17 +350,15 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   String? get busyDetail => _busy ? _busyDetail : null;
   double? get busyProgress => _busy ? _busyProgress : null;
-  bool get wordbookImportActive => _wordbookImportActive;
-  String get wordbookImportName => _wordbookImportName;
-  int get wordbookImportProcessedEntries => _wordbookImportProcessedEntries;
-  int? get wordbookImportTotalEntries => _wordbookImportTotalEntries;
-  double? get wordbookImportProgress {
-    final total = _wordbookImportTotalEntries;
-    if (!_wordbookImportActive || total == null || total <= 0) {
-      return null;
-    }
-    return (_wordbookImportProcessedEntries / total).clamp(0.0, 1.0);
-  }
+  bool get wordbookImportActive => _wordbookImportStore.value.active;
+  String get wordbookImportName => _wordbookImportStore.value.name;
+  int get wordbookImportProcessedEntries =>
+      _wordbookImportStore.value.processedEntries;
+  int? get wordbookImportTotalEntries =>
+      _wordbookImportStore.value.totalEntries;
+  double? get wordbookImportProgress => _wordbookImportStore.value.progress;
+  ValueListenable<WordbookImportProgressSnapshot>
+  get wordbookImportListenable => _wordbookImportStore;
 
   String? get error {
     final key = _message;
@@ -1651,10 +1649,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       return;
     }
 
-    _wordbookImportActive = true;
-    _wordbookImportName = normalizedName;
-    _wordbookImportProcessedEntries = 0;
-    _wordbookImportTotalEntries = null;
+    _wordbookImportStore.start(normalizedName);
     _setBusy(
       true,
       messageKey: 'busyImportingWordbook',
@@ -1666,21 +1661,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         filePath: normalizedPath,
         name: normalizedName,
         onProgress: (processedEntries, totalEntries) {
-          _wordbookImportActive = true;
-          _wordbookImportName = normalizedName;
-          _wordbookImportProcessedEntries = processedEntries;
-          _wordbookImportTotalEntries = totalEntries;
-          final progress = totalEntries == null || totalEntries <= 0
-              ? null
-              : (processedEntries / totalEntries).clamp(0.0, 1.0);
-          final detail = totalEntries == null
-              ? '$processedEntries'
-              : '$processedEntries / $totalEntries';
-          _setBusy(
-            true,
-            messageKey: 'busyImportingWordbook',
-            detail: detail,
-            progress: progress,
+          _wordbookImportStore.update(
+            processedEntries: processedEntries,
+            totalEntries: totalEntries,
           );
         },
       );
@@ -1703,10 +1686,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         params: <String, Object?>{'error': error},
       );
     } finally {
-      _wordbookImportActive = false;
-      _wordbookImportName = '';
-      _wordbookImportProcessedEntries = 0;
-      _wordbookImportTotalEntries = null;
+      _wordbookImportStore.finish();
       _setBusy(false);
     }
   }
@@ -3732,6 +3712,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     );
     _playbackStore.dispose();
     _practiceStore.dispose();
+    _wordbookImportStore.dispose();
     _maintenanceRepository.dispose();
     super.dispose();
   }
