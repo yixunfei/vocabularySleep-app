@@ -62,4 +62,85 @@ void main() {
       expect(entries.single.summaryMeaningText, '后台读取');
     },
   );
+
+  test('background search materializes matching lite entries', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'vocabulary_sleep_search_worker_test_',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final databasePath = p.join(directory.path, 'worker.sqlite');
+    final database = sqlite3.open(databasePath);
+    database.execute('''
+      CREATE TABLE words (
+        id INTEGER PRIMARY KEY,
+        wordbook_id INTEGER NOT NULL,
+        word TEXT NOT NULL,
+        meaning TEXT,
+        entry_uid TEXT,
+        primary_gloss TEXT,
+        schema_version TEXT,
+        sort_index INTEGER,
+        search_word TEXT NOT NULL,
+        search_meaning TEXT,
+        search_details TEXT,
+        search_word_compact TEXT NOT NULL,
+        search_details_compact TEXT
+      )
+    ''');
+    database.execute(
+      '''
+      INSERT INTO words (
+        id, wordbook_id, word, primary_gloss, sort_index,
+        search_word, search_meaning, search_details,
+        search_word_compact, search_details_compact
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ''',
+      <Object?>[
+        1,
+        7,
+        'background',
+        'worker target',
+        0,
+        'background',
+        'worker target',
+        'worker target',
+        'background',
+        'workertarget',
+      ],
+    );
+    database.execute(
+      '''
+      INSERT INTO words (
+        id, wordbook_id, word, primary_gloss, sort_index,
+        search_word, search_meaning, search_details,
+        search_word_compact, search_details_compact
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ''',
+      <Object?>[
+        2,
+        7,
+        'ignored',
+        'other',
+        1,
+        'ignored',
+        'other',
+        'other',
+        'ignored',
+        'other',
+      ],
+    );
+    database.dispose();
+
+    final result = await searchWordbookLiteInBackground(
+      databasePath: databasePath,
+      wordbookId: 7,
+      query: 'target',
+      mode: 'meaning',
+    );
+
+    expect(result.totalCount, 1);
+    expect(result.entries, hasLength(1));
+    expect(result.entries.single.word, 'background');
+    expect(result.entries.single.summaryMeaningText, 'worker target');
+  });
 }

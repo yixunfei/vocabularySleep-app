@@ -1,20 +1,120 @@
 part of 'app_state.dart';
 
 extension _AppStateWordbook on AppState {
-  void _setSearchQueryImpl(String value) {
-    if (_searchQuery == value) return;
-    _searchQuery = value;
+  Future<void> _setSearchCriteriaImpl({
+    required String query,
+    required SearchMode mode,
+  }) async {
+    if (_searchQuery == query && _searchMode == mode) return;
+    _searchQuery = query;
+    _searchMode = mode;
     _invalidateVisibleWordsCache();
+    _currentWordCacheValid = false;
+    if (_shouldSearchWordbookInBackground) {
+      await _searchSelectedWordbookInBackground();
+      return;
+    }
+    _wordbookSearchStore.cancel();
     _ensureCurrentWordInScope();
     _notifyStateChanged();
   }
 
-  void _setSearchModeImpl(SearchMode mode) {
-    if (_searchMode == mode) return;
-    _searchMode = mode;
+  bool get _shouldSearchWordbookInBackground {
+    final selectedWordbook = _selectedWordbook;
+    return selectedWordbook != null &&
+        _searchQuery.trim().isNotEmpty &&
+        _shouldUseLiteWordQueries(selectedWordbook);
+  }
+
+  Future<void> _searchSelectedWordbookInBackground() async {
+    final selectedWordbook = _selectedWordbook;
+    if (selectedWordbook == null || !_shouldSearchWordbookInBackground) {
+      return;
+    }
+    _wordbookSearchStore.schedule(
+      wordbookId: selectedWordbook.id,
+      query: _searchQuery,
+      mode: _searchMode.name,
+    );
     _invalidateVisibleWordsCache();
-    _ensureCurrentWordInScope();
+    _currentWordCacheValid = false;
     _notifyStateChanged();
+
+    final activeRunner = _wordbookSearchRunner;
+    if (activeRunner != null) {
+      await activeRunner;
+      return;
+    }
+
+    final runner = _drainWordbookSearchRequests();
+    _wordbookSearchRunner = runner;
+    try {
+      await runner;
+    } finally {
+      if (identical(_wordbookSearchRunner, runner)) {
+        _wordbookSearchRunner = null;
+      }
+    }
+  }
+
+  Future<void> _drainWordbookSearchRequests() async {
+    while (!_disposed) {
+      final request = _wordbookSearchStore.takePendingRequest();
+      if (request == null) {
+        return;
+      }
+      final result = await _queryWordbookSearch(request);
+      if (!_canCommitWordbookSearch(request) ||
+          !_wordbookSearchStore.complete(
+            request: request,
+            entries: result.entries,
+            totalCount: result.totalCount,
+          )) {
+        continue;
+      }
+      _invalidateVisibleWordsCache();
+      _currentWordCacheValid = false;
+      _ensureCurrentWordInScope();
+      _notifyStateChanged();
+    }
+  }
+
+  Future<WordbookSearchResult> _queryWordbookSearch(
+    WordbookSearchRequest request,
+  ) async {
+    try {
+      return await _wordbookRepository.searchWordsLiteAsync(
+        request.wordbookId,
+        query: request.query,
+        mode: request.mode,
+      );
+    } catch (error, stackTrace) {
+      _log.e(
+        'app_state',
+        'background wordbook search failed',
+        error: error,
+        stackTrace: stackTrace,
+        data: <String, Object?>{
+          'wordbookId': request.wordbookId,
+          'queryLength': request.query.length,
+          'mode': request.mode,
+        },
+      );
+      return const WordbookSearchResult(entries: <WordEntry>[], totalCount: 0);
+    }
+  }
+
+  bool _canCommitWordbookSearch(WordbookSearchRequest request) {
+    final currentWordbook = _selectedWordbook;
+    return !_disposed &&
+        currentWordbook != null &&
+        currentWordbook.id == request.wordbookId &&
+        wordbookSearchSignature(
+              wordbookId: currentWordbook.id,
+              query: _searchQuery,
+              mode: _searchMode.name,
+            ) ==
+            request.signature;
   }
 
   Future<void> _selectWordbookImpl(
@@ -24,6 +124,8 @@ extension _AppStateWordbook on AppState {
   }) async {
     if (wordbook == null || _disposed) return;
     final loadGeneration = ++_wordbookLoadGeneration;
+    _wordbookSearchStore.cancel();
+    _currentWordCacheValid = false;
     if (_wordbookLoadBusyGeneration != null) {
       _wordbookLoadBusyGeneration = null;
       _wordbookLoadStore.finish();
@@ -138,7 +240,14 @@ extension _AppStateWordbook on AppState {
       _clearSelectedWordbookWords();
       _currentWordIndex = 0;
       resetTestModeProgress();
-      _notifyStateChanged();
+      if (_shouldSearchWordbookInBackground) {
+        await _searchSelectedWordbookInBackground();
+      } else {
+        _notifyStateChanged();
+      }
+      if (_disposed || loadGeneration != _wordbookLoadGeneration) {
+        return;
+      }
       if (previousSelection?.id != wordbook.id) {
         await _syncPlaybackToSelectedWordbook(wordbook);
       }
@@ -174,6 +283,12 @@ extension _AppStateWordbook on AppState {
         }
       }
     }
+    if (_shouldSearchWordbookInBackground) {
+      await _searchSelectedWordbookInBackground();
+      if (_disposed || loadGeneration != _wordbookLoadGeneration) {
+        return;
+      }
+    }
     final restoredProgressIndex =
         (focusWordId == null && (normalizedFocusWord ?? '').isEmpty)
         ? _playbackProgressIndexForWordbook(wordbook)
@@ -187,7 +302,9 @@ extension _AppStateWordbook on AppState {
       );
       if (!matchesFocusedWord) {
         _searchQuery = '';
+        _wordbookSearchStore.cancel();
         _invalidateVisibleWordsCache();
+        _currentWordCacheValid = false;
       }
     }
     _currentWordIndex = restoredProgressIndex >= 0

@@ -14,6 +14,7 @@ import '../widgets/empty_state_view.dart';
 import '../widgets/page_header.dart';
 import '../widgets/setting_tile.dart';
 import '../widgets/study_wordbook_status.dart';
+import '../widgets/study_search_loading_view.dart';
 import 'follow_along_page.dart';
 import 'practice_notebook_page.dart';
 import 'practice_review_page.dart';
@@ -48,6 +49,9 @@ class PracticePage extends ConsumerWidget {
     final i18n = AppI18n(state.uiLanguage);
     if (!state.isModuleEnabled(ModuleIds.practice)) {
       return ModuleDisabledView(i18n: i18n, moduleId: ModuleIds.practice);
+    }
+    if (state.wordbookSearchInProgress) {
+      return StudySearchLoadingView(label: i18n.t('processing'));
     }
     final current = state.currentWord;
     if (state.selectedWordbook == null || current == null) {
@@ -794,6 +798,7 @@ class _PracticePageRebuildToken {
     required this.currentWordIndex,
     required this.searchQuery,
     required this.searchMode,
+    required this.wordbookSearchRevision,
     required this.favoritesIdentity,
     required this.favoritesCount,
     required this.taskWordsIdentity,
@@ -834,6 +839,7 @@ class _PracticePageRebuildToken {
       currentWordIndex: state.currentWordIndex,
       searchQuery: state.searchQuery,
       searchMode: state.searchMode,
+      wordbookSearchRevision: state.wordbookSearchRevision,
       favoritesIdentity: identityHashCode(state.favorites),
       favoritesCount: state.favorites.length,
       taskWordsIdentity: identityHashCode(state.taskWords),
@@ -870,6 +876,7 @@ class _PracticePageRebuildToken {
   final int currentWordIndex;
   final String searchQuery;
   final SearchMode searchMode;
+  final int wordbookSearchRevision;
   final int favoritesIdentity;
   final int favoritesCount;
   final int taskWordsIdentity;
@@ -908,6 +915,7 @@ class _PracticePageRebuildToken {
         other.currentWordIndex == currentWordIndex &&
         other.searchQuery == searchQuery &&
         other.searchMode == searchMode &&
+        other.wordbookSearchRevision == wordbookSearchRevision &&
         other.favoritesIdentity == favoritesIdentity &&
         other.favoritesCount == favoritesCount &&
         other.taskWordsIdentity == taskWordsIdentity &&
@@ -945,6 +953,7 @@ class _PracticePageRebuildToken {
     currentWordIndex,
     searchQuery,
     searchMode,
+    wordbookSearchRevision,
     favoritesIdentity,
     favoritesCount,
     taskWordsIdentity,

@@ -17,6 +17,7 @@ import '../widgets/empty_state_view.dart';
 import '../widgets/section_header.dart';
 import '../widgets/status_badge.dart';
 import '../widgets/study_wordbook_status.dart';
+import '../widgets/study_search_loading_view.dart';
 import '../widgets/word_card.dart';
 import 'follow_along_page.dart';
 
@@ -119,6 +120,9 @@ class _PlayPageState extends ConsumerState<PlayPage> {
         onSwitchWordbook: () =>
             showStudyWordbookSheet(context: context, state: state, i18n: i18n),
       );
+    }
+    if (state.wordbookSearchInProgress) {
+      return StudySearchLoadingView(label: i18n.t('processing'));
     }
     if (current == null) {
       final searching = state.searchQuery.trim().isNotEmpty;
@@ -689,6 +693,7 @@ class _PlayPageRebuildToken {
     required this.currentWordTask,
     required this.searchQuery,
     required this.searchMode,
+    required this.wordbookSearchRevision,
     required this.isPlaying,
     required this.isPaused,
     required this.playOrder,
@@ -727,6 +732,7 @@ class _PlayPageRebuildToken {
       currentWordTask: current != null && state.isTaskEntry(current),
       searchQuery: state.searchQuery,
       searchMode: state.searchMode,
+      wordbookSearchRevision: state.wordbookSearchRevision,
       isPlaying: state.isPlaying,
       isPaused: state.isPaused,
       playOrder: config.order,
@@ -762,6 +768,7 @@ class _PlayPageRebuildToken {
   final bool currentWordTask;
   final String searchQuery;
   final SearchMode searchMode;
+  final int wordbookSearchRevision;
   final bool isPlaying;
   final bool isPaused;
   final PlayOrder playOrder;
@@ -835,6 +842,7 @@ class _PlayPageRebuildToken {
         other.currentWordTask == currentWordTask &&
         other.searchQuery == searchQuery &&
         other.searchMode == searchMode &&
+        other.wordbookSearchRevision == wordbookSearchRevision &&
         other.isPlaying == isPlaying &&
         other.isPaused == isPaused &&
         other.playOrder == playOrder &&
@@ -885,6 +893,7 @@ class _PlayPageRebuildToken {
       weatherEnabled,
       weatherLoading,
       weatherSnapshotSignature,
+      wordbookSearchRevision,
     ),
   );
 }

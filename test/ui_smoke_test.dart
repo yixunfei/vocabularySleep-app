@@ -269,6 +269,25 @@ void main() {
       expect(state.currentWord?.word, 'Beta');
     });
 
+    testWidgets('library shows progress while a large search is running', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        words: const <WordEntry>[],
+        wordbookSearchInProgress: true,
+      );
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const LibraryPage(),
+        settle: false,
+      );
+
+      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+      expect(find.text('No matching words'), findsNothing);
+    });
+
     testWidgets('study import progress rebuilds only the lock panel', (
       tester,
     ) async {
@@ -867,6 +886,26 @@ void main() {
 
       expect(state.visibleWordsReadCount, readsAfterInitialBuild);
       expect(find.text('Alpha'), findsWidgets);
+    });
+
+    testWidgets('play page distinguishes search loading from no results', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        words: const <WordEntry>[],
+        wordbookSearchInProgress: true,
+      );
+      await _pumpPage(
+        tester,
+        state: state,
+        child: PlayPage(onOpenPractice: () {}, onOpenLibrary: () {}),
+        settle: false,
+      );
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text('Processing...'), findsOneWidget);
+      expect(find.text('No words match this search'), findsNothing);
     });
 
     testWidgets('expanded mini player changes reading speed from menu', (
@@ -6332,6 +6371,26 @@ void main() {
       expect(find.text('Shuffle sprint'), findsOneWidget);
     });
 
+    testWidgets('practice page distinguishes search loading from empty', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        words: const <WordEntry>[],
+        wordbookSearchInProgress: true,
+      );
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const PracticePage(),
+        settle: false,
+      );
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text('Processing...'), findsOneWidget);
+      expect(find.text('Practice needs a wordbook'), findsNothing);
+    });
+
     testWidgets('practice page offers explicit loading for deferred wordbook', (
       tester,
     ) async {
@@ -6967,6 +7026,7 @@ Future<void> _pumpPage(
   required _FakeAppState state,
   required Widget child,
   Locale? locale,
+  bool settle = true,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -6989,7 +7049,9 @@ Future<void> _pumpPage(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  if (settle) {
+    await tester.pumpAndSettle();
+  }
 }
 
 Future<void> _pumpUntilFound(
@@ -7133,6 +7195,7 @@ class _FakeAppState extends ChangeNotifier
     List<WordEntry>? recentWeakEntries,
     bool selectedWordbookLoaded = true,
     bool selectedWordbookRequiresOnDemandLoad = false,
+    bool wordbookSearchInProgress = false,
   }) {
     final visibleWords =
         words ??
@@ -7236,7 +7299,8 @@ class _FakeAppState extends ChangeNotifier
             (visibleWords.length < 2
                 ? visibleWords
                 : visibleWords.sublist(0, 2)),
-      );
+      )
+      .._wordbookSearchInProgress = wordbookSearchInProgress;
   }
 
   PlayConfig _config;
@@ -7317,6 +7381,8 @@ class _FakeAppState extends ChangeNotifier
   SleepProgramProgress? _sleepProgramProgress;
   String _searchQuery = '';
   SearchMode _searchMode = SearchMode.all;
+  bool _wordbookSearchInProgress = false;
+  int _wordbookSearchRevision = 0;
   bool _testModeEnabled = false;
   bool _testModeRevealed = false;
   bool _testModeHintRevealed = false;
@@ -7779,6 +7845,12 @@ class _FakeAppState extends ChangeNotifier
 
   @override
   String get searchQuery => _searchQuery;
+
+  @override
+  bool get wordbookSearchInProgress => _wordbookSearchInProgress;
+
+  @override
+  int get wordbookSearchRevision => _wordbookSearchRevision;
 
   @override
   Wordbook? get selectedWordbook => _selectedWordbook;
@@ -8983,14 +9055,23 @@ class _FakeAppState extends ChangeNotifier
   }
 
   @override
-  void setSearchMode(SearchMode mode) {
-    _searchMode = mode;
-    notifyListeners();
+  Future<void> setSearchMode(SearchMode mode) async {
+    await setSearchCriteria(query: _searchQuery, mode: mode);
   }
 
   @override
-  void setSearchQuery(String value) {
-    _searchQuery = value;
+  Future<void> setSearchQuery(String value) async {
+    await setSearchCriteria(query: value, mode: _searchMode);
+  }
+
+  @override
+  Future<void> setSearchCriteria({
+    required String query,
+    required SearchMode mode,
+  }) async {
+    _searchQuery = query;
+    _searchMode = mode;
+    _wordbookSearchRevision += 1;
     notifyListeners();
   }
 

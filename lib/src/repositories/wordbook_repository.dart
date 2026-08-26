@@ -46,6 +46,13 @@ abstract class WordbookRepository {
     int offset,
   });
 
+  Future<WordbookSearchResult> searchWordsLiteAsync(
+    int wordbookId, {
+    required String query,
+    required String mode,
+    int limit,
+  });
+
   WordEntry? hydrateWordEntry(WordEntry entry);
 
   int countSearchWords(
@@ -252,6 +259,20 @@ class DatabaseWordbookRepository implements WordbookRepository {
       offset: offset,
     );
   }
+
+  @override
+  Future<WordbookSearchResult> searchWordsLiteAsync(
+    int wordbookId, {
+    required String query,
+    required String mode,
+    int limit = 100000,
+  }) => searchWordbookLiteInBackground(
+    databasePath: _database.dbPath,
+    wordbookId: wordbookId,
+    query: query,
+    mode: mode,
+    limit: limit,
+  );
 
   @override
   WordEntry? hydrateWordEntry(WordEntry entry) {

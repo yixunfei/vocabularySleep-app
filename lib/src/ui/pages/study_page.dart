@@ -203,6 +203,7 @@ class _StudyPageRebuildToken {
     required this.wordsVersion,
     required this.searchQuery,
     required this.searchMode,
+    required this.wordbookSearchRevision,
   });
 
   factory _StudyPageRebuildToken.fromState(AppState state) {
@@ -219,6 +220,7 @@ class _StudyPageRebuildToken {
       wordsVersion: state.wordsVersion,
       searchQuery: state.searchQuery,
       searchMode: state.searchMode,
+      wordbookSearchRevision: state.wordbookSearchRevision,
     );
   }
 
@@ -233,6 +235,7 @@ class _StudyPageRebuildToken {
   final int wordsVersion;
   final String searchQuery;
   final SearchMode searchMode;
+  final int wordbookSearchRevision;
 
   @override
   bool operator ==(Object other) {
@@ -247,7 +250,8 @@ class _StudyPageRebuildToken {
         other.selectedWordbookLoaded == selectedWordbookLoaded &&
         other.wordsVersion == wordsVersion &&
         other.searchQuery == searchQuery &&
-        other.searchMode == searchMode;
+        other.searchMode == searchMode &&
+        other.wordbookSearchRevision == wordbookSearchRevision;
   }
 
   @override
@@ -263,6 +267,7 @@ class _StudyPageRebuildToken {
     wordsVersion,
     searchQuery,
     searchMode,
+    wordbookSearchRevision,
   );
 }
 

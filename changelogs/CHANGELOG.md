@@ -1,3 +1,26 @@
+## [Unreleased-STUDY-PERF-PHASE15-BACKGROUND-SEARCH] - 2026-08-26
+
+### 原因
+- 真实 12000 词搜索仍在 UI isolate 同步执行 SQLite 全表匹配、计数和最多 12000 个 lite 模型物化，常见查询会连续阻塞约 67-215ms。
+
+### 修改
+- 新增共享搜索 SQL 计划与只读 SQLite worker，完整结果在后台直接构造 `WordEntry` 快照。
+- 新增独立 `WordbookSearchStore`；查询使用 generation/签名校验，Library、Play、Practice 通过 revision 消费同一完成快照并显示明确加载态。
+- 快速输入采用单 worker 串行执行且仅保留最新待执行请求；切词本、清空查询、数据库恢复及 `dispose` 会取消待执行请求并释放已提交快照。
+
+### 修复
+- `a`/`ab`/`ability` 的 worker 总耗时约 208-216ms/109ms/71ms，期间 UI 10ms 定时器最大间隔约 11.0-12.5ms，不再出现原同步路径 67-215ms 的 UI isolate 冻结。
+- 迟到搜索结果不会覆盖新查询或新词本；搜索中进入 Play/Practice 不再短暂显示“无结果/无词本”。
+
+### 风险变更
+- 搜索结果以最多 100000 条 lite 对象的完整快照支持播放与练习语义；超大词本的峰值内存仍需后续通过分页 ID/FTS 架构单独收敛。
+- worker 失败不再回退 UI isolate 同步全量搜索，而是记录错误并提交空结果，优先保证界面响应。
+
+### 验证
+- 真实 `zh_en_12000.json.gz` 搜索、10ms UI timer 和 160ms 连续输入基准通过；产品层回归确认同时运行的搜索 worker 上限为 1。
+- 核心状态/播放/练习/worker 回归及阶段目标 UI smoke 通过；目标 `flutter analyze` 无 error，`dart format`、`git diff --check` 通过。
+- 本阶段新增/退休 i18n key 均为 0，未触达 catalog。
+
 ## [Unreleased-STUDY-PERF-PHASE14-HOT-PATHS] - 2026-08-26
 
 ### 原因

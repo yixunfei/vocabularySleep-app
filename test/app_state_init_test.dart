@@ -24,6 +24,7 @@ import 'package:vocabulary_sleep_app/src/services/settings_service.dart';
 import 'package:vocabulary_sleep_app/src/services/playback_service.dart';
 import 'package:vocabulary_sleep_app/src/services/weather_service.dart';
 import 'package:vocabulary_sleep_app/src/services/wordbook_import_service.dart';
+import 'package:vocabulary_sleep_app/src/services/wordbook_query_worker.dart';
 import 'package:vocabulary_sleep_app/src/state/app_state.dart';
 import 'package:vocabulary_sleep_app/src/state/wordbook_import_store.dart';
 import 'package:vocabulary_sleep_app/src/state/wordbook_load_store.dart';
@@ -266,6 +267,22 @@ class _CountingWordbookRepository extends DatabaseWordbookRepository {
       limit: limit,
       offset: offset,
     );
+  }
+
+  @override
+  Future<WordbookSearchResult> searchWordsLiteAsync(
+    int wordbookId, {
+    required String query,
+    required String mode,
+    int limit = 100000,
+  }) async {
+    final entries = searchWordsLite(
+      wordbookId,
+      query: query,
+      mode: mode,
+      limit: limit,
+    );
+    return WordbookSearchResult(entries: entries, totalCount: entries.length);
   }
 }
 
@@ -1009,8 +1026,8 @@ void main() {
       );
       expect(repository.liteQueryCalls, 1);
 
-      state.setSearchQuery('Beta');
       repository.searchLiteQueryCalls = 0;
+      await state.setSearchQuery('Beta');
       final searchedPage = state.getVisibleWordsPage(limit: 20);
       expect(searchedPage.map((item) => item.word), <String>['Beta']);
       expect(repository.searchLiteQueryCalls, 1);

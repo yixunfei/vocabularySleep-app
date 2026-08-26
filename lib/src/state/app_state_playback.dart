@@ -445,6 +445,8 @@ extension _AppStatePlayback on AppState {
               : true);
     if (_searchQuery.trim().isNotEmpty && !hasFocusedEntry) {
       _searchQuery = '';
+      _wordbookSearchStore.cancel();
+      _currentWordCacheValid = false;
       await selectWordbook(
         target,
         focusWord: focusWord,

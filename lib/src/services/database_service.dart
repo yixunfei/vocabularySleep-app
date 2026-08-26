@@ -22,6 +22,7 @@ import '../models/wordbook_schema_v1.dart';
 import '../utils/search_text_normalizer.dart' as search_text;
 import 'built_in_wordbook_source.dart';
 import 'wordbook_import_service.dart';
+import 'wordbook_search_query.dart';
 
 part 'database_service_maintenance.dart';
 part 'database_service_wordbook_query.dart';

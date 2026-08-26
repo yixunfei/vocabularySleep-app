@@ -48,10 +48,12 @@ import '../services/online_ambient_catalog_service.dart';
 import '../services/playback_service.dart';
 import '../services/settings_service.dart';
 import '../services/weather_service.dart';
+import '../services/wordbook_query_worker.dart';
 import 'playback_store.dart';
 import 'practice_store.dart';
 import 'wordbook_import_store.dart';
 import 'wordbook_load_store.dart';
+import 'wordbook_search_store.dart';
 import 'weather_store.dart';
 import 'test_mode_store.dart';
 import 'startup_store.dart';
@@ -213,6 +215,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   final PlaybackStore _playbackStore;
   final WordbookImportStore _wordbookImportStore;
   final WordbookLoadStore _wordbookLoadStore;
+  final WordbookSearchStore _wordbookSearchStore = WordbookSearchStore();
+  Future<void>? _wordbookSearchRunner;
   Timer? _playbackProgressPersistTimer;
   Timer? _practiceDashboardPersistTimer;
   Timer? _practiceAnswerPersistTimer;
@@ -410,6 +414,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _taskWords.contains(entry.collectionReferenceKey);
   String get searchQuery => _searchQuery;
   SearchMode get searchMode => _searchMode;
+  bool get wordbookSearchInProgress =>
+      _currentWordbookSearchSnapshot?.loading ?? false;
+  int get wordbookSearchRevision => _wordbookSearchStore.revision;
   String get uiLanguage => _uiLanguage;
   bool get uiLanguageFollowsSystem => _uiLanguageFollowsSystem;
   bool get firstRunSetupCompleted => _firstRunSetupCompleted;
@@ -579,6 +586,22 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   List<AmbientPreset> get ambientPresets =>
       List<AmbientPreset>.unmodifiable(_ambientPresets);
 
+  WordbookSearchSnapshot? get _currentWordbookSearchSnapshot {
+    final selectedWordbook = _selectedWordbook;
+    if (selectedWordbook == null ||
+        _searchQuery.trim().isEmpty ||
+        !_shouldUseLiteWordQueries(selectedWordbook)) {
+      return null;
+    }
+    final snapshot = _wordbookSearchStore.snapshot;
+    final signature = wordbookSearchSignature(
+      wordbookId: selectedWordbook.id,
+      query: _searchQuery,
+      mode: _searchMode.name,
+    );
+    return snapshot.signature == signature ? snapshot : null;
+  }
+
   List<WordEntry> get visibleWords {
     if (_visibleWordsCache != null &&
         _visibleWordsCacheVersion == _wordsVersion &&
@@ -591,6 +614,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     final selectedWordbook = _selectedWordbook;
     final computed = selectedWordbook == null || normalizedQuery.isEmpty
         ? _words
+        : _shouldUseLiteWordQueries(selectedWordbook)
+        ? (_currentWordbookSearchSnapshot?.entries ?? const <WordEntry>[])
         : _searchWordbookEntries(
             selectedWordbook,
             query: normalizedQuery,
@@ -694,6 +719,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
           ? _words.length
           : selectedWordbook.wordCount;
     }
+    if (_shouldUseLiteWordQueries(selectedWordbook)) {
+      return _currentWordbookSearchSnapshot?.totalCount ?? 0;
+    }
     return _wordbookRepository.countSearchWords(
       selectedWordbook.id,
       query: _searchQuery,
@@ -717,6 +745,15 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       final start = offset.clamp(0, _words.length).toInt();
       final end = (start + limit).clamp(start, _words.length).toInt();
       return _words.sublist(start, end);
+    }
+    if (_shouldUseLiteWordQueries(selectedWordbook)) {
+      final entries = _currentWordbookSearchSnapshot?.entries;
+      if (entries == null || entries.isEmpty) {
+        return const <WordEntry>[];
+      }
+      final start = offset.clamp(0, entries.length).toInt();
+      final end = (start + limit).clamp(start, entries.length).toInt();
+      return entries.sublist(start, end);
     }
     if (!selectedWordbookLoaded) {
       return _getDeferredWordbookPage(
@@ -1532,9 +1569,16 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     anchorWord: anchorWord,
   );
 
-  void setSearchQuery(String value) => _setSearchQueryImpl(value);
+  Future<void> setSearchQuery(String value) =>
+      _setSearchCriteriaImpl(query: value, mode: _searchMode);
 
-  void setSearchMode(SearchMode mode) => _setSearchModeImpl(mode);
+  Future<void> setSearchMode(SearchMode mode) =>
+      _setSearchCriteriaImpl(query: _searchQuery, mode: mode);
+
+  Future<void> setSearchCriteria({
+    required String query,
+    required SearchMode mode,
+  }) => _setSearchCriteriaImpl(query: query, mode: mode);
 
   Future<void> selectWordbook(
     Wordbook? wordbook, {
@@ -2065,6 +2109,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _messageParams = const <String, Object?>{};
       _searchQuery = '';
       _searchMode = SearchMode.all;
+      _wordbookSearchStore.cancel();
       _favorites = <String>{};
       _taskWords = <String>{};
       await _reloadPersistentStateAfterDatabaseChange();
@@ -3481,6 +3526,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
     _searchQuery = '';
     _searchMode = SearchMode.all;
+    _wordbookSearchStore.cancel();
     _invalidateVisibleWordsCache();
     _loadPracticeDashboard();
     _ensurePracticeDate(persist: true);
@@ -3661,6 +3707,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _disposed = true;
     _wordbookLoadGeneration += 1;
     _wordbookLoadBusyGeneration = null;
+    _wordbookSearchStore.cancel();
     _flushDeferredPersistence();
     _ambientSyncDebounceTimer?.cancel();
     _playbackProgressPersistTimer?.cancel();

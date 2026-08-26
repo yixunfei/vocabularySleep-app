@@ -481,6 +481,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     _maybeScrollToCurrentWord(state);
     final previewVisible = state.config.showText;
     final searching = state.searchQuery.trim().isNotEmpty;
+    final searchLoading = state.wordbookSearchInProgress;
     final mediaQuery = MediaQuery.of(context);
     final compactHeight = mediaQuery.size.height < 720;
     final showCompactAddWord = compactHeight || mediaQuery.size.width < 360;
@@ -577,8 +578,11 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                         selected: <SearchMode>{state.searchMode},
                         onSelectionChanged: (selection) {
                           if (selection.isEmpty) return;
-                          _commitSearchQuery(state, _searchController.text);
-                          state.setSearchMode(selection.first);
+                          _searchDebounce?.cancel();
+                          state.setSearchCriteria(
+                            query: _searchController.text,
+                            mode: selection.first,
+                          );
                         },
                       ),
                     ),
@@ -646,7 +650,12 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
               ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            if (totalWords <= 0)
+            if (searchLoading)
+              const SliverPadding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverToBoxAdapter(child: LinearProgressIndicator()),
+              )
+            else if (totalWords <= 0)
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverToBoxAdapter(
