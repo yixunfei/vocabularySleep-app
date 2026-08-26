@@ -2,7 +2,7 @@
 
 ## 基本信息
 - **创建日期**: 2026-08-25
-- **状态**: 进行中（阶段 1-11 已完成手工验证，阶段 12-14 进行第二轮性能收口）
+- **状态**: 进行中（阶段 1-12 已完成，阶段 13-14 进行第二轮性能收口）
 - **负责人**: Codex
 
 ## 目标
@@ -114,3 +114,10 @@
 - 完成词本加载、连续播放和跨模块操作；Study 页显示 `Playing`/`Pause`，切换 Toolbox、Life tools 后返回 Study，播放位置从 `6/12000` 推进到 `12/12000`，进程保持存活且未观察到 Flutter fatal、SQLite 异常。
 - 连续执行 Study/Toolbox/Life tools 交替切换 6 轮，Android 进程 PSS 约 `471-483 MB`（包含 12000 词已加载模型、Profile runtime 和模拟器开销），未见随切换单调增长；该数值不是泄漏结论，需真机基线对照。
 - 自动 `integration_test` 仍因 Gradle 无法访问 `storage.googleapis.com` 的 `androidx.test:runner` 元数据未执行；完整帧时间、真机 RSS/heap 和练习答题流程留待网络可用后补测。
+
+## 阶段 12 执行结果
+- 本地 `.json`、`.jsonl`、`.json.gz` 文件由导入 worker 直接读取；压缩字节解码、UTF-8 解码、JSON 解析和 SQLite 单事务写入不再把完整 JSON 字符串带回 UI isolate。
+- 远程/内置词本流在 UI isolate 仅汇集原始字节，随后通过 `TransferableTypedData` 转交同一 worker；Web、自定义 importer、合并导入与 worker 失败仍走原兼容路径。
+- 真实 `中文-英语_12000词单词本.json` 生成的 6.06MB gzip（解压后约 27.9MB）完整导入 12000 词约 17.90s；10ms UI 计时器触发 1799 次，最大间隔约 13.1ms，峰值进程 RSS 约 315MB（Windows Flutter test，仅作同机基准）。
+- 单独旧流式解压基线约 135ms、最大事件循环间隔约 12ms，说明本阶段主要收益是收敛跨 isolate 大字符串和 UI heap 峰值，而不是显著缩短总导入时间。
+- 验证：`flutter test test/database_service_test.dart --reporter compact`（35 项通过，新增 gzip 流与本地 gzip 文件回归）；目标文件 `flutter analyze`、`dart format`、`git diff --check` 通过；本阶段未触达 i18n catalog。

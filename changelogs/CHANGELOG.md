@@ -1,3 +1,23 @@
+## [Unreleased-STUDY-PERF-PHASE12-COMPRESSED-IMPORT] - 2026-08-26
+
+### 原因
+- `.json.gz` 和远程字节流此前在 UI isolate 完成解压与 UTF-8 字符串构造，再把完整 JSON 发送给写入 worker，造成不必要的大字符串驻留和移动端 heap 压力。
+
+### 修改
+- 本地 JSON/JSONL/Gzip 文件改由导入 worker 直接读取，并在同一 isolate 完成解压、解析和 SQLite 单事务写入。
+- 远程字节流使用 `TransferableTypedData` 转交 worker；Web、自定义 importer、合并导入和 worker 失败保留原兼容路径。
+
+### 修复
+- 默认压缩词本导入不再在 UI isolate 构造约 20MB 的解压后 JSON 字符串，也不再进行 UI isolate 到写入 worker 的大字符串传递。
+- 真实 12000 词 gzip 完整导入约 17.90s，10ms UI 计时器最大间隔约 13.1ms。
+
+### 风险变更
+- worker 新增文件与可转移字节两种输入；回退路径会重新读取本地文件或复用原始流字节，数据库事务和 replace 语义保持不变。
+
+### 验证
+- `flutter test test/database_service_test.dart --reporter compact` 通过（35 项）。
+- 目标文件 `flutter analyze`、`dart format`、`git diff --check` 通过；本阶段新增/退休 i18n key 均为 0。
+
 ## [Unreleased-STUDY-PERF-PHASE11-DEVICE-SMOKE] - 2026-08-26
 
 ### 验证

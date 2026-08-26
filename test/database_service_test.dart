@@ -726,6 +726,78 @@ void main() {
     },
   );
 
+  test('gzipped byte stream import decodes and writes in background', () async {
+    final database = AppDatabaseService(WordbookImportService());
+    await database.init();
+    addTearDown(database.dispose);
+
+    final jsonBytes = utf8.encode(
+      jsonEncode(<String, Object?>{
+        'words': <Map<String, Object?>>[
+          <String, Object?>{'word': 'alpha', 'meaning': '第一项'},
+          <String, Object?>{'word': 'beta', 'meaning': '第二项'},
+        ],
+      }),
+    );
+    final compressed = gzip.encode(jsonBytes);
+    final split = compressed.length ~/ 2;
+    final imported = await database.importWordbookJsonByteStreamAsync(
+      sourcePath: 'custom:test_gzipped_stream',
+      name: 'Gzipped stream test',
+      byteStream: Stream<List<int>>.fromIterable(<List<int>>[
+        compressed.sublist(0, split),
+        compressed.sublist(split),
+      ]),
+      gzipped: true,
+    );
+
+    expect(imported, 2);
+    final wordbook = database.getWordbooks().firstWhere(
+      (item) => item.path == 'custom:test_gzipped_stream',
+    );
+    expect(database.getWords(wordbook.id).map((item) => item.word), <String>[
+      'alpha',
+      'beta',
+    ]);
+  });
+
+  test('json gzip file import stays on the background file path', () async {
+    final database = AppDatabaseService(WordbookImportService());
+    await database.init();
+    addTearDown(database.dispose);
+
+    final sourceFile = File(
+      '${tempDir.path}${Platform.pathSeparator}worker_wordbook.json.gz',
+    );
+    await sourceFile.writeAsBytes(
+      gzip.encode(
+        utf8.encode(
+          jsonEncode(<String, Object?>{
+            'words': <Map<String, Object?>>[
+              <String, Object?>{'word': 'gamma', 'meaning': '第三项'},
+            ],
+          }),
+        ),
+      ),
+      flush: true,
+    );
+
+    final progress = <(int, int?)>[];
+    final imported = await database.importWordbookFileAsync(
+      filePath: sourceFile.path,
+      name: 'Gzip file test',
+      onProgress: (processed, total) => progress.add((processed, total)),
+    );
+
+    expect(imported, 1);
+    expect(progress.first, (0, 1));
+    expect(progress.last, (1, 1));
+    final wordbook = database.getWordbooks().firstWhere(
+      (item) => item.path == sourceFile.path,
+    );
+    expect(database.getWords(wordbook.id).single.word, 'gamma');
+  });
+
   test(
     'lite reads and export payloads fall back to primary_gloss when meaning cache is empty',
     () async {
