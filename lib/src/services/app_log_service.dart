@@ -6,18 +6,27 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import 'buffered_file_log_writer.dart';
+
 class AppLogService {
-  AppLogService._();
+  AppLogService._() {
+    _writer = BufferedFileLogWriter(
+      resolveFile: _ensureWritableFile,
+      isDisabled: () => _fileLoggingDisabled,
+      shouldDisable: _shouldDisableFileLogging,
+      disable: _disableFileLogging,
+    );
+  }
 
   static final AppLogService instance = AppLogService._();
+  static const int _maxPersistedLineCharacters = 64 * 1024;
 
   File? _file;
   Future<void>? _initFuture;
-  Future<void> _queue = Future<void>.value();
+  late final BufferedFileLogWriter _writer;
   bool _fileLoggingDisabled = false;
   String? _fileLoggingDisableReason;
   bool _reportedDisabledState = false;
-  int _writeGeneration = 0;
 
   Future<void> init() {
     _initFuture ??= _init();
@@ -34,6 +43,9 @@ class AppLogService {
   }
 
   void d(String tag, String message, {Map<String, Object?>? data}) {
+    if (!kDebugMode) {
+      return;
+    }
     _write('DEBUG', tag, message, data: data);
   }
 
@@ -80,47 +92,49 @@ class AppLogService {
       if (error != null) 'error': '$error',
       if (stackTrace != null) 'stack': '$stackTrace',
     };
-    final line = jsonEncode(payload);
+    final line = _encodeLogLine(payload);
     debugPrint(line);
-    final generation = _writeGeneration;
+    if (level != 'DEBUG') {
+      _writer.add(level: level, line: line);
+    }
+  }
 
-    _queue = _queue.then((_) async {
-      if (_fileLoggingDisabled || _writeGeneration != generation) {
-        return;
-      }
-      try {
-        final file = await _ensureWritableFile();
-        if (file == null || _writeGeneration != generation) {
-          return;
-        }
-        await file.writeAsString('$line\n', mode: FileMode.append, flush: true);
-      } catch (writeError, writeStack) {
-        if (_shouldDisableFileLogging(writeError)) {
-          _disableFileLogging(writeError);
-          return;
-        }
-        try {
-          final recoveredFile = await _ensureWritableFile(forceRefresh: true);
-          if (recoveredFile == null || _writeGeneration != generation) {
-            return;
-          }
-          await recoveredFile.writeAsString(
-            '$line\n',
-            mode: FileMode.append,
-            flush: true,
-          );
-        } catch (recoveryError, recoveryStack) {
-          if (_shouldDisableFileLogging(recoveryError)) {
-            _disableFileLogging(recoveryError);
-            return;
-          }
-          debugPrint('[AppLogService] write failed: $writeError\n$writeStack');
-          debugPrint(
-            '[AppLogService] recovery failed: $recoveryError\n$recoveryStack',
-          );
-        }
-      }
+  String _encodeLogLine(Map<String, Object?> payload) {
+    String line;
+    try {
+      line = jsonEncode(payload);
+    } catch (error) {
+      line = jsonEncode(<String, Object?>{
+        'time': payload['time'],
+        'level': payload['level'],
+        'tag': payload['tag'],
+        'message': payload['message'],
+        'data': '${payload['data']}',
+        'encodingError': '$error',
+      });
+    }
+    if (line.length <= _maxPersistedLineCharacters) {
+      return line;
+    }
+    return jsonEncode(<String, Object?>{
+      'time': payload['time'],
+      'level': payload['level'],
+      'tag': payload['tag'],
+      'message': _truncate('${payload['message']}', 4096),
+      if (payload['error'] != null)
+        'error': _truncate('${payload['error']}', 8192),
+      if (payload['stack'] != null)
+        'stack': _truncate('${payload['stack']}', 32768),
+      'truncated': true,
+      'originalCharacters': line.length,
     });
+  }
+
+  String _truncate(String value, int maxCharacters) {
+    if (value.length <= maxCharacters) {
+      return value;
+    }
+    return '${value.substring(0, maxCharacters)}...';
   }
 
   Future<File?> _prepareLogFile() async {
@@ -179,7 +193,22 @@ class AppLogService {
   }
 
   @visibleForTesting
-  Future<void> flushForTest() => _queue;
+  Future<void> flushForTest() => _writer.flush();
+
+  @visibleForTesting
+  int get retainedFileLogLineCount => _writer.retainedLineCount;
+
+  @visibleForTesting
+  int get droppedFileLogLineCount => _writer.droppedLineCount;
+
+  @visibleForTesting
+  int get fileLogWriteBatchCount => _writer.writeBatchCount;
+
+  @visibleForTesting
+  int get maxObservedRetainedFileLogLines => _writer.maxObservedRetainedLines;
+
+  @visibleForTesting
+  int get maxRetainedFileLogLines => BufferedFileLogWriter.maxRetainedLines;
 
   @visibleForTesting
   bool get isFileLoggingDisabled => _fileLoggingDisabled;
@@ -189,10 +218,9 @@ class AppLogService {
 
   @visibleForTesting
   void resetForTest() {
-    _writeGeneration += 1;
+    _writer.reset();
     _file = null;
     _initFuture = null;
-    _queue = Future<void>.value();
     _fileLoggingDisabled = false;
     _fileLoggingDisableReason = null;
     _reportedDisabledState = false;

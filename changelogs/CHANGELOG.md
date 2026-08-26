@@ -1,3 +1,27 @@
+## [Unreleased-STUDY-PERF-PHASE16-LOG-BACKPRESSURE] - 2026-08-26
+
+### 原因
+- 连续播放和 TTS 在调试模式会生成高频日志；旧实现为每行创建无界 Future 链并执行 `flush: true`，慢存储下队列会持续持有闭包和字符串，离开单词模块后仍可能继续造成写盘、内存和 GC 压力。
+
+### 修改
+- DEBUG 日志改为仅 debug 构建控制台输出且不持久化；INFO/WARN/ERROR 使用单一有界批量写入器。
+- 队列限制为 1024 行/1 MiB 字符，批次限制为 128 行/256 KiB；背压优先保留 WARN/ERROR，超大记录截断后仍保持有效 JSON。
+- 文件追加取消逐条强制 flush；保留目录删除恢复、path-provider 不可用时 console-only 降级和错误批次重试。
+- 重置使用 generation 隔离，并串行等待旧 drain 结束，避免新旧代际并发写盘。
+
+### 修复
+- 2000 条 INFO 基准的 flush 由约 2937ms 降至约 10ms，入队后 RSS 增量由约 5.7MB 降至约 0.7MB；5000 条突发队列保持在硬上限内且尾部 ERROR 仍落盘。
+- 消除慢文件系统上无界日志 Future/字符串链，使播放结束或切换其他模块后不再继续偿还逐条强制落盘积压。
+
+### 风险变更
+- 队列过载时会主动丢弃较旧、较低优先级日志并输出一次背压提示；错误日志优先但不是无限保留。
+- 2000 条同步 JSON 入队仍产生约 30ms CPU 占用和约 32.3ms timer 最大间隔；真实播放为分散调用，日志 data 惰性构造/源头采样保留为后续优化项。
+
+### 验证
+- `flutter test test/app_log_service_test.dart --reporter expanded` 通过（5 项）。
+- `flutter test test/playback_service_test.dart test/tts_service_test.dart test/app_state_init_test.dart --reporter expanded` 通过（35 项）。
+- 目标 `flutter analyze` 无问题，`dart format` 通过；本阶段新增/退休 i18n key 均为 0，未触达 catalog。
+
 ## [Unreleased-STUDY-PERF-PHASE15-BACKGROUND-SEARCH] - 2026-08-26
 
 ### 原因
