@@ -614,33 +614,12 @@ extension AppDatabaseServiceWordbookQuery on AppDatabaseService {
     required String query,
     required String mode,
   }) {
-    final normalizedQuery = search_text.normalizeSearchText(query);
-    if (normalizedQuery.isEmpty) {
-      return ('wordbook_id = ?', <Object?>[wordbookId]);
-    }
-    final likeQuery = _buildContainsLikePattern(normalizedQuery);
-    final fuzzyLikeQuery = search_text.buildFuzzySqlLikePattern(query);
-    final resolvedFuzzyPattern = fuzzyLikeQuery.isEmpty
-        ? likeQuery
-        : fuzzyLikeQuery;
-    return switch (mode.trim()) {
-      'word' => (
-        'wordbook_id = ? AND search_word LIKE ?',
-        <Object?>[wordbookId, likeQuery],
-      ),
-      'meaning' => (
-        'wordbook_id = ? AND (COALESCE(search_meaning, \'\') LIKE ? OR COALESCE(search_details, \'\') LIKE ?)',
-        <Object?>[wordbookId, likeQuery, likeQuery],
-      ),
-      'fuzzy' => (
-        'wordbook_id = ? AND (search_word_compact LIKE ? OR COALESCE(search_details_compact, \'\') LIKE ?)',
-        <Object?>[wordbookId, resolvedFuzzyPattern, resolvedFuzzyPattern],
-      ),
-      _ => (
-        'wordbook_id = ? AND (search_word LIKE ? OR COALESCE(search_meaning, \'\') LIKE ? OR COALESCE(search_details, \'\') LIKE ?)',
-        <Object?>[wordbookId, likeQuery, likeQuery, likeQuery],
-      ),
-    };
+    final plan = buildWordbookSearchSqlPlan(
+      wordbookId: wordbookId,
+      query: query,
+      mode: mode,
+    );
+    return (plan.whereClause, plan.parameters);
   }
 
   WordEntry? findJumpWordByPrefix(
@@ -732,14 +711,6 @@ extension AppDatabaseServiceWordbookQuery on AppDatabaseService {
     final fieldsByWordId = _getWordFieldsByWordIds(<int>[wordId]);
     final fields = fieldsByWordId[wordId] ?? const <WordFieldItem>[];
     return fields.isEmpty ? entry : entry.copyWith(fields: fields);
-  }
-
-  String _buildContainsLikePattern(String raw) {
-    final escaped = raw
-        .replaceAll('\\', '\\\\')
-        .replaceAll('%', '\\%')
-        .replaceAll('_', '\\_');
-    return '%$escaped%';
   }
 
   List<List<int>> _chunkSqlIntIds(Iterable<int> ids) {

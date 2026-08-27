@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
@@ -47,8 +48,12 @@ import '../services/online_ambient_catalog_service.dart';
 import '../services/playback_service.dart';
 import '../services/settings_service.dart';
 import '../services/weather_service.dart';
+import '../services/wordbook_query_worker.dart';
 import 'playback_store.dart';
 import 'practice_store.dart';
+import 'wordbook_import_store.dart';
+import 'wordbook_load_store.dart';
+import 'wordbook_search_store.dart';
 import 'weather_store.dart';
 import 'test_mode_store.dart';
 import 'startup_store.dart';
@@ -97,6 +102,10 @@ class _PendingPracticeMemoryEvent {
 class AppState extends ChangeNotifier with WidgetsBindingObserver {
   static const int _practiceSessionHistoryLimit = 365;
   static const int _startupEagerWordLoadLimit = 1500;
+  static const int _maxHydratedWordCacheEntries = 64;
+  // Progress rows are tiny compared with WordEntry details, but an app can
+  // visit many wordbooks in one process. Keep the cross-wordbook index bounded.
+  static const int _maxMemoryProgressIndexEntries = 30000;
   static const Duration _playbackProgressPersistDebounce = Duration(seconds: 2);
   static const Duration _practiceDashboardPersistDebounce = Duration(
     milliseconds: 800,
@@ -133,6 +142,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     StartupStore? startupStore,
     PracticeStore? practiceStore,
     PlaybackStore? playbackStore,
+    WordbookImportStore? wordbookImportStore,
+    WordbookLoadStore? wordbookLoadStore,
     DailyQuoteService? dailyQuoteService,
   }) : _maintenanceRepository =
            maintenanceRepository ?? DatabaseMaintenanceRepository(database),
@@ -156,7 +167,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
        _weatherService = weatherService ?? WeatherService(),
        _dailyQuoteService = dailyQuoteService ?? DailyQuoteService(),
        _practiceStore = practiceStore ?? PracticeStore(),
-       _playbackStore = playbackStore ?? PlaybackStore() {
+       _playbackStore = playbackStore ?? PlaybackStore(),
+       _wordbookImportStore = wordbookImportStore ?? WordbookImportStore(),
+       _wordbookLoadStore = wordbookLoadStore ?? WordbookLoadStore() {
     _weatherStore =
         weatherStore ??
         WeatherStore(
@@ -200,6 +213,10 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   late final bool _ownsStartupStore;
   final PracticeStore _practiceStore;
   final PlaybackStore _playbackStore;
+  final WordbookImportStore _wordbookImportStore;
+  final WordbookLoadStore _wordbookLoadStore;
+  final WordbookSearchStore _wordbookSearchStore = WordbookSearchStore();
+  Future<void>? _wordbookSearchRunner;
   Timer? _playbackProgressPersistTimer;
   Timer? _practiceDashboardPersistTimer;
   Timer? _practiceAnswerPersistTimer;
@@ -209,6 +226,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       <int, WordMemoryProgress>{};
   final List<_PendingPracticeMemoryEvent> _pendingPracticeMemoryEvents =
       <_PendingPracticeMemoryEvent>[];
+  final LinkedHashMap<int, WordMemoryProgress?> _memoryProgressIndex =
+      LinkedHashMap<int, WordMemoryProgress?>();
   bool _disposed = false;
 
   FocusService get focusService => _focusService;
@@ -221,10 +240,6 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   String? _busyDetail;
   double? _busyProgress;
   List<AmbientPreset> _ambientPresets = const <AmbientPreset>[];
-  bool _wordbookImportActive = false;
-  String _wordbookImportName = '';
-  int _wordbookImportProcessedEntries = 0;
-  int? _wordbookImportTotalEntries;
   String? _message;
   Map<String, Object?> _messageParams = const <String, Object?>{};
 
@@ -233,6 +248,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   Wordbook? _selectedWordbook;
   List<WordEntry> _words = <WordEntry>[];
   int? _loadedWordbookId;
+  int _wordbookLoadGeneration = 0;
+  int? _wordbookLoadBusyGeneration;
   int _currentWordIndex = 0;
   WordEntry? _transientCurrentWord;
   String _searchQuery = '';
@@ -276,6 +293,58 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   int _visibleWordsCacheVersion = -1;
   String _visibleWordsCacheQuery = '';
   SearchMode _visibleWordsCacheMode = SearchMode.all;
+  // Deferred large books are paged synchronously by the library surface.
+  // Keep a small LRU of already-read pages so unrelated state notifications
+  // do not issue the same SQLite query again on the UI isolate.
+  static const int _maxDeferredWordbookPageCacheEntries = 8;
+  static const int _maxDeferredWordbookPageCacheWords = 240;
+  final LinkedHashMap<String, List<WordEntry>> _deferredWordbookPageCache =
+      LinkedHashMap<String, List<WordEntry>>();
+  final Set<String> _deferredWordbookPageCompleteKeys = <String>{};
+  String _visibleWordCountCacheSignature = '';
+  int? _visibleWordCountCacheValue;
+
+  // [性能] _words 的 id → index 索引，惰性构建，随 _wordsVersion 失效。
+  // 将热路径 _indexOfWordEntry 对主词表的查找从 O(n) 降为 O(1)。
+  Map<int, int>? _wordsIdIndex;
+  int _wordsIdIndexVersion = -1;
+
+  // [性能] currentWord 结果缓存：
+  // 该 getter 会在每次 notifyListeners 时被所有存活页面的 rebuild token 重算，
+  // 内部又依赖 O(n) 的 _indexOfWordEntry。按影响其结果的关键输入做签名比较，
+  // 未变化时直接返回缓存，避免跨页面的重复 O(n) 计算。
+  bool _currentWordCacheValid = false;
+  WordEntry? _currentWordCacheValue;
+  int _currentWordCacheWordsVersion = -1;
+  int _currentWordCacheIndex = -1;
+  WordEntry? _currentWordCacheTransient;
+  String _currentWordCacheQuery = '';
+  SearchMode _currentWordCacheMode = SearchMode.all;
+  int? _currentWordCacheWordbookId;
+
+  // Practice dashboard collections are read repeatedly by several cards during
+  // one AppState notification. Cache them by the immutable wordbook version
+  // and the practice collections' identities so a 12k-word scan happens once.
+  List<WordEntry>? _practiceTaskEntriesCache;
+  List<WordEntry>? _practiceFavoriteEntriesCache;
+  int _practiceCollectionWordsVersion = -1;
+  int _practiceCollectionTaskIdentity = 0;
+  int _practiceCollectionFavoriteIdentity = 0;
+  List<WordEntry>? _practiceRememberedEntriesCache;
+  List<WordEntry>? _practiceWeakEntriesCache;
+  List<WordEntry>? _practiceWrongNotebookEntriesCache;
+  int _practiceDerivedWordsVersion = -1;
+  int _practiceDerivedMemoryIdentity = 0;
+  int _practiceDerivedMemoryRevision = -1;
+  int _practiceDerivedRememberedIdentity = 0;
+  int _practiceDerivedWeakIdentity = 0;
+  int _practiceDerivedLegacyRememberedIdentity = 0;
+
+  // Large wordbooks keep lite rows in _words. Hydrated details are retained in
+  // a small LRU so playback can serve the current card without replacing and
+  // copying the full word list on every word change.
+  final Map<String, WordEntry> _hydratedWordCache = <String, WordEntry>{};
+  final List<String> _hydratedWordCacheOrder = <String>[];
 
   bool get initializing => _initializing;
   bool get initialized => _initialized;
@@ -289,17 +358,17 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   String? get busyDetail => _busy ? _busyDetail : null;
   double? get busyProgress => _busy ? _busyProgress : null;
-  bool get wordbookImportActive => _wordbookImportActive;
-  String get wordbookImportName => _wordbookImportName;
-  int get wordbookImportProcessedEntries => _wordbookImportProcessedEntries;
-  int? get wordbookImportTotalEntries => _wordbookImportTotalEntries;
-  double? get wordbookImportProgress {
-    final total = _wordbookImportTotalEntries;
-    if (!_wordbookImportActive || total == null || total <= 0) {
-      return null;
-    }
-    return (_wordbookImportProcessedEntries / total).clamp(0.0, 1.0);
-  }
+  bool get wordbookImportActive => _wordbookImportStore.value.active;
+  String get wordbookImportName => _wordbookImportStore.value.name;
+  int get wordbookImportProcessedEntries =>
+      _wordbookImportStore.value.processedEntries;
+  int? get wordbookImportTotalEntries =>
+      _wordbookImportStore.value.totalEntries;
+  double? get wordbookImportProgress => _wordbookImportStore.value.progress;
+  ValueListenable<WordbookImportProgressSnapshot>
+  get wordbookImportListenable => _wordbookImportStore;
+  ValueListenable<WordbookLoadProgressSnapshot> get wordbookLoadListenable =>
+      _wordbookLoadStore;
 
   String? get error {
     final key = _message;
@@ -326,6 +395,10 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   PlayUnit? get activeUnit => _playbackStore.activeUnit;
   ValueListenable<PlaybackUnitProgress> get playbackUnitProgressListenable =>
       _playbackStore.unitProgress;
+  ValueListenable<int> get playbackRevisionListenable =>
+      _playbackStore.revision;
+  ValueListenable<int> get practiceRevisionListenable =>
+      _practiceStore.revision;
   int? get playingWordbookId => _playbackStore.playingWordbookId;
   String? get playingWordbookName => _playbackStore.playingWordbookName;
   String? get playingWord => _playbackStore.playingWord;
@@ -341,6 +414,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _taskWords.contains(entry.collectionReferenceKey);
   String get searchQuery => _searchQuery;
   SearchMode get searchMode => _searchMode;
+  bool get wordbookSearchInProgress =>
+      _currentWordbookSearchSnapshot?.loading ?? false;
+  int get wordbookSearchRevision => _wordbookSearchStore.revision;
   String get uiLanguage => _uiLanguage;
   bool get uiLanguageFollowsSystem => _uiLanguageFollowsSystem;
   bool get firstRunSetupCompleted => _firstRunSetupCompleted;
@@ -482,8 +558,15 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   int? get pendingTodoReminderLaunchId =>
       _startupStore.pendingTodoReminderLaunchId;
   List<WordEntry> get practiceWrongNotebookEntries {
-    return _practiceEntriesFromWords(_practiceStore.weakWords);
+    _ensurePracticeDerivedEntriesCache();
+    return _practiceWrongNotebookEntriesCache!;
   }
+
+  List<WordEntry> get practiceTaskEntries =>
+      _practiceTaskEntriesForWords(_words);
+
+  List<WordEntry> get practiceFavoriteEntries =>
+      _practiceFavoriteEntriesForWords(_words);
 
   double get practiceTodayAccuracy => _practiceStore.todayReviewed <= 0
       ? 0
@@ -503,6 +586,22 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   List<AmbientPreset> get ambientPresets =>
       List<AmbientPreset>.unmodifiable(_ambientPresets);
 
+  WordbookSearchSnapshot? get _currentWordbookSearchSnapshot {
+    final selectedWordbook = _selectedWordbook;
+    if (selectedWordbook == null ||
+        _searchQuery.trim().isEmpty ||
+        !_shouldUseLiteWordQueries(selectedWordbook)) {
+      return null;
+    }
+    final snapshot = _wordbookSearchStore.snapshot;
+    final signature = wordbookSearchSignature(
+      wordbookId: selectedWordbook.id,
+      query: _searchQuery,
+      mode: _searchMode.name,
+    );
+    return snapshot.signature == signature ? snapshot : null;
+  }
+
   List<WordEntry> get visibleWords {
     if (_visibleWordsCache != null &&
         _visibleWordsCacheVersion == _wordsVersion &&
@@ -515,6 +614,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     final selectedWordbook = _selectedWordbook;
     final computed = selectedWordbook == null || normalizedQuery.isEmpty
         ? _words
+        : _shouldUseLiteWordQueries(selectedWordbook)
+        ? (_currentWordbookSearchSnapshot?.entries ?? const <WordEntry>[])
         : _searchWordbookEntries(
             selectedWordbook,
             query: normalizedQuery,
@@ -536,11 +637,13 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   List<WordEntry> get recentWeakWordEntries {
-    return _memoryRecoveryEntries(_words);
+    _ensurePracticeDerivedEntriesCache();
+    return _practiceWeakEntriesCache!;
   }
 
   List<WordEntry> get recentRememberedWordEntries {
-    return _memoryStableEntries(_words);
+    _ensurePracticeDerivedEntriesCache();
+    return _practiceRememberedEntriesCache!;
   }
 
   WordMemoryProgress? memoryProgressForWordEntry(WordEntry entry) {
@@ -594,10 +697,30 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     if (selectedWordbook == null) {
       return 0;
     }
+    final cacheSignature = _visibleWordCountSignature(selectedWordbook);
+    if (_visibleWordCountCacheSignature == cacheSignature &&
+        _visibleWordCountCacheValue != null) {
+      return _visibleWordCountCacheValue!;
+    }
+    final count = _computeVisibleWordCount(selectedWordbook);
+    _visibleWordCountCacheSignature = cacheSignature;
+    _visibleWordCountCacheValue = count;
+    return count;
+  }
+
+  String _visibleWordCountSignature(Wordbook wordbook) {
+    return '${wordbook.id}|${wordbook.wordCount}|$_loadedWordbookId|'
+        '$_wordsVersion|${_searchMode.name}|$_searchQuery';
+  }
+
+  int _computeVisibleWordCount(Wordbook selectedWordbook) {
     if (_searchQuery.trim().isEmpty) {
       return selectedWordbookLoaded
           ? _words.length
           : selectedWordbook.wordCount;
+    }
+    if (_shouldUseLiteWordQueries(selectedWordbook)) {
+      return _currentWordbookSearchSnapshot?.totalCount ?? 0;
     }
     return _wordbookRepository.countSearchWords(
       selectedWordbook.id,
@@ -613,7 +736,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     }
     if (_searchQuery.trim().isEmpty) {
       if (!selectedWordbookLoaded) {
-        return _queryWordbookEntries(
+        return _getDeferredWordbookPage(
           selectedWordbook,
           limit: limit,
           offset: offset,
@@ -623,6 +746,22 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       final end = (start + limit).clamp(start, _words.length).toInt();
       return _words.sublist(start, end);
     }
+    if (_shouldUseLiteWordQueries(selectedWordbook)) {
+      final entries = _currentWordbookSearchSnapshot?.entries;
+      if (entries == null || entries.isEmpty) {
+        return const <WordEntry>[];
+      }
+      final start = offset.clamp(0, entries.length).toInt();
+      final end = (start + limit).clamp(start, entries.length).toInt();
+      return entries.sublist(start, end);
+    }
+    if (!selectedWordbookLoaded) {
+      return _getDeferredWordbookPage(
+        selectedWordbook,
+        limit: limit,
+        offset: offset,
+      );
+    }
     return _searchWordbookEntries(
       selectedWordbook,
       query: _searchQuery,
@@ -630,6 +769,97 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       limit: limit,
       offset: offset,
     );
+  }
+
+  List<WordEntry> _getDeferredWordbookPage(
+    Wordbook wordbook, {
+    required int limit,
+    required int offset,
+  }) {
+    final normalizedLimit = limit.clamp(0, 100000).toInt();
+    final normalizedOffset = offset.clamp(0, 100000).toInt();
+    if (normalizedLimit == 0) {
+      return const <WordEntry>[];
+    }
+    final baseKey =
+        '${wordbook.id}|$_wordsVersion|${_searchMode.name}|'
+        '$_searchQuery';
+    if (normalizedOffset == 0) {
+      final cached = _deferredWordbookPageCache[baseKey];
+      if (cached != null &&
+          (cached.length >= normalizedLimit ||
+              _deferredWordbookPageCompleteKeys.contains(baseKey))) {
+        _touchDeferredWordbookPage(baseKey, cached);
+        return cached.sublist(0, normalizedLimit.clamp(0, cached.length));
+      }
+      final existing = cached ?? const <WordEntry>[];
+      final requestedAdditional = normalizedLimit - existing.length;
+      final additional = requestedAdditional <= 0
+          ? const <WordEntry>[]
+          : _queryDeferredWordbookEntries(
+              wordbook,
+              limit: requestedAdditional,
+              offset: existing.length,
+            );
+      final reachedEnd = additional.length < requestedAdditional;
+      final merged = <WordEntry>[...existing, ...additional];
+      final bounded = merged.length > _maxDeferredWordbookPageCacheWords
+          ? merged.sublist(0, _maxDeferredWordbookPageCacheWords)
+          : merged;
+      _touchDeferredWordbookPage(baseKey, bounded);
+      if (reachedEnd) {
+        _deferredWordbookPageCompleteKeys.add(baseKey);
+      } else {
+        _deferredWordbookPageCompleteKeys.remove(baseKey);
+      }
+      return merged.length <= normalizedLimit
+          ? merged
+          : merged.sublist(0, normalizedLimit);
+    }
+
+    final pageKey = '$baseKey|offset:$normalizedOffset|limit:$normalizedLimit';
+    final cached = _deferredWordbookPageCache[pageKey];
+    if (cached != null) {
+      _touchDeferredWordbookPage(pageKey, cached);
+      return cached;
+    }
+    final page = _queryDeferredWordbookEntries(
+      wordbook,
+      limit: normalizedLimit,
+      offset: normalizedOffset,
+    );
+    if (page.length <= _maxDeferredWordbookPageCacheWords) {
+      _touchDeferredWordbookPage(pageKey, page);
+    }
+    return page;
+  }
+
+  List<WordEntry> _queryDeferredWordbookEntries(
+    Wordbook wordbook, {
+    required int limit,
+    required int offset,
+  }) {
+    if (_searchQuery.trim().isNotEmpty) {
+      return _searchWordbookEntries(
+        wordbook,
+        query: _searchQuery,
+        mode: _searchMode.name,
+        limit: limit,
+        offset: offset,
+      );
+    }
+    return _queryWordbookEntries(wordbook, limit: limit, offset: offset);
+  }
+
+  void _touchDeferredWordbookPage(String key, List<WordEntry> page) {
+    _deferredWordbookPageCache.remove(key);
+    _deferredWordbookPageCache[key] = page;
+    while (_deferredWordbookPageCache.length >
+        AppState._maxDeferredWordbookPageCacheEntries) {
+      final oldestKey = _deferredWordbookPageCache.keys.first;
+      _deferredWordbookPageCache.remove(oldestKey);
+      _deferredWordbookPageCompleteKeys.remove(oldestKey);
+    }
   }
 
   List<WordEntry> _queryWordbookEntries(
@@ -648,6 +878,30 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       );
     }
     return _wordbookRepository.getWordsLite(
+      wordbook.id,
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  Future<List<WordEntry>> _queryWordbookEntriesAsync(
+    Wordbook wordbook, {
+    int limit = 100000,
+    int offset = 0,
+    bool? includeFields,
+  }) {
+    final resolvedIncludeFields =
+        includeFields ?? !_shouldUseLiteWordQueries(wordbook);
+    if (resolvedIncludeFields) {
+      return Future<List<WordEntry>>.sync(
+        () => _wordbookRepository.getWords(
+          wordbook.id,
+          limit: limit,
+          offset: offset,
+        ),
+      );
+    }
+    return _wordbookRepository.getWordsLiteAsync(
       wordbook.id,
       limit: limit,
       offset: offset,
@@ -733,6 +987,34 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   WordEntry? get currentWord {
+    // [性能] 签名命中则直接返回缓存，避免每次 notifyListeners 被各页面 token 重复 O(n) 计算。
+    if (_currentWordCacheValid &&
+        _currentWordCacheWordsVersion == _wordsVersion &&
+        _currentWordCacheIndex == _currentWordIndex &&
+        identical(_currentWordCacheTransient, _transientCurrentWord) &&
+        _currentWordCacheQuery == _searchQuery &&
+        _currentWordCacheMode == _searchMode &&
+        _currentWordCacheWordbookId == _selectedWordbook?.id) {
+      return _currentWordCacheValue;
+    }
+    final value = _computeCurrentWord();
+    _currentWordCacheValid = true;
+    _currentWordCacheValue = value;
+    _currentWordCacheWordsVersion = _wordsVersion;
+    _currentWordCacheIndex = _currentWordIndex;
+    _currentWordCacheTransient = _transientCurrentWord;
+    _currentWordCacheQuery = _searchQuery;
+    _currentWordCacheMode = _searchMode;
+    _currentWordCacheWordbookId = _selectedWordbook?.id;
+    return value;
+  }
+
+  WordEntry? _computeCurrentWord() {
+    WordEntry? resolveHydrated(WordEntry? entry) {
+      if (entry == null) return null;
+      return _hydratedWordCache[_hydrationCacheKey(entry)] ?? entry;
+    }
+
     final transient = _transientCurrentWord;
     final searchActive = _searchQuery.trim().isNotEmpty;
     if (transient != null &&
@@ -740,23 +1022,23 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
             transient.wordbookId == _selectedWordbook!.id)) {
       if (!searchActive) {
         if (_words.isEmpty || _indexOfWordEntry(_words, transient) < 0) {
-          return transient;
+          return resolveHydrated(transient);
         }
       } else if (visibleWords.any(
         (item) => _isSameWordEntry(item, transient),
       )) {
-        return transient;
+        return resolveHydrated(transient);
       }
     }
     if (_currentWordIndex < 0 || _currentWordIndex >= _words.length) {
-      return _scopeWords.isEmpty ? null : _scopeWords.first;
+      return resolveHydrated(_scopeWords.isEmpty ? null : _scopeWords.first);
     }
     final current = _words[_currentWordIndex];
-    if (!searchActive) return current;
+    if (!searchActive) return resolveHydrated(current);
     if (visibleWords.any((item) => _isSameWordEntry(item, current))) {
-      return current;
+      return resolveHydrated(current);
     }
-    return _scopeWords.isEmpty ? null : _scopeWords.first;
+    return resolveHydrated(_scopeWords.isEmpty ? null : _scopeWords.first);
   }
 
   String _localizedBuiltinWordbookName(String path) {
@@ -1287,9 +1569,16 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     anchorWord: anchorWord,
   );
 
-  void setSearchQuery(String value) => _setSearchQueryImpl(value);
+  Future<void> setSearchQuery(String value) =>
+      _setSearchCriteriaImpl(query: value, mode: _searchMode);
 
-  void setSearchMode(SearchMode mode) => _setSearchModeImpl(mode);
+  Future<void> setSearchMode(SearchMode mode) =>
+      _setSearchCriteriaImpl(query: _searchQuery, mode: mode);
+
+  Future<void> setSearchCriteria({
+    required String query,
+    required SearchMode mode,
+  }) => _setSearchCriteriaImpl(query: query, mode: mode);
 
   Future<void> selectWordbook(
     Wordbook? wordbook, {
@@ -1410,10 +1699,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       return;
     }
 
-    _wordbookImportActive = true;
-    _wordbookImportName = normalizedName;
-    _wordbookImportProcessedEntries = 0;
-    _wordbookImportTotalEntries = null;
+    _wordbookImportStore.start(normalizedName);
     _setBusy(
       true,
       messageKey: 'busyImportingWordbook',
@@ -1425,21 +1711,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         filePath: normalizedPath,
         name: normalizedName,
         onProgress: (processedEntries, totalEntries) {
-          _wordbookImportActive = true;
-          _wordbookImportName = normalizedName;
-          _wordbookImportProcessedEntries = processedEntries;
-          _wordbookImportTotalEntries = totalEntries;
-          final progress = totalEntries == null || totalEntries <= 0
-              ? null
-              : (processedEntries / totalEntries).clamp(0.0, 1.0);
-          final detail = totalEntries == null
-              ? '$processedEntries'
-              : '$processedEntries / $totalEntries';
-          _setBusy(
-            true,
-            messageKey: 'busyImportingWordbook',
-            detail: detail,
-            progress: progress,
+          _wordbookImportStore.update(
+            processedEntries: processedEntries,
+            totalEntries: totalEntries,
           );
         },
       );
@@ -1462,10 +1736,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         params: <String, Object?>{'error': error},
       );
     } finally {
-      _wordbookImportActive = false;
-      _wordbookImportName = '';
-      _wordbookImportProcessedEntries = 0;
-      _wordbookImportTotalEntries = null;
+      _wordbookImportStore.finish();
       _setBusy(false);
     }
   }
@@ -1838,6 +2109,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       _messageParams = const <String, Object?>{};
       _searchQuery = '';
       _searchMode = SearchMode.all;
+      _wordbookSearchStore.cancel();
       _favorites = <String>{};
       _taskWords = <String>{};
       await _reloadPersistentStateAfterDatabaseChange();
@@ -2536,7 +2808,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     };
 
     if (selectedWordbook != null && shouldLoadSelectedWords) {
-      _setWords(_queryWordbookEntries(selectedWordbook));
+      _setWords(await _queryWordbookEntriesAsync(selectedWordbook));
       final restoredIndex = _playbackProgressIndexForWordbook(selectedWordbook);
       final restoredEntries = _searchQuery.trim().isEmpty
           ? _words
@@ -2559,6 +2831,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   void _setWords(List<WordEntry> nextWords) {
     final transient = _transientCurrentWord;
+    _clearHydratedWordCache();
     _words = nextWords;
     _loadedWordbookId = _selectedWordbook?.id;
     if (transient != null) {
@@ -2574,6 +2847,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   void _clearSelectedWordbookWords() {
+    _clearHydratedWordCache();
     _words = const <WordEntry>[];
     _loadedWordbookId = null;
     _transientCurrentWord = null;
@@ -2587,6 +2861,10 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _visibleWordsCacheVersion = -1;
     _visibleWordsCacheQuery = '';
     _visibleWordsCacheMode = SearchMode.all;
+    _deferredWordbookPageCache.clear();
+    _deferredWordbookPageCompleteKeys.clear();
+    _visibleWordCountCacheSignature = '';
+    _visibleWordCountCacheValue = null;
   }
 
   Future<void> _syncSpecialWordbooks() async {
@@ -2642,6 +2920,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
           return updated;
         })
         .toList(growable: false);
+    _invalidateVisibleWordsCache();
   }
 
   void _refreshSelectedSpecialWordbook(
@@ -2703,6 +2982,17 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     return visibleWords;
   }
 
+  List<WordEntry> practiceBatchSourceWords(PracticeRoundSource source) {
+    return switch (source) {
+      PracticeRoundSource.currentScope => visibleWords,
+      PracticeRoundSource.wholeWordbook => _words,
+      PracticeRoundSource.wrongNotebook => practiceWrongNotebookEntries,
+      PracticeRoundSource.taskWords => practiceTaskEntries,
+      PracticeRoundSource.favorites => practiceFavoriteEntries,
+      PracticeRoundSource.recentWeak => recentWeakWordEntries,
+    };
+  }
+
   void _setCurrentWordByEntry(WordEntry entry) {
     final index = _indexOfWordEntry(_words, entry);
     if (index >= 0) {
@@ -2737,7 +3027,34 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _setCurrentWordByEntry(scoped.first);
   }
 
+  Map<int, int> _ensureWordsIdIndex() {
+    if (_wordsIdIndex != null && _wordsIdIndexVersion == _wordsVersion) {
+      return _wordsIdIndex!;
+    }
+    final index = <int, int>{};
+    for (var i = 0; i < _words.length; i += 1) {
+      final id = _words[i].id;
+      if (id != null && id > 0) {
+        index.putIfAbsent(id, () => i);
+      }
+    }
+    _wordsIdIndex = index;
+    _wordsIdIndexVersion = _wordsVersion;
+    return index;
+  }
+
   int _indexOfWordEntry(List<WordEntry> entries, WordEntry target) {
+    // [性能] 对主词表 _words 且 target 带稳定 id 时走 O(1) 索引；
+    // sameEntryAs 在双方 id>0 时即为 id 相等判断，故按 id 命中与其语义一致。
+    if (identical(entries, _words)) {
+      final targetId = target.id;
+      if (targetId != null && targetId > 0) {
+        final hit = _ensureWordsIdIndex()[targetId];
+        if (hit != null) {
+          return hit;
+        }
+      }
+    }
     for (var i = 0; i < entries.length; i += 1) {
       if (_isSameWordEntry(entries[i], target)) {
         return i;
@@ -2755,38 +3072,51 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     if (wordbook == null || !_shouldUseLiteWordQueries(wordbook)) {
       return entry;
     }
+    final cacheKey = _hydrationCacheKey(entry);
+    final cached = _hydratedWordCache[cacheKey];
+    if (cached != null) {
+      _touchHydratedWordCache(cacheKey, cached);
+      return cached;
+    }
     final hydrated = _wordbookRepository.hydrateWordEntry(entry);
     if (hydrated == null) {
       return entry;
     }
-    _replaceLoadedWordEntryIfNeeded(hydrated);
+    _touchHydratedWordCache(cacheKey, hydrated);
     return hydrated;
   }
 
-  void _replaceLoadedWordEntryIfNeeded(WordEntry entry) {
-    final index = _indexOfWordEntry(_words, entry);
-    if (index < 0) {
-      return;
+  String _hydrationCacheKey(WordEntry entry) {
+    final id = entry.id;
+    if (id != null && id > 0) {
+      return 'wb:${entry.wordbookId}|id:$id';
     }
-    final existing = _words[index];
-    if (_isWordEntryHydrationEquivalent(existing, entry)) {
-      return;
+    final entryUid = entry.entryUid?.trim() ?? '';
+    if (entryUid.isNotEmpty) {
+      return 'wb:${entry.wordbookId}|uid:$entryUid';
     }
-    final nextWords = List<WordEntry>.from(_words);
-    nextWords[index] = entry;
-    _words = nextWords;
-    _loadedWordbookId = _selectedWordbook?.id;
-    _transientCurrentWord = null;
-    _refreshWordMemoryProgressCache(nextWords);
-    _wordsVersion += 1;
-    _invalidateVisibleWordsCache();
+    return 'wb:${entry.wordbookId}|word:${entry.word}|gloss:${entry.primaryGloss ?? ''}';
   }
 
-  bool _isWordEntryHydrationEquivalent(WordEntry current, WordEntry next) {
-    return _isSameWordEntry(current, next) &&
-        current.summaryMeaningText == next.summaryMeaningText &&
-        current.rawContent == next.rawContent &&
-        current.fields.length == next.fields.length;
+  void _touchHydratedWordCache(String key, WordEntry entry) {
+    _hydratedWordCache[key] = entry;
+    _hydratedWordCacheOrder
+      ..remove(key)
+      ..add(key);
+    while (_hydratedWordCacheOrder.length > _maxHydratedWordCacheEntries) {
+      final evicted = _hydratedWordCacheOrder.removeAt(0);
+      _hydratedWordCache.remove(evicted);
+    }
+    _currentWordCacheValid = false;
+  }
+
+  void _clearHydratedWordCache() {
+    if (_hydratedWordCache.isEmpty) {
+      return;
+    }
+    _hydratedWordCache.clear();
+    _hydratedWordCacheOrder.clear();
+    _currentWordCacheValid = false;
   }
 
   Wordbook? _resolveWordbookForEntry(WordEntry entry) {
@@ -3145,6 +3475,11 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Future<void> _reloadPersistentStateAfterDatabaseChange() async {
+    // Invalidate any in-flight isolate query before replacing the database
+    // snapshot. Its result must never repopulate state from the old database.
+    _wordbookLoadGeneration += 1;
+    _wordbookLoadBusyGeneration = null;
+    _clearMemoryProgressIndex();
     _config = _settings.loadPlayConfig();
     _playback.updateRuntimeConfig(_config);
 
@@ -3191,6 +3526,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
     _searchQuery = '';
     _searchMode = SearchMode.all;
+    _wordbookSearchStore.cancel();
     _invalidateVisibleWordsCache();
     _loadPracticeDashboard();
     _ensurePracticeDate(persist: true);
@@ -3345,12 +3681,33 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
+  void _notifyPlaybackChanged() {
+    if (_disposed) {
+      return;
+    }
+    _playbackStore.notifyChanged();
+  }
+
+  void _notifyPracticeChanged() {
+    if (_disposed) {
+      return;
+    }
+    _practiceStore.notifyChanged();
+  }
+
+  /// Refresh practice surfaces after a session route is closed. Answer writes
+  /// remain local to the session and do not rebuild the hidden tab per word.
+  void refreshPracticeViews() => _notifyPracticeChanged();
+
   @override
   void dispose() {
     if (_disposed) {
       return;
     }
     _disposed = true;
+    _wordbookLoadGeneration += 1;
+    _wordbookLoadBusyGeneration = null;
+    _wordbookSearchStore.cancel();
     _flushDeferredPersistence();
     _ambientSyncDebounceTimer?.cancel();
     _playbackProgressPersistTimer?.cancel();
@@ -3407,6 +3764,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       }),
     );
     _playbackStore.dispose();
+    _practiceStore.dispose();
+    _wordbookImportStore.dispose();
+    _wordbookLoadStore.dispose();
     _maintenanceRepository.dispose();
     super.dispose();
   }

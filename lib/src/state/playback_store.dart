@@ -51,6 +51,14 @@ class PlaybackStore {
       <String, PlaybackProgressSnapshot>{};
   final ValueNotifier<PlaybackUnitProgress> unitProgress =
       ValueNotifier<PlaybackUnitProgress>(PlaybackUnitProgress.empty);
+  // Playback changes are high frequency (one event per word). Keep them on a
+  // dedicated channel so unrelated AppState listeners do not rebuild for each
+  // pronunciation step.
+  final ValueNotifier<int> revision = ValueNotifier<int>(0);
+
+  void notifyChanged() {
+    revision.value += 1;
+  }
 
   void setUnitProgress(int current, int total, PlayUnit? activeUnit) {
     if (unitProgress.value.sameAs(current, total, activeUnit)) {
@@ -72,5 +80,6 @@ class PlaybackStore {
 
   void dispose() {
     unitProgress.dispose();
+    revision.dispose();
   }
 }

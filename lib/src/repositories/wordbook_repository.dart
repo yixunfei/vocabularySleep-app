@@ -1,6 +1,7 @@
 import '../models/word_entry.dart';
 import '../models/wordbook.dart';
 import '../services/database_service.dart';
+import '../services/wordbook_query_worker.dart';
 
 abstract class WordbookRepository {
   String get databasePath;
@@ -20,6 +21,15 @@ abstract class WordbookRepository {
 
   List<WordEntry> getWordsLite(int wordbookId, {int limit, int offset});
 
+  /// Defaults to the synchronous repository path for non-database adapters.
+  Future<List<WordEntry>> getWordsLiteAsync(
+    int wordbookId, {
+    int limit = 100000,
+    int offset = 0,
+  }) async {
+    return getWordsLite(wordbookId, limit: limit, offset: offset);
+  }
+
   List<WordEntry> searchWords(
     int wordbookId, {
     required String query,
@@ -34,6 +44,13 @@ abstract class WordbookRepository {
     required String mode,
     int limit,
     int offset,
+  });
+
+  Future<WordbookSearchResult> searchWordsLiteAsync(
+    int wordbookId, {
+    required String query,
+    required String mode,
+    int limit,
   });
 
   WordEntry? hydrateWordEntry(WordEntry entry);
@@ -190,6 +207,26 @@ class DatabaseWordbookRepository implements WordbookRepository {
   }
 
   @override
+  Future<List<WordEntry>> getWordsLiteAsync(
+    int wordbookId, {
+    int limit = 100000,
+    int offset = 0,
+  }) async {
+    try {
+      return await loadWordbookLiteEntriesInBackground(
+        databasePath: _database.dbPath,
+        wordbookId: wordbookId,
+        limit: limit,
+        offset: offset,
+      );
+    } catch (_) {
+      // Isolate/FFI availability varies on web and during database migration.
+      // Preserve the existing behavior as a functional fallback.
+      return getWordsLite(wordbookId, limit: limit, offset: offset);
+    }
+  }
+
+  @override
   List<WordEntry> searchWords(
     int wordbookId, {
     required String query,
@@ -222,6 +259,20 @@ class DatabaseWordbookRepository implements WordbookRepository {
       offset: offset,
     );
   }
+
+  @override
+  Future<WordbookSearchResult> searchWordsLiteAsync(
+    int wordbookId, {
+    required String query,
+    required String mode,
+    int limit = 100000,
+  }) => searchWordbookLiteInBackground(
+    databasePath: _database.dbPath,
+    wordbookId: wordbookId,
+    query: query,
+    mode: mode,
+    limit: limit,
+  );
 
   @override
   WordEntry? hydrateWordEntry(WordEntry entry) {

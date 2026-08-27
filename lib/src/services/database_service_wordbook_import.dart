@@ -62,10 +62,42 @@ extension AppDatabaseServiceWordbookImport on AppDatabaseService {
     void Function(int processedEntries, int? totalEntries)? onProgress,
     int yieldEvery = 180,
   }) async {
-    final descriptor = _importService.inspectJsonText(
+    if (_canUseBackgroundJsonImport(replaceExisting)) {
+      final result = await _tryRunWordbookJsonImportWorker(
+        dbPath: dbPath,
+        sourcePath: sourcePath,
+        name: name,
+        content: content,
+        onProgress: onProgress,
+      );
+      if (result != null) {
+        return result.imported;
+      }
+    }
+
+    return _importWordbookJsonTextOnCurrentIsolate(
+      sourcePath: sourcePath,
+      name: name,
+      content: content,
+      replaceExisting: replaceExisting,
+      onProgress: onProgress,
+      yieldEvery: yieldEvery,
+    );
+  }
+
+  Future<int> _importWordbookJsonTextOnCurrentIsolate({
+    required String sourcePath,
+    required String name,
+    required String content,
+    required bool replaceExisting,
+    required void Function(int processedEntries, int? totalEntries)? onProgress,
+    required int yieldEvery,
+  }) async {
+    final prepared = await _importService.prepareJsonImportAsync(
       content,
       fallbackName: name,
     );
+    final descriptor = prepared.descriptor;
     final resolvedName = _resolveImportedWordbookName(
       sourcePath: sourcePath,
       requestedName: name,
@@ -84,8 +116,8 @@ extension AppDatabaseServiceWordbookImport on AppDatabaseService {
           : null;
       var imported = 0;
       try {
-        await _importService.processJsonTextAsync(
-          content,
+        await _importService.processPreparedJsonImportAsync(
+          prepared,
           onPayload: (payload) {
             final accepted = replaceExisting
                 ? _insertWordWithStatements(
@@ -118,6 +150,37 @@ extension AppDatabaseServiceWordbookImport on AppDatabaseService {
     void Function(int processedEntries, int? totalEntries)? onProgress,
     int yieldEvery = 180,
   }) async {
+    if (_canUseBackgroundJsonImport(replaceExisting)) {
+      final builder = BytesBuilder(copy: false);
+      await for (final chunk in byteStream) {
+        builder.add(chunk);
+      }
+      final bytes = builder.takeBytes();
+      final result = await _tryRunWordbookJsonImportWorker(
+        dbPath: dbPath,
+        sourcePath: sourcePath,
+        name: name,
+        encodedBytes: TransferableTypedData.fromList(<Uint8List>[bytes]),
+        gzipped: gzipped,
+        onProgress: onProgress,
+      );
+      if (result != null) {
+        return result.imported;
+      }
+      final content = await _importService.readJsonByteStreamAsString(
+        Stream<List<int>>.value(bytes),
+        gzipped: gzipped,
+      );
+      return _importWordbookJsonTextOnCurrentIsolate(
+        sourcePath: sourcePath,
+        name: name,
+        content: content,
+        replaceExisting: replaceExisting,
+        onProgress: onProgress,
+        yieldEvery: yieldEvery,
+      );
+    }
+
     final content = await _importService.readJsonByteStreamAsString(
       byteStream,
       gzipped: gzipped,
@@ -129,6 +192,48 @@ extension AppDatabaseServiceWordbookImport on AppDatabaseService {
       replaceExisting: replaceExisting,
       onProgress: onProgress,
       yieldEvery: yieldEvery,
+    );
+  }
+
+  bool _canUseBackgroundJsonImport(bool replaceExisting) {
+    return replaceExisting &&
+        !kIsWeb &&
+        _importService.runtimeType == WordbookImportService;
+  }
+
+  Future<int> _importWordbookJsonFileAsync({
+    required String sourcePath,
+    required String name,
+    required bool gzipped,
+    void Function(int processedEntries, int? totalEntries)? onProgress,
+  }) async {
+    if (_canUseBackgroundJsonImport(true)) {
+      final result = await _tryRunWordbookJsonImportWorker(
+        dbPath: dbPath,
+        sourcePath: sourcePath,
+        name: name,
+        filePath: sourcePath,
+        gzipped: gzipped,
+        onProgress: onProgress,
+      );
+      if (result != null) {
+        return result.imported;
+      }
+    }
+
+    final content = gzipped
+        ? await _importService.readJsonByteStreamAsString(
+            File(sourcePath).openRead(),
+            gzipped: true,
+          )
+        : await File(sourcePath).readAsString();
+    return _importWordbookJsonTextOnCurrentIsolate(
+      sourcePath: sourcePath,
+      name: name,
+      content: content,
+      replaceExisting: true,
+      onProgress: onProgress,
+      yieldEvery: 180,
     );
   }
 
@@ -711,10 +816,9 @@ extension AppDatabaseServiceWordbookImport on AppDatabaseService {
     final normalizedLower = normalizedPath.toLowerCase();
     if (normalizedLower.endsWith('.json.gz') ||
         normalizedLower.endsWith('.gz')) {
-      return importWordbookJsonByteStreamAsync(
+      return _importWordbookJsonFileAsync(
         sourcePath: normalizedPath,
         name: name,
-        byteStream: File(normalizedPath).openRead(),
         gzipped: true,
         onProgress: onProgress,
       );
@@ -722,11 +826,10 @@ extension AppDatabaseServiceWordbookImport on AppDatabaseService {
 
     if (normalizedLower.endsWith('.json') ||
         normalizedLower.endsWith('.jsonl')) {
-      final content = await File(normalizedPath).readAsString();
-      return importWordbookJsonTextAsync(
+      return _importWordbookJsonFileAsync(
         sourcePath: normalizedPath,
         name: name,
-        content: content,
+        gzipped: false,
         onProgress: onProgress,
       );
     }

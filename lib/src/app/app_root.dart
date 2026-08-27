@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../i18n/app_i18n.dart';
+import '../models/play_config.dart';
 import '../state/app_state_provider.dart';
 import '../ui/app_shell.dart';
 import '../ui/theme/app_theme.dart';
@@ -16,9 +17,14 @@ class VocabularySleepApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appState = ref.watch(appStateProvider);
-    final uiLanguage = appState.uiLanguage;
-    final appearance = appState.config.appearance;
+    final rootState = ref.watch(
+      appStateProvider.select(
+        (state) =>
+            (uiLanguage: state.uiLanguage, appearance: state.config.appearance),
+      ),
+    );
+    final uiLanguage = rootState.uiLanguage;
+    final AppearanceConfig appearance = rootState.appearance;
     final i18n = AppI18n(uiLanguage);
     return MaterialApp(
       title: i18n.t('appTitle'),

@@ -1,7 +1,10 @@
 import 'dart:convert';
+import 'dart:isolate';
 import 'dart:math' as math;
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -10,6 +13,7 @@ import '../models/todo_item.dart';
 import '../models/tomato_timer.dart';
 import '../models/user_data_export.dart';
 import '../models/word_entry.dart';
+import '../models/word_entry_lite_decoder.dart';
 import '../models/word_field.dart';
 import '../models/word_memory_progress.dart';
 import '../models/wordbook.dart';
@@ -18,10 +22,12 @@ import '../models/wordbook_schema_v1.dart';
 import '../utils/search_text_normalizer.dart' as search_text;
 import 'built_in_wordbook_source.dart';
 import 'wordbook_import_service.dart';
+import 'wordbook_search_query.dart';
 
 part 'database_service_maintenance.dart';
 part 'database_service_wordbook_query.dart';
 part 'database_service_wordbook_import.dart';
+part 'database_service_wordbook_import_worker.dart';
 part 'database_service_tasks.dart';
 part 'database_service_core.dart';
 part 'database_service_schema.dart';

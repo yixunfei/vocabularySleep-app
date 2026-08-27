@@ -21,9 +21,14 @@ import 'word_editor_page.dart';
 import 'wordbook_management_page.dart';
 
 class LibraryPage extends ConsumerStatefulWidget {
-  const LibraryPage({super.key, this.onAttachScrollToTop});
+  const LibraryPage({
+    super.key,
+    this.onAttachScrollToTop,
+    this.isActive = true,
+  });
 
   final ValueChanged<VoidCallback>? onAttachScrollToTop;
+  final bool isActive;
 
   @override
   ConsumerState<LibraryPage> createState() => _LibraryPageState();
@@ -31,6 +36,8 @@ class LibraryPage extends ConsumerStatefulWidget {
 
 class _LibraryPageState extends ConsumerState<LibraryPage> {
   static const int _pageSize = 20;
+  static const int _maxRetainedRowKeys = 240;
+  static const int _maxMeasuredRowHeights = 240;
   static const Duration _searchDebounceDuration = Duration(milliseconds: 160);
 
   final TextEditingController _searchController = TextEditingController();
@@ -44,14 +51,25 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   int _visibleItemCount = _pageSize;
   int _currentScopeWordCount = 0;
   String _paginationSignature = '';
+  String _loadedWordsSignature = '';
   String _autoScrolledSignature = '';
   List<WordEntry> _loadedWords = const <WordEntry>[];
+  late final AppState _appState;
+
+  void _handlePlaybackRevision() {
+    if (!mounted || !widget.isActive) {
+      return;
+    }
+    setState(() {});
+  }
 
   @override
   void initState() {
     super.initState();
     widget.onAttachScrollToTop?.call(_scrollToTop);
     _scrollController.addListener(_handleScrollChanged);
+    _appState = ref.read(appStateProvider);
+    _appState.playbackRevisionListenable.addListener(_handlePlaybackRevision);
   }
 
   @override
@@ -60,10 +78,16 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     if (oldWidget.onAttachScrollToTop != widget.onAttachScrollToTop) {
       widget.onAttachScrollToTop?.call(_scrollToTop);
     }
+    if (widget.isActive && !oldWidget.isActive && mounted) {
+      setState(() {});
+    }
   }
 
   @override
   void dispose() {
+    _appState.playbackRevisionListenable.removeListener(
+      _handlePlaybackRevision,
+    );
     _scrollController.removeListener(_handleScrollChanged);
     _searchDebounce?.cancel();
     _searchController.dispose();
@@ -105,18 +129,30 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
 
   GlobalKey _rowKeyFor(WordEntry word) {
     final identity = _wordIdentity(word);
-    return _rowKeys.putIfAbsent(
-      identity,
-      () => GlobalKey(debugLabel: 'library_word_$identity'),
-    );
+    final existing = _rowKeys[identity];
+    if (existing != null) return existing;
+    final key = GlobalKey(debugLabel: 'library_word_$identity');
+    _rowKeys[identity] = key;
+    _pruneDetachedRowKeys();
+    return key;
   }
 
-  void _syncRowKeys(List<WordEntry> words) {
-    final activeIdentities = words.map(_wordIdentity).toSet();
-    _rowKeys.removeWhere((key, _) => !activeIdentities.contains(key));
-    _rowHeights.removeWhere((key, _) => !activeIdentities.contains(key));
-    for (final word in words) {
-      _rowKeyFor(word);
+  void _syncRowKeys(List<WordEntry> _) {
+    // SliverList only builds a small viewport window. Keys are created from
+    // the builder, so do not eagerly allocate one for every loaded word.
+    _pruneDetachedRowKeys();
+  }
+
+  void _pruneDetachedRowKeys() {
+    if (_rowKeys.length <= _maxRetainedRowKeys) return;
+    final removable = _rowKeys.entries
+        .where((entry) => entry.value.currentContext == null)
+        .take(_rowKeys.length - _maxRetainedRowKeys)
+        .map((entry) => entry.key)
+        .toList(growable: false);
+    for (final identity in removable) {
+      _rowKeys.remove(identity);
+      _rowHeights.remove(identity);
     }
   }
 
@@ -128,12 +164,16 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       return;
     }
     _rowHeights[identity] = nextHeight;
+    while (_rowHeights.length > _maxMeasuredRowHeights) {
+      _rowHeights.remove(_rowHeights.keys.first);
+    }
   }
 
   String _buildPaginationSignature(AppState state, int totalWords) {
     final selectedWordbookId = state.selectedWordbook?.id.toString() ?? 'none';
     final searchQuery = state.searchQuery.trim();
-    return '$selectedWordbookId|${state.searchMode.name}|$searchQuery|$totalWords';
+    return '$selectedWordbookId|${state.wordsVersion}|'
+        '${state.searchMode.name}|$searchQuery|$totalWords';
   }
 
   void _syncPaginationState(AppState state, int totalWords) {
@@ -145,6 +185,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
       _visibleItemCount = scopeWordCount == 0
           ? 0
           : min(_pageSize, scopeWordCount);
+      _rowHeights.clear();
       return;
     }
 
@@ -155,6 +196,21 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     if (scopeWordCount > 0 && _visibleItemCount == 0) {
       _visibleItemCount = min(_pageSize, scopeWordCount);
     }
+  }
+
+  List<WordEntry> _resolveDisplayedWords(AppState state, int totalWords) {
+    final limit = totalWords <= 0
+        ? 0
+        : _visibleItemCount.clamp(0, totalWords).toInt();
+    final signature = '$_paginationSignature|limit:$limit';
+    if (_loadedWordsSignature == signature) {
+      return _loadedWords;
+    }
+    _loadedWordsSignature = signature;
+    _loadedWords = limit <= 0
+        ? const <WordEntry>[]
+        : state.getVisibleWordsPage(limit: limit, offset: 0);
+    return _loadedWords;
   }
 
   void _maybeScrollToCurrentWord(AppState state) {
@@ -216,6 +272,12 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   double _estimateOffsetForIndex(List<WordEntry> words, int targetIndex) {
     final averageExtent = _averageRowExtent(words);
     final listTopOffset = _scrollOffsetForKey(_listTopKey) ?? 0;
+
+    // Before any row has been laid out there is no useful anchor to inspect;
+    // avoid scanning the entire deferred wordbook just to discover that.
+    if (_rowKeys.isEmpty) {
+      return listTopOffset + averageExtent * targetIndex;
+    }
 
     int? nearestBuiltIndex;
     double? nearestBuiltOffset;
@@ -381,6 +443,11 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Avoid rebuilding the deferred page and retaining its visible row
+    // elements on every global AppState notification while Study is hidden.
+    if (!widget.isActive) {
+      return const SizedBox.shrink();
+    }
     final state = ref.watch(appStateProvider);
     final i18n = AppI18n(state.uiLanguage);
     _syncSearchField(state);
@@ -405,13 +472,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
 
     final totalWords = state.visibleWordCount;
     _syncPaginationState(state, totalWords);
-    final displayedWords = totalWords <= 0
-        ? const <WordEntry>[]
-        : state.getVisibleWordsPage(
-            limit: _visibleItemCount.clamp(0, totalWords).toInt(),
-            offset: 0,
-          );
-    _loadedWords = displayedWords;
+    final displayedWords = _resolveDisplayedWords(state, totalWords);
     _syncRowKeys(displayedWords);
     final currentWord = state.currentWord;
     final selectedIdentity = currentWord == null
@@ -420,6 +481,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
     _maybeScrollToCurrentWord(state);
     final previewVisible = state.config.showText;
     final searching = state.searchQuery.trim().isNotEmpty;
+    final searchLoading = state.wordbookSearchInProgress;
     final mediaQuery = MediaQuery.of(context);
     final compactHeight = mediaQuery.size.height < 720;
     final showCompactAddWord = compactHeight || mediaQuery.size.width < 360;
@@ -516,8 +578,11 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                         selected: <SearchMode>{state.searchMode},
                         onSelectionChanged: (selection) {
                           if (selection.isEmpty) return;
-                          _commitSearchQuery(state, _searchController.text);
-                          state.setSearchMode(selection.first);
+                          _searchDebounce?.cancel();
+                          state.setSearchCriteria(
+                            query: _searchController.text,
+                            mode: selection.first,
+                          );
                         },
                       ),
                     ),
@@ -585,7 +650,12 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
               ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            if (totalWords <= 0)
+            if (searchLoading)
+              const SliverPadding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverToBoxAdapter(child: LinearProgressIndicator()),
+              )
+            else if (totalWords <= 0)
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 sliver: SliverToBoxAdapter(
@@ -822,28 +892,42 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   }
 }
 
-class _MeasuredSize extends StatefulWidget {
-  const _MeasuredSize({required this.child, required this.onSizeChanged});
+class _MeasuredSize extends SingleChildRenderObjectWidget {
+  const _MeasuredSize({required Widget child, required this.onSizeChanged})
+    : super(child: child);
 
-  final Widget child;
   final ValueChanged<Size> onSizeChanged;
 
   @override
-  State<_MeasuredSize> createState() => _MeasuredSizeState();
+  RenderObject createRenderObject(BuildContext context) {
+    return _MeasuredSizeRenderObject(onSizeChanged);
+  }
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    covariant _MeasuredSizeRenderObject renderObject,
+  ) {
+    renderObject.onSizeChanged = onSizeChanged;
+  }
 }
 
-class _MeasuredSizeState extends State<_MeasuredSize> {
+class _MeasuredSizeRenderObject extends RenderProxyBox {
+  _MeasuredSizeRenderObject(this.onSizeChanged);
+
+  ValueChanged<Size> onSizeChanged;
   Size? _lastSize;
 
   @override
-  Widget build(BuildContext context) {
+  void performLayout() {
+    super.performLayout();
+    final nextSize = size;
+    if (nextSize == _lastSize) return;
+    _lastSize = nextSize;
+    final callback = onSizeChanged;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final size = context.size;
-      if (size == null || size == _lastSize) return;
-      _lastSize = size;
-      widget.onSizeChanged(size);
+      if (!attached) return;
+      callback(nextSize);
     });
-    return widget.child;
   }
 }

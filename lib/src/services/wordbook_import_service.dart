@@ -10,6 +10,8 @@ import '../models/word_field.dart';
 import '../models/wordbook_import_audit.dart';
 import '../models/wordbook_schema_v1.dart';
 
+part 'wordbook_json_import_preparation.dart';
+
 const Set<String> _jsonRecordContainerKeys = <String>{
   'words',
   'entries',
@@ -215,21 +217,18 @@ class WordbookImportService {
   }
 
   Future<List<WordEntryPayload>> parseJsonTextAsync(String content) async {
-    final standard = tryParseStandardWordbook(content);
-    if (standard != null) {
-      _ensureStandardWordbookValid(standard);
-      return standard.toPayloads();
-    }
+    final prepared = await prepareJsonImportAsync(content);
+    return prepared.payloads;
+  }
 
-    final payloads = <WordEntryPayload>[];
-    final records = await compute(_parseJsonRecords, content);
-    for (var index = 0; index < records.length; index += 1) {
-      final payload = _recordToPayload(records[index], sortIndex: index);
-      if (payload != null) {
-        payloads.add(payload);
-      }
-    }
-    return payloads;
+  Future<PreparedWordbookJsonImport> prepareJsonImportAsync(
+    String content, {
+    String fallbackName = '',
+  }) {
+    return compute(_prepareWordbookJsonImportInWorker, (
+      content: content,
+      fallbackName: fallbackName,
+    ), debugLabel: 'wordbook-json-import');
   }
 
   int processJsonText(
@@ -367,145 +366,61 @@ class WordbookImportService {
     void Function(int processed, int? total)? onProgress,
     int yieldEvery = 180,
   }) async {
-    final standard = tryParseStandardWordbook(content);
-    if (standard != null) {
-      _ensureStandardWordbookValid(standard);
-      final payloads = standard.toPayloads();
-      onProgress?.call(0, payloads.length);
-      final resolvedYieldEvery = yieldEvery < 1 ? 1 : yieldEvery;
-      for (var index = 0; index < payloads.length; index += 1) {
-        onPayload(payloads[index]);
-        onProgress?.call(index + 1, payloads.length);
-        if ((index + 1) % resolvedYieldEvery == 0) {
-          await Future<void>.delayed(Duration.zero);
-        }
-      }
-      return payloads.length;
-    }
+    final prepared = await prepareJsonImportAsync(content);
+    return processPreparedJsonImportAsync(
+      prepared,
+      onPayload: onPayload,
+      onProgress: onProgress,
+      yieldEvery: yieldEvery,
+    );
+  }
 
+  PreparedWordbookJsonImport prepareJsonImport(
+    String content, {
+    String fallbackName = '',
+  }) {
+    return _prepareWordbookJsonImport(
+      this,
+      content,
+      fallbackName: fallbackName,
+    );
+  }
+
+  Future<int> processPreparedJsonImportAsync(
+    PreparedWordbookJsonImport prepared, {
+    required void Function(WordEntryPayload payload) onPayload,
+    void Function(int processed, int? total)? onProgress,
+    int yieldEvery = 180,
+  }) async {
+    final payloads = prepared.payloads;
+    final total = prepared.descriptor.totalRecords ?? payloads.length;
     final resolvedYieldEvery = yieldEvery < 1 ? 1 : yieldEvery;
-
-    Map<String, Object?>? asRecordMap(Object? value) {
-      if (value is Map<String, Object?>) {
-        return value;
-      }
-      if (value is Map) {
-        return value.cast<String, Object?>();
-      }
-      return null;
-    }
-
-    int emitPayload(Object? value, int sortIndex) {
-      final record = asRecordMap(value);
-      if (record == null) return 0;
-      final payload = _recordToPayload(record, sortIndex: sortIndex);
-      if (payload == null) return 0;
-      onPayload(payload);
-      return 1;
-    }
-
-    var lastReportedProcessed = -1;
     var lastReportedPercent = -1;
-    var sinceLastYield = 0;
 
-    void reportProgress(int processed, int? total, {bool force = false}) {
+    void reportProgress(int processed, {bool force = false}) {
       if (onProgress == null) return;
-      if (!force) {
-        if (total != null && total > 0) {
-          final percent = ((processed * 100) ~/ total).clamp(0, 100);
-          if (processed < total && percent == lastReportedPercent) {
-            return;
-          }
-          lastReportedPercent = percent;
-        } else if (processed - lastReportedProcessed < 64) {
+      final normalized = processed.clamp(0, total);
+      if (!force && total > 0) {
+        final percent = ((normalized * 100) ~/ total).clamp(0, 100);
+        if (normalized < total && percent == lastReportedPercent) {
           return;
         }
+        lastReportedPercent = percent;
       }
-      lastReportedProcessed = processed;
-      onProgress(processed, total);
+      onProgress(normalized, total);
     }
 
-    Future<void> maybeYield() async {
-      sinceLastYield += 1;
-      if (sinceLastYield < resolvedYieldEvery) return;
-      sinceLastYield = 0;
-      await Future<void>.delayed(Duration.zero);
-    }
-
-    try {
-      final decoded = jsonDecode(content);
-      if (decoded is List) {
-        var count = 0;
-        final total = decoded.length;
-        reportProgress(0, total, force: true);
-        for (var index = 0; index < total; index += 1) {
-          count += emitPayload(decoded[index], index);
-          reportProgress(index + 1, total);
-          await maybeYield();
-        }
-        reportProgress(total, total, force: true);
-        return count;
-      }
-
-      if (decoded is Map) {
-        final container = _resolveRecordContainer(
-          decoded.cast<String, Object?>(),
-        );
-        if (container != null) {
-          var count = 0;
-          final total = container.length;
-          reportProgress(0, total, force: true);
-          for (var index = 0; index < total; index += 1) {
-            count += emitPayload(container[index], index);
-            reportProgress(index + 1, total);
-            await maybeYield();
-          }
-          reportProgress(total, total, force: true);
-          return count;
-        }
-        reportProgress(0, 1, force: true);
-        final count = emitPayload(decoded, 0);
-        reportProgress(1, 1, force: true);
-        return count;
-      }
-    } catch (_) {
-      // Fall back to JSONL / concatenated object parser below.
-    }
-
-    final lines = content.split(RegExp(r'\r?\n'));
-    var depth = 0;
-    var count = 0;
-    var processed = 0;
-    final buffer = StringBuffer();
-    reportProgress(0, null, force: true);
-
-    for (final line in lines) {
-      final trimmed = line.trim();
-      if (trimmed.isEmpty) continue;
-      buffer.writeln(line);
-      for (final char in trimmed.runes) {
-        if (char == 123) depth += 1;
-        if (char == 125) depth -= 1;
-      }
-
-      if (depth != 0) continue;
-      final chunk = buffer.toString().trim();
-      buffer.clear();
-      if (chunk.isEmpty) continue;
-
-      try {
-        final decoded = jsonDecode(chunk);
-        count += emitPayload(decoded, processed);
-        processed += 1;
-        reportProgress(processed, null);
-        await maybeYield();
-      } catch (_) {
-        // Ignore malformed rows.
+    reportProgress(0, force: true);
+    for (var index = 0; index < payloads.length; index += 1) {
+      final payload = payloads[index];
+      onPayload(payload);
+      reportProgress((payload.sortIndex ?? index) + 1);
+      if ((index + 1) % resolvedYieldEvery == 0) {
+        await Future<void>.delayed(Duration.zero);
       }
     }
-
-    reportProgress(processed, null, force: true);
-    return count;
+    reportProgress(total, force: true);
+    return payloads.length;
   }
 
   Future<int> processJsonByteStreamAsync(

@@ -17,6 +17,7 @@ import '../widgets/empty_state_view.dart';
 import '../widgets/section_header.dart';
 import '../widgets/status_badge.dart';
 import '../widgets/study_wordbook_status.dart';
+import '../widgets/study_search_loading_view.dart';
 import '../widgets/word_card.dart';
 import 'follow_along_page.dart';
 
@@ -28,10 +29,12 @@ class PlayPage extends ConsumerStatefulWidget {
     super.key,
     required this.onOpenPractice,
     required this.onOpenLibrary,
+    this.isActive = true,
   });
 
   final VoidCallback onOpenPractice;
   final VoidCallback onOpenLibrary;
+  final bool isActive;
 
   @override
   ConsumerState<PlayPage> createState() => _PlayPageState();
@@ -41,14 +44,40 @@ class _PlayPageState extends ConsumerState<PlayPage> {
   int _transitionDirection = 1;
   double? _progressDragValue;
   bool _continuousPathExpanded = false;
+  late final AppState _appState;
+
+  void _handlePlaybackRevision() {
+    if (!mounted || !widget.isActive) {
+      return;
+    }
+    setState(() {});
+  }
 
   @override
   void initState() {
     super.initState();
+    _appState = ref.read(appStateProvider);
+    _appState.playbackRevisionListenable.addListener(_handlePlaybackRevision);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(appStateProvider).refreshWeatherIfStale();
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant PlayPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive && mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void dispose() {
+    _appState.playbackRevisionListenable.removeListener(
+      _handlePlaybackRevision,
+    );
+    super.dispose();
   }
 
   void _setTransitionDirection(int direction) {
@@ -60,6 +89,12 @@ class _PlayPageState extends ConsumerState<PlayPage> {
 
   @override
   Widget build(BuildContext context) {
+    // The parent AppShell retains this tab for navigation, but an inactive
+    // playback page should not evaluate its rebuild token or keep its full
+    // word-card tree mounted while another module is active.
+    if (!widget.isActive) {
+      return const SizedBox.shrink();
+    }
     final token = ref.watch(
       appStateProvider.select(_PlayPageRebuildToken.fromState),
     );
@@ -86,6 +121,9 @@ class _PlayPageState extends ConsumerState<PlayPage> {
             showStudyWordbookSheet(context: context, state: state, i18n: i18n),
       );
     }
+    if (state.wordbookSearchInProgress) {
+      return StudySearchLoadingView(label: i18n.t('processing'));
+    }
     if (current == null) {
       final searching = state.searchQuery.trim().isNotEmpty;
       return EmptyStateView(
@@ -108,7 +146,7 @@ class _PlayPageState extends ConsumerState<PlayPage> {
     }
 
     final visibleWords = state.visibleWords;
-    final index = _indexOfWord(visibleWords, current);
+    final index = _indexOfWord(state, visibleWords, current);
     final position = visibleWords.isEmpty
         ? 0.0
         : ((index + 1) / visibleWords.length);
@@ -121,8 +159,8 @@ class _PlayPageState extends ConsumerState<PlayPage> {
     );
     final progressStep = _progressJumpStep(visibleWords.length);
     final mode = experienceModeFromAppearance(state.config.appearance);
-    final weakCount = token.weakWordCount;
-    final todayAccuracy = token.todayAccuracyPercent;
+    final weakCount = state.practiceWeakWordCount;
+    final todayAccuracy = (state.practiceTodayAccuracy * 100).round();
     final isPlaybackPaused = state.isPlaying && state.isPaused;
 
     return ListView(
@@ -149,8 +187,8 @@ class _PlayPageState extends ConsumerState<PlayPage> {
           transitionDirection: _transitionDirection,
           showMeaning: state.config.showText,
           showFields: mode == AppExperienceMode.focus,
-          isFavorite: token.currentWordFavorite,
-          isTaskWord: token.currentWordTask,
+          isFavorite: state.isFavoriteEntry(current),
+          isTaskWord: state.isTaskEntry(current),
           onToggleFavorite: () => state.toggleFavorite(current),
           onToggleTask: () => state.toggleTaskWord(current),
           onPlayPronunciation: () => state.previewPronunciation(current.word),
@@ -655,6 +693,7 @@ class _PlayPageRebuildToken {
     required this.currentWordTask,
     required this.searchQuery,
     required this.searchMode,
+    required this.wordbookSearchRevision,
     required this.isPlaying,
     required this.isPaused,
     required this.playOrder,
@@ -693,6 +732,7 @@ class _PlayPageRebuildToken {
       currentWordTask: current != null && state.isTaskEntry(current),
       searchQuery: state.searchQuery,
       searchMode: state.searchMode,
+      wordbookSearchRevision: state.wordbookSearchRevision,
       isPlaying: state.isPlaying,
       isPaused: state.isPaused,
       playOrder: config.order,
@@ -728,6 +768,7 @@ class _PlayPageRebuildToken {
   final bool currentWordTask;
   final String searchQuery;
   final SearchMode searchMode;
+  final int wordbookSearchRevision;
   final bool isPlaying;
   final bool isPaused;
   final PlayOrder playOrder;
@@ -801,6 +842,7 @@ class _PlayPageRebuildToken {
         other.currentWordTask == currentWordTask &&
         other.searchQuery == searchQuery &&
         other.searchMode == searchMode &&
+        other.wordbookSearchRevision == wordbookSearchRevision &&
         other.isPlaying == isPlaying &&
         other.isPaused == isPaused &&
         other.playOrder == playOrder &&
@@ -851,6 +893,7 @@ class _PlayPageRebuildToken {
       weatherEnabled,
       weatherLoading,
       weatherSnapshotSignature,
+      wordbookSearchRevision,
     ),
   );
 }

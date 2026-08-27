@@ -1,3 +1,346 @@
+## [Unreleased-STUDY-PERF-PHASE16-LOG-BACKPRESSURE] - 2026-08-26
+
+### 原因
+- 连续播放和 TTS 在调试模式会生成高频日志；旧实现为每行创建无界 Future 链并执行 `flush: true`，慢存储下队列会持续持有闭包和字符串，离开单词模块后仍可能继续造成写盘、内存和 GC 压力。
+
+### 修改
+- DEBUG 日志改为仅 debug 构建控制台输出且不持久化；INFO/WARN/ERROR 使用单一有界批量写入器。
+- 队列限制为 1024 行/1 MiB 字符，批次限制为 128 行/256 KiB；背压优先保留 WARN/ERROR，超大记录截断后仍保持有效 JSON。
+- 文件追加取消逐条强制 flush；保留目录删除恢复、path-provider 不可用时 console-only 降级和错误批次重试。
+- 重置使用 generation 隔离，并串行等待旧 drain 结束，避免新旧代际并发写盘。
+
+### 修复
+- 2000 条 INFO 基准的 flush 由约 2937ms 降至约 10ms，入队后 RSS 增量由约 5.7MB 降至约 0.7MB；5000 条突发队列保持在硬上限内且尾部 ERROR 仍落盘。
+- 消除慢文件系统上无界日志 Future/字符串链，使播放结束或切换其他模块后不再继续偿还逐条强制落盘积压。
+
+### 风险变更
+- 队列过载时会主动丢弃较旧、较低优先级日志并输出一次背压提示；错误日志优先但不是无限保留。
+- 2000 条同步 JSON 入队仍产生约 30ms CPU 占用和约 32.3ms timer 最大间隔；真实播放为分散调用，日志 data 惰性构造/源头采样保留为后续优化项。
+
+### 验证
+- `flutter test test/app_log_service_test.dart --reporter expanded` 通过（5 项）。
+- `flutter test test/playback_service_test.dart test/tts_service_test.dart test/app_state_init_test.dart --reporter expanded` 通过（35 项）。
+- 目标 `flutter analyze` 无问题，`dart format` 通过；本阶段新增/退休 i18n key 均为 0，未触达 catalog。
+
+## [Unreleased-STUDY-PERF-PHASE15-BACKGROUND-SEARCH] - 2026-08-26
+
+### 原因
+- 真实 12000 词搜索仍在 UI isolate 同步执行 SQLite 全表匹配、计数和最多 12000 个 lite 模型物化，常见查询会连续阻塞约 67-215ms。
+
+### 修改
+- 新增共享搜索 SQL 计划与只读 SQLite worker，完整结果在后台直接构造 `WordEntry` 快照。
+- 新增独立 `WordbookSearchStore`；查询使用 generation/签名校验，Library、Play、Practice 通过 revision 消费同一完成快照并显示明确加载态。
+- 快速输入采用单 worker 串行执行且仅保留最新待执行请求；切词本、清空查询、数据库恢复及 `dispose` 会取消待执行请求并释放已提交快照。
+
+### 修复
+- `a`/`ab`/`ability` 的 worker 总耗时约 208-216ms/109ms/71ms，期间 UI 10ms 定时器最大间隔约 11.0-12.5ms，不再出现原同步路径 67-215ms 的 UI isolate 冻结。
+- 迟到搜索结果不会覆盖新查询或新词本；搜索中进入 Play/Practice 不再短暂显示“无结果/无词本”。
+
+### 风险变更
+- 搜索结果以最多 100000 条 lite 对象的完整快照支持播放与练习语义；超大词本的峰值内存仍需后续通过分页 ID/FTS 架构单独收敛。
+- worker 失败不再回退 UI isolate 同步全量搜索，而是记录错误并提交空结果，优先保证界面响应。
+
+### 验证
+- 真实 `zh_en_12000.json.gz` 搜索、10ms UI timer 和 160ms 连续输入基准通过；产品层回归确认同时运行的搜索 worker 上限为 1。
+- 核心状态/播放/练习/worker 回归及阶段目标 UI smoke 通过；目标 `flutter analyze` 无 error，`dart format`、`git diff --check` 通过。
+- 本阶段新增/退休 i18n key 均为 0，未触达 catalog。
+
+## [Unreleased-STUDY-PERF-PHASE14-HOT-PATHS] - 2026-08-26
+
+### 原因
+- 第二轮基准确认轻量词条首次释义访问、Library 已加载分页复制、Play 当前词定位及内置词本加载进度广播仍会叠加 UI/GC 压力。
+
+### 修改
+- lite `WordEntry` 在没有结构化字段时直接读取 legacy meaning/primary gloss，跳过字段 Map 构造与合并。
+- Library 缓存已加载分页结果；Play 无搜索时优先使用 `currentWordIndex`。
+- 内置词本下载/处理进度迁移到独立 `WordbookLoadStore`，AppShell BusyOverlay 局部监听；Study 导入锁定面板同样局部监听导入进度。
+- 词本加载 generation 覆盖快速切换和销毁边界，过期进度、结果与错误不再回写当前状态。
+
+### 修复
+- 12000 条 lite 释义冷访问约从 82ms 降至 34ms，RSS 增量约从 35MB 降至 20-21MB。
+- 12000 词播放索引完整轮转约从 192-208ms 降至 0.55ms；101 次内置加载进度不再触发全局状态广播。
+- 修复阶段 13 后 Study 导入锁定面板进度停留在初始值，以及快速切换词本可能遗留 BusyOverlay 的竞态。
+
+### 风险变更
+- 新增专用加载进度 notifier，由 `AppState` 统一持有与销毁；开始/结束仍保留必要的全局 busy 语义。
+- 搜索仍是剩余 P0：真实 12000 词查询 `a` 会在 UI isolate 同步物化约 11996 条、耗时约 210ms，阶段 15 单独迁移到只读 SQLite worker。
+
+### 验证
+- `flutter test test/word_entry_test.dart test/app_state_init_test.dart test/app_state_logic_test.dart test/app_state_practice_test.dart test/playback_service_test.dart test/wordbook_query_worker_test.dart --reporter compact` 通过（47 项）。
+- 阶段目标 UI smoke 5 项通过；目标 `flutter analyze` 无 error；`dart format`、`git diff --check` 通过。
+- 完整 `test/ui_smoke_test.dart` 存在 43 个与本轮无关的既有失败（旧文案断言及 toolbox `ListTile`/`DecoratedBox` 断言），已记录但未在本切片处理。
+- 本阶段新增/退休 i18n key 均为 0，未触达 catalog。
+
+## [Unreleased-STUDY-PERF-PHASE13-IMPORT-PROGRESS] - 2026-08-26
+
+### 原因
+- 导入 worker 已移除 SQLite/JSON 的 UI isolate 阻塞，但每个百分比进度仍通过巨型 `AppState` 全局广播，约 101 次重建 `AppShell` 和存活页面；根 `MaterialApp` 也订阅了全部状态。
+
+### 修改
+- 新增独立的词本导入进度 store 与不可变快照，进度回调只更新专用 `ValueListenable`。
+- 导入横幅和 BusyOverlay 改为局部监听；导入开始、完成、错误及 Study 锁定保持原语义。
+- 应用根节点只选择 UI 语言和外观配置，其他 AppState 通知不再重建整个 `MaterialApp`。
+
+### 修复
+- 101 次模拟导入进度不再进入全局通知通道；定向 UI smoke 验证进度仍能更新且全局通知为 0。
+- 降低真实 12000 词导入期间其他模块的无关 build、selector 计算和对象分配。
+
+### 风险变更
+- 进度展示从全局 AppState 字段迁移到专用快照；开始与结束仍各自触发必要的全局 busy/锁定状态更新。
+
+### 验证
+- `flutter test test/ui_smoke_test.dart --plain-name "wordbook import progress updates without a global rebuild" --reporter compact` 通过。
+- `flutter test test/app_state_init_test.dart test/database_service_test.dart test/app_state_logic_test.dart test/app_state_practice_test.dart --reporter compact` 通过（69 项）。
+- 目标文件 `flutter analyze` 无 error，仅有 5 条既有 info；`dart format`、`git diff --check` 通过。本阶段新增/退休 i18n key 均为 0，未触达 catalog。
+
+## [Unreleased-STUDY-PERF-PHASE12-COMPRESSED-IMPORT] - 2026-08-26
+
+### 原因
+- `.json.gz` 和远程字节流此前在 UI isolate 完成解压与 UTF-8 字符串构造，再把完整 JSON 发送给写入 worker，造成不必要的大字符串驻留和移动端 heap 压力。
+
+### 修改
+- 本地 JSON/JSONL/Gzip 文件改由导入 worker 直接读取，并在同一 isolate 完成解压、解析和 SQLite 单事务写入。
+- 远程字节流使用 `TransferableTypedData` 转交 worker；Web、自定义 importer、合并导入和 worker 失败保留原兼容路径。
+
+### 修复
+- 默认压缩词本导入不再在 UI isolate 构造约 20MB 的解压后 JSON 字符串，也不再进行 UI isolate 到写入 worker 的大字符串传递。
+- 真实 12000 词 gzip 完整导入约 17.90s，10ms UI 计时器最大间隔约 13.1ms。
+
+### 风险变更
+- worker 新增文件与可转移字节两种输入；回退路径会重新读取本地文件或复用原始流字节，数据库事务和 replace 语义保持不变。
+
+### 验证
+- `flutter test test/database_service_test.dart --reporter compact` 通过（35 项）。
+- 目标文件 `flutter analyze`、`dart format`、`git diff --check` 通过；本阶段新增/退休 i18n key 均为 0。
+
+## [Unreleased-STUDY-PERF-PHASE11-DEVICE-SMOKE] - 2026-08-26
+
+### 验证
+- Android Profile APK 在 `emulator-5554` 通过系统文件选择器导入真实 `中文-英语_12000词单词本.json`，界面确认 `Imported 12000 words` 和 `12000 words · custom`。
+- 完成 12000 词加载、连续播放及 Study/Toolbox/Life tools 交替切换；返回 Study 后仍显示 `Playing`/`Pause`，播放位置由 `6/12000` 推进至 `12/12000`，未见 Flutter fatal 或 SQLite 异常。
+- 6 轮跨模块切换期间进程 PSS 约 `471-483 MB`，未观察到单调增长；该结果仅为模拟器手工 smoke，不替代真机内存基线。
+
+### 未完成
+- 自动 `integration_test` 因 Gradle 无法访问 `storage.googleapis.com` 的 `androidx.test:runner` 元数据仍未执行；完整帧时间、真机 RSS/heap 和练习答题流程待网络恢复后补测。
+
+## [Unreleased-STUDY-PERF-PHASE10-IMPORT-WRITE] - 2026-08-26
+
+### 原因
+- 阶段 9 已将 JSON 解析移出 UI isolate，但完整导入仍在 UI isolate 执行 12000 条 SQLite 多表写入；实测单次事件循环停顿超过 1 秒，其他模块会同步卡顿。
+
+### 修改
+- 默认 `WordbookImportService` 且 `replaceExisting=true` 的 JSON 导入改为独立 isolate 内一次完成解析、descriptor 构造和 SQLite 单事务写入。
+- 通过 `SendPort` 转发进度；worker 复用现有词本 upsert、prepared statements、字段子表和词数刷新逻辑。
+- Web、自定义 importer、`replaceExisting=false` 保留原兼容路径；worker 失败时回退原路径。
+
+### 修复
+- 真实 12000 词完整导入由约 21.25s 降至约 17.82s，UI 事件循环最大停顿由约 1116.7ms 降至约 11.7ms。
+- 保持标准元数据、source payload、字段/样式/标签/媒体和 `replaceExisting` 原子语义。
+
+### 风险变更
+- worker 与主 isolate 对同一 SQLite 文件各持有独立 WAL 连接；设置 busy timeout，主连接仍可读。自定义和合并导入不改变连接所有权。
+
+### 验证
+- `flutter test test/database_service_test.dart --reporter compact` 通过（33 项，含进度、原子替换和自定义 importer 回归）。
+- 目标文件 `flutter analyze`、`dart format`、`git diff --check` 通过；`flutter build apk --profile --target-platform android-arm64` 成功。
+- Android integration smoke 因 Gradle 无法访问 `storage.googleapis.com` 的 `androidx.test:runner` 元数据未执行，设备跨模块复测留待下一阶段。
+
+## [Unreleased-STUDY-PERF-PHASE9-IMPORT-PARSE] - 2026-08-26
+
+### 原因
+- JSON 导入入口先在 UI isolate 执行 `inspectJsonText`，随后再次执行标准格式探测和正式解析；真实 12000 词文件会重复承担完整 JSON 解码和动态字段物化成本。
+
+### 修改
+- 新增独立 JSON preparation worker，在后台一次完成 JSON 解码、格式 descriptor 和 `WordEntryPayload` 构造。
+- `parseJsonTextAsync`、`processJsonTextAsync` 与数据库异步导入复用同一准备结果；保留同步 API 和 JSON/JSONL 兼容行为。
+
+### 修复
+- 真实 27.9MB/12000 词文件同步解析约 4.12s 且 UI 计时器无响应；worker 解析约 4.03s，期间 UI 计时器约 403 次，避免导入时冻结其他模块。
+- 数据库导入不再重复调用 `inspectJsonText` 与 `processJsonTextAsync`，降低重复 CPU 和短期对象分配。
+
+### 风险变更
+- 本阶段仍在 UI isolate 使用现有 SQLite 连接执行写入；事务回滚、prepared statements 和 upsert 语义未改变。大 payload batch 的峰值内存与写入耗时将在下一阶段单独评估。
+
+### 验证
+- `flutter test test/database_service_test.dart --reporter compact` 通过（32 项）。
+- 目标文件 `flutter analyze`、`dart format`、`git diff --check` 通过；新增/退休 i18n key 均为 0。
+
+## [Unreleased-STUDY-PERF-PHASE8-WORKER-DECODE] - 2026-08-26
+
+### 原因
+- 大词本查询已在 isolate 执行，但旧路径把 12000 个摘要 Map 返回 UI isolate 后才构造 `WordEntry`，真实基准仍有约 128-135ms 连续 UI 解码占用。
+
+### 修改
+- SQLite worker 直接从 ResultSet 构造最终摘要模型并返回，Repository 不再在 UI isolate 二次遍历 Map。
+- worker 解码不再同时保留完整 Map 列表与最终模型列表；异常场景继续使用同步查询 fallback。
+
+### 修复
+- 移除显式加载/播放 12000 词本时 UI isolate 上的大批量字符串清洗和模型构造，降低加载完成瞬间的掉帧。
+
+### 验证
+- `flutter test test/app_state_init_test.dart test/app_state_logic_test.dart test/wordbook_query_worker_test.dart --reporter compact` 通过（22 项）。
+- 真实 12000 词本三轮基准：旧 UI 解码约 128-135ms；新 worker 端到端约 163-168ms，模型解码全部在 worker。
+- 目标文件 `flutter analyze`、`dart format`、`git diff --check` 通过；本阶段新增/退休 i18n key 均为 0。
+
+## [Unreleased-STUDY-PERF-PHASE7-INACTIVE-TREE] - 2026-08-26
+
+### 原因
+- 顶层 `IndexedStack` 会保留 Study Tab；切到 Toolbox、Focus 等其他模块后，隐藏的 Play/Library 仍会订阅 AppState 并重建词卡与分页树，造成跨模块持续卡顿和额外内存占用。
+
+### 修改
+- Study、Play、Library 在非活动 Tab 返回轻量占位，释放隐藏的列表元素、行测量对象和全局状态订阅；再次进入时按当前状态恢复。
+- 离开 Study Tab 时清理 Library 滚动回调，避免保留已销毁页面 State 的闭包引用。
+
+### 修复
+- 切换到其他模块后，学习/单词表页面不再因全局状态通知重复构建，降低大词本场景的 UI 重建和 GC 压力。
+
+### 验证
+- `flutter test test/ui_smoke_test.dart --plain-name "library page" --reporter compact` 通过。
+- `flutter test test/ui_smoke_test.dart --plain-name "practice" --reporter compact` 通过。
+- 真实 12000 词本摘要查询：同步约 31ms，worker 端到端约 60ms；worker 主要用于隔离 UI 阻塞。
+- 本阶段新增/退休 i18n key 均为 0；未触达 catalog。
+
+## [Unreleased-STUDY-PERF-PHASE5] - 2026-08-26
+
+### 原因
+- 大词本进入单词表、学习或播放时，SQLite lite 全量扫描和摘要行物化仍在 UI isolate 执行，首帧和切换期间会阻塞其他模块。
+
+### 修改
+- 新增独立的 lite 行解码器和 SQLite query worker；大词本只读摘要查询通过 `Isolate.run` 与独立只读连接执行。
+- 选词本和播放按需加载改为等待异步 lite 查询，加入 load generation 校验，旧请求结果和 busy 状态不会覆盖当前词本请求。
+- worker 异常自动回退同步 repository 路径；完整字段查询、搜索、导入写入和事务语义保持不变。
+
+### 修复
+- 降低加载大词本时 UI isolate 的 SQLite 扫描/行映射阻塞，避免旧的异步结果在切换词本或数据库恢复后污染当前状态。
+
+### 验证
+- `flutter test test/app_state_practice_test.dart test/app_state_init_test.dart test/app_state_logic_test.dart test/playback_service_test.dart test/memory_lane_selector_test.dart test/wordbook_query_worker_test.dart --reporter compact` 通过（41 项）。
+- 目标文件 `flutter analyze` 无 error；`dart format`、`git diff --check` 通过。
+- 本阶段新增/退休 i18n key 均为 0；维护脚本未运行（未触达 catalog）。
+
+## [Unreleased-STUDY-PERF-PHASE6-LIST] - 2026-08-26
+
+### 原因
+- 延迟加载的大词本在 Library build、播放切词和其他全局通知期间会重复执行同步分页/count 查询；滚动加载后还会为整段列表预创建 GlobalKey 和测量状态。
+
+### 修改
+- 为延迟词本的 count/page 查询增加签名缓存与有界 LRU，短页到达末尾后不再重复查询；搜索分页继续使用 `searchWordsLite`。
+- Library 仅在 Sliver 实际构建行时创建 GlobalKey，并限制脱离视口的 key 与行高测量缓存。
+
+### 修复
+- 降低打开学习模块后切到其他模块时由重复 SQLite 查询、列表分配和常驻 row 元数据造成的 UI/GC 压力。
+- 行高测量改为 `RenderProxyBox` 在 layout 尺寸变化时回调，避免播放切词或其他状态通知下为每一行重复排队测量任务。
+
+### 验证
+- 新增回归覆盖延迟词本普通分页和搜索分页的重复读取；`flutter test test/app_state_init_test.dart test/app_state_logic_test.dart --reporter compact` 通过。
+- `dart format`、`git diff --check` 通过；本阶段新增/退休 i18n key 均为 0。
+
+## [Unreleased-STUDY-PERF-PHASE3] - 2026-08-26
+
+### 原因
+- 练习逐题作答仍会更新巨型 `AppState`，唤醒顶层常驻页面；练习入口还会为整本大词表重复构建候选并让会话路由持有整本列表。
+
+### 修改
+- 新增练习专用 `PracticeStore.revision` 通道；答题过程延迟练习仪表盘刷新，完成或路由销毁时统一刷新。
+- 非活动练习 Tab 不再订阅全局状态或练习 revision；练习任务、收藏、记忆/错题派生集合按版本与集合身份缓存。
+- 练习轮次使用来源描述和有界批次，下一批按需从 `AppState` 解析，取消会话页对完整词本源列表的长期持有。
+
+### 修复
+- 连续答题不再逐题触发全局 `notifyListeners()`，降低切换到其他模块后的重建和 GC 压力。
+- 修正练习派生缓存对旧版已记忆集合变化的失效条件，并避免当前词范围判断重复扫描。
+
+### 验证
+- `flutter test test/app_state_practice_test.dart test/app_state_init_test.dart test/ui_smoke_test.dart --plain-name "practice" --reporter compact` 通过。
+- `dart format`、目标文件 `flutter analyze`、`git diff --check` 已执行；本阶段未触达 i18n catalog。
+
+## [Unreleased-STUDY-PERF-PHASE4] - 2026-08-26
+
+### 原因
+- 换词本时 `_setWords` 会为整本词表重复查询记忆进度；答题更新进度还会复制整张进度 map，导致大词本下额外 CPU、分配和 GC。
+
+### 修改
+- `PracticeStore` 增加显式 `wordMemoryProgressRevision`，答题对现有 map 原地更新受影响词并只递增一次 revision。
+- `AppState` 增加最多 30,000 条的跨词本进度 LRU；只查询未命中的 ID，空结果也缓存，换词本复用已加载进度。
+- 记忆 lane 派生缓存按进度 revision 失效；恢复/重置数据库时清空进度索引。
+
+### 修复
+- 往返打开词本和连续答题不再反复执行整本进度查询或复制 12,000 条 map，降低进入其他模块后的持续内存压力。
+
+### 验证
+- `flutter test test/app_state_init_test.dart --plain-name "memory progress index" --reporter compact` 通过。
+- `flutter test test/app_state_practice_test.dart test/app_state_init_test.dart test/app_state_logic_test.dart test/playback_service_test.dart test/memory_lane_selector_test.dart --reporter compact` 通过。
+- `dart format`、目标文件 `flutter analyze`、`git diff --check` 已执行；本阶段未触达 i18n catalog。
+
+## [Unreleased-STUDY-PERF-PHASE2] - 2026-08-26
+
+### 原因
+- 大词本播放过程中，逐词 hydrate 会复制整份词表并重新刷新整本记忆进度缓存，造成额外分配、数据库查询和 GC 抖动。
+
+### 修改
+- `AppState` 增加最多 64 条的 hydrated word LRU 缓存；播放只缓存当前及近期完整词条，切换词本时清空缓存。
+- 播放队列复用现有 `scopeWords` 列表，不再为每次播放/重启/跳词创建整本 `List<WordEntry>` 副本。
+- hydrate 不再替换 `_words`、递增 `wordsVersion` 或刷新整本 memory progress cache；播放回调直接使用解析后的词条和服务提供的 index。
+
+### 修复
+- 播放切词不会再触发整本词表的复制和整本记忆进度查询，保持 lite 词表身份稳定，降低进入其他模块后的持续内存与 UI 压力。
+
+### 验证
+- `flutter test test/app_state_init_test.dart test/app_state_logic_test.dart test/app_state_practice_test.dart test/playback_service_test.dart test/memory_lane_selector_test.dart --reporter compact` 通过。
+- 新增集成回归：`playback hydration keeps the lite word list and memory cache intact`，验证列表实例、`wordsVersion`、记忆进度查询次数和当前词详情均保持预期。
+- `dart format`、`git diff --check` 已执行；本阶段未触达 i18n catalog。
+
+## [Unreleased-STUDY-PERF-PHASE1] - 2026-08-25
+
+### 原因
+- 播放每个单词都会通过巨型 `AppState` 广播，导致顶层常驻 Tab、Study 内隐藏页和练习页持续重建；用户切到其他模块后仍会被播放切词拖慢。
+
+### 修改
+- `PlaybackStore` 新增独立的有界 revision `ValueNotifier`；播放开始、暂停、切词、跳词和结束只在该通道通知，不再触发全局 `AppState.notifyListeners()`。
+- `PlayPage`、`LibraryPage`、`MiniPlayer` 订阅播放 revision，并在销毁时可靠解绑；Study/顶层 Tab 通过 `isActive` 只让当前可见页面响应切词。
+- Play 页面在播放 revision 回调中直接读取当前词和播放状态，避免依赖未触发的全局 selector 快照。
+
+### 修复
+- 播放切词不再唤醒 Practice、Toolbox、Focus、More 等无关模块，切断“进入学习后其他模块越来越卡”的第一条重建放大链。
+
+### 验证
+- `flutter test test/app_state_init_test.dart --plain-name "playback changes use the dedicated revision"` 通过：全局通知 `0`，专用播放 revision 正常递增。
+- `flutter test test/ui_smoke_test.dart --plain-name "UI smoke play page"` 通过。
+- 目标文件 `flutter analyze` 无 error；仅保留既有 `prefer_initializing_formals` info。
+
+## [Unreleased-STUDY-PERF-HOTPATH-OPT] - 2026-08-23
+
+### 原因
+- 单词表/学习/练习模块在移动端加载大词本卡顿，且播放/练习后即便切到其他模块也越来越卡。经定位为三类问题叠加：主线程同步加载、`WordEntry.fields` 无缓存重复解析、`currentWord`/`_indexOfWordEntry` 在每次全量 `notifyListeners` 时被所有常驻页面重复 O(n) 计算。
+
+### 新增
+- 无新增/退休 i18n key（本轮不涉及用户可见文案）。
+- `AppState`：新增 `_words` 的 `id→index` 惰性索引（随 `_wordsVersion` 失效）与 `currentWord` 结果缓存字段。
+- `WordEntry`：新增 `fields` 合并结果 `Expando` 缓存（不破坏 `const` 构造）。
+
+### 修改
+- `lib/src/models/word_entry.dart`：`fields` getter 首次解析合并后按实例缓存，消除 `displayMeaning`/`summaryMeaningText`/`sameEntryAs` 等热路径重复 `jsonDecode`。
+- `lib/src/state/app_state.dart`：
+  - `_indexOfWordEntry` 对主词表 `_words` 且目标带稳定 `id` 时走 O(1) 索引（与 `sameEntryAs` 的 id 相等语义一致），否则保持线性回退。
+  - `currentWord` 拆为缓存包装 + `_computeCurrentWord`，按 `_wordsVersion`/`_currentWordIndex`/`_transientCurrentWord`(identity)/搜索词/搜索模式/词本 id 签名命中缓存，避免每次 `notifyListeners` 被各页面 rebuild token 重复 O(n) 计算。
+- 删除死代码 `lib/src/state/wordbook_state.dart`（`WordbookState` 独立 ChangeNotifier，全仓无实例化引用）。
+
+### 修复
+- 缓解“越用越卡”：播放切词/练习作答触发的全量广播，其每页重建前的 token 计算由 O(n) 降为 O(1)，词本规模不再是放大因子。
+- 缓解渲染/判题重复解析：词条字段解析结果按实例复用。
+
+### 风险变更（未改动，明确不处理）
+- 播放切词广播节流/分级（计划阶段 A-3）：因上述优化已令每次广播成本降为 O(1)，节流收益边际且可能引入 UI 同步延迟，暂不改动。
+- `_setWords` 内 `_refreshWordMemoryProgressCache` 异步化（计划阶段 B-7）：其为单次批量查询，异步化会造成记忆徽标短暂错位的时序风险，暂缓。
+- 词本加载移出主线程（isolate，计划阶段 B-5）与 `IndexedStack` 常驻页卸载（计划阶段 A-4）：属高风险结构性改动（sqlite3 FFI 跨 isolate、导航/后台播放连续性），需真机回归，作为独立切片待用户确认后推进。
+- 保留：播放状态机语义、判题逻辑、持久化时机、i18n 文案均未改动。
+
+### 验证
+- `flutter analyze lib`：本次触达文件无 error/warning（全仓 137 项均为既有 toolbox 等模块 warning/info，与本轮无关）。
+- `flutter test`（word_card_transition / app_state_logic / app_state_practice / app_state_init / app_state_startup / playback_service）：44 项全部通过。
+- 通过 `git stash` 回退本轮改动复跑 `ui_smoke_test.dart`，43 项失败为既有问题（集中于 toolbox/focus/soothing），与本轮无关。
+- `.fields` 返回值全仓均为只读使用（map/length/for 迭代），`Expando` 缓存无并发写入风险。
+- lite 词条查询列含 `id`，`id→index` 索引可覆盖大词本路径。
+
 ## [Unreleased-PLAN_313-PROGRESS-ARCHIVE-PUSH] - 2026-06-01
 
 ### 原因

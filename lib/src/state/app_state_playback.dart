@@ -6,9 +6,11 @@ extension _AppStatePlayback on AppState {
     if (selected == null || selectedWordbookLoaded) {
       return selected;
     }
+    final loadGeneration = ++_wordbookLoadGeneration;
 
-    final showBusy = !_busy;
+    final showBusy = !_busy || _wordbookLoadBusyGeneration != null;
     if (showBusy) {
+      _wordbookLoadBusyGeneration = loadGeneration;
       _setBusy(
         true,
         messageKey: 'busyLoadingWordbook',
@@ -18,7 +20,13 @@ extension _AppStatePlayback on AppState {
     }
     try {
       _selectedWordbook = selected;
-      _setWords(_queryWordbookEntries(selected));
+      final nextWords = await _queryWordbookEntriesAsync(selected);
+      if (_disposed ||
+          loadGeneration != _wordbookLoadGeneration ||
+          _selectedWordbook?.id != selected.id) {
+        return _selectedWordbook;
+      }
+      _setWords(nextWords);
       final restoredIndex = _playbackProgressIndexForWordbook(selected);
       final restoredEntries = _searchQuery.trim().isEmpty
           ? _words
@@ -32,8 +40,11 @@ extension _AppStatePlayback on AppState {
       resetTestModeProgress();
       _notifyStateChanged();
     } finally {
-      if (showBusy) {
-        _setBusy(false);
+      if (_wordbookLoadBusyGeneration == loadGeneration) {
+        _wordbookLoadBusyGeneration = null;
+        if (!_disposed && loadGeneration == _wordbookLoadGeneration) {
+          _setBusy(false);
+        }
       }
     }
     return _selectedWordbook;
@@ -60,7 +71,7 @@ extension _AppStatePlayback on AppState {
         startIndex = scopedIndex;
       }
     }
-    final words = List<WordEntry>.from(scopeWords);
+    final words = scopeWords;
     final safeStart = startIndex.clamp(0, words.length - 1);
     final syncToken = ++_playbackStore.wordbookPlaybackSyncToken;
     _playbackStore.playingWordbookId = wordbook.id;
@@ -70,7 +81,7 @@ extension _AppStatePlayback on AppState {
     _playbackStore.playingWord = words[safeStart].word;
     _rememberPlaybackProgressImpl(words[safeStart]);
     _playbackStore.resetUnitProgress();
-    _notifyStateChanged();
+    _notifyPlaybackChanged();
 
     _playbackStore.playSessionId += 1;
     await _playback.stop();
@@ -110,7 +121,7 @@ extension _AppStatePlayback on AppState {
       final scopedIndex = _indexOfWordEntry(scopeWords, activeWord);
       if (scopedIndex >= 0) startIndex = scopedIndex;
     }
-    final words = List<WordEntry>.from(scopeWords);
+    final words = scopeWords;
     final safeStart = startIndex.clamp(0, words.length - 1);
     final sessionId = ++_playbackStore.playSessionId;
 
@@ -123,7 +134,7 @@ extension _AppStatePlayback on AppState {
     _playbackStore.playingWord = words[safeStart].word;
     _rememberPlaybackProgressImpl(words[safeStart]);
     _playbackStore.resetUnitProgress();
-    _notifyStateChanged();
+    _notifyPlaybackChanged();
 
     try {
       await _playback.preparePlay(
@@ -131,22 +142,18 @@ extension _AppStatePlayback on AppState {
         startIndex: safeStart,
         config: _config,
         resolveWord: (index, word) {
-          final resolved = _hydrateWordEntryIfNeeded(word);
-          if (index >= 0 && index < words.length) {
-            words[index] = resolved;
-          }
-          return resolved;
+          return _hydrateWordEntryIfNeeded(word);
         },
         onWordChanged: (index, word) {
           if (sessionId != _playbackStore.playSessionId) return;
-          final nextWord = (index >= 0 && index < words.length)
-              ? words[index]
-              : word;
-          final mappedIndex = _indexOfWordEntry(words, nextWord);
-          if (mappedIndex >= 0) {
-            _playbackStore.playingScopeIndex = mappedIndex;
-          } else if (index >= 0 && index < words.length) {
+          final nextWord = word;
+          if (index >= 0 && index < words.length) {
             _playbackStore.playingScopeIndex = index;
+          } else {
+            _playbackStore.playingScopeIndex = _indexOfWordEntry(
+              words,
+              nextWord,
+            );
           }
           _playbackStore.playingWord = nextWord.word;
           _rememberPlaybackProgressImpl(nextWord);
@@ -155,7 +162,7 @@ extension _AppStatePlayback on AppState {
             _setCurrentWordByEntry(nextWord);
             resetTestModeProgress();
           }
-          _notifyStateChanged();
+          _notifyPlaybackChanged();
         },
         onUnitChanged: (current, total, unit) {
           if (sessionId != _playbackStore.playSessionId) return;
@@ -203,7 +210,7 @@ extension _AppStatePlayback on AppState {
     }
     _playbackStore.isPlaying = true;
     _playbackStore.isPaused = false;
-    _notifyStateChanged();
+    _notifyPlaybackChanged();
     try {
       await _playback.startPreparedPlay();
     } catch (error, stackTrace) {
@@ -259,7 +266,7 @@ extension _AppStatePlayback on AppState {
   }) async {
     if (_disposed) return;
     if (scopeWords.isEmpty) return;
-    final words = List<WordEntry>.from(scopeWords);
+    final words = scopeWords;
     final safeStart = startIndex.clamp(0, words.length - 1);
     final sessionId = ++_playbackStore.playSessionId;
 
@@ -272,7 +279,7 @@ extension _AppStatePlayback on AppState {
     _playbackStore.playingWord = words[safeStart].word;
     _rememberPlaybackProgressImpl(words[safeStart]);
     _playbackStore.resetUnitProgress();
-    _notifyStateChanged();
+    _notifyPlaybackChanged();
 
     try {
       await _playback.playWords(
@@ -280,22 +287,18 @@ extension _AppStatePlayback on AppState {
         startIndex: safeStart,
         config: _config,
         resolveWord: (index, word) {
-          final resolved = _hydrateWordEntryIfNeeded(word);
-          if (index >= 0 && index < words.length) {
-            words[index] = resolved;
-          }
-          return resolved;
+          return _hydrateWordEntryIfNeeded(word);
         },
         onWordChanged: (index, word) {
           if (sessionId != _playbackStore.playSessionId) return;
-          final nextWord = (index >= 0 && index < words.length)
-              ? words[index]
-              : word;
-          final mappedIndex = _indexOfWordEntry(words, nextWord);
-          if (mappedIndex >= 0) {
-            _playbackStore.playingScopeIndex = mappedIndex;
-          } else if (index >= 0 && index < words.length) {
+          final nextWord = word;
+          if (index >= 0 && index < words.length) {
             _playbackStore.playingScopeIndex = index;
+          } else {
+            _playbackStore.playingScopeIndex = _indexOfWordEntry(
+              words,
+              nextWord,
+            );
           }
           _playbackStore.playingWord = nextWord.word;
           _rememberPlaybackProgressImpl(nextWord);
@@ -304,7 +307,7 @@ extension _AppStatePlayback on AppState {
             _setCurrentWordByEntry(nextWord);
             resetTestModeProgress();
           }
-          _notifyStateChanged();
+          _notifyPlaybackChanged();
         },
         onUnitChanged: (current, total, unit) {
           if (sessionId != _playbackStore.playSessionId) return;
@@ -351,7 +354,7 @@ extension _AppStatePlayback on AppState {
         _playbackStore.isPaused = true;
         _flushPlaybackProgressPersist();
       }
-      _notifyStateChanged();
+      _notifyPlaybackChanged();
     } catch (error, stackTrace) {
       _log.e(
         'app_state',
@@ -394,7 +397,7 @@ extension _AppStatePlayback on AppState {
     _setCurrentWordByEntry(scopeWords[nextScopeIndex]);
     _rememberPlaybackProgressImpl(scopeWords[nextScopeIndex]);
     resetTestModeProgress();
-    _notifyStateChanged();
+    _notifyPlaybackChanged();
   }
 
   Future<void> _playNextWordImpl() async {
@@ -409,7 +412,7 @@ extension _AppStatePlayback on AppState {
     _setCurrentWordByEntry(scopeWords[nextScopeIndex]);
     _rememberPlaybackProgressImpl(scopeWords[nextScopeIndex]);
     resetTestModeProgress();
-    _notifyStateChanged();
+    _notifyPlaybackChanged();
   }
 
   Future<void> _jumpToPlayingWordbookImpl() async {
@@ -442,6 +445,8 @@ extension _AppStatePlayback on AppState {
               : true);
     if (_searchQuery.trim().isNotEmpty && !hasFocusedEntry) {
       _searchQuery = '';
+      _wordbookSearchStore.cancel();
+      _currentWordCacheValid = false;
       await selectWordbook(
         target,
         focusWord: focusWord,
@@ -538,7 +543,7 @@ extension _AppStatePlayback on AppState {
         _playbackStore.playingScopeWords.isEmpty) {
       return;
     }
-    final words = List<WordEntry>.from(_playbackStore.playingScopeWords);
+    final words = _playbackStore.playingScopeWords;
     final safeTarget = targetIndex.clamp(0, words.length - 1);
     _playbackStore.playingScopeIndex = safeTarget;
     _playbackStore.playingWord = words[safeTarget].word;
@@ -546,7 +551,7 @@ extension _AppStatePlayback on AppState {
     if (_selectedWordbook?.id == playingId) {
       _setCurrentWordByEntry(words[safeTarget]);
       resetTestModeProgress();
-      _notifyStateChanged();
+      _notifyPlaybackChanged();
     }
     _playbackStore.playSessionId += 1;
     final restartSessionId = _playbackStore.playSessionId;
@@ -579,7 +584,7 @@ extension _AppStatePlayback on AppState {
     _playbackStore.queuedPlaybackScopeTarget = null;
     _playbackStore.playbackScopeRestarting = false;
     if (notify) {
-      _notifyStateChanged();
+      _notifyPlaybackChanged();
     }
   }
 }

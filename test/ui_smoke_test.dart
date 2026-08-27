@@ -45,6 +45,8 @@ import 'package:vocabulary_sleep_app/src/services/todo_reminder_service.dart';
 import 'package:vocabulary_sleep_app/src/state/app_state.dart';
 import 'package:vocabulary_sleep_app/src/state/app_state_provider.dart';
 import 'package:vocabulary_sleep_app/src/state/playback_store.dart';
+import 'package:vocabulary_sleep_app/src/state/wordbook_import_store.dart';
+import 'package:vocabulary_sleep_app/src/state/wordbook_load_store.dart';
 import 'package:vocabulary_sleep_app/src/ui/app_shell.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/appearance_studio_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/data_management_page.dart';
@@ -60,6 +62,7 @@ import 'package:vocabulary_sleep_app/src/ui/pages/practice_review_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/practice_session_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/recognition_settings_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/settings_home_page.dart';
+import 'package:vocabulary_sleep_app/src/ui/pages/study_page.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_human_tests.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_life_tools.dart';
 import 'package:vocabulary_sleep_app/src/ui/pages/toolbox_crypto_security.dart';
@@ -249,6 +252,79 @@ void main() {
 
       expect(find.text('Prefix jump'), findsOneWidget);
       expect(find.text('Open index'), findsNothing);
+    });
+
+    testWidgets('library reuses its loaded page across playback revisions', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpPage(tester, state: state, child: const LibraryPage());
+      final readsAfterInitialBuild = state.visibleWordsPageReadCount;
+      expect(readsAfterInitialBuild, greaterThan(0));
+
+      state.emitPlaybackRevision(1);
+      await tester.pump();
+
+      expect(state.visibleWordsPageReadCount, readsAfterInitialBuild);
+      expect(state.currentWord?.word, 'Beta');
+    });
+
+    testWidgets('library shows progress while a large search is running', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        words: const <WordEntry>[],
+        wordbookSearchInProgress: true,
+      );
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const LibraryPage(),
+        settle: false,
+      );
+
+      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+      expect(find.text('No matching words'), findsNothing);
+    });
+
+    testWidgets('study import progress rebuilds only the lock panel', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      state.emitWordbookImportProgress(
+        const WordbookImportProgressSnapshot(
+          active: true,
+          name: 'Large import',
+          processedEntries: 0,
+          totalEntries: 100,
+        ),
+      );
+      await _pumpPage(
+        tester,
+        state: state,
+        child: StudyPage(
+          selectedTab: StudyStartupTab.play,
+          onSelectTab: (_) {},
+          onOpenPractice: _noop,
+          onAttachLibraryScrollToTop: (_) {},
+        ),
+      );
+      var globalNotifications = 0;
+      state.addListener(() => globalNotifications += 1);
+
+      state.emitWordbookImportProgress(
+        const WordbookImportProgressSnapshot(
+          active: true,
+          name: 'Large import',
+          processedEntries: 50,
+          totalEntries: 100,
+        ),
+      );
+      await tester.pump();
+
+      expect(find.textContaining('50 / 100'), findsOneWidget);
+      expect(globalNotifications, 0);
     });
 
     testWidgets('library page hides alphabet index for non-Latin words', (
@@ -585,6 +661,65 @@ void main() {
       expect(find.textContaining('Focus lock is active.'), findsNothing);
     });
 
+    testWidgets('wordbook import progress updates without a global rebuild', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpAppShell(tester, state: state);
+      var globalNotifications = 0;
+      state.addListener(() => globalNotifications += 1);
+
+      state.emitWordbookImportProgress(
+        const WordbookImportProgressSnapshot(
+          active: true,
+          name: 'Large import',
+          processedEntries: 50,
+          totalEntries: 100,
+        ),
+      );
+      await tester.pump();
+
+      expect(find.textContaining('Large import'), findsWidgets);
+      expect(find.text('50 / 100'), findsWidgets);
+      expect(globalNotifications, 0);
+
+      state.emitWordbookImportProgress(WordbookImportProgressSnapshot.idle);
+      await tester.pump();
+      expect(find.textContaining('Large import'), findsNothing);
+    });
+
+    testWidgets('wordbook load progress updates without a global rebuild', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final state = _FakeAppState.sample(uiLanguage: 'en');
+      await _pumpAppShell(tester, state: state);
+      var globalNotifications = 0;
+      state.addListener(() => globalNotifications += 1);
+
+      state.emitWordbookLoadProgress(
+        const WordbookLoadProgressSnapshot(
+          active: true,
+          name: 'Large built-in',
+          detail: '50 / 100',
+          progress: 0.5,
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('50 / 100'), findsOneWidget);
+      expect(globalNotifications, 0);
+
+      state.emitWordbookLoadProgress(WordbookLoadProgressSnapshot.idle);
+      await tester.pump();
+      expect(find.text('50 / 100'), findsNothing);
+    });
+
     testWidgets('app shell opens the configured startup tab after init', (
       tester,
     ) async {
@@ -751,6 +886,26 @@ void main() {
 
       expect(state.visibleWordsReadCount, readsAfterInitialBuild);
       expect(find.text('Alpha'), findsWidgets);
+    });
+
+    testWidgets('play page distinguishes search loading from no results', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        words: const <WordEntry>[],
+        wordbookSearchInProgress: true,
+      );
+      await _pumpPage(
+        tester,
+        state: state,
+        child: PlayPage(onOpenPractice: () {}, onOpenLibrary: () {}),
+        settle: false,
+      );
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text('Processing...'), findsOneWidget);
+      expect(find.text('No words match this search'), findsNothing);
     });
 
     testWidgets('expanded mini player changes reading speed from menu', (
@@ -6216,6 +6371,26 @@ void main() {
       expect(find.text('Shuffle sprint'), findsOneWidget);
     });
 
+    testWidgets('practice page distinguishes search loading from empty', (
+      tester,
+    ) async {
+      final state = _FakeAppState.sample(
+        uiLanguage: 'en',
+        words: const <WordEntry>[],
+        wordbookSearchInProgress: true,
+      );
+      await _pumpPage(
+        tester,
+        state: state,
+        child: const PracticePage(),
+        settle: false,
+      );
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text('Processing...'), findsOneWidget);
+      expect(find.text('Practice needs a wordbook'), findsNothing);
+    });
+
     testWidgets('practice page offers explicit loading for deferred wordbook', (
       tester,
     ) async {
@@ -6851,6 +7026,7 @@ Future<void> _pumpPage(
   required _FakeAppState state,
   required Widget child,
   Locale? locale,
+  bool settle = true,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -6873,7 +7049,9 @@ Future<void> _pumpPage(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  if (settle) {
+    await tester.pumpAndSettle();
+  }
 }
 
 Future<void> _pumpUntilFound(
@@ -7017,6 +7195,7 @@ class _FakeAppState extends ChangeNotifier
     List<WordEntry>? recentWeakEntries,
     bool selectedWordbookLoaded = true,
     bool selectedWordbookRequiresOnDemandLoad = false,
+    bool wordbookSearchInProgress = false,
   }) {
     final visibleWords =
         words ??
@@ -7120,7 +7299,8 @@ class _FakeAppState extends ChangeNotifier
             (visibleWords.length < 2
                 ? visibleWords
                 : visibleWords.sublist(0, 2)),
-      );
+      )
+      .._wordbookSearchInProgress = wordbookSearchInProgress;
   }
 
   PlayConfig _config;
@@ -7150,11 +7330,21 @@ class _FakeAppState extends ChangeNotifier
   bool _isPaused = false;
   int loadSelectedWordbookCalls = 0;
   int visibleWordsReadCount = 0;
+  int visibleWordsPageReadCount = 0;
   int _currentUnit = 0;
   int _totalUnits = 0;
   PlayUnit? _activeUnit;
   final ValueNotifier<PlaybackUnitProgress> _playbackUnitProgress =
       ValueNotifier<PlaybackUnitProgress>(PlaybackUnitProgress.empty);
+  final ValueNotifier<int> _playbackRevision = ValueNotifier<int>(0);
+  final ValueNotifier<WordbookImportProgressSnapshot> _wordbookImportProgress =
+      ValueNotifier<WordbookImportProgressSnapshot>(
+        WordbookImportProgressSnapshot.idle,
+      );
+  final ValueNotifier<WordbookLoadProgressSnapshot> _wordbookLoadProgress =
+      ValueNotifier<WordbookLoadProgressSnapshot>(
+        WordbookLoadProgressSnapshot.idle,
+      );
   int? _playingWordbookId;
   String? _playingWordbookName;
   String? _playingWord;
@@ -7191,6 +7381,8 @@ class _FakeAppState extends ChangeNotifier
   SleepProgramProgress? _sleepProgramProgress;
   String _searchQuery = '';
   SearchMode _searchMode = SearchMode.all;
+  bool _wordbookSearchInProgress = false;
+  int _wordbookSearchRevision = 0;
   bool _testModeEnabled = false;
   bool _testModeRevealed = false;
   bool _testModeHintRevealed = false;
@@ -7219,6 +7411,7 @@ class _FakeAppState extends ChangeNotifier
   int _practiceTotalReviewed = 28;
   int _practiceTotalRemembered = 22;
   String _practiceLastSessionTitle = 'Scope sprint';
+  final ValueNotifier<int> _practiceRevision = ValueNotifier<int>(0);
   List<WordEntry> _recentRememberedEntries = <WordEntry>[];
   List<WordEntry> _recentWeakEntries = <WordEntry>[];
   final Map<String, List<String>> _practiceWeakReasonsByWord =
@@ -7311,19 +7504,37 @@ class _FakeAppState extends ChangeNotifier
   double? get busyProgress => null;
 
   @override
-  bool get wordbookImportActive => false;
+  bool get wordbookImportActive => _wordbookImportProgress.value.active;
 
   @override
-  String get wordbookImportName => '';
+  String get wordbookImportName => _wordbookImportProgress.value.name;
 
   @override
-  int get wordbookImportProcessedEntries => 0;
+  int get wordbookImportProcessedEntries =>
+      _wordbookImportProgress.value.processedEntries;
 
   @override
-  int? get wordbookImportTotalEntries => null;
+  int? get wordbookImportTotalEntries =>
+      _wordbookImportProgress.value.totalEntries;
 
   @override
-  double? get wordbookImportProgress => null;
+  double? get wordbookImportProgress => _wordbookImportProgress.value.progress;
+
+  @override
+  ValueListenable<WordbookImportProgressSnapshot>
+  get wordbookImportListenable => _wordbookImportProgress;
+
+  @override
+  ValueListenable<WordbookLoadProgressSnapshot> get wordbookLoadListenable =>
+      _wordbookLoadProgress;
+
+  void emitWordbookLoadProgress(WordbookLoadProgressSnapshot snapshot) {
+    _wordbookLoadProgress.value = snapshot;
+  }
+
+  void emitWordbookImportProgress(WordbookImportProgressSnapshot snapshot) {
+    _wordbookImportProgress.value = snapshot;
+  }
 
   @override
   WordEntry? get currentWord => _currentWord ?? _visibleWords.firstOrNull;
@@ -7349,6 +7560,9 @@ class _FakeAppState extends ChangeNotifier
   @override
   ValueListenable<PlaybackUnitProgress> get playbackUnitProgressListenable =>
       _playbackUnitProgress;
+
+  @override
+  ValueListenable<int> get playbackRevisionListenable => _playbackRevision;
 
   @override
   int? get playingWordbookId => _playingWordbookId;
@@ -7499,6 +7713,9 @@ class _FakeAppState extends ChangeNotifier
   String get practiceLastSessionTitle => _practiceLastSessionTitle;
 
   @override
+  ValueListenable<int> get practiceRevisionListenable => _practiceRevision;
+
+  @override
   List<String> get practiceRememberedWords => recentRememberedWordEntries
       .map((entry) => entry.word)
       .toList(growable: false);
@@ -7552,6 +7769,14 @@ class _FakeAppState extends ChangeNotifier
       List<WordEntry>.unmodifiable(_recentWeakEntries);
 
   @override
+  List<WordEntry> get practiceTaskEntries =>
+      List<WordEntry>.unmodifiable(_visibleWords.where(isTaskEntry));
+
+  @override
+  List<WordEntry> get practiceFavoriteEntries =>
+      List<WordEntry>.unmodifiable(_visibleWords.where(isFavoriteEntry));
+
+  @override
   int get practiceTodayReviewed => _practiceTodayReviewed;
 
   @override
@@ -7591,6 +7816,23 @@ class _FakeAppState extends ChangeNotifier
   WordMemoryProgress? memoryProgressForWordEntry(WordEntry entry) => null;
 
   @override
+  List<WordEntry> practiceBatchSourceWords(PracticeRoundSource source) {
+    return switch (source) {
+      PracticeRoundSource.currentScope ||
+      PracticeRoundSource.wholeWordbook => _visibleWords,
+      PracticeRoundSource.wrongNotebook ||
+      PracticeRoundSource.recentWeak => _recentWeakEntries,
+      PracticeRoundSource.taskWords => practiceTaskEntries,
+      PracticeRoundSource.favorites => practiceFavoriteEntries,
+    };
+  }
+
+  @override
+  void refreshPracticeViews() {
+    _practiceRevision.value += 1;
+  }
+
+  @override
   List<String> practiceWeakReasonsForWord(WordEntry entry) {
     return List<String>.unmodifiable(
       _practiceWeakReasonsByWord[entry.word.trim().toLowerCase()] ??
@@ -7603,6 +7845,12 @@ class _FakeAppState extends ChangeNotifier
 
   @override
   String get searchQuery => _searchQuery;
+
+  @override
+  bool get wordbookSearchInProgress => _wordbookSearchInProgress;
+
+  @override
+  int get wordbookSearchRevision => _wordbookSearchRevision;
 
   @override
   Wordbook? get selectedWordbook => _selectedWordbook;
@@ -7765,9 +8013,19 @@ class _FakeAppState extends ChangeNotifier
 
   @override
   List<WordEntry> getVisibleWordsPage({required int limit, int offset = 0}) {
+    visibleWordsPageReadCount += 1;
     final start = offset.clamp(0, _visibleWords.length).toInt();
     final end = (start + limit).clamp(start, _visibleWords.length).toInt();
     return _visibleWords.sublist(start, end);
+  }
+
+  void emitPlaybackRevision(int index) {
+    if (_visibleWords.isEmpty) {
+      return;
+    }
+    _currentWordIndex = index.clamp(0, _visibleWords.length - 1);
+    _currentWord = _visibleWords[_currentWordIndex];
+    _playbackRevision.value += 1;
   }
 
   @override
@@ -8797,14 +9055,23 @@ class _FakeAppState extends ChangeNotifier
   }
 
   @override
-  void setSearchMode(SearchMode mode) {
-    _searchMode = mode;
-    notifyListeners();
+  Future<void> setSearchMode(SearchMode mode) async {
+    await setSearchCriteria(query: _searchQuery, mode: mode);
   }
 
   @override
-  void setSearchQuery(String value) {
-    _searchQuery = value;
+  Future<void> setSearchQuery(String value) async {
+    await setSearchCriteria(query: value, mode: _searchMode);
+  }
+
+  @override
+  Future<void> setSearchCriteria({
+    required String query,
+    required SearchMode mode,
+  }) async {
+    _searchQuery = query;
+    _searchMode = mode;
+    _wordbookSearchRevision += 1;
     notifyListeners();
   }
 

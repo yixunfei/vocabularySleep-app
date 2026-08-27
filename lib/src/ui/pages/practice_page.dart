@@ -14,6 +14,7 @@ import '../widgets/empty_state_view.dart';
 import '../widgets/page_header.dart';
 import '../widgets/setting_tile.dart';
 import '../widgets/study_wordbook_status.dart';
+import '../widgets/study_search_loading_view.dart';
 import 'follow_along_page.dart';
 import 'practice_notebook_page.dart';
 import 'practice_review_page.dart';
@@ -25,15 +26,32 @@ part 'practice_page_helpers.dart';
 part 'practice_page_sections.dart';
 
 class PracticePage extends ConsumerWidget {
-  const PracticePage({super.key});
+  const PracticePage({super.key, this.isActive = true});
+
+  final bool isActive;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(appStateProvider.select(_PracticePageRebuildToken.fromState));
     final state = ref.read(appStateProvider);
+    // AppShell keeps tabs alive. An inactive practice tab must not subscribe to
+    // either the global AppState channel or the practice dashboard revision.
+    if (!isActive) {
+      return const SizedBox.shrink();
+    }
+    ref.watch(appStateProvider.select(_PracticePageRebuildToken.fromState));
+    return ValueListenableBuilder<int>(
+      valueListenable: state.practiceRevisionListenable,
+      builder: (context, revision, child) => _buildContent(context, ref, state),
+    );
+  }
+
+  Widget _buildContent(BuildContext context, WidgetRef ref, AppState state) {
     final i18n = AppI18n(state.uiLanguage);
     if (!state.isModuleEnabled(ModuleIds.practice)) {
       return ModuleDisabledView(i18n: i18n, moduleId: ModuleIds.practice);
+    }
+    if (state.wordbookSearchInProgress) {
+      return StudySearchLoadingView(label: i18n.t('processing'));
     }
     final current = state.currentWord;
     if (state.selectedWordbook == null || current == null) {
@@ -326,7 +344,8 @@ class PracticePage extends ConsumerWidget {
                           state,
                           slot: 'current-word',
                         ),
-                        rotationSourceWords: currentSprintSourceWords,
+                        rotationSource: buckets.currentSprintSource,
+                        rotationSourceCount: currentSprintSourceWords.length,
                         rotationBatchSize: 1,
                         rotationAnchorWord: current,
                       ),
@@ -359,7 +378,8 @@ class PracticePage extends ConsumerWidget {
                                 state,
                                 slot: 'warmup-7',
                               ),
-                              rotationSourceWords: scopedWords,
+                              rotationSource: PracticeRoundSource.currentScope,
+                              rotationSourceCount: scopedWords.length,
                               rotationBatchSize: 7,
                             ),
                     ),
@@ -387,6 +407,16 @@ class PracticePage extends ConsumerWidget {
                               ),
                               words: scopedWords,
                               shuffle: true,
+                              rotationKey: _buildPracticeScopeRotationKey(
+                                state,
+                                slot: 'shuffle-sprint',
+                              ),
+                              rotationSource: PracticeRoundSource.currentScope,
+                              rotationSourceCount: scopedWords.length,
+                              rotationBatchSize:
+                                  state.practiceRoundSettings.roundSize,
+                              rotationCursorAdvance:
+                                  state.practiceRoundSettings.roundSize,
                             ),
                     ),
                     _buildQuickLaunchCard(
@@ -436,7 +466,8 @@ class PracticePage extends ConsumerWidget {
                 state,
                 slot: 'current-word',
               ),
-              rotationSourceWords: currentSprintSourceWords,
+              rotationSource: buckets.currentSprintSource,
+              rotationSourceCount: currentSprintSourceWords.length,
               rotationBatchSize: 1,
               rotationAnchorWord: current,
             ),
@@ -470,9 +501,10 @@ class PracticePage extends ConsumerWidget {
                   state,
                   slot: 'scope-session',
                 ),
-                rotationSourceWords: scopedWords,
-                rotationBatchSize: scopedWords.length,
-                rotationCursorAdvance: 1,
+                rotationSource: PracticeRoundSource.currentScope,
+                rotationSourceCount: scopedWords.length,
+                rotationBatchSize: state.practiceRoundSettings.roundSize,
+                rotationCursorAdvance: state.practiceRoundSettings.roundSize,
               );
             },
           ),
@@ -498,6 +530,14 @@ class PracticePage extends ConsumerWidget {
               ),
               words: wordbookWords,
               shuffle: true,
+              rotationKey: _buildPracticeRoundRotationKey(
+                state,
+                source: PracticeRoundSource.wholeWordbook,
+              ),
+              rotationSource: PracticeRoundSource.wholeWordbook,
+              rotationSourceCount: wordbookWords.length,
+              rotationBatchSize: state.practiceRoundSettings.roundSize,
+              rotationCursorAdvance: state.practiceRoundSettings.roundSize,
             ),
           ),
           const SizedBox(height: 12),
@@ -673,9 +713,11 @@ class PracticePage extends ConsumerWidget {
                         state,
                         slot: 'scope-session',
                       ),
-                      rotationSourceWords: scopedWords,
-                      rotationBatchSize: scopedWords.length,
-                      rotationCursorAdvance: 1,
+                      rotationSource: PracticeRoundSource.currentScope,
+                      rotationSourceCount: scopedWords.length,
+                      rotationBatchSize: state.practiceRoundSettings.roundSize,
+                      rotationCursorAdvance:
+                          state.practiceRoundSettings.roundSize,
                     ),
                     icon: const Icon(Icons.play_arrow_rounded),
                     label: Text(
@@ -699,6 +741,15 @@ class PracticePage extends ConsumerWidget {
                       ),
                       words: wordbookWords,
                       shuffle: true,
+                      rotationKey: _buildPracticeRoundRotationKey(
+                        state,
+                        source: PracticeRoundSource.wholeWordbook,
+                      ),
+                      rotationSource: PracticeRoundSource.wholeWordbook,
+                      rotationSourceCount: wordbookWords.length,
+                      rotationBatchSize: state.practiceRoundSettings.roundSize,
+                      rotationCursorAdvance:
+                          state.practiceRoundSettings.roundSize,
                     ),
                     icon: const Icon(Icons.library_books_rounded),
                     label: Text(
@@ -747,6 +798,7 @@ class _PracticePageRebuildToken {
     required this.currentWordIndex,
     required this.searchQuery,
     required this.searchMode,
+    required this.wordbookSearchRevision,
     required this.favoritesIdentity,
     required this.favoritesCount,
     required this.taskWordsIdentity,
@@ -787,6 +839,7 @@ class _PracticePageRebuildToken {
       currentWordIndex: state.currentWordIndex,
       searchQuery: state.searchQuery,
       searchMode: state.searchMode,
+      wordbookSearchRevision: state.wordbookSearchRevision,
       favoritesIdentity: identityHashCode(state.favorites),
       favoritesCount: state.favorites.length,
       taskWordsIdentity: identityHashCode(state.taskWords),
@@ -823,6 +876,7 @@ class _PracticePageRebuildToken {
   final int currentWordIndex;
   final String searchQuery;
   final SearchMode searchMode;
+  final int wordbookSearchRevision;
   final int favoritesIdentity;
   final int favoritesCount;
   final int taskWordsIdentity;
@@ -861,6 +915,7 @@ class _PracticePageRebuildToken {
         other.currentWordIndex == currentWordIndex &&
         other.searchQuery == searchQuery &&
         other.searchMode == searchMode &&
+        other.wordbookSearchRevision == wordbookSearchRevision &&
         other.favoritesIdentity == favoritesIdentity &&
         other.favoritesCount == favoritesCount &&
         other.taskWordsIdentity == taskWordsIdentity &&
@@ -898,6 +953,7 @@ class _PracticePageRebuildToken {
     currentWordIndex,
     searchQuery,
     searchMode,
+    wordbookSearchRevision,
     favoritesIdentity,
     favoritesCount,
     taskWordsIdentity,

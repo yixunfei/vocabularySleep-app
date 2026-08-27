@@ -157,6 +157,14 @@ class WordEntry {
   final List<WordFieldItem> _fields;
   final String _rawFieldsJson;
 
+  // [性能] fields 合并结果缓存：
+  // 该 getter 会做 jsonDecode + 合并，被 displayMeaning / summaryMeaningText /
+  // sameEntryAs 等热路径反复调用。WordEntry 为不可变对象（含 const 构造），
+  // 因此用 Expando 按实例缓存合并结果，避免重复解析。Expando 对 const 规范化
+  // 实例同样有效，且不改变对象结构、不破坏 const 构造。
+  static final Expando<List<WordFieldItem>> _fieldsCache =
+      Expando<List<WordFieldItem>>('WordEntry.fields');
+
   String get stableIdentityKey {
     final entryUidPart = sanitizeDisplayText(entryUid ?? '');
     if (entryUidPart.isNotEmpty) {
@@ -236,18 +244,43 @@ class WordEntry {
   };
 
   List<WordFieldItem> get fields {
+    final cached = _fieldsCache[this];
+    if (cached != null) {
+      return cached;
+    }
     final parsedRawFields = _rawFieldsJson.trim().isEmpty
         ? const <WordFieldItem>[]
         : parseFieldItemsJson(_rawFieldsJson);
     final fallbackFields = buildFieldItemsFromRecord(_legacyFieldRecord);
-    return mergeFieldItems(<WordFieldItem>[
+    final merged = mergeFieldItems(<WordFieldItem>[
       ..._fields,
       ...parsedRawFields,
       ...fallbackFields,
     ]);
+    _fieldsCache[this] = merged;
+    return merged;
+  }
+
+  bool get _canUseMeaningFastPath => _fields.isEmpty && _rawFieldsJson.isEmpty;
+
+  String get _legacyDisplayMeaning {
+    final legacyMeaning = sanitizeDisplayText(meaning ?? '');
+    if (legacyMeaning.isNotEmpty) {
+      return legacyMeaning;
+    }
+    return sanitizeDisplayText(primaryGloss ?? '');
   }
 
   WordFieldItem? get primaryMeaningField {
+    if (_canUseMeaningFastPath) {
+      final fallback = _legacyDisplayMeaning;
+      if (fallback.isEmpty) return null;
+      return WordFieldItem(
+        key: 'meaning',
+        label: legacyFieldLabels['meaning'] ?? 'Meaning',
+        value: fallback,
+      );
+    }
     for (final field in fields) {
       if (field.key == 'meaning' && field.asList().isNotEmpty) {
         return field;
@@ -271,7 +304,9 @@ class WordEntry {
     return null;
   }
 
-  String get displayMeaning => primaryMeaningField?.asText() ?? '';
+  String get displayMeaning => _canUseMeaningFastPath
+      ? _legacyDisplayMeaning
+      : primaryMeaningField?.asText() ?? '';
 
   List<String> get displayExamples =>
       primaryExampleField?.asList() ?? const <String>[];

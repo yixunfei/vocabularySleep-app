@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../models/practice_question_type.dart';
 import '../models/practice_session_record.dart';
 import '../models/settings_dto.dart';
@@ -9,6 +11,10 @@ import '../models/word_memory_progress.dart';
 /// AppState orchestrates IO and cross-domain coordination, while this store
 /// keeps mutable practice data in one boundary.
 class PracticeStore {
+  /// High-frequency practice updates stay off the global AppState channel.
+  /// Consumers that render the practice dashboard can subscribe directly.
+  final ValueNotifier<int> revision = ValueNotifier<int>(0);
+
   String dateKey = '';
   int todaySessions = 0;
   int todayReviewed = 0;
@@ -27,6 +33,7 @@ class PracticeStore {
   final Map<String, WordEntry> trackedEntriesByWord = <String, WordEntry>{};
   Map<int, WordMemoryProgress> wordMemoryProgressByWordId =
       <int, WordMemoryProgress>{};
+  int wordMemoryProgressRevision = 0;
 
   bool autoAddWeakWordsToTask = false;
   bool autoPlayPronunciation = false;
@@ -34,4 +41,21 @@ class PracticeStore {
   bool showAnswerFeedbackDialog = true;
   PracticeQuestionType defaultQuestionType = PracticeQuestionType.flashcard;
   PracticeRoundSettings roundSettings = PracticeRoundSettings.defaults;
+
+  void notifyChanged() {
+    revision.value += 1;
+  }
+
+  void dispose() {
+    revision.dispose();
+  }
+
+  void replaceWordMemoryProgress(Map<int, WordMemoryProgress> next) {
+    wordMemoryProgressByWordId = next;
+    wordMemoryProgressRevision += 1;
+  }
+
+  void markWordMemoryProgressChanged() {
+    wordMemoryProgressRevision += 1;
+  }
 }
