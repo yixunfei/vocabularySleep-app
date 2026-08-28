@@ -85,12 +85,15 @@
 - catalog 改为 `rootBundle.load` 读取原始字节，通过 `TransferableTypedData` 交给 `compute` worker 完成 UTF-8 与 CSV 解析；空内容、缺列、无有效 key 和损坏编码均抛出带阶段信息的 `AppI18nCatalogLoadException`，失败不会安装空表或覆盖此前成功表。
 - `pubspec.yaml` 仅发布 `app_texts.csv`，AssetManifest 测试确认 registry、retirement 与说明文件不再进入应用资源。catalog/启动测试 12 项与完整 `ui_smoke_test.dart` 147 项通过，4 个目标文件定向 `flutter analyze --no-pub` 无诊断，`git diff --check` 通过。
 - i18n 启动阶段新增 key 2、退休 key 0；占位符审计为 `51766` keys、缺失/不一致均为 0。维护报告保留历史基线：`40108` 个未引用 key、`661` 个 stale registry source、`30` 个待清理 retirement，本轮不处理；旧 helper 与 catalog Dart 插值扫描无命中。
+- 已完成音频异步竞争阶段：`SeamlessAmbientLoop` 将启动、切轨、淡入收尾和外部调节的全部音量写入统一到单飞 drain；在途批次期间的变化只标记 pending，下一批重新采样最新目标，销毁会先等待在途音量写入再停止播放器。
+- 长笛振幅轮询提取为 71 行独立控制器，以 in-flight guard 阻止 50ms 定时器堆叠平台调用，并用 generation 在停止、重启和销毁时丢弃迟到数据与错误；现有长笛页面只替换定时接线，未扩展超大页面职责。
+- 环境音与振幅轮询测试共 9 项通过，覆盖最大并发为 1、中间音量合并、最终值落地、销毁等待、停止后迟到异常和销毁后迟到结果；完整 `ui_smoke_test.dart` 147 项通过，新增轮询器、接入文件和测试定向 `flutter analyze --no-pub` 无诊断，`git diff --check` 通过。`ambient_service.dart` 仍有 2 条既有 `prefer_initializing_formals` info，本轮不做无关构造器改名。
 
 ## 完成检查清单
 - [x] 正确性与测试门禁修复完成
 - [x] 图片与归档资源安全修复完成
 - [x] i18n 启动与包体修复完成
-- [ ] 音频异步竞争修复完成
+- [x] 音频异步竞争修复完成
 - [ ] 全量验证通过或剩余历史项已明确记录
 - [ ] Changelog 已更新
 - [ ] 各阶段已提交

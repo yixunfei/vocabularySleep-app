@@ -109,7 +109,7 @@ class _FluteToolState extends State<_FluteTool> {
   final ToolboxLoopController _sustainEdgeLoop = ToolboxLoopController();
   late final ToolboxSoundFontInstrumentEngine _sampledFluteEngine;
   late final ToolboxSampledMidiSustainController _sampledFluteSustain;
-  Timer? _amplitudeTimer;
+  late final ToolboxFluteAmplitudePoller<Amplitude> _amplitudePoller;
   final Set<int> _pressedHoles = <int>{};
   final Map<int, int> _activeHolePointers = <int, int>{};
   final Map<int, int> _holePressCounts = <int, int>{};
@@ -143,6 +143,13 @@ class _FluteToolState extends State<_FluteTool> {
   @override
   void initState() {
     super.initState();
+    _amplitudePoller = ToolboxFluteAmplitudePoller<Amplitude>(
+      read: _readBlowAmplitude,
+      onAmplitude: _handleBlowAmplitude,
+      onError: (error, stackTrace) {
+        unawaited(_handleBlowSensorUnavailable());
+      },
+    );
     _sampledFluteEngine = _createToolboxSoundFontInstrumentEngine(context);
     _sampledFluteSustain = ToolboxSampledMidiSustainController(
       engine: _sampledFluteEngine,
@@ -825,8 +832,7 @@ class _FluteToolState extends State<_FluteTool> {
   }
 
   Future<void> _handleBlowSensorUnavailable({bool notify = true}) async {
-    _amplitudeTimer?.cancel();
-    _amplitudeTimer = null;
+    _amplitudePoller.stop();
     try {
       await _micRecorder.stop();
     } catch (_) {}
@@ -859,15 +865,11 @@ class _FluteToolState extends State<_FluteTool> {
     return devices.isNotEmpty;
   }
 
-  Future<void> _pollBlowAmplitude() async {
-    try {
-      if (!_blowSensorEnabled || !await _micRecorder.isRecording()) {
-        return;
-      }
-      _handleBlowAmplitude(await _micRecorder.getAmplitude());
-    } catch (_) {
-      await _handleBlowSensorUnavailable();
+  Future<Amplitude?> _readBlowAmplitude() async {
+    if (!_blowSensorEnabled || !await _micRecorder.isRecording()) {
+      return null;
     }
+    return _micRecorder.getAmplitude();
   }
 
   void _handleBlowAmplitude(Amplitude amplitude) {
@@ -945,7 +947,7 @@ class _FluteToolState extends State<_FluteTool> {
             '${Directory.systemTemp.path}${Platform.pathSeparator}'
             'flute_blow_meter_${DateTime.now().microsecondsSinceEpoch}.wav',
       );
-      _amplitudeTimer?.cancel();
+      _amplitudePoller.stop();
       _invalidateSustainSync();
       await _stopSustainLayers();
       if (mounted) {
@@ -958,9 +960,7 @@ class _FluteToolState extends State<_FluteTool> {
           _breathConfidence = 0;
         });
       }
-      _amplitudeTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
-        unawaited(_pollBlowAmplitude());
-      });
+      _amplitudePoller.start();
       unawaited(_warmUpActivePreset());
     } catch (_) {
       await _handleBlowSensorUnavailable();
@@ -968,8 +968,7 @@ class _FluteToolState extends State<_FluteTool> {
   }
 
   Future<void> _stopBlowSensor({bool resetUi = true}) async {
-    _amplitudeTimer?.cancel();
-    _amplitudeTimer = null;
+    _amplitudePoller.stop();
     try {
       await _micRecorder.stop();
     } catch (_) {}
@@ -1994,8 +1993,7 @@ class _FluteToolState extends State<_FluteTool> {
 
   @override
   void dispose() {
-    _amplitudeTimer?.cancel();
-    _amplitudeTimer = null;
+    _amplitudePoller.dispose();
     _invalidateSustainSync();
     unawaited(_disposeMicRecorder());
     unawaited(_sustainCoreLoop.dispose());
