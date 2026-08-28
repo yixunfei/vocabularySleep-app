@@ -34,7 +34,7 @@
    - `pubspec.yaml` 仅打包运行时 CSV，不再打包 `app_text_registry.json`、retirement 和说明文档。
    - CSV 在后台 isolate 解析；`runApp` 立即安装轻量加载壳，catalog 就绪后再构造完整依赖和应用树。
    - 加载失败记录日志并显示可重试的最小错误界面，不再把空表伪装为加载成功。
-   - 不执行 catalog 历史 key 批量删除；本轮只修正现有中文 key，新增/退休 key 目标均为 0。
+   - 不执行 catalog 历史 key 批量删除；仅新增启动失败与重试所需的 2 个稳定 key，退休 key 目标为 0。
 5. **音频异步竞争**
    - 环境音音量同步改为单飞合并：同一时刻只允许一个平台调用链，期间变化合并为最新状态。
    - 长笛振幅轮询增加 in-flight guard，并在停止/销毁后丢弃迟到结果。
@@ -81,11 +81,15 @@
 - 归档 service 测试 10 项通过，覆盖 ZIP/TAR.GZ/GZip worker 往返、路径穿越、符号链接、路径冲突、压缩比炸弹和写盘前二次验证；完整 `ui_smoke_test.dart` 147 项通过，目标文件定向 `flutter analyze --no-pub` 无诊断。
 - 归档页按职责拆为状态/I/O 910 行、视图 406 行、进度与选项 294 行；公开 service 531 行、纯 worker 692 行、资源策略 181 行，均低于项目单文件上限。
 - 归档阶段 i18n 新增 key 6、退休 key 0；占位符审计为 `51764` keys、缺失/不一致均为 0。维护报告保留历史基线：`40108` 个未引用 key、`661` 个 stale registry source、`30` 个待清理 retirement，本轮不处理；旧 helper 与 catalog Dart 插值扫描无命中。
+- 已完成 i18n 启动与包体阶段：`runApp` 在绑定和全局错误处理安装后立即挂载轻量加载壳；`.env` 等前置初始化与 catalog 加载异步执行，catalog 成功前不构造 `AppDependencies`，失败时记录诊断并提供单飞重试，成功后的完整应用树仅构造一次。
+- catalog 改为 `rootBundle.load` 读取原始字节，通过 `TransferableTypedData` 交给 `compute` worker 完成 UTF-8 与 CSV 解析；空内容、缺列、无有效 key 和损坏编码均抛出带阶段信息的 `AppI18nCatalogLoadException`，失败不会安装空表或覆盖此前成功表。
+- `pubspec.yaml` 仅发布 `app_texts.csv`，AssetManifest 测试确认 registry、retirement 与说明文件不再进入应用资源。catalog/启动测试 12 项与完整 `ui_smoke_test.dart` 147 项通过，4 个目标文件定向 `flutter analyze --no-pub` 无诊断，`git diff --check` 通过。
+- i18n 启动阶段新增 key 2、退休 key 0；占位符审计为 `51766` keys、缺失/不一致均为 0。维护报告保留历史基线：`40108` 个未引用 key、`661` 个 stale registry source、`30` 个待清理 retirement，本轮不处理；旧 helper 与 catalog Dart 插值扫描无命中。
 
 ## 完成检查清单
 - [x] 正确性与测试门禁修复完成
 - [x] 图片与归档资源安全修复完成
-- [ ] i18n 启动与包体修复完成
+- [x] i18n 启动与包体修复完成
 - [ ] 音频异步竞争修复完成
 - [ ] 全量验证通过或剩余历史项已明确记录
 - [ ] Changelog 已更新

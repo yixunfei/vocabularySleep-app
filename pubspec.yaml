@@ -134,7 +134,7 @@ flutter:
     - assets/toolbox/colors/
     - assets/toolbox/device_frames/
     - assets/toolbox/instruments/
-    - lib/l10n/catalog/
+    - lib/l10n/catalog/app_texts.csv
 
   # To add assets to your application, add an assets section, like this:
   # assets:
