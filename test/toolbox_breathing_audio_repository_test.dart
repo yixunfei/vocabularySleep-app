@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 import 'package:vocabulary_sleep_app/src/services/cstcloud_resource_cache_service.dart';
+import 'package:vocabulary_sleep_app/src/services/cstcloud_s3_compat_client.dart';
 import 'package:vocabulary_sleep_app/src/services/toolbox_breathing_audio_repository.dart';
 import 'package:vocabulary_sleep_app/src/services/toolbox_breathing_catalog.dart';
 
@@ -85,6 +86,62 @@ void main() {
       expect(resolved!.duration, const Duration(milliseconds: 100));
     });
 
+    test('replaces an unusable remote cue before resolving it', () async {
+      final tempDir = await Directory.systemTemp.createTemp(
+        'breathing_audio_remote_retry_',
+      );
+      addTearDown(() => tempDir.delete(recursive: true));
+      final remoteKey = ToolboxBreathingAudioRepository(
+        null,
+      ).candidateRemoteKeysForCue('session_start').single;
+      final client = _SequencedBreathingResourceClient(<Uint8List>[
+        Uint8List.fromList(<int>[1, 2, 3]),
+        _buildWavBytes(payloadLength: 4800, declaredDataLength: 4800),
+      ]);
+      final repo = ToolboxBreathingAudioRepository(
+        CstCloudResourceCacheService(client: client, cacheDirectory: tempDir),
+      );
+
+      final resolved = await repo.resolve('session_start');
+
+      expect(resolved, isNotNull);
+      expect(resolved!.kind, BreathingCueSourceKind.remote);
+      expect(client.downloadCalls, 2);
+      expect(await File(p.join(tempDir.path, remoteKey)).exists(), isTrue);
+    });
+
+    test('invalidating a remote cue drops its resolution cache', () async {
+      final tempDir = await Directory.systemTemp.createTemp(
+        'breathing_audio_invalidate_',
+      );
+      addTearDown(() => tempDir.delete(recursive: true));
+      final remoteKey = ToolboxBreathingAudioRepository(
+        null,
+      ).candidateRemoteKeysForCue('session_start').single;
+      final payload = _buildWavBytes(
+        payloadLength: 4800,
+        declaredDataLength: 4800,
+      );
+      final client = _SequencedBreathingResourceClient(<Uint8List>[
+        payload,
+        payload,
+      ]);
+      final cache = CstCloudResourceCacheService(
+        client: client,
+        cacheDirectory: tempDir,
+      );
+      final repo = ToolboxBreathingAudioRepository(cache);
+
+      final first = await repo.resolve('session_start');
+      await cache.deleteCachedFile(remoteKey, cacheRelativePath: remoteKey);
+      await repo.invalidateRemoteCue(remoteKey);
+      final second = await repo.resolve('session_start');
+
+      expect(first, isNotNull);
+      expect(second, isNotNull);
+      expect(client.downloadCalls, 2);
+    });
+
     test('stage cue durations fit with mobile-friendly playback rate caps', () {
       for (final scenario in BreathingExperienceCatalog.scenarios) {
         for (final stage in scenario.stages) {
@@ -126,6 +183,30 @@ class _FakeBreathingCacheService extends CstCloudResourceCacheService {
     ResourceDownloadProgressCallback? onProgress,
   }) async {
     return file;
+  }
+}
+
+class _SequencedBreathingResourceClient extends CstCloudS3CompatClient {
+  _SequencedBreathingResourceClient(this.payloads);
+
+  final List<Uint8List> payloads;
+  int downloadCalls = 0;
+
+  @override
+  Future<File> downloadObjectToFile(
+    String objectKey,
+    File targetFile, {
+    void Function(int receivedBytes, int totalBytes)? onProgress,
+  }) async {
+    downloadCalls += 1;
+    if (payloads.isEmpty) {
+      throw StateError('No fake payload remains for $objectKey');
+    }
+    final payload = payloads.removeAt(0);
+    await targetFile.parent.create(recursive: true);
+    await targetFile.writeAsBytes(payload, flush: true);
+    onProgress?.call(payload.length, payload.length);
+    return targetFile;
   }
 }
 

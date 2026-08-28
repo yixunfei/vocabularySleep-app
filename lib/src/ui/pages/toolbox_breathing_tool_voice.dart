@@ -323,12 +323,31 @@ extension _BreathingVoiceHelpers on _BreathingPracticeReleaseCardState {
       }
       return true;
     } catch (_) {
+      if (resolved.kind == BreathingCueSourceKind.remote) {
+        await _invalidateRemoteCue(resolved.location);
+      }
       if (mounted && respectVoiceSetting) {
         _updateState(
           () => _voiceAvailability = _BreathingVoiceAvailability.unavailable,
         );
       }
       return false;
+    }
+  }
+
+  Future<void> _invalidateRemoteCue(String remoteKey) async {
+    final resourceCache = _resourceCache;
+    if (resourceCache != null) {
+      try {
+        await resourceCache.deleteCachedFile(
+          remoteKey,
+          cacheRelativePath: remoteKey,
+        );
+      } catch (_) {}
+    }
+    final repo = _cueRepo;
+    if (repo != null) {
+      await repo.invalidateRemoteCue(remoteKey);
     }
   }
 

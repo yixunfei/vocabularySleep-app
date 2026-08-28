@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -31,6 +32,8 @@ class ToolboxBreathingAudioRepository {
   final CstCloudResourceCacheService? _resourceCache;
   final Map<String, Future<BreathingResolvedCue?>> _resolvedCache =
       <String, Future<BreathingResolvedCue?>>{};
+  final Map<String, Set<String>> _remoteCandidatesByCacheKey =
+      <String, Set<String>>{};
   final Map<String, Future<Duration?>> _durationCache =
       <String, Future<Duration?>>{};
   final Map<String, Future<ByteData?>> _assetDataCache =
@@ -68,10 +71,39 @@ class ToolboxBreathingAudioRepository {
   }) {
     final normalizedTags = _normalizedLanguageTags(languageTags);
     final cacheKey = '$cueId|${normalizedTags.join(",")}';
-    return _resolvedCache.putIfAbsent(
+    return _cacheResolution(
       cacheKey,
-      () => _resolveInternal(cueId, normalizedTags),
+      remoteCandidates: candidateRemoteKeysForCue(
+        cueId,
+        languageTags: normalizedTags,
+      ),
+      loader: () => _resolveInternal(cueId, normalizedTags),
     );
+  }
+
+  /// Drops cached metadata for a remote cue after its file becomes unusable.
+  ///
+  /// The next resolve will revalidate the cache and download a replacement if
+  /// needed. Asset-backed cues are intentionally left untouched.
+  Future<void> invalidateRemoteCue(String remoteKey) {
+    final normalizedLocation = _normalizeRemoteKey(remoteKey);
+    if (normalizedLocation.isEmpty) {
+      return Future<void>.value();
+    }
+    _durationCache.remove('file|$normalizedLocation');
+
+    // Candidate keys are recorded when a resolution starts, so invalidation
+    // can drop both completed and still-pending resolutions immediately. This
+    // keeps a player error from waiting on an unrelated network future.
+    final cacheKeys = _remoteCandidatesByCacheKey.entries
+        .where((entry) => entry.value.contains(normalizedLocation))
+        .map((entry) => entry.key)
+        .toList(growable: false);
+    for (final cacheKey in cacheKeys) {
+      _resolvedCache.remove(cacheKey);
+      _remoteCandidatesByCacheKey.remove(cacheKey);
+    }
+    return Future<void>.value();
   }
 
   Future<BreathingResolvedCue?> resolveScenarioStage(
@@ -86,9 +118,22 @@ class ToolboxBreathingAudioRepository {
     final cacheKey =
         'stage|$scenarioId|$stageIndex|${stageKind.name}|$normalizedFallback|'
         '${normalizedTags.join(",")}';
-    return _resolvedCache.putIfAbsent(
+    final remoteCandidates = <String>{
+      ...candidateRemoteKeysForScenarioStage(
+        scenarioId,
+        stageIndex: stageIndex,
+        stageKind: stageKind,
+      ),
+      if (normalizedFallback.isNotEmpty)
+        ...candidateRemoteKeysForCue(
+          normalizedFallback,
+          languageTags: normalizedTags,
+        ),
+    };
+    return _cacheResolution(
       cacheKey,
-      () => _resolveScenarioStageInternal(
+      remoteCandidates: remoteCandidates,
+      loader: () => _resolveScenarioStageInternal(
         scenarioId,
         stageIndex: stageIndex,
         stageKind: stageKind,
@@ -96,6 +141,25 @@ class ToolboxBreathingAudioRepository {
         languageTags: normalizedTags,
       ),
     );
+  }
+
+  Future<BreathingResolvedCue?> _cacheResolution(
+    String cacheKey, {
+    required Iterable<String> remoteCandidates,
+    required Future<BreathingResolvedCue?> Function() loader,
+  }) {
+    final cached = _resolvedCache[cacheKey];
+    if (cached != null) {
+      return cached;
+    }
+    _remoteCandidatesByCacheKey[cacheKey] = Set<String>.unmodifiable(
+      remoteCandidates
+          .map(_normalizeRemoteKey)
+          .where((candidate) => candidate.isNotEmpty),
+    );
+    final future = loader();
+    _resolvedCache[cacheKey] = future;
+    return future;
   }
 
   Future<List<BreathingResolvedCue>> warmUpCueIds(
@@ -311,6 +375,56 @@ class ToolboxBreathingAudioRepository {
     });
   }
 
+  Future<bool> _isUsableRemoteCueFile(File file) async {
+    try {
+      if (!await file.exists()) {
+        return false;
+      }
+      final totalLength = await file.length();
+      if (totalLength <= 44) {
+        return false;
+      }
+      final headerLength = totalLength < 4096 ? totalLength : 4096;
+      final buffer = BytesBuilder(copy: false);
+      await for (final chunk in file.openRead(0, headerLength)) {
+        buffer.add(chunk);
+      }
+      final bytes = buffer.takeBytes();
+      if (!_hasUsableWavDataChunk(bytes, totalLength)) {
+        return false;
+      }
+      final duration = _tryParseWavDuration(bytes, totalLength: totalLength);
+      return duration != null && duration > Duration.zero;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  bool _hasUsableWavDataChunk(Uint8List bytes, int totalLength) {
+    if (bytes.length < 12 ||
+        _readAscii(bytes, 0, 4) != 'RIFF' ||
+        _readAscii(bytes, 8, 4) != 'WAVE') {
+      return false;
+    }
+
+    var offset = 12;
+    while (offset + 8 <= bytes.length) {
+      final chunkId = _readAscii(bytes, offset, 4);
+      final chunkSize = _readUint32LE(bytes, offset + 4);
+      final chunkDataOffset = offset + 8;
+      if (chunkId == 'data') {
+        return chunkDataOffset < bytes.length && chunkDataOffset < totalLength;
+      }
+      final paddedChunkSize = chunkSize + (chunkSize.isOdd ? 1 : 0);
+      final nextOffset = chunkDataOffset + paddedChunkSize;
+      if (nextOffset <= offset || nextOffset > bytes.length) {
+        return false;
+      }
+      offset = nextOffset;
+    }
+    return false;
+  }
+
   Future<Duration?> _durationForAsset(
     String assetPath, {
     required String cacheKey,
@@ -511,19 +625,18 @@ class ToolboxBreathingAudioRepository {
     String remoteKey,
   ) async {
     try {
-      final file = await resourceCache.ensureFileDownloaded(
+      final file = await resourceCache.ensureValidFileDownloaded(
         remoteKey,
         cacheRelativePath: remoteKey,
+        validator: _isUsableRemoteCueFile,
       );
-      if (!await file.exists()) {
-        return null;
-      }
-      if (await file.length() <= 0) {
-        return null;
-      }
       return file;
     } catch (_) {
       return null;
     }
+  }
+
+  String _normalizeRemoteKey(String remoteKey) {
+    return remoteKey.trim().replaceAll('\\', '/');
   }
 }
