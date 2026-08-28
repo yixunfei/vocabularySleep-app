@@ -654,9 +654,12 @@ class _HumanSettingsSectionState extends State<_HumanSettingsSection> {
                     margin: const EdgeInsets.symmetric(horizontal: 14),
                     color: colorScheme.primary.withValues(alpha: 0.14),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-                    child: widget.child,
+                  Material(
+                    color: Colors.transparent,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                      child: widget.child,
+                    ),
                   ),
                 ],
               ),

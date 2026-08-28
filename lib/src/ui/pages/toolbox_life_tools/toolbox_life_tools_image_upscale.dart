@@ -2,11 +2,11 @@ part of '../toolbox_life_tools.dart';
 
 enum _ImageUpscaleMode { ratio, size, canvas }
 
-enum _ImageUpscaleAlgorithm { duplicate, nearest, linear, cubic, average }
+typedef _ImageUpscaleAlgorithm = ToolboxImageUpscaleAlgorithm;
 
 enum _ImageUpscaleFormat { png, jpg }
 
-enum _ImageUpscaleCanvasMode { transparent, edge, mirror, solid }
+typedef _ImageUpscaleCanvasMode = ToolboxImageCanvasMode;
 
 class _ImageUpscalePage extends StatefulWidget {
   const _ImageUpscalePage({this.embedded = false});
@@ -18,6 +18,9 @@ class _ImageUpscalePage extends StatefulWidget {
 }
 
 class _ImageUpscalePageState extends State<_ImageUpscalePage> {
+  static const ToolboxImageProcessingService _imageService =
+      ToolboxImageProcessingService();
+
   final TextEditingController _customScaleController = TextEditingController(
     text: '2.0',
   );
@@ -41,7 +44,7 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
   _ImageUpscaleFormat _format = _ImageUpscaleFormat.png;
   _ImageUpscaleCanvasMode _canvasMode = _ImageUpscaleCanvasMode.edge;
   double _scale = 2.0;
-  double _maxScale = 16.0;
+  final double _maxScale = 16.0;
   double _targetWidth = 2048;
   double _targetHeight = 2048;
   double _jpegQuality = 92;
@@ -216,7 +219,7 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '${_sourceWidth}x$_sourceHeight · ${_formatBytes(_sourceSize)}',
+                      '${_sourceWidth}x$_sourceHeight · ${_lifeFormatBytes(_sourceSize)}',
                     ),
                     const SizedBox(height: 10),
                     ClipRRect(
@@ -263,15 +266,15 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
             ),
             value: _mode,
             options: const <_LifeOption<_ImageUpscaleMode>>[
-              const _LifeOption<_ImageUpscaleMode>(
+              _LifeOption<_ImageUpscaleMode>(
                 value: _ImageUpscaleMode.ratio,
                 labelKey: 'inline.plan295.life.by_scale.ea8b02907910',
               ),
-              const _LifeOption<_ImageUpscaleMode>(
+              _LifeOption<_ImageUpscaleMode>(
                 value: _ImageUpscaleMode.size,
                 labelKey: 'inline.plan295.life.target_size.f5281cce0aac',
               ),
-              const _LifeOption<_ImageUpscaleMode>(
+              _LifeOption<_ImageUpscaleMode>(
                 value: _ImageUpscaleMode.canvas,
                 labelKey: 'inline.plan295.life.canvas_expand.0d27fe89de89',
               ),
@@ -289,27 +292,27 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
             ),
             value: _algorithm,
             options: const <_LifeOption<_ImageUpscaleAlgorithm>>[
-              const _LifeOption<_ImageUpscaleAlgorithm>(
+              _LifeOption<_ImageUpscaleAlgorithm>(
                 value: _ImageUpscaleAlgorithm.duplicate,
                 labelKey:
                     'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_upscale.fast_duplicate_19fe43',
               ),
-              const _LifeOption<_ImageUpscaleAlgorithm>(
+              _LifeOption<_ImageUpscaleAlgorithm>(
                 value: _ImageUpscaleAlgorithm.nearest,
                 labelKey:
                     'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_upscale.nearest_27b4ad',
               ),
-              const _LifeOption<_ImageUpscaleAlgorithm>(
+              _LifeOption<_ImageUpscaleAlgorithm>(
                 value: _ImageUpscaleAlgorithm.linear,
                 labelKey:
                     'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_upscale.linear_0dcc7e',
               ),
-              const _LifeOption<_ImageUpscaleAlgorithm>(
+              _LifeOption<_ImageUpscaleAlgorithm>(
                 value: _ImageUpscaleAlgorithm.cubic,
                 labelKey:
                     'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_upscale.cubic_175f76',
               ),
-              const _LifeOption<_ImageUpscaleAlgorithm>(
+              _LifeOption<_ImageUpscaleAlgorithm>(
                 value: _ImageUpscaleAlgorithm.average,
                 labelKey:
                     'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_upscale.average_9c484a',
@@ -328,11 +331,11 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
             ),
             value: _format,
             options: const <_LifeOption<_ImageUpscaleFormat>>[
-              const _LifeOption<_ImageUpscaleFormat>(
+              _LifeOption<_ImageUpscaleFormat>(
                 value: _ImageUpscaleFormat.png,
                 labelKey: 'inline.plan295.life.png_lossless.de21e3ccbc6d',
               ),
-              const _LifeOption<_ImageUpscaleFormat>(
+              _LifeOption<_ImageUpscaleFormat>(
                 value: _ImageUpscaleFormat.jpg,
                 labelKey: 'inline.plan295.life.jpeg_smaller.590d2284a5b8',
               ),
@@ -430,19 +433,19 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
               ),
               value: _canvasMode,
               options: const <_LifeOption<_ImageUpscaleCanvasMode>>[
-                const _LifeOption<_ImageUpscaleCanvasMode>(
+                _LifeOption<_ImageUpscaleCanvasMode>(
                   value: _ImageUpscaleCanvasMode.edge,
                   labelKey: 'inline.plan295.life.edge_extend.efde37c9108d',
                 ),
-                const _LifeOption<_ImageUpscaleCanvasMode>(
+                _LifeOption<_ImageUpscaleCanvasMode>(
                   value: _ImageUpscaleCanvasMode.mirror,
                   labelKey: 'inline.plan295.life.mirror_fill.9281515b28ed',
                 ),
-                const _LifeOption<_ImageUpscaleCanvasMode>(
+                _LifeOption<_ImageUpscaleCanvasMode>(
                   value: _ImageUpscaleCanvasMode.solid,
                   labelKey: 'inline.plan295.life.solid_color.eb1e35ce00b9',
                 ),
-                const _LifeOption<_ImageUpscaleCanvasMode>(
+                _LifeOption<_ImageUpscaleCanvasMode>(
                   value: _ImageUpscaleCanvasMode.transparent,
                   labelKey: 'inline.plan295.life.transparent.fd7f50f5a927',
                 ),
@@ -667,14 +670,14 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
                 context,
                 'inline.plan295.life.source_size.b47053a82484',
               ),
-              value: _formatBytes(_sourceSize),
+              value: _lifeFormatBytes(_sourceSize),
             ),
             ToolboxMetricCard(
               label: _lifeI18nText(
                 context,
                 'inline.plan295.life.output_size.bbdae54e8de3',
               ),
-              value: _hasResult ? _formatBytes(_resultSize) : '--',
+              value: _hasResult ? _lifeFormatBytes(_resultSize) : '--',
             ),
             ToolboxMetricCard(
               label: _lifeI18nText(
@@ -798,17 +801,19 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
       final picked = await FilePicker.platform.pickFiles(
         allowMultiple: false,
         type: FileType.image,
-        withData: true,
+        withData: kIsWeb,
+        withReadStream: !kIsWeb,
       );
       final file = (picked != null && picked.files.isNotEmpty)
           ? picked.files.first
           : null;
-      final bytes = file?.bytes;
-      if (file == null || bytes == null || bytes.isEmpty) {
+      if (file == null) {
         return;
       }
 
-      final preview = await _decodePreview(bytes);
+      final bytes = await _readLifePickedImageBytes(file);
+      final prepared = await _imageService.prepareSource(bytes);
+      final preview = await _decodeLifeUiImage(prepared.previewBytes);
       if (!mounted) {
         preview.dispose();
         return;
@@ -818,13 +823,13 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
       final oldResult = _resultPreview;
       setState(() {
         _sourceName = file.name;
-        _sourceBytes = Uint8List.fromList(bytes);
+        _sourceBytes = bytes;
         _sourcePreview = preview;
-        _sourceWidth = preview.width;
-        _sourceHeight = preview.height;
+        _sourceWidth = prepared.width;
+        _sourceHeight = prepared.height;
         _sourceSize = bytes.length;
-        _targetWidth = math.max(64, preview.width * 2).toDouble();
-        _targetHeight = math.max(64, preview.height * 2).toDouble();
+        _targetWidth = math.max(64, prepared.width * 2).toDouble();
+        _targetHeight = math.max(64, prepared.height * 2).toDouble();
         _customScaleController.text = _scale.toStringAsFixed(2);
         _resultBytes = null;
         _resultPreview = null;
@@ -837,15 +842,18 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
       });
       oldSource?.dispose();
       oldResult?.dispose();
-    } catch (error) {
+    } catch (error, stackTrace) {
       if (!mounted) {
         return;
       }
+      _logLifeImageError('upscale.pick', error, stackTrace);
       setState(() {
         _error = _lifeI18nText(
           context,
           'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.compress.failed_to_pick_image.6e0bad236d',
-          params: <String, Object?>{'error': error},
+          params: <String, Object?>{
+            'error': _lifeImageProcessingErrorText(context, error),
+          },
         );
       });
     }
@@ -863,27 +871,22 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
     });
 
     try {
-      final decoded = img.decodeImage(source);
-      if (decoded == null) {
-        throw StateError('Unsupported image format');
-      }
-      final oriented = img.bakeOrientation(decoded);
       final targetWidth = _expectedWidth();
       final targetHeight = _expectedHeight();
-      final output = _mode == _ImageUpscaleMode.canvas
-          ? _expandCanvas(
-              oriented,
-              targetWidth: targetWidth,
-              targetHeight: targetHeight,
-            )
-          : _resizeImage(
-              oriented,
-              targetWidth: targetWidth,
-              targetHeight: targetHeight,
-            );
-
-      final resultBytes = _encodeResult(output);
-      final preview = await _decodePreview(resultBytes);
+      final result = await _imageService.upscale(
+        ToolboxImageUpscaleInput(
+          sourceBytes: source,
+          targetWidth: targetWidth,
+          targetHeight: targetHeight,
+          algorithm: _algorithm,
+          outputFormat: ToolboxImageOutputFormat.values.byName(_format.name),
+          expandCanvas: _mode == _ImageUpscaleMode.canvas,
+          canvasMode: _canvasMode,
+          canvasColor: _canvasColor.toARGB32() & 0x00ffffff,
+          jpegQuality: _jpegQuality.round(),
+        ),
+      );
+      final preview = await _decodeLifeUiImage(result.previewBytes);
       if (!mounted) {
         preview.dispose();
         return;
@@ -891,23 +894,26 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
 
       final oldResult = _resultPreview;
       setState(() {
-        _resultBytes = resultBytes;
+        _resultBytes = result.bytes;
         _resultPreview = preview;
-        _resultWidth = preview.width;
-        _resultHeight = preview.height;
-        _resultSize = resultBytes.length;
+        _resultWidth = result.width;
+        _resultHeight = result.height;
+        _resultSize = result.bytes.length;
         _resultDetail = _buildResultDetail();
       });
       oldResult?.dispose();
-    } catch (error) {
+    } catch (error, stackTrace) {
       if (!mounted) {
         return;
       }
+      _logLifeImageError('upscale.run', error, stackTrace);
       setState(() {
         _error = _lifeI18nText(
           context,
           'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.upscale.upscale_failed.78f8fb476d',
-          params: <String, Object?>{'error': error},
+          params: <String, Object?>{
+            'error': _lifeImageProcessingErrorText(context, error),
+          },
         );
       });
     } finally {
@@ -931,64 +937,24 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
     try {
       final sourceName = _sourceName ?? 'image';
       final baseName = path.basenameWithoutExtension(sourceName);
-      final ext = _formatExtension(_format);
+      final ext = ToolboxImageOutputFormat.values
+          .byName(_format.name)
+          .fileExtension;
       final fileName = '${baseName}_upscaled.$ext';
 
-      String? savedPath;
-      try {
-        savedPath = await FilePicker.platform.saveFile(
-          dialogTitle: _lifeI18nText(
-            context,
-            'inline.plan295.life.save_upscaled_image.03390afabac6',
-          ),
-          fileName: fileName,
-          type: FileType.custom,
-          allowedExtensions: <String>[ext],
-          bytes: result,
-        );
-      } on UnimplementedError {
-        savedPath = null;
-      }
-
+      final savedPath = await _saveLifeBytes(
+        context: context,
+        bytes: result,
+        fileName: fileName,
+        fallbackFileName: '$baseName.$ext',
+        subdirectory: 'image_upscale',
+        dialogTitleKey: 'inline.plan295.life.save_upscaled_image.03390afabac6',
+        allowedExtensions: <String>[ext],
+      );
       if (!mounted) {
         return;
       }
-
-      if (savedPath == null || savedPath.trim().isEmpty) {
-        if (kIsWeb) {
-          setState(() {
-            _savedPath = _lifeI18nText(
-              context,
-              'inline.plan295.crypto.browser_download_started_check_your.b28d392515b4',
-            );
-          });
-          return;
-        }
-
-        final appDir = await getApplicationDocumentsDirectory();
-        final exportDir = Directory(
-          path.join(appDir.path, 'life_tools', 'image_upscale'),
-        );
-        if (!await exportDir.exists()) {
-          await exportDir.create(recursive: true);
-        }
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final fallback = File(
-          path.join(exportDir.path, '${baseName}_$timestamp.$ext'),
-        );
-        await fallback.writeAsBytes(result, flush: true);
-        if (!mounted) {
-          return;
-        }
-        setState(() {
-          _savedPath = fallback.path;
-        });
-        return;
-      }
-
-      setState(() {
-        _savedPath = savedPath;
-      });
+      setState(() => _savedPath = savedPath);
     } catch (error) {
       if (!mounted) {
         return;
@@ -1027,164 +993,6 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
       _customScaleController.selection = TextSelection.fromPosition(
         TextPosition(offset: _customScaleController.text.length),
       );
-    }
-  }
-
-  img.Image _expandCanvas(
-    img.Image source, {
-    required int targetWidth,
-    required int targetHeight,
-  }) {
-    final resized = source.width == targetWidth && source.height == targetHeight
-        ? img.Image.from(source)
-        : _resizeImage(
-            source,
-            targetWidth: math.min(source.width, targetWidth),
-            targetHeight: math.min(source.height, targetHeight),
-          );
-
-    if (_canvasMode == _ImageUpscaleCanvasMode.transparent) {
-      return img.copyExpandCanvas(
-        resized,
-        newWidth: targetWidth,
-        newHeight: targetHeight,
-      );
-    }
-    if (_canvasMode == _ImageUpscaleCanvasMode.solid) {
-      return img.copyExpandCanvas(
-        resized,
-        newWidth: targetWidth,
-        newHeight: targetHeight,
-        backgroundColor: img.ColorRgb8(
-          (_canvasColor.r * 255.0).round().clamp(0, 255),
-          (_canvasColor.g * 255.0).round().clamp(0, 255),
-          (_canvasColor.b * 255.0).round().clamp(0, 255),
-        ),
-      );
-    }
-
-    final canvas = img.Image(
-      width: targetWidth,
-      height: targetHeight,
-      numChannels: resized.numChannels,
-    );
-    final offsetX = (targetWidth - resized.width) ~/ 2;
-    final offsetY = (targetHeight - resized.height) ~/ 2;
-    _fillCanvasBySampling(
-      canvas: canvas,
-      source: resized,
-      offsetX: offsetX,
-      offsetY: offsetY,
-      mirror: _canvasMode == _ImageUpscaleCanvasMode.mirror,
-    );
-    return canvas;
-  }
-
-  img.Image _resizeImage(
-    img.Image source, {
-    required int targetWidth,
-    required int targetHeight,
-  }) {
-    final safeWidth = math.max(1, targetWidth);
-    final safeHeight = math.max(1, targetHeight);
-    if (_algorithm == _ImageUpscaleAlgorithm.duplicate) {
-      return img.copyResize(
-        source,
-        width: safeWidth,
-        height: safeHeight,
-        interpolation: img.Interpolation.nearest,
-      );
-    }
-    return img.copyResize(
-      source,
-      width: safeWidth,
-      height: safeHeight,
-      interpolation: _interpolationFor(_algorithm),
-    );
-  }
-
-  void _fillCanvasBySampling({
-    required img.Image canvas,
-    required img.Image source,
-    required int offsetX,
-    required int offsetY,
-    required bool mirror,
-  }) {
-    for (var y = 0; y < canvas.height; y += 1) {
-      for (var x = 0; x < canvas.width; x += 1) {
-        final inside =
-            x >= offsetX &&
-            x < offsetX + source.width &&
-            y >= offsetY &&
-            y < offsetY + source.height;
-        if (inside) {
-          canvas.setPixel(x, y, source.getPixel(x - offsetX, y - offsetY));
-          continue;
-        }
-
-        final sampleX = mirror
-            ? _mirrorSample(x - offsetX, source.width)
-            : _clampSample(x - offsetX, source.width);
-        final sampleY = mirror
-            ? _mirrorSample(y - offsetY, source.height)
-            : _clampSample(y - offsetY, source.height);
-        canvas.setPixel(x, y, source.getPixel(sampleX, sampleY));
-      }
-    }
-  }
-
-  int _clampSample(int value, int length) {
-    if (length <= 1) {
-      return 0;
-    }
-    return value.clamp(0, length - 1);
-  }
-
-  int _mirrorSample(int value, int length) {
-    if (length <= 1) {
-      return 0;
-    }
-    var sample = value;
-    final period = (length - 1) * 2;
-    sample %= period;
-    if (sample < 0) {
-      sample += period;
-    }
-    if (sample >= length) {
-      sample = period - sample;
-    }
-    return sample.clamp(0, length - 1);
-  }
-
-  Uint8List _encodeResult(img.Image image) {
-    switch (_format) {
-      case _ImageUpscaleFormat.png:
-        return Uint8List.fromList(
-          img.encodePng(image, level: 6, filter: img.PngFilter.paeth),
-        );
-      case _ImageUpscaleFormat.jpg:
-        return Uint8List.fromList(
-          img.encodeJpg(
-            image,
-            quality: _jpegQuality.round().clamp(60, 100),
-            chroma: img.JpegChroma.yuv444,
-          ),
-        );
-    }
-  }
-
-  img.Interpolation _interpolationFor(_ImageUpscaleAlgorithm algorithm) {
-    switch (algorithm) {
-      case _ImageUpscaleAlgorithm.duplicate:
-        return img.Interpolation.nearest;
-      case _ImageUpscaleAlgorithm.nearest:
-        return img.Interpolation.nearest;
-      case _ImageUpscaleAlgorithm.linear:
-        return img.Interpolation.linear;
-      case _ImageUpscaleAlgorithm.cubic:
-        return img.Interpolation.cubic;
-      case _ImageUpscaleAlgorithm.average:
-        return img.Interpolation.average;
     }
   }
 
@@ -1244,15 +1052,6 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
     }
   }
 
-  String _formatExtension(_ImageUpscaleFormat format) {
-    switch (format) {
-      case _ImageUpscaleFormat.png:
-        return 'png';
-      case _ImageUpscaleFormat.jpg:
-        return 'jpg';
-    }
-  }
-
   String _buildResultDetail() {
     final parts = <String>[
       _modeLabel(_mode, context),
@@ -1299,24 +1098,6 @@ class _ImageUpscalePageState extends State<_ImageUpscalePage> {
         _targetHeight.round(),
       ),
     };
-  }
-
-  Future<ui.Image> _decodePreview(Uint8List bytes) async {
-    final codec = await ui.instantiateImageCodec(bytes);
-    final frame = await codec.getNextFrame();
-    return frame.image;
-  }
-
-  String _formatBytes(int bytes) {
-    if (bytes < 1024) {
-      return '$bytes B';
-    }
-    final kb = bytes / 1024;
-    if (kb < 1024) {
-      return '${kb.toStringAsFixed(1)} KB';
-    }
-    final mb = kb / 1024;
-    return '${mb.toStringAsFixed(2)} MB';
   }
 
   void _resetAll() {

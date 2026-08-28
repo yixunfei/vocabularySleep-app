@@ -2,33 +2,10 @@ part of '../toolbox_life_tools.dart';
 
 enum _ImageCompressMode { ratio, width }
 
-enum _ImageCompressAlgorithm {
-  jpegBalanced,
-  jpegAggressive,
-  pngLossless,
-  gifIndexed,
-  autoBest,
-}
-
-enum _ImageCompressColorMode { original, grayscale, monochrome }
-
-enum _ImageCompressDpiMode { keep, pngMetadata }
-
-enum _ImageCompressFormat { jpg, png, gif }
-
-class _ImageCompressCandidate {
-  const _ImageCompressCandidate({
-    required this.bytes,
-    required this.algorithm,
-    required this.format,
-    required this.detail,
-  });
-
-  final Uint8List bytes;
-  final _ImageCompressAlgorithm algorithm;
-  final _ImageCompressFormat format;
-  final String detail;
-}
+typedef _ImageCompressAlgorithm = ToolboxImageCompressAlgorithm;
+typedef _ImageCompressColorMode = ToolboxImageColorMode;
+typedef _ImageCompressDpiMode = ToolboxImageDpiMode;
+typedef _ImageCompressFormat = ToolboxImageOutputFormat;
 
 class _ImageCompressPage extends StatefulWidget {
   const _ImageCompressPage({this.embedded = false});
@@ -40,6 +17,9 @@ class _ImageCompressPage extends StatefulWidget {
 }
 
 class _ImageCompressPageState extends State<_ImageCompressPage> {
+  static const ToolboxImageProcessingService _imageService =
+      ToolboxImageProcessingService();
+
   String? _sourceName;
   Uint8List? _sourceBytes;
   ui.Image? _sourcePreview;
@@ -217,7 +197,7 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
                         params: <String, Object?>{
                           '_sourceWidth': _sourceWidth,
                           '_sourceHeight': _sourceHeight,
-                          'p2': _formatBytes(_sourceSize),
+                          'p2': _lifeFormatBytes(_sourceSize),
                         },
                       ),
                     ),
@@ -274,12 +254,12 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
             'inline.plan295.life.mode.5a854fd8b48d',
           ),
           value: _mode,
-          options: <_LifeOption<_ImageCompressMode>>[
-            const _LifeOption<_ImageCompressMode>(
+          options: const <_LifeOption<_ImageCompressMode>>[
+            _LifeOption<_ImageCompressMode>(
               value: _ImageCompressMode.ratio,
               labelKey: 'inline.plan295.life.by_ratio.277739a0a091',
             ),
-            const _LifeOption<_ImageCompressMode>(
+            _LifeOption<_ImageCompressMode>(
               value: _ImageCompressMode.width,
               labelKey: 'inline.plan295.life.by_width.c0450e2c56f9',
             ),
@@ -293,28 +273,28 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
             'inline.plan295.life.algorithm.1f86c487e91d',
           ),
           value: _algorithm,
-          options: <_LifeOption<_ImageCompressAlgorithm>>[
-            const _LifeOption<_ImageCompressAlgorithm>(
+          options: const <_LifeOption<_ImageCompressAlgorithm>>[
+            _LifeOption<_ImageCompressAlgorithm>(
               value: _ImageCompressAlgorithm.autoBest,
               labelKey:
                   'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.auto_best_43fd8b',
             ),
-            const _LifeOption<_ImageCompressAlgorithm>(
+            _LifeOption<_ImageCompressAlgorithm>(
               value: _ImageCompressAlgorithm.jpegBalanced,
               labelKey:
                   'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.jpeg_balanced_489128',
             ),
-            const _LifeOption<_ImageCompressAlgorithm>(
+            _LifeOption<_ImageCompressAlgorithm>(
               value: _ImageCompressAlgorithm.jpegAggressive,
               labelKey:
                   'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.jpeg_aggressive_22a8de',
             ),
-            const _LifeOption<_ImageCompressAlgorithm>(
+            _LifeOption<_ImageCompressAlgorithm>(
               value: _ImageCompressAlgorithm.pngLossless,
               labelKey:
                   'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.png_lossless_2d47ce',
             ),
-            const _LifeOption<_ImageCompressAlgorithm>(
+            _LifeOption<_ImageCompressAlgorithm>(
               value: _ImageCompressAlgorithm.gifIndexed,
               labelKey:
                   'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.gif_indexed_aa8150',
@@ -331,18 +311,18 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
               'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.lossy_preprocess_8c458c',
             ),
             value: _colorMode,
-            options: <_LifeOption<_ImageCompressColorMode>>[
-              const _LifeOption<_ImageCompressColorMode>(
+            options: const <_LifeOption<_ImageCompressColorMode>>[
+              _LifeOption<_ImageCompressColorMode>(
                 value: _ImageCompressColorMode.original,
                 labelKey:
                     'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.original_color_567f1a',
               ),
-              const _LifeOption<_ImageCompressColorMode>(
+              _LifeOption<_ImageCompressColorMode>(
                 value: _ImageCompressColorMode.grayscale,
                 labelKey:
                     'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.grayscale_0c177d',
               ),
-              const _LifeOption<_ImageCompressColorMode>(
+              _LifeOption<_ImageCompressColorMode>(
                 value: _ImageCompressColorMode.monochrome,
                 labelKey:
                     'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.black_white_36588b',
@@ -375,13 +355,13 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
               'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.dpi_option_6201da',
             ),
             value: _dpiMode,
-            options: <_LifeOption<_ImageCompressDpiMode>>[
-              const _LifeOption<_ImageCompressDpiMode>(
+            options: const <_LifeOption<_ImageCompressDpiMode>>[
+              _LifeOption<_ImageCompressDpiMode>(
                 value: _ImageCompressDpiMode.keep,
                 labelKey:
                     'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.no_custom_dpi_501946',
               ),
-              const _LifeOption<_ImageCompressDpiMode>(
+              _LifeOption<_ImageCompressDpiMode>(
                 value: _ImageCompressDpiMode.pngMetadata,
                 labelKey:
                     'literal.ui.pages.toolbox_life_tools.toolbox_life_tools_image_compress.write_png_dpi_0210f5',
@@ -619,14 +599,14 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
                 context,
                 'inline.plan295.life.source_size.b47053a82484',
               ),
-              value: _formatBytes(_sourceSize),
+              value: _lifeFormatBytes(_sourceSize),
             ),
             ToolboxMetricCard(
               label: _lifeI18nText(
                 context,
                 'inline.plan295.life.output_size.bbdae54e8de3',
               ),
-              value: _hasResult ? _formatBytes(_resultSize) : '--',
+              value: _hasResult ? _lifeFormatBytes(_resultSize) : '--',
             ),
             ToolboxMetricCard(
               label: _lifeI18nText(
@@ -771,17 +751,19 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
       final picked = await FilePicker.platform.pickFiles(
         allowMultiple: false,
         type: FileType.image,
-        withData: true,
+        withData: kIsWeb,
+        withReadStream: !kIsWeb,
       );
       final file = (picked != null && picked.files.isNotEmpty)
           ? picked.files.first
           : null;
-      final bytes = file?.bytes;
-      if (file == null || bytes == null || bytes.isEmpty) {
+      if (file == null) {
         return;
       }
 
-      final preview = await _decodePreview(bytes);
+      final bytes = await _readLifePickedImageBytes(file);
+      final prepared = await _imageService.prepareSource(bytes);
+      final preview = await _decodeLifeUiImage(prepared.previewBytes);
       if (!mounted) {
         preview.dispose();
         return;
@@ -791,12 +773,12 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
       final oldResult = _resultPreview;
       setState(() {
         _sourceName = file.name;
-        _sourceBytes = Uint8List.fromList(bytes);
+        _sourceBytes = bytes;
         _sourcePreview = preview;
-        _sourceWidth = preview.width;
-        _sourceHeight = preview.height;
+        _sourceWidth = prepared.width;
+        _sourceHeight = prepared.height;
         _sourceSize = bytes.length;
-        _targetWidth = preview.width.toDouble();
+        _targetWidth = prepared.width.toDouble();
         _resultBytes = null;
         _resultPreview = null;
         _resultWidth = 0;
@@ -810,15 +792,18 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
       });
       oldSource?.dispose();
       oldResult?.dispose();
-    } catch (error) {
+    } catch (error, stackTrace) {
       if (!mounted) {
         return;
       }
+      _logLifeImageError('compress.pick', error, stackTrace);
       setState(() {
         _error = _lifeI18nText(
           context,
           'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.compress.failed_to_pick_image.6e0bad236d',
-          params: <String, Object?>{'error': error},
+          params: <String, Object?>{
+            'error': _lifeImageProcessingErrorText(context, error),
+          },
         );
       });
     }
@@ -835,25 +820,22 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
       _error = null;
     });
     try {
-      final decoded = img.decodeImage(source);
-      if (decoded == null) {
-        throw StateError('Unsupported image format');
-      }
-      final oriented = img.bakeOrientation(decoded);
       final targetWidth = _mode == _ImageCompressMode.ratio
-          ? math.max(1, (oriented.width * _ratio).round())
+          ? math.max(1, (_sourceWidth * _ratio).round())
           : math.max(1, _targetWidth.round());
-      final resized = targetWidth >= oriented.width
-          ? oriented
-          : img.copyResize(
-              oriented,
-              width: targetWidth,
-              interpolation: img.Interpolation.average,
-            );
-      final preprocessed = _applyPreprocess(resized);
-      final candidate = _encodeCandidate(preprocessed, _algorithm);
-      final resultBytes = candidate.bytes;
-      final preview = await _decodePreview(resultBytes);
+      final result = await _imageService.compress(
+        ToolboxImageCompressInput(
+          sourceBytes: source,
+          targetWidth: targetWidth,
+          algorithm: _algorithm,
+          colorMode: _colorMode,
+          dpiMode: _dpiMode,
+          jpegQuality: _jpegQuality.round(),
+          monochromeThreshold: _bwThreshold,
+          dpi: _dpi.round(),
+        ),
+      );
+      final preview = await _decodeLifeUiImage(result.previewBytes);
 
       if (!mounted) {
         preview.dispose();
@@ -862,25 +844,28 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
 
       final oldResult = _resultPreview;
       setState(() {
-        _resultBytes = resultBytes;
+        _resultBytes = result.bytes;
         _resultPreview = preview;
-        _resultWidth = preview.width;
-        _resultHeight = preview.height;
-        _resultSize = resultBytes.length;
-        _resultAlgorithm = candidate.algorithm;
-        _resultAlgorithmDetail = candidate.detail;
-        _resultFormat = candidate.format;
+        _resultWidth = result.width;
+        _resultHeight = result.height;
+        _resultSize = result.bytes.length;
+        _resultAlgorithm = result.algorithm;
+        _resultAlgorithmDetail = result.detail;
+        _resultFormat = result.format;
       });
       oldResult?.dispose();
-    } catch (error) {
+    } catch (error, stackTrace) {
       if (!mounted) {
         return;
       }
+      _logLifeImageError('compress.run', error, stackTrace);
       setState(() {
         _error = _lifeI18nText(
           context,
           'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.image.compress.compression_failed.e559f85464',
-          params: <String, Object?>{'error': error},
+          params: <String, Object?>{
+            'error': _lifeImageProcessingErrorText(context, error),
+          },
         );
       });
     } finally {
@@ -903,64 +888,23 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
     try {
       final sourceName = _sourceName ?? 'image';
       final baseName = path.basenameWithoutExtension(sourceName);
-      final ext = _formatExtension(_resultFormat);
+      final ext = _resultFormat.fileExtension;
       final fileName = '${baseName}_compressed.$ext';
 
-      String? savedPath;
-      try {
-        savedPath = await FilePicker.platform.saveFile(
-          dialogTitle: _lifeI18nText(
-            context,
+      final savedPath = await _saveLifeBytes(
+        context: context,
+        bytes: result,
+        fileName: fileName,
+        fallbackFileName: '$baseName.$ext',
+        subdirectory: 'image_compress',
+        dialogTitleKey:
             'inline.plan295.life.save_compressed_image.071ebb6716f7',
-          ),
-          fileName: fileName,
-          type: FileType.custom,
-          allowedExtensions: <String>[ext],
-          bytes: result,
-        );
-      } on UnimplementedError {
-        savedPath = null;
-      }
-
+        allowedExtensions: <String>[ext],
+      );
       if (!mounted) {
         return;
       }
-
-      if (savedPath == null || savedPath.trim().isEmpty) {
-        if (kIsWeb) {
-          setState(() {
-            _savedPath = _lifeI18nText(
-              context,
-              'inline.plan295.crypto.browser_download_started_check_your.b28d392515b4',
-            );
-          });
-          return;
-        }
-
-        final appDir = await getApplicationDocumentsDirectory();
-        final exportDir = Directory(
-          path.join(appDir.path, 'life_tools', 'image_compress'),
-        );
-        if (!await exportDir.exists()) {
-          await exportDir.create(recursive: true);
-        }
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final fallback = File(
-          path.join(exportDir.path, '${baseName}_$timestamp.$ext'),
-        );
-        await fallback.writeAsBytes(result, flush: true);
-        if (!mounted) {
-          return;
-        }
-        setState(() {
-          _savedPath = fallback.path;
-        });
-        return;
-      }
-
-      setState(() {
-        _savedPath = savedPath;
-      });
+      setState(() => _savedPath = savedPath);
     } catch (error) {
       if (!mounted) {
         return;
@@ -976,104 +920,6 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
       if (mounted) {
         setState(() => _saving = false);
       }
-    }
-  }
-
-  _ImageCompressCandidate _encodeCandidate(
-    img.Image image,
-    _ImageCompressAlgorithm algorithm,
-  ) {
-    final preprocessDetail = _preprocessDetailToken();
-    final dpiDetail = _dpiDetailToken();
-    String detailWithOptions(String detail) {
-      final parts = <String>[
-        detail,
-        preprocessDetail,
-        if (dpiDetail.isNotEmpty) dpiDetail,
-      ];
-      return parts.where((part) => part.isNotEmpty).join(' | ');
-    }
-
-    switch (algorithm) {
-      case _ImageCompressAlgorithm.jpegBalanced:
-        final bytes = Uint8List.fromList(
-          img.encodeJpg(
-            image,
-            quality: _jpegQuality.round().clamp(20, 100),
-            chroma: img.JpegChroma.yuv444,
-          ),
-        );
-        return _ImageCompressCandidate(
-          bytes: bytes,
-          algorithm: algorithm,
-          format: _ImageCompressFormat.jpg,
-          detail: detailWithOptions('q${_jpegQuality.round()} yuv444'),
-        );
-      case _ImageCompressAlgorithm.jpegAggressive:
-        final safeQuality = math
-            .max(20, _jpegQuality.round() - 20)
-            .clamp(20, 90);
-        final bytes = Uint8List.fromList(
-          img.encodeJpg(
-            image,
-            quality: safeQuality,
-            chroma: img.JpegChroma.yuv420,
-          ),
-        );
-        return _ImageCompressCandidate(
-          bytes: bytes,
-          algorithm: algorithm,
-          format: _ImageCompressFormat.jpg,
-          detail: detailWithOptions('q$safeQuality yuv420'),
-        );
-      case _ImageCompressAlgorithm.pngLossless:
-        final pngDpi = _pngDpiMetadata();
-        final encoder = img.PngEncoder(
-          filter: img.PngFilter.paeth,
-          level: 9,
-          pixelDimensions: pngDpi,
-        );
-        final bytes = Uint8List.fromList(
-          encoder.encode(image, singleFrame: true),
-        );
-        return _ImageCompressCandidate(
-          bytes: bytes,
-          algorithm: algorithm,
-          format: _ImageCompressFormat.png,
-          detail: detailWithOptions(
-            pngDpi == null ? 'level9 paeth' : 'level9 paeth dpi${_dpi.round()}',
-          ),
-        );
-      case _ImageCompressAlgorithm.gifIndexed:
-        final bytes = Uint8List.fromList(
-          img.encodeGif(
-            image,
-            samplingFactor: 32,
-            dither: img.DitherKernel.none,
-            ditherSerpentine: false,
-          ),
-        );
-        return _ImageCompressCandidate(
-          bytes: bytes,
-          algorithm: algorithm,
-          format: _ImageCompressFormat.gif,
-          detail: detailWithOptions('indexed256 no-dither'),
-        );
-      case _ImageCompressAlgorithm.autoBest:
-        final candidates = <_ImageCompressCandidate>[
-          _encodeCandidate(image, _ImageCompressAlgorithm.jpegBalanced),
-          _encodeCandidate(image, _ImageCompressAlgorithm.jpegAggressive),
-          _encodeCandidate(image, _ImageCompressAlgorithm.pngLossless),
-          _encodeCandidate(image, _ImageCompressAlgorithm.gifIndexed),
-        ];
-        candidates.sort((a, b) => a.bytes.length.compareTo(b.bytes.length));
-        final winner = candidates.first;
-        return _ImageCompressCandidate(
-          bytes: winner.bytes,
-          algorithm: winner.algorithm,
-          format: winner.format,
-          detail: 'auto -> ${winner.detail}',
-        );
     }
   }
 
@@ -1110,80 +956,11 @@ class _ImageCompressPageState extends State<_ImageCompressPage> {
     }
   }
 
-  String _formatExtension(_ImageCompressFormat format) {
-    switch (format) {
-      case _ImageCompressFormat.jpg:
-        return 'jpg';
-      case _ImageCompressFormat.png:
-        return 'png';
-      case _ImageCompressFormat.gif:
-        return 'gif';
-    }
-  }
-
-  img.Image _applyPreprocess(img.Image source) {
-    final image = img.Image.from(source);
-    switch (_colorMode) {
-      case _ImageCompressColorMode.original:
-        return image;
-      case _ImageCompressColorMode.grayscale:
-        return img.grayscale(image);
-      case _ImageCompressColorMode.monochrome:
-        return img.luminanceThreshold(
-          image,
-          threshold: _bwThreshold.clamp(0.0, 1.0),
-        );
-    }
-  }
-
-  String _preprocessDetailToken() {
-    switch (_colorMode) {
-      case _ImageCompressColorMode.original:
-        return 'color';
-      case _ImageCompressColorMode.grayscale:
-        return 'gray';
-      case _ImageCompressColorMode.monochrome:
-        return 'bw@${_bwThreshold.toStringAsFixed(2)}';
-    }
-  }
-
-  img.PngPhysicalPixelDimensions? _pngDpiMetadata() {
-    if (_dpiMode != _ImageCompressDpiMode.pngMetadata) {
-      return null;
-    }
-    return img.PngPhysicalPixelDimensions.dpi(_dpi.round());
-  }
-
-  String _dpiDetailToken() {
-    if (_dpiMode != _ImageCompressDpiMode.pngMetadata) {
-      return '';
-    }
-    return 'dpi${_dpi.round()}(png-only)';
-  }
-
   int _scaledHeight(int width) {
     if (_sourceWidth <= 0 || _sourceHeight <= 0) {
       return 0;
     }
     return math.max(1, (_sourceHeight * width / _sourceWidth).round());
-  }
-
-  Future<ui.Image> _decodePreview(Uint8List bytes) async {
-    final codec = await ui.instantiateImageCodec(bytes);
-    final frame = await codec.getNextFrame();
-    return frame.image;
-  }
-
-  String _formatBytes(int bytes) {
-    if (bytes < 1024) {
-      return '$bytes B';
-    }
-    final kb = bytes / 1024;
-    if (kb < 1024) {
-      return '${kb.toStringAsFixed(1)} KB';
-    }
-    final mb = kb / 1024;
-    return '${mb.toStringAsFixed(2)} MB';
   }
 
   void _resetAll() {

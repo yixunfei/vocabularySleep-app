@@ -176,6 +176,8 @@ class SeamlessAmbientLoop {
   int? _fadeFromIndex;
   int? _fadeToIndex;
   double _fadeProgress = 0;
+  Future<void>? _volumeSyncFuture;
+  bool _volumeSyncPending = false;
 
   Future<void> start() async {
     if (_disposed || _started) {
@@ -229,7 +231,7 @@ class SeamlessAmbientLoop {
         },
       );
       await firstPlayer.setReleaseMode(ReleaseMode.loop);
-      await firstPlayer.setVolume(_targetVolume);
+      await _syncVolumes();
       // CRITICAL FIX: Wait for player to be ready before resuming
       await _playerReady(firstPlayer);
       if (!_isRunActive(runToken)) {
@@ -260,8 +262,7 @@ class SeamlessAmbientLoop {
       },
     );
 
-    await firstPlayer.setVolume(_targetVolume);
-    await secondPlayer.setVolume(0);
+    await _syncVolumes();
 
     // CRITICAL FIX: Wait for player to be ready before resuming.
     // Without this, resume() may be called before the audio source is loaded,
@@ -304,6 +305,20 @@ class SeamlessAmbientLoop {
     _fadeFromIndex = null;
     _fadeToIndex = null;
     _fadeProgress = 0;
+    _volumeSyncPending = false;
+
+    final volumeSyncFuture = _volumeSyncFuture;
+    if (volumeSyncFuture != null) {
+      try {
+        await volumeSyncFuture;
+      } catch (error) {
+        AppLogService.instance.w(
+          'ambient_audio',
+          'volume sync failed while disposing',
+          data: <String, Object?>{'error': '$error'},
+        );
+      }
+    }
 
     final players = <AmbientLoopPlayer>[
       ...<AmbientLoopPlayer?>[_firstPlayer, _secondPlayer].nonNulls,
@@ -404,7 +419,10 @@ class SeamlessAmbientLoop {
       return;
     }
 
-    await toPlayer.setVolume(0);
+    await _syncVolumes();
+    if (!_isRunActive(runToken)) {
+      return;
+    }
     await toPlayer.resume();
     if (!_isRunActive(runToken)) {
       return;
@@ -452,7 +470,10 @@ class SeamlessAmbientLoop {
     _fadeToIndex = null;
     _fadeProgress = 0;
 
-    if (fromPlayer != null) {
+    if (_isRunActive(runToken)) {
+      await _syncVolumes();
+    }
+    if (fromPlayer != null && !_disposed) {
       await fromPlayer.stop();
     }
     AppLogService.instance.d(
@@ -463,20 +484,61 @@ class SeamlessAmbientLoop {
         'activeIndex': _activeIndex,
       },
     );
-    if (_isRunActive(runToken)) {
-      await _syncVolumes();
+  }
+
+  Future<void> _syncVolumes() {
+    if (_disposed) {
+      return Future<void>.value();
+    }
+    _volumeSyncPending = true;
+    final activeSync = _volumeSyncFuture;
+    if (activeSync != null) {
+      return activeSync;
+    }
+
+    final completion = Completer<void>();
+    final syncFuture = completion.future;
+    _volumeSyncFuture = syncFuture;
+    unawaited(_drainVolumeSync(completion, syncFuture));
+    return syncFuture;
+  }
+
+  Future<void> _drainVolumeSync(
+    Completer<void> completion,
+    Future<void> syncFuture,
+  ) async {
+    try {
+      while (!_disposed && _volumeSyncPending) {
+        _volumeSyncPending = false;
+        final targets = _captureVolumeTargets();
+        for (final target in targets) {
+          if (_disposed) {
+            break;
+          }
+          await target.player.setVolume(target.volume);
+        }
+      }
+      completion.complete();
+    } on Object catch (error, stackTrace) {
+      completion.completeError(error, stackTrace);
+    } finally {
+      if (identical(_volumeSyncFuture, syncFuture)) {
+        _volumeSyncFuture = null;
+      }
     }
   }
 
-  Future<void> _syncVolumes() async {
+  List<({AmbientLoopPlayer player, double volume})> _captureVolumeTargets() {
     final firstPlayer = _firstPlayer;
     if (firstPlayer == null) {
-      return;
+      return <({AmbientLoopPlayer player, double volume})>[];
     }
 
+    final targetVolume = _targetVolume;
     if (_usingNativeLoopFallback || _secondPlayer == null) {
-      await firstPlayer.setVolume(_targetVolume);
-      return;
+      return <({AmbientLoopPlayer player, double volume})>[
+        (player: firstPlayer, volume: targetVolume),
+      ];
     }
 
     final secondPlayer = _secondPlayer!;
@@ -484,26 +546,27 @@ class SeamlessAmbientLoop {
     final fadeToIndex = _fadeToIndex;
 
     if (fadeFromIndex != null && fadeToIndex != null) {
-      final fromVolume = _targetVolume * (1 - _fadeProgress);
-      final toVolume = _targetVolume * _fadeProgress;
+      final fadeProgress = _fadeProgress;
+      final fromVolume = targetVolume * (1 - fadeProgress);
+      final toVolume = targetVolume * fadeProgress;
       final fromPlayer = _playerByIndex(fadeFromIndex);
       final toPlayer = _playerByIndex(fadeToIndex);
-      if (fromPlayer != null) {
-        await fromPlayer.setVolume(fromVolume);
-      }
-      if (toPlayer != null) {
-        await toPlayer.setVolume(toVolume);
-      }
-      return;
+      return <({AmbientLoopPlayer player, double volume})>[
+        if (fromPlayer != null) (player: fromPlayer, volume: fromVolume),
+        if (toPlayer != null) (player: toPlayer, volume: toVolume),
+      ];
     }
 
     if (_activeIndex == 0) {
-      await firstPlayer.setVolume(_targetVolume);
-      await secondPlayer.setVolume(0);
-    } else {
-      await firstPlayer.setVolume(0);
-      await secondPlayer.setVolume(_targetVolume);
+      return <({AmbientLoopPlayer player, double volume})>[
+        (player: firstPlayer, volume: targetVolume),
+        (player: secondPlayer, volume: 0),
+      ];
     }
+    return <({AmbientLoopPlayer player, double volume})>[
+      (player: firstPlayer, volume: 0),
+      (player: secondPlayer, volume: targetVolume),
+    ];
   }
 
   AmbientLoopPlayer? _playerByIndex(int index) {

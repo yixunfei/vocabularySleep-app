@@ -6,10 +6,10 @@ import 'package:vocabulary_sleep_app/src/services/toolbox_id_photo_service.dart'
 
 void main() {
   group('ToolboxIdPhotoService', () {
-    test('renders preset dimensions from millimeter and dpi', () {
+    test('renders preset dimensions from millimeter and dpi', () async {
       final source = _fixturePortrait();
 
-      final result = const ToolboxIdPhotoService().render(
+      final result = await const ToolboxIdPhotoService().render(
         ToolboxIdPhotoRenderInput(
           sourceBytes: source,
           preset: toolboxIdPhotoPresets.first,
@@ -29,10 +29,10 @@ void main() {
       expect(decoded.height, 413);
     });
 
-    test('replaces a sampled plain background with target color', () {
+    test('replaces a sampled plain background with target color', () async {
       final source = _fixturePortrait();
 
-      final result = const ToolboxIdPhotoService().render(
+      final result = await const ToolboxIdPhotoService().render(
         ToolboxIdPhotoRenderInput(
           sourceBytes: source,
           preset: toolboxIdPhotoPresets[5],
@@ -51,10 +51,10 @@ void main() {
       expect(corner.b, closeTo(0xff, 4));
     });
 
-    test('exports jpeg when requested', () {
+    test('exports jpeg when requested', () async {
       final source = _fixturePortrait();
 
-      final result = const ToolboxIdPhotoService().render(
+      final result = await const ToolboxIdPhotoService().render(
         ToolboxIdPhotoRenderInput(
           sourceBytes: source,
           preset: toolboxIdPhotoPresets[1],

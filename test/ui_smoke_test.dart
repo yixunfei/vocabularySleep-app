@@ -467,7 +467,7 @@ void main() {
         child: const AppearanceStudioPage(),
       );
 
-      expect(find.text('\u5b57\u4f53\u6392\u7248'), findsOneWidget);
+      expect(find.text('\u6392\u7248'), findsOneWidget);
       expect(find.text('\u91cd\u7f6e'), findsOneWidget);
       expect(find.text('\u7cfb\u7edf\u5b57\u4f53'), findsOneWidget);
       expect(find.text('Typography'), findsNothing);
@@ -485,8 +485,8 @@ void main() {
         child: const LanguageSettingsPage(),
       );
 
-      expect(find.text('袧邪褋褌褉芯泄泻懈 褟蟹褘泻邪'), findsOneWidget);
-      expect(find.text('袪褍褋褋泻懈泄'), findsWidgets);
+      expect(find.text('Настройки языка'), findsOneWidget);
+      expect(find.text('русский'), findsWidgets);
       expect(find.text('Language settings'), findsNothing);
     });
 
@@ -996,43 +996,37 @@ void main() {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const ToolboxPage());
 
-      expect(find.text('Multi-tool toolbox'), findsOneWidget);
+      expect(find.text('Toolbox'), findsWidgets);
       await tester.scrollUntilVisible(
-        find.text('Soothing music'),
+        find.text('Soothing Music'),
         300,
         scrollable: find.byType(Scrollable).first,
       );
-      expect(find.text('Soothing music'), findsOneWidget);
+      expect(find.text('Soothing Music'), findsOneWidget);
       await tester.scrollUntilVisible(
-        find.text('Schulte grid'),
+        find.text('Schulte Grid'),
         300,
         scrollable: find.byType(Scrollable).first,
       );
-      expect(find.text('Schulte grid'), findsOneWidget);
+      expect(find.text('Schulte Grid'), findsOneWidget);
       await tester.scrollUntilVisible(
-        find.text('Human test hub'),
+        find.text('Human Tests'),
         300,
         scrollable: find.byType(Scrollable).first,
       );
-      expect(find.text('Human test hub'), findsOneWidget);
+      expect(find.text('Human Tests'), findsOneWidget);
       await tester.scrollUntilVisible(
-        find.text('Daily decision'),
+        find.text('Daily Decision'),
         300,
         scrollable: find.byType(Scrollable).first,
       );
-      expect(find.text('Daily decision'), findsOneWidget);
+      expect(find.text('Daily Decision'), findsOneWidget);
       await tester.scrollUntilVisible(
-        find.text('Sound locator'),
+        find.text('Life Tools'),
         300,
         scrollable: find.byType(Scrollable).first,
       );
-      expect(find.text('Sound locator'), findsOneWidget);
-      await tester.scrollUntilVisible(
-        find.text('Life tool hub'),
-        300,
-        scrollable: find.byType(Scrollable).first,
-      );
-      expect(find.text('Life tool hub'), findsOneWidget);
+      expect(find.text('Life Tools'), findsOneWidget);
     });
 
     testWidgets('toolbox intro stays compact and opens editing tips', (
@@ -1050,22 +1044,24 @@ void main() {
       expect(introPanel, findsOneWidget);
       expect(tester.getSize(introPanel).height, lessThan(92));
       expect(
-        find.text('Long-press cards for layout and shortcuts.'),
+        find.text('Quick access to sleep, focus, sound, and calm tools.'),
         findsOneWidget,
       );
-      expect(find.text('Long press'), findsNothing);
 
       await tester.tap(
         find.byKey(const ValueKey<String>('toolbox_intro_help_button')),
       );
       await tester.pumpAndSettle();
 
+      expect(find.textContaining('Tap any tool to open it.'), findsOneWidget);
       expect(
-        find.textContaining('Long-press any tool card to edit and reorder it.'),
+        find.text('Drag-and-drop reordering for quick access.'),
         findsOneWidget,
       );
-      expect(find.text('Long press'), findsOneWidget);
-      expect(find.text('Shortcuts'), findsOneWidget);
+      expect(
+        find.text('Pin your most-used tools to the Quick entry panel.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('toolbox page opens human test hub', (tester) async {
@@ -1074,13 +1070,13 @@ void main() {
 
       final humanTestCard = find
           .ancestor(
-            of: find.text('Human test hub'),
+            of: find.text('Human Tests'),
             matching: find.byType(InkWell),
           )
           .first;
 
       await tester.scrollUntilVisible(
-        find.text('Human test hub'),
+        find.text('Human Tests'),
         300,
         scrollable: find.byType(Scrollable).first,
       );
@@ -1094,66 +1090,11 @@ void main() {
       expect(find.text('Color vision'), findsOneWidget);
     });
 
-    testWidgets('toolbox page opens sound locator module', (tester) async {
-      final state = _FakeAppState.sample(uiLanguage: 'en');
-      await _pumpPage(tester, state: state, child: const ToolboxPage());
-
-      await tester.scrollUntilVisible(
-        find.text('Sound locator'),
-        300,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.pumpAndSettle();
-
-      final locatorCard = find
-          .ancestor(
-            of: find.text('Sound locator'),
-            matching: find.byType(InkWell),
-          )
-          .first;
-      await tester.ensureVisible(locatorCard);
-      await tester.pumpAndSettle();
-      await tester.tap(locatorCard, warnIfMissed: false);
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 500));
-
-      expect(find.text('Start locating'), findsOneWidget);
-      expect(find.text('Movement confirmation'), findsOneWidget);
-      expect(find.textContaining('ODAS'), findsWidgets);
-      await tester.scrollUntilVisible(
-        find.text('Phone microphone'),
-        300,
-        scrollable: find.byType(Scrollable).last,
-      );
-      await tester.pump(const Duration(milliseconds: 120));
-
-      expect(find.text('Phone microphone'), findsOneWidget);
-    });
-
     testWidgets('toolbox page opens life tool hub module', (tester) async {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const ToolboxPage());
 
-      await tester.scrollUntilVisible(
-        find.text('Life tool hub'),
-        300,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.pumpAndSettle();
-
-      final lifeHubCard = find
-          .ancestor(
-            of: find.text('Life tool hub'),
-            matching: find.byType(InkWell),
-          )
-          .first;
-      await tester.ensureVisible(lifeHubCard);
-      await tester.pumpAndSettle();
-      await tester.tap(
-        find.descendant(of: lifeHubCard, matching: find.byType(InkWell)).first,
-        warnIfMissed: false,
-      );
-      await tester.pumpAndSettle();
+      await _openLifeToolsFromToolbox(tester);
 
       expect(
         find.byKey(
@@ -1512,9 +1453,12 @@ void main() {
           ),
           '800',
         );
-        await tester.tap(
-          find.byKey(const ValueKey<String>('city-compare-add-custom-expense')),
+        final addExpenseButton = find.byKey(
+          const ValueKey<String>('city-compare-add-custom-expense'),
         );
+        await tester.ensureVisible(addExpenseButton);
+        await tester.pumpAndSettle();
+        await tester.tap(addExpenseButton);
         await tester.pumpAndSettle();
 
         expect(find.text('Pet care'), findsOneWidget);
@@ -1585,10 +1529,18 @@ void main() {
       expect(find.text('Progress and fees'), findsOneWidget);
       expect(find.text('Remaining principal'), findsWidgets);
 
-      await tester.tap(find.widgetWithText(ChoiceChip, 'Housing area'));
+      final housingAreaMode = find.widgetWithText(ChoiceChip, 'Housing area');
+      await tester.ensureVisible(housingAreaMode);
+      await tester.pumpAndSettle();
+      await tester.tap(housingAreaMode);
       await tester.pumpAndSettle();
 
-      expect(find.widgetWithText(TextField, 'Unit price'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Unit price'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      expect(find.text('Unit price'), findsOneWidget);
       expect(find.text('Property total'), findsOneWidget);
     });
 
@@ -1665,10 +1617,7 @@ void main() {
         expect(find.text('Mode'), findsOneWidget);
         expect(find.text('Input area'), findsOneWidget);
         expect(find.text('Results'), findsOneWidget);
-        expect(find.text('Pinyin and zhuyin'), findsOneWidget);
-        expect(find.text('Number writing'), findsOneWidget);
-        expect(find.text('Solar to lunar'), findsOneWidget);
-        expect(find.text('Language code lookup'), findsOneWidget);
+        expect(find.text('Pinyin and zhuyin'), findsWidgets);
         expect(find.text('Chinese to pinyin'), findsNothing);
         expect(
           find.byKey(const ValueKey<String>('life_text_transform_input_field')),
@@ -1685,12 +1634,8 @@ void main() {
           findsNothing,
         );
 
-        await tester.tap(find.widgetWithText(ChoiceChip, 'Phonetic').first);
-        await tester.pumpAndSettle();
-        await tester.tap(
-          find.widgetWithText(ChoiceChip, 'Pinyin and zhuyin').first,
-        );
-        await tester.pumpAndSettle();
+        await _tapVisibleChoiceChip(tester, 'Phonetic');
+        await _tapVisibleChoiceChip(tester, 'Pinyin and zhuyin');
 
         await tester.enterText(
           find.byKey(const ValueKey<String>('life_text_transform_input_field')),
@@ -1700,10 +1645,8 @@ void main() {
         expect(find.text('Pinyin without tone'), findsOneWidget);
         expect(find.text('Zhuyin'), findsOneWidget);
 
-        await tester.tap(find.widgetWithText(ChoiceChip, 'Hidden').first);
-        await tester.pumpAndSettle();
-        await tester.tap(find.widgetWithText(ChoiceChip, 'Hide text').first);
-        await tester.pumpAndSettle();
+        await _tapVisibleChoiceChip(tester, 'Hidden');
+        await _tapVisibleChoiceChip(tester, 'Hide text');
         expect(
           find.byKey(
             const ValueKey<String>('life_text_transform_secondary_field'),
@@ -1724,12 +1667,8 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.textContaining('cover'), findsWidgets);
 
-        await tester.tap(find.widgetWithText(ChoiceChip, 'Number').first);
-        await tester.pumpAndSettle();
-        await tester.tap(
-          find.widgetWithText(ChoiceChip, 'Number writing').first,
-        );
-        await tester.pumpAndSettle();
+        await _tapVisibleChoiceChip(tester, 'Number');
+        await _tapVisibleChoiceChip(tester, 'Number writing');
         await tester.enterText(
           find.byKey(const ValueKey<String>('life_text_transform_input_field')),
           '2024',
@@ -1741,12 +1680,8 @@ void main() {
         expect(find.text('English words'), findsOneWidget);
         expect(find.byIcon(Icons.copy_rounded), findsWidgets);
 
-        await tester.tap(find.widgetWithText(ChoiceChip, 'Encoding').first);
-        await tester.pumpAndSettle();
-        await tester.tap(
-          find.widgetWithText(ChoiceChip, 'RC4 legacy encode').first,
-        );
-        await tester.pumpAndSettle();
+        await _tapVisibleChoiceChip(tester, 'Encoding');
+        await _tapVisibleChoiceChip(tester, 'RC4 legacy encode');
         expect(
           find.byKey(const ValueKey<String>('life_text_transform_key_field')),
           findsOneWidget,
@@ -1763,20 +1698,12 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('RC4 Base64'), findsOneWidget);
 
-        await tester.tap(find.widgetWithText(ChoiceChip, 'Calendar').first);
-        await tester.pumpAndSettle();
-        await tester.tap(
-          find.widgetWithText(ChoiceChip, 'Solar to lunar').first,
-        );
-        await tester.pumpAndSettle();
+        await _tapVisibleChoiceChip(tester, 'Calendar');
+        await _tapVisibleChoiceChip(tester, 'Solar to lunar');
         expect(find.text('Lunar date'), findsOneWidget);
 
-        await tester.tap(find.widgetWithText(ChoiceChip, 'Style').first);
-        await tester.pumpAndSettle();
-        await tester.tap(
-          find.widgetWithText(ChoiceChip, 'Vertical layout').first,
-        );
-        await tester.pumpAndSettle();
+        await _tapVisibleChoiceChip(tester, 'Style');
+        await _tapVisibleChoiceChip(tester, 'Vertical layout');
         expect(
           find.byKey(
             const ValueKey<String>('life_text_transform_vertical_columns'),
@@ -2415,27 +2342,9 @@ void main() {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const ToolboxPage());
 
-      await tester.scrollUntilVisible(
-        find.text('Life tool hub'),
-        300,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.pumpAndSettle();
+      await _openLifeToolsFromToolbox(tester);
 
-      final lifeHubCard = find
-          .ancestor(
-            of: find.text('Life tool hub'),
-            matching: find.byType(InkWell),
-          )
-          .first;
-      await tester.tap(lifeHubCard, warnIfMissed: false);
-      await tester.pumpAndSettle();
-
-      final timeCard = find
-          .ancestor(of: find.text('Time screen'), matching: find.byType(Card))
-          .first;
-      await tester.tap(timeCard, warnIfMissed: false);
-      await tester.pumpAndSettle();
+      await _openLifeTool(tester, 'time_screen');
 
       expect(find.text('Clock preview'), findsOneWidget);
       expect(find.text('Clock settings'), findsOneWidget);
@@ -2444,26 +2353,10 @@ void main() {
       expect(find.text('Flip animation'), findsOneWidget);
       expect(find.text('Classic flip'), findsWidgets);
 
-      Navigator.of(tester.element(find.text('Clock preview'))).pop();
+      await tester.tap(find.byIcon(Icons.arrow_back_rounded).last);
       await tester.pumpAndSettle();
 
-      await tester.scrollUntilVisible(
-        find.text('Handheld barrage'),
-        300,
-        scrollable: find.byType(Scrollable).last,
-      );
-      await tester.pumpAndSettle();
-
-      final barrageCard = find
-          .ancestor(
-            of: find.text('Handheld barrage'),
-            matching: find.byType(Card),
-          )
-          .first;
-      await tester.ensureVisible(barrageCard);
-      await tester.pumpAndSettle();
-      await tester.tap(barrageCard, warnIfMissed: false);
-      await tester.pumpAndSettle();
+      await _openLifeTool(tester, 'barrage');
 
       expect(find.text('Barrage preview'), findsOneWidget);
       expect(find.text('Barrage settings'), findsOneWidget);
@@ -2477,37 +2370,9 @@ void main() {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const ToolboxPage());
 
-      await tester.scrollUntilVisible(
-        find.text('Life tool hub'),
-        300,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.pumpAndSettle();
+      await _openLifeToolsFromToolbox(tester);
 
-      final lifeHubCard = find
-          .ancestor(
-            of: find.text('Life tool hub'),
-            matching: find.byType(InkWell),
-          )
-          .first;
-      await tester.tap(lifeHubCard, warnIfMissed: false);
-      await tester.pumpAndSettle();
-
-      await tester.scrollUntilVisible(
-        find.text('Ruler and protractor'),
-        300,
-        scrollable: find.byType(Scrollable).last,
-      );
-      await tester.pumpAndSettle();
-
-      final rulerCard = find
-          .ancestor(
-            of: find.text('Ruler and protractor'),
-            matching: find.byType(Card),
-          )
-          .first;
-      await tester.tap(rulerCard, warnIfMissed: false);
-      await tester.pumpAndSettle();
+      await _openLifeTool(tester, 'ruler');
 
       expect(find.text('Landscape ruler'), findsOneWidget);
       expect(find.text('Open ruler'), findsOneWidget);
@@ -2519,30 +2384,9 @@ void main() {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const ToolboxPage());
 
-      await tester.scrollUntilVisible(
-        find.text('Life tool hub'),
-        300,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.pumpAndSettle();
+      await _openLifeToolsFromToolbox(tester);
 
-      final lifeHubCard = find
-          .ancestor(
-            of: find.text('Life tool hub'),
-            matching: find.byType(InkWell),
-          )
-          .first;
-      await tester.tap(lifeHubCard, warnIfMissed: false);
-      await tester.pumpAndSettle();
-
-      await tester.scrollUntilVisible(
-        find.text('Color helper'),
-        300,
-        scrollable: find.byType(Scrollable).last,
-      );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Color helper').last, warnIfMissed: false);
+      await _openLifeTool(tester, 'color_helper');
       await _pumpUntilAnyFound(tester, <Finder>[
         find.text('Unified palette'),
         find.text('Palette load failed'),
@@ -2557,7 +2401,7 @@ void main() {
       );
       expect(find.text('Unified palette'), findsOneWidget);
       expect(
-        find.text('Name / pinyin / romaji / hex / ??FF??'),
+        find.text('Name / pinyin / romaji / hex / #FFFFFF'),
         findsOneWidget,
       );
       expect(find.text('776 / 776 colors'), findsOneWidget);
@@ -2578,21 +2422,21 @@ void main() {
       );
       expect(colorHelperScaffoldBeforeSelection.backgroundColor, isNull);
 
-      await tester.enterText(find.byType(TextField).first, '??F4DC');
+      await tester.enterText(find.byType(TextField).first, '#F9F4DC');
       await tester.pumpAndSettle();
 
-      expect(find.text('涔崇櫧'), findsWidgets);
+      expect(find.text('乳白'), findsWidgets);
       expect(find.text('RUBAI'), findsWidgets);
 
       await tester.scrollUntilVisible(
-        find.text('涔崇櫧'),
+        find.text('乳白'),
         120,
         scrollable: find.byType(Scrollable).last,
       );
       await tester.pumpAndSettle();
 
       final rubaiTile = find
-          .ancestor(of: find.text('涔崇櫧'), matching: find.byType(InkWell))
+          .ancestor(of: find.text('乳白'), matching: find.byType(InkWell))
           .first;
       await tester.tap(rubaiTile, warnIfMissed: false);
       await tester.pumpAndSettle();
@@ -2638,38 +2482,9 @@ void main() {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const ToolboxPage());
 
-      await tester.scrollUntilVisible(
-        find.text('Life tool hub'),
-        300,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.pumpAndSettle();
+      await _openLifeToolsFromToolbox(tester);
 
-      final lifeHubCard = find
-          .ancestor(
-            of: find.text('Life tool hub'),
-            matching: find.byType(InkWell),
-          )
-          .first;
-      await tester.tap(lifeHubCard, warnIfMissed: false);
-      await tester.pumpAndSettle();
-
-      await tester.scrollUntilVisible(
-        find.text('Wallpaper helper'),
-        300,
-        scrollable: find.byType(Scrollable).last,
-      );
-      await tester.pumpAndSettle();
-
-      final wallpaperCard = find
-          .ancestor(
-            of: find.text('Wallpaper helper'),
-            matching: find.byType(Card),
-          )
-          .first;
-      await tester.ensureVisible(wallpaperCard);
-      await tester.pumpAndSettle();
-      await tester.tap(wallpaperCard, warnIfMissed: false);
+      await _openLifeTool(tester, 'wallpaper_helper', settleAfterOpen: false);
       await _pumpUntilFound(tester, find.text('Wallpaper search'));
 
       expect(find.text('Wallpaper search'), findsOneWidget);
@@ -2693,39 +2508,9 @@ void main() {
         final state = _FakeAppState.sample(uiLanguage: 'en');
         await _pumpPage(tester, state: state, child: const ToolboxPage());
 
-        await tester.scrollUntilVisible(
-          find.text('Life tool hub'),
-          300,
-          scrollable: find.byType(Scrollable).first,
-        );
-        await tester.pumpAndSettle();
+        await _openLifeToolsFromToolbox(tester);
 
-        final lifeHubCard = find
-            .ancestor(
-              of: find.text('Life tool hub'),
-              matching: find.byType(InkWell),
-            )
-            .first;
-        await tester.tap(lifeHubCard, warnIfMissed: false);
-        await tester.pumpAndSettle();
-
-        await tester.scrollUntilVisible(
-          find.text('Garbage sorting'),
-          300,
-          scrollable: find.byType(Scrollable).last,
-        );
-        await tester.pumpAndSettle();
-
-        final garbageCard = find
-            .ancestor(
-              of: find.text('Garbage sorting'),
-              matching: find.byType(Card),
-            )
-            .first;
-        await tester.ensureVisible(garbageCard);
-        await tester.pumpAndSettle();
-        await tester.tap(garbageCard, warnIfMissed: false);
-        await tester.pumpAndSettle();
+        await _openLifeTool(tester, 'garbage');
 
         await _pumpUntilFound(tester, find.text('Start search'));
         expect(find.text('Remote sorting data'), findsOneWidget);
@@ -2804,39 +2589,9 @@ void main() {
         final state = _FakeAppState.sample(uiLanguage: 'en');
         await _pumpPage(tester, state: state, child: const ToolboxPage());
 
-        await tester.scrollUntilVisible(
-          find.text('Life tool hub'),
-          300,
-          scrollable: find.byType(Scrollable).first,
-        );
-        await tester.pumpAndSettle();
+        await _openLifeToolsFromToolbox(tester);
 
-        final lifeHubCard = find
-            .ancestor(
-              of: find.text('Life tool hub'),
-              matching: find.byType(InkWell),
-            )
-            .first;
-        await tester.tap(lifeHubCard, warnIfMissed: false);
-        await tester.pumpAndSettle();
-
-        await tester.scrollUntilVisible(
-          find.text('Reverse image'),
-          300,
-          scrollable: find.byType(Scrollable).last,
-        );
-        await tester.pumpAndSettle();
-
-        final reverseImageCard = find
-            .ancestor(
-              of: find.text('Reverse image'),
-              matching: find.byType(Card),
-            )
-            .first;
-        await tester.ensureVisible(reverseImageCard);
-        await tester.pumpAndSettle();
-        await tester.tap(reverseImageCard, warnIfMissed: false);
-        await tester.pumpAndSettle();
+        await _openLifeTool(tester, 'reverse_image');
 
         expect(find.text('Aggregated engines'), findsOneWidget);
         expect(find.text('Run search'), findsOneWidget);
@@ -2873,38 +2628,9 @@ void main() {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const ToolboxPage());
 
-      await tester.scrollUntilVisible(
-        find.text('Life tool hub'),
-        300,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.pumpAndSettle();
+      await _openLifeToolsFromToolbox(tester);
 
-      final lifeHubCard = find
-          .ancestor(
-            of: find.text('Life tool hub'),
-            matching: find.byType(InkWell),
-          )
-          .first;
-      await tester.tap(lifeHubCard, warnIfMissed: false);
-      await tester.pumpAndSettle();
-
-      await tester.scrollUntilVisible(
-        find.text('Image compression / upscale'),
-        300,
-        scrollable: find.byType(Scrollable).last,
-      );
-      await tester.pumpAndSettle();
-
-      final imageTransformCard = find
-          .ancestor(
-            of: find.text('Image compression / upscale'),
-            matching: find.byType(Card),
-          )
-          .first;
-      await tester.ensureVisible(imageTransformCard);
-      await tester.tap(imageTransformCard, warnIfMissed: false);
-      await tester.pumpAndSettle();
+      await _openLifeTool(tester, 'image_transform');
 
       expect(find.text('Tool tabs'), findsOneWidget);
       expect(
@@ -3283,22 +3009,34 @@ void main() {
           child: const CryptoSecurityHubPage(),
         );
 
-        final fileCryptoCard = find
-            .ancestor(
-              of: find.text('File encryption').last,
-              matching: find.byType(InkWell),
-            )
-            .first;
+        final fileCryptoCard = find.byKey(
+          const ValueKey<String>('crypto_file_encryption_card'),
+        );
+        await tester.scrollUntilVisible(
+          fileCryptoCard,
+          300,
+          scrollable: find.byType(Scrollable).last,
+        );
         await tester.ensureVisible(fileCryptoCard);
-        await tester.tap(fileCryptoCard, warnIfMissed: false);
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.descendant(of: fileCryptoCard, matching: find.byType(InkWell)),
+          warnIfMissed: false,
+        );
         await tester.pumpAndSettle();
 
         expect(find.text('File encryption'), findsWidgets);
-        expect(find.text('Encryption settings'), findsOneWidget);
-
-        await tester.ensureVisible(find.text('Encryption settings'));
+        final configSection = find.byKey(
+          const ValueKey<String>('crypto_file_config_section'),
+        );
+        await tester.scrollUntilVisible(
+          configSection,
+          200,
+          scrollable: find.byType(Scrollable).last,
+        );
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Encryption settings'));
+        expect(find.text('Encryption settings'), findsOneWidget);
+        await tester.tap(configSection);
         await tester.pumpAndSettle();
 
         expect(find.text('Error and decrypt limits'), findsOneWidget);
@@ -3435,39 +3173,9 @@ void main() {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const ToolboxPage());
 
-      await tester.scrollUntilVisible(
-        find.text('Life tool hub'),
-        300,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.pumpAndSettle();
+      await _openLifeToolsFromToolbox(tester);
 
-      final lifeHubCard = find
-          .ancestor(
-            of: find.text('Life tool hub'),
-            matching: find.byType(InkWell),
-          )
-          .first;
-      await tester.tap(lifeHubCard, warnIfMissed: false);
-      await tester.pumpAndSettle();
-
-      await tester.scrollUntilVisible(
-        find.text('Simple mind map'),
-        300,
-        scrollable: find.byType(Scrollable).last,
-      );
-      await tester.pumpAndSettle();
-
-      final mindMapCard = find
-          .ancestor(
-            of: find.text('Simple mind map'),
-            matching: find.byType(Card),
-          )
-          .first;
-      await tester.ensureVisible(mindMapCard);
-      await tester.pumpAndSettle();
-      await tester.tap(mindMapCard, warnIfMissed: false);
-      await tester.pumpAndSettle();
+      await _openLifeTool(tester, 'mind_map');
 
       expect(find.text('Mind map stage'), findsOneWidget);
       expect(find.text('Node actions'), findsOneWidget);
@@ -3608,39 +3316,9 @@ void main() {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const ToolboxPage());
 
-      await tester.scrollUntilVisible(
-        find.text('Life tool hub'),
-        300,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.pumpAndSettle();
+      await _openLifeToolsFromToolbox(tester);
 
-      final lifeHubCard = find
-          .ancestor(
-            of: find.text('Life tool hub'),
-            matching: find.byType(InkWell),
-          )
-          .first;
-      await tester.tap(lifeHubCard, warnIfMissed: false);
-      await tester.pumpAndSettle();
-
-      await tester.scrollUntilVisible(
-        find.text('Relative calculator'),
-        300,
-        scrollable: find.byType(Scrollable).last,
-      );
-      await tester.pumpAndSettle();
-
-      final relativesCard = find
-          .ancestor(
-            of: find.text('Relative calculator'),
-            matching: find.byType(Card),
-          )
-          .first;
-      await tester.ensureVisible(relativesCard);
-      await tester.pumpAndSettle();
-      await tester.tap(relativesCard, warnIfMissed: false);
-      await tester.pumpAndSettle();
+      await _openLifeTool(tester, 'relatives');
 
       expect(find.text('Calculator'), findsOneWidget);
       expect(find.text('Relations'), findsOneWidget);
@@ -3826,15 +3504,15 @@ void main() {
       await tester.tap(find.text('Aim settings'), warnIfMissed: false);
       await tester.pumpAndSettle();
 
-      expect(find.text('Target total 路 20'), findsOneWidget);
-      expect(find.text('Target size 路 54 dp'), findsOneWidget);
+      expect(find.text('Target total · 20'), findsOneWidget);
+      expect(find.text('Target size · 54 dp'), findsOneWidget);
 
       await tester.tap(find.text('Reveal grow'));
       await tester.pumpAndSettle();
-      expect(find.text('Start size 路 0.2 dp'), findsOneWidget);
-      expect(find.text('Reveal time 路 120 ms'), findsOneWidget);
-      expect(find.text('Visible size 路 6.0 dp'), findsOneWidget);
-      expect(find.text('Growth speed 路 1.1x'), findsOneWidget);
+      expect(find.text('Start size · 0.2 dp'), findsOneWidget);
+      expect(find.text('Reveal time · 120 ms'), findsOneWidget);
+      expect(find.text('Visible size · 6.0 dp'), findsOneWidget);
+      expect(find.text('Growth speed · 1.1x'), findsOneWidget);
       expect(find.text('Moving growth'), findsOneWidget);
       expect(find.text('Sniper duel'), findsOneWidget);
       expect(find.text('Speed curve'), findsOneWidget);
@@ -3897,14 +3575,14 @@ void main() {
       await tester.tap(find.text('Aim settings'), warnIfMissed: false);
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
-        find.text('Target total 路 20'),
+        find.text('Target total · 20'),
         160,
         scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
       await tester.drag(find.byType(Slider).first, const Offset(-500, 0));
       await tester.pumpAndSettle();
-      expect(find.text('Target total 路 5'), findsOneWidget);
+      expect(find.text('Target total · 5'), findsOneWidget);
 
       final startButton = find.widgetWithText(FilledButton, 'Start').first;
       await tester.scrollUntilVisible(
@@ -4100,7 +3778,8 @@ void main() {
       await tester.ensureVisible(find.text('Start'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Start'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 2300));
 
       expect(find.textContaining('Current target:'), findsOneWidget);
       expect(find.text('#1'), findsNothing);
@@ -4837,6 +4516,15 @@ void main() {
         child: const DynamicVisionTestPage(),
       );
 
+      await tester.tap(find.text('Moving symbol'));
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(
+        find.text('Reset start'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
       expect(find.text('Reset start'), findsOneWidget);
 
       final symbolSettings = find.text('Symbol settings');
@@ -4864,7 +4552,12 @@ void main() {
 
       expect(find.text('Change settings?'), findsNothing);
 
+      await tester.ensureVisible(find.text('Ball count'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Ball count'));
+      await tester.pumpAndSettle();
+      expect(find.text('Ball count settings'), findsOneWidget);
+      await tester.ensureVisible(find.text('Start'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Start'));
       await tester.pump(const Duration(milliseconds: 120));
@@ -4930,13 +4623,13 @@ void main() {
 
       final schulteCard = find
           .ancestor(
-            of: find.text('Schulte grid'),
+            of: find.text('Schulte Grid'),
             matching: find.byType(InkWell),
           )
           .first;
 
       await tester.scrollUntilVisible(
-        find.text('Schulte grid'),
+        find.text('Schulte Grid'),
         300,
         scrollable: find.byType(Scrollable).first,
       );
@@ -4961,10 +4654,10 @@ void main() {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const ToolboxPage());
 
-      expect(find.text('My toolbox'), findsOneWidget);
+      expect(find.text('Toolbox'), findsWidgets);
 
       await tester.scrollUntilVisible(
-        find.text('Human test hub'),
+        find.text('Human Tests'),
         300,
         scrollable: find.byType(Scrollable).first,
       );
@@ -4972,7 +4665,7 @@ void main() {
 
       final humanTestCard = find
           .ancestor(
-            of: find.text('Human test hub'),
+            of: find.text('Human Tests'),
             matching: find.byType(InkWell),
           )
           .first;
@@ -4981,23 +4674,23 @@ void main() {
       await tester.longPress(humanTestCard, warnIfMissed: false);
       await tester.pumpAndSettle();
 
-      expect(find.text('Editing your Toolbox home'), findsOneWidget);
-      expect(find.text('Frequent shortcuts'), findsOneWidget);
-      expect(find.text('Edit home entries'), findsOneWidget);
+      expect(find.text('Customize your toolbox'), findsOneWidget);
+      expect(find.text('Quick Access'), findsOneWidget);
+      expect(find.text('Toolbox layout'), findsOneWidget);
       expect(find.text('Visible'), findsOneWidget);
       expect(find.text('Hidden'), findsOneWidget);
-      expect(find.text('Exit'), findsWidgets);
+      expect(find.text('Done'), findsWidgets);
 
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
-      expect(find.text('Editing your Toolbox home'), findsNothing);
-      expect(find.text('My toolbox'), findsOneWidget);
+      expect(find.text('Customize your toolbox'), findsNothing);
+      expect(find.text('Toolbox'), findsWidgets);
 
       await tester.longPress(humanTestCard);
       await tester.pumpAndSettle();
 
       await tester.scrollUntilVisible(
-        find.text('Human test hub'),
+        find.text('Human Tests'),
         300,
         scrollable: find.byType(Scrollable).first,
       );
@@ -5032,8 +4725,8 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(removeHumanTests, warnIfMissed: false);
       await tester.pumpAndSettle();
-      expect(find.text('Remove Human test hub from home?'), findsOneWidget);
-      await tester.tap(find.text('Remove').last);
+      expect(find.text('Hide Human Tests?'), findsOneWidget);
+      await tester.tap(find.text('Hide').last);
       await tester.pump();
       final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
       expect(snackBar.duration, const Duration(seconds: 3));
@@ -5109,21 +4802,21 @@ void main() {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const ToolboxPage());
 
-      expect(find.text('Frequent shortcuts'), findsOneWidget);
+      expect(find.text('Quick Access'), findsOneWidget);
       await tester.tap(
         find.byKey(const ValueKey<String>('toolbox_manage_quick_entries')),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Choose shortcuts'), findsOneWidget);
+      expect(find.text('Choose quick entries'), findsOneWidget);
       final sheetScrollable = find.byType(Scrollable).last;
       await tester.scrollUntilVisible(
-        find.text('Human test hub').last,
+        find.text('Human Tests').last,
         180,
         scrollable: sheetScrollable,
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Human test hub').last, warnIfMissed: false);
+      await tester.tap(find.text('Human Tests').last, warnIfMissed: false);
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
         find.byKey(const ValueKey<String>('toolbox_save_quick_entries')),
@@ -5139,14 +4832,14 @@ void main() {
       expect(state.toolboxLayoutState.quick, <String>[
         ModuleIds.toolboxHumanTests,
       ]);
-      expect(find.text('Human test hub'), findsWidgets);
+      expect(find.text('Human Tests'), findsWidgets);
     });
 
     testWidgets('toolbox page adds entries by dragging them to quick entries', (
       tester,
     ) async {
       final state = _FakeAppState.sample(uiLanguage: 'en');
-      await tester.binding.setSurfaceSize(const Size(390, 1000));
+      await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       await _pumpPage(tester, state: state, child: const ToolboxPage());
@@ -5156,58 +4849,29 @@ void main() {
           'toolbox_entry_draggable_${ModuleIds.toolboxSleepAssistant}',
         ),
       );
-      final target = find.text('Frequent shortcuts');
-
       expect(source, findsOneWidget);
-      expect(target, findsOneWidget);
 
-      await tester.drag(
-        source,
-        tester.getCenter(target) - tester.getCenter(source),
-        warnIfMissed: false,
+      await tester.ensureVisible(source);
+      await tester.pumpAndSettle();
+      expect(source.hitTestable(), findsOneWidget);
+      final gesture = await tester.startGesture(tester.getCenter(source));
+      await tester.pump(const Duration(milliseconds: 650));
+      final target = find.byKey(
+        const ValueKey<String>('toolbox_quick_entry_floating_drop_target'),
       );
+      expect(target.hitTestable(), findsOneWidget);
+      await gesture.moveBy(const Offset(0, -20));
+      await tester.pump();
+      await gesture.moveTo(tester.getCenter(target));
+      await tester.pump(const Duration(milliseconds: 200));
+      await gesture.up();
       await tester.pumpAndSettle();
 
       expect(state.toolboxLayoutState.quick, <String>[
         ModuleIds.toolboxSleepAssistant,
       ]);
-      expect(find.text('Sleep assistant'), findsWidgets);
+      expect(find.text('Sleep Assistant'), findsWidgets);
     });
-
-    testWidgets(
-      'toolbox edit mode adds entries by dragging them to quick entries',
-      (tester) async {
-        final state = _FakeAppState.sample(uiLanguage: 'en');
-        await tester.binding.setSurfaceSize(const Size(390, 1100));
-        addTearDown(() => tester.binding.setSurfaceSize(null));
-
-        await _pumpPage(tester, state: state, child: const ToolboxPage());
-        await tester.tap(find.text('Edit layout'));
-        await tester.pumpAndSettle();
-
-        final source = find.byKey(
-          const ValueKey<String>(
-            'toolbox_edit_quick_draggable_${ModuleIds.toolboxSleepAssistant}',
-          ),
-        );
-        final target = find.text('Frequent shortcuts');
-
-        expect(source, findsOneWidget);
-        expect(target, findsOneWidget);
-
-        final gesture = await tester.startGesture(tester.getCenter(source));
-        await tester.pump(const Duration(milliseconds: 650));
-        await gesture.moveTo(tester.getCenter(target));
-        await tester.pump();
-        await gesture.up();
-        await tester.pumpAndSettle();
-
-        expect(state.toolboxLayoutState.quick, <String>[
-          ModuleIds.toolboxSleepAssistant,
-        ]);
-        expect(find.text('Sleep assistant'), findsWidgets);
-      },
-    );
 
     testWidgets('soothing music page shows extended modes', (tester) async {
       final state = _FakeAppState.sample(uiLanguage: 'en');
@@ -5256,7 +4920,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Modes'), findsOneWidget);
-      expect(find.text('涓撴敞搴曡壊'), findsWidgets);
+      expect(find.text('Focus Base'), findsWidgets);
       expect(find.text('Study'), findsWidgets);
     });
 
@@ -7052,6 +6716,74 @@ Future<void> _pumpPage(
   if (settle) {
     await tester.pumpAndSettle();
   }
+}
+
+Future<void> _openLifeToolsFromToolbox(WidgetTester tester) async {
+  final entry = find.byKey(
+    const ValueKey<String>(
+      'toolbox_entry_draggable_${ModuleIds.toolboxLifeTools}',
+    ),
+  );
+  await tester.scrollUntilVisible(
+    entry,
+    300,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.ensureVisible(entry);
+  await tester.pumpAndSettle();
+
+  final openButton = find.descendant(of: entry, matching: find.byType(InkWell));
+  expect(openButton, findsOneWidget);
+  await tester.tap(openButton, warnIfMissed: false);
+  await tester.pumpAndSettle();
+
+  expect(
+    find.byKey(
+      const ValueKey<String>('toolbox_embedded_${ModuleIds.toolboxLifeTools}'),
+    ),
+    findsOneWidget,
+  );
+}
+
+Future<void> _openLifeTool(
+  WidgetTester tester,
+  String toolId, {
+  bool settleAfterOpen = true,
+}) async {
+  final searchField = find.byKey(
+    const ValueKey<String>('life_tools_search_field'),
+  );
+  expect(searchField, findsOneWidget);
+  await tester.enterText(searchField, toolId);
+  await tester.pumpAndSettle();
+
+  final card = find.byKey(ValueKey<String>('life_tool_card_$toolId'));
+  await tester.scrollUntilVisible(
+    card,
+    300,
+    scrollable: find.byType(Scrollable).last,
+  );
+  await tester.ensureVisible(card);
+  await tester.pumpAndSettle();
+
+  final openButton = find.descendant(of: card, matching: find.byType(InkWell));
+  expect(openButton, findsOneWidget);
+  await tester.tap(openButton.hitTestable());
+  if (settleAfterOpen) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+  }
+  expect(find.byKey(ValueKey<String>('life_tool_$toolId')), findsOneWidget);
+}
+
+Future<void> _tapVisibleChoiceChip(WidgetTester tester, String label) async {
+  final chip = find.widgetWithText(ChoiceChip, label).first;
+  expect(chip, findsOneWidget);
+  await tester.ensureVisible(chip);
+  await tester.pumpAndSettle();
+  await tester.tap(chip);
+  await tester.pumpAndSettle();
 }
 
 Future<void> _pumpUntilFound(

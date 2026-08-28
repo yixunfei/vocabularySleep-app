@@ -781,9 +781,13 @@ class _GifMakerToolPageState extends State<_GifMakerToolPage> {
       }
       return;
     }
+    final bytes = await file.readAsBytes();
+    if (!mounted) {
+      return;
+    }
     final saved = await _saveLifeBytes(
       context: context,
-      bytes: await file.readAsBytes(),
+      bytes: bytes,
       fileName: path.basename(exportPath),
       subdirectory: 'gif_maker',
       dialogTitleKey: 'toolbox.life.gif_maker.save_dialog',

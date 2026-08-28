@@ -623,7 +623,9 @@ class _AimTestCardState extends State<_AimTestCard>
       _AimTestMode.revealGrowth => i18n.t(
         'inline.ui.pages.toolbox_human_tests_aim.reveal_grow_e12a67',
       ),
-      _AimTestMode.moving => i18n.t('toolbox.sound.focus.stageMoving'),
+      _AimTestMode.moving => i18n.t(
+        'inline.ui.pages.toolbox_human_tests_aim.moving_86a602',
+      ),
       _AimTestMode.decoys => i18n.t(
         'inline.ui.pages.toolbox_human_tests_aim_widgets.decoys_7648df',
       ),

@@ -816,9 +816,12 @@ class _DateTimePickerTile extends StatelessWidget {
           context: context,
           initialTime: TimeOfDay.fromDateTime(value),
         );
+        if (!context.mounted) {
+          return;
+        }
         final resolvedTime = pickedTime ?? TimeOfDay.fromDateTime(value);
         final pickedSecond = await _pickSecond(context, value.second);
-        if (pickedSecond == null) {
+        if (pickedSecond == null || !context.mounted) {
           return;
         }
         onChanged(

@@ -5,7 +5,6 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:archive/archive.dart';
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:camera/camera.dart';
 import 'package:crypto/crypto.dart';
@@ -33,6 +32,8 @@ import 'package:video_trimmer/video_trimmer.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/todo_item.dart';
 import '../../services/app_log_service.dart';
+import '../../services/toolbox_archive_processing_service.dart';
+import '../../services/toolbox_archive_resource_policy.dart';
 import '../../services/toolbox_fake_call_service.dart';
 import '../../services/toolbox_life_notify_service.dart';
 import '../../services/toolbox_meme_service.dart';
@@ -41,6 +42,8 @@ import '../../services/toolbox_date_calculator_service.dart';
 import '../../services/toolbox_scientific_calculator_service.dart';
 import '../../services/toolbox_image_to_web_service.dart';
 import '../../services/toolbox_id_photo_service.dart';
+import '../../services/toolbox_image_processing_service.dart';
+import '../../services/toolbox_image_resource_policy.dart';
 import '../../services/toolbox_i18n_text_ref.dart';
 import '../../services/toolbox_number_mark_service.dart';
 import '../../services/toolbox_offer_select_service.dart';
@@ -128,6 +131,8 @@ part 'toolbox_life_tools/toolbox_life_tools_distance_meter.dart';
 part 'toolbox_life_tools/toolbox_life_tools_bio_clock.dart';
 part 'toolbox_life_tools/toolbox_life_tools_gif_maker.dart';
 part 'toolbox_life_tools/toolbox_life_tools_archive.dart';
+part 'toolbox_life_tools/toolbox_life_tools_archive_view.dart';
+part 'toolbox_life_tools/toolbox_life_tools_archive_widgets.dart';
 
 const MethodChannel _lifeDisplayChannel = MethodChannel(
   'vocabulary_sleep/life_display',
@@ -340,6 +345,90 @@ String _lifeI18nText(
   return _lifeDecodeEscapedUnicodeText(i18n.t(key, params: params));
 }
 
+String _lifeImageProcessingErrorText(BuildContext context, Object error) {
+  if (error is! ToolboxImageProcessingException) {
+    return error.toString();
+  }
+  return switch (error.code) {
+    ToolboxImageProcessingErrorCode.sourceFileTooLarge => _lifeI18nText(
+      context,
+      'inline.plan296.crypto.error.image_file_too_large_with_limit',
+      params: const <String, Object?>{
+        'limit': ToolboxImageResourcePolicy.maxSourceBytesLabel,
+      },
+    ),
+    ToolboxImageProcessingErrorCode.sourceDimensionsTooLarge => _lifeI18nText(
+      context,
+      'inline.plan296.crypto.error.image_dimensions_too_large_with_limit',
+      params: const <String, Object?>{
+        'pixels': ToolboxImageResourcePolicy.maxSourcePixelsLabel,
+      },
+    ),
+    ToolboxImageProcessingErrorCode.outputDimensionsTooLarge => _lifeI18nText(
+      context,
+      'toolbox.life.image.error.output_dimensions_too_large',
+      params: const <String, Object?>{
+        'pixels': ToolboxImageResourcePolicy.maxOutputPixelsLabel,
+        'side': ToolboxImageResourcePolicy.maxOutputSideLabel,
+      },
+    ),
+    ToolboxImageProcessingErrorCode.processingFailed => _lifeI18nText(
+      context,
+      'toolbox.life.image.error.processing_failed',
+    ),
+    ToolboxImageProcessingErrorCode.emptySource ||
+    ToolboxImageProcessingErrorCode.unsupportedFormat => _lifeI18nText(
+      context,
+      'toolbox.life.image.error.invalid_or_unsupported',
+    ),
+  };
+}
+
+void _logLifeImageError(String operation, Object error, StackTrace stackTrace) {
+  AppLogService.instance.e(
+    'ToolboxImage',
+    operation,
+    error: error,
+    stackTrace: stackTrace,
+  );
+}
+
+Future<Uint8List> _readLifePickedImageBytes(PlatformFile file) async {
+  if (file.size > 0) {
+    ToolboxImageResourcePolicy.validateSourceBytes(file.size);
+  }
+  final directBytes = file.bytes;
+  if (directBytes != null) {
+    ToolboxImageResourcePolicy.validateSourceBytes(directBytes.length);
+    return directBytes;
+  }
+
+  final stream =
+      file.readStream ??
+      (file.path == null ? null : File(file.path!).openRead());
+  if (stream == null) {
+    throw const ToolboxImageProcessingException(
+      ToolboxImageProcessingErrorCode.processingFailed,
+      cause: 'Selected image has no readable byte source',
+    );
+  }
+  final builder = BytesBuilder(copy: false);
+  var byteLength = 0;
+  await for (final chunk in stream) {
+    byteLength += chunk.length;
+    if (byteLength > ToolboxImageResourcePolicy.maxSourceBytes) {
+      throw ToolboxImageProcessingException(
+        ToolboxImageProcessingErrorCode.sourceFileTooLarge,
+        actualBytes: byteLength,
+      );
+    }
+    builder.add(chunk);
+  }
+  final bytes = builder.takeBytes();
+  ToolboxImageResourcePolicy.validateSourceBytes(bytes.length);
+  return bytes;
+}
+
 String _lifeDecodeEscapedUnicodeText(String value) {
   if (!value.contains(r'\u')) {
     return value;
@@ -409,11 +498,13 @@ Future<String> _saveLifeBytes({
   required BuildContext context,
   required Uint8List bytes,
   required String fileName,
+  String? fallbackFileName,
   required String subdirectory,
   required String dialogTitleKey,
   required List<String> allowedExtensions,
 }) async {
   final safeFileName = _lifeSafeFileName(fileName);
+  final safeFallbackFileName = _lifeSafeFileName(fallbackFileName ?? fileName);
   final dialogTitle = _lifeI18nText(context, dialogTitleKey);
   final browserDownloadText = _lifeI18nText(
     context,
@@ -450,7 +541,7 @@ Future<String> _saveLifeBytes({
   final target = File(
     path.join(
       exportDir.path,
-      _lifeTimestampedFileName(safeFileName, timestamp),
+      _lifeTimestampedFileName(safeFallbackFileName, timestamp),
     ),
   );
   await target.writeAsBytes(bytes, flush: true);

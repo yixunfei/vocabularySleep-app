@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
@@ -8,9 +9,10 @@ import 'package:vocabulary_sleep_app/src/services/ambient_service.dart';
 import 'package:vocabulary_sleep_app/src/services/cstcloud_resource_cache_service.dart';
 
 class _FakeAmbientLoopPlayer implements AmbientLoopPlayer {
-  _FakeAmbientLoopPlayer({required this.duration});
+  _FakeAmbientLoopPlayer({required this.duration, this.onSetVolume});
 
   final Duration? duration;
+  final Future<void> Function(double volume)? onSetVolume;
   final List<Source> sources = <Source>[];
   final List<ReleaseMode> releaseModes = <ReleaseMode>[];
   final List<double> volumes = <double>[];
@@ -34,6 +36,10 @@ class _FakeAmbientLoopPlayer implements AmbientLoopPlayer {
   @override
   Future<void> setVolume(double volume) async {
     volumes.add(volume);
+    final handler = onSetVolume;
+    if (handler != null) {
+      await handler(volume);
+    }
   }
 
   @override
@@ -49,6 +55,48 @@ class _FakeAmbientLoopPlayer implements AmbientLoopPlayer {
   @override
   Future<void> dispose() async {
     disposeCalls += 1;
+  }
+}
+
+class _SlowVolumeWriteTracker {
+  final List<({int playerIndex, double volume})> writes =
+      <({int playerIndex, double volume})>[];
+  final List<Completer<void>> _pendingWrites = <Completer<void>>[];
+
+  bool blockWrites = false;
+  int inFlight = 0;
+  int maxInFlight = 0;
+
+  int get pendingWriteCount => _pendingWrites.length;
+
+  Future<void> write(int playerIndex, double volume) async {
+    writes.add((playerIndex: playerIndex, volume: volume));
+    inFlight++;
+    if (inFlight > maxInFlight) {
+      maxInFlight = inFlight;
+    }
+    try {
+      if (!blockWrites) {
+        return;
+      }
+      final release = Completer<void>();
+      _pendingWrites.add(release);
+      await release.future;
+    } finally {
+      inFlight--;
+    }
+  }
+
+  void releaseNext() {
+    if (_pendingWrites.isEmpty) {
+      throw StateError('No pending volume write to release.');
+    }
+    _pendingWrites.removeAt(0).complete();
+  }
+
+  void resetObservations() {
+    writes.clear();
+    maxInFlight = inFlight;
   }
 }
 
@@ -138,6 +186,120 @@ void main() {
     expect(players, hasLength(1));
     expect(players.single.releaseModes, contains(ReleaseMode.loop));
     expect(players.single.resumeCalls, 1);
+  });
+
+  test(
+    'volume writes are single-flight and coalesce to the latest value',
+    () async {
+      final tracker = _SlowVolumeWriteTracker();
+      final players = <_FakeAmbientLoopPlayer>[];
+      final loop = SeamlessAmbientLoop(
+        source: AssetSource('ambient/noise/white-noise.wav'),
+        initialVolume: 0.5,
+        overlap: const Duration(milliseconds: 200),
+        fadeInterval: const Duration(milliseconds: 50),
+        playerFactory: () {
+          final playerIndex = players.length;
+          final player = _FakeAmbientLoopPlayer(
+            duration: const Duration(seconds: 10),
+            onSetVolume: (volume) => tracker.write(playerIndex, volume),
+          );
+          players.add(player);
+          return player;
+        },
+      );
+      await loop.start();
+      tracker
+        ..resetObservations()
+        ..blockWrites = true;
+
+      final firstUpdate = loop.setTargetVolume(0.2);
+      await Future<void>.delayed(Duration.zero);
+      expect(tracker.pendingWriteCount, 1);
+
+      final intermediateUpdate = loop.setTargetVolume(0.6);
+      final latestUpdate = loop.setTargetVolume(0.9);
+      await Future<void>.delayed(Duration.zero);
+      expect(tracker.writes, hasLength(1));
+
+      tracker.releaseNext();
+      await Future<void>.delayed(Duration.zero);
+      expect(tracker.pendingWriteCount, 1);
+      expect(tracker.writes, hasLength(2));
+
+      tracker.releaseNext();
+      await Future<void>.delayed(Duration.zero);
+      expect(tracker.pendingWriteCount, 1);
+      expect(tracker.writes, hasLength(3));
+
+      tracker.releaseNext();
+      await Future<void>.delayed(Duration.zero);
+      expect(tracker.pendingWriteCount, 1);
+      expect(tracker.writes, hasLength(4));
+
+      tracker.releaseNext();
+      await Future.wait(<Future<void>>[
+        firstUpdate,
+        intermediateUpdate,
+        latestUpdate,
+      ]);
+
+      expect(tracker.maxInFlight, 1);
+      expect(tracker.writes.map((write) => write.playerIndex), <int>[
+        0,
+        1,
+        0,
+        1,
+      ]);
+      expect(tracker.writes.map((write) => write.volume), <double>[
+        0.2,
+        0,
+        0.9,
+        0,
+      ]);
+
+      tracker.blockWrites = false;
+      await loop.dispose();
+    },
+  );
+
+  test('dispose waits for an in-flight volume write', () async {
+    final tracker = _SlowVolumeWriteTracker();
+    final players = <_FakeAmbientLoopPlayer>[];
+    final loop = SeamlessAmbientLoop(
+      source: AssetSource('ambient/noise/white-noise.wav'),
+      initialVolume: 0.5,
+      playerFactory: () {
+        final playerIndex = players.length;
+        final player = _FakeAmbientLoopPlayer(
+          duration: const Duration(seconds: 10),
+          onSetVolume: (volume) => tracker.write(playerIndex, volume),
+        );
+        players.add(player);
+        return player;
+      },
+    );
+    await loop.start();
+    tracker
+      ..resetObservations()
+      ..blockWrites = true;
+
+    final update = loop.setTargetVolume(0.3);
+    await Future<void>.delayed(Duration.zero);
+    expect(tracker.pendingWriteCount, 1);
+
+    final dispose = loop.dispose();
+    await Future<void>.delayed(Duration.zero);
+    expect(players.every((player) => player.stopCalls == 0), isTrue);
+    expect(players.every((player) => player.disposeCalls == 0), isTrue);
+
+    tracker.releaseNext();
+    await Future.wait(<Future<void>>[update, dispose]);
+
+    expect(tracker.maxInFlight, 1);
+    expect(tracker.inFlight, 0);
+    expect(players.every((player) => player.stopCalls == 1), isTrue);
+    expect(players.every((player) => player.disposeCalls == 1), isTrue);
   });
 
   test(

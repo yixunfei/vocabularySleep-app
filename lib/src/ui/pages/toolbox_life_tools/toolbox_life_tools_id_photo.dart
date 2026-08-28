@@ -32,6 +32,8 @@ class _IdPhotoToolPage extends StatefulWidget {
 
 class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
   static const ToolboxIdPhotoService _service = ToolboxIdPhotoService();
+  static const ToolboxImageProcessingService _imageService =
+      ToolboxImageProcessingService();
 
   String? _sourceName;
   Uint8List? _sourceBytes;
@@ -727,16 +729,18 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
       final picked = await FilePicker.platform.pickFiles(
         allowMultiple: false,
         type: FileType.image,
-        withData: true,
+        withData: kIsWeb,
+        withReadStream: !kIsWeb,
       );
       final file = (picked != null && picked.files.isNotEmpty)
           ? picked.files.first
           : null;
-      final bytes = file?.bytes;
-      if (file == null || bytes == null || bytes.isEmpty) {
+      if (file == null) {
         return;
       }
-      final preview = await _decodePreview(bytes);
+      final bytes = await _readLifePickedImageBytes(file);
+      final prepared = await _imageService.prepareSource(bytes);
+      final preview = await _decodePreview(prepared.previewBytes);
       if (!mounted) {
         preview.dispose();
         return;
@@ -746,10 +750,10 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
       final oldResult = _resultPreview;
       setState(() {
         _sourceName = file.name;
-        _sourceBytes = Uint8List.fromList(bytes);
+        _sourceBytes = bytes;
         _sourcePreview = preview;
-        _sourceWidth = preview.width;
-        _sourceHeight = preview.height;
+        _sourceWidth = prepared.width;
+        _sourceHeight = prepared.height;
         _sourceSize = bytes.length;
         _resultBytes = null;
         _resultPreview = null;
@@ -759,15 +763,18 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
       });
       oldSource?.dispose();
       oldResult?.dispose();
-    } catch (error) {
+    } catch (error, stackTrace) {
       if (!mounted) {
         return;
       }
+      _logLifeImageError('id_photo.pick', error, stackTrace);
       setState(() {
         _error = _lifeI18nText(
           context,
           'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.id.photo.failed_to_pick_photo.bf6cfec218',
-          params: <String, Object?>{'error': error},
+          params: <String, Object?>{
+            'error': _lifeImageProcessingErrorText(context, error),
+          },
         );
       });
     }
@@ -785,7 +792,7 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
     });
 
     try {
-      final result = _service.render(
+      final result = await _service.render(
         ToolboxIdPhotoRenderInput(
           sourceBytes: source,
           preset: _preset,
@@ -813,15 +820,18 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
         _resultPreview = preview;
       });
       oldResult?.dispose();
-    } catch (error) {
+    } catch (error, stackTrace) {
       if (!mounted) {
         return;
       }
+      _logLifeImageError('id_photo.run', error, stackTrace);
       setState(() {
         _error = _lifeI18nText(
           context,
           'inline.plan296.ui.pages.toolbox.life.tools.toolbox.life.tools.id.photo.generation_failed.9cae90229b',
-          params: <String, Object?>{'error': error},
+          params: <String, Object?>{
+            'error': _lifeImageProcessingErrorText(context, error),
+          },
         );
       });
     } finally {
@@ -848,61 +858,19 @@ class _IdPhotoToolPageState extends State<_IdPhotoToolPage> {
       final ext = _formatExtension(_format);
       final fileName = '${baseName}_${_preset.id}_${_dpi.round()}dpi.$ext';
 
-      String? savedPath;
-      try {
-        savedPath = await FilePicker.platform.saveFile(
-          dialogTitle: _lifeI18nText(
-            context,
-            'inline.plan295.life.save_id_photo.7db851db140c',
-          ),
-          fileName: fileName,
-          type: FileType.custom,
-          allowedExtensions: <String>[ext],
-          bytes: result,
-        );
-      } on UnimplementedError {
-        savedPath = null;
-      }
-
+      final savedPath = await _saveLifeBytes(
+        context: context,
+        bytes: result,
+        fileName: fileName,
+        fallbackFileName: '$baseName.$ext',
+        subdirectory: 'id_photo',
+        dialogTitleKey: 'inline.plan295.life.save_id_photo.7db851db140c',
+        allowedExtensions: <String>[ext],
+      );
       if (!mounted) {
         return;
       }
-
-      if (savedPath == null || savedPath.trim().isEmpty) {
-        if (kIsWeb) {
-          setState(() {
-            _savedPath = _lifeI18nText(
-              context,
-              'inline.plan295.crypto.browser_download_started_check_your.b28d392515b4',
-            );
-          });
-          return;
-        }
-
-        final appDir = await getApplicationDocumentsDirectory();
-        final exportDir = Directory(
-          path.join(appDir.path, 'life_tools', 'id_photo'),
-        );
-        if (!await exportDir.exists()) {
-          await exportDir.create(recursive: true);
-        }
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final fallback = File(
-          path.join(exportDir.path, '${baseName}_$timestamp.$ext'),
-        );
-        await fallback.writeAsBytes(result, flush: true);
-        if (!mounted) {
-          return;
-        }
-        setState(() {
-          _savedPath = fallback.path;
-        });
-        return;
-      }
-
-      setState(() {
-        _savedPath = savedPath;
-      });
+      setState(() => _savedPath = savedPath);
     } catch (error) {
       if (!mounted) {
         return;

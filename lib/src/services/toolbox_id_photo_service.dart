@@ -1,7 +1,10 @@
+import 'dart:isolate';
 import 'dart:math' as math;
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
+
+import 'toolbox_image_resource_policy.dart';
 
 enum ToolboxIdPhotoOutputFormat { png, jpg }
 
@@ -129,19 +132,43 @@ class ToolboxIdPhotoRenderResult {
 class ToolboxIdPhotoService {
   const ToolboxIdPhotoService();
 
-  ToolboxIdPhotoRenderResult render(ToolboxIdPhotoRenderInput input) {
-    if (input.sourceBytes.isEmpty) {
-      throw ArgumentError.value(input.sourceBytes.length, 'sourceBytes');
+  Future<ToolboxIdPhotoRenderResult> render(
+    ToolboxIdPhotoRenderInput input,
+  ) async {
+    ToolboxImageResourcePolicy.validateSourceBytes(input.sourceBytes.length);
+    final dpi = input.dpi.clamp(72.0, 600.0).toDouble();
+    ToolboxImageResourcePolicy.validateOutputDimensions(
+      input.preset.pixelWidth(dpi),
+      input.preset.pixelHeight(dpi),
+    );
+    _IdPhotoWorkerResponse response;
+    try {
+      response = await compute(
+        _renderIdPhotoWorker,
+        _IdPhotoWorkerRequest.fromInput(input),
+        debugLabel: 'toolbox-id-photo-render',
+      );
+    } catch (error) {
+      throw ToolboxImageProcessingException(
+        ToolboxImageProcessingErrorCode.processingFailed,
+        cause: error.toString(),
+      );
     }
-    final decoded = img.decodeImage(input.sourceBytes);
-    if (decoded == null) {
-      throw StateError('Unsupported image format');
-    }
+    return response.materializeResult();
+  }
 
-    final source = img.bakeOrientation(decoded);
+  ToolboxIdPhotoRenderResult _renderSynchronously(
+    ToolboxIdPhotoRenderInput input,
+  ) {
+    final source = _decodeValidatedSource(input.sourceBytes);
+
     final dpi = input.dpi.clamp(72.0, 600.0).toDouble();
     final targetWidth = input.preset.pixelWidth(dpi);
     final targetHeight = input.preset.pixelHeight(dpi);
+    ToolboxImageResourcePolicy.validateOutputDimensions(
+      targetWidth,
+      targetHeight,
+    );
     final crop = _resolveCrop(
       sourceWidth: source.width,
       sourceHeight: source.height,
@@ -188,6 +215,58 @@ class ToolboxIdPhotoService {
       replacedPixels: replacedPixels,
       outputFormat: input.outputFormat,
     );
+  }
+
+  img.Image _decodeValidatedSource(Uint8List bytes) {
+    ToolboxImageResourcePolicy.validateSourceBytes(bytes.length);
+    final decoder = img.findDecoderForData(bytes);
+    if (decoder == null) {
+      throw const ToolboxImageProcessingException(
+        ToolboxImageProcessingErrorCode.unsupportedFormat,
+      );
+    }
+    img.DecodeInfo? info;
+    try {
+      info = decoder.startDecode(bytes);
+    } catch (error) {
+      throw ToolboxImageProcessingException(
+        ToolboxImageProcessingErrorCode.unsupportedFormat,
+        cause: error.toString(),
+      );
+    }
+    if (info == null) {
+      throw const ToolboxImageProcessingException(
+        ToolboxImageProcessingErrorCode.unsupportedFormat,
+      );
+    }
+    ToolboxImageResourcePolicy.validateSourceDimensions(
+      info.width,
+      info.height,
+    );
+    img.Image? decoded;
+    try {
+      decoded = decoder.decodeFrame(0);
+    } catch (error) {
+      throw ToolboxImageProcessingException(
+        ToolboxImageProcessingErrorCode.unsupportedFormat,
+        width: info.width,
+        height: info.height,
+        cause: error.toString(),
+      );
+    }
+    if (decoded == null) {
+      throw ToolboxImageProcessingException(
+        ToolboxImageProcessingErrorCode.unsupportedFormat,
+        width: info.width,
+        height: info.height,
+      );
+    }
+    final source = img.bakeOrientation(decoded);
+    ToolboxImageResourcePolicy.validateSourceDimensions(
+      source.width,
+      source.height,
+    );
+    return source;
   }
 
   List<int> _encode(img.Image image, ToolboxIdPhotoRenderInput input) {
@@ -352,6 +431,168 @@ class ToolboxIdPhotoService {
   int _mix(double source, double target, double factor) {
     final mixed = source + (target - source) * factor.clamp(0.0, 1.0);
     return mixed.round().clamp(0, 255);
+  }
+}
+
+class _IdPhotoWorkerRequest {
+  _IdPhotoWorkerRequest.fromInput(ToolboxIdPhotoRenderInput input)
+    : sourceBytes = TransferableTypedData.fromList(<Uint8List>[
+        input.sourceBytes,
+      ]),
+      preset = input.preset,
+      dpi = input.dpi,
+      backgroundColor = input.backgroundColor,
+      outputFormat = input.outputFormat,
+      jpegQuality = input.jpegQuality,
+      zoom = input.zoom,
+      offsetX = input.offsetX,
+      offsetY = input.offsetY,
+      replaceBackground = input.replaceBackground,
+      backgroundTolerance = input.backgroundTolerance,
+      replacementStrength = input.replacementStrength;
+
+  final TransferableTypedData sourceBytes;
+  final ToolboxIdPhotoPreset preset;
+  final double dpi;
+  final int backgroundColor;
+  final ToolboxIdPhotoOutputFormat outputFormat;
+  final int jpegQuality;
+  final double zoom;
+  final double offsetX;
+  final double offsetY;
+  final bool replaceBackground;
+  final double backgroundTolerance;
+  final double replacementStrength;
+
+  ToolboxIdPhotoRenderInput materializeInput() {
+    return ToolboxIdPhotoRenderInput(
+      sourceBytes: sourceBytes.materialize().asUint8List(),
+      preset: preset,
+      dpi: dpi,
+      backgroundColor: backgroundColor,
+      outputFormat: outputFormat,
+      jpegQuality: jpegQuality,
+      zoom: zoom,
+      offsetX: offsetX,
+      offsetY: offsetY,
+      replaceBackground: replaceBackground,
+      backgroundTolerance: backgroundTolerance,
+      replacementStrength: replacementStrength,
+    );
+  }
+}
+
+class _IdPhotoWorkerResponse {
+  const _IdPhotoWorkerResponse.success({
+    required this.bytes,
+    required this.pixelWidth,
+    required this.pixelHeight,
+    required this.sourceWidth,
+    required this.sourceHeight,
+    required this.cropX,
+    required this.cropY,
+    required this.cropWidth,
+    required this.cropHeight,
+    required this.replacedPixels,
+    required this.outputFormat,
+  }) : errorCode = null,
+       errorWidth = null,
+       errorHeight = null,
+       errorCause = null;
+
+  const _IdPhotoWorkerResponse.failure({
+    required this.errorCode,
+    this.errorWidth,
+    this.errorHeight,
+    this.errorCause,
+  }) : bytes = null,
+       pixelWidth = 0,
+       pixelHeight = 0,
+       sourceWidth = 0,
+       sourceHeight = 0,
+       cropX = 0,
+       cropY = 0,
+       cropWidth = 0,
+       cropHeight = 0,
+       replacedPixels = 0,
+       outputFormat = ToolboxIdPhotoOutputFormat.png;
+
+  factory _IdPhotoWorkerResponse.fromResult(ToolboxIdPhotoRenderResult result) {
+    return _IdPhotoWorkerResponse.success(
+      bytes: TransferableTypedData.fromList(<Uint8List>[result.bytes]),
+      pixelWidth: result.pixelWidth,
+      pixelHeight: result.pixelHeight,
+      sourceWidth: result.sourceWidth,
+      sourceHeight: result.sourceHeight,
+      cropX: result.cropX,
+      cropY: result.cropY,
+      cropWidth: result.cropWidth,
+      cropHeight: result.cropHeight,
+      replacedPixels: result.replacedPixels,
+      outputFormat: result.outputFormat,
+    );
+  }
+
+  final TransferableTypedData? bytes;
+  final int pixelWidth;
+  final int pixelHeight;
+  final int sourceWidth;
+  final int sourceHeight;
+  final int cropX;
+  final int cropY;
+  final int cropWidth;
+  final int cropHeight;
+  final int replacedPixels;
+  final ToolboxIdPhotoOutputFormat outputFormat;
+  final String? errorCode;
+  final int? errorWidth;
+  final int? errorHeight;
+  final String? errorCause;
+
+  ToolboxIdPhotoRenderResult materializeResult() {
+    final failureCode = errorCode;
+    if (failureCode != null) {
+      throw ToolboxImageProcessingException(
+        ToolboxImageProcessingErrorCode.values.byName(failureCode),
+        width: errorWidth,
+        height: errorHeight,
+        cause: errorCause,
+      );
+    }
+    return ToolboxIdPhotoRenderResult(
+      bytes: bytes!.materialize().asUint8List(),
+      pixelWidth: pixelWidth,
+      pixelHeight: pixelHeight,
+      sourceWidth: sourceWidth,
+      sourceHeight: sourceHeight,
+      cropX: cropX,
+      cropY: cropY,
+      cropWidth: cropWidth,
+      cropHeight: cropHeight,
+      replacedPixels: replacedPixels,
+      outputFormat: outputFormat,
+    );
+  }
+}
+
+_IdPhotoWorkerResponse _renderIdPhotoWorker(_IdPhotoWorkerRequest request) {
+  try {
+    final result = const ToolboxIdPhotoService()._renderSynchronously(
+      request.materializeInput(),
+    );
+    return _IdPhotoWorkerResponse.fromResult(result);
+  } on ToolboxImageProcessingException catch (error) {
+    return _IdPhotoWorkerResponse.failure(
+      errorCode: error.code.name,
+      errorWidth: error.width,
+      errorHeight: error.height,
+      errorCause: error.cause,
+    );
+  } catch (error) {
+    return _IdPhotoWorkerResponse.failure(
+      errorCode: ToolboxImageProcessingErrorCode.processingFailed.name,
+      errorCause: error.toString(),
+    );
   }
 }
 
