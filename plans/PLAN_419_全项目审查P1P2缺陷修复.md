@@ -69,6 +69,12 @@
 - `test/ui_smoke_test.dart` 共 147 项通过；`focus_service_test.dart`、`focus_timer_widgets_test.dart` 与 `toolbox_human_tests_extended_smoke_test.dart` 共 21 项通过，测试输出无离屏点击告警。
 - i18n 本阶段新增 key 0、退休 key 0；占位符审计为 `51755` keys、缺失/不一致均为 0，旧 helper 与 catalog Dart 插值扫描无命中。维护报告保留历史基线：`40108` 个未引用 key、`661` 个 stale registry source、`30` 个待清理 retirement，本轮不处理。
 - `flutter analyze --no-pub` 完成扫描，仍有 175 条既有 lint/warning；本轮修改未新增诊断，静态债务按计划保留到 P3。
+- 已完成图片阶段：压缩、放大和证件照统一使用后台 `compute` worker 与 `TransferableTypedData`；源图先读元数据、仅解码第一帧并修正方向，UI 仅接收最长边不超过 1600 px 的预览。
+- 图片资源策略统一限制源文件 32 MiB、源图 4000 万像素、输出 6400 万像素且单边不超过 16384 px；原生文件选择改为限额流式读取，避免完整载入超限文件后才拒绝。
+- 图片 service/证件照测试共 9 项通过，覆盖方向修正、预览缩小、元数据预检、输出预检、压缩格式和证件照既有算法；完整 `ui_smoke_test.dart` 147 项通过。
+- 图片目标文件定向 `flutter analyze --no-pub` 无诊断，`git diff --check` 通过。压缩页由 1221 行降至 998 行，证件照页由 1016 行降至 976 行；放大页由 1354 行降至 1135 行，剩余既有展示层拆分仍按计划留到 P3。
+- 图片阶段 i18n 新增 key 3、退休 key 0；占位符审计为 `51758` keys、缺失/不一致均为 0。维护报告保留历史基线：`40108` 个未引用 key、`661` 个 stale registry source、`30` 个待清理 retirement，本轮不处理；旧 helper 与 catalog Dart 插值扫描无命中。
+- Web 全应用构建仍被既有 `sherpa_onnx`/`sqlite3` 的 `dart:ffi` 直接依赖阻断。Chrome 图片测试已完成编译并启动浏览器，但本机 runner 未建立连接，等待约 2 分钟后终止；VM 与完整 Widget 回归已通过，Web 运行时仍作为设备/环境验证缺口保留。
 
 ## 完成检查清单
 - [x] 正确性与测试门禁修复完成
