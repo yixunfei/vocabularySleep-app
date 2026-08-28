@@ -112,6 +112,8 @@ class _BreathingPracticeReleaseCardState
   bool _voiceLocaleNoticeShown = false;
   bool _voiceLocaleDialogOpen = false;
   int _systemCueSequenceToken = 0;
+  int _boltPreparationGeneration = 0;
+  int _sessionPreparationGeneration = 0;
 
   List<BreathingStagePlan> get _loopStages {
     final filtered = _scenario.stages
@@ -295,31 +297,43 @@ class _BreathingPracticeReleaseCardState
     if (_running || _boltRunning || _boltPreparing || _sessionPreparing) {
       return;
     }
+    final preparationGeneration = ++_boltPreparationGeneration;
     await _stopSystemCue();
     await _stopPreview();
-    if (!mounted) {
+    if (!mounted || preparationGeneration != _boltPreparationGeneration) {
       return;
     }
     setState(() {
       _boltPreparing = true;
       _boltExpanded = true;
     });
-    await _playSystemCueSequence(<String>['bolt_prepare', 'bolt_start']);
-    if (!mounted || !_boltPreparing) {
-      return;
+    try {
+      await _playSystemCueSequence(<String>['bolt_prepare', 'bolt_start']);
+      if (!mounted ||
+          !_boltPreparing ||
+          preparationGeneration != _boltPreparationGeneration) {
+        return;
+      }
+      _boltStopwatch
+        ..reset()
+        ..start();
+      setState(() {
+        _boltPreparing = false;
+        _boltRunning = true;
+      });
+      _tickBolt();
+    } finally {
+      if (mounted &&
+          _boltPreparing &&
+          preparationGeneration == _boltPreparationGeneration) {
+        setState(() => _boltPreparing = false);
+      }
     }
-    _boltStopwatch
-      ..reset()
-      ..start();
-    setState(() {
-      _boltPreparing = false;
-      _boltRunning = true;
-    });
-    _tickBolt();
   }
 
   Future<void> _stopBoltTest() async {
     if (_boltPreparing) {
+      _boltPreparationGeneration += 1;
       await _stopSystemCue();
       if (!mounted) {
         return;
@@ -345,6 +359,7 @@ class _BreathingPracticeReleaseCardState
   }
 
   Future<void> _resetBoltTest() async {
+    _boltPreparationGeneration += 1;
     await _stopSystemCue();
     _boltClock?.cancel();
     _boltStopwatch
@@ -377,32 +392,43 @@ class _BreathingPracticeReleaseCardState
     if (_running || _boltRunning || _boltPreparing || _sessionPreparing) {
       return;
     }
+    final preparationGeneration = ++_sessionPreparationGeneration;
     await _stopSystemCue();
     await _stopPreview();
-    if (!mounted) {
+    if (!mounted || preparationGeneration != _sessionPreparationGeneration) {
       return;
     }
     setState(() {
       _sessionPreparing = true;
       _lastSummary = null;
     });
-    await _playSystemCueSequence(<String>['session_start']);
-    if (!mounted || !_sessionPreparing) {
-      return;
+    try {
+      await _playSystemCueSequence(<String>['session_start']);
+      if (!mounted ||
+          !_sessionPreparing ||
+          preparationGeneration != _sessionPreparationGeneration) {
+        return;
+      }
+      setState(() {
+        _sessionPreparing = false;
+        _running = true;
+        _runStartedAt = DateTime.now();
+      });
+      if (_controller.value <= 0 || _controller.value >= 1) {
+        _syncDuration();
+        _controller.forward(from: 0);
+        unawaited(_announceStage());
+      } else {
+        _controller.forward();
+      }
+      _tickStart();
+    } finally {
+      if (mounted &&
+          _sessionPreparing &&
+          preparationGeneration == _sessionPreparationGeneration) {
+        setState(() => _sessionPreparing = false);
+      }
     }
-    setState(() {
-      _sessionPreparing = false;
-      _running = true;
-      _runStartedAt = DateTime.now();
-    });
-    if (_controller.value <= 0 || _controller.value >= 1) {
-      _syncDuration();
-      _controller.forward(from: 0);
-      unawaited(_announceStage());
-    } else {
-      _controller.forward();
-    }
-    _tickStart();
   }
 
   Future<void> _pauseSession() async {
@@ -425,6 +451,7 @@ class _BreathingPracticeReleaseCardState
   }
 
   Future<void> _resetSession() async {
+    _sessionPreparationGeneration += 1;
     _clock?.cancel();
     _controller.stop();
     _controller.value = 0;
@@ -2245,68 +2272,80 @@ class _BreathingPracticeReleaseCardState
                 .toList(growable: false),
           ),
           const SizedBox(height: 8),
-          SwitchListTile.adaptive(
-            value: _includeHoldStage,
-            onChanged: (value) => unawaited(_setIncludeHoldStage(value)),
-            title: Text(i18n.t('toolbox.breathing.breath_hold_stage')),
-            subtitle: Text(
-              i18n.t(
-                'inline.plan294.breathing.on_by_default_turn_this_off_to_skip_all_hold_pha_51f0422b',
-              ),
+          Material(
+            type: MaterialType.transparency,
+            child: Column(
+              children: <Widget>[
+                SwitchListTile.adaptive(
+                  value: _includeHoldStage,
+                  onChanged: (value) => unawaited(_setIncludeHoldStage(value)),
+                  title: Text(i18n.t('toolbox.breathing.breath_hold_stage')),
+                  subtitle: Text(
+                    i18n.t(
+                      'inline.plan294.breathing.on_by_default_turn_this_off_to_skip_all_hold_pha_51f0422b',
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.zero,
+                ),
+                SwitchListTile.adaptive(
+                  value: _includeRecoveryStage,
+                  onChanged: (value) =>
+                      unawaited(_setIncludeRecoveryStage(value)),
+                  title: Text(
+                    i18n.t('inline.plan294.breathing.recovery_stage_25591247'),
+                  ),
+                  subtitle: Text(
+                    i18n.t(
+                      'inline.plan294.breathing.when_off_the_loop_keeps_only_the_main_breathing__90b5dbd6',
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.zero,
+                ),
+                SwitchListTile.adaptive(
+                  value: _voiceOn,
+                  onChanged: (value) => unawaited(_setVoiceEnabled(value)),
+                  title: Text(i18n.t('toolbox.breathing.voice_cues')),
+                  subtitle: Text(
+                    i18n.t(
+                      'inline.plan294.breathing.cloud_cues_are_downloaded_and_cached_first_voice_d82f5299',
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.zero,
+                ),
+                SwitchListTile.adaptive(
+                  value: _textOn,
+                  onChanged: (value) {
+                    setState(() => _textOn = value);
+                    _savePrefs();
+                  },
+                  title: Text(
+                    i18n.t('inline.plan294.breathing.text_cues_2c05233d'),
+                  ),
+                  subtitle: Text(
+                    i18n.t(
+                      'inline.plan294.breathing.show_the_current_action_body_prompt_and_countdow_80d08090',
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.zero,
+                ),
+                SwitchListTile.adaptive(
+                  value: _hapticOn,
+                  onChanged: (value) {
+                    setState(() => _hapticOn = value);
+                    _savePrefs();
+                  },
+                  title: Text(
+                    i18n.t('inline.plan294.breathing.haptics_b2ca72e4'),
+                  ),
+                  subtitle: Text(
+                    i18n.t(
+                      'inline.plan294.breathing.adds_subtle_pulses_on_stage_changes_so_you_can_f_f66b095f',
+                    ),
+                  ),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ],
             ),
-            contentPadding: EdgeInsets.zero,
-          ),
-          SwitchListTile.adaptive(
-            value: _includeRecoveryStage,
-            onChanged: (value) => unawaited(_setIncludeRecoveryStage(value)),
-            title: Text(
-              i18n.t('inline.plan294.breathing.recovery_stage_25591247'),
-            ),
-            subtitle: Text(
-              i18n.t(
-                'inline.plan294.breathing.when_off_the_loop_keeps_only_the_main_breathing__90b5dbd6',
-              ),
-            ),
-            contentPadding: EdgeInsets.zero,
-          ),
-          SwitchListTile.adaptive(
-            value: _voiceOn,
-            onChanged: (value) => unawaited(_setVoiceEnabled(value)),
-            title: Text(i18n.t('toolbox.breathing.voice_cues')),
-            subtitle: Text(
-              i18n.t(
-                'inline.plan294.breathing.cloud_cues_are_downloaded_and_cached_first_voice_d82f5299',
-              ),
-            ),
-            contentPadding: EdgeInsets.zero,
-          ),
-          SwitchListTile.adaptive(
-            value: _textOn,
-            onChanged: (value) {
-              setState(() => _textOn = value);
-              _savePrefs();
-            },
-            title: Text(i18n.t('inline.plan294.breathing.text_cues_2c05233d')),
-            subtitle: Text(
-              i18n.t(
-                'inline.plan294.breathing.show_the_current_action_body_prompt_and_countdow_80d08090',
-              ),
-            ),
-            contentPadding: EdgeInsets.zero,
-          ),
-          SwitchListTile.adaptive(
-            value: _hapticOn,
-            onChanged: (value) {
-              setState(() => _hapticOn = value);
-              _savePrefs();
-            },
-            title: Text(i18n.t('inline.plan294.breathing.haptics_b2ca72e4')),
-            subtitle: Text(
-              i18n.t(
-                'inline.plan294.breathing.adds_subtle_pulses_on_stage_changes_so_you_can_f_f66b095f',
-              ),
-            ),
-            contentPadding: EdgeInsets.zero,
           ),
         ],
       ),

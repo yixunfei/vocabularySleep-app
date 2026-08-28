@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 
+import 'package:vocabulary_sleep_app/src/services/cstcloud_resource_cache_service.dart';
 import 'package:vocabulary_sleep_app/src/services/toolbox_breathing_audio_repository.dart';
 import 'package:vocabulary_sleep_app/src/services/toolbox_breathing_catalog.dart';
 
@@ -60,6 +64,27 @@ void main() {
       }
     });
 
+    test('clamps a corrupt WAV data length to the actual file size', () async {
+      final tempDir = await Directory.systemTemp.createTemp(
+        'breathing_audio_repository_',
+      );
+      addTearDown(() => tempDir.delete(recursive: true));
+
+      final file = File(p.join(tempDir.path, 'session_start.wav'));
+      await file.writeAsBytes(
+        _buildWavBytes(payloadLength: 4800, declaredDataLength: 0x7ffffffb),
+        flush: true,
+      );
+
+      final repo = ToolboxBreathingAudioRepository(
+        _FakeBreathingCacheService(file),
+      );
+      final resolved = await repo.resolve('session_start');
+
+      expect(resolved, isNotNull);
+      expect(resolved!.duration, const Duration(milliseconds: 100));
+    });
+
     test('stage cue durations fit with mobile-friendly playback rate caps', () {
       for (final scenario in BreathingExperienceCatalog.scenarios) {
         for (final stage in scenario.stages) {
@@ -87,6 +112,50 @@ void main() {
       }
     });
   });
+}
+
+class _FakeBreathingCacheService extends CstCloudResourceCacheService {
+  _FakeBreathingCacheService(this.file);
+
+  final File file;
+
+  @override
+  Future<File> ensureFileDownloaded(
+    String remoteKey, {
+    String? cacheRelativePath,
+    ResourceDownloadProgressCallback? onProgress,
+  }) async {
+    return file;
+  }
+}
+
+Uint8List _buildWavBytes({
+  required int payloadLength,
+  required int declaredDataLength,
+}) {
+  final bytes = Uint8List(44 + payloadLength);
+  final data = ByteData.view(bytes.buffer);
+
+  void writeAscii(int offset, String value) {
+    for (var index = 0; index < value.length; index += 1) {
+      bytes[offset + index] = value.codeUnitAt(index);
+    }
+  }
+
+  writeAscii(0, 'RIFF');
+  data.setUint32(4, bytes.length - 8, Endian.little);
+  writeAscii(8, 'WAVE');
+  writeAscii(12, 'fmt ');
+  data.setUint32(16, 16, Endian.little);
+  data.setUint16(20, 1, Endian.little);
+  data.setUint16(22, 1, Endian.little);
+  data.setUint32(24, 48000, Endian.little);
+  data.setUint32(28, 48000, Endian.little);
+  data.setUint16(32, 1, Endian.little);
+  data.setUint16(34, 8, Endian.little);
+  writeAscii(36, 'data');
+  data.setUint32(40, declaredDataLength, Endian.little);
+  return bytes;
 }
 
 String? _effectiveCueIdForStage(BreathingStagePlan stage) {

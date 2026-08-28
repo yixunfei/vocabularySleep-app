@@ -1,3 +1,32 @@
+## [Unreleased-FIX-BREATHING-VOICE] - 2026-08-28
+
+### 原因
+- 呼吸引导缓存中的部分 WAV 文件 `data` 块长度字段损坏，声明值远大于实际文件长度，导致启动提示按错误的超长时长等待。
+- 设置面板的 `SwitchListTile` 直接位于带背景的装饰层内，触发 Flutter 关于 `ListTile` 背景和 ink splash 承载层的框架警告。
+
+### 修改
+- WAV 时长解析在存在文件总长度时以实际可用字节数为上限，并保留正常 WAV 的声明长度。
+- 系统提示等待优先使用播放器完成事件，缺失事件时使用 12 秒有界回退，并通过序列令牌支持取消；会话和 BOLT 启动增加代际校验及 `finally` 状态清理。
+- 呼吸设置开关组增加透明 `Material` 承载层，不改变开关回调、持久化或页面布局语义。
+
+### 修复
+- 启动提示实际播放完成后，开始按钮不再因损坏的 WAV 头而永久停留在“准备中”。
+- 重置、取消、播放器异常或完成事件缺失时，准备状态不会被旧的异步启动任务重新写回。
+- 消除呼吸设置面板对应的 `ListTile background color or ink splashes may be invisible` 框架警告。
+
+### 风险变更
+- 播放器未发出完成事件时，系统提示最多按单条 12 秒回退后继续；真实音频仍以完成事件为准。
+- 未修改呼吸阶段计时、音频资源映射、持久化字段、本地化文案或通用播放器实现。
+
+### 验证
+- `dart format` 目标 Dart 文件通过。
+- `flutter analyze --no-pub` 目标实现与测试文件通过。
+- `flutter test --no-pub test/toolbox_breathing_audio_repository_test.dart --reporter compact` 通过（4 项）。
+- `flutter test --no-pub test/ui_smoke_test.dart --reporter compact` 通过（147 项）。
+- `flutter test --no-pub --reporter compact` 通过（751 项）。
+- `node scripts/audit_i18n_placeholders.js` 通过（catalog 51766 keys，missing/mismatch/missingParams 均为 0）；维护报告保留既有 40108 个未引用 key、661 个 stale registry source 和 30 个可退休 key，未执行清理。
+- 旧 helper 扫描和 catalog Dart 插值扫描无命中；`git diff --check` 通过，本轮未修改 i18n catalog/registry。
+
 ## [Unreleased-AUDIT-P1P2-REMEDIATION] - 2026-08-28
 
 ### 原因

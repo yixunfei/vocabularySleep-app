@@ -413,14 +413,24 @@ class ToolboxBreathingAudioRepository {
       final chunkId = _readAscii(bytes, offset, 4);
       final chunkSize = _readUint32LE(bytes, offset + 4);
       final chunkDataOffset = offset + 8;
-      final paddedChunkSize = chunkSize + (chunkSize.isOdd ? 1 : 0);
-      final nextOffset = chunkDataOffset + paddedChunkSize;
       if (chunkId == 'fmt ' && chunkDataOffset + 16 <= bytes.length) {
         byteRate = _readUint32LE(bytes, chunkDataOffset + 8);
       } else if (chunkId == 'data') {
-        dataSize = chunkSize;
+        // Some cached files contain a corrupt data-size field (for example,
+        // 0x7fffffff) even though the file itself is only a few kilobytes.
+        // The file length is authoritative when it is available; otherwise
+        // only the bytes we actually received can be used.
+        final availableDataSize =
+            (totalLength ?? bytes.length) - chunkDataOffset;
+        if (availableDataSize > 0) {
+          dataSize = chunkSize > availableDataSize
+              ? availableDataSize
+              : chunkSize;
+        }
         break;
       }
+      final paddedChunkSize = chunkSize + (chunkSize.isOdd ? 1 : 0);
+      final nextOffset = chunkDataOffset + paddedChunkSize;
       if (nextOffset <= offset) {
         break;
       }
