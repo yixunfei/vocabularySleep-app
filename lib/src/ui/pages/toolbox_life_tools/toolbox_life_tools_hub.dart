@@ -430,6 +430,7 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
           ),
           const SizedBox(height: 12),
           TextField(
+            key: const ValueKey<String>('life_tools_search_field'),
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.search_rounded),
               border: const OutlineInputBorder(),

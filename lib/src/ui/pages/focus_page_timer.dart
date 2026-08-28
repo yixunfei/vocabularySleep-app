@@ -522,39 +522,45 @@ extension _FocusPageTimerExtension on _FocusPageState {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(i18n.t('reminderSettings'), style: theme.textTheme.bodyMedium),
-            const SizedBox(height: 6),
-            buildSwitch(
-              label: i18n.t('reminderHaptic'),
-              value: reminder.haptic,
-              map: (next) => reminder.copyWith(haptic: next),
-            ),
-            buildSwitch(
-              label: i18n.t('reminderSound'),
-              value: reminder.sound,
-              map: (next) => reminder.copyWith(sound: next),
-            ),
-            buildSwitch(
-              label: i18n.t('reminderVoice'),
-              value: reminder.voice,
-              map: (next) => reminder.copyWith(voice: next),
-            ),
-            buildSwitch(
-              label: i18n.t('reminderPauseAmbient'),
-              value: reminder.pauseAmbient,
-              map: (next) => reminder.copyWith(pauseAmbient: next),
-            ),
-            buildSwitch(
-              label: i18n.t('reminderVisual'),
-              value: reminder.visual,
-              map: (next) => reminder.copyWith(visual: next),
-            ),
-          ],
+      child: Material(
+        color: Colors.transparent,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                i18n.t('reminderSettings'),
+                style: theme.textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 6),
+              buildSwitch(
+                label: i18n.t('reminderHaptic'),
+                value: reminder.haptic,
+                map: (next) => reminder.copyWith(haptic: next),
+              ),
+              buildSwitch(
+                label: i18n.t('reminderSound'),
+                value: reminder.sound,
+                map: (next) => reminder.copyWith(sound: next),
+              ),
+              buildSwitch(
+                label: i18n.t('reminderVoice'),
+                value: reminder.voice,
+                map: (next) => reminder.copyWith(voice: next),
+              ),
+              buildSwitch(
+                label: i18n.t('reminderPauseAmbient'),
+                value: reminder.pauseAmbient,
+                map: (next) => reminder.copyWith(pauseAmbient: next),
+              ),
+              buildSwitch(
+                label: i18n.t('reminderVisual'),
+                value: reminder.visual,
+                map: (next) => reminder.copyWith(visual: next),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -618,11 +624,17 @@ extension _FocusPageTimerExtension on _FocusPageState {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
-      child: SwitchListTile.adaptive(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-        title: Text(label),
-        value: value,
-        onChanged: onChanged,
+      child: Material(
+        color: Colors.transparent,
+        child: SwitchListTile.adaptive(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 2,
+          ),
+          title: Text(label),
+          value: value,
+          onChanged: onChanged,
+        ),
       ),
     );
   }

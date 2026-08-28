@@ -65,9 +65,13 @@
 ### 2026-08-28
 - 已完成全项目只读审查、定向复现和用户方案确认。
 - 已创建 `codex/fix-audit-findings` 分支并建立本计划。
+- 已完成 correctness 阶段：修复 Material 层级、异步 context 生命周期、快速入口长按/拖放冲突与移动端跨屏接收区，并恢复现行 UI/文案测试契约。
+- `test/ui_smoke_test.dart` 共 147 项通过；`focus_service_test.dart`、`focus_timer_widgets_test.dart` 与 `toolbox_human_tests_extended_smoke_test.dart` 共 21 项通过，测试输出无离屏点击告警。
+- i18n 本阶段新增 key 0、退休 key 0；占位符审计为 `51755` keys、缺失/不一致均为 0，旧 helper 与 catalog Dart 插值扫描无命中。维护报告保留历史基线：`40108` 个未引用 key、`661` 个 stale registry source、`30` 个待清理 retirement，本轮不处理。
+- `flutter analyze --no-pub` 完成扫描，仍有 175 条既有 lint/warning；本轮修改未新增诊断，静态债务按计划保留到 P3。
 
 ## 完成检查清单
-- [ ] 正确性与测试门禁修复完成
+- [x] 正确性与测试门禁修复完成
 - [ ] 图片与归档资源安全修复完成
 - [ ] i18n 启动与包体修复完成
 - [ ] 音频异步竞争修复完成

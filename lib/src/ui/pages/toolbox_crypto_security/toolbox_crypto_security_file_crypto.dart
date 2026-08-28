@@ -451,6 +451,7 @@ class _FileCryptoToolPageState extends State<_FileCryptoToolPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           InkWell(
+            key: const ValueKey<String>('crypto_file_config_section'),
             borderRadius: BorderRadius.circular(14),
             onTap: _busy
                 ? null

@@ -2555,11 +2555,12 @@ class _PasswordVaultPageState extends State<_PasswordVaultPage>
   }
 
   Future<void> _exportVault() async {
+    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     if (_unlocked) {
       final authenticated = await _ensureBiometricGate(
         reasonKey: 'toolbox.crypto.password_vault.biometric_reason',
       );
-      if (!authenticated) {
+      if (!authenticated || !mounted) {
         return;
       }
     }
@@ -2568,10 +2569,7 @@ class _PasswordVaultPageState extends State<_PasswordVaultPage>
           ? _service.encodeVaultBytes(_snapshot!)
           : await _readSelectedVaultBytes();
       final pickedPath = await _pickCryptoSavePath(
-        dialogTitle: _lifeI18nText(
-          context,
-          'toolbox.crypto.password_vault.export_dialog',
-        ),
+        dialogTitle: i18n.t('toolbox.crypto.password_vault.export_dialog'),
         fileName:
             'vocabulary_sleep_password_vault_${DateTime.now().millisecondsSinceEpoch}.vspvault',
         extension: 'vspvault',
@@ -2583,11 +2581,13 @@ class _PasswordVaultPageState extends State<_PasswordVaultPage>
         fallbackSegments: const <String>['toolbox_crypto', 'exports'],
         fallbackFileName: 'vocabulary_sleep_password_vault.vspvault',
       );
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _statusMessage = savedPath == null
-            ? _lifeI18nText(context, 'toolbox.crypto.common.browser_download')
-            : _lifeI18nText(
-                context,
+            ? i18n.t('toolbox.crypto.common.browser_download')
+            : i18n.t(
                 'toolbox.crypto.password_vault.export_success',
                 params: <String, Object?>{'path': savedPath},
               );

@@ -680,7 +680,7 @@ void main() {
 
         expect(reminder.playCalls, 1);
         expect(reminder.lastAnnouncementLanguageTag, startsWith('zh'));
-        expect(reminder.lastAnnouncementText, contains('专注时间结束'));
+        expect(reminder.lastAnnouncementText, contains('专注完成'));
         expect(reminder.lastAnnouncementText, contains('第'));
         expect(reminder.lastAnnouncementText, contains('时长'));
         expect(reminder.lastAnnouncementText, contains('3 分'));

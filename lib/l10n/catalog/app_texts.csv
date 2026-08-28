@@ -4156,7 +4156,7 @@ inline.plan295.life.my_answer_draft_optional.e20a9654f0ac,我的回答草稿（�
 inline.plan295.life.my_gender.e1e7a00505fd,我的性别,My gender,私の性別,My gender,My gender,My gender,My gender
 inline.plan295.life.mycenaean_greece_rises.401e3f9eba08,迈锡尼希腊兴起,Mycenaean Greece rises,Mycenaean Greece rises,Mycenaean Greece rises,Mycenaean Greece rises,Mycenaean Greece rises,Mycenaean Greece rises
 inline.plan295.life.mycenaean_palaces_linear_b_writing_a.26eece56044d,迈锡尼宫殿、线形文字 B 和武士贵族文化构成希腊青铜时代晚期的重要形态。,"Mycenaean palaces, Linear B writing, and warrior elites shaped Late Bronze Age Greece.","Mycenaean palaces, Linear B writing, and warrior elites shaped Late Bronze Age Greece.","Mycenaean palaces, Linear B writing, and warrior elites shaped Late Bronze Age Greece.","Mycenaean palaces, Linear B writing, and warrior elites shaped Late Bronze Age Greece.","Mycenaean palaces, Linear B writing, and warrior elites shaped Late Bronze Age Greece.","Mycenaean palaces, Linear B writing, and warrior elites shaped Late Bronze Age Greece."
-inline.plan295.life.name_pinyin_romaji_hex_ff.5e2c00de5e02,名称 / 拼音 / 罗马音 / HEX / ??FF??,Name / pinyin / romaji / hex / ??FF??,名前 / ピンイン / ローマ字 / 16進 / ??FF??,Name / pinyin / romaji / hex / ??FF??,Name / pinyin / romaji / hex / ??FF??,Name / pinyin / romaji / hex / ??FF??,Name / pinyin / romaji / hex / ??FF??
+inline.plan295.life.name_pinyin_romaji_hex_ff.5e2c00de5e02,名称 / 拼音 / 罗马音 / HEX / #FFFFFF,Name / pinyin / romaji / hex / #FFFFFF,名前 / ピンイン / ローマ字 / 16進 / #FFFFFF,Name / Pinyin / Romaji / Hex / #FFFFFF,Nom / pinyin / romaji / hex / #FFFFFF,Nombre / pinyin / romaji / hex / #FFFFFF,Название / пиньинь / ромадзи / HEX / #FFFFFF
 inline.plan295.life.name.0a0a54c8e406,颜色名,name,名前,name,name,name,name
 inline.plan295.life.name.160a4094139f,文件名,Name,名前,Name,Name,Name,Name
 inline.plan295.life.name.d391dcbbc154,姓名,Name,名前,Name,Name,Name,Name
@@ -57463,7 +57463,7 @@ ref.reminderSound,系统提示音,System chime,システムチャイム,Systemsi
 ref.reminderVisual,视觉高亮,Visual highlight,視覚的ハイライト,Visuelle Hervorhebung,Mise en évidence visuelle,Resaltado visual,Визуальное выделение
 ref.reminderVoice,语音提示,Voice prompt,音声プロンプト,Sprachanweisung,Invite vocale,Indicaciones de voz,Голосовое уведомление
 ref.resume,继续,Resume,再開,Fortsetzen,Reprendre,Reanudar,Продолжить
-ref.roundProgress,{current} 的 {total} 回合,Round {current} of {total},{current} の {total} ラウンド,Runde {current} von {total},Tour {current} de {total},Ronda {current} de {total},Раунд {current} из {total}
+ref.roundProgress,第 {current}/{total} 回合,Round {current} of {total},{current} の {total} ラウンド,Runde {current} von {total},Tour {current} de {total},Ronda {current} de {total},Раунд {current} из {total}
 ref.rounds,回合,Rounds,ラウンド,Runden,Manches,Rondas,Раунды
 ref.roundsLabel,回合,Rounds,ラウンド,Runden,Manches,Rondas,Раунды
 ref.save,保存,Save,保存,Speichern,Enregistrer,Guardar,Сохранить
@@ -59010,7 +59010,7 @@ renameWordbook,重命名单词书,Rename wordbook,単語帳の名前を変更,W�
 resizeSplitHint,拖动分隔线以调整计划与笔记大小,Drag the divider to resize tasks and notes,区切り線をドラッグして、タスクとノートのサイズを変更,"Ziehen Sie den Divider, um Aufgaben und Notizen zu skalieren",Faites glisser le séparateur pour redimensionner les tâches et les notes,Arrastra el divisor para redimensionar tareas y notas,"Перетащите разделитель, чтобы изменить размер задач и заметок"
 resume,继续,Resume,再開,Fortsetzen,Reprendre,Reanudar,Продолжить
 revealAnswer,显示答案,Reveal Answer,答えを表示,Antwort anzeigen,Révéler la réponse,Revelar respuesta,Показать ответ
-roundProgress,{current} 的 {total} 回合,Round {current} of {total},{current} の {total} ラウンド,Runde {current} von {total},Tour {current} de {total},Ronda {current} de {total},Раунд {current} из {total}
+roundProgress,第 {current}/{total} 回合,Round {current} of {total},{current} の {total} ラウンド,Runde {current} von {total},Tour {current} de {total},Ronda {current} de {total},Раунд {current} из {total}
 rounds,回合,Rounds,ラウンド,Runden,Manches,Rondas,Раунды
 roundsLabel,回合,Rounds,ラウンド,Runden,Manches,Rondas,Раунды
 ru,Русский,Русский,Русский,Русский,Русский,Русский,Русский

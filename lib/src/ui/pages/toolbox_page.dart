@@ -27,6 +27,7 @@ class ToolboxPage extends ConsumerStatefulWidget {
 class _ToolboxPageState extends ConsumerState<ToolboxPage> {
   bool _editing = false;
   bool _layoutDragActive = false;
+  bool _quickDragActive = false;
   bool _childConsumedBackIntent = false;
   int _backIntentSerial = 0;
   ToolboxEntryData? _activeEntry;
@@ -147,51 +148,78 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
     required List<ToolboxEntryData> quickEntries,
     required ValueChanged<ToolboxEntryData> onOpenEntry,
   }) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(
-        ToolboxUiTokens.pageHorizontalPadding,
-        ToolboxUiTokens.pageTopPadding,
-        ToolboxUiTokens.pageHorizontalPadding,
-        ToolboxUiTokens.pageBottomPadding,
-      ),
+    return Stack(
+      fit: StackFit.expand,
       children: <Widget>[
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: ToolboxUiTokens.contentMaxWidth,
+        ListView(
+          padding: const EdgeInsets.fromLTRB(
+            ToolboxUiTokens.pageHorizontalPadding,
+            ToolboxUiTokens.pageTopPadding,
+            ToolboxUiTokens.pageHorizontalPadding,
+            ToolboxUiTokens.pageBottomPadding,
+          ),
+          children: <Widget>[
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: ToolboxUiTokens.contentMaxWidth,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    _buildHeader(i18n),
+                    const SizedBox(height: ToolboxUiTokens.cardSpacing),
+                    _buildIntroPanel(i18n),
+                    const SizedBox(height: ToolboxUiTokens.cardSpacing),
+                    ToolboxQuickEntryPanel(
+                      i18n: i18n,
+                      state: state,
+                      quickEntries: quickEntries,
+                      availableEntries: visibleEntries,
+                      onOpenEntry: onOpenEntry,
+                    ),
+                    const SizedBox(height: ToolboxUiTokens.sectionSpacing),
+                    if (visibleEntries.isEmpty)
+                      _EmptyToolboxLayoutPanel(
+                        i18n: i18n,
+                        hiddenEntries: hiddenEntries,
+                        onEdit: _enterEditMode,
+                      )
+                    else
+                      ToolboxSection(
+                        section: homeSection,
+                        enableQuickDrag: true,
+                        onEntryLongPress: (_) => _enterEditMode(),
+                        onEntryOpen: onOpenEntry,
+                        onQuickDragStarted: () => _setQuickDragActive(true),
+                        onQuickDragEnded: () => _setQuickDragActive(false),
+                      ),
+                  ],
+                ),
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                _buildHeader(i18n),
-                const SizedBox(height: ToolboxUiTokens.cardSpacing),
-                _buildIntroPanel(i18n),
-                const SizedBox(height: ToolboxUiTokens.cardSpacing),
-                ToolboxQuickEntryPanel(
+          ],
+        ),
+        if (_quickDragActive)
+          Positioned.fill(
+            child: SafeArea(
+              minimum: const EdgeInsets.fromLTRB(
+                ToolboxUiTokens.pageHorizontalPadding,
+                ToolboxUiTokens.pageTopPadding,
+                ToolboxUiTokens.pageHorizontalPadding,
+                0,
+              ),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ToolboxQuickEntryDropOverlay(
                   i18n: i18n,
                   state: state,
                   quickEntries: quickEntries,
                   availableEntries: visibleEntries,
-                  onOpenEntry: onOpenEntry,
                 ),
-                const SizedBox(height: ToolboxUiTokens.sectionSpacing),
-                if (visibleEntries.isEmpty)
-                  _EmptyToolboxLayoutPanel(
-                    i18n: i18n,
-                    hiddenEntries: hiddenEntries,
-                    onEdit: _enterEditMode,
-                  )
-                else
-                  ToolboxSection(
-                    section: homeSection,
-                    enableQuickDrag: true,
-                    onEntryLongPress: (_) => _enterEditMode(),
-                    onEntryOpen: onOpenEntry,
-                  ),
-              ],
+              ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -364,6 +392,7 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
     setState(() {
       _editing = true;
       _layoutDragActive = false;
+      _quickDragActive = false;
     });
   }
 
@@ -371,6 +400,7 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
     setState(() {
       _editing = false;
       _layoutDragActive = false;
+      _quickDragActive = false;
     });
   }
 
@@ -387,6 +417,7 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
       setState(() {
         _editing = false;
         _layoutDragActive = false;
+        _quickDragActive = false;
         _activeEntry = entry;
       });
       return;
@@ -411,6 +442,15 @@ class _ToolboxPageState extends ConsumerState<ToolboxPage> {
     }
     setState(() {
       _layoutDragActive = value;
+    });
+  }
+
+  void _setQuickDragActive(bool value) {
+    if (_quickDragActive == value) {
+      return;
+    }
+    setState(() {
+      _quickDragActive = value;
     });
   }
 

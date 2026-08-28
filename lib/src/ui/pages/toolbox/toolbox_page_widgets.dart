@@ -203,6 +203,8 @@ class ToolboxSection extends StatelessWidget {
     this.onEntryLongPress,
     this.onEntryRemove,
     this.onEntryOpen,
+    this.onQuickDragStarted,
+    this.onQuickDragEnded,
     this.dragTooltip = '',
     this.removeTooltip = '',
   });
@@ -213,6 +215,8 @@ class ToolboxSection extends StatelessWidget {
   final ValueChanged<ToolboxEntryData>? onEntryLongPress;
   final ValueChanged<ToolboxEntryData>? onEntryRemove;
   final ValueChanged<ToolboxEntryData>? onEntryOpen;
+  final VoidCallback? onQuickDragStarted;
+  final VoidCallback? onQuickDragEnded;
   final String dragTooltip;
   final String removeTooltip;
 
@@ -249,6 +253,8 @@ class ToolboxSection extends StatelessWidget {
                             ? null
                             : () => onEntryRemove!(entry),
                         onOpen: onEntryOpen,
+                        onQuickDragStarted: onQuickDragStarted,
+                        onQuickDragEnded: onQuickDragEnded,
                         dragTooltip: dragTooltip,
                         removeTooltip: removeTooltip,
                       ),
@@ -263,7 +269,7 @@ class ToolboxSection extends StatelessWidget {
   }
 }
 
-class _ToolboxEntryTile extends StatelessWidget {
+class _ToolboxEntryTile extends StatefulWidget {
   const _ToolboxEntryTile({
     required this.entry,
     required this.editing,
@@ -271,6 +277,8 @@ class _ToolboxEntryTile extends StatelessWidget {
     required this.onLongPress,
     required this.onRemove,
     required this.onOpen,
+    required this.onQuickDragStarted,
+    required this.onQuickDragEnded,
     required this.dragTooltip,
     required this.removeTooltip,
   });
@@ -281,26 +289,53 @@ class _ToolboxEntryTile extends StatelessWidget {
   final VoidCallback? onLongPress;
   final VoidCallback? onRemove;
   final ValueChanged<ToolboxEntryData>? onOpen;
+  final VoidCallback? onQuickDragStarted;
+  final VoidCallback? onQuickDragEnded;
   final String dragTooltip;
   final String removeTooltip;
 
   @override
+  State<_ToolboxEntryTile> createState() => _ToolboxEntryTileState();
+}
+
+class _ToolboxEntryTileState extends State<_ToolboxEntryTile> {
+  static const double _stationaryDragTolerance = 18;
+
+  Offset? _dragOrigin;
+
+  @override
   Widget build(BuildContext context) {
     final card = ToolboxEntryCard(
-      entry: entry,
-      editing: editing,
-      onLongPress: onLongPress,
-      onRemove: onRemove,
-      onOpen: onOpen,
-      dragTooltip: dragTooltip,
-      removeTooltip: removeTooltip,
+      entry: widget.entry,
+      editing: widget.editing,
+      onLongPress: widget.enableQuickDrag ? null : widget.onLongPress,
+      onRemove: widget.onRemove,
+      onOpen: widget.onOpen,
+      dragTooltip: widget.dragTooltip,
+      removeTooltip: widget.removeTooltip,
     );
-    if (!enableQuickDrag || editing) {
+    if (!widget.enableQuickDrag || widget.editing) {
       return card;
     }
     return LongPressDraggable<ToolboxEntryData>(
-      key: ValueKey<String>('toolbox_entry_draggable_${entry.moduleId}'),
-      data: entry,
+      key: ValueKey<String>('toolbox_entry_draggable_${widget.entry.moduleId}'),
+      data: widget.entry,
+      onDragStarted: () {
+        final renderBox = context.findRenderObject()! as RenderBox;
+        _dragOrigin = renderBox.localToGlobal(Offset.zero);
+        widget.onQuickDragStarted?.call();
+      },
+      onDragEnd: (details) {
+        widget.onQuickDragEnded?.call();
+        final dragOrigin = _dragOrigin;
+        _dragOrigin = null;
+        if (!details.wasAccepted &&
+            dragOrigin != null &&
+            (details.offset - dragOrigin).distance <=
+                _stationaryDragTolerance) {
+          widget.onLongPress?.call();
+        }
+      },
       feedback: Material(
         color: Colors.transparent,
         child: SizedBox(

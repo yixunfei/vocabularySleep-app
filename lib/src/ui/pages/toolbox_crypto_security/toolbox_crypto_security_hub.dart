@@ -216,6 +216,7 @@ class CryptoSecurityHubPage extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _CryptoSecurityModuleCard(
+            key: const ValueKey<String>('crypto_file_encryption_card'),
             icon: Icons.lock_rounded,
             accent: _accent,
             title: _lifeI18nText(context, 'toolbox.crypto.file.title'),
@@ -473,6 +474,7 @@ class CryptoSecurityHubPage extends StatelessWidget {
 
 class _CryptoSecurityModuleCard extends StatelessWidget {
   const _CryptoSecurityModuleCard({
+    super.key,
     required this.icon,
     required this.accent,
     required this.title,

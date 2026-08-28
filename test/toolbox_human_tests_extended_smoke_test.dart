@@ -664,7 +664,10 @@ void main() {
       expect(find.text('Pace level'), findsOneWidget);
       expect(find.text('Sync window'), findsOneWidget);
       expect(find.text('Charge window'), findsOneWidget);
-      await tester.tap(find.text('Single-side practice'));
+      final singleSidePractice = find.text('Single-side practice');
+      await tester.ensureVisible(singleSidePractice);
+      await tester.pumpAndSettle();
+      await tester.tap(singleSidePractice);
       await tester.pumpAndSettle();
       expect(find.text('Practice side'), findsOneWidget);
       expect(find.text('Left only'), findsOneWidget);

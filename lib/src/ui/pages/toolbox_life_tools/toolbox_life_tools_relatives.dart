@@ -977,13 +977,16 @@ class _RelativesSwitchTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
-      child: SwitchListTile.adaptive(
-        contentPadding: const EdgeInsetsDirectional.only(start: 12, end: 10),
-        secondary: Icon(icon),
-        title: Text(title),
-        subtitle: Text(subtitle),
-        value: value,
-        onChanged: onChanged,
+      child: Material(
+        color: Colors.transparent,
+        child: SwitchListTile.adaptive(
+          contentPadding: const EdgeInsetsDirectional.only(start: 12, end: 10),
+          secondary: Icon(icon),
+          title: Text(title),
+          subtitle: Text(subtitle),
+          value: value,
+          onChanged: onChanged,
+        ),
       ),
     );
   }
