@@ -5,7 +5,6 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:archive/archive.dart';
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:camera/camera.dart';
 import 'package:crypto/crypto.dart';
@@ -33,6 +32,8 @@ import 'package:video_trimmer/video_trimmer.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/todo_item.dart';
 import '../../services/app_log_service.dart';
+import '../../services/toolbox_archive_processing_service.dart';
+import '../../services/toolbox_archive_resource_policy.dart';
 import '../../services/toolbox_fake_call_service.dart';
 import '../../services/toolbox_life_notify_service.dart';
 import '../../services/toolbox_meme_service.dart';
@@ -130,6 +131,8 @@ part 'toolbox_life_tools/toolbox_life_tools_distance_meter.dart';
 part 'toolbox_life_tools/toolbox_life_tools_bio_clock.dart';
 part 'toolbox_life_tools/toolbox_life_tools_gif_maker.dart';
 part 'toolbox_life_tools/toolbox_life_tools_archive.dart';
+part 'toolbox_life_tools/toolbox_life_tools_archive_view.dart';
+part 'toolbox_life_tools/toolbox_life_tools_archive_widgets.dart';
 
 const MethodChannel _lifeDisplayChannel = MethodChannel(
   'vocabulary_sleep/life_display',
