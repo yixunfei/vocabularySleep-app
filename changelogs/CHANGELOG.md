@@ -1,3 +1,33 @@
+## [Unreleased-AUDIT-P1P2-REMEDIATION] - 2026-08-28
+
+### 原因
+- 全项目审查确认 UI 测试门禁、Material 层级与异步 context 生命周期存在正确性缺口；图片、归档和 i18n CSV 的 CPU/内存工作会阻塞 UI isolate，归档还缺少资源与路径硬边界。
+- 环境音高频音量写入和长笛 50ms 振幅轮询允许异步平台调用重叠，旧结果可能晚于最新状态落地或在页面销毁后回写。
+
+### 修改
+- 恢复现行 UI/文案测试契约，修复 Material 承载层、异步 mounted/context 检查，以及快速入口长按拖放在窄屏和跨屏场景的交互边界。
+- 图片压缩、放大、证件照及归档编解码迁移到 `compute` worker，并使用 `TransferableTypedData` 传输大字节；图片增加文件、像素、边长限制，归档增加输入、条目、单文件、总内容和压缩比限制。
+- 归档在解码前预检 ZIP 中央目录，解码后复核长度与 CRC；写盘前拒绝绝对路径、父级穿越、符号链接、大小写冲突和规范化重复路径，失败时清理本次部分输出。
+- 应用立即挂载轻量启动壳，i18n CSV 在后台 isolate 解析；catalog 失败抛出明确异常并可重试，完整依赖只在成功后构造一次。发布资源仅保留 `app_texts.csv`。
+- 环境音音量写入改为单飞合并并在销毁前等待在途调用；长笛振幅轮询增加 in-flight guard 与 generation，停止、重启或销毁后丢弃迟到数据和错误。
+
+### 修复
+- 消除已确认的测试失败、Material 断言、异步 context 使用风险，以及图片/归档大输入导致 UI 卡顿或资源耗尽的生产风险。
+- catalog 缺失、损坏、缺列或无有效 key 时不再静默安装空表；审计 registry、retirement 和说明文件不再进入发布资源。
+- 音量快速变化只应用当前批次和最终目标值，不再并发写入平台播放器；麦克风读取在慢设备上不再按定时周期无限堆叠。
+
+### 风险变更
+- 图片限制为源文件 32 MiB、源图 4000 万像素、输出 6400 万像素且单边不超过 16384 px；归档限制为 256 MiB、10000 条目、单文件 256 MiB、累计内容 1 GiB 和压缩比 200:1，合法超大输入也会被明确拒绝。
+- 未改变图片算法、归档格式、专注状态机和播放策略；未升级 EOL SQLite/Riverpod/本地 override 依赖，也未清理 catalog 历史债务或机械拆分既有超大文件。
+- 全应用 Web 构建仍被既有 `sherpa_onnx`/`sqlite3` 的 `dart:ffi` 导入阻断；Android/iOS 真机帧时间、RSS 和耗电仍需设备回归。
+
+### 验证
+- `flutter test --no-pub` 全量 750 项通过；`test/ui_smoke_test.dart` 147 项通过。
+- `flutter analyze --no-pub` 无 error，保留 151 条既有 warning/info；本轮新增文件与目标接入文件定向分析无新增诊断。
+- i18n 共新增 11 个 key、退休 0 个；最终占位符审计为 51766 keys，catalog missing、placeholder mismatch 和 Dart missing params 均为 0，旧 helper 与 catalog Dart 插值扫描无命中。
+- AssetManifest 测试确认 `lib/l10n/catalog/` 发布资源只有 `app_texts.csv`；维护报告保留既有 40108 个未引用 key、661 个 stale registry source 和 30 个 retirement，本轮未执行批量清理。
+- `git diff --check` 通过；`PROJECT_DOMAIN.md` 已检查，本轮不改变产品范围，无需更新。
+
 ## [Unreleased-STUDY-PERF-PHASE16-LOG-BACKPRESSURE] - 2026-08-26
 
 ### 原因

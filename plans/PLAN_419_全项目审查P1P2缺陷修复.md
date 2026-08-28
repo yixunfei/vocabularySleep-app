@@ -2,7 +2,7 @@
 
 ## 基本信息
 - **创建日期**: 2026-08-28
-- **状态**: 进行中
+- **状态**: 已完成
 - **负责人**: Codex
 - **分支**: `codex/fix-audit-findings`
 
@@ -58,7 +58,7 @@
 ## 不处理边界
 - 不在本轮机械拆分 111 个超限源码文件；单独建立 P3 架构计划。
 - 不在本轮升级 EOL SQLite 包、Riverpod 或本地 override 插件；依赖升级单独验证迁移风险。
-- 不批量删除 40109 个未引用 catalog key，也不执行 `--apply-retirements`。
+- 不批量删除 40108 个未引用 catalog key，也不执行 `--apply-retirements`。
 - 不改变图片算法、归档格式、专注状态机、播放策略或工具入口行为。
 
 ## 执行记录
@@ -86,14 +86,17 @@
 - `pubspec.yaml` 仅发布 `app_texts.csv`，AssetManifest 测试确认 registry、retirement 与说明文件不再进入应用资源。catalog/启动测试 12 项与完整 `ui_smoke_test.dart` 147 项通过，4 个目标文件定向 `flutter analyze --no-pub` 无诊断，`git diff --check` 通过。
 - i18n 启动阶段新增 key 2、退休 key 0；占位符审计为 `51766` keys、缺失/不一致均为 0。维护报告保留历史基线：`40108` 个未引用 key、`661` 个 stale registry source、`30` 个待清理 retirement，本轮不处理；旧 helper 与 catalog Dart 插值扫描无命中。
 - 已完成音频异步竞争阶段：`SeamlessAmbientLoop` 将启动、切轨、淡入收尾和外部调节的全部音量写入统一到单飞 drain；在途批次期间的变化只标记 pending，下一批重新采样最新目标，销毁会先等待在途音量写入再停止播放器。
-- 长笛振幅轮询提取为 71 行独立控制器，以 in-flight guard 阻止 50ms 定时器堆叠平台调用，并用 generation 在停止、重启和销毁时丢弃迟到数据与错误；现有长笛页面只替换定时接线，未扩展超大页面职责。
+- 长笛振幅轮询提取为 80 行独立控制器，以 in-flight guard 阻止 50ms 定时器堆叠平台调用，并用 generation 在停止、重启和销毁时丢弃迟到数据与错误；现有长笛页面只替换定时接线，未扩展超大页面职责。
 - 环境音与振幅轮询测试共 9 项通过，覆盖最大并发为 1、中间音量合并、最终值落地、销毁等待、停止后迟到异常和销毁后迟到结果；完整 `ui_smoke_test.dart` 147 项通过，新增轮询器、接入文件和测试定向 `flutter analyze --no-pub` 无诊断，`git diff --check` 通过。`ambient_service.dart` 仍有 2 条既有 `prefer_initializing_formals` info，本轮不做无关构造器改名。
+- 最终 `flutter test --no-pub` 全量 750 项通过；`flutter analyze --no-pub` 无 error，保留 151 条既有 warning/info，静态债务继续按 P3 边界处理。
+- 最终 i18n 占位符审计为 `51766` keys、缺失/不一致/Dart missing params 均为 0；维护报告保留 `40108` 个未引用 key、`661` 个 stale registry source 与 `30` 个 retirement，旧 helper 和 catalog Dart 插值扫描无命中。
+- 已检查 `PROJECT_DOMAIN.md` 与相关引用链，本轮不改变产品范围或 toolbox 视觉基线，无需修改领域与设计规范文档。全应用 Web 构建仍受既有 FFI 依赖阻断，Android/iOS 真机帧时间、RSS 和耗电作为明确环境验证缺口保留。
 
 ## 完成检查清单
 - [x] 正确性与测试门禁修复完成
 - [x] 图片与归档资源安全修复完成
 - [x] i18n 启动与包体修复完成
 - [x] 音频异步竞争修复完成
-- [ ] 全量验证通过或剩余历史项已明确记录
-- [ ] Changelog 已更新
-- [ ] 各阶段已提交
+- [x] 全量验证通过或剩余历史项已明确记录
+- [x] Changelog 已更新
+- [x] 各阶段已提交
