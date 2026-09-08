@@ -1,6 +1,8 @@
 part of 'toolbox_breathing_tool.dart';
 
 const String _diaphragmScenarioId = 'diaphragm_4262';
+const Duration _breathingSystemCueFallbackCap = Duration(seconds: 12);
+const Duration _breathingSystemCueCancellationPoll = Duration(milliseconds: 80);
 
 extension _BreathingVoiceHelpers on _BreathingPracticeReleaseCardState {
   List<String> _localeTags(Locale locale) {
@@ -321,12 +323,31 @@ extension _BreathingVoiceHelpers on _BreathingPracticeReleaseCardState {
       }
       return true;
     } catch (_) {
+      if (resolved.kind == BreathingCueSourceKind.remote) {
+        await _invalidateRemoteCue(resolved.location);
+      }
       if (mounted && respectVoiceSetting) {
         _updateState(
           () => _voiceAvailability = _BreathingVoiceAvailability.unavailable,
         );
       }
       return false;
+    }
+  }
+
+  Future<void> _invalidateRemoteCue(String remoteKey) async {
+    final resourceCache = _resourceCache;
+    if (resourceCache != null) {
+      try {
+        await resourceCache.deleteCachedFile(
+          remoteKey,
+          cacheRelativePath: remoteKey,
+        );
+      } catch (_) {}
+    }
+    final repo = _cueRepo;
+    if (repo != null) {
+      await repo.invalidateRemoteCue(remoteKey);
     }
   }
 
@@ -376,6 +397,90 @@ extension _BreathingVoiceHelpers on _BreathingPracticeReleaseCardState {
     } catch (_) {}
   }
 
+  Duration _boundedSystemCueFallback(Duration duration) {
+    if (duration <= Duration.zero) {
+      return const Duration(milliseconds: 1200);
+    }
+    if (duration > _breathingSystemCueFallbackCap) {
+      return _breathingSystemCueFallbackCap;
+    }
+    return duration;
+  }
+
+  Future<bool> _waitForSystemCueCompletion({
+    required int sequenceToken,
+    required Duration fallbackDuration,
+    required Duration gap,
+  }) async {
+    if (!mounted || _systemCueSequenceToken != sequenceToken) {
+      return false;
+    }
+
+    final completion = Completer<bool>();
+    StreamSubscription<void>? completionSubscription;
+    Timer? fallbackTimer;
+    Timer? cancellationTimer;
+    Timer? gapTimer;
+    var playbackCompleted = false;
+
+    bool sequenceIsActive() {
+      return mounted && _systemCueSequenceToken == sequenceToken;
+    }
+
+    void finish(bool active) {
+      if (!completion.isCompleted) {
+        completion.complete(active);
+      }
+    }
+
+    void handlePlaybackComplete() {
+      if (playbackCompleted || completion.isCompleted) {
+        return;
+      }
+      playbackCompleted = true;
+      fallbackTimer?.cancel();
+      if (gap <= Duration.zero) {
+        finish(sequenceIsActive());
+        return;
+      }
+      gapTimer = Timer(gap, () => finish(sequenceIsActive()));
+    }
+
+    completionSubscription = _systemPlayer.onPlayerComplete.listen(
+      (_) => handlePlaybackComplete(),
+      onError: (_, _) {
+        // A missing completion event is covered by the bounded fallback timer.
+      },
+      onDone: () => finish(false),
+      cancelOnError: false,
+    );
+    fallbackTimer = Timer(
+      _boundedSystemCueFallback(fallbackDuration) + gap,
+      () => finish(sequenceIsActive()),
+    );
+    cancellationTimer = Timer.periodic(_breathingSystemCueCancellationPoll, (
+      _,
+    ) {
+      if (!sequenceIsActive()) {
+        finish(false);
+      }
+    });
+
+    // A very short cue may have completed before the subscription was added.
+    if (_systemPlayer.state == PlayerState.completed) {
+      handlePlaybackComplete();
+    }
+
+    try {
+      return await completion.future;
+    } finally {
+      fallbackTimer.cancel();
+      cancellationTimer.cancel();
+      gapTimer?.cancel();
+      await completionSubscription.cancel();
+    }
+  }
+
   Future<void> _playSystemCueSequence(
     List<String> cueIds, {
     bool respectVoiceSetting = true,
@@ -412,8 +517,14 @@ extension _BreathingVoiceHelpers on _BreathingPracticeReleaseCardState {
       if (!played) {
         continue;
       }
-      final waitDuration = _resolvedCueDurationOrFallback(resolved) + gap;
-      await Future<void>.delayed(waitDuration);
+      final sequenceIsActive = await _waitForSystemCueCompletion(
+        sequenceToken: sequenceToken,
+        fallbackDuration: _resolvedCueDurationOrFallback(resolved),
+        gap: gap,
+      );
+      if (!sequenceIsActive) {
+        return;
+      }
     }
   }
 

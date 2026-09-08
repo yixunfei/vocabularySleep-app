@@ -104,12 +104,42 @@ class CstCloudS3CompatClient {
     File targetFile, {
     void Function(int receivedBytes, int totalBytes)? onProgress,
   }) async {
-    await _probeClient.downloadObjectToFile(
-      objectKey,
-      targetFile,
-      onProgress: onProgress,
-    );
-    return targetFile;
+    try {
+      final result = await _probeClient.downloadObjectToFile(
+        objectKey,
+        targetFile,
+        onProgress: onProgress,
+      );
+      if (result.writtenBytes <= 0) {
+        throw StateError('Downloaded object is empty: $objectKey');
+      }
+      final actualBytes = await targetFile.length();
+      if (actualBytes != result.writtenBytes) {
+        throw StateError(
+          'Downloaded object write count mismatch: $objectKey '
+          '($actualBytes/${result.writtenBytes} bytes)',
+        );
+      }
+      if (result.contentLength > 0 &&
+          result.writtenBytes != result.contentLength) {
+        throw StateError(
+          'Downloaded object is incomplete: $objectKey '
+          '(${result.writtenBytes}/${result.contentLength} bytes)',
+        );
+      }
+      return targetFile;
+    } catch (_) {
+      for (final file in <File>[targetFile, File('${targetFile.path}.part')]) {
+        try {
+          if (await file.exists()) {
+            await file.delete();
+          }
+        } catch (_) {
+          // Best-effort cleanup; preserve the original download error.
+        }
+      }
+      rethrow;
+    }
   }
 
   /// 获取对象范围数据

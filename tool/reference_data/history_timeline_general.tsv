@@ -1,0 +1,227 @@
+# collection	id	category	start_year	end_year	years_before_present	approximate	wikidata_search	image_id
+core	cosmic_microwave_background	cosmic			13799620000	true	cosmic microwave background	
+core	first_stars	cosmic			13600000000	true	first stars	
+core	milky_way_formation	cosmic			13500000000	true	Milky Way formation	
+core	solar_system_formation	cosmic			4567000000	true	formation and evolution of the Solar System	
+core	moon_formation	cosmic			4510000000	true	origin of the Moon	
+core	oldest_known_zircons	earth			4404000000	true	Jack Hills zircon	
+core	early_earth_oceans	earth			4400000000	true	origin of water on Earth	
+core	oxygenic_photosynthesis	earth			2700000000	true	oxygenic photosynthesis	
+core	huronian_glaciation	earth			2400000000	true	Huronian glaciation	
+core	first_multicellular_life	earth			1600000000	true	multicellular organism	
+core	cryogenian_snowball_earth	earth			720000000	true	Snowball Earth	
+core	ediacaran_biota	earth			575000000	true	Ediacaran biota	
+core	ordovician_radiation	earth			485000000	true	Great Ordovician Biodiversification Event	
+core	first_land_arthropods	earth			450000000	true	colonization of land	
+core	first_forests	earth			385000000	true	first forest	
+core	permian_triassic_extinction	earth			251900000	true	Permian-Triassic extinction event	
+core	first_mammals	earth			225000000	true	evolution of mammals	
+core	first_birds	earth			150000000	true	origin of birds	
+core	flowering_plants_emerge	earth			140000000	true	evolutionary history of plants	
+core	paleocene_eocene_thermal_maximum	earth			56000000	true	Paleocene-Eocene Thermal Maximum	
+core	first_primates	earth			55000000	true	evolution of primates	
+core	great_american_interchange	earth			3000000	true	Great American Interchange	
+core	quaternary_glaciation	earth			2580000	true	Quaternary glaciation	
+core	younger_dryas	earth			12900	true	Younger Dryas	
+core	holocene_begins	earth	-9700	-9700		true	Holocene	
+core	african_humid_period	earth	-9000	-3000		true	African humid period	
+core	eight_two_kiloyear_event	earth	-6200	-6200		true	8.2-kiloyear event	
+core	minoan_eruption	earth	-1600	-1600		true	Minoan eruption	
+core	sahelanthropus	human			7000000	true	Sahelanthropus	
+core	ardipithecus_ramidus	human			4400000	true	Ardipithecus ramidus	
+core	australopithecus_lucy	human			3200000	true	Lucy Australopithecus	
+core	lomekwi_tools	human			3300000	true	Lomekwi	
+core	homo_habilis	human			2400000	true	Homo habilis	
+core	middle_stone_age	human			300000	true	Middle Stone Age	
+core	levallois_technique	human			300000	true	Levallois technique	
+core	denisovans	human			300000	true	Denisovan	
+core	early_human_burials	human			100000	true	human burial	
+core	prehistoric_ochre_use	human			100000	true	ochre use by humans	
+core	bow_and_arrow	human			64000	true	bow and arrow	
+core	neanderthal_sapiens_interbreeding	human			55000	true	interbreeding between archaic and modern humans	
+core	first_bone_flutes	human			40000	true	Paleolithic flutes	
+core	chauvet_cave_art	human			36000	true	Chauvet Cave	
+core	venus_figurines	human			35000	true	Venus figurine	
+core	sewing_needles	human			30000	true	sewing needle	
+core	peopling_of_americas	human			16000	true	peopling of the Americas	
+core	jomon_pottery	human			16000	true	Jomon pottery	
+core	earliest_known_bread	human			14400	true	Shubayqa 1	
+core	jericho_settlement	human			11000	true	Tell es-Sultan	
+core	sheep_domestication	human			11000	true	domestic sheep	
+core	cattle_domestication	human			10500	true	domestication of cattle	
+core	maize_domestication	human			9000	true	domestication of maize	
+core	copper_metallurgy	human			8500	true	copper metallurgy	
+core	irrigation_agriculture	human			8000	true	irrigation	
+core	uruk_period	civilization	-4000	-3100		true	Uruk period	
+core	earliest_cuneiform	civilization	-3400	-3200		true	cuneiform	
+core	stonehenge_construction	civilization	-3000	-2000		true	Stonehenge	
+core	mesopotamian_city_ur	civilization	-2900	-2000		true	Ur	
+core	code_of_ur_nammu	civilization	-2100	-2050		true	Code of Ur-Nammu	
+core	epic_of_gilgamesh	civilization	-2100	-1200		true	Epic of Gilgamesh	
+core	minoan_linear_a	civilization	-1800	-1450		true	Linear A	
+core	hittite_empire	civilization	-1650	-1178		true	Hittite Empire	
+core	vedic_period	civilization	-1500	-500		true	Vedic period	
+core	mycenaean_linear_b	civilization	-1450	-1200		true	Linear B	
+core	battle_of_kadesh	civilization	-1274	-1274		false	Battle of Kadesh	
+core	egyptian_hittite_peace_treaty	civilization	-1259	-1259		true	Egyptian-Hittite peace treaty	
+core	olmec_colossal_heads	civilization	-1200	-400		true	Olmec colossal heads	
+core	nok_culture	civilization	-1000	300		true	Nok culture	
+core	chavin_culture	civilization	-900	-200		true	Chavin culture	
+core	neo_assyrian_empire	civilization	-911	-609		false	Neo-Assyrian Empire	
+core	babylonian_astronomy	civilization	-800	-100		true	Babylonian astronomy	
+core	achaemenid_royal_road	civilization	-500	-500		true	Royal Road	
+core	zoroastrianism_spreads	civilization	-600	-500		true	Zoroastrianism	
+core	mahavira_and_jainism	civilization	-599	-527		true	Mahavira	
+core	axial_age	civilization	-800	-200		true	Axial Age	
+core	library_of_alexandria	civilization	-283	-283		true	Library of Alexandria	
+core	seleucid_empire	civilization	-312	-63		false	Seleucid Empire	
+core	ptolemaic_kingdom	civilization	-305	-30		false	Ptolemaic Kingdom	
+core	teotihuacan_rise	civilization	100	250		true	Teotihuacan	
+core	kingdom_of_aksum	civilization	100	940		true	Kingdom of Aksum	
+core	nazca_culture	civilization	100	800		true	Nazca culture	
+core	moche_civilization	civilization	100	700		true	Moche culture	
+core	sasanian_empire	civilization	224	651		false	Sasanian Empire	
+core	buddhism_spreads_east_asia	civilization	100	600		true	Silk Road transmission of Buddhism	
+core	hagia_sophia_completed	civilization	537	537		false	Hagia Sophia	
+core	srivijaya_empire	civilization	650	1377		true	Srivijaya	
+core	tibetan_empire	civilization	618	842		false	Tibetan Empire	
+core	house_of_wisdom	civilization	800	1258		true	House of Wisdom	
+core	ghana_empire	civilization	700	1240		true	Ghana Empire	
+core	chola_maritime_expansion	civilization	985	1070		true	Chola dynasty	
+core	fatimid_cairo_founded	civilization	969	969		false	Cairo	
+core	university_of_bologna	civilization	1088	1088		true	University of Bologna	
+core	seljuk_empire	civilization	1037	1194		false	Seljuk Empire	
+core	reconquista_toledo	civilization	1085	1085		false	conquest of Toledo	
+core	cahokia_peak	civilization	1050	1350		true	Cahokia	
+core	rapanui_settlement	civilization	1200	1200		true	settlement of Easter Island	
+core	swahili_city_states	civilization	1000	1500		true	Swahili city-states	
+core	mali_empire_founded	civilization	1235	1235		true	Mali Empire	
+core	kingdom_of_benin	civilization	1180	1897		true	Kingdom of Benin	
+core	solomonic_dynasty	civilization	1270	1974		false	Solomonic dynasty	
+core	majapahit_empire	civilization	1293	1527		false	Majapahit	
+core	vijayanagara_empire	civilization	1336	1646		false	Vijayanagara Empire	
+core	tenochtitlan_founded	civilization	1325	1325		true	Tenochtitlan	
+core	inca_empire_expansion	civilization	1438	1533		true	Inca Empire	
+core	polynesian_new_zealand_settlement	civilization	1250	1300		true	Maori settlement of New Zealand	
+core	timurid_renaissance	civilization	1370	1507		true	Timurid Renaissance	
+core	joseon_dynasty	civilization	1392	1897		false	Joseon	
+core	songhai_empire	civilization	1464	1591		true	Songhai Empire	
+core	safavid_empire	civilization	1501	1736		false	Safavid Iran	
+core	sikhism_founded	civilization	1500	1500		true	Sikhism	
+core	columbian_exchange	civilization	1492	1600		true	Columbian exchange	
+core	manila_galleon	civilization	1565	1815		false	Manila galleon	
+core	transatlantic_slave_trade_expands	civilization	1501	1867		true	Atlantic slave trade	
+core	thirty_years_war	civilization	1618	1648		false	Thirty Years' War	
+core	babylonian_mathematics	science	-1800	-1600		true	Babylonian mathematics	
+core	ebers_papyrus	science	-1550	-1550		true	Ebers Papyrus	
+core	thales_natural_philosophy	science	-600	-546		true	Thales of Miletus	
+core	pythagorean_school	science	-530	-495		true	Pythagoreanism	
+core	hippocratic_corpus	science	-450	-350		true	Hippocratic Corpus	
+core	democritus_atomism	science	-430	-370		true	Democritus	
+core	aristotle_lyceum	science	-335	-335		true	Lyceum Aristotle	
+core	euclid_elements	science	-300	-300		true	Euclid's Elements	
+core	archimedes_science	science	-287	-212		true	Archimedes	
+core	eratosthenes_earth_measurement	science	-240	-240		true	Eratosthenes measurement of Earth	
+core	antikythera_mechanism	science	-150	-100		true	Antikythera mechanism	
+core	ptolemy_almagest	science	150	150		true	Almagest	
+core	zhang_heng_seismoscope	science	132	132		false	Zhang Heng seismoscope	
+core	indian_zero_decimal	science	628	628		true	zero in Indian mathematics	
+core	aryabhatiya	science	499	499		false	Aryabhatiya	
+core	al_khwarizmi_algebra	science	820	820		true	The Compendious Book on Calculation by Completion and Balancing	
+core	ibn_al_haytham_optics	science	1015	1021		true	Book of Optics	
+core	avicenna_canon_medicine	science	1025	1025		true	The Canon of Medicine	
+core	mariners_compass	science	1100	1200		true	mariner's compass	
+core	gunpowder_formula	science	1044	1044		false	Wujing Zongyao	
+core	mechanical_clock	science	1283	1283		true	mechanical clock	
+core	bi_sheng_movable_type	science	1040	1040		true	Bi Sheng	
+core	fibonacci_liber_abaci	science	1202	1202		false	Liber Abaci	
+core	vesalius_anatomy	science	1543	1543		false	De humani corporis fabrica	
+core	kepler_planetary_laws	science	1609	1619		false	Kepler's laws of planetary motion	
+core	harvey_blood_circulation	science	1628	1628		false	William Harvey blood circulation	
+core	torricelli_barometer	science	1643	1643		false	barometer	
+core	boyle_law	science	1662	1662		false	Boyle's law	
+core	hooke_cells	science	1665	1665		false	Micrographia	
+core	leeuwenhoek_microorganisms	science	1676	1676		true	Antonie van Leeuwenhoek microorganisms	
+core	halley_comet_prediction	science	1705	1705		false	Halley's Comet prediction	
+core	linnaeus_taxonomy	science	1735	1735		false	Systema Naturae	
+core	lavoisier_chemical_revolution	science	1789	1789		true	Traite Elementaire de Chimie	
+core	jenner_smallpox_vaccine	science	1796	1796		false	Edward Jenner smallpox vaccine	
+core	voltaic_pile	science	1800	1800		false	voltaic pile	
+core	oersted_electromagnetism	science	1820	1820		false	Oersted electromagnetism	
+core	faraday_induction	science	1831	1831		false	Faraday's law of induction	
+core	daguerreotype	science	1839	1839		false	daguerreotype	
+core	ether_anesthesia	science	1846	1846		false	ether anesthesia	
+core	germ_theory	science	1861	1884		true	germ theory of disease	
+core	maxwell_equations	science	1865	1865		false	Maxwell's equations	
+core	telephone_patent	science	1876	1876		false	invention of the telephone	
+core	incandescent_light	science	1879	1879		true	incandescent light bulb	
+core	hertz_radio_waves	science	1887	1887		false	Heinrich Hertz radio waves	
+core	x_rays_discovered	science	1895	1895		false	discovery of X-rays	
+core	radioactivity_discovered	science	1896	1896		false	discovery of radioactivity	
+core	electron_discovered	science	1897	1897		false	discovery of the electron	
+core	planck_quantum_hypothesis	science	1900	1900		false	Planck quantum hypothesis	
+core	special_relativity	science	1905	1905		false	special relativity	
+core	haber_bosch_process	science	1909	1913		true	Haber process	
+core	continental_drift	science	1912	1912		false	continental drift	
+core	penicillin_discovered	science	1928	1928		false	discovery of penicillin	
+core	nuclear_fission	science	1938	1938		false	discovery of nuclear fission	
+core	transistor_invented	science	1947	1947		false	invention of the transistor	
+core	eniac_completed	science	1945	1946		true	ENIAC	
+core	polio_vaccine	science	1955	1955		false	polio vaccine	
+core	gagarin_spaceflight	science	1961	1961		false	Vostok 1	
+core	first_laser	science	1960	1960		false	first working laser	
+core	plate_tectonics_consensus	science	1965	1968		true	plate tectonics	
+core	first_ivf_birth	science	1978	1978		false	Louise Brown	
+core	pcr_invented	science	1983	1983		false	polymerase chain reaction	
+core	hubble_space_telescope	science	1990	1990		false	Hubble Space Telescope	
+core	first_exoplanet_sunlike_star	science	1995	1995		false	51 Pegasi b	
+core	dolly_cloned	science	1996	1996		false	Dolly sheep	
+core	large_hadron_collider	science	2008	2008		false	Large Hadron Collider	
+core	mrna_vaccines_deployed	science	2020	2020		false	mRNA vaccine	
+core	portuguese_goa	modern	1510	1510		false	Portuguese conquest of Goa	
+core	dutch_east_india_company	modern	1602	1799		false	Dutch East India Company	
+core	treaty_of_utrecht	modern	1713	1715		false	Treaty of Utrecht	
+core	encyclopedie_publication	modern	1751	1772		false	Encyclopedie	
+core	greek_war_independence	modern	1821	1829		false	Greek War of Independence	
+core	taiping_rebellion	modern	1850	1864		false	Taiping Rebellion	
+core	crimean_war	modern	1853	1856		false	Crimean War	
+core	perry_expedition_japan	modern	1853	1854		false	Perry Expedition	
+core	italian_unification	modern	1848	1871		true	Unification of Italy	
+core	emancipation_proclamation	modern	1863	1863		false	Emancipation Proclamation	
+core	first_geneva_convention	modern	1864	1864		false	First Geneva Convention	
+core	first_international	modern	1864	1876		false	International Workingmen's Association	
+core	berlin_conference	modern	1884	1885		false	Berlin Conference	
+core	first_sino_japanese_war	modern	1894	1895		false	First Sino-Japanese War	
+core	spanish_american_war	modern	1898	1898		false	Spanish-American War	
+core	boxer_uprising	modern	1899	1901		false	Boxer Rebellion	
+core	russo_japanese_war	modern	1904	1905		false	Russo-Japanese War	
+core	new_zealand_womens_suffrage	modern	1893	1893		false	women's suffrage in New Zealand	
+core	mexican_revolution	modern	1910	1920		false	Mexican Revolution	
+core	march_on_rome	modern	1922	1922		false	March on Rome	
+core	turkish_republic_founded	modern	1923	1923		false	proclamation of the Republic of Turkey	
+core	irish_free_state	modern	1922	1922		false	Irish Free State	
+core	gandhi_salt_march	modern	1930	1930		false	Salt March	
+core	spanish_civil_war	modern	1936	1939		false	Spanish Civil War	
+core	second_sino_japanese_war	modern	1937	1945		false	Second Sino-Japanese War	
+core	indonesian_independence	modern	1945	1949		false	Indonesian National Revolution	
+core	vietnam_independence_declared	modern	1945	1945		false	Proclamation of Independence of the Democratic Republic of Vietnam	
+core	israel_independence	modern	1948	1948		false	Israeli Declaration of Independence	
+core	geneva_conventions_1949	modern	1949	1949		false	Geneva Conventions	
+core	european_human_rights_convention	modern	1950	1950		false	European Convention on Human Rights	
+core	algerian_independence	modern	1962	1962		false	Algerian independence	
+core	organization_african_unity	modern	1963	1963		false	Organisation of African Unity	
+core	asean_founded	modern	1967	1967		false	ASEAN	
+core	vietnam_war_ends	modern	1975	1975		false	Fall of Saigon	
+core	helsinki_accords	modern	1975	1975		false	Helsinki Accords	
+core	solidarity_poland	modern	1980	1989		false	Solidarity Polish trade union	
+core	iran_iraq_war	modern	1980	1988		false	Iran-Iraq War	
+core	maastricht_treaty	modern	1992	1993		false	Maastricht Treaty	
+core	rwandan_genocide	modern	1994	1994		false	Rwandan genocide	
+core	good_friday_agreement	modern	1998	1998		false	Good Friday Agreement	
+core	euro_introduced	modern	1999	2002		false	introduction of the euro	
+core	kyoto_protocol	modern	1997	2005		false	Kyoto Protocol	
+core	war_in_afghanistan	modern	2001	2021		false	War in Afghanistan 2001-2021	
+core	iraq_war	modern	2003	2011		false	Iraq War	
+core	african_union_founded	modern	2002	2002		false	African Union	
+core	brexit	modern	2016	2020		false	Brexit	
+core	russian_invasion_ukraine	modern	2022	2022		false	Russian invasion of Ukraine	

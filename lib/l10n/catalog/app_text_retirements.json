@@ -603,6 +603,916 @@
       "retiredAt": "2026-07-02",
       "owner": "Codex",
       "cleanupAfter": "2026-08-02"
+    },
+    {
+      "key": "toolbox.life.timeline.collection.brief_24_history",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_002_deb83f4c49.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_002_deb83f4c49.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_002_deb83f4c49.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_003_1e542f8599.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_003_1e542f8599.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_003_1e542f8599.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_004_06faa253be.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_004_06faa253be.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_004_06faa253be.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_005_5c014495d8.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_005_5c014495d8.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_005_5c014495d8.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_006_788958f3df.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_006_788958f3df.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_006_788958f3df.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_007_5aa07a250c.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_007_5aa07a250c.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_007_5aa07a250c.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_008_48e630ab9c.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_008_48e630ab9c.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_008_48e630ab9c.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_012_c6d3d5e9b7.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_012_c6d3d5e9b7.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_012_c6d3d5e9b7.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_013_3e97b3d9b9.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_013_3e97b3d9b9.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_013_3e97b3d9b9.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_014_a79a7f1b61.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_014_a79a7f1b61.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_014_a79a7f1b61.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_015_577003fe77.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_015_577003fe77.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_015_577003fe77.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_016_4906eee1bd.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_016_4906eee1bd.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_016_4906eee1bd.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_017_3670a318f1.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_017_3670a318f1.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_017_3670a318f1.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_019_6a058ca7e6.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_019_6a058ca7e6.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_019_6a058ca7e6.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_020_67d7f6bceb.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_020_67d7f6bceb.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_020_67d7f6bceb.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_021_ea53f421b3.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_021_ea53f421b3.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_021_ea53f421b3.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_022_3a7515cdf7.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_022_3a7515cdf7.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_022_3a7515cdf7.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_023_42e9ec0f21.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_023_42e9ec0f21.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_023_42e9ec0f21.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_024_becc944e7d.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_024_becc944e7d.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_024_becc944e7d.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_025_668f2a4c41.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_025_668f2a4c41.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_025_668f2a4c41.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_026_6666ddc31a.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_026_6666ddc31a.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_026_6666ddc31a.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_027_081f637bec.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_027_081f637bec.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_027_081f637bec.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_028_dfbe86910b.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_028_dfbe86910b.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_028_dfbe86910b.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_029_017c58f3c8.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_029_017c58f3c8.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_029_017c58f3c8.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_030_ea36fe756c.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_030_ea36fe756c.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_030_ea36fe756c.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_031_88e00dec78.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_031_88e00dec78.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_031_88e00dec78.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_032_0c17c67151.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_032_0c17c67151.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_032_0c17c67151.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_033_c433be87a5.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_033_c433be87a5.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_033_c433be87a5.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_034_61dba1cc97.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_034_61dba1cc97.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_034_61dba1cc97.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_035_2c67ebcdc4.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_035_2c67ebcdc4.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_035_2c67ebcdc4.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_036_a126f0e8d0.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_036_a126f0e8d0.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_036_a126f0e8d0.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_037_232927fe4b.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_037_232927fe4b.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_037_232927fe4b.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_038_8b86bd5ba6.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_038_8b86bd5ba6.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_038_8b86bd5ba6.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_039_e86062722b.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_039_e86062722b.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_039_e86062722b.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_040_09f7c4a3cd.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_040_09f7c4a3cd.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_040_09f7c4a3cd.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_041_cc0c037e38.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_041_cc0c037e38.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_041_cc0c037e38.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_042_aeeed22a90.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_042_aeeed22a90.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_042_aeeed22a90.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_043_8ce4e71a4a.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_043_8ce4e71a4a.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_043_8ce4e71a4a.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_044_855bf538f7.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_044_855bf538f7.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_044_855bf538f7.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_045_4abace39a3.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_045_4abace39a3.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_045_4abace39a3.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_046_49dc78bb6c.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_046_49dc78bb6c.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_046_49dc78bb6c.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_047_3dadbfd358.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_047_3dadbfd358.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_047_3dadbfd358.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_048_0723c773dc.display",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_048_0723c773dc.title",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
+    },
+    {
+      "key": "toolbox.life.timeline.brief24.brief24_048_0723c773dc.detail",
+      "reason": "PLAN_424 replaces the retired brief24 EPUB/OCR timeline collection with the curated offline China history overview and local open-access image assets.",
+      "retiredAt": "2026-08-29",
+      "owner": "Codex",
+      "cleanupAfter": "2026-09-29"
     }
   ],
   "duplicateKeys": []

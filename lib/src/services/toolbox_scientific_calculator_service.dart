@@ -79,6 +79,9 @@ class ToolboxScientificCalculatorService {
     required double at,
     ScientificAngleMode angleMode = ScientificAngleMode.degree,
   }) {
+    if (!at.isFinite) {
+      throw const FormatException('invalid derivative point');
+    }
     final h = math.max(1e-6, at.abs() * 1e-6);
     return (evaluate(
               expression,
@@ -98,6 +101,9 @@ class ToolboxScientificCalculatorService {
     required double at,
     ScientificAngleMode angleMode = ScientificAngleMode.degree,
   }) {
+    if (!at.isFinite) {
+      throw const FormatException('invalid limit point');
+    }
     var left = double.nan;
     var right = double.nan;
     for (var i = 1; i <= 8; i++) {
@@ -127,6 +133,9 @@ class ToolboxScientificCalculatorService {
     required double rightBound,
     ScientificAngleMode angleMode = ScientificAngleMode.degree,
   }) {
+    if (!leftBound.isFinite || !rightBound.isFinite || leftBound > rightBound) {
+      throw const FormatException('invalid root bounds');
+    }
     var left = leftBound;
     var right = rightBound;
     var fLeft = evaluate(
@@ -324,16 +333,17 @@ class ToolboxScientificCalculatorService {
   }
 
   double binomialPmf({required int n, required int k, required double p}) {
-    if (p < 0 || p > 1) {
-      throw const FormatException('invalid probability');
-    }
+    _validateBinomialInputs(n, p);
+    if (k < 0 || k > n) return 0;
+    if (p == 0) return k == 0 ? 1 : 0;
+    if (p == 1) return k == n ? 1 : 0;
     return combination(n, k) * math.pow(p, k) * math.pow(1 - p, n - k);
   }
 
   double binomialCdf({required int n, required int k, required double p}) {
-    if (p < 0 || p > 1) {
-      throw const FormatException('invalid probability');
-    }
+    _validateBinomialInputs(n, p);
+    if (k < 0) return 0;
+    if (k >= n) return 1;
     var value = 0.0;
     for (var i = 0; i <= k; i++) {
       value += binomialPmf(n: n, k: i, p: p);
@@ -346,7 +356,10 @@ class ToolboxScientificCalculatorService {
     required double standardDeviation,
     required double x,
   }) {
-    if (standardDeviation <= 0) {
+    if (!mean.isFinite ||
+        !standardDeviation.isFinite ||
+        !x.isFinite ||
+        standardDeviation <= 0) {
       throw const FormatException('invalid standard deviation');
     }
     final z = (x - mean) / standardDeviation;
@@ -359,7 +372,10 @@ class ToolboxScientificCalculatorService {
     required double standardDeviation,
     required double x,
   }) {
-    if (standardDeviation <= 0) {
+    if (!mean.isFinite ||
+        !standardDeviation.isFinite ||
+        !x.isFinite ||
+        standardDeviation <= 0) {
       throw const FormatException('invalid standard deviation');
     }
     final z = (x - mean) / (standardDeviation * math.sqrt2);
@@ -379,8 +395,17 @@ class ToolboxScientificCalculatorService {
         ? asDouble.toStringAsExponential(8)
         : asDouble.toStringAsPrecision(12);
     return fixed
-        .replaceFirst(RegExp(r'\.?0+(e|$)'), r'$1')
+        .replaceFirstMapped(
+          RegExp(r'\.?0+(e|$)'),
+          (match) => match.group(1) ?? '',
+        )
         .replaceFirst(RegExp(r'e\+'), 'e');
+  }
+
+  void _validateBinomialInputs(int n, double p) {
+    if (n < 0 || !p.isFinite || p < 0 || p > 1) {
+      throw const FormatException('invalid binomial inputs');
+    }
   }
 
   double _erf(double x) {
@@ -422,6 +447,9 @@ class _ScientificExpressionParser {
     if (_index != source.length) {
       throw const FormatException('trailing token');
     }
+    if (!value.isFinite) {
+      throw const FormatException('non-finite result');
+    }
     return value;
   }
 
@@ -440,17 +468,17 @@ class _ScientificExpressionParser {
   }
 
   double _parseTerm() {
-    var value = _parsePower();
+    var value = _parseUnary();
     while (true) {
       _skipSpace();
       if (_match('*') || _match('×')) {
-        value *= _parsePower();
+        value *= _parseUnary();
       } else if (_match('/') || _match('÷')) {
-        value /= _parsePower();
+        value /= _parseUnary();
       } else if (_match('%')) {
-        value %= _parsePower();
+        value %= _parseUnary();
       } else if (_canStartImplicitFactor()) {
-        value *= _parsePower();
+        value *= _parseUnary();
       } else {
         return value;
       }
@@ -458,10 +486,10 @@ class _ScientificExpressionParser {
   }
 
   double _parsePower() {
-    var value = _parseUnary();
+    var value = _parsePostfix();
     _skipSpace();
     if (_match('^')) {
-      value = math.pow(value, _parsePower()).toDouble();
+      value = math.pow(value, _parseUnary()).toDouble();
     }
     return value;
   }
@@ -474,7 +502,7 @@ class _ScientificExpressionParser {
     if (_match('-')) {
       return -_parseUnary();
     }
-    return _parsePostfix();
+    return _parsePower();
   }
 
   double _parsePostfix() {

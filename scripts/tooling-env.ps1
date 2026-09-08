@@ -131,6 +131,210 @@ function Ensure-ProjectCMakeEnvironment {
   return $cmakeCommand
 }
 
+function Test-ProjectX64PortableExecutable {
+  param([string]$Path)
+
+  if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+    return $false
+  }
+
+  $stream = $null
+  $reader = $null
+  try {
+    $stream = [System.IO.File]::Open(
+      $Path,
+      [System.IO.FileMode]::Open,
+      [System.IO.FileAccess]::Read,
+      [System.IO.FileShare]::ReadWrite
+    )
+    if ($stream.Length -lt 64) {
+      return $false
+    }
+
+    $reader = New-Object System.IO.BinaryReader($stream)
+    if ($reader.ReadUInt16() -ne 0x5A4D) {
+      return $false
+    }
+
+    $stream.Position = 0x3C
+    $peOffset = $reader.ReadInt32()
+    if ($peOffset -lt 0 -or $peOffset -gt ($stream.Length - 6)) {
+      return $false
+    }
+
+    $stream.Position = $peOffset
+    return ($reader.ReadUInt32() -eq 0x00004550) -and
+      ($reader.ReadUInt16() -eq 0x8664)
+  } catch {
+    return $false
+  } finally {
+    if ($reader) {
+      $reader.Dispose()
+    } elseif ($stream) {
+      $stream.Dispose()
+    }
+  }
+}
+
+function Test-ProjectX64LibClangDirectory {
+  param([string]$Directory)
+
+  if (-not (Test-Path -LiteralPath $Directory -PathType Container)) {
+    return $false
+  }
+
+  foreach ($fileName in @('libclang.dll', 'clang.dll')) {
+    if (Test-ProjectX64PortableExecutable -Path (Join-Path $Directory $fileName)) {
+      return $true
+    }
+  }
+
+  return $false
+}
+
+function Resolve-ProjectLibClangDirectory {
+  param([string]$ProjectRoot)
+
+  $candidates = New-Object System.Collections.Generic.List[string]
+  foreach ($value in @(
+      $env:LIBCLANG_PATH,
+      [Environment]::GetEnvironmentVariable('LIBCLANG_PATH', 'User'),
+      [Environment]::GetEnvironmentVariable('LIBCLANG_PATH', 'Machine'),
+      (Join-Path $ProjectRoot '.tooling\libclang\runtimes\win-x64\native'),
+      (Join-Path $ProjectRoot '.tooling\libclang\bin')
+    )) {
+    if (-not [string]::IsNullOrWhiteSpace($value)) {
+      $candidates.Add($value)
+    }
+  }
+
+  $projectLibClangRoot = Join-Path $ProjectRoot '.tooling\libclang'
+  if (Test-Path -LiteralPath $projectLibClangRoot -PathType Container) {
+    Get-ChildItem -LiteralPath $projectLibClangRoot -Directory -Filter 'libclang.runtime.win-x64*' -ErrorAction SilentlyContinue |
+      Sort-Object Name -Descending |
+      ForEach-Object {
+        $candidates.Add((Join-Path $_.FullName 'runtimes\win-x64\native'))
+      }
+  }
+
+  if (-not [string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
+    Get-ChildItem -LiteralPath $env:LOCALAPPDATA -Directory -Filter 'libclang-*' -ErrorAction SilentlyContinue |
+      Sort-Object Name -Descending |
+      ForEach-Object {
+        $candidates.Add((Join-Path $_.FullName 'runtimes\win-x64\native'))
+        $candidates.Add((Join-Path $_.FullName 'bin'))
+      }
+  }
+
+  if (-not [string]::IsNullOrWhiteSpace($env:USERPROFILE)) {
+    $nugetRoot = Join-Path $env:USERPROFILE '.nuget\packages\libclang.runtime.win-x64'
+    if (Test-Path -LiteralPath $nugetRoot -PathType Container) {
+      Get-ChildItem -LiteralPath $nugetRoot -Directory -ErrorAction SilentlyContinue |
+        Sort-Object Name -Descending |
+        ForEach-Object {
+          $candidates.Add((Join-Path $_.FullName 'runtimes\win-x64\native'))
+        }
+    }
+  }
+
+  if (-not [string]::IsNullOrWhiteSpace($env:ProgramFiles)) {
+    $candidates.Add((Join-Path $env:ProgramFiles 'LLVM\bin'))
+    foreach ($edition in @('Community', 'Professional', 'Enterprise', 'BuildTools')) {
+      $candidates.Add((Join-Path $env:ProgramFiles "Microsoft Visual Studio\2022\$edition\VC\Tools\Llvm\x64\bin"))
+    }
+  }
+
+  $visited = New-Object System.Collections.Generic.HashSet[string]([System.StringComparer]::OrdinalIgnoreCase)
+  foreach ($candidate in $candidates) {
+    $expanded = [Environment]::ExpandEnvironmentVariables($candidate.Trim().Trim([char]34))
+    if ([string]::IsNullOrWhiteSpace($expanded)) {
+      continue
+    }
+
+    $directory = $expanded
+    if (Test-Path -LiteralPath $expanded -PathType Leaf) {
+      if ([System.IO.Path]::GetFileName($expanded) -notin @('libclang.dll', 'clang.dll')) {
+        continue
+      }
+      $directory = Split-Path -Parent $expanded
+    }
+    if (-not (Test-Path -LiteralPath $directory -PathType Container)) {
+      continue
+    }
+
+    $fullDirectory = [System.IO.Path]::GetFullPath($directory)
+    if (-not $visited.Add($fullDirectory)) {
+      continue
+    }
+    if (Test-ProjectX64LibClangDirectory -Directory $fullDirectory) {
+      return $fullDirectory
+    }
+  }
+
+  throw @"
+A valid x64 libclang.dll was not found. FJS/rquickjs requires it for the bindgen build step.
+Set LIBCLANG_PATH to the directory containing an x64 libclang.dll, or use the project PowerShell scripts to bootstrap the pinned runtime.
+"@
+}
+
+function Install-ProjectLibClangRuntime {
+  param([string]$ProjectRoot)
+
+  $packageId = 'libclang.runtime.win-x64'
+  $packageVersion = '22.1.8'
+  $outputDirectory = Join-Path $ProjectRoot '.tooling\libclang'
+  $packageDirectory = Join-Path $outputDirectory "$packageId.$packageVersion"
+  $runtimeDirectory = Join-Path $packageDirectory 'runtimes\win-x64\native'
+
+  if (Test-ProjectX64LibClangDirectory -Directory $runtimeDirectory) {
+    return $runtimeDirectory
+  }
+
+  if (Test-Path -LiteralPath $packageDirectory) {
+    $quarantineDirectory = "$packageDirectory.incomplete.$([DateTime]::UtcNow.ToString('yyyyMMddHHmmssfff'))"
+    Write-Warning "Moving incomplete libclang package to $quarantineDirectory"
+    Move-Item -LiteralPath $packageDirectory -Destination $quarantineDirectory
+  }
+
+  $nugetCommand = Ensure-ProjectNuGet
+  New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
+  Write-Host "x64 libclang was not found. Installing $packageId $packageVersion to $outputDirectory ..."
+
+  $nugetOutput = & $nugetCommand @(
+    'install',
+    $packageId,
+    '-Version', $packageVersion,
+    '-OutputDirectory', $outputDirectory,
+    '-Source', 'https://api.nuget.org/v3/index.json',
+    '-DirectDownload',
+    '-NonInteractive',
+    '-ForceEnglishOutput'
+  )
+  $exitCode = $LASTEXITCODE
+  $nugetOutput | ForEach-Object { Write-Host $_ }
+  if ($exitCode -ne 0) {
+    throw "NuGet failed to install $packageId $packageVersion (exit code $exitCode). Set LIBCLANG_PATH to an existing x64 libclang directory and retry."
+  }
+  if (-not (Test-ProjectX64LibClangDirectory -Directory $runtimeDirectory)) {
+    throw "NuGet completed, but a valid x64 libclang.dll was not found in $runtimeDirectory."
+  }
+
+  return $runtimeDirectory
+}
+
+function Ensure-ProjectLibClangEnvironment {
+  param([string]$ProjectRoot)
+
+  try {
+    $directory = Resolve-ProjectLibClangDirectory -ProjectRoot $ProjectRoot
+  } catch {
+    $directory = Install-ProjectLibClangRuntime -ProjectRoot $ProjectRoot
+  }
+  $env:LIBCLANG_PATH = $directory
+  Add-ProjectPathEntry -PathEntry $directory
+  return $directory
+}
+
 function Resolve-ProjectAndroidSdkRoot {
   param([string]$ProjectRoot)
 

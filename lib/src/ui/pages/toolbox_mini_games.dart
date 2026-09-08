@@ -9,9 +9,12 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../games/sokoban/sokoban_level.dart';
+import '../../games/sokoban/sokoban_level_generator.dart';
 import '../../i18n/app_i18n.dart';
 import '../../services/app_log_service.dart';
 import '../widgets/section_header.dart';
+import '../widgets/sokoban_board.dart';
 import 'toolbox_sudoku_card.dart';
 import 'toolbox_tool_shell.dart';
 

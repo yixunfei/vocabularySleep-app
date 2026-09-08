@@ -1,3 +1,294 @@
+## [Unreleased-PLAN_431-MAIN-INTEGRATION] - 2026-09-09
+
+### 原因
+- 按用户要求归档当前工作区，集成计算器、音钵音频、推箱子、历史年表与 Windows 构建工具改动，作为睡眠支持重设计前的基线。
+
+### 修改
+- 提交当前分支工作区并合并到本地 main；后续睡眠支持改动使用独立分支。本次不推送远端。
+- 沿用仓库现有忽略规则，plans/docs/records 等本地工作文档不强制加入版本控制。
+
+### 验证
+- 全量 Flutter 测试 817 项通过；全仓静态分析无 error，142 条既有 warning/info。
+- CAS bridge、历史年表数据验证通过；i18n 审计 53200 keys，缺失、占位符、params 错误均为 0；旧 helper 与 catalog Dart 插值扫描无命中。
+- 维护报告为 40389 未引用 key、2002 stale source、160 ready retirements；本次集成新增 key 0、退休 key 0，不清理历史债务。
+
+## [Unreleased-PLAN_430-WINDOWS-LIBCLANG-ENV] - 2026-08-30
+
+### 原因
+- 当前 PowerShell/Codex 进程未继承后来配置的用户级 `LIBCLANG_PATH`，导致 FJS 3.3.0 的 `rquickjs-sys` 在 bindgen 0.72.1 中找不到 `libclang.dll` 并 panic，最终只显示 Cargokit/MSBuild `MSB8066` 外层错误。
+
+### 新增
+- 共享构建工具增加 libclang 解析与验证：依次检查当前进程、用户级、系统级环境变量，以及项目工具目录、LocalAppData、NuGet 和 Visual Studio/LLVM 常见 x64 路径。
+- 找不到有效 DLL 时提前输出明确的依赖与配置提示，不再等待 Rust build-script 失败。
+- 后续缺失反馈补充 x64 PE 文件头校验；所有本机候选均无效时，通过 NuGet 将固定版本 `libclang.runtime.win-x64 22.1.8` 引导到已忽略的 `.tooling/libclang`。
+
+### 修改
+- Windows `dev-run.ps1` 与 `build.ps1` 统一注入经验证的 `LIBCLANG_PATH`，并在执行 Flutter 前输出实际目录。
+- README 补充 FJS/QuickJS 首次 Windows 构建前提、项目本地自动引导、离线配置，以及直接运行 `flutter run` 时刷新当前 PowerShell 环境的方法。
+- 本轮未改变 Flutter/Rust/FJS 版本、业务代码或 i18n catalog；新增 key 0、退休 key 0。
+
+### 修复
+- 修复机器未安装或当前用户无法访问既有 libclang 时，预检只能抛错、无法自行恢复的问题。
+- 修复 NuGet 标准输出进入 PowerShell success stream 后污染安装函数返回值的问题；安装函数现在只返回一个经验证的目录字符串。
+
+### 验证
+- PowerShell Parser 对 `tooling-env.ps1`、`dev-run.ps1`、`build.ps1` 校验通过。
+- 删除子进程 `LIBCLANG_PATH` 后，共享工具、开发入口预检和发布入口 dry-run 均从用户级配置恢复并验证 libclang 22.1.8。
+- `flutter build windows --debug` 在 53.8 秒内成功生成 `build/windows/x64/runner/Debug/xianyushengxi.exe`；`dev-run.ps1 -Device windows -NoPubGet -RunRetry 1` 随后成功启动应用并连接 Dart VM。
+- 项目本地 NuGet 首次引导、单值返回、模拟外部路径缺失回退和伪 x86 PE 拒绝通过；强制使用 `.tooling/libclang` 的完整 Windows debug build 在 64.9 秒内成功。
+- 强制使用项目本地路径的 `dev-run.ps1 -Device windows -NoPubGet -RunRetry 1` 成功启动并连接 Dart VM，发布脚本 Windows dry-run 通过。
+
+## [Unreleased-PLAN_429-CALCULATOR-INPUT-STABILITY] - 2026-08-30
+
+### 原因
+- 高级计算器快速反复点击 `=` 时，重复触觉平台调用会把非关键 `PlatformException` 泄漏到 Flutter 日志；AC 在计算中和错误态缺少完整回归保障。
+
+### 修复
+- 等号提交在按键分发入口同步拒绝空输入和计算中的重复点击，单次计算期间只发出一个请求及一次触觉反馈。
+- 计算器触觉反馈改为安全异步调用，平台不支持或临时失败时不再中断输入操作或产生未处理异步异常。
+- AC 收口为统一工作区清空操作：先取消当前计算代际并清除结果/错误/加载态，再清空表达式和结果提交态；迟到结果不会恢复。
+
+### 修改
+- 新增快速三连等号、触觉平台异常、计算中 AC、错误态 AC 后继续计算，以及会话清理迟到结果的回归测试。
+- 保持 `Ans`、`Mem`、历史、定义、CAS 协议和会话持久化格式不变；本轮 i18n 新增 key 0、退休 key 0。
+
+### 风险变更
+- 触觉反馈属于非关键能力，平台异常会被计算器局部隔离；Android/iOS 真实触觉强度与连续点击手感仍需发布前真机复核。
+
+### 验证
+- 修复前测试稳定复现 3 次快速点击产生 3 次触觉请求和未处理 `PlatformException`；修复后只产生 1 次计算请求和 1 次触觉尝试。
+- 计算器服务/session/store/Widget 专项 41 项、全量 Flutter 817 项全部通过；目标 6 个文件静态分析零诊断。
+- Dart format 与目标 `git diff --check` 通过。
+
+## [Unreleased-PLAN_428-CALCULATOR-FINAL-AUDIT] - 2026-08-30
+
+### 原因
+- 对 PLAN 425-427 完成的高级计算器做最终正确性、竞态、持久化、资源边界和移动端交互审核，修复可复现问题，不扩张 SVD、Jordan 标准形、PDE/ODE 或张量范围。
+
+### 修复
+- 修正数值回退中 `-2^2`、`2^-2` 与 `2^3^2` 的常规优先级/右结合语义，拒绝非有限结果；补齐二项分布端点概率和非法整数域校验。
+- 编辑表达式、手机键盘输入或切换角度时立即使在途请求失效，旧结果不再覆盖新输入；dispose 期间尚在加载资源的原生 CAS 不再复活。
+- 符号矩阵不再把未知主元擅自视为非零；恒等方程、矛盾方程、欠定与不相容线性系统分别返回全集、空集或自由变量参数式，无法可靠判定的非线性系统明确返回 unsupported。
+- 复数 QR、Gram-Schmidt、最小二乘、向量投影、范数和点积统一使用 Hermitian 内积，避免把复数向量错误套用实数内积。
+- 会话持久化采用临时文件、备份与原子替换，支持写入中断回退；解码拒绝空结果，64KB CAS 请求限制按 UTF-8 字节而非 UTF-16 字符数计算。
+
+### 修改
+- 更新 core、advanced、dispatcher 三份 CAS bridge 的 manifest SHA-256；本轮未改变请求协议、会话 schema 或 i18n catalog，新增 key 0、退休 key 0。
+
+### 风险变更
+- Android/iOS 真机键盘、连续触控、原生构建、长表达式耗时与峰值内存仍需发布前验收；Windows Widget 与 FJS/QuickJS 集成不能替代移动真机结果。
+- 全仓既有 142 条 warning/info、40389 个未引用 catalog key、2002 条 stale registry source 和 160 条可退休记录不属于本轮计算器审核范围。
+
+### 验证
+- 目标 analyze 35 项零诊断；计算器服务/session/store/Widget 37 项、Windows FJS/QuickJS 11 项、全量 Flutter 813 项全部通过；全仓 analyze 无 error。
+- `node tool/test_calculator_cas_bridge.mjs`、Dart format、manifest JSON 与 5 个 CAS 资源 SHA-256、i18n 占位符/params、旧 helper、catalog Dart 插值和 `git diff --check` 全部通过。
+- core/advanced/dispatcher 最新哈希依次为 `e4e0130cdf00e70c17d1f44a4aeace9717d7d39017afe3a5f2a4e7ef4d9e7f2a`、`09fd77f34d415cfcd36f77585d7074410883504c3d833893e8fa5c25b288a0de`、`e091a00632c014f56c28fbc3edfc42165f9fa2f162fdbcc1916d4d0671c4083e`。
+
+## [Unreleased-PLAN_427-CALCULATOR-ADVANCED-DOMAINS] - 2026-08-30
+
+### 原因
+- PLAN_426 已打通连续输入、角度语义、命名定义、持久历史和结果路由，但常用高级线性代数、完整复数工作区和可发现的长尾函数入口仍不足。
+
+### 新增
+- 增加零空间、列空间、行空间、PLU、QR、最小二乘、Gram-Schmidt 和向量投影；分解结果使用结构化 `P/L/U`、`Q/R` 部件。
+- 增加复数实部、虚部、共轭、模、辐角、极式、直角坐标式和极坐标构造；极坐标使用独立半径与角度输入。
+- 增加可搜索函数/符号目录，覆盖常量符号、代数、三角、双曲、复数、数论与组合、微积分、线性代数和概率，并支持插入输入或打开专业工具。
+- 七语言 catalog/registry 新增 44 个稳定 key、更新 2 个既有 key，退休 key 0 个。
+
+### 修改
+- CAS bridge 按 core、advanced、dispatcher 拆分；请求协议新增独立 `radius`、`angle` 字段，避免通过展示字符串传递极坐标结构。
+- 结构化结果部件支持独立展示、复制、继续计算、历史持久化与恢复，并按矩阵/向量类型提供有效目标路由。
+- 专业工具与结果舞台适配 320dp、375dp 和 1.3 倍字体，固定键盘仍保持三层与 48dp 触控底线。
+
+### 风险变更
+- PLU/QR、最小二乘和正交化对维度、主元、秩与退化输入做显式校验；不满足条件时返回可本地化错误，不伪造分解。
+- 最小二乘优先处理精确符号输入；正规方程不对病态浮点矩阵承诺高精度。SVD、Jordan 标准形、PDE/ODE 通解和张量运算仍不在当前范围。
+- Web 仍只提供 Dart 数值回退；Android/iOS 原生构建、触控、峰值内存和长表达式性能需发布前真机复核。
+
+### 验证
+- `node tool/test_calculator_cas_bridge.mjs` 与 JS 语法检查通过；Windows FJS/QuickJS 原生集成 10 项通过。
+- 科学计算服务、会话与计算器 Widget 定向测试 27 项通过，覆盖结构化历史、函数目录、复数输入和 320/375dp/1.3 倍字体；目标静态分析无诊断。
+- 全量 `flutter test --no-pub --reporter compact` 803 项通过；全仓 analyze 无 error，142 条 warning/info 均位于计算器范围外。
+- i18n 审计通过（53200 keys，缺失/占位符/params 均为 0）；旧 helper 与 catalog Dart 插值扫描无命中。维护报告中的 40389 个未引用 key、2002 条 stale registry source 和 160 条可退休记录为既有债务，本轮不处理。
+- manifest JSON 与 5 个 CAS 资源 SHA-256 全部匹配；core/advanced/dispatcher 哈希依次为 `ea0ebfdf4dca6f6a15e9bf46faad9ef91ff1fbfc048c892ede2648119c04cf18`、`376ddc7f5e16705041de12e2a86e8e2e02dd385ff17d123bdda536963fafd659`、`0e573fd99754872104892eb36151dea3e634da23618010c336bedc5b14e6a742`；`git diff --check` 通过。
+
+## [Unreleased-PLAN_426-CALCULATOR-WORKSPACE] - 2026-08-30
+
+### 原因
+- PLAN_425 的角度开关只作用于 Dart 回退，`Ans/Mem` 未覆盖所有专业操作，矩阵/向量结果、命名定义、撤销重做和跨页面历史仍未形成连续工作流。
+
+### 新增
+- 增加请求级命名变量/函数，支持新增、编辑、删除和插入；最多 32 个定义、每个函数最多 4 个参数，并拒绝保留名、重复名、非法表达式和循环依赖。
+- 增加有界会话快照与原生 JSON store，持久化最近 50 条历史、`Ans`、`Mem`、角度、当前结果和定义；恢复带编辑代际保护，保存采用单飞合并。
+- 增加 Flutter 标准撤销/重做控件，以及矩阵/向量结果到主表达式、矩阵 A/B、向量 A/B 的目的地路由。
+- 七语言 catalog/registry 新增 34 个稳定 key，退休 key 0 个。
+
+### 修改
+- 所有方程、上下界、参数、矩阵单元和向量分量统一展开 definitions/substitutions；Nerdamer 变量与函数在每次请求结束后清理，Algebrite 在下一请求开始前清理。
+- `DEG/RAD` 仅应用于闭合直接数值三角与反三角计算；符号微积分固定使用弧度，并在工作区明确展示语义。
+- Taylor 改为 Nerdamer 精确逐阶导数公式，保留任意展开点与精确阶乘系数，避免原生 Algebrite 路径超过计算期限。
+- 320dp 下角度区和命令区自适应重排；键盘与控制键统一为 48dp，375dp 首屏仍可触达等号键。
+
+### 风险变更
+- 定义仅在请求内安装，不开放可跨请求残留的 CAS `:=` 赋值；Web 仍不提供原生完整符号引擎。
+- 会话文件限制 512KiB，损坏、超限或不可用时回退空会话，不阻断计算。
+- 未清理项目既存 i18n 债务；Android/iOS 真机的持久化目录、触控和峰值性能仍需发布前验证。
+
+### 验证
+- `node tool/test_calculator_cas_bridge.mjs` 与 JS 语法检查通过；Windows FJS/QuickJS 原生集成 8 项通过。
+- 会话与计算器 Widget 定向测试 17 项通过，覆盖 320/375dp、定义、撤销/重做、结果路由、历史恢复和无 overflow；目标静态分析无诊断。
+- i18n 审计通过（53156 keys，缺失/占位符/params 均为 0）；旧 helper 与 catalog Dart 插值扫描无命中。维护报告中的 40374 个未引用 key、2002 条 stale registry source 和 160 条可退休记录为既存债务，本轮不处理。
+- CAS bridge SHA-256 更新为 `9cc386ecd8c1abfdfc000f0aaa0dac91d4cd531ba94cce051daca8075343ece3`。
+
+## [Unreleased-PLAN_425-ADVANCED-CALCULATOR] - 2026-08-30
+
+### 原因
+- 生活实用中的旧高级计算器把主表达式、矩阵、微积分和概率工具拆成互不连通的输入与结果，无法自然连续计算，手写 `double` 解析器也不能保留分数、根式、变量、方程和符号矩阵。
+- 用户要求以 375dp 手机为基准重新设计，并补齐可以覆盖日常科学计算、常用高等数学和线性代数的完整符号工作流。
+
+### 新增
+- 引入固定版本的 Nerdamer Prime 1.5.0、Algebrite 1.4.0 与 FJS 3.3.0/QuickJS，新增受限原生 CAS bridge、结构化请求/结果/错误模型、双引擎路由和 Dart 数值回退。
+- 增加精确值、近似值和 LaTeX 三种结果表达，以及化简、展开、因式分解、部分分式、代入、方程组、导数、积分、极限、Taylor、求和/连乘、Laplace、多元微积分、符号矩阵、向量和概率工具。
+- 增加基础/科学/完整符号三层移动键盘，支持光标内插入；专业工具以抽屉和子页承载，矩阵提供 1x1 至 6x6 网格与最大 12x12 文本编辑模式。
+- 增加会话控制器、375dp Widget 工作流、JS bridge 和 Windows 原生 CAS 集成测试；CAS 资产补齐版本、来源、MIT 许可、SHA-256、受限运行时和原生构建说明。
+- 七语言 catalog 新增 120 个 key、更新 26 个既有 key，registry 新增 146 条运行时记录；退休 key 0 个。
+
+### 修改
+- 主表达式、专业工具、`Ans`、`Mem` 和最多 50 条历史记录合并为同一连续计算会话；结果可直接续算、复制纯文本/LaTeX或恢复原表达式。
+- 修复数值格式化把 `0.5` 输出为 `0.5$1` 的捕获组残留；为生活实用 Hub 增加可注入的计算引擎工厂，默认运行路径不变。
+- 更新高级计算器产品边界和 CAS 依赖说明；移除无法约束 FJS `rustup run stable` 构建过程的仓库级 Rust 固定文件，明确要求 stable 1.95 或更高版本。
+
+### 风险变更
+- 任意符号表达式不保证存在闭式解；无闭式结果时保留未求值表达式、提供明确数值近似或错误，不伪造解析解。
+- 原生运行时限制为 96 MiB 内存、1 MiB 栈、64KB 请求和默认 4 秒计算期限；超时或资源耗尽时关闭并重建引擎。网格矩阵不超过 6x6，文本矩阵不超过 12x12。
+- 完整符号引擎当前依赖原生 FJS/QuickJS，Web 端仅支持 Dart 数值表达式回退。Android/iOS 构建、真机触控、峰值内存和长表达式性能仍需发布前验证。
+- Windows 首次原生构建需要 Rust stable 1.95+ 和可由 `LIBCLANG_PATH` 定位的 x64 `libclang.dll`；本轮使用 Rust stable 1.98.0 与 `libclang.runtime.win-x64` 22.1.8 验证。
+
+### 验证
+- 目标 `flutter analyze --no-pub --no-fatal-infos` 分析 18 项文件无诊断。
+- i18n/catalog、数值服务、会话控制器与计算器 Widget 共 23 项测试通过；既有 `life tools advanced calculator fits narrow screen` 375dp smoke 通过。
+- Windows 原生 CAS 集成 6 项通过；`node tool/test_calculator_cas_bridge.mjs` 通过；manifest 中两份 CAS 与 bridge 的 SHA-256 校验通过。
+- i18n 审计通过（53122 keys，missing/mismatch/missingParams 均为 0）；旧 helper 和 catalog Dart 插值扫描无命中。维护报告的 40362 个未引用 key、2002 条 stale registry source 与 160 条可退休记录未在本轮清理。
+- `git diff --check` 通过。
+
+## [Unreleased-PLAN_422-SINGING-BOWL-PERF-AUDIO] - 2026-08-29
+
+### 原因
+- 疗愈音钵切换时在 UI isolate 同步生成 4 个长 WAV，并在高开销逐采样 DSP、无界 voice overflow 和未等待的播放器销毁竞态下造成明显卡顿、内存峰值和偶发闪退。
+- 旧的伪噪声与高反馈 Schroeder 混响带来高频毛刺、金属感和梳状尾韵。
+
+### 修改
+- 音钵合成迁移到后台 isolate，增加相同参数单飞缓存、过期请求丢弃和有限 LRU；采样率改为 24kHz，时长限制为 6.5--14 秒，合成与空间处理使用 Float32 缓冲。
+- 音钵播放器收敛为 2 个变体、每变体最多 2 个可复用 voice，关闭 overflow；加入 native preload、候选就绪后原子替换，以及 play/stop/dispose 串行锁和完成监听代际保护。
+- 控制器对连续敲击增加单飞背压，平台调用变慢时最多保留一个在途播放请求，超额触发直接丢弃。
+- 候选预热必须让所有变体至少准备一个 voice；任一变体失败时保留旧音色，避免安装不可播放的候选。
+- 重写攻击段噪声、包络、空间反射和尾部处理，加入 DC block、低通和 fade，限制归一化增益以避免尖峰。
+- 增加 WAV 边界、异步缓存、快速切换和 fake 平台生命周期回归测试。
+
+### 修复
+- 音色/频率切换不再同步阻塞 Flutter UI，也不会并发 stop/dispose 同一批原生播放器。
+- 快速连续敲击不会无限创建 native player；旧完成事件不会误停后续播放。
+- 音频尾部与攻击段的相邻采样跳变、过度高频噪声和反馈梳状伪影得到约束。
+
+### 风险变更
+- 超过 2 个 voice/变体的同时敲击会丢弃超额触发，以保证资源有界；旧音色在新音色准备完成前继续可用。
+- 24kHz PCM、音色参数和尾韵长度发生变化，需 Android/iOS 真机做听感、RSS、帧时间和功耗复测。
+- 未修改其它 toolbox 音频模块、频率/音色选项、自动播放、持久化、路由和 i18n catalog。
+
+### 验证
+- 目标分析无诊断；全量 `flutter analyze --no-pub` 无 error（143 条既有 warning/info）。
+- 音钵与音频回归 14 项通过；全量 `flutter test --no-pub --reporter compact` 778 项通过。
+- i18n 占位符审计通过；维护报告仅保留既有历史债务，本轮新增 key 0、退休 key 0。
+- `git diff --check` 通过。
+
+## [Unreleased-PLAN_423-SOKOBAN-REWORK] - 2026-08-29
+
+### 原因
+- 旧推箱子在 UI isolate 中执行多层随机 DFS；双箱、三箱切关卡时搜索组合爆炸，造成长时间卡顿和内存峰值。
+- 关卡由互不关联的简单路线拼接，结构重复，三箱难度与提示路线也不稳定。
+
+### 修改
+- 抽取不可变棋盘模型、方向、难度和推箱步骤；改用有界反向拉箱生成器，从可回放解法反推起始局面。
+- 将反向路线、候选校验、评分和难度门槛拆为独立职责；页面指标、难度、提示、棋盘和操作区也按区域收口，避免继续堆积单体方法。
+- 生成器增加静态死锁规避、地面连通性检查、墙体装饰验证、候选评分、去重签名和安全兜底；单箱/双箱/三箱分别提高最低推数与转向门槛。
+- 页面改为有限关卡队列：当前档位优先、其它档位后台预热；预取在 worker isolate 执行，平台不支持时使用同一有界同步生成器。
+- 棋盘收敛为单个 `CustomPaint` 舞台，保留方向按钮、相邻点击、滑动、撤销、提示和路线显示；偏离路线后开启“显示路线”仍可看到参考路线。
+- 关卡编号文案新增 `toolbox.miniGames.sokoban.level_number`，同步七语言 CSV 与 registry。
+
+### 修复
+- 新关卡切换不再把生成工作放进 `setState`，三箱连续切换不会触发无界搜索或重复 widget 树构建。
+- 反向推箱校验改为检查玩家实际拉箱站位；极小棋盘兜底不再生成落在边界墙上的箱子。
+- 极小到只剩一个可走格时，兜底优先保留玩家位置，不再把玩家与箱子绘制在同一格。
+- 自定义棋盘减少每格 widget 和重绘对象，降低多箱局面的布局与绘制开销。
+- 箱子状态改为替换式快照，避免 `CustomPainter` 持有可变列表而漏掉箱子重绘。
+- 修正路线显示开关语义：默认隐藏参考箭头，提示或主动开启后才显示；偏离路线时仍可显示完整参考路线。
+
+### 风险变更
+- 参考路线是生成器保证可回放的解法，不承诺数学最优步数；指标名称改为“路线步数”语义。
+- worker isolate 为短生命周期并限制为每档最多 2 个预取关卡；worker 失败时会丢弃预取结果并保持当前局可操作。
+- 未修改其它小游戏、持久化格式、工具箱入口和路由；Android/iOS 真机帧时间、RSS、触控和长时间切关卡仍需设备回归。
+
+### 验证
+- 定向 `flutter analyze --no-pub` 无诊断。
+- 推箱子生成器、worker 回放、受限棋盘、连续三箱切关卡和 375dp 窄屏测试通过。
+- i18n 占位符审计通过（51767 keys，missing/mismatch/missingParams 均为 0）；维护报告无重复 key/缺 locale，本轮新增 1 个 key、退休 0 个。
+- 旧 helper、catalog Dart 插值扫描和 `git diff --check` 通过。
+- 全应用 Web 构建仍受既有 `sherpa_onnx`/`sqlite3` `dart:ffi` 与 VeraCrypt JS 常量阻断，未归因于本轮改动。
+
+## [Unreleased-CACHE-CLEANUP] - 2026-08-28
+
+### 原因
+- 远程缓存只判断文件是否存在，损坏、空文件或解码失败的下载结果可能被后续请求永久复用。
+- 呼吸引导远程 WAV 在播放器拒绝文件后仍会留在缓存，并继续命中解析缓存。
+
+### 修改
+- 为 `CstCloudResourceCacheService` 增加校验后获取、失效文件删除和单次重新下载机制；空响应、失败重试和有效缓存旁的陈旧 `.part` 文件都会被清理。
+- 下载响应现在校验实际写入长度；空文件、读取失败和文本/GZip 解码失败时自动清理缓存。
+- 呼吸引导远程音频在解析前校验基本可播放结构，播放失败时删除远程缓存并淘汰时长/解析缓存。
+
+### 修复
+- 损坏的呼吸音频会被删除并重新下载；替换文件仍不可用时会清理干净并回退到可用资源。
+- 下载中断或进程异常留下的临时文件不会阻塞下一次下载。
+
+### 风险变更
+- 校验失败最多触发一次重新下载，避免网络异常时无限重试。
+- WAV 校验保留现有可播放但 RIFF 长度字段不规范的资源，仅拒绝无法读取基本结构或无实际音频数据的文件。
+
+### 验证
+- `flutter analyze --no-pub` 目标实现与测试文件通过。
+- 缓存与呼吸仓库回归测试通过（缓存测试 13 项，呼吸测试 6 项）。
+- 共享缓存相关既有模块回归测试通过（乐器、环境音、每日选择）。
+- `git diff --check` 通过；本轮未修改 i18n catalog/registry。
+
+## [Unreleased-FIX-BREATHING-VOICE] - 2026-08-28
+
+### 原因
+- 呼吸引导缓存中的部分 WAV 文件 `data` 块长度字段损坏，声明值远大于实际文件长度，导致启动提示按错误的超长时长等待。
+- 设置面板的 `SwitchListTile` 直接位于带背景的装饰层内，触发 Flutter 关于 `ListTile` 背景和 ink splash 承载层的框架警告。
+
+### 修改
+- WAV 时长解析在存在文件总长度时以实际可用字节数为上限，并保留正常 WAV 的声明长度。
+- 系统提示等待优先使用播放器完成事件，缺失事件时使用 12 秒有界回退，并通过序列令牌支持取消；会话和 BOLT 启动增加代际校验及 `finally` 状态清理。
+- 呼吸设置开关组增加透明 `Material` 承载层，不改变开关回调、持久化或页面布局语义。
+
+### 修复
+- 启动提示实际播放完成后，开始按钮不再因损坏的 WAV 头而永久停留在“准备中”。
+- 重置、取消、播放器异常或完成事件缺失时，准备状态不会被旧的异步启动任务重新写回。
+- 消除呼吸设置面板对应的 `ListTile background color or ink splashes may be invisible` 框架警告。
+
+### 风险变更
+- 播放器未发出完成事件时，系统提示最多按单条 12 秒回退后继续；真实音频仍以完成事件为准。
+- 未修改呼吸阶段计时、音频资源映射、持久化字段、本地化文案或通用播放器实现。
+
+### 验证
+- `dart format` 目标 Dart 文件通过。
+- `flutter analyze --no-pub` 目标实现与测试文件通过。
+- `flutter test --no-pub test/toolbox_breathing_audio_repository_test.dart --reporter compact` 通过（4 项）。
+- `flutter test --no-pub test/ui_smoke_test.dart --reporter compact` 通过（147 项）。
+- `flutter test --no-pub --reporter compact` 通过（751 项）。
+- `node scripts/audit_i18n_placeholders.js` 通过（catalog 51766 keys，missing/mismatch/missingParams 均为 0）；维护报告保留既有 40108 个未引用 key、661 个 stale registry source 和 30 个可退休 key，未执行清理。
+- 旧 helper 扫描和 catalog Dart 插值扫描无命中；`git diff --check` 通过，本轮未修改 i18n catalog/registry。
+
 ## [Unreleased-AUDIT-P1P2-REMEDIATION] - 2026-08-28
 
 ### 原因
@@ -8508,3 +8799,33 @@
 - `全能单位换算` 当前完全依赖本地静态单位表；温度走开尔文中间基准，数据类同时保留十进制与二进制口径，结果适合日常估算而非专业校准。
 - `BMI 计算器` 使用成年人常见参考阈值，仅做自查辅助；儿童、孕期、健身增肌和特殊病史场景不应把该结果当作唯一判断。
 - 当前 `flutter test test/ui_smoke_test.dart` 仍被项目内既有的 `toolbox_life_tools_text_transform.dart` 编译错误阻塞，本轮新增 smoke 已写入但无法在该阻塞修复前完成执行。
+# CHANGELOG
+
+## [Unreleased-PLAN_424-HISTORY-PERIODIC] - 2026-08-29
+
+### 原因
+- 工具箱生活实用中的历史年表节点覆盖不足，中国旧的“简明24史”表图链路依赖不可发布的本机资源，元素周期表在手机上难以查看完整布局且扩展属性不完整。
+
+### 新增
+- 通用离线历史年表扩展为 428 个节点，中国历史年表概要整理为 116 个节点；数据源清单、缓存和生成器固定在 `tool/reference_data/` 与 `tool/generate_timeline_periodic_data.js`。
+- 新增 12 张 The Met Open Access 公版对象衍生 WebP，加入对象页、原图、许可、抓取日期、SHA-256 和用途 manifest。
+- 元素周期表补齐 118 个元素的周期/族、布局坐标与物性扩展字段，窄屏概览支持完整 18 列结构，详细模式支持搜索、定位和缩放。
+
+### 修改
+- 将活动集合命名统一为“中国历史年表概要”，旧 `brief24` catalog 实体按 append-only retirement 登记，保留后续集中清理的审计入口。
+- 历史图片改为 Flutter 本地 assets，图片来源与解码失败状态独立展示，运行时主流程不依赖在线图片服务。
+- 中国年表生成器改为使用 TSV 中逐条 `note_zh`/`note_en` 说明，避免详情退化为泛化占位文案。
+
+### 风险变更
+- 历史节点是面向快速浏览的编年概要，不替代专题史学研究；约略年代和争议事件继续以范围或约略标记表达。
+- The Met 图片仅使用对象 API 明确标记为公版的对象，衍生 WebP 总计约 1.41 MB；后续替换图片时需同步复核对象许可与 manifest 校验值。
+
+### 验证
+- `node tool/validate_timeline_periodic_data.js` 通过：通用种子 226、既有锚点 202、合并通用年表 428、中国历史年表概要 116、元素 118、图片 12（1,408,148 bytes）。
+- `node scripts/audit_i18n_placeholders.js` 通过：catalog 53,002、placeholderKeys 4,241、missing 0、placeholderMismatch 0；本轮目标模块新增 1,235 个 catalog key，旧 `brief24` key 新增 130 条 retirement。
+- `node scripts/maintain_i18n_catalog.js --limit 20` 通过：duplicateCsvKeys/duplicateRegistryIds/missingLocaleColumns 均为 0，blocked retirement 为 0；既有未引用 key 与 stale registry source 债务保留，未执行大规模清理。
+- 完整 `flutter test` 通过（780 个用例，包含 1 个历史年表 WebP 资源解码用例）；375dp 周期表、搜索、详细模式、全屏与目标 smoke 均通过。
+- `flutter analyze --no-pub` 未发现本轮目标源码诊断；全项目仍有既有 143 条 info/warning，命令以退出码 1 结束。
+- `git diff --check`、旧 helper/本机路径/目标模块远程图片引用扫描通过。
+
+## [Unreleased-PLAN_422-SINGING-BOWL-PERF-AUDIO] - 2026-08-29

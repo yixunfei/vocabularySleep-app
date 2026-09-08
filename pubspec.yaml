@@ -50,6 +50,9 @@ dependencies:
   uuid: ^4.5.3
   provider: ^6.1.5+1
   flutter_riverpod: ^2.6.1
+  fjs: 3.3.0
+  flutter_rust_bridge: 2.12.0
+  flutter_math_fork: 0.7.4
   dict_reader: ^1.6.0
   sherpa_onnx: ^1.12.34
   archive: ^4.0.9
@@ -132,8 +135,10 @@ flutter:
     - assets/en_zh_15000_wordbook.json
     - assets/toolbox/beads/
     - assets/toolbox/colors/
+    - assets/toolbox/calculator_cas/
     - assets/toolbox/device_frames/
     - assets/toolbox/instruments/
+    - assets/toolbox/history_timeline/
     - lib/l10n/catalog/app_texts.csv
 
   # To add assets to your application, add an assets section, like this:

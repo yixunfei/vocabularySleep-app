@@ -1,7 +1,15 @@
 part of '../toolbox_life_tools.dart';
 
 class LifeToolsHubPage extends StatefulWidget {
-  const LifeToolsHubPage({super.key});
+  const LifeToolsHubPage({
+    super.key,
+    this.advancedCalculatorEngineFactory,
+    this.advancedCalculatorSessionStoreFactory,
+  });
+
+  final ToolboxCalculatorEngine Function()? advancedCalculatorEngineFactory;
+  final ToolboxCalculatorSessionStore Function()?
+  advancedCalculatorSessionStoreFactory;
 
   @override
   State<LifeToolsHubPage> createState() => _LifeToolsHubPageState();
@@ -548,7 +556,10 @@ class _LifeToolsHubPageState extends State<LifeToolsHubPage> {
       'id_photo' => const _IdPhotoToolPage(),
       'sup_sub' => const _NumberMarksPage(),
       'meme_maker' => const _MemeMakerToolPage(),
-      'advanced_calculator' => const _AdvancedCalculatorToolPage(),
+      'advanced_calculator' => _AdvancedCalculatorToolPage(
+        engineFactory: widget.advancedCalculatorEngineFactory,
+        sessionStoreFactory: widget.advancedCalculatorSessionStoreFactory,
+      ),
       'bio_clock' => const _BioClockToolPage(),
       'text_count' ||
       'text_encoding' ||

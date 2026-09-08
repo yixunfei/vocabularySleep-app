@@ -1244,6 +1244,75 @@ void main() {
       expect(find.text('H · Hydrogen'), findsOneWidget);
     });
 
+    testWidgets(
+      'periodic table keeps the full grid usable at 375dp and supports focus',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(375, 812));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        _mockSystemChromeForFullscreenTest();
+
+        final state = _FakeAppState.sample(uiLanguage: 'en');
+        await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
+        await _openLifeTool(tester, 'timeline_periodic');
+
+        await _tapVisibleChoiceChip(tester, 'Elements');
+        final stage = find.byKey(
+          const ValueKey<String>('periodic-table-stage'),
+        );
+        expect(stage, findsOneWidget);
+        expect(tester.getRect(stage).width, lessThanOrEqualTo(375));
+
+        final search = find.byKey(
+          const ValueKey<String>('periodic-search-field'),
+        );
+        await tester.ensureVisible(search);
+        await tester.enterText(search, '79');
+        await tester.pumpAndSettle();
+        expect(find.text('Au · Gold'), findsOneWidget);
+        expect(find.text('79'), findsWidgets);
+
+        await _tapVisibleChoiceChip(tester, 'Details');
+        expect(tester.getRect(stage).height, 510);
+        expect(find.byType(InteractiveViewer), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        final fullscreen = find.byKey(
+          const ValueKey<String>('periodic-fullscreen-open'),
+        );
+        final pageScrollable = find
+            .ancestor(of: fullscreen, matching: find.byType(Scrollable))
+            .first;
+        await tester.scrollUntilVisible(
+          fullscreen,
+          320,
+          scrollable: pageScrollable,
+        );
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(fullscreen);
+        await tester.tap(fullscreen);
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const ValueKey<String>('periodic-fullscreen-page')),
+          findsOneWidget,
+        );
+        expect(find.text('Au · Gold'), findsOneWidget);
+
+        final fullscreenStage = find.byKey(
+          const ValueKey<String>('periodic-table-stage'),
+        );
+        expect(tester.getRect(fullscreenStage).width, lessThanOrEqualTo(375));
+        await tester.tap(
+          find.byKey(const ValueKey<String>('periodic-fullscreen-close')),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const ValueKey<String>('periodic-fullscreen-page')),
+          findsNothing,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+
     testWidgets('life tools opens archive tool controls', (tester) async {
       final state = _FakeAppState.sample(uiLanguage: 'en');
       await _pumpPage(tester, state: state, child: const LifeToolsHubPage());
@@ -1326,16 +1395,19 @@ void main() {
       await tester.enterText(find.byType(TextField).first, 'Advanced');
       await tester.pumpAndSettle();
 
-      final calculatorCard = find
-          .ancestor(
-            of: find.text('Advanced calculator'),
-            matching: find.byType(Card),
-          )
-          .first;
+      final calculatorCard = find.byKey(
+        const ValueKey<String>('life_tool_card_advanced_calculator'),
+      );
       await tester.tap(calculatorCard, warnIfMissed: false);
       await tester.pumpAndSettle();
 
-      expect(find.text('Quick keypad'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('advanced_calculator_expression')),
+        findsOneWidget,
+      );
+      expect(find.text('Basic'), findsOneWidget);
+      expect(find.text('Scientific'), findsOneWidget);
+      expect(find.text('Symbols'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
