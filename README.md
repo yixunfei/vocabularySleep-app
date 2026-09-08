@@ -124,6 +124,7 @@ Windows 桌面构建需要 CMake 的原因是 Flutter Windows runner 和部分�
 - Visual Studio Build Tools 或 Visual Studio Community，并勾选 Desktop development with C++。
 - CMake，可通过 Visual Studio Installer 组件、winget、Chocolatey 或 CMake 官网安装。
 - NuGet CLI。若 `nuget.exe` 不在 `PATH`，脚本会尝试下载到当前用户目录；也可用 `NUGET_BIN` 指向本机 `nuget.exe`。
+- FJS/QuickJS 首次 Windows 构建需要 x64 `libclang.dll`。项目脚本会优先验证 `LIBCLANG_PATH` 和常见安装位置；均不可用时，会明确提示并把固定版本 `libclang.runtime.win-x64 22.1.8` 引导到已忽略的 `.tooling/libclang`。
 
 Android 构建需要 Android SDK。推荐安装 Android Studio 后配置 `ANDROID_HOME` 或 `ANDROID_SDK_ROOT`，并确保 `platform-tools` 可用。构建 `android-appbundle` 时还需要 Android SDK Command-line Tools，Flutter 会在 Gradle 完成后调用 `cmdline-tools/latest/bin/apkanalyzer` 检查 AAB 的 native debug symbols；若缺失，可在 Android Studio SDK Manager 安装 Command-line Tools，或安装官方 command-line tools zip 后运行 `flutter doctor --android-licenses`。
 
@@ -152,6 +153,7 @@ Copy-Item .env.template .env
 - `FLUTTER_BIN` / `FLUTTER_ROOT`
 - `CMAKE_BIN` / `CMAKE_ROOT`
 - `ANDROID_HOME` / `ANDROID_SDK_ROOT`
+- `LIBCLANG_PATH`
 - `NUGET_BIN`
 - `OPENCODE_BIN`
 - `DAILY_CHOICE_RECIPE_SOURCE_DIR`
@@ -175,6 +177,17 @@ Windows 桌面运行：
 ```bash
 flutter run -d windows
 ```
+
+高级计算器的 FJS/QuickJS 原生依赖在首次 Windows 构建时需要 x64 `libclang.dll`。推荐使用下方项目脚本：它会验证 DLL 架构，并在本机没有有效安装时通过 NuGet 引导固定版本到 `.tooling/libclang`。首次引导需要访问 NuGet；离线环境可预先安装 x64 LLVM/libclang，并把包含 DLL 的目录配置到 `LIBCLANG_PATH`。
+
+直接执行 `flutter run` 会绕过项目预检。若用户级变量是在当前终端启动后才设置，先刷新当前 PowerShell 环境：
+
+```powershell
+$env:LIBCLANG_PATH = [Environment]::GetEnvironmentVariable('LIBCLANG_PATH', 'User')
+flutter run -d windows
+```
+
+下方项目脚本会主动读取当前进程、用户级和系统级配置，并提供项目本地回退，因此更适合作为日常入口。
 
 PowerShell 快捷运行脚本：
 

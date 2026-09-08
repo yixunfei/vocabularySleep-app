@@ -38,16 +38,32 @@ class _ToolboxAudioLruCache {
 
   int get bytesEstimate => _bytesEstimate;
 
-  Uint8List putIfAbsent(String key, Uint8List Function() ifAbsent) {
-    final existing = _entries.remove(key);
-    if (existing != null) {
-      _entries[key] = existing;
-      return existing;
+  Uint8List? get(String key) {
+    final value = _entries.remove(key);
+    if (value == null) {
+      return null;
     }
-    final value = ifAbsent();
+    _entries[key] = value;
+    return value;
+  }
+
+  void put(String key, Uint8List value) {
+    final previous = _entries.remove(key);
+    if (previous != null) {
+      _bytesEstimate -= previous.lengthInBytes;
+    }
     _entries[key] = value;
     _bytesEstimate += value.lengthInBytes;
     _evictIfNeeded();
+  }
+
+  Uint8List putIfAbsent(String key, Uint8List Function() ifAbsent) {
+    final existing = get(key);
+    if (existing != null) {
+      return existing;
+    }
+    final value = ifAbsent();
+    put(key, value);
     return value;
   }
 
@@ -90,6 +106,8 @@ class ToolboxAudioBank {
   ToolboxAudioBank._();
 
   static final _ToolboxAudioLruCache _cache = _ToolboxAudioLruCache();
+  static final Map<String, Future<Uint8List>> _asyncSingingBowlBuilds =
+      <String, Future<Uint8List>>{};
 
   static int get cacheCapacity => _cache.capacity;
 
@@ -739,6 +757,66 @@ class ToolboxAudioBank {
         variant: normalizedVariant,
       ),
     );
+  }
+
+  /// Builds a singing-bowl tone away from Flutter's UI isolate.
+  ///
+  /// The synchronous [singingBowlTone] API remains available for existing
+  /// callers and tests. The interactive bowl page should use this method so
+  /// a cache miss cannot block frame production while the WAV is synthesized.
+  static Future<Uint8List> singingBowlToneAsync({
+    required double frequency,
+    String style = 'crystal',
+    int variant = 0,
+  }) {
+    final normalizedFrequency = frequency.clamp(80.0, 1200.0).toDouble();
+    final normalizedStyle = switch (style) {
+      'brass' => 'brass',
+      'deep' => 'deep',
+      'pure' => 'pure',
+      _ => 'crystal',
+    };
+    final normalizedVariant = variant.clamp(0, 31).toInt();
+    final key =
+        'singing_bowl:${normalizedFrequency.toStringAsFixed(2)}:'
+        '$normalizedStyle:$normalizedVariant';
+    final cached = _cache.get(key);
+    if (cached != null) {
+      return Future<Uint8List>.value(cached);
+    }
+    final pending = _asyncSingingBowlBuilds[key];
+    if (pending != null) {
+      return pending;
+    }
+
+    final future =
+        compute<_SingingBowlToneWorkerRequest, TransferableTypedData>(
+          _buildSingingBowlToneInWorker,
+          _SingingBowlToneWorkerRequest(
+            frequency: normalizedFrequency,
+            style: normalizedStyle,
+            variant: normalizedVariant,
+          ),
+          debugLabel: 'toolbox-singing-bowl-tone',
+        ).then<Uint8List>((result) {
+          final bytes = result.materialize().asUint8List();
+          _cache.put(key, bytes);
+          return bytes;
+        });
+    _asyncSingingBowlBuilds[key] = future;
+    future.then<void>(
+      (_) {
+        if (identical(_asyncSingingBowlBuilds[key], future)) {
+          _asyncSingingBowlBuilds.remove(key);
+        }
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        if (identical(_asyncSingingBowlBuilds[key], future)) {
+          _asyncSingingBowlBuilds.remove(key);
+        }
+      },
+    );
+    return future;
   }
 
   static Uint8List woodfishClick({

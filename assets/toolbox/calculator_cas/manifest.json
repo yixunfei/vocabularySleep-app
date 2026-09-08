@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "runtime": {
+    "name": "fjs",
+    "version": "3.3.0",
+    "source": "https://github.com/fluttercandies/fjs",
+    "license": "MIT"
+  },
+  "engines": [
+    {
+      "name": "nerdamer-prime",
+      "version": "1.5.0",
+      "source": "https://github.com/together-science/nerdamer-prime",
+      "asset": "assets/toolbox/calculator_cas/nerdamer-prime-1.5.0.min.js",
+      "sha256": "3321e375b9cd36d1733c62b3c07b0c097bf4d336234ad9cfd06d9a8c780e9973",
+      "license": "MIT",
+      "licenseAsset": "assets/toolbox/calculator_cas/LICENSE-nerdamer-prime.txt"
+    },
+    {
+      "name": "Algebrite",
+      "version": "1.4.0",
+      "source": "https://github.com/davidedc/Algebrite",
+      "asset": "assets/toolbox/calculator_cas/algebrite-1.4.0.browser.js",
+      "sha256": "4c5d57e3263883d6b0f32a406d158695f4f8267e89ca2cdaced160f8c4f3b275",
+      "license": "MIT",
+      "licenseAsset": "assets/toolbox/calculator_cas/LICENSE-algebrite.txt"
+    }
+  ],
+  "bridge": {
+    "protocolVersion": 1,
+    "assets": [
+      {
+        "role": "core",
+        "asset": "assets/toolbox/calculator_cas/calculator_cas_core.js",
+        "sha256": "e4e0130cdf00e70c17d1f44a4aeace9717d7d39017afe3a5f2a4e7ef4d9e7f2a"
+      },
+      {
+        "role": "advanced",
+        "asset": "assets/toolbox/calculator_cas/calculator_cas_advanced.js",
+        "sha256": "09fd77f34d415cfcd36f77585d7074410883504c3d833893e8fa5c25b288a0de"
+      },
+      {
+        "role": "dispatcher",
+        "asset": "assets/toolbox/calculator_cas/calculator_cas_bridge.js",
+        "sha256": "e091a00632c014f56c28fbc3edfc42165f9fa2f162fdbcc1916d4d0671c4083e"
+      }
+    ]
+  }
+}

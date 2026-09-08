@@ -90,8 +90,13 @@ class ToolboxEffectPlayer implements ToolboxNotePlayer {
       <_ToolboxReusableEffectVoice>[];
   final Set<AudioPlayer> _overflowPlayers = <AudioPlayer>{};
   Future<String>? _sourcePathFuture;
+  bool _disposed = false;
 
+  @override
   Future<void> play({double volume = 1.0, double playbackRate = 1.0}) async {
+    if (_disposed) {
+      return;
+    }
     try {
       final normalizedVolume = volume.clamp(0.0, 1.0);
       final normalizedPlaybackRate = playbackRate.clamp(0.92, 1.08);
@@ -104,7 +109,7 @@ class ToolboxEffectPlayer implements ToolboxNotePlayer {
         );
         return;
       }
-      if (!allowOverflow) {
+      if (_disposed || !allowOverflow) {
         return;
       }
       await _playOverflow(
@@ -127,6 +132,7 @@ class ToolboxEffectPlayer implements ToolboxNotePlayer {
     }
   }
 
+  @override
   Future<void> warmUp() async {
     try {
       await _ensureSourcePath();
@@ -154,6 +160,55 @@ class ToolboxEffectPlayer implements ToolboxNotePlayer {
     }
   }
 
+  /// Prepares a bounded number of native voices before the first interaction.
+  ///
+  /// [warmUp] intentionally keeps its historical file-only behavior for other
+  /// toolbox instruments. The bowl controller opts into this stronger form so
+  /// the first strike does not pay MediaPlayer preparation latency.
+  Future<bool> preload({int voices = 1}) async {
+    if (_disposed) {
+      return false;
+    }
+    var preparedAny = false;
+    try {
+      final sourcePath = await _ensureSourcePath();
+      final count = voices.clamp(0, maxPlayers).toInt();
+      for (var index = 0; index < count; index += 1) {
+        if (_disposed) {
+          return preparedAny;
+        }
+        final voice = await _acquireVoice(
+          sourcePath: sourcePath,
+          allowOverflow: false,
+        );
+        preparedAny = preparedAny || voice != null;
+        voice?.release();
+      }
+    } catch (error, stackTrace) {
+      _log.w(
+        'toolbox_audio',
+        'toolbox effect voice preload skipped after failure',
+        data: <String, Object?>{
+          'error': '$error',
+          'strategy': 'bounded_voice_preload',
+          'bytes': bytes.length,
+        },
+      );
+      _log.e(
+        'toolbox_audio',
+        'toolbox effect voice preload detail',
+        error: error,
+        stackTrace: stackTrace,
+        data: <String, Object?>{
+          'strategy': 'bounded_voice_preload',
+          'bytes': bytes.length,
+        },
+      );
+    }
+    return preparedAny;
+  }
+
+  @override
   Future<void> stop() async {
     final voices = _voices.toList(growable: false);
     for (final voice in voices) {
@@ -167,9 +222,14 @@ class ToolboxEffectPlayer implements ToolboxNotePlayer {
     }
   }
 
+  @override
   Future<void> dispose() async {
-    final voices = _voices.toList(growable: false);
-    _voices.clear();
+    _disposed = true;
+    final voices = await _voiceLock.synchronized(() {
+      final snapshot = _voices.toList(growable: false);
+      _voices.clear();
+      return snapshot;
+    });
     for (final voice in voices) {
       await voice.dispose();
     }
@@ -185,6 +245,9 @@ class ToolboxEffectPlayer implements ToolboxNotePlayer {
     bool allowOverflow = true,
   }) async {
     return _voiceLock.synchronized(() async {
+      if (_disposed) {
+        return null;
+      }
       for (final voice in _voices) {
         if (!voice.isBusy) {
           voice.reserve();
@@ -357,6 +420,7 @@ class ToolboxRealisticEffectPlayer implements ToolboxNotePlayer {
   final math.Random _random = math.Random();
   int _roundRobinIndex = 0;
 
+  @override
   Future<void> play({
     double baseVolume = 1.0,
     double? volume,
@@ -379,14 +443,25 @@ class ToolboxRealisticEffectPlayer implements ToolboxNotePlayer {
     );
   }
 
+  @override
   Future<void> warmUp() async {
     await Future.wait<void>(_players.map((player) => player.warmUp()));
   }
 
+  Future<bool> preload({int voicesPerVariant = 1}) async {
+    final count = voicesPerVariant.clamp(0, maxPlayers).toInt();
+    final readiness = await Future.wait<bool>(
+      _players.map((player) => player.preload(voices: count)),
+    );
+    return readiness.every((ready) => ready);
+  }
+
+  @override
   Future<void> stop() async {
     await Future.wait<void>(_players.map((player) => player.stop()));
   }
 
+  @override
   Future<void> dispose() async {
     await Future.wait<void>(_players.map((player) => player.dispose()));
   }
@@ -397,11 +472,15 @@ class _ToolboxReusableEffectVoice {
 
   final Uint8List bytes;
   final AudioPlayer _player = AudioPlayer();
+  final _ToolboxAsyncLock _commandLock = _ToolboxAsyncLock();
   bool _disposed = false;
   bool _busy = false;
   bool _prepared = false;
   String? _preparedPath;
   Future<void>? _prepareFuture;
+  StreamSubscription<void>? _completionSubscription;
+  Timer? _completionTimer;
+  int _playbackGeneration = 0;
 
   bool get isBusy => _busy;
 
@@ -414,6 +493,10 @@ class _ToolboxReusableEffectVoice {
   }
 
   Future<void> prepare(String sourcePath) {
+    return _commandLock.synchronized(() => _prepareUnlocked(sourcePath));
+  }
+
+  Future<void> _prepareUnlocked(String sourcePath) {
     final existing = _prepareFuture;
     if (existing != null) {
       return existing;
@@ -428,88 +511,109 @@ class _ToolboxReusableEffectVoice {
     return future;
   }
 
-  Future<void> play({
-    required double volume,
-    required double playbackRate,
-  }) async {
-    final preparedPath = _preparedPath;
-    if (preparedPath == null) {
-      throw StateError('Attempted to play an unprepared toolbox voice.');
-    }
-    await prepare(preparedPath);
-    if (_disposed) {
-      throw StateError('Attempted to play a disposed toolbox voice.');
-    }
-    try {
-      await _player.setVolume(volume);
-      await _player.setPlaybackRate(playbackRate);
-      await AudioPlayerSourceHelper.waitForDuration(
-        _player,
-        tag: 'toolbox_audio',
-        data: <String, Object?>{
-          'playerId': _player.playerId,
-          'path': preparedPath,
-        },
-        timeout: const Duration(seconds: 5),
-      );
-      unawaited(
-        _waitForPlaybackEndOrTimeout().whenComplete(() async {
-          release();
-          if (_disposed) {
-            return;
-          }
-          try {
-            await _player.stop();
-          } catch (_) {}
-        }),
-      );
-      await _player.resume();
-    } catch (_) {
-      release();
-      _prepared = false;
-      _preparedPath = null;
-      rethrow;
-    }
+  Future<void> play({required double volume, required double playbackRate}) {
+    return _commandLock.synchronized(() async {
+      final preparedPath = _preparedPath;
+      if (preparedPath == null) {
+        throw StateError('Attempted to play an unprepared toolbox voice.');
+      }
+      await _prepareUnlocked(preparedPath);
+      if (_disposed) {
+        throw StateError('Attempted to play a disposed toolbox voice.');
+      }
+      try {
+        _invalidatePlaybackWatcher();
+        final playbackGeneration = _playbackGeneration;
+        await _player.setVolume(volume);
+        await _player.setPlaybackRate(playbackRate);
+        await AudioPlayerSourceHelper.waitForDuration(
+          _player,
+          tag: 'toolbox_audio',
+          data: <String, Object?>{
+            'playerId': _player.playerId,
+            'path': preparedPath,
+          },
+          timeout: const Duration(seconds: 5),
+        );
+        _watchPlaybackEnd(playbackGeneration);
+        await _player.resume();
+      } catch (_) {
+        _invalidatePlaybackWatcher();
+        release();
+        _prepared = false;
+        _preparedPath = null;
+        rethrow;
+      }
+    });
   }
 
-  Future<void> dispose() async {
-    _disposed = true;
-    release();
-    await _player.dispose();
-  }
-
-  Future<void> stop() async {
-    if (_disposed) {
-      return;
-    }
-    release();
-    try {
-      await _player.stop();
-    } catch (_) {}
-  }
-
-  Future<void> _waitForPlaybackEndOrTimeout() async {
-    final completer = Completer<void>();
-    StreamSubscription<void>? subscription;
-    Timer? timer;
-
-    void complete() {
-      if (completer.isCompleted) {
+  Future<void> dispose() {
+    return _commandLock.synchronized(() async {
+      if (_disposed) {
         return;
       }
-      timer?.cancel();
-      unawaited(subscription?.cancel() ?? Future<void>.value());
-      completer.complete();
-    }
+      _disposed = true;
+      _invalidatePlaybackWatcher();
+      release();
+      try {
+        await _player.dispose();
+      } catch (_) {}
+    });
+  }
 
-    subscription = _player.onPlayerComplete.listen(
-      (_) => complete(),
-      onError: (Object error, StackTrace stackTrace) => complete(),
-      onDone: complete,
+  Future<void> stop() {
+    return _commandLock.synchronized(() async {
+      if (_disposed) {
+        return;
+      }
+      _invalidatePlaybackWatcher();
+      release();
+      try {
+        await _player.stop();
+      } catch (_) {}
+    });
+  }
+
+  Future<void> _finishPlayback(int playbackGeneration) {
+    return _commandLock.synchronized(() async {
+      if (playbackGeneration != _playbackGeneration) {
+        return;
+      }
+      _invalidatePlaybackWatcher();
+      release();
+      if (_disposed) {
+        return;
+      }
+      try {
+        await _player.stop();
+      } catch (_) {}
+    });
+  }
+
+  void _watchPlaybackEnd(int playbackGeneration) {
+    _completionSubscription = _player.onPlayerComplete.listen(
+      (_) => unawaited(_finishPlayback(playbackGeneration)),
+      onError: (Object error, StackTrace stackTrace) {
+        unawaited(_finishPlayback(playbackGeneration));
+      },
+      onDone: () => unawaited(_finishPlayback(playbackGeneration)),
       cancelOnError: true,
     );
-    timer = Timer(const Duration(seconds: 20), complete);
-    return completer.future;
+    _completionTimer = Timer(
+      const Duration(seconds: 20),
+      () => unawaited(_finishPlayback(playbackGeneration)),
+    );
+  }
+
+  void _invalidatePlaybackWatcher() {
+    _playbackGeneration += 1;
+    _completionTimer?.cancel();
+    _completionTimer = null;
+    final subscription = _completionSubscription;
+    _completionSubscription = null;
+    if (subscription != null) {
+      unawaited(subscription.cancel());
+    }
   }
 
   Future<void> _doPrepare(String sourcePath) async {
@@ -537,17 +641,18 @@ class _ToolboxReusableEffectVoice {
 class _ToolboxAsyncLock {
   Future<void> _tail = Future<void>.value();
 
-  Future<T> synchronized<T>(Future<T> Function() operation) {
+  Future<T> synchronized<T>(FutureOr<T> Function() operation) {
     final previous = _tail;
     final release = Completer<void>();
     _tail = release.future;
-    return previous.whenComplete(() {}).then((_) => operation()).whenComplete(
-      () {
-        if (!release.isCompleted) {
-          release.complete();
-        }
-      },
-    );
+    return previous
+        .then<void>((_) {}, onError: (Object error, StackTrace stackTrace) {})
+        .then<T>((_) => operation())
+        .whenComplete(() {
+          if (!release.isCompleted) {
+            release.complete();
+          }
+        });
   }
 }
 
@@ -556,18 +661,26 @@ class _ToolboxAudioTempStore {
 
   static final _ToolboxAudioTempStore instance = _ToolboxAudioTempStore._();
 
-  final Map<String, Future<String>> _pathFutures = <String, Future<String>>{};
+  static const int _maxPathIndexEntries = 256;
+  final LinkedHashMap<String, Future<String>> _pathFutures =
+      LinkedHashMap<String, Future<String>>();
 
   Future<String> pathFor(Uint8List bytes) {
     final digest = sha1.convert(bytes).toString();
-    final existing = _pathFutures[digest];
+    final existing = _pathFutures.remove(digest);
     if (existing != null) {
+      _pathFutures[digest] = existing;
       return existing;
     }
     final future = _writeBytes(digest, bytes);
     _pathFutures[digest] = future;
+    while (_pathFutures.length > _maxPathIndexEntries) {
+      _pathFutures.remove(_pathFutures.keys.first);
+    }
     return future.catchError((Object error) {
-      _pathFutures.remove(digest);
+      if (identical(_pathFutures[digest], future)) {
+        _pathFutures.remove(digest);
+      }
       throw error;
     });
   }

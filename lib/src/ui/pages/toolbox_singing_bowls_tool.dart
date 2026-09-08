@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../i18n/app_i18n.dart';
-import '../../services/toolbox_audio_service.dart';
+import '../../services/toolbox_singing_bowls_audio_controller.dart';
 import '../../services/toolbox_singing_bowls_prefs_service.dart';
 import '../motion/app_motion.dart';
 import 'toolbox/toolbox_ui_components.dart';
@@ -20,8 +20,9 @@ part 'toolbox_singing_bowls_tool_layout.dart';
 part 'toolbox_singing_bowls_tool_wide.dart';
 part 'toolbox_singing_bowls_tool_wide_tiles.dart';
 
-// [风险] 本次（PLAN_045）仅进行 UI-only 精修与展示层文件拆分：
-// - 所有 `ToolboxSingingBowlsPrefsService` 调用、音频播放器构建、事件触发语义保持不变；
+// [风险] 页面展示层仍保持既有交互语义；音频生命周期由 PLAN_422 控制器统一编排：
+// - `ToolboxSingingBowlsPrefsService` 调用、事件触发语义和用户可见选项保持不变；
+// - 音频合成在后台 worker 执行，播放器替换、停止和销毁按序等待；
 // - `_frequencyId`/`_voiceId`/`_autoPlayIntervalMs` 默认值与持久化结构保持不变；
 // - `_bowlFrequencySpecs` 中的 id/note/frequency/文案保持不变，仅改 accent/glow/gradient；
 // - `_bowlVoiceSpecs` 的 id 与 baseVolume 保持不变。
@@ -53,15 +54,13 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
   static const Duration _ambientMotionDuration = Duration(seconds: 8);
   static const int minAutoPlayMs = 2000;
   static const int maxAutoPlayMs = 30000;
-  static const List<int> _audioVariants = <int>[0, 1, 2, 3];
-
   late final AnimationController _ambientController;
   late final AnimationController _strikeController;
 
   Timer? _autoPlayTimer;
   Timer? _persistTimer;
   Timer? _playerRebuildTimer;
-  ToolboxRealisticEffectPlayer? _player;
+  late final ToolboxSingingBowlsAudioController _audioController;
 
   String _frequencyId = 'heart';
   String _voiceId = 'crystal';
@@ -93,6 +92,7 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
   @override
   void initState() {
     super.initState();
+    _audioController = ToolboxSingingBowlsAudioController();
     _ambientController = AnimationController(
       vsync: this,
       duration: _ambientMotionDuration,
@@ -111,10 +111,7 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
     _playerRebuildTimer?.cancel();
     _ambientController.dispose();
     _strikeController.dispose();
-    final player = _player;
-    if (player != null) {
-      unawaited(player.dispose());
-    }
+    unawaited(_audioController.dispose());
     super.dispose();
   }
 
@@ -139,29 +136,12 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
 
   Future<void> _rebuildPlayer() async {
     final buildNonce = ++_playerBuildNonce;
-    try {
-      final nextPlayer = ToolboxRealisticEffectPlayer.build(
-        variants: _audioVariants,
-        bytesForVariant: (int variant) => ToolboxAudioBank.singingBowlTone(
-          frequency: frequencySpec.frequency,
-          style: voiceSpec.id,
-          variant: variant,
-        ),
-        maxPlayers: 4,
-        volumeJitter: 0.018,
-      );
-      await nextPlayer.warmUp();
-      if (!mounted || buildNonce != _playerBuildNonce) {
-        await nextPlayer.dispose();
-        return;
-      }
-      final oldPlayer = _player;
-      _player = nextPlayer;
-      if (oldPlayer != null) {
-        unawaited(oldPlayer.dispose());
-      }
-    } catch (_) {
-      // Best-effort audio warmup.
+    final applied = await _audioController.setTone(
+      frequency: frequencySpec.frequency,
+      style: voiceSpec.id,
+    );
+    if (!mounted || buildNonce != _playerBuildNonce || !applied) {
+      return;
     }
   }
 
@@ -178,7 +158,6 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
     _playerRebuildTimer = Timer(const Duration(milliseconds: 220), () {
       final shouldResume = _resumeAutoPlayAfterRebuild;
       _resumeAutoPlayAfterRebuild = false;
-      unawaited(_stopVoices());
       unawaited(
         _rebuildPlayer().then((_) {
           if (!mounted || !shouldResume) {
@@ -191,9 +170,7 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
   }
 
   Future<void> _stopVoices() async {
-    try {
-      await _player?.stop();
-    } catch (_) {}
+    await _audioController.stop();
   }
 
   void _restartAutoPlay({required bool strikeNow}) {
@@ -335,7 +312,7 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
       return;
     }
     try {
-      await _player?.play(baseVolume: voiceSpec.baseVolume);
+      await _audioController.play(baseVolume: voiceSpec.baseVolume);
     } catch (_) {}
   }
 

@@ -87,4 +87,48 @@ void main() {
     expect(find.text('Sokoban'), findsWidgets);
     expect(find.text('New level'), findsOneWidget);
   });
+
+  testWidgets('sokoban can switch and regenerate triple-box levels rapidly', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: SokobanGamePage()));
+    await tester.pump();
+
+    await tester.tap(find.text('Triple').first);
+    await tester.pump();
+    for (var index = 0; index < 8; index += 1) {
+      final newLevel = find.text('New level').first;
+      await tester.ensureVisible(newLevel);
+      await tester.pump();
+      await tester.tap(newLevel);
+      await tester.pump();
+    }
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Triple'), findsWidgets);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('sokoban compact layout fits a narrow phone viewport', (
+    tester,
+  ) async {
+    final view = tester.view;
+    final oldPhysicalSize = view.physicalSize;
+    final oldDevicePixelRatio = view.devicePixelRatio;
+    view
+      ..physicalSize = const Size(375, 667)
+      ..devicePixelRatio = 1;
+    addTearDown(() {
+      view
+        ..physicalSize = oldPhysicalSize
+        ..devicePixelRatio = oldDevicePixelRatio;
+    });
+
+    await tester.pumpWidget(const MaterialApp(home: SokobanGamePage()));
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Sokoban'), findsWidgets);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 }

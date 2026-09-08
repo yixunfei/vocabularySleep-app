@@ -122,8 +122,10 @@ function Ensure-AndroidAppBundleEnvironment {
 function Ensure-CMakeEnvironment {
   $cmakeCommand = Ensure-ProjectCMakeEnvironment -ProjectRoot $projectRoot
   $nugetCommand = Ensure-ProjectNuGet
+  $libClangDirectory = Ensure-ProjectLibClangEnvironment -ProjectRoot $projectRoot
   Write-Host "CMake: $cmakeCommand"
   Write-Host "NuGet: $nugetCommand"
+  Write-Host "libclang: $libClangDirectory"
 }
 
 function Reset-StaleGradleWrapperState {

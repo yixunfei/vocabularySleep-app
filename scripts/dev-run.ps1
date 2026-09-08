@@ -29,8 +29,15 @@ function Ensure-BuildTools {
   $flutterCmd = Resolve-FlutterCommand
   $cmakeCmd = Ensure-ProjectCMakeEnvironment -ProjectRoot $projectRoot
   $null = Ensure-ProjectNuGet
+  $libClangDirectory = $null
+  if ($Device -ieq 'windows') {
+    $libClangDirectory = Ensure-ProjectLibClangEnvironment -ProjectRoot $projectRoot
+  }
   Write-Host "Flutter: $flutterCmd"
   Write-Host "CMake: $cmakeCmd"
+  if ($libClangDirectory) {
+    Write-Host "libclang: $libClangDirectory"
+  }
 }
 
 function Stop-FlutterAppProcess {

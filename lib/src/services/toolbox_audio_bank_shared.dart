@@ -104,12 +104,13 @@ Uint8List _encodeWav(
   List<double> samples, {
   required int sampleRate,
   required double gain,
+  double maxNormalization = double.infinity,
 }) {
   var peak = 0.000001;
   for (final sample in samples) {
     peak = math.max(peak, sample.abs());
   }
-  final normalization = gain / peak;
+  final normalization = math.min(gain / peak, maxNormalization);
 
   final byteData = ByteData(44 + samples.length * 2);
   void writeString(int offset, String value) {

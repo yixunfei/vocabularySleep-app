@@ -37,6 +37,13 @@ void main() {
       expect(calculator.evaluate('cosh(0) + tanh(0)'), closeTo(1, 1e-12));
     });
 
+    test('uses conventional exponent precedence and right associativity', () {
+      expect(calculator.evaluate('-2^2'), closeTo(-4, 1e-12));
+      expect(calculator.evaluate('(-2)^2'), closeTo(4, 1e-12));
+      expect(calculator.evaluate('2^-2'), closeTo(0.25, 1e-12));
+      expect(calculator.evaluate('2^3^2'), closeTo(512, 1e-12));
+    });
+
     test('estimates integral derivative limit and root numerically', () {
       expect(
         calculator.integrate(
@@ -82,5 +89,47 @@ void main() {
         closeTo(0.5, 1e-7),
       );
     });
+
+    test('keeps probability boundaries finite and rejects invalid domains', () {
+      expect(calculator.binomialPmf(n: 4, k: 0, p: 0), 1);
+      expect(calculator.binomialPmf(n: 4, k: 1, p: 0), 0);
+      expect(calculator.binomialPmf(n: 4, k: 4, p: 1), 1);
+      expect(calculator.binomialPmf(n: 4, k: 3, p: 1), 0);
+      expect(calculator.binomialPmf(n: 4, k: -1, p: 0), 0);
+      expect(calculator.binomialPmf(n: 4, k: 5, p: 1), 0);
+      expect(calculator.binomialCdf(n: 4, k: -1, p: 0.5), 0);
+      expect(calculator.binomialCdf(n: 4, k: 8, p: 0.5), 1);
+      expect(
+        () => calculator.binomialPmf(n: -1, k: 0, p: 0.5),
+        throwsFormatException,
+      );
+      expect(
+        () => calculator.binomialPmf(n: 1, k: 0, p: double.nan),
+        throwsFormatException,
+      );
+      expect(
+        () => calculator.normalPdf(
+          mean: 0,
+          standardDeviation: double.infinity,
+          x: 0,
+        ),
+        throwsFormatException,
+      );
+    });
+
+    test('rejects non-finite numeric expression results', () {
+      expect(() => calculator.evaluate('1/0'), throwsFormatException);
+      expect(() => calculator.evaluate('sqrt(-1)'), throwsFormatException);
+    });
+
+    test(
+      'formats decimal and exponential results without capture artifacts',
+      () {
+        expect(calculator.formatNumber(0.5), '0.5');
+        expect(calculator.formatNumber(1.25), '1.25');
+        expect(calculator.formatNumber(1e-9), '1e-9');
+        expect(calculator.formatNumber(42), '42');
+      },
+    );
   });
 }
