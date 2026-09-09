@@ -43,6 +43,11 @@ import '../services/cstcloud_resource_prewarm_service.dart';
 import '../services/cstcloud_resource_cache_service.dart';
 import '../services/focus_service.dart';
 import '../services/memory_algorithm.dart';
+import '../services/sleep/sleep_routine_controller.dart';
+import '../services/sleep/sleep_support_session_controller.dart';
+import '../services/sleep/sleep_day_program.dart';
+import '../services/sleep/sleep_sound_controller.dart';
+import '../services/sleep/sleep_sound_player.dart';
 import '../services/memory_lane_selector.dart';
 import '../services/online_ambient_catalog_service.dart';
 import '../services/playback_service.dart';
@@ -276,13 +281,24 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   SleepDashboardState _sleepDashboardState = const SleepDashboardState();
   SleepAssessmentDraftState _sleepAssessmentDraft =
       const SleepAssessmentDraftState();
-  SleepRoutineRunnerState _sleepRoutineRunnerState =
-      const SleepRoutineRunnerState();
+  final SleepRoutineController _sleepRoutineController =
+      SleepRoutineController();
+  final SleepSoundController _sleepSoundController = SleepSoundController(
+    playerFactory: SleepLoopSoundPlayer.new,
+  );
+  late final SleepSupportSessionController _sleepSupportSessionController =
+      SleepSupportSessionController(
+        saveEvent: (event) async {
+          saveSleepNightEvent(event);
+        },
+      );
+  SleepRoutineRunnerState get _sleepRoutineRunnerState =>
+      _sleepRoutineController.value;
   SleepNightRescueState _sleepNightRescueState = const SleepNightRescueState();
-  List<SleepDailyLog> _sleepDailyLogs = <SleepDailyLog>[];
-  List<SleepNightEvent> _sleepNightEvents = <SleepNightEvent>[];
-  List<SleepThoughtEntry> _sleepThoughtEntries = <SleepThoughtEntry>[];
-  List<SleepRoutineTemplate> _sleepRoutineTemplates = <SleepRoutineTemplate>[];
+  List<SleepDailyLog> _sleepDailyLogs = const [];
+  List<SleepNightEvent> _sleepNightEvents = const [];
+  List<SleepThoughtEntry> _sleepThoughtEntries = const [];
+  List<SleepRoutineTemplate> _sleepRoutineTemplates = const [];
   SleepProgramProgress? _sleepProgramProgress;
 
   // Ambient sync debounce to prevent race conditions from rapid state changes
@@ -461,15 +477,16 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   SleepAssessmentDraftState get sleepAssessmentDraft => _sleepAssessmentDraft;
   SleepRoutineRunnerState get sleepRoutineRunnerState =>
       _sleepRoutineRunnerState;
+  SleepRoutineController get sleepRoutineController => _sleepRoutineController;
+  SleepSoundController get sleepSoundController => _sleepSoundController;
+  SleepSupportSessionController get sleepSupportSessionController =>
+      _sleepSupportSessionController;
   SleepNightRescueState get sleepNightRescueState => _sleepNightRescueState;
-  List<SleepDailyLog> get sleepDailyLogs =>
-      List<SleepDailyLog>.unmodifiable(_sleepDailyLogs);
-  List<SleepNightEvent> get sleepNightEvents =>
-      List<SleepNightEvent>.unmodifiable(_sleepNightEvents);
-  List<SleepThoughtEntry> get sleepThoughtEntries =>
-      List<SleepThoughtEntry>.unmodifiable(_sleepThoughtEntries);
+  List<SleepDailyLog> get sleepDailyLogs => _sleepDailyLogs;
+  List<SleepNightEvent> get sleepNightEvents => _sleepNightEvents;
+  List<SleepThoughtEntry> get sleepThoughtEntries => _sleepThoughtEntries;
   List<SleepRoutineTemplate> get sleepRoutineTemplates =>
-      List<SleepRoutineTemplate>.unmodifiable(_sleepRoutineTemplates);
+      _sleepRoutineTemplates;
   SleepProgramProgress? get sleepProgramProgress => _sleepProgramProgress;
   SleepDailyLog? get latestSleepDailyLog => _sleepDailyLogs.firstOrNull;
   SleepRoutineStep? get currentSleepRoutineStep {
@@ -1464,6 +1481,10 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      _sleepRoutineController.synchronize();
+      _sleepSoundController.synchronize();
+    }
     _didChangeAppLifecycleStateImpl(state);
   }
 
@@ -3705,6 +3726,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       return;
     }
     _disposed = true;
+    _sleepRoutineController.dispose();
+    _sleepSoundController.dispose();
+    _sleepSupportSessionController.dispose();
     _wordbookLoadGeneration += 1;
     _wordbookLoadBusyGeneration = null;
     _wordbookSearchStore.cancel();

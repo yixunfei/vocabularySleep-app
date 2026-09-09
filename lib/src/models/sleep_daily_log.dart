@@ -1,3 +1,5 @@
+import 'sleep_support_session.dart';
+
 enum SleepNightRescueMode {
   briefAwakening('brief_awakening'),
   fullyAwake('fully_awake'),
@@ -31,30 +33,30 @@ class SleepDailyLog {
     this.outOfBedAt,
     this.estimatedTotalSleepMinutes,
     this.sleepLatencyMinutes,
-    this.nightWakeCount = 0,
-    this.nightWakeTotalMinutes = 0,
+    this.nightWakeCount,
+    this.nightWakeTotalMinutes,
     this.timeInBedMinutes,
     this.sleepEfficiency,
     this.morningEnergy,
     this.daytimeSleepiness,
-    this.caffeineAfterCutoff = false,
-    this.alcoholAtNight = false,
-    this.lateScreenExposure = false,
-    this.morningLightDone = false,
-    this.heavyDinner = false,
-    this.intenseExerciseLate = false,
-    this.hotBathDone = false,
-    this.stretchingDone = false,
-    this.whiteNoiseUsed = false,
+    this.caffeineAfterCutoff,
+    this.alcoholAtNight,
+    this.lateScreenExposure,
+    this.morningLightDone,
+    this.heavyDinner,
+    this.intenseExerciseLate,
+    this.hotBathDone,
+    this.stretchingDone,
+    this.whiteNoiseUsed,
     this.whiteNoiseSourceId,
-    this.bedroomTooHot = false,
-    this.bedroomTooBright = false,
-    this.bedroomTooNoisy = false,
-    this.clockChecking = false,
+    this.bedroomTooHot,
+    this.bedroomTooBright,
+    this.bedroomTooNoisy,
+    this.clockChecking,
     this.stressPeakLevel,
     this.worryLoadLevel,
     this.windDownMinutes,
-    this.napMinutes = 0,
+    this.napMinutes,
     this.notes,
     this.createdAt,
     this.updatedAt,
@@ -69,30 +71,30 @@ class SleepDailyLog {
   final DateTime? outOfBedAt;
   final int? estimatedTotalSleepMinutes;
   final int? sleepLatencyMinutes;
-  final int nightWakeCount;
-  final int nightWakeTotalMinutes;
+  final int? nightWakeCount;
+  final int? nightWakeTotalMinutes;
   final int? timeInBedMinutes;
   final double? sleepEfficiency;
   final int? morningEnergy;
   final int? daytimeSleepiness;
-  final bool caffeineAfterCutoff;
-  final bool alcoholAtNight;
-  final bool lateScreenExposure;
-  final bool morningLightDone;
-  final bool heavyDinner;
-  final bool intenseExerciseLate;
-  final bool hotBathDone;
-  final bool stretchingDone;
-  final bool whiteNoiseUsed;
+  final bool? caffeineAfterCutoff;
+  final bool? alcoholAtNight;
+  final bool? lateScreenExposure;
+  final bool? morningLightDone;
+  final bool? heavyDinner;
+  final bool? intenseExerciseLate;
+  final bool? hotBathDone;
+  final bool? stretchingDone;
+  final bool? whiteNoiseUsed;
   final String? whiteNoiseSourceId;
-  final bool bedroomTooHot;
-  final bool bedroomTooBright;
-  final bool bedroomTooNoisy;
-  final bool clockChecking;
+  final bool? bedroomTooHot;
+  final bool? bedroomTooBright;
+  final bool? bedroomTooNoisy;
+  final bool? clockChecking;
   final int? stressPeakLevel;
   final int? worryLoadLevel;
   final int? windDownMinutes;
-  final int napMinutes;
+  final int? napMinutes;
   final String? notes;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -239,30 +241,56 @@ class SleepDailyLog {
         map['estimated_total_sleep_minutes'],
       ),
       sleepLatencyMinutes: _readInt(map['sleep_latency_minutes']),
-      nightWakeCount: _readInt(map['night_wake_count']) ?? 0,
-      nightWakeTotalMinutes: _readInt(map['night_wake_total_minutes']) ?? 0,
+      nightWakeCount: _readInt(map['night_wake_count']),
+      nightWakeTotalMinutes: _readInt(map['night_wake_total_minutes']),
       timeInBedMinutes: _readInt(map['time_in_bed_minutes']),
       sleepEfficiency: _readDouble(map['sleep_efficiency']),
       morningEnergy: _readInt(map['morning_energy']),
       daytimeSleepiness: _readInt(map['daytime_sleepiness']),
-      caffeineAfterCutoff: map['caffeine_after_cutoff'] == true,
-      alcoholAtNight: map['alcohol_at_night'] == true,
-      lateScreenExposure: map['late_screen_exposure'] == true,
-      morningLightDone: map['morning_light_done'] == true,
-      heavyDinner: map['heavy_dinner'] == true,
-      intenseExerciseLate: map['intense_exercise_late'] == true,
-      hotBathDone: map['hot_bath_done'] == true,
-      stretchingDone: map['stretching_done'] == true,
-      whiteNoiseUsed: map['white_noise_used'] == true,
+      caffeineAfterCutoff: map['caffeine_after_cutoff'] is bool
+          ? map['caffeine_after_cutoff'] as bool
+          : null,
+      alcoholAtNight: map['alcohol_at_night'] is bool
+          ? map['alcohol_at_night'] as bool
+          : null,
+      lateScreenExposure: map['late_screen_exposure'] is bool
+          ? map['late_screen_exposure'] as bool
+          : null,
+      morningLightDone: map['morning_light_done'] is bool
+          ? map['morning_light_done'] as bool
+          : null,
+      heavyDinner: map['heavy_dinner'] is bool
+          ? map['heavy_dinner'] as bool
+          : null,
+      intenseExerciseLate: map['intense_exercise_late'] is bool
+          ? map['intense_exercise_late'] as bool
+          : null,
+      hotBathDone: map['hot_bath_done'] is bool
+          ? map['hot_bath_done'] as bool
+          : null,
+      stretchingDone: map['stretching_done'] is bool
+          ? map['stretching_done'] as bool
+          : null,
+      whiteNoiseUsed: map['white_noise_used'] is bool
+          ? map['white_noise_used'] as bool
+          : null,
       whiteNoiseSourceId: _readString(map['white_noise_source_id']),
-      bedroomTooHot: map['bedroom_too_hot'] == true,
-      bedroomTooBright: map['bedroom_too_bright'] == true,
-      bedroomTooNoisy: map['bedroom_too_noisy'] == true,
-      clockChecking: map['clock_checking'] == true,
+      bedroomTooHot: map['bedroom_too_hot'] is bool
+          ? map['bedroom_too_hot'] as bool
+          : null,
+      bedroomTooBright: map['bedroom_too_bright'] is bool
+          ? map['bedroom_too_bright'] as bool
+          : null,
+      bedroomTooNoisy: map['bedroom_too_noisy'] is bool
+          ? map['bedroom_too_noisy'] as bool
+          : null,
+      clockChecking: map['clock_checking'] is bool
+          ? map['clock_checking'] as bool
+          : null,
       stressPeakLevel: _readInt(map['stress_peak_level']),
       worryLoadLevel: _readInt(map['worry_load_level']),
       windDownMinutes: _readInt(map['wind_down_minutes']),
-      napMinutes: _readInt(map['nap_minutes']) ?? 0,
+      napMinutes: _readInt(map['nap_minutes']),
       notes: _readString(map['notes']),
       createdAt: _readDateTime(map['created_at']),
       updatedAt: _readDateTime(map['updated_at']),
@@ -275,6 +303,8 @@ class SleepNightEvent {
     this.id,
     required this.dateKey,
     required this.mode,
+    this.intent,
+    this.hasLeftBed,
     this.startedAt,
     this.endedAt,
     this.guessedTrigger,
@@ -287,6 +317,8 @@ class SleepNightEvent {
   final String? id;
   final String dateKey;
   final SleepNightRescueMode mode;
+  final SleepSupportIntent? intent;
+  final bool? hasLeftBed;
   final DateTime? startedAt;
   final DateTime? endedAt;
   final String? guessedTrigger;
@@ -300,6 +332,8 @@ class SleepNightEvent {
       'id': id,
       'date_key': dateKey,
       'mode': mode.storageValue,
+      'intent': intent?.name,
+      'has_left_bed': hasLeftBed,
       'started_at': startedAt?.toIso8601String(),
       'ended_at': endedAt?.toIso8601String(),
       'guessed_trigger': guessedTrigger,
@@ -324,6 +358,12 @@ class SleepNightEvent {
       id: _readString(map['id']),
       dateKey: dateKey,
       mode: mode,
+      intent: SleepSupportIntent.values
+          .where((intent) => intent.name == map['intent'])
+          .firstOrNull,
+      hasLeftBed: map['has_left_bed'] is bool
+          ? map['has_left_bed'] as bool
+          : null,
       startedAt: _readDateTime(map['started_at']),
       endedAt: _readDateTime(map['ended_at']),
       guessedTrigger: _readString(map['guessed_trigger']),

@@ -3,13 +3,15 @@ import 'package:provider/provider.dart';
 
 import '../../core/module_system/module_id.dart';
 import '../../i18n/app_i18n.dart';
+import '../../models/sleep_daily_log.dart';
+import '../../services/sleep/sleep_day_report.dart';
 import '../../state/app_state.dart';
 import '../module/module_access.dart';
-import '../widgets/empty_state_view.dart';
-import '../widgets/setting_tile.dart';
+import 'sleep_assistant_ui_support.dart';
 import 'sleep_chart_widgets.dart';
 import 'sleep_research_library.dart';
-import 'sleep_assistant_ui_support.dart';
+import 'sleep_support/sleep_day_form_widgets.dart';
+import 'sleep_support/sleep_day_history.dart';
 import 'toolbox_tool_shell.dart';
 
 class SleepReportPage extends StatelessWidget {
@@ -17,275 +19,240 @@ class SleepReportPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appState = context.watch<AppState>();
-    final i18n = AppI18n(appState.uiLanguage);
-    Widget themed(Widget child) {
-      return sleepModuleTheme(
-        context: context,
-        enabled: appState.sleepDashboardState.sleepDarkModeEnabled,
-        child: child,
-      );
-    }
-
-    if (!appState.isModuleEnabled(ModuleIds.toolboxSleepAssistant)) {
-      return themed(
-        ToolboxToolPage(
-          title: i18n.t('toolbox.sleep.core.title'),
-          subtitle: i18n.t('toolbox.sleep.assessment.moduleDisabled'),
-          child: ModuleDisabledView(
-            i18n: i18n,
-            moduleId: ModuleIds.toolboxSleepAssistant,
-          ),
-        ),
-      );
-    }
-    final rangeDays = appState.sleepDashboardState.lastReportRangeDays;
-    final recentLogs = appState.sleepDailyLogs
-        .take(rangeDays)
-        .toList(growable: false);
-
-    if (recentLogs.isEmpty) {
-      return themed(
-        ToolboxToolPage(
+    final data = context.select(
+      (AppState s) => (
+        s.uiLanguage,
+        s.sleepDailyLogs,
+        s.sleepDashboardState.lastReportRangeDays,
+        s.sleepDashboardState.sleepDarkModeEnabled,
+        s.isModuleEnabled(ModuleIds.toolboxSleepAssistant),
+        s.sleepProfile,
+        s.sleepNightEvents,
+      ),
+    );
+    final i18n = AppI18n(data.$1);
+    final report = SleepDayReport(data.$2, days: data.$3, now: DateTime.now());
+    return sleepModuleTheme(
+      context: context,
+      enabled: data.$4,
+      child: Builder(
+        builder: (context) => ToolboxToolPage(
           title: i18n.t('toolbox.sleep.report.title'),
           subtitle: i18n.t('toolbox.sleep.report.intro'),
-          child: EmptyStateView(
-            icon: Icons.insights_rounded,
-            title: i18n.t('toolbox.sleep.report.noData'),
-            message: i18n.t('toolbox.sleep.report.noDataHint'),
-          ),
-        ),
-      );
-    }
-
-    final chartLogs = recentLogs.reversed.toList(growable: false);
-    final avgSleep = averageSleepInt(
-      recentLogs.map((item) => item.estimatedTotalSleepMinutes),
-    );
-    final avgEfficiency = averageSleepDouble(
-      recentLogs.map((item) => item.sleepEfficiency),
-    );
-    final avgEnergy = averageSleepInt(
-      recentLogs.map((item) => item.morningEnergy),
-    );
-    final avgSleepiness = averageSleepInt(
-      recentLogs.map((item) => item.daytimeSleepiness),
-    );
-    final lateCaffeineDays = recentLogs
-        .where((item) => item.caffeineAfterCutoff)
-        .length;
-    final lateScreenDays = recentLogs
-        .where((item) => item.lateScreenExposure)
-        .length;
-    final noisyDays = recentLogs
-        .where(
-          (item) =>
-              item.bedroomTooNoisy ||
-              item.bedroomTooBright ||
-              item.bedroomTooHot,
-        )
-        .length;
-    final morningLightDays = recentLogs
-        .where((item) => item.morningLightDone)
-        .length;
-    final advice = buildSleepWeeklyAdvice(
-      i18n,
-      logs: recentLogs,
-      profile: appState.sleepProfile,
-    );
-
-    return themed(
-      ToolboxToolPage(
-        title: i18n.t('toolbox.sleep.report.title'),
-        subtitle: i18n.t('toolbox.sleep.report.intro'),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Row(
-                      children: <Widget>[
-                        Text(
-                          i18n.t('toolbox.sleep.report.range'),
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const Spacer(),
-                        SegmentedButton<int>(
-                          segments: <ButtonSegment<int>>[
-                            ButtonSegment<int>(
-                              value: 7,
-                              label: Text(
-                                i18n.t('toolbox.sleep.report.range7d'),
-                              ),
-                            ),
-                            ButtonSegment<int>(
-                              value: 14,
-                              label: Text(
-                                i18n.t('toolbox.sleep.report.range14d'),
-                              ),
-                            ),
-                          ],
-                          selected: <int>{rangeDays},
-                          onSelectionChanged: (selection) {
-                            final value = selection.first;
-                            appState.updateSleepDashboardState(
-                              appState.sleepDashboardState.copyWith(
-                                lastReportRangeDays: value,
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: <Widget>[
-                        ToolboxMetricCard(
-                          label: i18n.t('toolbox.sleep.report.avgSleep'),
-                          value: sleepMinutesLabel(avgSleep),
-                        ),
-                        ToolboxMetricCard(
-                          label: i18n.t('toolbox.sleep.report.avgEfficiency'),
-                          value: sleepPercentLabel(avgEfficiency),
-                        ),
-                        ToolboxMetricCard(
-                          label: i18n.t('toolbox.sleep.report.morningEnergy'),
-                          value: sleepScoreLabel(avgEnergy),
-                        ),
-                        ToolboxMetricCard(
-                          label: i18n.t(
-                            'toolbox.sleep.report.daytimeSleepiness',
-                          ),
-                          value: sleepScoreLabel(avgSleepiness),
-                        ),
-                      ],
-                    ),
-                  ],
+          showPageHeader: false,
+          child: data.$5
+              ? _content(context, i18n, report)
+              : ModuleDisabledView(
+                  i18n: i18n,
+                  moduleId: ModuleIds.toolboxSleepAssistant,
                 ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SleepMetricChartCard(
-              title: i18n.t('toolbox.sleep.report.sleepDurationTrend'),
-              subtitle: i18n.t('toolbox.sleep.report.sleepDurationTrendHint'),
-              i18n: i18n,
-              points: chartLogs
-                  .map(
-                    (log) => SleepChartPoint(
-                      label: sleepDateLabel(log.dateKey).substring(5),
-                      value: log.estimatedTotalSleepMinutes?.toDouble(),
-                      valueLabel: sleepMinutesLabel(
-                        log.estimatedTotalSleepMinutes,
-                      ),
-                    ),
-                  )
-                  .toList(growable: false),
-              color: const Color(0xFF4976AA),
-            ),
-            const SizedBox(height: 12),
-            SleepMetricChartCard(
-              title: i18n.t('toolbox.sleep.report.efficiencyTrend'),
-              subtitle: i18n.t('toolbox.sleep.report.efficiencyTrendHint'),
-              i18n: i18n,
-              points: chartLogs
-                  .map(
-                    (log) => SleepChartPoint(
-                      label: sleepDateLabel(log.dateKey).substring(5),
-                      value: log.sleepEfficiency == null
-                          ? null
-                          : log.sleepEfficiency! * 100,
-                      valueLabel: sleepPercentLabel(log.sleepEfficiency),
-                    ),
-                  )
-                  .toList(growable: false),
-              color: const Color(0xFF58805B),
-            ),
-            const SizedBox(height: 12),
-            SleepMetricChartCard(
-              title: i18n.t('toolbox.sleep.report.energyTrend'),
-              subtitle: i18n.t('toolbox.sleep.report.energyTrendHint'),
-              i18n: i18n,
-              points: chartLogs
-                  .map(
-                    (log) => SleepChartPoint(
-                      label: sleepDateLabel(log.dateKey).substring(5),
-                      value: log.morningEnergy?.toDouble(),
-                      valueLabel: sleepScoreLabel(log.morningEnergy),
-                    ),
-                  )
-                  .toList(growable: false),
-              color: const Color(0xFFB4882D),
-            ),
-            const SizedBox(height: 12),
-            SleepMetricChartCard(
-              title: i18n.t('toolbox.sleep.report.wakeBurden'),
-              subtitle: i18n.t('toolbox.sleep.report.wakeBurdenHint'),
-              i18n: i18n,
-              points: chartLogs
-                  .map(
-                    (log) => SleepChartPoint(
-                      label: sleepDateLabel(log.dateKey).substring(5),
-                      value: sleepWakeBurdenValue(log).toDouble(),
-                      valueLabel: sleepWakeBurdenLabel(i18n, log),
-                    ),
-                  )
-                  .toList(growable: false),
-              color: const Color(0xFF9C6652),
-            ),
-            const SizedBox(height: 12),
-            SettingTile(
-              icon: Icons.local_cafe_rounded,
-              title: i18n.t('toolbox.sleep.report.lateCaffeineDays'),
-              subtitle: i18n.t('toolbox.sleep.report.lateCaffeineDaysHint'),
-              trailing: Text('$lateCaffeineDays/${recentLogs.length}'),
-            ),
-            const SizedBox(height: 8),
-            SettingTile(
-              icon: Icons.phone_android_rounded,
-              title: i18n.t('toolbox.sleep.report.lateScreenDays'),
-              subtitle: i18n.t('toolbox.sleep.report.lateScreenDaysHint'),
-              trailing: Text('$lateScreenDays/${recentLogs.length}'),
-            ),
-            const SizedBox(height: 8),
-            SettingTile(
-              icon: Icons.wb_sunny_rounded,
-              title: i18n.t('toolbox.sleep.report.morningLightDays'),
-              subtitle: i18n.t('toolbox.sleep.report.morningLightDaysHint'),
-              trailing: Text('$morningLightDays/${recentLogs.length}'),
-            ),
-            const SizedBox(height: 8),
-            SettingTile(
-              icon: Icons.meeting_room_rounded,
-              title: i18n.t('toolbox.sleep.report.envIssueDays'),
-              subtitle: i18n.t('toolbox.sleep.report.envIssueDaysHint'),
-              trailing: Text('$noisyDays/${recentLogs.length}'),
-            ),
-            const SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      i18n.t('toolbox.sleep.report.nextCycleAdvice'),
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 12),
-                    SleepAdviceList(items: advice, i18n: i18n),
-                  ],
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );
+  }
+
+  Widget _content(BuildContext context, AppI18n i18n, SleepDayReport report) =>
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _range(context, i18n, report),
+          SleepDayHistory(
+            events: context.read<AppState>().sleepNightEvents,
+            dates: report.dates,
+            i18n: i18n,
+          ),
+          if (report.recordedLogs.isEmpty)
+            SleepDayPanel(
+              title: i18n.t('toolbox.sleep.report.noData'),
+              children: [Text(i18n.t('toolbox.sleep.report.noDataHint'))],
+            )
+          else ...[
+            _averages(i18n, report.recordedLogs),
+            ..._charts(i18n, report),
+            _factors(i18n, report.recordedLogs),
+            ExpansionTile(
+              title: Text(i18n.t('toolbox.sleep.report.nextCycleAdvice')),
+              childrenPadding: const EdgeInsets.all(16),
+              children: [
+                SleepAdviceList(
+                  items: buildSleepWeeklyAdvice(
+                    i18n,
+                    logs: report.recordedLogs,
+                    profile: context.read<AppState>().sleepProfile,
+                  ),
+                  i18n: i18n,
+                ),
+              ],
+            ),
+          ],
+        ],
+      );
+
+  Widget _range(
+    BuildContext context,
+    AppI18n i18n,
+    SleepDayReport report,
+  ) => SleepDayPanel(
+    title: i18n.t('toolbox.sleep.report.range'),
+    children: [
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final days in [7, 14])
+            ChoiceChip(
+              label: Text(
+                i18n.t(
+                  days == 7
+                      ? 'toolbox.sleep.report.range7d'
+                      : 'toolbox.sleep.report.range14d',
+                ),
+              ),
+              selected: report.dates.length == days,
+              onSelected: (_) {
+                final state = context.read<AppState>();
+                state.updateSleepDashboardState(
+                  state.sleepDashboardState.copyWith(lastReportRangeDays: days),
+                );
+              },
+            ),
+        ],
+      ),
+      const SizedBox(height: 12),
+      Text(
+        '${SleepDayReport.dateKey(report.dates.first)} – ${SleepDayReport.dateKey(report.dates.last)}',
+      ),
+      const SizedBox(height: 8),
+      Text(
+        i18n.t(
+          'toolbox.sleep.day.report_window',
+          params: {
+            'count': report.recordedLogs.length,
+            'days': report.dates.length,
+          },
+        ),
+      ),
+    ],
+  );
+
+  Widget _averages(AppI18n i18n, List<SleepDailyLog> logs) => SleepDayPanel(
+    title: i18n.t('toolbox.sleep.day.recorded_summary'),
+    children: [
+      for (final item in <(String, List<int?>, String Function(int?))>[
+        (
+          'avgSleep',
+          logs.map((l) => l.estimatedTotalSleepMinutes).toList(),
+          (value) => sleepMinutesLabel(value, i18n: i18n),
+        ),
+        (
+          'morningEnergy',
+          logs.map((l) => l.morningEnergy).toList(),
+          sleepScoreLabel,
+        ),
+        (
+          'daytimeSleepiness',
+          logs.map((l) => l.daytimeSleepiness).toList(),
+          sleepScoreLabel,
+        ),
+      ])
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Text(
+            '${i18n.t('toolbox.sleep.report.${item.$1}')}: ${item.$3(averageSleepInt(item.$2))}\n'
+            '${i18n.t('toolbox.sleep.day.samples', params: {'count': item.$2.whereType<int>().length})}',
+          ),
+        ),
+      Text(
+        '${i18n.t('toolbox.sleep.report.avgEfficiency')}: '
+        '${sleepPercentLabel(averageSleepDouble(logs.map((l) => l.sleepEfficiency)))}\n'
+        '${i18n.t('toolbox.sleep.day.samples', params: {'count': logs.where((l) => l.sleepEfficiency != null).length})}',
+      ),
+    ],
+  );
+
+  List<Widget> _charts(AppI18n i18n, SleepDayReport report) => [
+    for (final metric
+        in <
+          (
+            String,
+            String,
+            double? Function(SleepDailyLog),
+            String Function(SleepDailyLog),
+          )
+        >[
+          (
+            'sleepDurationTrend',
+            'sleepDurationTrendHint',
+            (l) => l.estimatedTotalSleepMinutes?.toDouble(),
+            (l) => sleepMinutesLabel(l.estimatedTotalSleepMinutes, i18n: i18n),
+          ),
+          (
+            'efficiencyTrend',
+            'efficiencyTrendHint',
+            (l) => l.sleepEfficiency == null ? null : l.sleepEfficiency! * 100,
+            (l) => sleepPercentLabel(l.sleepEfficiency),
+          ),
+          (
+            'energyTrend',
+            'energyTrendHint',
+            (l) => l.morningEnergy?.toDouble(),
+            (l) => sleepScoreLabel(l.morningEnergy),
+          ),
+          (
+            'wakeBurden',
+            'wakeBurdenHint',
+            (l) => sleepWakeBurdenValue(l)?.toDouble(),
+            (l) => sleepWakeBurdenLabel(i18n, l),
+          ),
+        ])
+      Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: SleepMetricChartCard(
+          title: i18n.t('toolbox.sleep.report.${metric.$1}'),
+          subtitle: i18n.t('toolbox.sleep.report.${metric.$2}'),
+          i18n: i18n,
+          points: List.generate(report.dates.length, (index) {
+            final log = report.logs[index];
+            return SleepChartPoint(
+              label: '${report.dates[index].month}/${report.dates[index].day}',
+              value: log == null ? null : metric.$3(log),
+              valueLabel: log == null
+                  ? i18n.t('toolbox.sleep.day.unknown')
+                  : metric.$4(log),
+            );
+          }),
+        ),
+      ),
+  ];
+
+  Widget _factors(AppI18n i18n, List<SleepDailyLog> logs) => SleepDayPanel(
+    title: i18n.t('toolbox.sleep.log.behaviorEnv'),
+    children: [
+      for (final factor in <(String, bool? Function(SleepDailyLog))>[
+        ('lateCaffeineDays', (l) => l.caffeineAfterCutoff),
+        ('lateScreenDays', (l) => l.lateScreenExposure),
+        ('morningLightDays', (l) => l.morningLightDone),
+        ('envIssueDays', _environmentIssue),
+      ])
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Text(
+            '${i18n.t('toolbox.sleep.report.${factor.$1}')}: '
+            '${logs.where((l) => factor.$2(l) == true).length}/'
+            '${logs.where((l) => factor.$2(l) != null).length}',
+          ),
+        ),
+      Text(i18n.t('toolbox.sleep.day.known_only')),
+    ],
+  );
+
+  bool? _environmentIssue(SleepDailyLog log) {
+    final factors = [
+      log.bedroomTooHot,
+      log.bedroomTooBright,
+      log.bedroomTooNoisy,
+    ];
+    if (factors.contains(true)) return true;
+    return factors.contains(null) ? null : false;
   }
 }

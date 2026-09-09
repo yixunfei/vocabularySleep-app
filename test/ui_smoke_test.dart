@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'test_support/sleep_controller_test_state.dart';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -6920,7 +6922,7 @@ void _mockSystemChromeForFullscreenTest() {
 }
 
 class _FakeAppState extends ChangeNotifier
-    with WidgetsBindingObserver
+    with WidgetsBindingObserver, SleepControllerTestState
     implements AppState {
   _FakeAppState({
     required PlayConfig config,
