@@ -126,130 +126,87 @@ class _SleepLineChartPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    const topPadding = 12.0;
-    const bottomPadding = 24.0;
-    const leftPadding = 8.0;
-    const rightPadding = 8.0;
-    final usableHeight = size.height - topPadding - bottomPadding;
-    final usableWidth = size.width - leftPadding - rightPadding;
+    final offsets = _offsets(size);
+    if (offsets.isEmpty) return;
+    _drawGrid(canvas, size);
+    _drawSegments(canvas, offsets);
+    _drawLabels(canvas, size);
+  }
+
+  List<Offset?> _offsets(Size size) {
     final values = points
         .map((item) => item.value)
         .whereType<double>()
         .toList();
-    if (values.isEmpty || usableHeight <= 0 || usableWidth <= 0) {
-      return;
-    }
+    if (values.isEmpty || size.width <= 40 || size.height <= 36) return [];
+    final minimum = values.reduce(math.min);
+    final maximum = values.reduce(math.max);
+    final spread = math.max(maximum - minimum, 1.0);
+    return List.generate(points.length, (index) {
+      final value = points[index].value;
+      if (value == null) return null;
+      final normalized = maximum == minimum ? 0.5 : (value - minimum) / spread;
+      final x = points.length <= 1
+          ? size.width / 2
+          : 20 + (size.width - 40) * index / (points.length - 1);
+      return Offset(x, 12 + (1 - normalized) * (size.height - 36));
+    });
+  }
 
-    final minValue = values.reduce(math.min);
-    final maxValue = values.reduce(math.max);
-    final spread = maxValue - minValue < 0.001 ? 1.0 : maxValue - minValue;
-
-    final gridPaint = Paint()
+  void _drawGrid(Canvas canvas, Size size) {
+    final paint = Paint()
       ..color = gridColor.withValues(alpha: 0.4)
       ..strokeWidth = 1;
-
-    for (var i = 0; i < 3; i += 1) {
-      final y = topPadding + usableHeight * (i / 2);
-      canvas.drawLine(
-        Offset(leftPadding, y),
-        Offset(size.width - rightPadding, y),
-        gridPaint,
-      );
+    for (var index = 0; index < 3; index++) {
+      final y = 12 + (size.height - 36) * index / 2;
+      canvas.drawLine(Offset(20, y), Offset(size.width - 20, y), paint);
     }
+  }
 
-    final pointOffsets = <Offset?>[];
-    final stepX = points.length <= 1
-        ? usableWidth
-        : usableWidth / (points.length - 1);
-    for (var i = 0; i < points.length; i += 1) {
-      final value = points[i].value;
-      if (value == null) {
-        pointOffsets.add(null);
-        continue;
-      }
-      final normalized = (value - minValue) / spread;
-      final x = leftPadding + stepX * i;
-      final y = topPadding + (1 - normalized) * usableHeight;
-      pointOffsets.add(Offset(x, y));
-    }
-
-    final linePaint = Paint()
+  void _drawSegments(Canvas canvas, List<Offset?> offsets) {
+    final line = Paint()
       ..color = color
       ..strokeWidth = 2.8
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
-    final fillPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: <Color>[
-          color.withValues(alpha: 0.24),
-          color.withValues(alpha: 0.02),
-        ],
-      ).createShader(Offset.zero & size);
-
-    final linePath = Path();
-    final fillPath = Path();
-    var started = false;
-    for (final point in pointOffsets) {
+    final dot = Paint()..color = color;
+    Offset? previous;
+    for (final point in offsets) {
       if (point == null) {
+        // A missing date is a gap, never a line suggesting a measured value.
+        previous = null;
         continue;
       }
-      if (!started) {
-        linePath.moveTo(point.dx, point.dy);
-        fillPath.moveTo(point.dx, size.height - bottomPadding);
-        fillPath.lineTo(point.dx, point.dy);
-        started = true;
-      } else {
-        linePath.lineTo(point.dx, point.dy);
-        fillPath.lineTo(point.dx, point.dy);
-      }
+      if (previous != null) canvas.drawLine(previous, point, line);
+      canvas.drawCircle(point, 4, dot);
+      previous = point;
     }
-    if (started) {
-      for (var i = pointOffsets.length - 1; i >= 0; i -= 1) {
-        final point = pointOffsets[i];
-        if (point == null) {
-          continue;
-        }
-        fillPath.lineTo(point.dx, size.height - bottomPadding);
-        break;
-      }
-      fillPath.close();
-      canvas.drawPath(fillPath, fillPaint);
-      canvas.drawPath(linePath, linePaint);
-    }
+  }
 
-    final dotPaint = Paint()..color = color;
-    final dotFillPaint = Paint()
-      ..color = textColor.computeLuminance() > 0.5
-          ? const Color(0xFF0C1216)
-          : Colors.white;
-    for (final point in pointOffsets) {
-      if (point == null) {
+  void _drawLabels(Canvas canvas, Size size) {
+    final interval = math.max(1, (points.length / 4).ceil());
+    for (var index = 0; index < points.length; index++) {
+      if (index % interval != 0 && index != points.length - 1) continue;
+      // Avoid crowding the final label after a near-final tick.
+      if (index != points.length - 1 && points.length - 1 - index < interval) {
         continue;
       }
-      canvas.drawCircle(point, 4.8, dotPaint);
-      canvas.drawCircle(point, 2.4, dotFillPaint);
-    }
-
-    for (var i = 0; i < points.length; i += 1) {
-      final label = points[i].label;
-      final x = leftPadding + stepX * i;
-      final textPainter = TextPainter(
+      final text = TextPainter(
         text: TextSpan(
-          text: label,
-          style: TextStyle(
-            color: textColor,
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-          ),
+          text: points[index].label,
+          style: TextStyle(color: textColor, fontSize: 11),
         ),
-        maxLines: 1,
         textDirection: TextDirection.ltr,
       )..layout();
-      textPainter.paint(
+      final x = points.length <= 1
+          ? size.width / 2
+          : 20 + (size.width - 40) * index / (points.length - 1);
+      text.paint(
         canvas,
-        Offset(x - textPainter.width / 2, size.height - bottomPadding + 6),
+        Offset(
+          (x - text.width / 2).clamp(0, size.width - text.width),
+          size.height - 18,
+        ),
       );
     }
   }

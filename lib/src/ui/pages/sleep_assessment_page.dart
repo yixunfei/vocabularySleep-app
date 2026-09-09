@@ -5,8 +5,9 @@ import '../../core/module_system/module_id.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/sleep_profile.dart';
 import '../../state/app_state.dart';
+import '../../services/app_log_service.dart';
 import '../module/module_access.dart';
-import 'sleep_research_library.dart';
+import 'sleep_support/sleep_day_form_widgets.dart';
 import 'sleep_assistant_ui_support.dart';
 import 'toolbox_tool_shell.dart';
 
@@ -18,6 +19,10 @@ class SleepAssessmentPage extends StatefulWidget {
 }
 
 class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
+  int _step = 0;
+  bool _details = false;
+  bool _moreIssues = false;
+  bool _saved = false;
   late Set<SleepIssueType> _selectedIssues;
   late TextEditingController _goalController;
   late TimeOfDay? _bedtime;
@@ -90,6 +95,9 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
   );
 
   void _persistDraft() {
+    if (_saved && mounted) {
+      setState(() => _saved = false);
+    }
     context.read<AppState>().updateSleepAssessmentDraft(_draft);
   }
 
@@ -98,7 +106,7 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
         ? (_bedtime ?? const TimeOfDay(hour: 23, minute: 0))
         : (_wakeTime ?? const TimeOfDay(hour: 7, minute: 30));
     final picked = await showTimePicker(context: context, initialTime: current);
-    if (picked == null) {
+    if (picked == null || !mounted) {
       return;
     }
     setState(() {
@@ -114,414 +122,326 @@ class _SleepAssessmentPageState extends State<SleepAssessmentPage> {
   void _save() {
     final appState = context.read<AppState>();
     final now = DateTime.now();
-    appState.saveSleepProfile(
-      SleepProfile(
-        primaryIssues: _selectedIssues,
-        typicalBedtime: timeOfDayToStorage(_bedtime),
-        typicalWakeTime: timeOfDayToStorage(_wakeTime),
-        hasRacingThoughts: _hasRacingThoughts,
-        caffeineSensitive: _caffeineSensitive,
-        snoringRisk: _snoringRisk,
-        painImpactLevel: _painImpactLevel.round(),
-        stressLoadLevel: _stressLoadLevel.round(),
-        screenDependenceLevel: _screenDependenceLevel.round(),
-        lateWorkFrequency: _lateWorkFrequency.round(),
-        exerciseLateFrequency: _exerciseLateFrequency.round(),
-        bedroomLightIssue: _bedroomLightIssue,
-        bedroomNoiseIssue: _bedroomNoiseIssue,
-        bedroomTempIssue: _bedroomTempIssue,
-        shiftWorkOrJetLag: _shiftWorkOrJetLag,
-        refluxOrDigestiveDiscomfort: _refluxOrDigestiveDiscomfort,
-        nightmaresOrDreamDistress: _nightmaresOrDreamDistress,
-        goal: _goalController.text.trim(),
-        createdAt: appState.sleepProfile?.createdAt ?? now,
-        updatedAt: now,
-      ),
-    );
     final i18n = AppI18n(appState.uiLanguage);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(i18n.t('toolbox.sleep.assessment.saved'))),
-    );
+    try {
+      appState.saveSleepProfile(
+        SleepProfile(
+          primaryIssues: _selectedIssues,
+          typicalBedtime: timeOfDayToStorage(_bedtime),
+          typicalWakeTime: timeOfDayToStorage(_wakeTime),
+          hasRacingThoughts: _hasRacingThoughts,
+          caffeineSensitive: _caffeineSensitive,
+          snoringRisk: _snoringRisk,
+          painImpactLevel: _painImpactLevel.round(),
+          stressLoadLevel: _stressLoadLevel.round(),
+          screenDependenceLevel: _screenDependenceLevel.round(),
+          lateWorkFrequency: _lateWorkFrequency.round(),
+          exerciseLateFrequency: _exerciseLateFrequency.round(),
+          bedroomLightIssue: _bedroomLightIssue,
+          bedroomNoiseIssue: _bedroomNoiseIssue,
+          bedroomTempIssue: _bedroomTempIssue,
+          shiftWorkOrJetLag: _shiftWorkOrJetLag,
+          refluxOrDigestiveDiscomfort: _refluxOrDigestiveDiscomfort,
+          nightmaresOrDreamDistress: _nightmaresOrDreamDistress,
+          goal: _goalController.text.trim(),
+          createdAt: appState.sleepProfile?.createdAt ?? now,
+          updatedAt: now,
+        ),
+      );
+      setState(() => _saved = true);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(i18n.t('toolbox.sleep.assessment.saved'))),
+      );
+    } catch (error, stackTrace) {
+      AppLogService.instance.e(
+        'SleepAssessment',
+        'Could not save assessment',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      setState(() => _saved = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(i18n.t('toolbox.sleep.day.save_failed'))),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final appState = context.watch<AppState>();
-    final i18n = AppI18n(appState.uiLanguage);
-    Widget themed(Widget child) {
-      return sleepModuleTheme(
-        context: context,
-        enabled: appState.sleepDashboardState.sleepDarkModeEnabled,
-        child: child,
-      );
-    }
+    final language = context.select<AppState, String>((s) => s.uiLanguage);
+    final enabled = context.select<AppState, bool>(
+      (s) => s.isModuleEnabled(ModuleIds.toolboxSleepAssistant),
+    );
+    final dark = context.select<AppState, bool>(
+      (s) => s.sleepDashboardState.sleepDarkModeEnabled,
+    );
+    final i18n = AppI18n(language);
+    return sleepModuleTheme(
+      context: context,
+      enabled: dark,
+      child: Builder(
+        builder: (context) => ToolboxToolPage(
+          title: i18n.t('toolbox.sleep.assessment.title'),
+          subtitle: i18n.t('toolbox.sleep.assessment.flow.intro'),
+          showPageHeader: false,
+          child: enabled
+              ? _content(i18n)
+              : ModuleDisabledView(
+                  i18n: i18n,
+                  moduleId: ModuleIds.toolboxSleepAssistant,
+                ),
+        ),
+      ),
+    );
+  }
 
-    if (!appState.isModuleEnabled(ModuleIds.toolboxSleepAssistant)) {
-      return themed(
-        ToolboxToolPage(
-          title: i18n.t('toolbox.sleep.core.title'),
-          subtitle: i18n.t('toolbox.sleep.assessment.moduleDisabled'),
-          child: ModuleDisabledView(
-            i18n: i18n,
-            moduleId: ModuleIds.toolboxSleepAssistant,
+  Widget _content(AppI18n i18n) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Text(i18n.t('toolbox.sleep.assessment.flow.intro')),
+      const SizedBox(height: 12),
+      switch (_step) {
+        0 => _issues(i18n),
+        1 => _schedule(i18n),
+        _ => _review(i18n),
+      },
+      TextButton.icon(
+        onPressed: () => setState(() => _details = !_details),
+        icon: Icon(_details ? Icons.expand_less : Icons.tune_rounded),
+        label: Text(i18n.t('toolbox.sleep.day.details')),
+      ),
+      if (_details) ..._detailFields(i18n),
+      if (_details && _step < 2) _saveButton(i18n),
+    ],
+  );
+
+  Widget _issues(AppI18n i18n) => SleepDayPanel(
+    title: i18n.t('toolbox.sleep.assessment.flow.issue'),
+    children: [
+      for (final issue
+          in _moreIssues
+              ? SleepIssueType.values
+              : const [
+                  SleepIssueType.difficultyFallingAsleep,
+                  SleepIssueType.frequentAwakenings,
+                  SleepIssueType.racingThoughts,
+                  SleepIssueType.nonRestorativeSleep,
+                ])
+        SleepDayChoice<SleepIssueType>(
+          label: sleepIssueLabel(i18n, issue),
+          value: issue,
+          selected: _selectedIssues.contains(issue),
+          onSelected: (issue) {
+            setState(() {
+              if (!_selectedIssues.add(issue)) _selectedIssues.remove(issue);
+            });
+            _persistDraft();
+          },
+        ),
+      TextButton(
+        onPressed: () => setState(() => _moreIssues = !_moreIssues),
+        child: Text(i18n.t('toolbox.sleep.day.details')),
+      ),
+      FilledButton(
+        onPressed: () => setState(() => _step = 1),
+        child: Text(i18n.t('toolbox.sleep.day.next')),
+      ),
+      TextButton(
+        onPressed: () => setState(() => _step = 1),
+        child: Text(i18n.t('toolbox.sleep.day.skip')),
+      ),
+    ],
+  );
+
+  Widget _schedule(AppI18n i18n) => SleepDayPanel(
+    title: i18n.t('toolbox.sleep.assessment.baselineSchedule'),
+    children: [
+      Text(i18n.t('toolbox.sleep.assessment.flow.schedule_hint')),
+      const SizedBox(height: 12),
+      for (final item in <(bool, String, TimeOfDay?)>[
+        (true, 'typicalBedtime', _bedtime),
+        (false, 'typicalWakeTime', _wakeTime),
+      ])
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(i18n.t('toolbox.sleep.assessment.${item.$2}')),
+          subtitle: Text(
+            item.$3 == null
+                ? i18n.t('toolbox.sleep.day.unknown')
+                : sleepTimeOfDayLabel(item.$3),
+          ),
+          trailing: const Icon(Icons.schedule_rounded),
+          onTap: () => _pickTime(bedtime: item.$1),
+        ),
+      FilledButton(
+        onPressed: () => setState(() => _step = 2),
+        child: Text(i18n.t('toolbox.sleep.day.next')),
+      ),
+      TextButton(
+        onPressed: () => setState(() => _step = 2),
+        child: Text(i18n.t('toolbox.sleep.day.skip')),
+      ),
+      TextButton(
+        onPressed: () => setState(() => _step = 0),
+        child: Text(i18n.t('toolbox.sleep.day.back')),
+      ),
+    ],
+  );
+
+  Widget _review(AppI18n i18n) => SleepDayPanel(
+    title: i18n.t('toolbox.sleep.assessment.flow.review'),
+    children: [
+      Text(
+        _selectedIssues.isEmpty
+            ? i18n.t('toolbox.sleep.day.unknown')
+            : _selectedIssues
+                  .map((issue) => sleepIssueLabel(i18n, issue))
+                  .join(' · '),
+      ),
+      const SizedBox(height: 16),
+      _saveButton(i18n),
+      TextButton(
+        onPressed: () => setState(() => _step = 0),
+        child: Text(i18n.t('toolbox.sleep.day.back')),
+      ),
+    ],
+  );
+
+  Widget _saveButton(AppI18n i18n) => FilledButton.icon(
+    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+    onPressed: _saved ? null : _save,
+    icon: Icon(_saved ? Icons.check_rounded : Icons.save_rounded),
+    label: Text(
+      i18n.t(
+        _saved
+            ? 'toolbox.sleep.assessment.saved'
+            : 'toolbox.sleep.assessment.save',
+      ),
+    ),
+  );
+
+  List<Widget> _detailFields(AppI18n i18n) => [
+    SleepDayPanel(
+      title: i18n.t('toolbox.sleep.assessment.currentGoal'),
+      children: [
+        TextField(
+          controller: _goalController,
+          decoration: InputDecoration(
+            hintText: i18n.t('toolbox.sleep.assessment.goalHint'),
           ),
         ),
-      );
-    }
-    final adviceItems = buildSleepAssessmentAdvice(i18n, draft: _draft);
-    return themed(
-      ToolboxToolPage(
-        title: i18n.t('toolbox.sleep.assessment.title'),
-        subtitle: i18n.t('toolbox.sleep.assessment.intro'),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      i18n.t('toolbox.sleep.assessment.mainConcerns'),
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: SleepIssueType.values
-                          .map(
-                            (issue) => FilterChip(
-                              label: Text(sleepIssueLabel(i18n, issue)),
-                              selected: _selectedIssues.contains(issue),
-                              onSelected: (selected) {
-                                setState(() {
-                                  if (selected) {
-                                    _selectedIssues.add(issue);
-                                  } else {
-                                    _selectedIssues.remove(issue);
-                                  }
-                                });
-                                _persistDraft();
-                              },
-                            ),
-                          )
-                          .toList(growable: false),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      i18n.t('toolbox.sleep.assessment.baselineSchedule'),
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 12),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        i18n.t('toolbox.sleep.assessment.typicalBedtime'),
-                      ),
-                      subtitle: Text(sleepTimeOfDayLabel(_bedtime)),
-                      trailing: const Icon(Icons.schedule_rounded),
-                      onTap: () => _pickTime(bedtime: true),
-                    ),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        i18n.t('toolbox.sleep.assessment.typicalWakeTime'),
-                      ),
-                      subtitle: Text(sleepTimeOfDayLabel(_wakeTime)),
-                      trailing: const Icon(Icons.alarm_rounded),
-                      onTap: () => _pickTime(bedtime: false),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _goalController,
-                      maxLines: 2,
-                      decoration: InputDecoration(
-                        labelText: i18n.t(
-                          'toolbox.sleep.assessment.currentGoal',
-                        ),
-                        hintText: i18n.t('toolbox.sleep.assessment.goalHint'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            _AssessmentSliderCard(
-              i18n: i18n,
-              title: sleepAssessmentFactorTitle(i18n, 'stressLoadLevel'),
-              hint: sleepAssessmentFactorHint(i18n, 'stressLoadLevel'),
-              value: _stressLoadLevel,
-              status: sleepIntensityLabel(i18n, _stressLoadLevel.round()),
-              onChanged: (value) {
-                setState(() => _stressLoadLevel = value);
-                _persistDraft();
-              },
-            ),
-            const SizedBox(height: 12),
-            _AssessmentSliderCard(
-              i18n: i18n,
-              title: sleepAssessmentFactorTitle(i18n, 'screenDependenceLevel'),
-              hint: sleepAssessmentFactorHint(i18n, 'screenDependenceLevel'),
-              value: _screenDependenceLevel,
-              status: sleepIntensityLabel(i18n, _screenDependenceLevel.round()),
-              onChanged: (value) {
-                setState(() => _screenDependenceLevel = value);
-                _persistDraft();
-              },
-            ),
-            const SizedBox(height: 12),
-            _AssessmentSliderCard(
-              i18n: i18n,
-              title: sleepAssessmentFactorTitle(i18n, 'lateWorkFrequency'),
-              hint: sleepAssessmentFactorHint(i18n, 'lateWorkFrequency'),
-              value: _lateWorkFrequency,
-              status: sleepFrequencyLabel(i18n, _lateWorkFrequency.round()),
-              onChanged: (value) {
-                setState(() => _lateWorkFrequency = value);
-                _persistDraft();
-              },
-            ),
-            const SizedBox(height: 12),
-            _AssessmentSliderCard(
-              i18n: i18n,
-              title: sleepAssessmentFactorTitle(i18n, 'exerciseLateFrequency'),
-              hint: sleepAssessmentFactorHint(i18n, 'exerciseLateFrequency'),
-              value: _exerciseLateFrequency,
-              status: sleepFrequencyLabel(i18n, _exerciseLateFrequency.round()),
-              onChanged: (value) {
-                setState(() => _exerciseLateFrequency = value);
-                _persistDraft();
-              },
-            ),
-            const SizedBox(height: 12),
-            _AssessmentSliderCard(
-              i18n: i18n,
-              title: sleepAssessmentFactorTitle(i18n, 'painImpactLevel'),
-              hint: sleepAssessmentFactorHint(i18n, 'painImpactLevel'),
-              value: _painImpactLevel,
-              status: sleepIntensityLabel(i18n, _painImpactLevel.round()),
-              onChanged: (value) {
-                setState(() => _painImpactLevel = value);
-                _persistDraft();
-              },
-            ),
-            const SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      i18n.t('toolbox.sleep.assessment.riskAndContext'),
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 12),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        i18n.t('toolbox.sleep.assessment.racingThoughts'),
-                      ),
-                      value: _hasRacingThoughts,
-                      onChanged: (value) {
-                        setState(() => _hasRacingThoughts = value);
-                        _persistDraft();
-                      },
-                    ),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        i18n.t('toolbox.sleep.assessment.caffeineSensitive'),
-                      ),
-                      value: _caffeineSensitive,
-                      onChanged: (value) {
-                        setState(() => _caffeineSensitive = value);
-                        _persistDraft();
-                      },
-                    ),
-                    DropdownButtonFormField<SleepRiskLevel>(
-                      initialValue: _snoringRisk,
-                      decoration: InputDecoration(
-                        labelText: i18n.t(
-                          'toolbox.sleep.assessment.snoringRisk',
-                        ),
-                      ),
-                      items: SleepRiskLevel.values
-                          .map(
-                            (item) => DropdownMenuItem<SleepRiskLevel>(
-                              value: item,
-                              child: Text(sleepRiskLabel(i18n, item)),
-                            ),
-                          )
-                          .toList(growable: false),
-                      onChanged: (value) {
-                        if (value == null) {
-                          return;
-                        }
-                        setState(() => _snoringRisk = value);
-                        _persistDraft();
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        i18n.t('toolbox.sleep.assessment.bedroomBright'),
-                      ),
-                      value: _bedroomLightIssue,
-                      onChanged: (value) {
-                        setState(() => _bedroomLightIssue = value);
-                        _persistDraft();
-                      },
-                    ),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        i18n.t('toolbox.sleep.assessment.bedroomNoisy'),
-                      ),
-                      value: _bedroomNoiseIssue,
-                      onChanged: (value) {
-                        setState(() => _bedroomNoiseIssue = value);
-                        _persistDraft();
-                      },
-                    ),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        i18n.t('toolbox.sleep.assessment.bedroomTemp'),
-                      ),
-                      value: _bedroomTempIssue,
-                      onChanged: (value) {
-                        setState(() => _bedroomTempIssue = value);
-                        _persistDraft();
-                      },
-                    ),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(i18n.t('toolbox.sleep.assessment.shiftWork')),
-                      value: _shiftWorkOrJetLag,
-                      onChanged: (value) {
-                        setState(() => _shiftWorkOrJetLag = value);
-                        _persistDraft();
-                      },
-                    ),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        i18n.t('toolbox.sleep.assessment.digestiveDiscomfort'),
-                      ),
-                      value: _refluxOrDigestiveDiscomfort,
-                      onChanged: (value) {
-                        setState(() => _refluxOrDigestiveDiscomfort = value);
-                        _persistDraft();
-                      },
-                    ),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        i18n.t('toolbox.sleep.assessment.nightmares'),
-                      ),
-                      value: _nightmaresOrDreamDistress,
-                      onChanged: (value) {
-                        setState(() => _nightmaresOrDreamDistress = value);
-                        _persistDraft();
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      i18n.t('toolbox.sleep.assessment.directAdvice'),
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 12),
-                    SleepAdviceList(items: adviceItems, i18n: i18n),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: _save,
-              icon: const Icon(Icons.save_rounded),
-              label: Text(i18n.t('toolbox.sleep.assessment.save')),
-            ),
-          ],
-        ),
+      ],
+    ),
+    for (final field in <(String, double, ValueChanged<double>)>[
+      (
+        'stressLoadLevel',
+        _stressLoadLevel,
+        (value) => _stressLoadLevel = value,
       ),
-    );
-  }
-}
-
-class _AssessmentSliderCard extends StatelessWidget {
-  const _AssessmentSliderCard({
-    required this.i18n,
-    required this.title,
-    required this.hint,
-    required this.value,
-    required this.status,
-    required this.onChanged,
-  });
-
-  final AppI18n i18n;
-  final String title;
-  final String hint;
-  final double value;
-  final String status;
-  final ValueChanged<double> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-                Chip(label: Text(status)),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(hint, style: Theme.of(context).textTheme.bodySmall),
-            Slider(
-              value: value,
-              min: 0,
-              max: 5,
-              divisions: 5,
-              onChanged: onChanged,
-            ),
-          ],
-        ),
+      (
+        'screenDependenceLevel',
+        _screenDependenceLevel,
+        (value) => _screenDependenceLevel = value,
       ),
-    );
-  }
+      (
+        'lateWorkFrequency',
+        _lateWorkFrequency,
+        (value) => _lateWorkFrequency = value,
+      ),
+      (
+        'exerciseLateFrequency',
+        _exerciseLateFrequency,
+        (value) => _exerciseLateFrequency = value,
+      ),
+      (
+        'painImpactLevel',
+        _painImpactLevel,
+        (value) => _painImpactLevel = value,
+      ),
+    ])
+      _score(i18n, field.$1, field.$2, field.$3),
+    _contextFields(i18n),
+  ];
+
+  Widget _score(
+    AppI18n i18n,
+    String field,
+    double value,
+    ValueChanged<double> onChanged,
+  ) => SleepDayPanel(
+    title: sleepAssessmentFactorTitle(i18n, field),
+    children: [
+      Text(sleepAssessmentFactorHint(i18n, field)),
+      const SizedBox(height: 10),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (var number = 0; number <= 5; number++)
+            ChoiceChip(
+              label: Text(sleepIntensityLabel(i18n, number)),
+              selected: value.round() == number,
+              onSelected: (_) {
+                setState(() => onChanged(number.toDouble()));
+                _persistDraft();
+              },
+            ),
+        ],
+      ),
+    ],
+  );
+
+  Widget _contextFields(AppI18n i18n) => SleepDayPanel(
+    title: i18n.t('toolbox.sleep.assessment.riskAndContext'),
+    children: [
+      for (final item in <(String, bool, ValueChanged<bool>)>[
+        ('racingThoughts', _hasRacingThoughts, (v) => _hasRacingThoughts = v),
+        (
+          'caffeineSensitive',
+          _caffeineSensitive,
+          (v) => _caffeineSensitive = v,
+        ),
+        ('bedroomBright', _bedroomLightIssue, (v) => _bedroomLightIssue = v),
+        ('bedroomNoisy', _bedroomNoiseIssue, (v) => _bedroomNoiseIssue = v),
+        ('bedroomTemp', _bedroomTempIssue, (v) => _bedroomTempIssue = v),
+        ('shiftWork', _shiftWorkOrJetLag, (v) => _shiftWorkOrJetLag = v),
+        (
+          'digestiveDiscomfort',
+          _refluxOrDigestiveDiscomfort,
+          (v) => _refluxOrDigestiveDiscomfort = v,
+        ),
+        (
+          'nightmares',
+          _nightmaresOrDreamDistress,
+          (v) => _nightmaresOrDreamDistress = v,
+        ),
+      ])
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(i18n.t('toolbox.sleep.assessment.${item.$1}')),
+          value: item.$2,
+          onChanged: (value) {
+            setState(() => item.$3(value));
+            _persistDraft();
+          },
+        ),
+      Text(i18n.t('toolbox.sleep.assessment.snoringRisk')),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final risk in SleepRiskLevel.values)
+            ChoiceChip(
+              label: Text(sleepRiskLabel(i18n, risk)),
+              selected: _snoringRisk == risk,
+              onSelected: (_) {
+                setState(() => _snoringRisk = risk);
+                _persistDraft();
+              },
+            ),
+        ],
+      ),
+    ],
+  );
 }

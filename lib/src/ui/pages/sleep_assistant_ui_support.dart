@@ -595,6 +595,7 @@ String sleepBooleanStatus(AppI18n i18n, bool value) {
 
 String sleepWakeBurdenLabel(AppI18n i18n, SleepDailyLog log) {
   final burden = sleepWakeBurdenValue(log);
+  if (burden == null) return i18n.t('toolbox.sleep.core.noData');
   if (burden <= 1) {
     return i18n.t('toolbox.sleep.support.burden.low');
   }
@@ -604,9 +605,10 @@ String sleepWakeBurdenLabel(AppI18n i18n, SleepDailyLog log) {
   return i18n.t('toolbox.sleep.support.burden.high');
 }
 
-int sleepWakeBurdenValue(SleepDailyLog log) {
+int? sleepWakeBurdenValue(SleepDailyLog log) {
   final wakeMinutes = log.nightWakeTotalMinutes;
   final wakeCount = log.nightWakeCount;
+  if (wakeMinutes == null || wakeCount == null) return null;
   if (wakeCount <= 1 && wakeMinutes <= 10) {
     return 1;
   }

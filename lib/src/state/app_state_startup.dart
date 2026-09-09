@@ -365,6 +365,8 @@ extension _AppStateStartup on AppState {
     );
     if (wasSleepAssistantEnabled && !sleepAssistantEnabled) {
       _stopSleepRoutineImpl();
+      unawaited(_sleepSoundController.stop());
+      _sleepSupportSessionController.discard();
       _sleepNightRescueState = const SleepNightRescueState();
     } else if (!wasSleepAssistantEnabled &&
         sleepAssistantEnabled &&

@@ -36,8 +36,8 @@ extension _AppStateSleep on AppState {
       final activeTemplateId = _resolveSleepRoutineTemplateId(
         _sleepRepository.loadSleepActiveRoutineTemplateId(),
       );
-      _sleepRoutineRunnerState = _sleepRoutineRunnerState.copyWith(
-        activeTemplateId: activeTemplateId,
+      _sleepRoutineController.selectTemplate(
+        _sleepRoutineTemplateById(activeTemplateId),
       );
       _sleepCurrentPlan = _sleepRepository.loadSleepCurrentPlan();
       _sleepDashboardState = _sleepRepository.loadSleepDashboardState();
@@ -81,6 +81,9 @@ extension _AppStateSleep on AppState {
       createdAt: _sleepProfile?.createdAt ?? profile.createdAt,
       updatedAt: now,
     );
+    final plan = _buildRecommendedSleepPlan(normalized);
+    _sleepRepository.saveSleepProfile(normalized);
+    _sleepRepository.saveSleepCurrentPlan(plan);
     _sleepProfile = normalized;
     _sleepAssessmentDraft = SleepAssessmentDraftState(
       selectedIssues: normalized.primaryIssues,
@@ -102,15 +105,14 @@ extension _AppStateSleep on AppState {
       nightmaresOrDreamDistress: normalized.nightmaresOrDreamDistress,
       goal: normalized.goal,
     );
-    _sleepCurrentPlan = _buildRecommendedSleepPlan(normalized);
-    _sleepRepository.saveSleepProfile(normalized);
-    _sleepRepository.saveSleepCurrentPlan(_sleepCurrentPlan);
+    _sleepCurrentPlan = plan;
     _notifyStateChanged();
   }
 
   void _updateSleepAssessmentDraftImpl(SleepAssessmentDraftState draft) {
     _sleepAssessmentDraft = draft;
-    _notifyStateChanged();
+    // This in-memory draft is read when reopening the editor; its controls own
+    // their visual state, so typing need not rebuild the rest of the app.
   }
 
   SleepDailyLog? _sleepDailyLogByDateKeyImpl(String dateKey) {
@@ -127,28 +129,36 @@ extension _AppStateSleep on AppState {
   }
 
   void _saveSleepDailyLogImpl(SleepDailyLog log) {
-    final existing = _sleepDailyLogs
+    final currentLogs = _sleepDailyLogs.isEmpty
+        ? _sleepRepository.loadSleepDailyLogs()
+        : _sleepDailyLogs;
+    final existing = currentLogs
         .where((item) => item.dateKey == log.dateKey)
         .cast<SleepDailyLog?>()
         .firstOrNull;
     final normalized = _normalizeSleepDailyLog(log, existing: existing);
     final next =
-        _sleepDailyLogs
+        currentLogs
             .where((item) => item.dateKey != normalized.dateKey)
             .toList(growable: true)
           ..add(normalized);
-    _sleepDailyLogs = _sortSleepDailyLogs(
-      next,
-    ).take(120).toList(growable: false);
-    _sleepRepository.saveSleepDailyLogs(_sleepDailyLogs);
+    final saved = _sortSleepDailyLogs(next).take(120).toList(growable: false);
+    _sleepRepository.saveSleepDailyLogs(saved);
+    _sleepDailyLogs = List.unmodifiable(saved);
     _notifyStateChanged();
   }
 
   void _saveSleepNightEventImpl(SleepNightEvent event) {
+    // Night guidance can open before the daytime dashboard has loaded history.
+    final currentEvents = _sleepNightEvents.isEmpty
+        ? _sleepRepository.loadSleepNightEvents()
+        : _sleepNightEvents;
     final normalized = SleepNightEvent(
       id: (event.id ?? '').trim().isEmpty ? _uuid.v4() : event.id,
       dateKey: event.dateKey,
       mode: event.mode,
+      intent: event.intent,
+      hasLeftBed: event.hasLeftBed,
       startedAt: event.startedAt,
       endedAt: event.endedAt,
       guessedTrigger: event.guessedTrigger,
@@ -157,11 +167,14 @@ extension _AppStateSleep on AppState {
       fellAsleepAgainAt: event.fellAsleepAgainAt,
       notes: event.notes,
     );
-    final next = List<SleepNightEvent>.from(_sleepNightEvents)..add(normalized);
-    _sleepNightEvents = _sortSleepNightEvents(
-      next,
-    ).take(160).toList(growable: false);
-    _sleepRepository.saveSleepNightEvents(_sleepNightEvents);
+    final next =
+        currentEvents
+            .where((item) => item.id != normalized.id)
+            .toList(growable: true)
+          ..add(normalized);
+    final saved = _sortSleepNightEvents(next).take(160).toList(growable: false);
+    _sleepRepository.saveSleepNightEvents(saved);
+    _sleepNightEvents = List.unmodifiable(saved);
     _notifyStateChanged();
   }
 
@@ -178,9 +191,9 @@ extension _AppStateSleep on AppState {
     );
     final next = List<SleepThoughtEntry>.from(_sleepThoughtEntries)
       ..add(normalized);
-    _sleepThoughtEntries = _sortSleepThoughtEntries(
-      next,
-    ).take(240).toList(growable: false);
+    _sleepThoughtEntries = List.unmodifiable(
+      _sortSleepThoughtEntries(next).take(240),
+    );
     _sleepRepository.saveSleepThoughtEntries(_sleepThoughtEntries);
     _notifyStateChanged();
   }
@@ -190,13 +203,8 @@ extension _AppStateSleep on AppState {
     if (_sleepRoutineRunnerState.activeTemplateId == resolvedId) {
       return;
     }
-    _sleepRoutineRunnerState = _sleepRoutineRunnerState.copyWith(
-      activeTemplateId: resolvedId,
-      currentStepIndex: 0,
-      remainingSeconds: 0,
-      isRunning: false,
-      isPaused: false,
-      startedAt: null,
+    _sleepRoutineController.selectTemplate(
+      _sleepRoutineTemplateById(resolvedId),
     );
     _sleepRepository.saveSleepActiveRoutineTemplateId(resolvedId);
     _notifyStateChanged();
@@ -206,12 +214,12 @@ extension _AppStateSleep on AppState {
     final next = templates.isEmpty
         ? SleepRoutineTemplate.builtInDefaults()
         : templates.map(_normalizeSleepRoutineTemplate).toList(growable: false);
-    _sleepRoutineTemplates = next.toList(growable: false);
+    _sleepRoutineTemplates = List.unmodifiable(next);
     final resolvedId = _resolveSleepRoutineTemplateId(
       _sleepRoutineRunnerState.activeTemplateId,
     );
-    _sleepRoutineRunnerState = _sleepRoutineRunnerState.copyWith(
-      activeTemplateId: resolvedId,
+    _sleepRoutineController.selectTemplate(
+      _sleepRoutineTemplateById(resolvedId),
     );
     _sleepRepository.saveSleepRoutineTemplates(_sleepRoutineTemplates);
     _sleepRepository.saveSleepActiveRoutineTemplateId(resolvedId);
@@ -231,11 +239,9 @@ extension _AppStateSleep on AppState {
       }
       return a.updatedAt.compareTo(b.updatedAt);
     });
-    _sleepRoutineTemplates = next.toList(growable: false);
+    _sleepRoutineTemplates = List.unmodifiable(next);
     if (_sleepRoutineRunnerState.activeTemplateId == null) {
-      _sleepRoutineRunnerState = _sleepRoutineRunnerState.copyWith(
-        activeTemplateId: normalized.id,
-      );
+      _sleepRoutineController.selectTemplate(normalized);
       _sleepRepository.saveSleepActiveRoutineTemplateId(normalized.id);
     }
     _sleepRepository.saveSleepRoutineTemplates(_sleepRoutineTemplates);
@@ -254,21 +260,16 @@ extension _AppStateSleep on AppState {
     if (target == null || target.builtIn) {
       return;
     }
-    _sleepRoutineTemplates = _sleepRoutineTemplates
-        .where((item) => item.id != normalizedId)
-        .toList(growable: false);
+    _sleepRoutineTemplates = List.unmodifiable(
+      _sleepRoutineTemplates.where((item) => item.id != normalizedId),
+    );
     final resolvedId = _resolveSleepRoutineTemplateId(
       _sleepRoutineRunnerState.activeTemplateId == normalizedId
           ? null
           : _sleepRoutineRunnerState.activeTemplateId,
     );
-    _sleepRoutineRunnerState = _sleepRoutineRunnerState.copyWith(
-      activeTemplateId: resolvedId,
-      currentStepIndex: 0,
-      remainingSeconds: 0,
-      isRunning: false,
-      isPaused: false,
-      startedAt: null,
+    _sleepRoutineController.selectTemplate(
+      _sleepRoutineTemplateById(resolvedId),
     );
     _sleepRepository.saveSleepRoutineTemplates(_sleepRoutineTemplates);
     _sleepRepository.saveSleepActiveRoutineTemplateId(resolvedId);
@@ -286,14 +287,7 @@ extension _AppStateSleep on AppState {
     if (template == null || template.steps.isEmpty) {
       return;
     }
-    _sleepRoutineRunnerState = SleepRoutineRunnerState(
-      activeTemplateId: template.id,
-      currentStepIndex: 0,
-      remainingSeconds: template.steps.first.durationSeconds,
-      isRunning: true,
-      isPaused: false,
-      startedAt: DateTime.now(),
-    );
+    _sleepRoutineController.start(template);
     _sleepRepository.saveSleepActiveRoutineTemplateId(template.id);
     _notifyStateChanged();
   }
@@ -303,10 +297,7 @@ extension _AppStateSleep on AppState {
         _sleepRoutineRunnerState.isPaused) {
       return;
     }
-    _sleepRoutineRunnerState = _sleepRoutineRunnerState.copyWith(
-      isPaused: true,
-      isRunning: false,
-    );
+    _sleepRoutineController.pause();
     _notifyStateChanged();
   }
 
@@ -315,59 +306,26 @@ extension _AppStateSleep on AppState {
         !_sleepRoutineRunnerState.isPaused) {
       return;
     }
-    _sleepRoutineRunnerState = _sleepRoutineRunnerState.copyWith(
-      isPaused: false,
-      isRunning: true,
-      startedAt: _sleepRoutineRunnerState.startedAt ?? DateTime.now(),
-    );
+    _sleepRoutineController.resume();
     _notifyStateChanged();
   }
 
   void _advanceSleepRoutineImpl() {
-    final template = activeSleepRoutineTemplate;
-    if (template == null || template.steps.isEmpty) {
-      _stopSleepRoutineImpl();
-      return;
-    }
-    final nextIndex = _sleepRoutineRunnerState.currentStepIndex + 1;
-    if (nextIndex >= template.steps.length) {
-      _stopSleepRoutineImpl();
-      return;
-    }
-    _sleepRoutineRunnerState = _sleepRoutineRunnerState.copyWith(
-      currentStepIndex: nextIndex,
-      remainingSeconds: template.steps[nextIndex].durationSeconds,
-      isRunning: true,
-      isPaused: false,
-    );
+    _sleepRoutineController.advance();
     _notifyStateChanged();
   }
 
   void _tickSleepRoutineImpl() {
-    if (!_sleepRoutineRunnerState.isRunning ||
-        _sleepRoutineRunnerState.isPaused) {
-      return;
-    }
-    final remaining = _sleepRoutineRunnerState.remainingSeconds;
-    if (remaining <= 1) {
-      _advanceSleepRoutineImpl();
-      return;
-    }
-    _sleepRoutineRunnerState = _sleepRoutineRunnerState.copyWith(
-      remainingSeconds: remaining - 1,
-    );
-    _notifyStateChanged();
+    _sleepRoutineController.synchronize();
   }
 
   void _stopSleepRoutineImpl() {
-    _sleepRoutineRunnerState = _sleepRoutineRunnerState.copyWith(
-      currentStepIndex: 0,
-      remainingSeconds: 0,
-      isRunning: false,
-      isPaused: false,
-      startedAt: null,
-    );
+    _sleepRoutineController.stop();
     _notifyStateChanged();
+  }
+
+  SleepRoutineTemplate? _sleepRoutineTemplateById(String? id) {
+    return _sleepRoutineTemplates.where((item) => item.id == id).firstOrNull;
   }
 
   void _setSleepCurrentPlanImpl(SleepPlan? plan) {
@@ -396,21 +354,13 @@ extension _AppStateSleep on AppState {
 
   void _completeSleepProgramDayImpl(int day) {
     final current = _sleepProgramProgress;
-    if (current == null || day <= 0) {
+    if (current == null) {
       return;
     }
-    final completedDays = Set<int>.from(current.completedDays)..add(day);
-    final targetDays = switch (current.programType) {
-      SleepProgramType.sevenDayRhythmReset => 7,
-      SleepProgramType.fourteenDaySleepReset => 14,
-      SleepProgramType.insomniaStarter => 7,
-    };
-    _sleepProgramProgress = current.copyWith(
-      currentDay: math.min(day + 1, targetDays),
-      completedDays: completedDays,
-      isCompleted: completedDays.length >= targetDays,
-    );
-    _sleepRepository.saveSleepProgramProgress(_sleepProgramProgress);
+    final next = SleepDayProgram.complete(current, day, now: DateTime.now());
+    if (identical(current, next)) return;
+    _sleepRepository.saveSleepProgramProgress(next);
+    _sleepProgramProgress = next;
     _notifyStateChanged();
   }
 
@@ -491,7 +441,7 @@ extension _AppStateSleep on AppState {
           b.updatedAt ?? b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
       return bUpdated.compareTo(aUpdated);
     });
-    return list;
+    return List.unmodifiable(list);
   }
 
   List<SleepNightEvent> _sortSleepNightEvents(Iterable<SleepNightEvent> items) {
@@ -503,7 +453,7 @@ extension _AppStateSleep on AppState {
           b.startedAt ?? b.endedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
       return bTime.compareTo(aTime);
     });
-    return list;
+    return List.unmodifiable(list);
   }
 
   List<SleepRoutineTemplate> _mergeSleepRoutineDefaults(
@@ -511,7 +461,7 @@ extension _AppStateSleep on AppState {
   ) {
     final defaults = SleepRoutineTemplate.builtInDefaults();
     if (templates.isEmpty) {
-      return defaults;
+      return List.unmodifiable(defaults);
     }
     final next = List<SleepRoutineTemplate>.from(templates);
     final existingIds = templates.map((item) => item.id).toSet();
@@ -526,7 +476,7 @@ extension _AppStateSleep on AppState {
       }
       return a.updatedAt.compareTo(b.updatedAt);
     });
-    return next.toList(growable: false);
+    return List.unmodifiable(next);
   }
 
   List<SleepThoughtEntry> _sortSleepThoughtEntries(
@@ -538,7 +488,7 @@ extension _AppStateSleep on AppState {
       final bTime = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
       return bTime.compareTo(aTime);
     });
-    return list;
+    return List.unmodifiable(list);
   }
 
   SleepPlan _buildRecommendedSleepPlan(SleepProfile profile) {

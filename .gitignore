@@ -136,6 +136,9 @@ wordbooks/
 ASR/
 third_party/flutter_tts/example/
 models/
+# Dart domain models are source, not downloaded model artifacts.
+!lib/src/models/
+!lib/src/models/**
 model_cache/
 *.apk
 *.aab

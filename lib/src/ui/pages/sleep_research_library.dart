@@ -505,8 +505,8 @@ List<SleepAdviceItem> buildSleepDailyAdvice(
   final items = <SleepAdviceItem>[];
   if (log.estimatedTotalSleepMinutes == null &&
       log.sleepLatencyMinutes == null &&
-      log.nightWakeCount == 0 &&
-      log.nightWakeTotalMinutes == 0 &&
+      log.nightWakeCount == null &&
+      log.nightWakeTotalMinutes == null &&
       (log.notes ?? '').trim().isEmpty) {
     items.add(
       SleepAdviceItem(
@@ -521,7 +521,7 @@ List<SleepAdviceItem> buildSleepDailyAdvice(
     );
   }
 
-  if (log.caffeineAfterCutoff) {
+  if (log.caffeineAfterCutoff == true) {
     items.add(
       SleepAdviceItem(
         id: 'daily_caffeine',
@@ -535,7 +535,7 @@ List<SleepAdviceItem> buildSleepDailyAdvice(
     );
   }
 
-  if (!log.morningLightDone) {
+  if (log.morningLightDone == false) {
     items.add(
       SleepAdviceItem(
         id: 'daily_light',
@@ -548,7 +548,8 @@ List<SleepAdviceItem> buildSleepDailyAdvice(
     );
   }
 
-  if (log.lateScreenExposure || (log.windDownMinutes ?? 0) < 20) {
+  if (log.lateScreenExposure == true ||
+      (log.windDownMinutes != null && log.windDownMinutes! < 20)) {
     items.add(
       SleepAdviceItem(
         id: 'daily_screen',
@@ -577,9 +578,9 @@ List<SleepAdviceItem> buildSleepDailyAdvice(
     );
   }
 
-  if (log.nightWakeCount >= 2 ||
-      log.nightWakeTotalMinutes >= 30 ||
-      log.clockChecking) {
+  if ((log.nightWakeCount ?? 0) >= 2 ||
+      (log.nightWakeTotalMinutes ?? 0) >= 30 ||
+      log.clockChecking == true) {
     items.add(
       SleepAdviceItem(
         id: 'daily_rescue',
@@ -592,11 +593,13 @@ List<SleepAdviceItem> buildSleepDailyAdvice(
     );
   }
 
-  if (log.bedroomTooHot || log.bedroomTooBright || log.bedroomTooNoisy) {
+  if (log.bedroomTooHot == true ||
+      log.bedroomTooBright == true ||
+      log.bedroomTooNoisy == true) {
     items.add(
       SleepAdviceItem(
         id: 'daily_environment',
-        topicId: log.bedroomTooNoisy
+        topicId: log.bedroomTooNoisy == true
             ? sleepTopicWhiteNoise
             : sleepTopicBedroomSanctuary,
         title: i18n.t('toolbox.sleep.library.advice_daily_environment.title'),
@@ -607,7 +610,7 @@ List<SleepAdviceItem> buildSleepDailyAdvice(
     );
   }
 
-  if (log.napMinutes > 30) {
+  if ((log.napMinutes ?? 0) > 30) {
     items.add(
       SleepAdviceItem(
         id: 'daily_nap',
@@ -638,17 +641,21 @@ List<SleepAdviceItem> buildSleepWeeklyAdvice(
   final averageEfficiency = averageSleepDouble(
     logs.map((item) => item.sleepEfficiency),
   );
-  final lateScreenDays = logs.where((item) => item.lateScreenExposure).length;
+  final lateScreenDays = logs
+      .where((item) => item.lateScreenExposure == true)
+      .length;
   final lateCaffeineDays = logs
-      .where((item) => item.caffeineAfterCutoff)
+      .where((item) => item.caffeineAfterCutoff == true)
       .length;
   final missingMorningLightDays = logs
-      .where((item) => !item.morningLightDone)
+      .where((item) => item.morningLightDone == false)
       .length;
   final noisyDays = logs
       .where(
         (item) =>
-            item.bedroomTooNoisy || item.bedroomTooBright || item.bedroomTooHot,
+            item.bedroomTooNoisy == true ||
+            item.bedroomTooBright == true ||
+            item.bedroomTooHot == true,
       )
       .length;
   final highWorryDays = logs
@@ -659,7 +666,9 @@ List<SleepAdviceItem> buildSleepWeeklyAdvice(
       .length;
   final heavyWakeDays = logs
       .where(
-        (item) => item.nightWakeCount >= 2 || item.nightWakeTotalMinutes >= 30,
+        (item) =>
+            (item.nightWakeCount ?? 0) >= 2 ||
+            (item.nightWakeTotalMinutes ?? 0) >= 30,
       )
       .length;
 
@@ -746,7 +755,7 @@ List<SleepAdviceItem> buildSleepWeeklyAdvice(
     );
   }
 
-  if ((averageSleep ?? 0) < 360) {
+  if (averageSleep != null && averageSleep < 360) {
     items.add(
       SleepAdviceItem(
         id: 'weekly_sleep_amount',
