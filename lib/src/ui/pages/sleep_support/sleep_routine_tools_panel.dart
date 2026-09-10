@@ -81,7 +81,12 @@ class SleepRoutineToolsPanel extends StatelessWidget {
     required bool wakeAlarm,
   }) async {
     final appState = context.read<AppState>();
-    await appState.focusService.requestTodoReminderNotificationPermission();
+    final focus = appState.focusService;
+    if (!focus.initialized) {
+      await focus.init();
+    }
+    final permissionGranted = await focus
+        .requestTodoReminderNotificationPermission();
     if (!context.mounted) return;
     final profile = appState.sleepProfile;
     final fallback = wakeAlarm
@@ -103,7 +108,7 @@ class SleepRoutineToolsPanel extends StatelessWidget {
       time.minute,
     ).subtract(wakeAlarm ? Duration.zero : const Duration(minutes: 30));
     if (!dueAt.isAfter(now)) dueAt = dueAt.add(const Duration(days: 1));
-    appState.focusService.addTodo(
+    final created = focus.addTodo(
       i18n.t(
         wakeAlarm
             ? 'toolbox.sleep.winddown.wakeGetLight'
@@ -123,13 +128,23 @@ class SleepRoutineToolsPanel extends StatelessWidget {
       systemCalendarNotificationMinutesBefore: 0,
       systemCalendarAlarmMinutesBefore: 0,
     );
+    if (!created) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(i18n.t('toolbox.sleep.winddown.reminderUnavailable')),
+        ),
+      );
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           i18n.t(
-            wakeAlarm
-                ? 'toolbox.sleep.winddown.reminderWakeCreated'
-                : 'toolbox.sleep.winddown.reminderBedCreated',
+            permissionGranted
+                ? (wakeAlarm
+                      ? 'toolbox.sleep.winddown.reminderWakeCreated'
+                      : 'toolbox.sleep.winddown.reminderBedCreated')
+                : 'toolbox.sleep.winddown.reminderPermissionMissing',
           ),
         ),
       ),

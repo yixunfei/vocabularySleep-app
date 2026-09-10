@@ -112,7 +112,8 @@ void _persistenceTests() {
       final controller = _controller(records: records)
         ..start(SleepSupportIntent.nightWaking);
       controller.choose(SleepSupportChoice.sleepy);
-      expect(records, isEmpty);
+      await Future<void>.delayed(Duration.zero);
+      expect(records, hasLength(1));
       await controller.finish();
       expect(records.single.startedAt, DateTime(2026, 9, 9, 2));
       expect(records.single.returnedToBedAt, isNull);
@@ -161,11 +162,11 @@ void _persistenceTests() {
     now = DateTime(2026, 9, 10, 0, 1);
     expect(await controller.finish(), isFalse);
     expect(controller.state!.saveFailed, isTrue);
-    expect(controller.start(SleepSupportIntent.distressed), isFalse);
+    expect(controller.start(SleepSupportIntent.distressed), isTrue);
     now = now.add(const Duration(minutes: 3));
     expect(await controller.retrySave(), isTrue);
     expect(identical(attempts.first, attempts.last), isTrue);
-    expect(attempts.last.endedAt, DateTime(2026, 9, 10, 0, 1));
+    expect(attempts.last.endedAt, DateTime(2026, 9, 9, 23, 59));
     expect(attempts.last.dateKey, '2026-09-09');
     expect(controller.state!.saveFailed, isFalse);
     controller.dispose();

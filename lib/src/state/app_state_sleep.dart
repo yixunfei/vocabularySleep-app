@@ -47,7 +47,10 @@ extension _AppStateSleep on AppState {
         _sleepCurrentPlan = _buildRecommendedSleepPlan(profile);
         _sleepRepository.saveSleepCurrentPlan(_sleepCurrentPlan);
       }
-      if (profile != null) {
+      // Keep an in-progress assessment intact when the sleep data is
+      // refreshed while its editor is open. The saved profile is only a
+      // baseline for a clean draft.
+      if (profile != null && !_sleepAssessmentDraftDirty) {
         _sleepAssessmentDraft = SleepAssessmentDraftState(
           selectedIssues: profile.primaryIssues,
           typicalBedtime: profile.typicalBedtime,
@@ -68,6 +71,7 @@ extension _AppStateSleep on AppState {
           nightmaresOrDreamDistress: profile.nightmaresOrDreamDistress,
           goal: profile.goal,
         );
+        _sleepAssessmentDraftDirty = false;
       }
     } finally {
       _sleepLoading = false;
@@ -105,12 +109,14 @@ extension _AppStateSleep on AppState {
       nightmaresOrDreamDistress: normalized.nightmaresOrDreamDistress,
       goal: normalized.goal,
     );
+    _sleepAssessmentDraftDirty = false;
     _sleepCurrentPlan = plan;
     _notifyStateChanged();
   }
 
   void _updateSleepAssessmentDraftImpl(SleepAssessmentDraftState draft) {
     _sleepAssessmentDraft = draft;
+    _sleepAssessmentDraftDirty = true;
     // This in-memory draft is read when reopening the editor; its controls own
     // their visual state, so typing need not rebuild the rest of the app.
   }

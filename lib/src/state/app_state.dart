@@ -281,6 +281,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   SleepDashboardState _sleepDashboardState = const SleepDashboardState();
   SleepAssessmentDraftState _sleepAssessmentDraft =
       const SleepAssessmentDraftState();
+  bool _sleepAssessmentDraftDirty = false;
   final SleepRoutineController _sleepRoutineController =
       SleepRoutineController();
   final SleepSoundController _sleepSoundController = SleepSoundController(

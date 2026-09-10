@@ -21,6 +21,7 @@ class SleepSupportSessionController extends ChangeNotifier {
   SleepSupportSession? _state;
   SleepNightRescueMode _mode = SleepNightRescueMode.briefAwakening;
   SleepNightEvent? _pendingEvent;
+  final List<SleepNightEvent> _failedEvents = <SleepNightEvent>[];
   Future<bool>? _pendingSave;
   bool _disposed = false;
 
@@ -30,8 +31,26 @@ class SleepSupportSessionController extends ChangeNotifier {
     if (_disposed) return false;
     final current = _state;
     if (current != null) {
-      if (current.isPersisting || current.saveFailed) return false;
-      if (!current.isFinished) return current.intent == intent;
+      if (_isStale(current)) {
+        // A session from a previous calendar day must never reappear as the
+        // current night's guidance. Any checkpoint already written remains a
+        // historical fact; an unfinished in-memory draft is simply dropped.
+        _state = null;
+        _pendingEvent = null;
+      } else {
+        // A failed write belongs to the previous attempt. Keep it retryable,
+        // while allowing a tired user to start a fresh support flow immediately.
+        if (current.saveFailed) {
+          _rememberFailed(_pendingEvent);
+          _state = null;
+          _pendingEvent = null;
+          _pendingSave = null;
+        } else if (current.isPersisting) {
+          return false;
+        } else if (!current.isFinished) {
+          return current.intent == intent;
+        }
+      }
     }
     _mode =
         initialMode ??
@@ -39,7 +58,6 @@ class SleepSupportSessionController extends ChangeNotifier {
             ? SleepNightRescueMode.bodyActivated
             : SleepNightRescueMode.briefAwakening);
     _pendingEvent = null;
-    _pendingSave = null;
     _update(
       SleepSupportSession(
         id: _idFactory(),
@@ -119,7 +137,20 @@ class SleepSupportSessionController extends ChangeNotifier {
 
   void rest() {
     if (!_canInteract) return;
-    _update(_state!.copyWith(hasEngaged: true, isResting: true));
+    final next = _state!.copyWith(
+      hasEngaged: true,
+      isResting: true,
+      endedAt: _now(),
+    );
+    _update(next);
+    // Checkpoint the acknowledged support action before the user locks the
+    // phone. The end time marks the support segment, never an inferred sleep
+    // outcome. A later explicit finish only closes the UI session.
+    if (next.intent != SleepSupportIntent.prepareForSleep) {
+      final event = _eventFor(next);
+      _pendingEvent = event;
+      _persist(event);
+    }
   }
 
   void resumeGuide() {
@@ -135,11 +166,24 @@ class SleepSupportSessionController extends ChangeNotifier {
   /// Preparing for bed is not a night awakening and must not inflate its count.
   Future<bool> finish() {
     if (_disposed || _state == null) return Future.value(false);
-    if (_pendingSave != null) return _pendingSave!;
     final current = _state!;
-    if (current.isSaved) return Future.value(true);
-    if (current.saveFailed) return Future.value(false);
+    if (current.saveFailed) {
+      // Surface the retry/leave actions instead of trapping the user in the
+      // live guide after a checkpoint write failure.
+      _update(current.copyWith(isFinished: true));
+      return Future.value(false);
+    }
+    if (_pendingSave != null) {
+      if (!current.isFinished) {
+        _update(current.copyWith(isFinished: true));
+      }
+      return _pendingSave!;
+    }
     if (current.isFinished) return Future.value(true);
+    if (current.isSaved) {
+      _update(current.copyWith(isFinished: true));
+      return Future.value(true);
+    }
     final ended = current.copyWith(isFinished: true, endedAt: _now());
     if (!ended.hasEngaged ||
         ended.intent == SleepSupportIntent.prepareForSleep) {
@@ -148,16 +192,20 @@ class SleepSupportSessionController extends ChangeNotifier {
     }
     _pendingEvent = _eventFor(ended);
     _state = ended;
-    return _persist();
+    return _persist(_pendingEvent!);
   }
 
   Future<bool> retrySave() {
     if (_disposed || _state == null) return Future.value(false);
     if (_pendingSave != null) return _pendingSave!;
-    if (!_state!.saveFailed || _pendingEvent == null) {
+    if (_state!.saveFailed && _pendingEvent != null) {
+      return _persist(_pendingEvent!);
+    }
+    if (_failedEvents.isEmpty) {
       return Future.value(_state!.isSaved);
     }
-    return _persist();
+    final event = _failedEvents.removeAt(0);
+    return _persist(event);
   }
 
   void discard() {
@@ -168,29 +216,60 @@ class SleepSupportSessionController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> _persist() {
-    final event = _pendingEvent!;
-    // Schedule storage after assigning the shared future, preventing reentrant
-    // listeners and double taps from dispatching a second write.
-    final future = Future<void>(() => _saveEvent(event)).then(
-      (_) {
+  Future<bool> _persist(SleepNightEvent event) {
+    if (_pendingSave != null) {
+      return _pendingSave!;
+    }
+    // Assign the shared future before notifying listeners, preventing
+    // reentrant completion and double taps from dispatching a second write.
+    final future = () async {
+      try {
+        // Keep persistence off the interaction stack so selecting a night
+        // action remains immediate even when the repository is synchronous.
+        await Future<void>(() => _saveEvent(event));
+        _pendingSave = null;
+        _removeFailed(event.id);
         if (!_disposed && _state?.id == event.id) {
-          _pendingSave = null;
-          _update(_state!.copyWith(isPersisting: false, isSaved: true));
+          final next = _state!.copyWith(isPersisting: false, isSaved: true);
+          _state = next;
+          // A finished screen is about to be popped; avoid notifying a
+          // listener that may dispose the controller during its callback.
+          if (!next.isFinished) notifyListeners();
         }
         return true;
-      },
-      onError: (Object error, StackTrace stackTrace) {
+      } catch (_) {
+        _pendingSave = null;
         if (!_disposed && _state?.id == event.id) {
-          _pendingSave = null;
+          _rememberFailed(event);
           _update(_state!.copyWith(isPersisting: false, saveFailed: true));
         }
         return false;
-      },
-    );
+      }
+    }();
     _pendingSave = future;
-    _update(_state!.copyWith(isPersisting: true, saveFailed: false));
+    if (!_disposed && _state?.id == event.id) {
+      _update(_state!.copyWith(isPersisting: true, saveFailed: false));
+    }
     return future;
+  }
+
+  void _rememberFailed(SleepNightEvent? event) {
+    if (event == null || _failedEvents.any((item) => item.id == event.id)) {
+      return;
+    }
+    _failedEvents.add(event);
+  }
+
+  void _removeFailed(String? id) {
+    _failedEvents.removeWhere((item) => item.id == id);
+  }
+
+  bool _isStale(SleepSupportSession session) {
+    final started = session.startedAt;
+    final current = _now();
+    return started.year != current.year ||
+        started.month != current.month ||
+        started.day != current.day;
   }
 
   SleepNightEvent _eventFor(SleepSupportSession session) {

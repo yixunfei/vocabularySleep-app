@@ -392,15 +392,21 @@ class _AppShellState extends ConsumerState<AppShell> {
       return;
     }
     _lastHandledTodoReminderLaunchId = pendingTodoId;
-    if (_indexForTab(AppHomeTab.focus) < 0 ||
-        _tabAt(_index) == AppHomeTab.focus) {
+    final todo = state.focusService
+        .getTodos()
+        .where((item) => item.id == pendingTodoId)
+        .firstOrNull;
+    final destination = todo?.category == 'sleep'
+        ? AppHomeTab.toolbox
+        : AppHomeTab.focus;
+    if (_indexForTab(destination) < 0 || _tabAt(_index) == destination) {
       return;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
       }
-      _setTab(AppHomeTab.focus);
+      _setTab(destination);
     });
   }
 

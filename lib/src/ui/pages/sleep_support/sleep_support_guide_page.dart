@@ -144,6 +144,9 @@ class _SleepSupportGuidePageState extends State<SleepSupportGuidePage> {
   void _closeAfterSave(bool saved) {
     if (!mounted) return;
     if (saved && ModalRoute.of(context)?.isCurrent == true) {
+      // Ending the support flow also ends the sound started by this module.
+      // The controller is module-owned, so unrelated audio remains untouched.
+      context.read<AppState>().sleepSoundController.stop();
       Navigator.of(context).pop();
     } else {
       _exitPending = false;
@@ -154,6 +157,7 @@ class _SleepSupportGuidePageState extends State<SleepSupportGuidePage> {
     if (_exitPending) return;
     _exitPending = true;
     _controller.discard();
+    context.read<AppState>().sleepSoundController.stop();
     Navigator.of(context).pop();
   }
 }

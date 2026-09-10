@@ -758,7 +758,7 @@ class FocusService extends ChangeNotifier {
     return todos;
   }
 
-  void addTodo(
+  bool addTodo(
     String content, {
     int priority = 1,
     String? category,
@@ -772,7 +772,7 @@ class FocusService extends ChangeNotifier {
     bool systemCalendarAlarmEnabled = false,
     int systemCalendarAlarmMinutesBefore = 10,
   }) {
-    if (!_initialized || content.trim().isEmpty) return;
+    if (!_initialized || content.trim().isEmpty) return false;
     saveTodo(
       TodoItem(
         content: content.trim(),
@@ -791,6 +791,7 @@ class FocusService extends ChangeNotifier {
         createdAt: DateTime.now(),
       ),
     );
+    return true;
   }
 
   void saveTodo(TodoItem item) {

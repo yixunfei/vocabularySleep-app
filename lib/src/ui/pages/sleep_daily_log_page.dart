@@ -21,6 +21,7 @@ class SleepDailyLogPage extends StatefulWidget {
 class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
   late String _dateKey;
   late SleepLogDraft _draft;
+  final Map<String, SleepLogDraft> _draftsByDate = <String, SleepLogDraft>{};
   int _step = 0;
   bool _details = false;
   bool _saved = false;
@@ -42,7 +43,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
 
   void _loadDate(String key) {
     _dateKey = key;
-    _draft = SleepLogDraft(
+    _draft = _draftsByDate[key] ??= SleepLogDraft(
       dateKey: key,
       existing: context.read<AppState>().sleepDailyLogByDateKey(key),
     );
@@ -62,7 +63,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
     setState(() => _loadDate(sleepDateKeyFromDateTime(date)));
   }
 
-  void _answer(String field, int value) {
+  void _answer(AppI18n i18n, String field, int value) {
     setState(() {
       _draft.set(field, value);
       _saved = false;
@@ -70,9 +71,10 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
     });
   }
 
-  void _save(AppI18n i18n) {
+  void _save(AppI18n i18n, {bool keepDraft = false}) {
     try {
       context.read<AppState>().saveSleepDailyLog(_draft.build());
+      if (!keepDraft) _draftsByDate.remove(_dateKey);
       setState(() => _saved = true);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(i18n.t('toolbox.sleep.log.saved'))),
@@ -169,7 +171,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
             label: _optionLabel(i18n, value),
             value: value,
             selected: _draft.value(field) == value,
-            onSelected: (value) => _answer(field, value),
+            onSelected: (value) => _answer(i18n, field, value),
           ),
         TextButton(
           onPressed: () => setState(() => _step += 1),
@@ -180,6 +182,7 @@ class _SleepDailyLogPageState extends State<SleepDailyLogPage> {
             onPressed: () => setState(() => _step -= 1),
             child: Text(i18n.t('toolbox.sleep.day.back')),
           ),
+        if (_step > 0) ...[const SizedBox(height: 8), _saveButton(i18n)],
       ],
     );
   }

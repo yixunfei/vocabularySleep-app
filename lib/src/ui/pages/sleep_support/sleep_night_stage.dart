@@ -56,8 +56,13 @@ class SleepNightStage extends StatelessWidget {
             runSpacing: 4,
             children: [
               _textButton('toolbox.sleep.night.skip', onSkip),
-              _textButton('toolbox.sleep.night.change_method', onChangeMethod),
-              if (!session.choices.contains(SleepSupportChoice.rest))
+              if (session.step != SleepSupportStep.chooseMethod)
+                _textButton(
+                  'toolbox.sleep.night.change_method',
+                  onChangeMethod,
+                ),
+              if (!session.choices.contains(SleepSupportChoice.rest) &&
+                  !session.choices.contains(SleepSupportChoice.sleepy))
                 _textButton('toolbox.sleep.night.rest', onRest),
             ],
           ),

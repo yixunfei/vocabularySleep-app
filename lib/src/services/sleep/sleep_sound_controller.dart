@@ -37,7 +37,13 @@ class SleepSoundController extends ChangeNotifier {
 
   Future<void> play(SleepSound sound) async {
     if (_disposed) return;
-    if (_sound == sound && _status == SleepSoundStatus.preparing) return;
+    // Reusing the current sound is the common night-time path. Do not tear
+    // down and recreate the player, which would restart audio and its deadline.
+    if (_sound == sound &&
+        (_status == SleepSoundStatus.preparing ||
+            _status == SleepSoundStatus.playing)) {
+      return;
+    }
     final generation = ++_generation;
     final previous = _player;
     _player = null;
