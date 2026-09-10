@@ -1,3 +1,28 @@
+## [Unreleased-PLAN_436-ZH-COPY-REVIEW] - 2026-09-10
+
+### 原因
+- catalog 中文文案存在直译生硬、机器翻译痕迹和术语不统一问题；经审核文档确认后进行第一批修复。
+
+### 修改
+- 按 `docs/i18n_zh_review_2026-09-10.md` 批准的修复表更新 `app_texts.csv` 77 条：睡眠（音频床→背景音、日间锚点→日间/晨间节律、思维奔腾→睡前思绪很多、控制一个变量→一次只调整一个习惯、直接建议→个性化建议等）、音钵（声部→音色、碗→音钵、当前聆听音符→当前聆听建议）、拾音器→拾音调音器、呼吸（身体集中→身体专注、乐队→区间、憋气→屏息）、隐写（低隐蔽性→低可见度、可否认→不公开占用、防覆盖优先→防误覆盖）、快捷键盘→快捷面板、降级状态→简化结果、冻结（画面）→暂停画面等。
+- 同步修正同一误译在 ja/de/fr/es/ru 中的镜像残留（如 Schalenstimmen→Schalenklänge），registry 中 109 条镜像文本与 CSV 重新对齐。
+- 修复 `toolbox.sleep.winddown.reminderPermissionMissing` 历史损坏的 CSV 行（未加引号的逗号把一行挤成 13 列，en/de/ru 内容错位），重建为标准 8 列。
+
+### 新增
+- registry 新增 `lastPlan436ChineseCopyReview` 历史记录块。
+
+### 验证
+- `node scripts/audit_i18n_placeholders.js`：missing=0、placeholderMismatch=0、dart params 全部通过。
+- `node scripts/maintain_i18n_catalog.js --limit 20`：fatal 项全为 0，无本轮新增风险。
+- 旧 helper 扫描与 catalog Dart 插值扫描：无命中。
+- `flutter test test/app_i18n_catalog_test.dart`：10/10 通过。
+- 全仓 `rg` 确认 lib/test 中无被改中文原文的硬编码断言。
+
+### 风险变更
+- 8 个 key（计算器 keypad、放大镜、测速仪、照度计、winddown 提醒）在 registry 无对应条目，属历史缺项未补。
+- 非中文语言仅同步被带出的同一误译，未做逐句润色；`toolbox.breathing.band` 等键无运行时引用，按审核稿保留。
+- 剩余模块（daily_choice、miniGames、ai_interview 等）待下一批审核。
+
 ## [Unreleased-PLAN_435-SLEEP-SUPPORT-CONTINUITY] - 2026-09-10
 
 ### 原因
