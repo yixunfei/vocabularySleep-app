@@ -1,3 +1,29 @@
+## [Unreleased-PLAN_438-API密钥安全存储] - 2026-09-13
+
+### 原因
+- 落实审计 SEC-02 的代码侧可闭环部分：TTS/ASR/语音输入 API key 不再明文驻留数据库，安全备份导出前剥离密钥。
+
+### 新增
+- `flutter_secure_storage` 依赖（iOS Keychain / Android Keystore / Windows 凭据管理器）。
+- `SecureKeyValueStore` 抽象与 `FlutterSecureKeyValueStore` 默认实现（可注入测试 stub）。
+- `play_config_api_key_persistence.dart` 纯函数工具：提取/剥离/注入 playConfig JSON 中的 apiKey。
+- 新增测试 9 例：剥离/注入 round-trip、保存-加载密钥缓存回填、遗留明文行自动迁移、清空密钥全链生效、安全存储不可用时降级回写、备份库无明文密钥。
+
+### 修改
+- `settings_service.dart`：playConfig 保存时剥离三个 apiKey 槽位并异步写入安全存储 blob（`play_config.api_keys.v1`）；加载时从内存缓存回填；新增 `prewarmSecureApiKeys()` 启动预热 + 遗留明文自动迁移（密钥先落安全存储成功，才剥离明文行）。
+- `app_state_startup.dart`：启动在首次 `loadPlayConfig()` 前 await 预热，避免首帧配置缺密钥。
+- `database_service_maintenance.dart`：`createSafetyBackup` 在 VACUUM 副本上剥离 playConfig 行的 apiKey，覆盖迁移前旧库与降级场景。
+
+### 风险变更
+- 安全存储不可用（平台通道缺失等）时降级为旧行为（明文行）并记录错误日志：可用性优先，功能不回退。
+- 用户在历史上手动导出的 .db 备份仍含明文密钥，无法追溯清除；恢复后首次保存会自动迁移。
+- SettingsService 构造函数由 const 改为普通构造（持有可变缓存），无调用方使用 const，兼容。
+
+### 验证
+- `flutter analyze --no-pub`：0 error / 0 warning。
+- `flutter test test/play_config_api_key_security_test.dart`：9/9 通过；全量 `flutter test` 见下方补充记录。
+- `node scripts/audit_i18n_placeholders.js`：`missing=0`、`placeholderMismatch=0`（本轮无新增用户可见文案）。
+
 ## [Unreleased-PLAN_437-全模块审计缺陷修复] - 2026-09-13
 
 ### 原因
