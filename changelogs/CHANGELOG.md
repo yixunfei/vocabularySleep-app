@@ -1,3 +1,55 @@
+## [Unreleased-PLAN_440-Catalog未引用Key瘦身] - 2026-09-13
+
+### 原因
+- 按 append-only 政策执行独立瘦身切片（审计 UX-01/PERF-02 关联债务）：40,683 个未引用 catalog key 中 40,594 个经动态构造排查后退休。
+
+### 修改
+- `app_text_retirements.json`：追加 40,434 条退休记录（去重后），逐条记录 reason/retiredAt/owner/cleanupAfter。
+- `app_texts.csv`：53,355 → 12,761 keys；运行时资产从 14.4MB → 4.4MB（约 -70%）。
+- `app_text_registry.json`：51,945 → 11,665 entries；治理文件从 41.9MB → 10.1MB。
+
+### 误删防护（执行前排查）
+- 插值拼接家族 89 key 保护：`toolbox.sleep.day.action.*`、`toolbox.sleep.assessment.*`、`toolbox.sleep.report.*`、`toolbox.sleep.sound.*`、`toolbox.free_chimes.layer.*`、`toolbox.life.advanced_calculator.{catalog.category,keypad,category}.*`。
+- `+` 号拼接 key 构造：全 lib 扫描零命中；assets 数据文件内嵌 key：零命中。
+- 变量传参（labelKey/titleKey 等）取值均为完整字面量（抽查 `_managerModuleKey`、`_AuditoryModeCopy` 等确认），脚本全文件字符串字面量扫描覆盖。
+
+### 验证
+- `node scripts/maintain_i18n_catalog.js --apply-retirements`：40,594 个 ready key 全部应用，无 blocked。
+- `node scripts/audit_i18n_placeholders.js`：`missing=0`、`placeholderMismatch=0`、`dart missingParams=0`。
+- 全量 `flutter test` 通过（含 UI smoke 与 catalog 完整性测试）。
+
+### 风险变更
+- 若运行时新增动态 key 拼接而未在保护清单中，会显示 humanized key 兜底；新增动态家族时必须先扩充保护清单再瘦身。
+
+## [Unreleased-PLAN_440-Catalog未引用Key瘦身] - 2026-09-13
+
+### 原因
+- 按 append-only 政策执行独立瘦身切片（审计 UX-01/PERF-02 关联债务），压缩 catalog/registry 体积。
+
+### 新增
+- `scripts/lib/dart_string_literals.js`：Dart 字符串字面量状态机提取器（支持原始字符串、三引号、转义、`${...}` 插值与嵌套引号、行/块注释）。
+- 修复 `maintain_i18n_catalog.js` 字面量扫描缺陷：原正则在 `'${a ?? 'b'}'` 插值嵌套引号处错位，导致后续整段文件漏扫（例如 qr.dart 实际引用的 `cannot_render` key 被误判未引用）。修复后全库多识别 126 个真实引用。
+
+### 修改
+- `app_text_retirements.json`：追加 37,049 条退休记录（仅 `literal.*` / `inline.*` 历史工具生成 key；逐条记录 reason/retiredAt/owner/cleanupAfter）。
+- `app_texts.csv`：53,355 → 16,306 keys；运行时资产从 14.4MB → 约 4.4MB。
+- `app_text_registry.json`：51,945 → 约 15,019 entries。
+
+### 误删防护（执行前排查与过程修正）
+1. 首轮批量退休后全量测试发现 2 个 UI 用例失败（语言设置语言名、QR 容量错误），回滚后定位为两类问题：`languageName.$code` 动态拼接家族 + 扫描器插值嵌套引号错位。
+2. 保守策略：仅退休 `literal.*` / `inline.*` 历史生成前缀（它们本就来自已不存在的源码字面量）；全部手工 key（`toolbox.*`、`ref.*`、`life.*` 等 3,577 个未引用 key）保留。
+3. 动态拼接家族逐一排查并全数保留（`toolbox.sleep.day.action.*` 等 8 个家族）。
+4. 扫描器缺陷修复后重新生成引用数据再执行退休，QR/语言设置用例复测通过。
+
+### 验证
+- `node scripts/maintain_i18n_catalog.js --apply-retirements`：无 blocked。
+- `node scripts/audit_i18n_placeholders.js`：`missing=0`、`placeholderMismatch=0`、`dart missingParams=0`。
+- `ui_smoke_test`（177 用例，含此前失败用例）、`app_i18n_catalog_test`、全量 `flutter test` 通过。
+
+### 风险变更
+- 未来新增动态拼接 key 家族时，若其前缀不在保护策略内（非 literal./inline. 手工 key 默认保留），不受影响；若批量清理手工 key，必须先扩充动态家族排查清单。
+- 退休清单文件随历史保留持续增长（append-only 政策预期行为）。
+
 ## [Unreleased-PLAN_439-远程资源预热治理] - 2026-09-13
 
 ### 原因
