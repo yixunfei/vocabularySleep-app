@@ -6,7 +6,6 @@ import '../../i18n/app_i18n.dart';
 import '../../models/tomato_timer.dart';
 import '../../services/focus_service.dart';
 import '../layout/app_width_tier.dart';
-import '../ui_copy.dart';
 
 class FocusTimerDisplayCard extends StatelessWidget {
   const FocusTimerDisplayCard({

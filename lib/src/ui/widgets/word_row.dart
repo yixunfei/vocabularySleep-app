@@ -4,7 +4,6 @@ import '../../i18n/app_i18n.dart';
 import '../../models/word_entry.dart';
 import '../legacy_style.dart';
 import '../theme/app_theme.dart';
-import '../ui_copy.dart';
 import 'effectful_text.dart';
 
 enum _WordRowMenuAction { toggleFavorite, toggleTask }

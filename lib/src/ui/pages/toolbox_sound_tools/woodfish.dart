@@ -82,27 +82,20 @@ class _WoodfishToolState extends State<_WoodfishTool>
   late final AnimationController _ambientController;
 
   int get _sessionCount => _stateStore.sessionCount;
-  set _sessionCount(int value) => _stateStore.sessionCount = value;
   int get _allTimeCount => _stateStore.allTimeCount;
-  set _allTimeCount(int value) => _stateStore.allTimeCount = value;
 
   int get _pulseInCycle => _stateStore.pulseInCycle;
-  set _pulseInCycle(int value) => _stateStore.pulseInCycle = value;
 
   int get _targetCount => _stateStore.targetCount;
   set _targetCount(int value) => _stateStore.targetCount = value;
 
   int get _bpm => _stateStore.bpm;
-  set _bpm(int value) => _stateStore.bpm = value;
 
   int get _beatsPerCycle => _stateStore.beatsPerCycle;
-  set _beatsPerCycle(int value) => _stateStore.beatsPerCycle = value;
 
   int get _subdivision => _stateStore.subdivision;
-  set _subdivision(int value) => _stateStore.subdivision = value;
 
   int get _accentEvery => _stateStore.accentEvery;
-  set _accentEvery(int value) => _stateStore.accentEvery = value;
 
   double get _masterVolume => _stateStore.masterVolume;
   set _masterVolume(double value) => _stateStore.masterVolume = value;
@@ -129,17 +122,12 @@ class _WoodfishToolState extends State<_WoodfishTool>
   set _autoStopAtGoal(bool value) => _stateStore.autoStopAtGoal = value;
 
   bool get _autoRunning => _stateStore.autoRunning;
-  set _autoRunning(bool value) => _stateStore.autoRunning = value;
 
   bool get _lastWasAccent => _stateStore.lastWasAccent;
-  set _lastWasAccent(bool value) => _stateStore.lastWasAccent = value;
 
   String get _activeRhythmPresetId => _stateStore.activeRhythmPresetId;
-  set _activeRhythmPresetId(String value) =>
-      _stateStore.activeRhythmPresetId = value;
 
   String get _lastGesture => _stateStore.lastGesture;
-  set _lastGesture(String value) => _stateStore.lastGesture = value;
   String _floatingText = '功德 +1';
   _WoodfishSoundProfile _soundProfile = _WoodfishSoundProfile.temple;
   _WoodfishVisualStyle _visualStyle = _WoodfishVisualStyle.zenAmber;
@@ -147,9 +135,6 @@ class _WoodfishToolState extends State<_WoodfishTool>
       _WoodfishReboundArcPreset.compact;
   Duration get _elapsed => _stateStore.elapsed;
   set _elapsed(Duration value) => _stateStore.elapsed = value;
-
-  int get _floatingSerial => _stateStore.floatingSerial;
-  set _floatingSerial(int value) => _stateStore.floatingSerial = value;
 
   int? get _activeFloatingSerial => _stateStore.activeFloatingSerial;
   set _activeFloatingSerial(int? value) =>

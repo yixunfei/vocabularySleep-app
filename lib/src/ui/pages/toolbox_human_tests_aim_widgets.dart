@@ -542,19 +542,13 @@ class _AimReportSettingRow extends StatelessWidget {
 }
 
 class _AimStageIdleCard extends StatelessWidget {
-  const _AimStageIdleCard({
-    required this.title,
-    required this.subtitle,
-    this.onStart,
-  });
+  const _AimStageIdleCard({required this.title, required this.subtitle});
 
   final String title;
   final String subtitle;
-  final VoidCallback? onStart;
 
   @override
   Widget build(BuildContext context) {
-    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: 250,
@@ -587,14 +581,6 @@ class _AimStageIdleCard extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall,
           ),
-          if (onStart != null) ...<Widget>[
-            const SizedBox(height: 12),
-            _HumanActionButton(
-              label: i18n.t('toolbox.breathing.start'),
-              icon: Icons.play_arrow_rounded,
-              onPressed: onStart,
-            ),
-          ],
         ],
       ),
     );

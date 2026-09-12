@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../i18n/app_i18n.dart';
-import '../ui_copy.dart';
 import 'toolbox_breathing_tool.dart';
 import 'toolbox_mind_tools_schulte.dart';
 import 'toolbox_prayer_beads_tool.dart';

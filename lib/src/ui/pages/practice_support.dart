@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../i18n/app_i18n.dart';
 import '../../models/practice_question_type.dart';
 import '../../models/word_entry.dart';
-import '../ui_copy.dart';
 
 const List<String> practiceWeakReasonIds = <String>[
   'recall',

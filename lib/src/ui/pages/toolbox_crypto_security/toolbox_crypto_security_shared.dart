@@ -16,19 +16,11 @@ class _LifeSettingsPanel extends StatelessWidget {
     required this.title,
     this.subtitle,
     required this.children,
-    this.color,
-    this.borderColor,
-    this.shadowColor,
-    this.shadowOpacity = 0.05,
   });
 
   final String title;
   final String? subtitle;
   final List<Widget> children;
-  final Color? color;
-  final Color? borderColor;
-  final Color? shadowColor;
-  final double shadowOpacity;
 
   @override
   Widget build(BuildContext context) {
@@ -37,16 +29,12 @@ class _LifeSettingsPanel extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color ?? theme.colorScheme.surfaceContainerLow,
+        color: theme.colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: borderColor ?? theme.colorScheme.outlineVariant,
-        ),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: (shadowColor ?? Colors.black).withValues(
-              alpha: shadowOpacity,
-            ),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 18,
             offset: const Offset(0, 10),
           ),

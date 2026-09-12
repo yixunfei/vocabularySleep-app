@@ -7,7 +7,6 @@ import '../../services/app_log_service.dart';
 import '../../state/app_state.dart';
 import '../../state/app_state_provider.dart';
 import '../modal_helpers.dart';
-import '../ui_copy.dart';
 import '../widgets/section_header.dart';
 import '../widgets/word_card.dart';
 import '../widgets/word_detail_sections.dart';

@@ -183,8 +183,6 @@ class _ColorVisionCardState extends State<_ColorVisionCard> {
   bool _reportDialogOpen = false;
 
   double _targetHue = 130;
-  double _targetSaturation = 0.46;
-  double _targetLightness = 0.58;
   double _currentDelta = 0.12;
   _ColorVisionHueBand _hueBand = _ColorVisionHueBand.green;
   _ColorVisionDeltaAxis _deltaAxis = _ColorVisionDeltaAxis.lightness;
@@ -224,8 +222,6 @@ class _ColorVisionCardState extends State<_ColorVisionCard> {
     _roundHintUsed = false;
     final base = _randomBaseHsl();
     _targetHue = base.hue;
-    _targetSaturation = base.saturation;
-    _targetLightness = base.lightness;
     _targetColor = base.toColor();
     _hueBand = _hueBandFor(_targetHue);
     _deltaAxis = _sample(_random, _ColorVisionDeltaAxis.values);

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../state/app_state_provider.dart';
-import '../ui_copy.dart';
 import '../widgets/page_header.dart';
 import '../widgets/setting_tile.dart';
 import 'data_management_page.dart';

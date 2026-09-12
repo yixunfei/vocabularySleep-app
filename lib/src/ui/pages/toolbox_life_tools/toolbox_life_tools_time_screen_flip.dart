@@ -278,7 +278,6 @@ class _ClockDigitCard extends StatelessWidget {
     required this.fontStyle,
     required this.fontSize,
     required this.radius,
-    this.showValue = true,
     this.showDivider = true,
     this.showHinges = true,
     this.foreground,
@@ -289,7 +288,6 @@ class _ClockDigitCard extends StatelessWidget {
   final _ClockFontStyle fontStyle;
   final double fontSize;
   final double radius;
-  final bool showValue;
   final bool showDivider;
   final bool showHinges;
   final Widget? foreground;
@@ -352,14 +350,13 @@ class _ClockDigitCard extends StatelessWidget {
                   ),
                 ),
               ),
-            if (showValue)
-              Align(
-                alignment: Alignment.center,
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(value, maxLines: 1, style: textStyle),
-                ),
+            Align(
+              alignment: Alignment.center,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(value, maxLines: 1, style: textStyle),
               ),
+            ),
             if (showDivider)
               Align(
                 alignment: Alignment.center,

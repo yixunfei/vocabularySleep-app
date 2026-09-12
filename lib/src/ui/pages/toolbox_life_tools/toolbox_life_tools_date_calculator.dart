@@ -611,10 +611,6 @@ class _DateCalculatorPageState extends State<_DateCalculatorPage> {
     return '${value.year}-${_two(value.month)}-${_two(value.day)}';
   }
 
-  String _formatTime(DateTime value) {
-    return '${_two(value.hour)}:${_two(value.minute)}:${_two(value.second)}';
-  }
-
   String _formatDuration(Duration duration) {
     final seconds = duration.inSeconds.abs();
     final days = seconds ~/ Duration.secondsPerDay;

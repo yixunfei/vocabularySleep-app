@@ -1,6 +1,5 @@
 import '../i18n/app_i18n.dart';
 import '../models/wordbook.dart';
-import 'ui_copy.dart';
 
 String localizedWordbookName(
   AppI18n i18n,

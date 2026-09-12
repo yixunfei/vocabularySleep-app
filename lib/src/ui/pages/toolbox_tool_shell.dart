@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../i18n/app_i18n.dart';
-import '../ui_copy.dart';
 import '../widgets/page_header.dart';
 import 'toolbox/toolbox_ui_tokens.dart';
 

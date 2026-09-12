@@ -155,15 +155,14 @@ class _LifeColorBackgroundSwitch extends StatelessWidget {
 }
 
 class _LifeColorInfoPill extends StatelessWidget {
-  const _LifeColorInfoPill({required this.text, this.color});
+  const _LifeColorInfoPill({required this.text});
 
   final String text;
-  final Color? color;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final tone = color ?? theme.colorScheme.primary;
+    final tone = theme.colorScheme.primary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(

@@ -13,9 +13,7 @@ class _PasswordVaultPageState extends State<_PasswordVaultPage>
   static const Color _createAccent = Color(0xFF7A5C24);
   static const Color _unlockAccent = Color(0xFF28706F);
   static const Color _manageAccent = Color(0xFF4F639E);
-  static const bool _passwordRevealCacheEnabled = false;
   static const Duration _credentialTtl = Duration(seconds: 60);
-  static const Duration _passwordRevealTtl = Duration(seconds: 45);
   static const Duration _keyFileTtl = Duration(minutes: 5);
   static const Duration _biometricBackgroundLockDelay = Duration(seconds: 2);
 
@@ -47,8 +45,6 @@ class _PasswordVaultPageState extends State<_PasswordVaultPage>
   List<_LocalPasswordVaultInfo> _vaults = const <_LocalPasswordVaultInfo>[];
   List<ToolboxPasswordVaultEntryIndex> _indexes =
       const <ToolboxPasswordVaultEntryIndex>[];
-  final Map<String, _PasswordVaultPasswordCacheEntry> _passwordCache =
-      <String, _PasswordVaultPasswordCacheEntry>{};
   final Map<ToolboxPasswordVaultUnlockMode, _PasswordVaultCredentialCacheEntry>
   _credentialCache =
       <ToolboxPasswordVaultUnlockMode, _PasswordVaultCredentialCacheEntry>{};
@@ -75,7 +71,6 @@ class _PasswordVaultPageState extends State<_PasswordVaultPage>
   String? _localPath;
   String? _fileSha256;
   Timer? _credentialTtlTimer;
-  Timer? _passwordCacheTimer;
   Timer? _clipboardClearTimer;
   Timer? _keyFileTtlTimer;
   Timer? _autoLockTimer;
@@ -1186,7 +1181,7 @@ class _PasswordVaultPageState extends State<_PasswordVaultPage>
         _PasswordVaultEntryCard(
           index: index,
           accent: _accent,
-          password: _cachedPassword(index.id),
+          password: null,
           record: recordsById[index.id]!,
           readOnly: _unlockMode == ToolboxPasswordVaultUnlockMode.shadow,
           onGetPassword: () => _loadPassword(index.id),
@@ -1439,7 +1434,6 @@ class _PasswordVaultPageState extends State<_PasswordVaultPage>
           _unlocked = false;
           _snapshot = null;
           _indexes = const <ToolboxPasswordVaultEntryIndex>[];
-          _clearPasswordCache();
           _clearCredentialCache();
           _unlockMode = null;
           _masterController.clear();
@@ -1763,7 +1757,6 @@ class _PasswordVaultPageState extends State<_PasswordVaultPage>
       setState(() {
         _unlocked = true;
         _indexes = const <ToolboxPasswordVaultEntryIndex>[];
-        _clearPasswordCache();
         _createMasterController.clear();
         _createMasterConfirmController.clear();
         _statusMessage = _lifeI18nText(
@@ -1899,7 +1892,6 @@ class _PasswordVaultPageState extends State<_PasswordVaultPage>
         _indexes = result.indexes;
         _unlocked = true;
         _unlockMode = result.mode;
-        _clearPasswordCache();
         _showAll = false;
         _fileSha256 = effectiveFileSha256;
         _masterController.clear();
@@ -1992,7 +1984,6 @@ class _PasswordVaultPageState extends State<_PasswordVaultPage>
       );
       if (!authenticated) {
         _clearCredentialCache();
-        _clearPasswordCache();
         _reportBiometricGateIssue(
           'toolbox.crypto.password_vault.biometric_failed',
         );
@@ -2000,14 +1991,12 @@ class _PasswordVaultPageState extends State<_PasswordVaultPage>
       return authenticated;
     } on LocalAuthException {
       _clearCredentialCache();
-      _clearPasswordCache();
       _reportBiometricGateIssue(
         'toolbox.crypto.password_vault.biometric_failed',
       );
       return false;
     } on Object {
       _clearCredentialCache();
-      _clearPasswordCache();
       _reportBiometricGateIssue(
         'toolbox.crypto.password_vault.biometric_failed',
       );
@@ -2208,7 +2197,7 @@ class _PasswordVaultPageState extends State<_PasswordVaultPage>
           updatedAt: now,
         );
         nextRecord = _service.updateRecordIndex(
-          record: existingRecord!,
+          record: existingRecord,
           index: nextIndex,
           settings: snapshot.settings,
           masterPassword: primaryMaster!,
@@ -2241,7 +2230,7 @@ class _PasswordVaultPageState extends State<_PasswordVaultPage>
         primaryMasterPassword: primaryMaster,
         shadowMasterPassword: shadowMaster,
       );
-      _cacheCredential(ToolboxPasswordVaultUnlockMode.primary, primaryMaster!);
+      _cacheCredential(ToolboxPasswordVaultUnlockMode.primary, primaryMaster);
       setState(() {
         _indexes =
             _indexes
@@ -2251,9 +2240,7 @@ class _PasswordVaultPageState extends State<_PasswordVaultPage>
               ..sort(
                 (left, right) => right.updatedAt.compareTo(left.updatedAt),
               );
-        if (passwordChanged) {
-          _removePasswordCache(nextIndex.id);
-        }
+        if (passwordChanged) {}
         _statusMessage = _lifeI18nText(
           context,
           'toolbox.crypto.password_vault.save_success',
@@ -2385,7 +2372,6 @@ class _PasswordVaultPageState extends State<_PasswordVaultPage>
         _indexes = _indexes
             .where((item) => item.id != index.id)
             .toList(growable: false);
-        _removePasswordCache(index.id);
         _statusMessage = _lifeI18nText(
           context,
           'toolbox.crypto.password_vault.deleted',
@@ -2836,22 +2822,6 @@ class _PasswordVaultPageState extends State<_PasswordVaultPage>
     if (!await _confirmPasswordClipboardCopy()) {
       return;
     }
-    final cachedPassword = _cachedPassword(id);
-    if (cachedPassword != null) {
-      await _copyText(
-        cachedPassword,
-        'toolbox.crypto.password_vault.copied_password_auto_clear',
-        secret: true,
-        successParams: <String, Object?>{
-          'seconds': _effectiveClipboardClearSeconds.toString(),
-        },
-      );
-      if (!mounted) {
-        return;
-      }
-      setState(() => _removePasswordCache(id));
-      return;
-    }
     await _decryptAndCopyPassword(id);
   }
 
@@ -2939,65 +2909,6 @@ class _PasswordVaultPageState extends State<_PasswordVaultPage>
         ),
       ),
     );
-  }
-
-  String? _cachedPassword(String id) {
-    if (!_passwordRevealCacheEnabled) {
-      return null;
-    }
-    _evictExpiredPasswordCache();
-    return _passwordCache[id]?.password;
-  }
-
-  void _cachePassword(String id, String password) {
-    if (!_passwordRevealCacheEnabled) {
-      return;
-    }
-    _passwordCache[id] = _PasswordVaultPasswordCacheEntry(
-      password: password,
-      expiresAt: DateTime.now().add(_passwordRevealTtl),
-    );
-    _schedulePasswordCacheTimer();
-  }
-
-  void _removePasswordCache(String id) {
-    _passwordCache.remove(id);
-    _schedulePasswordCacheTimer();
-  }
-
-  void _clearPasswordCache() {
-    _passwordCache.clear();
-    _passwordCacheTimer?.cancel();
-    _passwordCacheTimer = null;
-  }
-
-  void _evictExpiredPasswordCache() {
-    final now = DateTime.now();
-    _passwordCache.removeWhere((_, entry) => !entry.expiresAt.isAfter(now));
-    if (_passwordCache.isEmpty) {
-      _passwordCacheTimer?.cancel();
-      _passwordCacheTimer = null;
-    }
-  }
-
-  void _schedulePasswordCacheTimer() {
-    _passwordCacheTimer?.cancel();
-    if (_passwordCache.isEmpty) {
-      _passwordCacheTimer = null;
-      return;
-    }
-    final now = DateTime.now();
-    final nextExpiry = _passwordCache.values
-        .map((entry) => entry.expiresAt)
-        .reduce((left, right) => left.isBefore(right) ? left : right);
-    final delay = nextExpiry.difference(now);
-    _passwordCacheTimer = Timer(delay.isNegative ? Duration.zero : delay, () {
-      if (!mounted) {
-        return;
-      }
-      setState(_evictExpiredPasswordCache);
-      _schedulePasswordCacheTimer();
-    });
   }
 
   String? _cachedCredential(ToolboxPasswordVaultUnlockMode mode) {
@@ -3323,7 +3234,6 @@ class _PasswordVaultPageState extends State<_PasswordVaultPage>
   }
 
   void _clearSensitiveSessionState({required bool clearKeyFile}) {
-    _clearPasswordCache();
     _clearCredentialCache();
     _autoLockTimer?.cancel();
     _autoLockTimer = null;
@@ -3489,16 +3399,6 @@ class _PasswordVaultPageState extends State<_PasswordVaultPage>
     };
     return _lifeI18nText(context, key);
   }
-}
-
-class _PasswordVaultPasswordCacheEntry {
-  const _PasswordVaultPasswordCacheEntry({
-    required this.password,
-    required this.expiresAt,
-  });
-
-  final String password;
-  final DateTime expiresAt;
 }
 
 class _PasswordVaultCredentialCacheEntry {
