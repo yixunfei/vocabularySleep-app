@@ -6,9 +6,6 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-val isBundleBuild = gradle.startParameter.taskNames.any { taskName ->
-    taskName.contains("bundle", ignoreCase = true)
-}
 val isReleaseBuild = gradle.startParameter.taskNames.any { taskName ->
     taskName.contains("release", ignoreCase = true)
 }
@@ -55,10 +52,9 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        ndk {
-            abiFilters.clear()
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
-        }
+        // [风险] PERF-01: 不能同时设置 ndk.abiFilters 与 splits.abi
+        // （AGP 直接报 Conflicting configuration）。ABI 取舍统一交给
+        // 下面的 splits 块与 flutter.targetPlatform。
     }
 
     signingConfigs {
@@ -115,14 +111,12 @@ android {
         checkReleaseBuilds = false
     }
 
-    splits {
-        abi {
-            isEnable = !isBundleBuild
-            reset()
-            include("armeabi-v7a", "arm64-v8a", "x86_64")
-            isUniversalApk = true
-        }
-    }
+    // [风险] PERF-01: ABI 取舍统一交给 Flutter 工具链：
+    // - `flutter build apk --split-per-abi --target-platform android-arm,android-arm64`
+    //   由插件自动配置 splits（universalApk=false），产出按 ABI 拆分的安装包；
+    // - 普通 `flutter build apk` 由插件注入 abiFilters（随 target-platform）。
+    // 在此手写 splits 会与插件注入的 abiFilters 冲突（AGP 直接报错），
+    // 也不再保留 universal APK：双 ABI 合包体积约 166MB，不可接受。
 }
 
 flutter {

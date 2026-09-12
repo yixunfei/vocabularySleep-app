@@ -247,14 +247,25 @@ function Copy-Artifact {
 }
 
 function Build-AndroidApk {
-  Invoke-Flutter -Arguments (New-BuildArgumentList -BaseArguments @('build', 'apk', '--release'))
+  # [风险] PERF-01: --split-per-abi + 限定双 ARM 目标平台，产出按 ABI
+  # 拆分的安装包并杜绝 x86_64 原生库混入；不再构建 universal fat APK
+  # （双 ABI 合包约 166MB，单 ABI 约一半）。
+  Invoke-Flutter -Arguments (New-BuildArgumentList -BaseArguments @(
+    'build', 'apk', '--release',
+    '--split-per-abi',
+    '--target-platform', 'android-arm,android-arm64'))
   Copy-Artifact `
-    -Source (Join-Path $projectRoot 'build\app\outputs\flutter-apk\app-release.apk') `
-    -Destination (Join-Path $distRoot 'android-apk\xianyushengxi.apk')
+    -Source (Join-Path $projectRoot 'build\app\outputs\flutter-apk\app-arm64-v8a-release.apk') `
+    -Destination (Join-Path $distRoot 'android-apk\xianyushengxi-arm64-v8a.apk')
+  Copy-Artifact `
+    -Source (Join-Path $projectRoot 'build\app\outputs\flutter-apk\app-armeabi-v7a-release.apk') `
+    -Destination (Join-Path $distRoot 'android-apk\xianyushengxi-armeabi-v7a.apk')
 }
 
 function Build-AndroidAppBundle {
-  Invoke-Flutter -Arguments (New-BuildArgumentList -BaseArguments @('build', 'appbundle', '--release'))
+  Invoke-Flutter -Arguments (New-BuildArgumentList -BaseArguments @(
+    'build', 'appbundle', '--release',
+    '--target-platform', 'android-arm,android-arm64'))
   Copy-Artifact `
     -Source (Join-Path $projectRoot 'build\app\outputs\bundle\release\app-release.aab') `
     -Destination (Join-Path $distRoot 'android-appbundle\xianyushengxi.aab')
