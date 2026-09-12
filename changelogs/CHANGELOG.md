@@ -1,3 +1,30 @@
+## [Unreleased-PLAN_441-Android产物与启动分层] - 2026-09-13
+
+### 原因
+- 落实审计 PERF-01 与 PERF-02：移除 universal fat APK 并固化按 ABI 拆分的产物矩阵；启动初始化并行分层。评估 ARCH-01 拆分可行性。
+
+### 修改（PERF-01）
+- `android/app/build.gradle.kts`：删除手写 `splits.abi` 块——新版 Flutter Gradle 插件自动管理 ABI，手写 splits 与插件注入的 abiFilters 冲突（AGP 构建失败，实测复现）；不再保留 universal APK。
+- `scripts/build.ps1`：APK 产物改为 `--split-per-abi --target-platform android-arm,android-arm64`，分发 `xianyushengxi-arm64-v8a.apk`（91.4MB）与 `xianyushengxi-armeabi-v7a.apk`（85.0MB）；AAB 同样限定双 ARM。
+
+### 修改（PERF-02）
+- `app_state_startup.dart`：数据库初始化后互不依赖的三组初始化（focus 服务+提醒轮询 / 环境音服务+声音恢复 / 安全存储预热+播放配置加载）由串行改为 `Future.wait` 并行，组内顺序语义不变；启动测试 32 例全过。
+
+### 体积对比
+- universal fat APK：166MB → 不再产出（替代为两个单 ABI 包）。
+- arm64 单包：96.6MB → 91.4MB（catalog 瘦身 -2.6MB compressed、图标 tree-shaking 等生效）。
+
+### 评估（ARCH-01）
+- 结论：拆分可行但跨 60+ 文件、需 3-5 个独立切片 + 真机回归，不宜与功能切片混批；建议先以 playback 进度域做"域 store 下线字段"试点（详见 plans/PLAN_441）。
+
+### 风险变更
+- 侧载分发从单个 universal APK 变为两个按 ABI 命名的 APK，渠道需按设备 ABI 选包（Play/AAB 渠道不受影响）。
+- CI 若出现 fjs（CAS Rust 组件）v7a 并发编译失败，按序构建或清理 `build/fjs` 缓存。
+
+### 验证
+- `flutter build apk --release --split-per-abi --target-platform android-arm,android-arm64`：成功，产物仅两个单 ABI APK。
+- `flutter analyze`：0 error / 0 warning；启动测试 32 例、全量 `flutter test` 通过。
+
 ## [Unreleased-PLAN_440-Catalog未引用Key瘦身] - 2026-09-13
 
 ### 原因
