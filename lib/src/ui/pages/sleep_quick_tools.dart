@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../i18n/app_i18n.dart';
 import '../../services/ambient_service.dart';
+import '../../services/app_log_service.dart';
 import '../../services/online_ambient_catalog_service.dart';
 import '../../state/app_state_provider.dart';
 import '../sheets/ambient_sheet.dart';
@@ -129,15 +130,43 @@ class _SleepWhiteNoiseSheetState extends ConsumerState<_SleepWhiteNoiseSheet> {
     _catalogFuture = ref.read(appStateProvider).fetchOnlineAmbientCatalog();
   }
 
+  void _reloadCatalog() {
+    setState(() {
+      _catalogFuture = ref.read(appStateProvider).fetchOnlineAmbientCatalog();
+    });
+  }
+
   Future<void> _downloadOption(OnlineAmbientSoundOption option) async {
     setState(() => _downloadingId = option.id);
     final appState = ref.read(appStateProvider);
-    await appState.downloadOnlineAmbientSource(option);
-    await _activateSource('downloaded_${option.id}');
-    if (!mounted) {
-      return;
+    // [风险] 下载或激活任一环节失败都必须复位 _downloadingId，
+    // 否则按钮会永久停留在 loading 态，用户只能重开页面。
+    try {
+      await appState.downloadOnlineAmbientSource(option);
+      await _activateSource('downloaded_${option.id}');
+    } catch (error, stackTrace) {
+      AppLogService.instance.e(
+        'SleepQuickTools',
+        'Ambient source download failed: ${option.id}',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppI18n(
+                appState.uiLanguage,
+              ).t('toolbox.sleep.tools.downloadFailed'),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _downloadingId = null);
+      }
     }
-    setState(() => _downloadingId = null);
   }
 
   Future<void> _activateSource(String sourceId) async {
@@ -236,6 +265,20 @@ class _SleepWhiteNoiseSheetState extends ConsumerState<_SleepWhiteNoiseSheet> {
                   child: Center(child: CircularProgressIndicator()),
                 );
               }
+              // 加载失败必须给出独立可读的错误态和重试入口；
+              // 加载成功但为空时也用独立空态，避免渲染成"空白区块"。
+              if (snapshot.hasError) {
+                return _AmbientCatalogStatus(
+                  message: i18n.t('toolbox.sleep.tools.onlineCatalogError'),
+                  actionLabel: i18n.t('app.bootstrap.retry'),
+                  onAction: _reloadCatalog,
+                );
+              }
+              if (!snapshot.hasData || options.isEmpty) {
+                return _AmbientCatalogStatus(
+                  message: i18n.t('toolbox.sleep.tools.onlineCatalogEmpty'),
+                );
+              }
               return Column(
                 children: options
                     .map(
@@ -252,6 +295,53 @@ class _SleepWhiteNoiseSheetState extends ConsumerState<_SleepWhiteNoiseSheet> {
               );
             },
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AmbientCatalogStatus extends StatelessWidget {
+  const _AmbientCatalogStatus({
+    required this.message,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final String message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: Column(
+        children: <Widget>[
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          if (actionLabel != null && onAction != null) ...<Widget>[
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: onAction,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(actionLabel!),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(112, 48),
+                textStyle: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
+          ],
         ],
       ),
     );
