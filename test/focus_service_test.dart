@@ -318,6 +318,7 @@ FocusService _createService(
   TodoReminderService? todoReminder,
   TtsService? tts,
   Future<void> Function(String text, TtsConfig config)? ttsSpeakOverride,
+  DateTime Function()? now,
 }) {
   return FocusService.fromRepository(
     repository: repository,
@@ -327,6 +328,7 @@ FocusService _createService(
     todoReminder: todoReminder ?? _FakeTodoReminderService(),
     tts: tts,
     ttsSpeakOverride: ttsSpeakOverride,
+    now: now,
   );
 }
 
@@ -445,6 +447,56 @@ void main() {
         service.advanceToNextPhase();
         expect(service.state.phase, TomatoTimerPhase.focus);
       });
+    });
+
+    test('countdown catches up after a suspended wall-clock gap', () async {
+      final repository = _MemoryFocusRepository();
+      final store = _MemorySettingsStoreRepository();
+      // 可控墙钟：平时跟随 fakeAsync 的虚拟时间，挂起时手动前跳。
+      final clockBase = DateTime(2026, 1, 1, 8);
+      var clockOffset = Duration.zero;
+      // elapsedSource 在 fakeAsync 内重绑为 () => async.elapsed，保证 tick 间实时读取。
+      var elapsedSource = () => Duration.zero;
+      final service = _createService(
+        repository,
+        store,
+        now: () => clockBase.add(elapsedSource()).add(clockOffset),
+      );
+      await service.init();
+      service.saveConfig(
+        const TomatoTimerConfig(
+          focusDurationSeconds: 60,
+          breakDurationSeconds: 60,
+          rounds: 1,
+          autoStartBreak: true,
+          autoStartNextRound: false,
+          reminder: TimerReminderConfig(
+            haptic: false,
+            sound: false,
+            voice: false,
+            visual: true,
+          ),
+        ),
+      );
+
+      fakeAsync((async) {
+        elapsedSource = () => async.elapsed;
+        service.start();
+        async.elapse(const Duration(seconds: 5));
+        expect(service.state.phase, TomatoTimerPhase.focus);
+        expect(service.state.remainingSeconds, 55);
+
+        // 模拟应用挂起：真实墙钟前进了 10 分钟，但期间没有任何 timer tick。
+        // 恢复后第一个 tick 必须按 wall-clock 一次性追平，而不是只减 1 秒。
+        clockOffset = const Duration(minutes: 10);
+        async.elapse(const Duration(seconds: 1));
+        expect(service.state.phase, TomatoTimerPhase.breakTime);
+        expect(service.state.remainingSeconds, 60);
+      });
+
+      // 会话统计按落库记录计算：结束会话后校验挂起时间已计入。
+      service.stop();
+      expect(service.getTodaySessionMinutes() >= 10, isTrue);
     });
 
     test('today stats separate focus minutes and session minutes', () async {

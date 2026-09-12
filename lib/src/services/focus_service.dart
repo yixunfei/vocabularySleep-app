@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -52,6 +53,7 @@ class FocusService extends ChangeNotifier {
     TodoReminderService? todoReminder,
     TtsService? tts,
     Future<void> Function(String text, TtsConfig config)? ttsSpeakOverride,
+    DateTime Function()? now,
   }) : _repository = repository,
        _settings = settings,
        _ambient = ambient,
@@ -59,7 +61,10 @@ class FocusService extends ChangeNotifier {
        _systemCalendar = systemCalendar,
        _todoReminder = todoReminder ?? PlatformTodoReminderService(),
        _tts = tts,
-       _ttsSpeakOverride = ttsSpeakOverride;
+       _ttsSpeakOverride = ttsSpeakOverride,
+       // [歧义] 必须在调用时解析 zone-local clock（_defaultNow），
+       // 而非构造时 tear-off clock.now：fakeAsync 只在 zone 内提供假时钟。
+       _now = now ?? _defaultNow;
 
   final FocusRepository _repository;
   final SettingsService _settings;
@@ -69,12 +74,22 @@ class FocusService extends ChangeNotifier {
   final TodoReminderService _todoReminder;
   final TtsService? _tts;
   final Future<void> Function(String text, TtsConfig config)? _ttsSpeakOverride;
+  // [风险] 倒计时使用可注入时钟：fakeAsync 测试与挂起补偿都需要可控的墙钟。
+  final DateTime Function() _now;
+
+  static DateTime _defaultNow() => clock.now();
 
   bool _initialized = false;
   bool _lockScreenActive = false;
   TomatoTimerConfig _timerConfig = const TomatoTimerConfig();
   TomatoTimerState _timerState = const TomatoTimerState();
   Timer? _timer;
+  // [风险] Timer.periodic 在应用挂起/锁屏后会停止触发，仅靠逐秒累减会丢时间；
+  // 剩余秒数按 wall-clock 锚点推进，periodic 只负责驱动刷新。
+  // 暂停/恢复与每次进入新阶段时必须重建锚点。
+  DateTime? _phaseAnchorAt;
+  int _phaseAnchorRemainingSeconds = 0;
+  DateTime? _lastSessionTickAt;
   static const Duration _reminderAlertTimeout = Duration(seconds: 45);
   DateTime? _sessionStartTime;
   int _sessionDurationSeconds = 0;
@@ -327,26 +342,52 @@ class FocusService extends ChangeNotifier {
 
   void _startTimer() {
     _timer?.cancel();
+    _rebasePhaseAnchor();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!_timerState.isActiveCountdown || _timerState.isPaused) return;
-
-      final newRemaining = _timerState.remainingSeconds - 1;
-      _sessionDurationSeconds += 1;
-      if (_timerState.phase == TomatoTimerPhase.focus) {
-        _sessionFocusSeconds += 1;
-      } else if (_timerState.phase == TomatoTimerPhase.breakTime) {
-        _sessionBreakSeconds += 1;
-      }
-
-      if (newRemaining <= 0) {
-        _timerState = _timerState.copyWith(remainingSeconds: 0);
-        _publishState();
-        _handlePhaseComplete(triggerReminder: true);
-      } else {
-        _timerState = _timerState.copyWith(remainingSeconds: newRemaining);
-        _publishState();
-      }
+      _advanceCountdownByWallClock();
     });
+  }
+
+  void _rebasePhaseAnchor() {
+    final now = _now();
+    _phaseAnchorAt = now;
+    _phaseAnchorRemainingSeconds = _timerState.remainingSeconds;
+    _lastSessionTickAt = now;
+  }
+
+  void _advanceCountdownByWallClock() {
+    final now = _now();
+    final anchorAt = _phaseAnchorAt;
+    if (anchorAt == null) {
+      _rebasePhaseAnchor();
+      return;
+    }
+    final elapsedSinceAnchor = now.difference(anchorAt).inSeconds;
+    // 墙钟被回拨时不允许多扣时间。
+    final newRemaining =
+        _phaseAnchorRemainingSeconds -
+        (elapsedSinceAnchor > 0 ? elapsedSinceAnchor : 0);
+
+    final lastTickAt = _lastSessionTickAt ?? now;
+    final elapsedSinceTick = now.difference(lastTickAt).inSeconds;
+    final sessionElapsed = elapsedSinceTick > 0 ? elapsedSinceTick : 0;
+    _lastSessionTickAt = now;
+    _sessionDurationSeconds += sessionElapsed;
+    if (_timerState.phase == TomatoTimerPhase.focus) {
+      _sessionFocusSeconds += sessionElapsed;
+    } else if (_timerState.phase == TomatoTimerPhase.breakTime) {
+      _sessionBreakSeconds += sessionElapsed;
+    }
+
+    if (newRemaining <= 0) {
+      _timerState = _timerState.copyWith(remainingSeconds: 0);
+      _publishState();
+      _handlePhaseComplete(triggerReminder: true);
+    } else {
+      _timerState = _timerState.copyWith(remainingSeconds: newRemaining);
+      _publishState();
+    }
   }
 
   void _handlePhaseComplete({required bool triggerReminder}) {
@@ -688,6 +729,7 @@ class FocusService extends ChangeNotifier {
   void pause() {
     if (!_timerState.canPause) return;
     _timerState = _timerState.copyWith(isPaused: true);
+    _rebasePhaseAnchor();
     _publishState();
   }
 
@@ -702,6 +744,7 @@ class FocusService extends ChangeNotifier {
   void resume() {
     if (!_timerState.canResume) return;
     _timerState = _timerState.copyWith(isPaused: false);
+    _rebasePhaseAnchor();
     _publishState();
   }
 

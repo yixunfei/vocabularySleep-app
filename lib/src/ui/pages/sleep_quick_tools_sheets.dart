@@ -103,6 +103,9 @@ class _MorningLightTimerSheetState
   Timer? _timer;
   int _targetMinutes = 15;
   int _remainingSeconds = 15 * 60;
+  // [风险] 倒计时按 wall-clock 截止推进：应用挂起/锁屏后 periodic 停止触发，
+  // 恢复后按截止时间一次性追平，避免挂起期间少计时。
+  DateTime? _endsAt;
 
   @override
   void dispose() {
@@ -206,12 +209,14 @@ class _MorningLightTimerSheetState
       });
       return;
     }
+    _endsAt = DateTime.now().add(Duration(seconds: _remainingSeconds));
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
       }
-      if (_remainingSeconds <= 1) {
+      final left = _endsAt?.difference(DateTime.now()).inSeconds ?? 0;
+      if (left <= 0) {
         timer.cancel();
         setState(() {
           _timer = null;
@@ -219,7 +224,7 @@ class _MorningLightTimerSheetState
         });
         return;
       }
-      setState(() => _remainingSeconds -= 1);
+      setState(() => _remainingSeconds = left);
     });
     setState(() {});
   }
