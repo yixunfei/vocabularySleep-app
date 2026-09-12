@@ -172,6 +172,57 @@ void main() {
     },
   );
 
+  test('rejects traversal and absolute cache relative paths', () async {
+    final service = CstCloudResourceCacheService(cacheDirectory: tempDir);
+    final escapeFile = File(p.join(tempDir.parent.path, 'escaped.bin'));
+    await escapeFile.writeAsBytes(<int>[1], flush: true);
+
+    for (final hostile in <String>[
+      '../escaped.bin',
+      '..\\escaped.bin',
+      'audio/../../escaped.bin',
+      '/absolute/escape.bin',
+      'C:/absolute/escape.bin',
+      'audio//cue.bin',
+      'audio/./cue.bin',
+    ]) {
+      // ensureFileDownloaded 在返回 Future 前同步校验，因此统一用闭包匹配。
+      expect(
+        () => service.ensureFileDownloaded(
+          'audio/cue.bin',
+          cacheRelativePath: hostile,
+        ),
+        throwsArgumentError,
+        reason: 'cacheRelativePath="$hostile" must be rejected',
+      );
+      expect(
+        () => service.deleteCachedFile(
+          'audio/cue.bin',
+          cacheRelativePath: hostile,
+        ),
+        throwsArgumentError,
+        reason: 'cacheRelativePath="$hostile" must be rejected',
+      );
+      expect(
+        () => service.hasCachedFilesUnderPrefix(hostile),
+        throwsArgumentError,
+        reason: 'prefix="$hostile" must be rejected',
+      );
+    }
+    expect(await escapeFile.exists(), isTrue);
+    await escapeFile.delete();
+
+    // 空 cacheRelativePath 回退到 remoteKey 本身，remoteKey 越界同样必须被拒绝。
+    expect(
+      () => service.ensureFileDownloaded('../escaped.bin'),
+      throwsArgumentError,
+    );
+    expect(
+      () => service.ensureFileDownloaded('C:/absolute/escape.bin'),
+      throwsArgumentError,
+    );
+  });
+
   test('only one validated download runs for concurrent callers', () async {
     final client = _FakeResourceClient(<Uint8List>[
       Uint8List.fromList(<int>[7, 8]),

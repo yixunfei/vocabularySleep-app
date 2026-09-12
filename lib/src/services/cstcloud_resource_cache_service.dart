@@ -233,9 +233,11 @@ class CstCloudResourceCacheService {
     final normalized = prefix.trim();
     if (normalized.isEmpty) return false;
     final baseDir = await _cacheBaseDir();
-    final targetDir = Directory(
-      p.join(baseDir.path, normalized.replaceAll('\\', '/')),
+    // [风险] prefix 与落盘路径同源，越界形态在这里同样只读校验、不静默回退。
+    final validated = _validateCacheRelativePath(
+      normalized.replaceAll('\\', '/'),
     );
+    final targetDir = Directory(p.join(baseDir.path, validated));
     if (!await targetDir.exists()) {
       return false;
     }
@@ -367,7 +369,42 @@ class CstCloudResourceCacheService {
     final targetPath = cacheRelativePath?.trim().isNotEmpty == true
         ? cacheRelativePath!.trim()
         : remoteKey;
-    return targetPath.replaceAll('\\', '/');
+    final normalized = targetPath.replaceAll('\\', '/');
+    return _validateCacheRelativePath(normalized);
+  }
+
+  // [风险] 缓存落盘路径必须严格受限于缓存根目录内：
+  // 1. `cacheRelativePath` 可能来自远端清单或用户配置，属于不可信输入；
+  // 2. 绝对路径、盘符、`.`/`..` 或空段都可能让 `p.join` 越出缓存目录；
+  // 3. 校验失败直接抛出，不做"剥掉越界段后继续写"的回退。
+  String _validateCacheRelativePath(String normalized) {
+    if (normalized.isEmpty) {
+      throw ArgumentError('Cache relative path must not be empty.');
+    }
+    if (normalized.startsWith('/')) {
+      throw ArgumentError(
+        'Cache relative path must not be absolute: $normalized',
+      );
+    }
+    for (final segment in normalized.split('/')) {
+      if (segment.isEmpty || segment == '.' || segment == '..') {
+        throw ArgumentError(
+          'Cache relative path must not contain empty, "." or ".." segments: '
+          '$normalized',
+        );
+      }
+      if (RegExp(r'^[A-Za-z]:').hasMatch(segment)) {
+        throw ArgumentError(
+          'Cache relative path must not contain drive roots: $normalized',
+        );
+      }
+      if (segment.contains('\u0000')) {
+        throw ArgumentError(
+          'Cache relative path contains invalid characters: $normalized',
+        );
+      }
+    }
+    return normalized;
   }
 
   Future<bool> _deleteCacheArtifacts(File targetFile) async {
