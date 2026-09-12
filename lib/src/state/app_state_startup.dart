@@ -14,25 +14,37 @@ extension _AppStateStartup on AppState {
         ModuleIds.toolboxModules,
       );
 
-      if (isModuleEnabled(ModuleIds.focus)) {
-        await _focusService.init();
-        await _pollPendingTodoReminderLaunchImpl();
-      }
-
+      // [风险] PERF-02: 启动初始化分层。数据库就绪后，focus 服务、
+      // 环境音恢复与安全存储/播放配置三组互不依赖，并行执行以缩短
+      // 首帧就绪时间；组内保持原有先后语义（key 先于 config）。
       final shouldInitAmbient =
           isModuleEnabled(ModuleIds.study) ||
           isModuleEnabled(ModuleIds.focus) ||
           isModuleEnabled(ModuleIds.toolbox);
-      if (shouldInitAmbient) {
-        await _ambient.init();
-        await _restoreDownloadedAmbientSounds();
-      }
-
-      // [风险] SEC-02: 必须先取回安全存储中的 API key 再同步加载配置，
-      // 否则首帧的播放/识别配置会短暂缺失密钥。
-      await _settings.prewarmSecureApiKeys();
-      _config = _settings.loadPlayConfig();
-      _playback.updateRuntimeConfig(_config);
+      final ambientInit = () async {
+        if (shouldInitAmbient) {
+          await _ambient.init();
+          await _restoreDownloadedAmbientSounds();
+        }
+      };
+      final focusInit = () async {
+        if (isModuleEnabled(ModuleIds.focus)) {
+          await _focusService.init();
+          await _pollPendingTodoReminderLaunchImpl();
+        }
+      };
+      final secureKeysAndConfig = () async {
+        // [风险] SEC-02: 必须先取回安全存储中的 API key 再同步加载配置，
+        // 否则首帧的播放/识别配置会短暂缺失密钥。
+        await _settings.prewarmSecureApiKeys();
+        _config = _settings.loadPlayConfig();
+        _playback.updateRuntimeConfig(_config);
+      };
+      await Future.wait(<Future<void>>[
+        ambientInit(),
+        focusInit(),
+        secureKeysAndConfig(),
+      ]);
       _bottomNavigationAutoHideEnabled = _settings
           .loadBottomNavigationAutoHideEnabled();
       _firstRunSetupCompleted = _settings.loadFirstRunSetupCompleted();
