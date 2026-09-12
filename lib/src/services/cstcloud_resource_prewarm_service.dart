@@ -1,3 +1,5 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
+
 import 'cstcloud_resource_cache_service.dart';
 
 class CstCloudResourcePrewarmProgress {
@@ -14,11 +16,92 @@ class CstCloudResourcePrewarmProgress {
   double get progress => total <= 0 ? 0 : completed / total;
 }
 
+/// [风险] PERF-03: 预热是一次可能持续很久的网络活动，必须可中途取消。
+/// 句柄由调用方持有；`cancel()` 立即生效，`prewarm` 在每个对象下载前检查。
+class CstCloudResourcePrewarmCancellation {
+  bool _cancelled = false;
+
+  bool get isCancelled => _cancelled;
+
+  void cancel() => _cancelled = true;
+}
+
+enum CstCloudResourcePrewarmStopReason {
+  /// 全部计划对象下载完成（或无事可做）。
+  none,
+
+  /// 调用方取消。
+  cancelled,
+
+  /// 计划总量超过 maxTotalBytes，仅下载了前缀内一部分。
+  capped,
+
+  /// 网络门控拒绝（如移动网络），未发生任何下载。
+  skippedByNetworkGate,
+}
+
+class CstCloudResourcePrewarmResult {
+  const CstCloudResourcePrewarmResult({
+    required this.stopReason,
+    required this.plannedCount,
+    required this.downloadedCount,
+    required this.plannedBytes,
+    required this.downloadedBytes,
+  });
+
+  final CstCloudResourcePrewarmStopReason stopReason;
+  final int plannedCount;
+  final int downloadedCount;
+  final int plannedBytes;
+  final int downloadedBytes;
+
+  bool get fullyDownloaded =>
+      stopReason == CstCloudResourcePrewarmStopReason.none &&
+      downloadedCount >= plannedCount;
+}
+
 class CstCloudResourcePrewarmService {
-  CstCloudResourcePrewarmService(this._cacheService);
+  CstCloudResourcePrewarmService(
+    this._cacheService, {
+    Connectivity? connectivity,
+  }) : _connectivity = connectivity ?? Connectivity();
 
   final CstCloudResourceCacheService _cacheService;
+  final Connectivity _connectivity;
+
   static const List<String> _resourcePrefixes = <String>['music/', 'ambient/'];
+
+  /// [风险] 预热总量上限：远程目录可能增长到任意规模，
+  /// 一次性全量下载会打爆流量与磁盘；默认 96 MiB 起步。
+  static const int defaultMaxTotalBytes = 96 * 1024 * 1024;
+
+  /// 网络门控的默认判定：只允许不计费/宽裕网络。
+  static bool isNetworkResultAllowed(List<ConnectivityResult> results) {
+    if (results.isEmpty) {
+      return false;
+    }
+    const allowed = <ConnectivityResult>{
+      ConnectivityResult.wifi,
+      ConnectivityResult.ethernet,
+      ConnectivityResult.vpn,
+    };
+    return results.any(allowed.contains);
+  }
+
+  Future<bool> isPrewarmNetworkAllowed({
+    Future<bool> Function()? networkGate,
+  }) async {
+    if (networkGate != null) {
+      return networkGate();
+    }
+    try {
+      return isNetworkResultAllowed(await _connectivity.checkConnectivity());
+    } catch (_) {
+      // 网络状态不可知时保守放行：预热是幂等可重试的缓存行为，
+      // 真正的失败由下载层兜底。
+      return true;
+    }
+  }
 
   Future<bool> shouldPrewarmMusic() async {
     for (final prefix in _resourcePrefixes) {
@@ -40,36 +123,81 @@ class CstCloudResourcePrewarmService {
     return false;
   }
 
-  Future<void> prewarm({
+  Future<CstCloudResourcePrewarmResult> prewarm({
     required void Function(CstCloudResourcePrewarmProgress progress) onProgress,
+    CstCloudResourcePrewarmCancellation? cancellation,
+    int maxTotalBytes = defaultMaxTotalBytes,
+    Future<bool> Function()? networkGate,
   }) async {
-    final targets = <String>[];
-    for (final prefix in _resourcePrefixes) {
-      final objects = await _cacheService.listObjects(prefix);
-      targets.addAll(
-        objects
-            .where((item) => !item.key.endsWith('/'))
-            .map((item) => item.key),
+    if (!await isPrewarmNetworkAllowed(networkGate: networkGate)) {
+      return const CstCloudResourcePrewarmResult(
+        stopReason: CstCloudResourcePrewarmStopReason.skippedByNetworkGate,
+        plannedCount: 0,
+        downloadedCount: 0,
+        plannedBytes: 0,
+        downloadedBytes: 0,
       );
     }
 
-    for (var index = 0; index < targets.length; index += 1) {
-      final key = targets[index];
+    final targets = <_PrewarmTarget>[];
+    for (final prefix in _resourcePrefixes) {
+      final objects = await _cacheService.listObjects(prefix);
+      for (final item in objects) {
+        if (item.key.endsWith('/') || item.size <= 0) {
+          continue;
+        }
+        targets.add(_PrewarmTarget(key: item.key, size: item.size));
+      }
+    }
+    final plannedBytes = targets.fold<int>(0, (sum, item) => sum + item.size);
+
+    var downloadedCount = 0;
+    var downloadedBytes = 0;
+    var stopReason = CstCloudResourcePrewarmStopReason.none;
+    for (final target in targets) {
+      if (cancellation?.isCancelled ?? false) {
+        stopReason = CstCloudResourcePrewarmStopReason.cancelled;
+        break;
+      }
+      if (downloadedBytes + target.size > maxTotalBytes) {
+        stopReason = CstCloudResourcePrewarmStopReason.capped;
+        break;
+      }
       onProgress(
         CstCloudResourcePrewarmProgress(
-          completed: index,
+          completed: downloadedCount,
           total: targets.length,
-          currentLabel: key,
+          currentLabel: target.key,
         ),
       );
-      await _cacheService.ensureFileDownloaded(key, cacheRelativePath: key);
+      await _cacheService.ensureFileDownloaded(
+        target.key,
+        cacheRelativePath: target.key,
+      );
+      downloadedCount += 1;
+      downloadedBytes += target.size;
       onProgress(
         CstCloudResourcePrewarmProgress(
-          completed: index + 1,
+          completed: downloadedCount,
           total: targets.length,
-          currentLabel: key,
+          currentLabel: target.key,
         ),
       );
     }
+
+    return CstCloudResourcePrewarmResult(
+      stopReason: stopReason,
+      plannedCount: targets.length,
+      downloadedCount: downloadedCount,
+      plannedBytes: plannedBytes,
+      downloadedBytes: downloadedBytes,
+    );
   }
+}
+
+class _PrewarmTarget {
+  const _PrewarmTarget({required this.key, required this.size});
+
+  final String key;
+  final int size;
 }

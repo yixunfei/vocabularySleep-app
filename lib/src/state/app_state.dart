@@ -274,6 +274,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   int _remotePrewarmCompletedCount = 0;
   int _remotePrewarmTotalCount = 0;
   String _remotePrewarmCurrentLabel = '';
+  CstCloudResourcePrewarmCancellation? _remotePrewarmCancellation;
   String? _lastBackupPath;
   bool _sleepLoading = false;
   SleepProfile? _sleepProfile;

@@ -538,17 +538,39 @@ extension _AppStateStartup on AppState {
     _remotePrewarmTotalCount = 0;
     _remotePrewarmCurrentLabel = '';
     _notifyStateChanged();
+    final cancellation = _remotePrewarmCancellation =
+        CstCloudResourcePrewarmCancellation();
     try {
-      await prewarm.prewarm(
+      final result = await prewarm.prewarm(
         onProgress: (progress) {
           _remotePrewarmCompletedCount = progress.completed;
           _remotePrewarmTotalCount = progress.total;
           _remotePrewarmCurrentLabel = progress.currentLabel;
           _notifyStateChanged();
         },
+        cancellation: cancellation,
       );
-      _remotePrewarmCompleted = true;
-      _settings.saveRemoteResourcePrewarmCompleted(true);
+      // [风险] 只有"全部完成"才视为永久完成；被取消或触达总量上限时
+      // 保留下次启动/按需路径重试的机会。
+      if (result.fullyDownloaded) {
+        _remotePrewarmCompleted = true;
+        _settings.saveRemoteResourcePrewarmCompleted(true);
+      } else if (result.stopReason ==
+          CstCloudResourcePrewarmStopReason.cancelled) {
+        _log.d(
+          'app_state',
+          'remote resource prewarm cancelled after '
+              '${result.downloadedCount}/${result.plannedCount}',
+        );
+      } else if (result.stopReason ==
+          CstCloudResourcePrewarmStopReason.capped) {
+        _log.d(
+          'app_state',
+          'remote resource prewarm capped at '
+              '${result.downloadedBytes}/${result.plannedBytes} bytes '
+              'after ${result.downloadedCount}/${result.plannedCount} files',
+        );
+      }
     } catch (error, stackTrace) {
       _remotePrewarmFailed = true;
       _log.e(
@@ -558,6 +580,9 @@ extension _AppStateStartup on AppState {
         stackTrace: stackTrace,
       );
     } finally {
+      if (identical(_remotePrewarmCancellation, cancellation)) {
+        _remotePrewarmCancellation = null;
+      }
       _remotePrewarmActive = false;
       _notifyStateChanged();
     }
@@ -566,6 +591,10 @@ extension _AppStateStartup on AppState {
   Future<void> _ensureRemoteResourcePrewarmOnDemandImpl() async {
     final prewarm = _remoteResourcePrewarm;
     if (prewarm == null || _remotePrewarmActive || _remotePrewarmCompleted) {
+      return;
+    }
+    // [风险] PERF-03: 计费网络下连目录枚举都不该发生，先做网络门控。
+    if (!await prewarm.isPrewarmNetworkAllowed()) {
       return;
     }
     try {
