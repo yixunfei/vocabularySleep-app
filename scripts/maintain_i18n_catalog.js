@@ -2,6 +2,8 @@
 
 const fs = require('fs');
 const path = require('path');
+const { extractDartStringLiterals } = require(path.join(__dirname, 'lib', 'dart_string_literals.js'));
+
 
 const root = path.resolve(__dirname, '..');
 const catalogDir = path.join(root, 'lib', 'l10n', 'catalog');
@@ -234,19 +236,17 @@ function scanLiteralCatalogRefs(catalogKeys) {
     ...walk(path.join(root, 'lib'), (filePath) => filePath.endsWith('.dart')),
     ...walk(path.join(root, 'test'), (filePath) => filePath.endsWith('.dart')),
   ].sort();
-  const stringPattern = /'((?:\\.|[^'\\])*)'|"((?:\\.|[^"\\])*)"/g;
-
   for (const filePath of dartFiles) {
     const source = fs.readFileSync(filePath, 'utf8');
-    let match;
-    while ((match = stringPattern.exec(source)) != null) {
-      const literal = match[1] ?? match[2] ?? '';
-      if (!catalogKeys.has(literal)) {
+    // [风险] 必须用状态机提取字面量：正则方案在插值内嵌套引号
+    // （'${a ?? 'b'}'）处会错位，导致后续文件内容漏扫。
+    for (const literal of extractDartStringLiterals(source)) {
+      if (!catalogKeys.has(literal.value)) {
         continue;
       }
-      refs.get(literal).push({
+      refs.get(literal.value).push({
         file: relative(filePath),
-        line: lineOf(source, match.index),
+        line: lineOf(source, literal.index),
       });
     }
   }
