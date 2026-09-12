@@ -9557,7 +9557,7 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
   }
 
   @override
-  void addTodo(
+  bool addTodo(
     String content, {
     int priority = 1,
     String? category,
@@ -9571,6 +9571,7 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
     bool systemCalendarAlarmEnabled = false,
     int systemCalendarAlarmMinutesBefore = 10,
   }) {
+    if (content.trim().isEmpty) return false;
     _todos.add(
       TodoItem(
         id: (_todos.lastOrNull?.id ?? 0) + 1,
@@ -9590,6 +9591,7 @@ class _FakeFocusService extends ChangeNotifier implements FocusService {
       ),
     );
     _publishViewState();
+    return true;
   }
 
   @override
