@@ -537,7 +537,7 @@ extension TtsServiceApi on TtsService {
             .post(
               Uri.parse(endpoint),
               headers: <String, String>{
-                'Authorization': 'Bearer;$apiKey',
+                'Authorization': 'Bearer $apiKey',
                 'Content-Type': 'application/json',
               },
               body: jsonEncode(requestBody),
