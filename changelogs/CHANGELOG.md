@@ -1,3 +1,27 @@
+## [Unreleased-PLAN_439-远程资源预热治理] - 2026-09-13
+
+### 原因
+- 落实审计 PERF-03 中代码侧可闭环部分：预热不再无条件串行全量下载，增加取消、总量上限与网络条件门控。
+
+### 新增
+- `connectivity_plus` 依赖（Android `ACCESS_NETWORK_STATE` 权限已具备）。
+- `CstCloudResourcePrewarmCancellation` 取消句柄与 `CstCloudResourcePrewarmResult` 结果语义（planned/downloaded/capped/cancelled/skippedByNetworkGate）。
+- `test/cstcloud_resource_prewarm_service_test.dart` 5 例：全量完成、cap 截停、中途取消、网络门控拒绝、默认门控判定。
+
+### 修改
+- `cstcloud_resource_prewarm_service.dart`：`prewarm` 支持取消句柄、`maxTotalBytes`（默认 96 MiB，按对象大小累计）、`networkGate` 可注入；新增 `isPrewarmNetworkAllowed()`（wifi/ethernet/vpn 允许，mobile/none 拒绝，状态不可知保守放行）。
+- `app_state_startup.dart`：预热完成语义收紧——仅"全部完成"置 `_remotePrewarmCompleted` 并持久化；capped/cancelled 保留重试机会并记录日志；按需路径在枚举远程目录前先过网络门控。
+- `app_state.dart`：dispose 时取消在途预热；完成后清理句柄。
+
+### 风险变更
+- capped/cancelled 不再永久标记完成：弱网/被取消场景每次启动会重试（网络门控拦截计费网络，wifi 下重试收敛）。
+- 预热总量默认上限 96 MiB：远程目录超限时只预热部分，其余留待用户按需下载。
+
+### 验证
+- `flutter analyze --no-pub`：0 error / 0 warning。
+- `flutter test test/cstcloud_resource_prewarm_service_test.dart`：5/5；全量回归见本轮提交前运行记录。
+- 无新增用户可见文案（i18n 审计不受影响）。
+
 ## [Unreleased-PLAN_438-API密钥安全存储] - 2026-09-13
 
 ### 原因
