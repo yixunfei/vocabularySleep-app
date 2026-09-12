@@ -1,4 +1,103 @@
-## [Unreleased-PLAN_436-ZH-COPY-REVIEW] - 2026-09-10
+## [Unreleased-PLAN_442-ZH-COPY-AUDIT-CONTINUE] - 2026-09-11
+
+### 原因
+- 继续优化运行时中文文案，覆盖公共外观、工具箱入口、语音设置、学习空状态和每日抉择说明。
+
+### 修改
+- 更新 29 个 catalog 中文 key，并同步全部对应 registry 镜像。
+- 优化外观透明度、内容卡片、背景图片和单词切换等表达。
+- 优化工具箱入口名称：音钵、指尖沙画、认知与行为测评、加密与安全、健康工具箱。
+- 优化语音设置中的试听、朗读、缓存、服务提供商和语气描述文案。
+- 优化学习页加载确认、空状态及词库切换提示，统一句式和标点。
+- 优化地点、穿搭、地图服务和语音识别错误提示。
+
+### 验证
+- `node scripts/audit_i18n_placeholders.js`：`missing=0`、`placeholderMismatch=0`、`dart missingParams=0`。
+- `node scripts/maintain_i18n_catalog.js --limit 5`：fatal duplicate/key/locale 项均为 0。
+- `git diff --check`：通过。
+
+### 未处理
+- 污染 key 拆分、乱码来源、隐写安全模型术语、BOLT 安全建议、数独变体命名和其他语言逐句润色仍需单独确认。
+
+
+### 原因
+- 继续优化外观、地点推荐、词库管理、穿搭建议、生活工具和语音识别中的明显直译与不自然表达。
+
+### 修改
+- 更新 39 个 catalog 中文 key，并同步对应 registry 镜像。
+- 将外观设置中的“模块/字段”表达改为用户更易理解的“控件/内容卡片/内容分区”。
+- 优化 IP 定位、地图源、地点保存和权限诊断提示。
+- 统一词库管理错误提示中的“词库/词条”术语。
+- 优化穿搭审核、生活工具分类、音效控制及语音识别错误提示。
+
+### 验证
+- `node scripts/audit_i18n_placeholders.js`：`missing=0`、`placeholderMismatch=0`、`dart missingParams=0`。
+- `node scripts/maintain_i18n_catalog.js --limit 5`：fatal duplicate/key/locale 项均为 0。
+- `git diff --check`：通过。
+
+### 未处理
+- 词库编辑器污染 key 拆分、乱码来源、隐写安全模型术语、BOLT 安全建议、数独变体命名和其他语言逐句润色仍需单独确认。
+
+
+### 原因
+- 继续优化基础公共、外观和专注流程中的中文 UI 文案，减少直译和工程化表达。
+
+### 修改
+- 更新 17 个 catalog 中文 key，并同步对应 registry 镜像。
+- 优化背景图片、透明度、字段分区、滚动标题、呼吸动画等外观设置文案。
+- 优化词库初始化、加载等待、放松阶段和播放列表等公共状态文案。
+
+### 验证
+- `node scripts/audit_i18n_placeholders.js`：`missing=0`、`placeholderMismatch=0`、`dart missingParams=0`。
+- `node scripts/maintain_i18n_catalog.js --limit 5`：fatal duplicate/key/locale 项均为 0。
+- `git diff --check`：通过。
+
+### 未处理
+- 词库编辑器污染 key 拆分、乱码来源、隐写安全模型术语、BOLT 安全建议、数独变体命名和其他语言逐句润色仍需单独确认。
+
+
+### 原因
+- 继续处理已确认的中文术语统一问题，重点收口外观、词库基础操作、听觉测试、音频拾音和地点定位提示。
+
+### 修改
+- 更新 28 个第三批 catalog 中文 key，并同步 26 个可用 registry 镜像。
+- 更新 22 个第四批 catalog 中文 key，并同步对应 registry 镜像。
+- 将字体、背景图显示模式、滚动标题、IP 粗略定位、衣物护理、音钵频率选择等机械翻译改为自然中文。
+- 将“媒介”统一为“中等”，将“听到率”改为“听辨正确率”，将 wordbook 基础操作统一为“词库”。
+- 将拾音工具“冻结快照/指引 冻结”改为“冻结当前画面/画面已冻结”。
+
+### 验证
+- `node scripts/audit_i18n_placeholders.js`：`missing=0`、`placeholderMismatch=0`、`dart missingParams=0`。
+- `node scripts/maintain_i18n_catalog.js --limit 5`：fatal duplicate/key/locale 项均为 0。
+- `git diff --check`：通过。
+
+### 未处理
+- 单词书编辑器污染 key 的拆分、乱码来源、隐写安全模型术语、BOLT 安全建议、数独变体命名和其他语言逐句润色仍需单独确认。
+
+## [Unreleased-PLAN_437-ZH-COPY-AUDIT] - 2026-09-11
+
+### 原因
+- 延续中文文案翻译质量梳理，补充数据完整性、编码异常和核心页面的第二批问题审查，先形成审核表，不提前替换运行时文案。
+
+### 新增
+- 在 `docs/i18n_zh_review_2026-09-10.md` 追加第二批审查表：P0 完整性/编码异常 6 组，页面与功能文案问题 24 组（含聚合项和待确认项）。
+- 为每条意见补充优先级、CSV 行号、英文基准、当前中文、问题类型、建议中文、占位符、调用点/证据和审核状态。
+
+### 修改
+- 更新 `plans/PLAN_436_中文文案翻译质量梳理.md` 的第二批执行记录和验证结果。
+
+### 验证
+- `node scripts/audit_i18n_placeholders.js`：catalog 53348，`missing=0`、`placeholderMismatch=0`、`dart missingParams=0`。
+- `node scripts/maintain_i18n_catalog.js --limit 20`：`duplicateCsvKeys=0`、`duplicateRegistryIds=0`、`missingLocaleColumns=0`；160 个可退休 key、40683 个未引用 key、2002 个 stale registry sources 作为历史线索保留，未执行清理。
+- 旧 helper 扫描：无命中。
+- catalog Dart 插值扫描：无命中。
+
+### 风险变更
+- 本批按审核确认替换 35 个 catalog 中文 key，并同步 15 个 registry 中文镜像；未修改 key、业务逻辑及其他语言。
+- 另统一 9 个呼吸模块来源快照中的“空气饥饿/空气渴望”为“缺气感”，并保留 `literal.*`、`arb.*` 编码候选及依赖控件/安全实现的术语待后续回溯。
+- `literal.*`、`arb.*` 编码候选以及依赖控件/安全实现的术语仍需回溯来源后确认；本批不执行 key 重命名、退休清理或其他语言逐句润色。
+
+
 
 ### 原因
 - catalog 中文文案存在直译生硬、机器翻译痕迹和术语不统一问题；经审核文档确认后进行第一批修复。
