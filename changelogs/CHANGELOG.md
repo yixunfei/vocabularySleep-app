@@ -1,3 +1,34 @@
+## [Unreleased-PLAN_437-全模块审计缺陷修复] - 2026-09-13
+
+### 原因
+- 依据 `records/record_314_project_comprehensive_audit_20260910.md` 与本轮 `flutter analyze`/i18n 审计结果，逐模块修复确认未闭环的缺陷并做体验调优。
+
+### 修复
+- **SEC-03 (P0)**: `cstcloud_resource_cache_service.dart` 新增严格缓存相对路径校验，拒绝绝对路径、盘符、`.`/`..`、空段与 NUL，杜绝下载/删除/前缀查询越出缓存目录；新增路径穿越回归测试。
+- **BUG-02 (P1)**: `tts_service_api.dart` Doubao 分支 Authorization 头由 `Bearer;$apiKey` 修正为 `Bearer $apiKey`。
+- **BUG-03 (P1)**: `sleep_quick_tools.dart` 环境音下载增加 try/catch/finally 与失败 SnackBar，`_downloadingId` 不再永久挂起；在线目录 FutureBuilder 补齐错误态+重试、空态分支。
+- **FOCUS-01 (P1)**: `focus_service.dart` 专注计时改为 wall-clock 锚点推进，挂起/恢复后按实际经过时间追平；暂停/恢复重建锚点；新增挂起追平回归测试。晨光计时器同步改为截止时间推进。
+- 修复 `test/ui_smoke_test.dart` 中 `FakeFocusService.addTodo` 与真实签名不一致的编译错误。
+
+### 修改
+- 工具箱入口卡片固定高度改为最小高度约束，标题/摘要换行时自然长高；快捷入口 pill 文案单行省略防溢出（UX-02，仅动 UI）。
+- 数独格子增加逐格 Semantics 标签（行/列/值），放松流程编辑器上移/下移/删除按钮补 tooltip（A11Y-01）。
+- 清理 lib 下 39 个 analyze warning 对应死代码：woodfish 壳层转发、休眠的密码揭示缓存机制、未引用 Painter（约 250 行）、postal 死 HTML 解析链、未用参数与导入；analyze 0 error 0 warning。
+
+### 新增（i18n）
+- 新增 7 个 catalog key（七语言 + registry 同步）：`toolbox.sleep.tools.onlineCatalogError`、`toolbox.sleep.tools.onlineCatalogEmpty`、`toolbox.sleep.tools.downloadFailed`、`toolbox.sleep.routine.moveUp`、`toolbox.sleep.routine.moveDown`、`toolbox.sudoku.cellLabel`、`toolbox.sudoku.cellEmpty`（含占位符 {row}/{col}/{value}）。退休 key 数：0。
+
+### 验证
+- `flutter analyze --no-pub`：0 error / 0 warning（info 级 103 条均为 test 文件风格提示）。
+- `flutter test`：全量 890+ 用例通过（含本轮新增回归）。
+- `node scripts/audit_i18n_placeholders.js`：`missing=0`、`placeholderMismatch=0`、`dart missingParams=0`。
+- 旧 helper 扫描与 catalog 插值扫描：均无命中。
+
+### 风险变更
+- **SEC-01 (P0，未闭环，需运维)**: S3 兼容存储凭据仍硬编码于 `cstcloud_s3_compat_client.dart`（实测桶拒绝匿名读，代码侧无法安全移除）；需轮换并吊销旧凭据、改匿名只读或服务端代理。
+- 缓存路径校验收紧后，若远端清单中出现含 `..`/空段/盘符的非法 key，将直接抛参数异常（安全优先，不做静默回退）。
+- 未处理（需独立计划）：PERF-01 发布包体、PERF-02 启动分层、PERF-03 预热策略（LRU/TTL/网络条件）、ARCH-01 长寿命依赖生命周期、40683 个未引用 catalog key 的瘦身（append-only 政策，属独立切片）。
+
 ## [Unreleased-PLAN_442-ZH-COPY-AUDIT-CONTINUE] - 2026-09-11
 
 ### 原因
