@@ -131,39 +131,55 @@ class _SudokuGameState extends State<_SudokuGame> {
                             : fixed
                             ? colors.secondaryContainer.withValues(alpha: 0.42)
                             : colors.surfaceContainerLowest;
-                        return GestureDetector(
-                          onTap: () => setState(() => _selected = index),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: background,
-                              border: Border(
-                                top: BorderSide(
-                                  width: row % 3 == 0 ? 2 : 0.7,
-                                  color: colors.outlineVariant,
-                                ),
-                                left: BorderSide(
-                                  width: col % 3 == 0 ? 2 : 0.7,
-                                  color: colors.outlineVariant,
-                                ),
-                                right: BorderSide(
-                                  width: col == 8 ? 2 : 0.7,
-                                  color: colors.outlineVariant,
-                                ),
-                                bottom: BorderSide(
-                                  width: row == 8 ? 2 : 0.7,
-                                  color: colors.outlineVariant,
+                        // 读屏用户依赖逐格语义才能完成核心玩法。
+                        return Semantics(
+                          button: true,
+                          selected: selected,
+                          excludeSemantics: true,
+                          label: i18n.t(
+                            'toolbox.sudoku.cellLabel',
+                            params: <String, Object?>{
+                              'row': row + 1,
+                              'col': col + 1,
+                              'value': value == 0
+                                  ? i18n.t('toolbox.sudoku.cellEmpty')
+                                  : '$value',
+                            },
+                          ),
+                          child: GestureDetector(
+                            onTap: () => setState(() => _selected = index),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: background,
+                                border: Border(
+                                  top: BorderSide(
+                                    width: row % 3 == 0 ? 2 : 0.7,
+                                    color: colors.outlineVariant,
+                                  ),
+                                  left: BorderSide(
+                                    width: col % 3 == 0 ? 2 : 0.7,
+                                    color: colors.outlineVariant,
+                                  ),
+                                  right: BorderSide(
+                                    width: col == 8 ? 2 : 0.7,
+                                    color: colors.outlineVariant,
+                                  ),
+                                  bottom: BorderSide(
+                                    width: row == 8 ? 2 : 0.7,
+                                    color: colors.outlineVariant,
+                                  ),
                                 ),
                               ),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              value == 0 ? '' : '$value',
-                              style: Theme.of(context).textTheme.titleLarge
-                                  ?.copyWith(
-                                    fontWeight: fixed
-                                        ? FontWeight.w900
-                                        : FontWeight.w700,
-                                  ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                value == 0 ? '' : '$value',
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(
+                                      fontWeight: fixed
+                                          ? FontWeight.w900
+                                          : FontWeight.w700,
+                                    ),
+                              ),
                             ),
                           ),
                         );

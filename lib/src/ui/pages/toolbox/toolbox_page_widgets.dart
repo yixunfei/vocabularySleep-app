@@ -83,7 +83,7 @@ class ToolboxIntroPanel extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   summary,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
@@ -390,14 +390,15 @@ class _ToolboxEntryCardState extends ConsumerState<ToolboxEntryCard> {
       scale: _pressed ? 0.985 : 1,
       duration: AppDurations.quick,
       curve: AppEasing.snappy,
+      // [风险] 用 minHeight 而非固定 height：大字号或长语言下标题/摘要
+      // 换行时卡片可以自然长高，避免 RenderFlex 溢出或内容被裁切。
       child: AnimatedContainer(
         duration: AppDurations.standard,
         curve: AppEasing.standard,
-        height: widget.editing
-            ? ToolboxUiTokens.entryEditingCardHeight
-            : ToolboxUiTokens.entryCardHeight,
-        constraints: const BoxConstraints(
-          minHeight: ToolboxUiTokens.entryMinHeight,
+        constraints: BoxConstraints(
+          minHeight: widget.editing
+              ? ToolboxUiTokens.entryEditingCardMinHeight
+              : ToolboxUiTokens.entryCardMinHeight,
         ),
         decoration: BoxDecoration(
           borderRadius: radius,

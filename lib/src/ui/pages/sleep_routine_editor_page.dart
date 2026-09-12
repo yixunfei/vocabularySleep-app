@@ -243,14 +243,17 @@ class _RoutineEditorStepCard extends StatelessWidget {
                 const Spacer(),
                 IconButton(
                   onPressed: canMoveUp ? onMoveUp : null,
+                  tooltip: i18n.t('toolbox.sleep.routine.moveUp'),
                   icon: const Icon(Icons.arrow_upward_rounded),
                 ),
                 IconButton(
                   onPressed: canMoveDown ? onMoveDown : null,
+                  tooltip: i18n.t('toolbox.sleep.routine.moveDown'),
                   icon: const Icon(Icons.arrow_downward_rounded),
                 ),
                 IconButton(
                   onPressed: onDelete,
+                  tooltip: i18n.t('toolbox.sleep.core.delete'),
                   icon: const Icon(Icons.delete_outline_rounded),
                 ),
               ],

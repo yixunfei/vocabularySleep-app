@@ -417,11 +417,17 @@ class _QuickEntryChip extends StatelessWidget {
               children: <Widget>[
                 Icon(entry.icon, size: 18, color: entry.accent),
                 const SizedBox(width: 8),
-                Text(
-                  entry.title,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                    fontWeight: FontWeight.w800,
+                // Flexible + 单行省略：长语言条目在 Wrap 中不会撑破行宽。
+                Flexible(
+                  child: Text(
+                    entry.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: false,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ],
