@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import '../core/module_system/module_toggle_state.dart';
@@ -8,10 +9,18 @@ import '../models/play_config.dart';
 import '../models/settings_dto.dart';
 import '../models/study_startup_tab.dart';
 import '../repositories/settings_store_repository.dart';
+import '../utils/play_config_api_key_persistence.dart';
+import 'app_log_service.dart';
 import 'database_service.dart';
+import 'secure_key_value_store.dart';
 
 class SettingsService {
-  const SettingsService.fromRepository(this._store);
+  // [风险] SEC-02: 不能再用 const 构造——实例需持有安全存储缓存，
+  // 保证同步的 loadPlayConfig 能取回已迁移到安全存储的 API key。
+  SettingsService.fromRepository(
+    this._store, {
+    SecureKeyValueStore? secureKeyValueStore,
+  }) : _secureStore = secureKeyValueStore ?? FlutterSecureKeyValueStore();
 
   factory SettingsService(AppDatabaseService database) {
     return SettingsService.fromRepository(
@@ -33,15 +42,78 @@ class SettingsService {
   static const String firstRunSetupCompletedKey =
       'first_run_setup_completed_v1';
 
+  /// [风险] SEC-02: TTS/ASR/语音输入的 apiKey 不再明文驻留 playConfig 行，
+  /// 统一迁入安全存储 blob；持久化行中只保留占位 null。
+  static const String secureApiKeysBlobKey = 'play_config.api_keys.v1';
+
   final SettingsStoreRepository _store;
+  final SecureKeyValueStore _secureStore;
+
+  // 内存缓存：prewarm 后可让同步的 loadPlayConfig 取回密钥；
+  // savePlayConfig 同步更新，保证"保存后立即读取"始终拿得到。
+  Map<String, String?>? _secureApiKeysCache;
+  bool _secureApiKeysPrewarmed = false;
+  int _secureApiKeysPersistGeneration = 0;
+
+  /// 启动时预热：读取安全存储 blob 并把遗留明文 key 迁移出 settings 行。
+  /// 幂等；迁移遵循"密钥先落安全存储成功，才剥离明文行"的顺序，
+  /// 安全存储不可用时保持旧行为并记录日志。
+  Future<void> prewarmSecureApiKeys() async {
+    if (_secureApiKeysPrewarmed) return;
+    _secureApiKeysPrewarmed = true;
+    try {
+      final blob = await _secureStore.read(secureApiKeysBlobKey);
+      if (blob != null && blob.trim().isNotEmpty) {
+        final decoded = jsonDecode(blob);
+        if (decoded is Map) {
+          _secureApiKeysCache = decoded.map<String, String?>(
+            (key, value) => MapEntry('$key', value?.toString()),
+          );
+        }
+      }
+    } catch (error, stackTrace) {
+      _logSecureStoreFailure('read', error, stackTrace);
+    }
+    await _migrateLegacyPlaintextApiKeys();
+  }
+
+  Future<void> _migrateLegacyPlaintextApiKeys() async {
+    try {
+      final raw = _store.getSetting(playConfigSettingKey);
+      final legacy = extractPlayConfigApiKeys(raw);
+      final hasLegacy = legacy.values.any(
+        (value) => value != null && value.trim().isNotEmpty,
+      );
+      if (!hasLegacy) return;
+      final merged = <String, String?>{...?_secureApiKeysCache, ...legacy};
+      await _secureStore.write(secureApiKeysBlobKey, jsonEncode(merged));
+      _secureApiKeysCache = merged;
+      final stripped = stripPlayConfigApiKeysFromRaw(raw);
+      if (stripped != null) {
+        _store.setSetting(playConfigSettingKey, stripped);
+      }
+      AppLogService.instance.d(
+        'SettingsService',
+        'API keys migrated to secure storage',
+      );
+    } catch (error, stackTrace) {
+      // 安全存储不可用：保留明文行（旧行为），避免用户凭据无法读取。
+      _logSecureStoreFailure('migrate', error, stackTrace);
+    }
+  }
 
   PlayConfig loadPlayConfig() {
-    final raw = _store.getSetting('playConfig');
+    final raw = _store.getSetting(playConfigSettingKey);
     if (raw == null || raw.trim().isEmpty) return PlayConfig.defaults;
     try {
       final decoded = jsonDecode(raw);
       if (decoded is Map) {
-        return PlayConfig.fromJson(decoded.cast<String, Object?>());
+        final json = decoded.cast<String, Object?>();
+        final cache = _secureApiKeysCache;
+        if (cache != null) {
+          injectPlayConfigApiKeys(json, cache);
+        }
+        return PlayConfig.fromJson(json);
       }
     } catch (_) {
       // ignore invalid JSON and fallback to defaults.
@@ -50,7 +122,54 @@ class SettingsService {
   }
 
   void savePlayConfig(PlayConfig config) {
-    _store.setSetting('playConfig', jsonEncode(config.toJson()));
+    final json = config.toJson();
+    final keys = extractPlayConfigApiKeysFromJson(json);
+    // 缓存镜像"最近一次保存"的密钥：UI 清空 key 时必须真正清除，
+    // 不能因缓存保旧导致清空操作被静默撤销。
+    _secureApiKeysCache = <String, String?>{...?_secureApiKeysCache, ...keys};
+    stripPlayConfigApiKeysInJson(json);
+    _store.setSetting(playConfigSettingKey, jsonEncode(json));
+    unawaited(_persistSecureApiKeys());
+  }
+
+  Future<void> _persistSecureApiKeys() async {
+    final generation = ++_secureApiKeysPersistGeneration;
+    try {
+      await _secureStore.write(
+        secureApiKeysBlobKey,
+        jsonEncode(_secureApiKeysCache ?? <String, String?>{}),
+      );
+    } catch (error, stackTrace) {
+      _logSecureStoreFailure('write', error, stackTrace);
+      // [风险] 降级：安全存储不可用时把密钥写回明文行，
+      // 保证用户凭据不因平台能力缺失而丢失（可用性优先）。
+      if (generation == _secureApiKeysPersistGeneration) {
+        try {
+          final raw = _store.getSetting(playConfigSettingKey);
+          final decoded = decodePlayConfigJson(raw);
+          final cache = _secureApiKeysCache;
+          if (decoded != null && cache != null) {
+            injectPlayConfigApiKeys(decoded, cache);
+            _store.setSetting(playConfigSettingKey, jsonEncode(decoded));
+          }
+        } catch (_) {
+          // 恢复失败时保留剥离行；用户在设置页重新保存即可。
+        }
+      }
+    }
+  }
+
+  void _logSecureStoreFailure(
+    String operation,
+    Object error,
+    StackTrace stackTrace,
+  ) {
+    AppLogService.instance.e(
+      'SettingsService',
+      'secure api key store $operation failed',
+      error: error,
+      stackTrace: stackTrace,
+    );
   }
 
   String loadUiLanguage() {

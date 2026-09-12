@@ -29,7 +29,35 @@ extension AppDatabaseServiceMaintenance on AppDatabaseService {
 
     _db.execute('PRAGMA wal_checkpoint(FULL);');
     _db.execute("VACUUM INTO '${_escapeSqlString(targetPath)}';");
+    // [风险] SEC-02: 备份是整库拷贝，settings.playConfig 行可能仍含明文
+    // API key（迁移前的旧库或安全存储降级回写）。导出前在备份副本内剥离，
+    // 不触碰运行中的数据库。
+    _stripApiKeysFromBackupDatabaseFile(targetPath);
     return targetPath;
+  }
+
+  void _stripApiKeysFromBackupDatabaseFile(String targetPath) {
+    final backupDb = sqlite3.open(targetPath);
+    try {
+      final rows = backupDb.select(
+        'SELECT value FROM settings WHERE key = ?',
+        <Object?>[playConfigSettingKey],
+      );
+      if (rows.isEmpty) {
+        return;
+      }
+      final raw = rows.first['value']?.toString();
+      final stripped = stripPlayConfigApiKeysFromRaw(raw);
+      if (stripped == null || stripped == raw) {
+        return;
+      }
+      backupDb.execute('UPDATE settings SET value = ? WHERE key = ?', <Object?>[
+        stripped,
+        playConfigSettingKey,
+      ]);
+    } finally {
+      backupDb.dispose();
+    }
   }
 
   Future<List<DatabaseBackupInfo>> listSafetyBackups({int limit = 20}) async {

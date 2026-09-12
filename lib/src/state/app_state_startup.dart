@@ -28,6 +28,9 @@ extension _AppStateStartup on AppState {
         await _restoreDownloadedAmbientSounds();
       }
 
+      // [风险] SEC-02: 必须先取回安全存储中的 API key 再同步加载配置，
+      // 否则首帧的播放/识别配置会短暂缺失密钥。
+      await _settings.prewarmSecureApiKeys();
       _config = _settings.loadPlayConfig();
       _playback.updateRuntimeConfig(_config);
       _bottomNavigationAutoHideEnabled = _settings

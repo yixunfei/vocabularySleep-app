@@ -79,6 +79,7 @@ dependencies:
   local_auth: ^3.0.1
   video_player: ^2.11.1
   video_trimmer: 5.0.0
+  flutter_secure_storage: ^10.3.3
 dev_dependencies:
   flutter_test:
     sdk: flutter
