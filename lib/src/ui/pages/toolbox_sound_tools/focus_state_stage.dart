@@ -86,10 +86,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
       ),
       clipBehavior: Clip.antiAlias,
       child: AnimatedBuilder(
-        animation: Listenable.merge(<Listenable>[
-          _pulseController,
-          _ambientController,
-        ]),
+        animation: _focusStateListenable,
         builder: (context, _) {
           return Stack(
             children: <Widget>[
@@ -547,10 +544,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
       ),
       clipBehavior: Clip.antiAlias,
       child: AnimatedBuilder(
-        animation: Listenable.merge(<Listenable>[
-          _pulseController,
-          _ambientController,
-        ]),
+        animation: _focusStateListenable,
         builder: (context, _) {
           return Stack(
             children: <Widget>[
@@ -803,10 +797,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
           children: <Widget>[
             Positioned.fill(
               child: AnimatedBuilder(
-                animation: Listenable.merge(<Listenable>[
-                  _pulseController,
-                  _ambientController,
-                ]),
+                animation: _focusStateListenable,
                 builder: (context, _) {
                   return CustomPaint(
                     painter: _FocusBeatVisualizerPainter(

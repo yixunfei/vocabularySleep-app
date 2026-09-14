@@ -431,4 +431,7 @@ class CstCloudResourceCacheService {
       // A stale partial file must not make an otherwise usable cache miss.
     }
   }
+
+  /// Close the underlying HTTP client to release resources.
+  Future<void> close() => _client.close();
 }

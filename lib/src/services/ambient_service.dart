@@ -56,15 +56,20 @@ class AmbientSource {
     bool? builtIn,
     bool? enabled,
     double? volume,
+    bool clearAssetPath = false,
+    bool clearFilePath = false,
+    bool clearRemoteUrl = false,
+    bool clearRemoteKey = false,
+    bool clearCategoryKey = false,
   }) {
     return AmbientSource(
       id: id ?? this.id,
       name: name ?? this.name,
-      assetPath: assetPath ?? this.assetPath,
-      filePath: filePath ?? this.filePath,
-      remoteUrl: remoteUrl ?? this.remoteUrl,
-      remoteKey: remoteKey ?? this.remoteKey,
-      categoryKey: categoryKey ?? this.categoryKey,
+      assetPath: clearAssetPath ? null : assetPath ?? this.assetPath,
+      filePath: clearFilePath ? null : filePath ?? this.filePath,
+      remoteUrl: clearRemoteUrl ? null : remoteUrl ?? this.remoteUrl,
+      remoteKey: clearRemoteKey ? null : remoteKey ?? this.remoteKey,
+      categoryKey: clearCategoryKey ? null : categoryKey ?? this.categoryKey,
       builtIn: builtIn ?? this.builtIn,
       enabled: enabled ?? this.enabled,
       volume: volume ?? this.volume,
@@ -403,7 +408,25 @@ class SeamlessAmbientLoop {
     );
     _handoffTimer?.cancel();
     _handoffTimer = Timer(handoffDelay, () {
-      unawaited(_performHandoff(runToken));
+      try {
+        unawaited(_performHandoff(runToken).catchError(
+          (Object error, StackTrace stackTrace) {
+            AppLogService.instance.e(
+              'ambient_audio',
+              'handoff failed',
+              error: error,
+              stackTrace: stackTrace,
+            );
+          },
+        ));
+      } catch (error, stackTrace) {
+        AppLogService.instance.e(
+          'ambient_audio',
+          'handoff dispatch failed',
+          error: error,
+          stackTrace: stackTrace,
+        );
+      }
     });
   }
 
@@ -453,11 +476,29 @@ class SeamlessAmbientLoop {
     _fadeTimer?.cancel();
     _fadeTimer = Timer.periodic(Duration(milliseconds: tickMs), (timer) {
       _fadeProgress = (_fadeProgress + step).clamp(0.0, 1.0);
-      unawaited(_syncVolumes());
+      unawaited(_syncVolumes().catchError(
+        (Object error, StackTrace stackTrace) {
+          AppLogService.instance.e(
+            'ambient_audio',
+            'volume sync failed during fade',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        },
+      ));
       if (_fadeProgress >= 1) {
         timer.cancel();
         _fadeTimer = null;
-        unawaited(_completeFade(runToken));
+        unawaited(_completeFade(runToken).catchError(
+          (Object error, StackTrace stackTrace) {
+          AppLogService.instance.e(
+            'ambient_audio',
+            'complete fade failed',
+            error: error,
+            stackTrace: stackTrace,
+          );
+          },
+        ));
       }
     });
   }
@@ -918,6 +959,7 @@ class AmbientService {
         await _syncPlaybackOnce();
       } while (_syncPlaybackQueued);
     } finally {
+      _syncPlaybackQueued = false;
       _syncPlaybackRunning = false;
     }
   }

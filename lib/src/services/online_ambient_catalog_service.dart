@@ -30,9 +30,19 @@ class OnlineAmbientCatalogService {
   static const String remotePrefix = 'ambient/moodist/';
   final CstCloudResourceCacheService _cacheService;
   List<OnlineAmbientSoundOption>? _cachedCatalog;
+  bool _disposed = false;
 
   static const List<OnlineAmbientSoundOption> fallbackOptions =
       <OnlineAmbientSoundOption>[];
+
+  void dispose() {
+    if (_disposed) {
+      return;
+    }
+    _disposed = true;
+    _cachedCatalog = null;
+    _cacheService.close();
+  }
 
   Future<List<OnlineAmbientSoundOption>> fetchCatalog({
     bool forceRefresh = false,

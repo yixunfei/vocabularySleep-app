@@ -52,8 +52,10 @@ class _TriangleToolState extends State<_TriangleTool> {
   String _lastGesture = 'Single';
   bool _rollInFlight = false;
   int _activeTouchCount = 0;
-  int? _rollPointer;
+  int? _rollingPointer;
   Timer? _rollTimer;
+  Duration _rollDuration = Duration.zero;
+  static const Duration _maxRollDuration = Duration(seconds: 30);
   Offset _rollPosition = Offset.zero;
   double _rollIntervalMs = 70;
   double _rollStrike = 0.5;
@@ -173,7 +175,8 @@ class _TriangleToolState extends State<_TriangleTool> {
     _rollTimer?.cancel();
     _rollTimer = null;
     _rollInFlight = false;
-    _rollPointer = null;
+    _rollingPointer = null;
+    _rollDuration = Duration.zero;
     _rollEnergy = 0;
   }
 
@@ -258,6 +261,7 @@ class _TriangleToolState extends State<_TriangleTool> {
         _rollIntervalMs = 70;
         _rollEnergy = 0.12;
         _rollInFlight = true;
+        _rollDuration = Duration.zero;
         await _performHit(
           strike: _rollStrike,
           damping: _rollDamping,
@@ -284,6 +288,11 @@ class _TriangleToolState extends State<_TriangleTool> {
 
   void _scheduleRollStep(Size size) {
     if (!_rollInFlight) {
+      return;
+    }
+    _rollDuration += Duration(milliseconds: _rollIntervalMs.round());
+    if (_rollDuration >= _maxRollDuration) {
+      _stopRollEngine();
       return;
     }
     unawaited(
@@ -337,13 +346,16 @@ class _TriangleToolState extends State<_TriangleTool> {
       return;
     }
     if (_playMode == _TrianglePlayMode.roll) {
-      _rollPointer = event.pointer;
+      _rollingPointer ??= event.pointer;
     }
     unawaited(_strikeFromStage(event.localPosition, size));
   }
 
   void _handleStagePointerMove(PointerMoveEvent event, Size size) {
-    if (_playMode != _TrianglePlayMode.roll || _rollPointer != event.pointer) {
+    if (_playMode != _TrianglePlayMode.roll) {
+      return;
+    }
+    if (_rollingPointer != event.pointer) {
       return;
     }
     _updateRollDynamics(event.localPosition, event.delta, size);
@@ -351,7 +363,7 @@ class _TriangleToolState extends State<_TriangleTool> {
 
   void _handleStagePointerUp(PointerEvent event) {
     _activeTouchCount = math.max(0, _activeTouchCount - 1);
-    if (_rollPointer == event.pointer) {
+    if (_rollingPointer == event.pointer) {
       _stopRollEngine();
     }
   }

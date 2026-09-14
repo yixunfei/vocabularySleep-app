@@ -89,6 +89,27 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
     };
   }
 
+  String _animationLabelI18n(BuildContext context, _FocusBeatAnimationKind kind) {
+    final i18n = _i18nOf(context);
+    return switch (kind) {
+      _FocusBeatAnimationKind.pendulum => i18n.t(
+        'toolbox.sound.focus.animNameWarm',
+      ),
+      _FocusBeatAnimationKind.hypno => i18n.t(
+        'toolbox.sound.focus.animNameStill',
+      ),
+      _FocusBeatAnimationKind.dew => i18n.t(
+        'toolbox.sound.focus.animNameClear',
+      ),
+      _FocusBeatAnimationKind.gear => i18n.t(
+        'toolbox.sound.focus.animNamePrecision',
+      ),
+      _FocusBeatAnimationKind.steps => i18n.t(
+        'toolbox.sound.focus.animNameStep',
+      ),
+    };
+  }
+
   String _soundLabel(_FocusBeatSoundKind kind) {
     return switch (kind) {
       _FocusBeatSoundKind.pendulum => '钟摆 Click',
@@ -96,6 +117,19 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
       _FocusBeatSoundKind.dew => '露滴 Drop',
       _FocusBeatSoundKind.gear => '机械 Tick',
       _FocusBeatSoundKind.steps => '步伐 Step',
+    };
+  }
+
+  String _soundLabelI18n(BuildContext context, _FocusBeatSoundKind kind) {
+    final i18n = _i18nOf(context);
+    return switch (kind) {
+      _FocusBeatSoundKind.pendulum => i18n.t(
+        'toolbox.sound.focus.soundNamePendulum',
+      ),
+      _FocusBeatSoundKind.hypno => i18n.t('toolbox.sound.focus.soundNamePulse'),
+      _FocusBeatSoundKind.dew => i18n.t('toolbox.sound.focus.soundNameDrop'),
+      _FocusBeatSoundKind.gear => i18n.t('toolbox.sound.focus.soundNameTick'),
+      _FocusBeatSoundKind.steps => i18n.t('toolbox.sound.focus.soundNameStep'),
     };
   }
 

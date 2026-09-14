@@ -251,7 +251,8 @@
         "toolbox.life_tools.menstrual_cycle",
         "toolbox.life_tools.gif_maker"
       ]
-    }
+    },
+    "totalEntries": 6
   },
   "localePolicy": {
     "supportedLocales": [
@@ -371106,6 +371107,158 @@
       ],
       "sourceCount": 1,
       "placeholders": []
+    },
+    {
+      "id": "toolbox.sound.focus.linkedMode",
+      "kind": "existing_app_i18n_key",
+      "status": "runtime_wired",
+      "sourceSystem": "AppI18n.t",
+      "texts": {
+        "zh": "推荐结对",
+        "en": "Linked mode",
+        "ja": "連動モード",
+        "de": "Gekoppelter Modus",
+        "fr": "Mode lié",
+        "es": "Vinculado",
+        "ru": "Связанный режим"
+      },
+      "sources": [
+        {
+          "file": "lib/src/ui/pages/toolbox_sound_tools/focus_state_stage_sections.dart",
+          "line": 75,
+          "context": "i18n.t(...)"
+        }
+      ],
+      "sourceCount": 1,
+      "placeholders": []
+    },
+    {
+      "id": "toolbox.sound.focus.unlinkedMode",
+      "kind": "existing_app_i18n_key",
+      "status": "runtime_wired",
+      "sourceSystem": "AppI18n.t",
+      "texts": {
+        "zh": "自由混搭",
+        "en": "Free mix",
+        "ja": "フリーミックス",
+        "de": "Freie Mischung",
+        "fr": "Mode libre",
+        "es": "Variación libre",
+        "ru": "Свободное смешивание"
+      },
+      "sources": [
+        {
+          "file": "lib/src/ui/pages/toolbox_sound_tools/focus_state_stage_sections.dart",
+          "line": 76,
+          "context": "i18n.t(...)"
+        }
+      ],
+      "sourceCount": 1,
+      "placeholders": []
+    },
+    {
+      "id": "toolbox.sound.focus.recommendedAnimation",
+      "kind": "existing_app_i18n_key",
+      "status": "runtime_wired",
+      "sourceSystem": "AppI18n.t",
+      "texts": {
+        "zh": "推荐动画：{label}",
+        "en": "Recommended animation: {label}",
+        "ja": "推奨アニメーション：{label}",
+        "de": "Empfohlene Animation: {label}",
+        "fr": "Animation recommandée : {label}",
+        "es": "Animación recomendada: {label}",
+        "ru": "Рекомендуемая анимация: {label}"
+      },
+      "sources": [
+        {
+          "file": "lib/src/ui/pages/toolbox_sound_tools/focus_state_stage_sections.dart",
+          "line": 298,
+          "context": "i18n.t(...)"
+        }
+      ],
+      "sourceCount": 1,
+      "placeholders": [
+        "label"
+      ]
+    },
+    {
+      "id": "inline.ui.pages.toolbox_human_tests_cognition.rounds",
+      "kind": "existing_app_i18n_key",
+      "status": "runtime_wired",
+      "sourceSystem": "AppI18n.t",
+      "texts": {
+        "zh": "{rounds} 回合",
+        "en": "{rounds} rounds",
+        "ja": "{rounds} ラウンド",
+        "de": "{rounds} Runden",
+        "fr": "Tours {rounds}",
+        "es": "Rondas {rounds}",
+        "ru": "Раунды {rounds}"
+      },
+      "sources": [
+        {
+          "file": "lib/src/ui/pages/toolbox_human_tests_cognition.dart",
+          "line": 700,
+          "context": "i18n.t(...)"
+        }
+      ],
+      "sourceCount": 1,
+      "placeholders": [
+        "rounds"
+      ]
+    },
+    {
+      "id": "inline.ui.pages.toolbox_human_tests_cognition.livesLeft",
+      "kind": "existing_app_i18n_key",
+      "status": "runtime_wired",
+      "sourceSystem": "AppI18n.t",
+      "texts": {
+        "zh": "{count} lives left",
+        "en": "{count} lives left",
+        "ja": "{count} ラウンド残り",
+        "de": "{count} verbleibende Leben",
+        "fr": "{count} vies restantes",
+        "es": "{count} vidas restantes",
+        "ru": "{count} жизней осталось"
+      },
+      "sources": [
+        {
+          "file": "lib/src/ui/pages/toolbox_human_tests_cognition.dart",
+          "line": 708,
+          "context": "i18n.t(...)"
+        }
+      ],
+      "sourceCount": 1,
+      "placeholders": [
+        "count"
+      ]
+    },
+    {
+      "id": "inline.ui.pages.toolbox_human_tests_bimanual.sync_window_ms",
+      "kind": "existing_app_i18n_key",
+      "status": "runtime_wired",
+      "sourceSystem": "AppI18n.t",
+      "texts": {
+        "zh": "{ms} ms sync",
+        "en": "{ms} ms sync",
+        "ja": "{ms} ms 同期",
+        "de": "{ms} ms Synchronisierung",
+        "fr": "{ms} ms synchronisation",
+        "es": "{ms} ms sincronización",
+        "ru": "{ms} мс синхронизация"
+      },
+      "sources": [
+        {
+          "file": "lib/src/ui/pages/toolbox_human_tests_bimanual.dart",
+          "line": 1055,
+          "context": "i18n.t(...)"
+        }
+      ],
+      "sourceCount": 1,
+      "placeholders": [
+        "ms"
+      ]
     }
   ],
   "lastPlan424HistoryPeriodic": {

@@ -19,6 +19,7 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
 
   Widget _buildSelectionSummary(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
@@ -63,15 +64,17 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
             children: <Widget>[
               _FocusInfoPill(
                 icon: _animationKind.icon,
-                label: _animationLabel(_animationKind),
+                label: _animationLabelI18n(context, _animationKind),
               ),
               _FocusInfoPill(
                 icon: _soundKind.icon,
-                label: _soundLabel(_soundKind),
+                label: _soundLabelI18n(context, _soundKind),
               ),
               _FocusInfoPill(
                 icon: Icons.auto_awesome_motion_rounded,
-                label: _linkAnimationAndSound ? '推荐结对' : '自由混搭',
+                label: _linkAnimationAndSound
+                    ? i18n.t('toolbox.sound.focus.linkedMode')
+                    : i18n.t('toolbox.sound.focus.unlinkedMode'),
                 emphasized: _linkAnimationAndSound,
               ),
             ],
@@ -170,7 +173,7 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    _animationLabel(kind),
+                    _animationLabelI18n(context, kind),
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -218,6 +221,7 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
   Widget _buildSoundOptionTile(BuildContext context, _FocusBeatSoundKind kind) {
     final selected = _soundKind == kind;
     final colorScheme = Theme.of(context).colorScheme;
+    final i18n = AppI18n(Localizations.localeOf(context).languageCode);
     final pairedAnimation = _pairedAnimationForSound(kind);
     return InkWell(
       borderRadius: BorderRadius.circular(18),
@@ -261,7 +265,7 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    _soundLabel(kind),
+                    _soundLabelI18n(context, kind),
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -293,7 +297,12 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
                   label: _realismLabel(_soundRealism(kind)),
                 ),
                 Text(
-                  '推荐动画：${_animationLabel(pairedAnimation)}',
+                  i18n.t(
+                    'toolbox.sound.focus.recommendedAnimation',
+                    params: <String, Object?>{
+                      'label': _animationLabelI18n(context, pairedAnimation),
+                    },
+                  ),
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),

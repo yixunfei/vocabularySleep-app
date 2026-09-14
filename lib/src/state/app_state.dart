@@ -3793,6 +3793,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _practiceStore.dispose();
     _wordbookImportStore.dispose();
     _wordbookLoadStore.dispose();
+    _onlineAmbientCatalogService.dispose();
     _maintenanceRepository.dispose();
     super.dispose();
   }

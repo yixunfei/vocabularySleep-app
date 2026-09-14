@@ -102,7 +102,7 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
     if (reducedMotion) {
       _ambientController.stop();
       _ambientController.value = 0;
-    } else if (!_ambientController.isAnimating) {
+    } else if (mounted && !_ambientController.isAnimating) {
       _ambientController.repeat();
     }
   }

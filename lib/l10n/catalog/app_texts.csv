@@ -16893,3 +16893,9 @@ toolbox.sleep.routine.moveUp,上移步骤,Move step up,ステップを上へ移�
 toolbox.sleep.routine.moveDown,下移步骤,Move step down,ステップを下へ移動,Schritt nach unten verschieben,Déplacer l'étape vers le bas,Mover el paso hacia abajo,Переместить шаг вниз
 toolbox.sudoku.cellLabel,第 {row} 行，第 {col} 列：{value},"Row {row}, column {col}: {value}",{row} 行 {col} 列目：{value},"Zeile {row}, Spalte {col}: {value}","Ligne {row}, colonne {col} : {value}","Fila {row}, columna {col}: {value}","Строка {row}, столбец {col}: {value}"
 toolbox.sudoku.cellEmpty,空,empty,空,leer,vide,vacío,пусто
+toolbox.sound.focus.linkedMode,推荐结对,Linked mode,連動モード,Gekoppelter Modus,Mode lié,Vinculado,Связанный режим
+toolbox.sound.focus.unlinkedMode,自由混搭,Free mix,フリーミックス,Freie Mischung,Mode libre,Variación libre,Свободное смешивание
+toolbox.sound.focus.recommendedAnimation,推荐动画：{label},Recommended animation: {label},推奨アニメーション：{label},Empfohlene Animation: {label},Animation recommandée : {label},Animación recomendada: {label},Рекомендуемая анимация: {label}
+inline.ui.pages.toolbox_human_tests_cognition.rounds,{rounds} 回合,{rounds} rounds,{rounds} ラウンド,{rounds} Runden,Tours {rounds},Rondas {rounds},Раунды {rounds}
+inline.ui.pages.toolbox_human_tests_cognition.livesLeft,{count} lives left,{count} lives left,{count} ラウンド残り,{count} verbleibende Leben,{count} vies restantes,{count} vidas restantes,{count} жизней осталось
+inline.ui.pages.toolbox_human_tests_bimanual.sync_window_ms,{ms} ms sync,{ms} ms sync,{ms} ms 同期,{ms} ms Synchronisierung,{ms} ms synchronisation,{ms} ms sincronización,{ms} мс синхронизация

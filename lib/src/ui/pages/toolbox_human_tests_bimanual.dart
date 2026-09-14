@@ -1054,7 +1054,10 @@ class _BimanualStage extends StatelessWidget {
             _HumanPill(text: ruleLabel, accent: accent),
             _HumanPill(text: laneLabel, accent: accent),
             _HumanPill(
-              text: '$syncWindowMs ms sync',
+              text: i18n.t(
+                'inline.ui.pages.toolbox_human_tests_bimanual.sync_window_ms',
+                params: <String, Object?>{'ms': '$syncWindowMs'},
+              ),
               accent: colorScheme.primary,
             ),
           ],

@@ -362,6 +362,7 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
 
   late final AnimationController _pulseController;
   late final AnimationController _ambientController;
+  late final Listenable _focusStateListenable;
   final TextEditingController _patternController = TextEditingController(
     text: '2bar+2bar',
   );
@@ -475,7 +476,7 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
     if (reducedMotion) {
       _ambientController.stop();
       _ambientController.value = 0;
-    } else if (!_ambientController.isAnimating) {
+    } else if (mounted && !_ambientController.isAnimating) {
       _ambientController.repeat();
     }
   }
@@ -492,6 +493,10 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
       vsync: this,
       duration: const Duration(seconds: 8),
     )..repeat();
+    _focusStateListenable = Listenable.merge(<Listenable>[
+      _pulseController,
+      _ambientController,
+    ]);
     _syncPulseAnimationDuration();
     _syncPatternFromArrangement(syncTemplate: false);
     unawaited(_rebuildPlayers());

@@ -695,8 +695,26 @@ class _StroopReportDialog extends StatelessWidget {
                   runSpacing: 8,
                   children: <Widget>[
                     Chip(label: Text(mode)),
-                    Chip(label: Text('$roundLimit rounds')),
-                    Chip(label: Text('$livesLeft lives left')),
+                    Chip(
+                      label: Text(
+                        i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_cognition.rounds',
+                          params: <String, Object?>{
+                            'rounds': roundLimit.toString(),
+                          },
+                        ),
+                      ),
+                    ),
+                    Chip(
+                      label: Text(
+                        i18n.t(
+                          'inline.ui.pages.toolbox_human_tests_cognition.livesLeft',
+                          params: <String, Object?>{
+                            'count': livesLeft.toString(),
+                          },
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
