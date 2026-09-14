@@ -3722,6 +3722,8 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   /// remain local to the session and do not rebuild the hidden tab per word.
   void refreshPracticeViews() => _notifyPracticeChanged();
 
+  bool get isDisposed => _disposed;
+
   @override
   void dispose() {
     if (_disposed) {

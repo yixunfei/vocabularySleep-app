@@ -1019,6 +1019,9 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
     _stopWaterHoldPainter();
     _stopSandLoop(immediate: true);
     _resetStrokeAudioSync();
+    // A transform takes ownership of the current pointer sequence. Never
+    // leave an unfinished stroke behind for the next gesture sequence.
+    _canvasStore.workingStroke = <Offset>[];
     _canvasStore.startTransform(focalPoint: focalPoint, size: size);
   }
 
@@ -1083,6 +1086,7 @@ class _ZenSandStudioPageState extends State<ZenSandStudioPage> {
       return;
     }
     _gestureMode = _ZenGestureMode.idle;
+    _canvasStore.workingStroke = <Offset>[];
     _stopWaterHoldPainter();
     _stopSandLoop(immediate: true);
     _resetStrokeAudioSync();

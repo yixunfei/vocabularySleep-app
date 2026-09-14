@@ -1,3 +1,33 @@
+## [Unreleased-功能Bug修复] - 2026-09-14
+
+### 修复
+- 修复禅意沙盘双指变换接管时遗留未完成笔画、变换结束后脏笔画影响后续手势的问题。
+- 修复音钵移动端舞台和 burst 绘制层使用固定放大倍数导致窄屏布局越界的问题，所有舞台层现在受 LayoutBuilder 约束并裁剪。
+- 修复在线环境音目录服务在释放后继续回写缓存或访问已关闭资源的问题，并安全处理异步 cache close 异常。
+- 修复 AppState 销毁期间在线环境音下载完成后仍写入运行时环境音和数据库的问题。
+
+### 验证
+- `dart format`：通过。
+- 定向 `dart analyze`：通过，无问题。
+- `flutter test test/online_ambient_catalog_service_test.dart test/toolbox_password_vault_service_test.dart`：通过（18 个测试）。
+- `flutter test test/ui_smoke_test.dart`：通过（148 个测试）。
+
+### 未处理项
+- 按要求未处理 S3 凭据、打包/签名、Gradle lint、依赖升级和包体资源问题。
+
+### 追加修复
+- 将每日抉择菜谱库 JSON 纳入 Flutter assets，并增加真实 bundle 加载回归测试。
+- 在线环境音目录复用注入缓存根目录和统一路径校验，过滤未完成下载文件，并合并并发目录请求。
+- 为音钵移动端控制和禅意沙盘快捷按钮补充可访问语义；快捷按钮命中区域提升至 48dp；音钵 burst 遵循 reduced-motion 并缩短为 900ms。
+
+### 本轮验证
+- `flutter test test/recipe_library_json_load_test.dart`：通过（2 tests）。
+- `flutter test test/online_ambient_catalog_service_test.dart test/cstcloud_resource_cache_service_test.dart`：通过（15 tests）。
+- `flutter test test/ui_smoke_test.dart`：通过（148 tests）。
+
+### 未处理项
+- Focus/Daily Choice 全量文案 catalog 迁移、远端 Ambient 多语言名录化、全局主题 token 化、painter 深度缓存和 record_070 生成物重建需独立切片。
+
 ## [Unreleased-PLAN_442-逐模块稳健性与体验优化] - 2026-09-13
 
 ### 原因

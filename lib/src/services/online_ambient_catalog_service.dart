@@ -1,7 +1,7 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
 import 'cstcloud_resource_cache_service.dart';
 
@@ -30,10 +30,17 @@ class OnlineAmbientCatalogService {
   static const String remotePrefix = 'ambient/moodist/';
   final CstCloudResourceCacheService _cacheService;
   List<OnlineAmbientSoundOption>? _cachedCatalog;
+  Future<List<OnlineAmbientSoundOption>>? _catalogRequest;
   bool _disposed = false;
 
   static const List<OnlineAmbientSoundOption> fallbackOptions =
       <OnlineAmbientSoundOption>[];
+
+  void _checkActive() {
+    if (_disposed) {
+      throw StateError('Online ambient catalog service is disposed.');
+    }
+  }
 
   void dispose() {
     if (_disposed) {
@@ -41,46 +48,74 @@ class OnlineAmbientCatalogService {
     }
     _disposed = true;
     _cachedCatalog = null;
-    _cacheService.close();
+    unawaited(
+      _cacheService.close().catchError((Object _) {
+        // Disposal must not surface an unhandled asynchronous close error.
+      }),
+    );
   }
 
   Future<List<OnlineAmbientSoundOption>> fetchCatalog({
     bool forceRefresh = false,
-  }) async {
+  }) {
+    _checkActive();
     if (!forceRefresh && _cachedCatalog != null) {
-      return _cachedCatalog!;
+      return Future<List<OnlineAmbientSoundOption>>.value(_cachedCatalog);
     }
+    final existing = _catalogRequest;
+    if (existing != null && !forceRefresh) {
+      return existing;
+    }
+    final request = _fetchCatalogAndCache();
+    _catalogRequest = request;
+    return request.whenComplete(() {
+      if (identical(_catalogRequest, request)) {
+        _catalogRequest = null;
+      }
+    });
+  }
 
+  Future<List<OnlineAmbientSoundOption>> _fetchCatalogAndCache() async {
     try {
       final remoteOptions = await _fetchCatalogFromS3();
+      _checkActive();
       if (remoteOptions.isNotEmpty) {
         _cachedCatalog = remoteOptions;
         return remoteOptions;
       }
     } catch (_) {
-      // Fall through to bundled fallback list.
+      if (_disposed) {
+        rethrow;
+      }
     }
-
+    _checkActive();
     _cachedCatalog = fallbackOptions;
     return fallbackOptions;
   }
 
   Future<String> localPathFor(OnlineAmbientSoundOption option) async {
-    final targetDirectory = await _ensureCacheRootDirectory();
-    return p.join(
-      targetDirectory.path,
-      option.remoteKey.replaceAll('/', Platform.pathSeparator),
+    _checkActive();
+    final relativePath = _cacheService.normalizeCacheRelativePath(
+      option.remoteKey,
+      cacheRelativePath: option.remoteKey,
     );
+    final targetDirectory = await _cacheService.resolveCacheDirectory();
+    _checkActive();
+    return p.join(targetDirectory.path, relativePath);
   }
 
   Future<bool> isDownloaded(OnlineAmbientSoundOption option) async {
+    _checkActive();
     final targetPath = await localPathFor(option);
+    _checkActive();
     final file = File(targetPath);
     return await file.exists() && await file.length() > 0;
   }
 
   Future<void> deleteLocal(OnlineAmbientSoundOption option) async {
+    _checkActive();
     final targetPath = await localPathFor(option);
+    _checkActive();
     final file = File(targetPath);
     if (await file.exists()) {
       await file.delete();
@@ -88,14 +123,13 @@ class OnlineAmbientCatalogService {
   }
 
   Future<Set<String>> listDownloadedRelativePaths() async {
-    final root = await _ensureCacheRootDirectory();
+    _checkActive();
+    final root = await _cacheService.resolveCacheDirectory();
+    _checkActive();
     final ambientRoot = Directory(
       p.join(root.path, remotePrefix.replaceAll('/', Platform.pathSeparator)),
     );
     if (!await ambientRoot.exists()) {
-      return <String>{};
-    }
-    if (!await root.exists()) {
       return <String>{};
     }
     final output = <String>{};
@@ -103,7 +137,7 @@ class OnlineAmbientCatalogService {
       recursive: true,
       followLinks: false,
     )) {
-      if (entity is! File) {
+      if (entity is! File || entity.path.endsWith('.part')) {
         continue;
       }
       final relative = p.relative(entity.path, from: ambientRoot.path);
@@ -123,11 +157,13 @@ class OnlineAmbientCatalogService {
     OnlineAmbientSoundOption option,
     void Function(ResourceDownloadProgress progress)? onProgress,
   ) async {
+    _checkActive();
     final file = await _cacheService.ensureFileDownloaded(
       option.remoteKey,
       cacheRelativePath: option.remoteKey,
       onProgress: onProgress,
     );
+    _checkActive();
     return file.path;
   }
 
@@ -201,16 +237,5 @@ class OnlineAmbientCatalogService {
               '${part[0].toUpperCase()}${part.substring(1).toLowerCase()}',
         )
         .join(' ');
-  }
-
-  Future<Directory> _ensureCacheRootDirectory() async {
-    final supportDir = await getApplicationSupportDirectory();
-    final cacheDir = Directory(
-      p.join(supportDir.path, 'remote_resource_cache'),
-    );
-    if (!await cacheDir.exists()) {
-      await cacheDir.create(recursive: true);
-    }
-    return cacheDir;
   }
 }

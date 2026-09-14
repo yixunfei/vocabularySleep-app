@@ -13,80 +13,83 @@ extension _SingingBowlsStage on _SingingBowlsPracticeCardState {
           child: Center(
             child: LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
-                final baseSize = math.min(
+                final stageSize = math.min(
                   constraints.maxWidth,
                   constraints.maxHeight,
                 );
-                final bowlSize = compact
-                    ? baseSize.clamp(240.0, 360.0).toDouble()
-                    : baseSize.clamp(300.0, 440.0).toDouble();
-                return GestureDetector(
-                  onTapDown: (_) => setPressing(true),
-                  onTapCancel: () => setPressing(false),
-                  onTapUp: (_) => setPressing(false),
-                  onTap: () => unawaited(strikeBowl()),
-                  child: Semantics(
-                    button: true,
-                    label: i18n.t('toolbox.sound.bowls.bowl_semantics'),
-                    child: SizedBox(
-                      width: bowlSize * 2.2,
-                      height: bowlSize * 2.2,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: <Widget>[
-                          for (final burst in _bursts)
-                            _buildBurstWave(
-                              burst: burst,
-                              bowlSize: bowlSize * 2.02,
-                            ),
-                          RepaintBoundary(
-                            child: AnimatedBuilder(
-                              animation: Listenable.merge(<Listenable>[
-                                _ambientController,
-                                _strikeController,
-                              ]),
-                              builder: (BuildContext context, Widget? child) {
-                                final strike = AppEasing.bounce.transform(
-                                  _strikeController.value,
-                                );
-                                final pulse =
-                                    0.5 +
-                                    0.5 *
-                                        math.sin(
-                                          _ambientController.value *
-                                              math.pi *
-                                              2,
-                                        );
-                                final scale =
-                                    1 -
-                                    strike * 0.056 -
-                                    (_pressing ? 0.025 : 0) +
-                                    pulse * 0.004;
-                                final yOffset = strike * 8.5;
-                                return Transform.translate(
-                                  offset: Offset(0, yOffset),
-                                  child: Transform.scale(
-                                    scale: scale,
-                                    child: child,
-                                  ),
-                                );
-                              },
-                              child: SizedBox.square(
-                                dimension: bowlSize,
-                                child: CustomPaint(
-                                  painter: _SingingBowlPainter(
-                                    accent: frequencySpec.accent,
-                                    glow: frequencySpec.glow,
-                                    voice: voiceSpec,
-                                    ambientValue: _ambientController.value,
-                                    strikeValue: _strikeController.value,
-                                    pressing: _pressing,
+                // Keep every stage layer inside the actual LayoutBuilder
+                // bounds. The previous fixed multipliers made the hit area
+                // and burst canvas exceed narrow phone constraints.
+                final bowlSize = math
+                    .min(stageSize * 0.82, compact ? 360.0 : 440.0)
+                    .clamp(1.0, double.infinity)
+                    .toDouble();
+                return ClipRect(
+                  child: GestureDetector(
+                    onTapDown: (_) => setPressing(true),
+                    onTapCancel: () => setPressing(false),
+                    onTapUp: (_) => setPressing(false),
+                    onTap: () => unawaited(strikeBowl()),
+                    child: Semantics(
+                      button: true,
+                      label: i18n.t('toolbox.sound.bowls.bowl_semantics'),
+                      child: SizedBox(
+                        width: stageSize,
+                        height: stageSize,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: <Widget>[
+                            for (final burst in _bursts)
+                              _buildBurstWave(burst: burst, bowlSize: bowlSize),
+                            RepaintBoundary(
+                              child: AnimatedBuilder(
+                                animation: Listenable.merge(<Listenable>[
+                                  _ambientController,
+                                  _strikeController,
+                                ]),
+                                builder: (BuildContext context, Widget? child) {
+                                  final strike = AppEasing.bounce.transform(
+                                    _strikeController.value,
+                                  );
+                                  final pulse =
+                                      0.5 +
+                                      0.5 *
+                                          math.sin(
+                                            _ambientController.value *
+                                                math.pi *
+                                                2,
+                                          );
+                                  final scale =
+                                      1 -
+                                      strike * 0.056 -
+                                      (_pressing ? 0.025 : 0) +
+                                      pulse * 0.004;
+                                  final yOffset = strike * 8.5;
+                                  return Transform.translate(
+                                    offset: Offset(0, yOffset),
+                                    child: Transform.scale(
+                                      scale: scale,
+                                      child: child,
+                                    ),
+                                  );
+                                },
+                                child: SizedBox.square(
+                                  dimension: bowlSize,
+                                  child: CustomPaint(
+                                    painter: _SingingBowlPainter(
+                                      accent: frequencySpec.accent,
+                                      glow: frequencySpec.glow,
+                                      voice: voiceSpec,
+                                      ambientValue: _ambientController.value,
+                                      strikeValue: _strikeController.value,
+                                      pressing: _pressing,
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -142,13 +145,15 @@ extension _SingingBowlsStage on _SingingBowlsPracticeCardState {
     return TweenAnimationBuilder<double>(
       key: ValueKey<int>(burst.id),
       tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 4600),
+      duration: _reducedMotion
+          ? Duration.zero
+          : const Duration(milliseconds: 900),
       curve: Curves.easeOutCubic,
       onEnd: () => removeBurst(burst.id),
       builder: (BuildContext context, double value, Widget? child) {
         return IgnorePointer(
           child: SizedBox.square(
-            dimension: bowlSize * 2.1,
+            dimension: bowlSize,
             child: CustomPaint(
               painter: _SpectrumBurstPainter(
                 accent: frequencySpec.accent,

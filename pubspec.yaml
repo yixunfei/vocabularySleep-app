@@ -142,6 +142,7 @@ flutter:
     - assets/toolbox/device_frames/
     - assets/toolbox/instruments/
     - assets/toolbox/history_timeline/
+    - assets/toolbox/daily_choice/
     - lib/l10n/catalog/app_texts.csv
 
   # To add assets to your application, add an assets section, like this:

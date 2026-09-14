@@ -162,6 +162,9 @@ extension AppStateAmbientDomain on AppState {
     try {
       final path = await _onlineAmbientCatalogService
           .downloadToLocalWithProgress(option, onProgress);
+      if (isDisposed) {
+        return null;
+      }
       _ambient.addFileSourceWithMetadata(
         path,
         id: 'downloaded_${option.id}',

@@ -252,6 +252,16 @@ class CstCloudResourceCacheService {
     return false;
   }
 
+  /// Resolves the root directory used for all cached resources.
+  Future<Directory> resolveCacheDirectory() => _cacheBaseDir();
+
+  /// Validates and normalizes a cache-relative path for callers that need to
+  /// inspect the same files written by this service.
+  String normalizeCacheRelativePath(
+    String remoteKey, {
+    String? cacheRelativePath,
+  }) => _normalizedTargetPath(remoteKey, cacheRelativePath);
+
   Future<Directory> _cacheBaseDir() async {
     final configuredDirectory = cacheDirectory;
     if (configuredDirectory != null) {

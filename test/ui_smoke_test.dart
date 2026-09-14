@@ -7112,6 +7112,8 @@ class _FakeAppState extends ChangeNotifier
   PlayConfig _config;
   String _uiLanguage;
   bool _uiLanguageFollowsSystem;
+  @override
+  bool get isDisposed => false;
   Wordbook? _selectedWordbook;
   bool _selectedWordbookLoaded;
   bool _selectedWordbookRequiresOnDemandLoad;

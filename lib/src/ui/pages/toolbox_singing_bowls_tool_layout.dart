@@ -32,6 +32,7 @@ extension _SingingBowlsLayout on _SingingBowlsPracticeCardState {
           context,
           icon: Icons.arrow_back_rounded,
           active: false,
+          semanticLabel: i18n.t('toolbox.sound.bowls.back_to_toolbox'),
           onTap: () => Navigator.of(context).maybePop(),
         ),
         const SizedBox(width: 10),
@@ -52,6 +53,11 @@ extension _SingingBowlsLayout on _SingingBowlsPracticeCardState {
               ? Icons.volume_up_rounded
               : Icons.volume_off_rounded,
           active: _soundEnabled,
+          semanticLabel: i18n.t(
+            _soundEnabled
+                ? 'toolbox.sound.bowls.btn_mute'
+                : 'toolbox.sound.bowls.btn_enable_sound',
+          ),
           onTap: toggleSound,
         ),
         const SizedBox(width: 8),
@@ -61,6 +67,11 @@ extension _SingingBowlsLayout on _SingingBowlsPracticeCardState {
               ? Icons.pause_circle_filled_rounded
               : Icons.play_circle_fill_rounded,
           active: _autoPlayEnabled,
+          semanticLabel: i18n.t(
+            _autoPlayEnabled
+                ? 'toolbox.sound.bowls.btn_pause_autoplay'
+                : 'toolbox.sound.bowls.btn_start_autoplay',
+          ),
           onTap: toggleAutoPlay,
         ),
       ],
@@ -217,12 +228,14 @@ extension _SingingBowlsLayout on _SingingBowlsPracticeCardState {
     required IconData icon,
     required bool active,
     required VoidCallback onTap,
+    String? semanticLabel,
   }) {
     return ToolboxIconPillButton(
       icon: icon,
       active: active,
       onTap: onTap,
       tint: frequencySpec.accent,
+      semanticLabel: semanticLabel,
     );
   }
 

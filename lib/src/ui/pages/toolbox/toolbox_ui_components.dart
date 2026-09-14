@@ -214,6 +214,7 @@ class ToolboxIconPillButton extends StatelessWidget {
     required this.onTap,
     required this.tint,
     this.tooltip,
+    this.semanticLabel,
     this.size = ToolboxUiTokens.pillIconSize,
     this.radius = 16,
   });
@@ -223,44 +224,50 @@ class ToolboxIconPillButton extends StatelessWidget {
   final VoidCallback onTap;
   final Color tint;
   final String? tooltip;
+  final String? semanticLabel;
   final double size;
   final double radius;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final button = Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(radius),
-        onTap: onTap,
-        child: Ink(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: active
-                ? tint.withValues(alpha: 0.92)
-                : theme.colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(radius),
-            border: Border.all(
-              color: active ? tint : theme.colorScheme.outlineVariant,
-            ),
-            boxShadow: <BoxShadow>[
-              toolboxPanelShadow(
-                theme.colorScheme.shadow,
-                opacity: 0.06,
-                blurRadius: 16,
-                offsetY: 8,
+    final button = Semantics(
+      button: true,
+      toggled: active,
+      label: semanticLabel ?? tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(radius),
+          onTap: onTap,
+          child: Ink(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: active
+                  ? tint.withValues(alpha: 0.92)
+                  : theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(radius),
+              border: Border.all(
+                color: active ? tint : theme.colorScheme.outlineVariant,
               ),
-            ],
-          ),
-          child: Icon(
-            icon,
-            color: active
-                ? (tint.computeLuminance() > 0.5
-                      ? const Color(0xFF1C1B1F)
-                      : Colors.white)
-                : theme.colorScheme.onSurfaceVariant,
+              boxShadow: <BoxShadow>[
+                toolboxPanelShadow(
+                  theme.colorScheme.shadow,
+                  opacity: 0.06,
+                  blurRadius: 16,
+                  offsetY: 8,
+                ),
+              ],
+            ),
+            child: Icon(
+              icon,
+              color: active
+                  ? (tint.computeLuminance() > 0.5
+                        ? const Color(0xFF1C1B1F)
+                        : Colors.white)
+                  : theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       ),
