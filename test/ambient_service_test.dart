@@ -9,10 +9,15 @@ import 'package:vocabulary_sleep_app/src/services/ambient_service.dart';
 import 'package:vocabulary_sleep_app/src/services/cstcloud_resource_cache_service.dart';
 
 class _FakeAmbientLoopPlayer implements AmbientLoopPlayer {
-  _FakeAmbientLoopPlayer({required this.duration, this.onSetVolume});
+  _FakeAmbientLoopPlayer({
+    required this.duration,
+    this.onSetVolume,
+    this.onSetSource,
+  });
 
   final Duration? duration;
   final Future<void> Function(double volume)? onSetVolume;
+  final Future<void> Function(Source source)? onSetSource;
   final List<Source> sources = <Source>[];
   final List<ReleaseMode> releaseModes = <ReleaseMode>[];
   final List<double> volumes = <double>[];
@@ -23,6 +28,7 @@ class _FakeAmbientLoopPlayer implements AmbientLoopPlayer {
   @override
   Future<void> setSource(Source source) async {
     sources.add(source);
+    await onSetSource?.call(source);
   }
 
   @override
@@ -301,6 +307,40 @@ void main() {
     expect(players.every((player) => player.stopCalls == 1), isTrue);
     expect(players.every((player) => player.disposeCalls == 1), isTrue);
   });
+
+  test(
+    'coalesces overlapping playback syncs without orphaning loops',
+    () async {
+      final sourceGate = Completer<void>();
+      final players = <_FakeAmbientLoopPlayer>[];
+      final service = AmbientService(
+        playerFactory: () {
+          final player = _FakeAmbientLoopPlayer(
+            duration: const Duration(seconds: 1),
+            onSetSource: (_) => sourceGate.future,
+          );
+          players.add(player);
+          return player;
+        },
+      );
+      service.setSourceEnabled('noise_white', true);
+
+      final first = service.syncPlayback();
+      await Future<void>.delayed(Duration.zero);
+      final second = service.syncPlayback();
+      await Future<void>.delayed(Duration.zero);
+      // The concurrent sync must not start a second loop while the first is
+      // still resolving its player. Before serialization both calls saw an
+      // empty map and created separate loops (2 players here, 4 after the
+      // gate opens), orphaning the earlier loop and its audio players.
+      expect(players, hasLength(1));
+
+      sourceGate.complete();
+      await Future.wait(<Future<void>>[first, second]);
+      expect(players, hasLength(2));
+      expect(players.every((player) => player.disposeCalls == 0), isTrue);
+    },
+  );
 
   test(
     'master switch stops playback without clearing selected sources',

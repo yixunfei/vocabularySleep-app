@@ -399,9 +399,13 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
     _maybeHaptic(frame.layer);
     _playLayer(frame.layer);
 
-    _pulseController
-      ..stop()
-      ..forward(from: 0);
+    if (_reducedMotion) {
+      _pulseController.value = 1;
+    } else {
+      _pulseController
+        ..stop()
+        ..forward(from: 0);
+    }
 
     if (mounted) {
       _setViewState(() {
@@ -580,9 +584,13 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
 
   void _previewCurrentSound() {
     _playLayer(0);
-    _pulseController
-      ..stop()
-      ..forward(from: 0);
+    if (_reducedMotion) {
+      _pulseController.value = 1;
+    } else {
+      _pulseController
+        ..stop()
+        ..forward(from: 0);
+    }
     if (_hapticsEnabled) {
       HapticFeedback.selectionClick();
     }
@@ -761,6 +769,19 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
     _setImmersiveHudVisible(!_immersiveHudVisible, autoHide: _running);
   }
 
+  Future<void> _exitImmersiveView() async {
+    if (!widget.fullScreen) {
+      return;
+    }
+    await _exitToolboxLandscapeMode();
+    if (!mounted) {
+      return;
+    }
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    }
+  }
+
   Future<void> _openImmersiveControlsSheet() async {
     _setImmersiveHudVisible(true, autoHide: false);
     await showModalBottomSheet<void>(
@@ -916,7 +937,7 @@ extension _FocusBeatsToolStateLogicX on _FocusBeatsToolState {
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton.icon(
-                          onPressed: widget.onExitFullScreen,
+                          onPressed: _exitImmersiveView,
                           icon: const Icon(Icons.close_rounded),
                           label: Text(
                             i18n.t('toolbox.sound.focus.immersiveExitSheet'),

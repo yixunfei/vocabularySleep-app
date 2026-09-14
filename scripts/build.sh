@@ -5,7 +5,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_ROOT="$PROJECT_ROOT/dist"
 ARTIFACT_NAME="xianyushengxi"
 
-TARGETS=("all")
+TARGETS=()
 CLEAN=0
 NO_PUB_GET=0
 DRY_RUN=0
@@ -17,8 +17,8 @@ usage() {
 Usage: ./scripts/build.sh [options]
 
 Options:
-  --target <name>        Build target. Can be repeated.
-                         android-apk | android-appbundle | ios | macos | windows | linux | web | all
+  --target <name>        Build target. Can be repeated or comma-separated.
+                         android-apk | android-appbundle | ios | macos | windows | linux | all
   --clean                Run flutter clean before building.
   --no-pub-get           Skip flutter pub get.
   --build-name <value>   Override Flutter build name.
@@ -30,8 +30,19 @@ EOF
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --target)
-      TARGETS+=("$2")
+      --target)
+      if [[ $# -lt 2 || -z "$2" ]]; then
+        echo "--target requires a value" >&2
+        exit 1
+      fi
+      IFS=',' read -r -a target_values <<< "$2"
+      for target_value in "${target_values[@]}"; do
+        if [[ -z "$target_value" ]]; then
+          echo "--target cannot contain an empty target" >&2
+          exit 1
+        fi
+        TARGETS+=("$target_value")
+      done
       shift 2
       ;;
     --clean)
@@ -66,10 +77,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ ${#TARGETS[@]} -gt 1 ]]; then
-  TARGETS=("${TARGETS[@]:1}")
-fi
-
 host_platform() {
   case "$(uname -s)" in
     Darwin) echo "macos" ;;
@@ -84,9 +91,9 @@ host_platform() {
 
 supported_targets() {
   case "$1" in
-    windows) echo "android-apk android-appbundle windows web" ;;
-    macos) echo "android-apk android-appbundle ios macos web" ;;
-    linux) echo "android-apk android-appbundle linux web" ;;
+    windows) echo "android-apk android-appbundle windows" ;;
+    macos) echo "android-apk android-appbundle ios macos" ;;
+    linux) echo "android-apk android-appbundle linux" ;;
     *)
       echo "Unsupported platform: $1" >&2
       exit 1
@@ -98,16 +105,27 @@ resolve_targets() {
   local platform="$1"
   shift
   local requested=("$@")
+  if [[ ${#requested[@]} -eq 0 ]]; then
+    requested=("all")
+  fi
   local supported
   supported="$(supported_targets "$platform")"
 
   if printf '%s\n' "${requested[@]}" | grep -qx 'all'; then
+    if [[ ${#requested[@]} -ne 1 ]]; then
+      echo "Target 'all' cannot be combined with another target." >&2
+      exit 1
+    fi
     echo "$supported"
     return
   fi
 
   local item
   for item in "${requested[@]}"; do
+    if [[ "$item" == "web" ]]; then
+      echo "Target 'web' is disabled because the current app depends on dart:ffi packages such as sherpa_onnx, sqlite3, and ffi, which do not compile to Flutter Web. Re-enable it only after adding web-specific implementations." >&2
+      exit 1
+    fi
     if ! printf '%s\n' "$supported" | tr ' ' '\n' | grep -qx "$item"; then
       echo "Target '$item' is not supported on host '$platform'." >&2
       exit 1
@@ -156,13 +174,14 @@ build_args() {
 }
 
 build_android_apk() {
-  mapfile -t args < <(build_args build apk --release)
+  mapfile -t args < <(build_args build apk --release --split-per-abi --target-platform android-arm,android-arm64)
   run_flutter "${args[@]}"
-  copy_artifact "$PROJECT_ROOT/build/app/outputs/flutter-apk/app-release.apk" "$DIST_ROOT/android-apk/$ARTIFACT_NAME.apk"
+  copy_artifact "$PROJECT_ROOT/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk" "$DIST_ROOT/android-apk/$ARTIFACT_NAME-arm64-v8a.apk"
+  copy_artifact "$PROJECT_ROOT/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk" "$DIST_ROOT/android-apk/$ARTIFACT_NAME-armeabi-v7a.apk"
 }
 
 build_android_appbundle() {
-  mapfile -t args < <(build_args build appbundle --release)
+  mapfile -t args < <(build_args build appbundle --release --target-platform android-arm,android-arm64)
   run_flutter "${args[@]}"
   copy_artifact "$PROJECT_ROOT/build/app/outputs/bundle/release/app-release.aab" "$DIST_ROOT/android-appbundle/$ARTIFACT_NAME.aab"
 }
@@ -191,11 +210,9 @@ build_linux() {
   copy_artifact "$PROJECT_ROOT/build/linux/x64/release/bundle" "$DIST_ROOT/linux"
 }
 
-build_web() {
-  mapfile -t args < <(build_args build web --release --no-wasm-dry-run)
-  run_flutter "${args[@]}"
-  copy_artifact "$PROJECT_ROOT/build/web" "$DIST_ROOT/web"
-}
+HOST_PLATFORM="$(host_platform)"
+RESOLVED_TARGETS_OUTPUT="$(resolve_targets "$HOST_PLATFORM" "${TARGETS[@]}")"
+read -r -a RESOLVED_TARGETS <<< "$RESOLVED_TARGETS_OUTPUT"
 
 mkdir -p "$DIST_ROOT"
 
@@ -207,9 +224,6 @@ if [[ $NO_PUB_GET -eq 0 ]]; then
   run_flutter pub get
 fi
 
-HOST_PLATFORM="$(host_platform)"
-read -r -a RESOLVED_TARGETS <<< "$(resolve_targets "$HOST_PLATFORM" "${TARGETS[@]}")"
-
 for item in "${RESOLVED_TARGETS[@]}"; do
   case "$item" in
     android-apk) build_android_apk ;;
@@ -218,7 +232,6 @@ for item in "${RESOLVED_TARGETS[@]}"; do
     macos) build_macos ;;
     windows) build_windows ;;
     linux) build_linux ;;
-    web) build_web ;;
     *)
       echo "Unsupported target: $item" >&2
       exit 1

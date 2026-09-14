@@ -278,7 +278,6 @@ class _FocusBeatsTool extends StatefulWidget {
     this.autoStart = false,
     this.initialImmersive = false,
     this.onOpenFullScreen,
-    this.onExitFullScreen,
   });
 
   final bool fullScreen;
@@ -286,7 +285,6 @@ class _FocusBeatsTool extends StatefulWidget {
   final bool initialImmersive;
   final void Function({required bool autoStart, required bool immersive})?
   onOpenFullScreen;
-  final VoidCallback? onExitFullScreen;
 
   @override
   State<_FocusBeatsTool> createState() => _FocusBeatsToolState();
@@ -386,6 +384,7 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
   bool _immersiveMode = false;
   bool _immersiveHudVisible = true;
   bool _linkAnimationAndSound = true;
+  bool _reducedMotion = false;
   bool _tempoExpanded = true;
   bool _meterExpanded = false;
   bool _styleExpanded = false;
@@ -463,6 +462,23 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
     arrangementTemplates: _savedTemplates,
     activeArrangementTemplateId: _activeTemplateId,
   );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final reducedMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (_reducedMotion == reducedMotion) {
+      return;
+    }
+    _reducedMotion = reducedMotion;
+    if (reducedMotion) {
+      _ambientController.stop();
+      _ambientController.value = 0;
+    } else if (!_ambientController.isAnimating) {
+      _ambientController.repeat();
+    }
+  }
 
   @override
   void initState() {
@@ -640,225 +656,6 @@ class _FocusBeatsToolState extends State<_FocusBeatsTool>
     }
     return Card(
       child: Padding(padding: const EdgeInsets.all(18), child: mobileBody),
-    );
-
-    final cycleLabel = (_cycleCount + 1).toString();
-    final segmentLabel = _patternEnabled && _patternError.isEmpty
-        ? '${_currentSegmentIndex + 1}/${_segmentPulseCounts.length}'
-        : '1/1';
-    final beatLabel = _activeBeat < 0 ? '--' : '${_activeBeat + 1}';
-    final subBeatLabel = _activeSubPulse == 0
-        ? '--'
-        : '$_activeSubPulse/$_subdivision';
-    final arrangementLabel = _patternError.isEmpty ? _pattern.raw : '1bar';
-
-    final body = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        _buildHeroSummary(
-          context,
-          beatLabel: beatLabel,
-          subBeatLabel: subBeatLabel,
-          segmentLabel: segmentLabel,
-          cycleLabel: cycleLabel,
-          arrangementLabel: arrangementLabel,
-        ),
-        const SizedBox(height: 14),
-        const SectionHeader(
-          title: '专注拍点工作台',
-          subtitle: '围绕手机单手操作重构了节奏、风格、编排与触感设置，首屏只保留最关键的开播信息。',
-        ),
-        const SizedBox(height: 12),
-        if (false)
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: <Widget>[
-              ToolboxMetricCard(label: 'BPM', value: '$_bpm'),
-              ToolboxMetricCard(
-                label: 'Meter',
-                value: '$_beatsPerBar/4 ×$_subdivision',
-              ),
-              ToolboxMetricCard(
-                label: 'Beat',
-                value: '$beatLabel · $subBeatLabel',
-              ),
-              ToolboxMetricCard(label: 'Segment', value: segmentLabel),
-              ToolboxMetricCard(label: 'Cycle', value: cycleLabel),
-            ],
-          ),
-        const SizedBox(height: 14),
-        _buildStage(context),
-        const SizedBox(height: 14),
-        _buildPrimaryControls(context),
-        const SizedBox(height: 14),
-        Visibility(
-          visible: false,
-          child: Row(
-            children: <Widget>[
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: _running ? _stop : _start,
-                  icon: Icon(
-                    _running ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                  ),
-                  label: Text(_running ? '停止节奏' : '开始节奏'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              FilledButton.tonalIcon(
-                onPressed: _tapTempo,
-                icon: const Icon(Icons.touch_app_rounded),
-                label: const Text('Tap'),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 10),
-        Visibility(
-          visible: false,
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: <Widget>[
-              OutlinedButton.icon(
-                onPressed: _toggleImmersiveMode,
-                icon: Icon(
-                  _immersiveMode
-                      ? Icons.fullscreen_exit_rounded
-                      : Icons.fullscreen_rounded,
-                ),
-                label: Text(_immersiveMode ? '退出沉浸' : '沉浸模式'),
-              ),
-              if (!widget.fullScreen && widget.onOpenFullScreen != null)
-                FilledButton.tonalIcon(
-                  onPressed: () {
-                    final shouldAutoStart = true;
-                    if (_running) {
-                      _stop();
-                    }
-                    widget.onOpenFullScreen?.call(
-                      autoStart: shouldAutoStart,
-                      immersive: false,
-                    );
-                  },
-                  icon: const Icon(Icons.open_in_full_rounded),
-                  label: const Text('全屏开始'),
-                ),
-              _FocusInfoPill(
-                icon: Icons.vibration_rounded,
-                label: _hapticsEnabled ? '触感开启' : '触感关闭',
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        _FocusControlSection(
-          icon: Icons.speed_rounded,
-          title: '节奏控制',
-          subtitle: 'BPM 调速与快捷步进',
-          summary: '$_bpm BPM · ${(60 / _bpm).toStringAsFixed(2)} 秒/拍',
-          expanded: _tempoExpanded,
-          onToggle: () {
-            setState(() {
-              _tempoExpanded = !_tempoExpanded;
-            });
-          },
-          child: _buildTempoSection(context),
-        ),
-        const SizedBox(height: 12),
-        _FocusControlSection(
-          icon: Icons.tune_rounded,
-          title: '拍号与子拍',
-          subtitle: '决定强弱拍结构与细分密度',
-          summary: '$_beatsPerBar/4 · 子拍 ×$_subdivision',
-          expanded: _meterExpanded,
-          onToggle: () {
-            setState(() {
-              _meterExpanded = !_meterExpanded;
-            });
-          },
-          child: _buildMeterSection(context),
-        ),
-        const SizedBox(height: 12),
-        _FocusControlSection(
-          icon: Icons.graphic_eq_rounded,
-          title: '拍点音色',
-          subtitle: '选择当前拍点点击的声音质感',
-          summary: _soundLabel(_soundKind),
-          expanded: _styleExpanded,
-          onToggle: () {
-            setState(() {
-              _styleExpanded = !_styleExpanded;
-            });
-          },
-          child: _buildStyleSection(context),
-        ),
-        const SizedBox(height: 12),
-        _FocusControlSection(
-          icon: Icons.view_timeline_rounded,
-          title: '循环编排',
-          subtitle: '按段落组织一轮节奏结构',
-          summary: _patternEnabled ? arrangementLabel : '单小节循环',
-          expanded: _arrangementExpanded,
-          onToggle: () {
-            setState(() {
-              _arrangementExpanded = !_arrangementExpanded;
-            });
-          },
-          child: _buildArrangementSection(
-            context,
-            arrangementLabel: arrangementLabel,
-          ),
-        ),
-        const SizedBox(height: 12),
-        _FocusControlSection(
-          icon: Icons.graphic_eq_rounded,
-          title: '混音与触感',
-          subtitle: '调整重拍、普通拍、子拍与震动',
-          summary:
-              '总音量 ${(100 * _masterVolume).round()}% · ${_hapticsEnabled ? '触感开' : '触感关'}',
-          expanded: _advancedExpanded,
-          onToggle: () {
-            setState(() {
-              _advancedExpanded = !_advancedExpanded;
-            });
-          },
-          child: _buildMixSection(context),
-        ),
-      ],
-    );
-
-    if (widget.fullScreen && _immersiveMode) {
-      return _buildImmersiveAnimationOnly(context);
-    }
-
-    if (widget.fullScreen) {
-      return _buildInstrumentPanelShell(
-        context,
-        fullScreen: true,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            if (widget.onExitFullScreen != null) ...<Widget>[
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton.tonalIcon(
-                  onPressed: widget.onExitFullScreen,
-                  icon: const Icon(Icons.fullscreen_exit_rounded),
-                  label: const Text('退出全屏'),
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-            body,
-          ],
-        ),
-      );
-    }
-
-    return Card(
-      child: Padding(padding: const EdgeInsets.all(18), child: body),
     );
   }
 }

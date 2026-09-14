@@ -51,6 +51,9 @@ function Resolve-Targets {
 
   $supportedTargets = Get-SupportedTargets -Platform $Platform
   if ($RequestedTargets -contains 'all') {
+    if ($RequestedTargets.Count -ne 1) {
+      throw "Target 'all' cannot be combined with another target."
+    }
     return $supportedTargets
   }
 

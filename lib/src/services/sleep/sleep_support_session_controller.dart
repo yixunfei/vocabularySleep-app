@@ -22,7 +22,7 @@ class SleepSupportSessionController extends ChangeNotifier {
   SleepNightRescueMode _mode = SleepNightRescueMode.briefAwakening;
   SleepNightEvent? _pendingEvent;
   final List<SleepNightEvent> _failedEvents = <SleepNightEvent>[];
-  Future<bool>? _pendingSave;
+  final Map<String, Future<bool>> _pendingSaves = <String, Future<bool>>{};
   bool _disposed = false;
 
   SleepSupportSession? get state => _state;
@@ -44,7 +44,6 @@ class SleepSupportSessionController extends ChangeNotifier {
           _rememberFailed(_pendingEvent);
           _state = null;
           _pendingEvent = null;
-          _pendingSave = null;
         } else if (current.isPersisting) {
           return false;
         } else if (!current.isFinished) {
@@ -173,11 +172,11 @@ class SleepSupportSessionController extends ChangeNotifier {
       _update(current.copyWith(isFinished: true));
       return Future.value(false);
     }
-    if (_pendingSave != null) {
+    if (_pendingSaves.containsKey(current.id)) {
       if (!current.isFinished) {
         _update(current.copyWith(isFinished: true));
       }
-      return _pendingSave!;
+      return _pendingSaves[current.id]!;
     }
     if (current.isFinished) return Future.value(true);
     if (current.isSaved) {
@@ -197,7 +196,8 @@ class SleepSupportSessionController extends ChangeNotifier {
 
   Future<bool> retrySave() {
     if (_disposed || _state == null) return Future.value(false);
-    if (_pendingSave != null) return _pendingSave!;
+    final pending = _pendingSaves[_state!.id];
+    if (pending != null) return pending;
     if (_state!.saveFailed && _pendingEvent != null) {
       return _persist(_pendingEvent!);
     }
@@ -212,22 +212,24 @@ class SleepSupportSessionController extends ChangeNotifier {
     if (_disposed || _state?.isPersisting == true) return;
     _state = null;
     _pendingEvent = null;
-    _pendingSave = null;
     notifyListeners();
   }
 
   Future<bool> _persist(SleepNightEvent event) {
-    if (_pendingSave != null) {
-      return _pendingSave!;
+    final existing = _pendingSaves[event.id];
+    if (existing != null) {
+      return existing;
     }
-    // Assign the shared future before notifying listeners, preventing
-    // reentrant completion and double taps from dispatching a second write.
+    // Key pending writes by event id: a new session must never adopt, or be
+    // blocked by, a write that belonged to the previous session. Registering
+    // the shared future before notifying listeners still prevents double taps
+    // and reentrant completion from dispatching a second write.
     final future = () async {
       try {
         // Keep persistence off the interaction stack so selecting a night
         // action remains immediate even when the repository is synchronous.
         await Future<void>(() => _saveEvent(event));
-        _pendingSave = null;
+        _pendingSaves.remove(event.id);
         _removeFailed(event.id);
         if (!_disposed && _state?.id == event.id) {
           final next = _state!.copyWith(isPersisting: false, isSaved: true);
@@ -238,7 +240,7 @@ class SleepSupportSessionController extends ChangeNotifier {
         }
         return true;
       } catch (_) {
-        _pendingSave = null;
+        _pendingSaves.remove(event.id);
         if (!_disposed && _state?.id == event.id) {
           _rememberFailed(event);
           _update(_state!.copyWith(isPersisting: false, saveFailed: true));
@@ -246,7 +248,7 @@ class SleepSupportSessionController extends ChangeNotifier {
         return false;
       }
     }();
-    _pendingSave = future;
+    _pendingSaves[event.id!] = future;
     if (!_disposed && _state?.id == event.id) {
       _update(_state!.copyWith(isPersisting: true, saveFailed: false));
     }

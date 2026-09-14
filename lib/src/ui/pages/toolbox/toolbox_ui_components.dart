@@ -181,8 +181,9 @@ class ToolboxInfoPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final effectiveBackground =
-        backgroundColor ?? Colors.white.withValues(alpha: 0.6);
+        backgroundColor ?? theme.colorScheme.surfaceContainerHighest;
     final effectiveTextColor =
         textColor ?? Theme.of(context).colorScheme.onSurfaceVariant;
     return DecoratedBox(
@@ -239,14 +240,14 @@ class ToolboxIconPillButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: active
                 ? tint.withValues(alpha: 0.92)
-                : Colors.white.withValues(alpha: 0.72),
+                : theme.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(radius),
             border: Border.all(
-              color: active ? tint : Colors.white.withValues(alpha: 0.82),
+              color: active ? tint : theme.colorScheme.outlineVariant,
             ),
             boxShadow: <BoxShadow>[
               toolboxPanelShadow(
-                Colors.black,
+                theme.colorScheme.shadow,
                 opacity: 0.06,
                 blurRadius: 16,
                 offsetY: 8,
@@ -255,7 +256,11 @@ class ToolboxIconPillButton extends StatelessWidget {
           ),
           child: Icon(
             icon,
-            color: active ? Colors.white : theme.colorScheme.onSurfaceVariant,
+            color: active
+                ? (tint.computeLuminance() > 0.5
+                      ? const Color(0xFF1C1B1F)
+                      : Colors.white)
+                : theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ),

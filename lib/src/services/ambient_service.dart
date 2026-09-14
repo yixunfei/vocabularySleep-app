@@ -903,7 +903,26 @@ class AmbientService {
     }
   }
 
+  bool _syncPlaybackRunning = false;
+  bool _syncPlaybackQueued = false;
+
   Future<void> syncPlayback() async {
+    if (_syncPlaybackRunning) {
+      _syncPlaybackQueued = true;
+      return;
+    }
+    _syncPlaybackRunning = true;
+    try {
+      do {
+        _syncPlaybackQueued = false;
+        await _syncPlaybackOnce();
+      } while (_syncPlaybackQueued);
+    } finally {
+      _syncPlaybackRunning = false;
+    }
+  }
+
+  Future<void> _syncPlaybackOnce() async {
     if (!_enabled) {
       await stopAll();
       return;

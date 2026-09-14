@@ -651,7 +651,6 @@ class _FocusBeatsFullScreenPageState extends State<_FocusBeatsFullScreenPage>
         fullScreen: true,
         autoStart: widget.autoStart,
         initialImmersive: widget.immersiveOnEnter,
-        onExitFullScreen: () => Navigator.of(context).pop(),
       ),
     );
   }

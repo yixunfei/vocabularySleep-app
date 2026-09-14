@@ -365,86 +365,94 @@ class _TriangleToolState extends State<_TriangleTool> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final size = Size(constraints.maxWidth, height);
-        return Listener(
-          behavior: HitTestBehavior.opaque,
-          onPointerDown: (event) => _handleStagePointerDown(event, size),
-          onPointerMove: (event) => _handleStagePointerMove(event, size),
-          onPointerUp: _handleStagePointerUp,
-          onPointerCancel: _handleStagePointerUp,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 120),
-            height: height,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(widget.fullScreen ? 24 : 18),
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: <Color>[
-                  immersive ? const Color(0xFF0F172A) : const Color(0xFFE6EEF9),
-                  Color.lerp(
+        return _ToolboxScrollLockSurface(
+          child: Listener(
+            behavior: HitTestBehavior.opaque,
+            onPointerDown: (event) => _handleStagePointerDown(event, size),
+            onPointerMove: (event) => _handleStagePointerMove(event, size),
+            onPointerUp: _handleStagePointerUp,
+            onPointerCancel: _handleStagePointerUp,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 120),
+              height: height,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(
+                  widget.fullScreen ? 24 : 18,
+                ),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: <Color>[
                     immersive
-                        ? const Color(0xFF172554)
-                        : const Color(0xFFC9DDF8),
-                    const Color(0xFFEAB308),
-                    _flash * 0.24,
-                  )!,
+                        ? const Color(0xFF0F172A)
+                        : const Color(0xFFE6EEF9),
+                    Color.lerp(
+                      immersive
+                          ? const Color(0xFF172554)
+                          : const Color(0xFFC9DDF8),
+                      const Color(0xFFEAB308),
+                      _flash * 0.24,
+                    )!,
+                  ],
+                ),
+                border: Border.all(
+                  color: immersive
+                      ? Colors.white.withValues(alpha: 0.14)
+                      : const Color(0xFF98B6DE),
+                ),
+                boxShadow: <BoxShadow>[
+                  BoxShadow(
+                    color: Colors.black.withValues(
+                      alpha: immersive ? 0.30 : 0.14,
+                    ),
+                    blurRadius: immersive ? 24 : 14,
+                    offset: const Offset(0, 10),
+                  ),
                 ],
               ),
-              border: Border.all(
-                color: immersive
-                    ? Colors.white.withValues(alpha: 0.14)
-                    : const Color(0xFF98B6DE),
-              ),
-              boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: Colors.black.withValues(
-                    alpha: immersive ? 0.30 : 0.14,
-                  ),
-                  blurRadius: immersive ? 24 : 14,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Stack(
-              children: <Widget>[
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _TriangleInstrumentPainter(
-                      intensity: _flash,
-                      strikerX: _strikerX,
-                      strikerY: _strikerY,
-                      strikerRecoil: _strikerRecoil,
+              child: Stack(
+                children: <Widget>[
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _TriangleInstrumentPainter(
+                        intensity: _flash,
+                        strikerX: _strikerX,
+                        strikerY: _strikerY,
+                        strikerRecoil: _strikerRecoil,
+                      ),
                     ),
                   ),
-                ),
-                Positioned(
-                  left: 14,
-                  right: 14,
-                  bottom: 12,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text(
-                        i18n.t('toolbox.sound.triangle.left_softer'),
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: immersive
-                              ? Colors.white70
-                              : const Color(0xFF334155),
+                  Positioned(
+                    left: 14,
+                    right: 14,
+                    bottom: 12,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Text(
+                          i18n.t('toolbox.sound.triangle.left_softer'),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: immersive
+                                    ? Colors.white70
+                                    : const Color(0xFF334155),
+                              ),
                         ),
-                      ),
-                      Text(
-                        i18n.t('toolbox.sound.triangle.right_brighter'),
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: immersive
-                              ? Colors.white70
-                              : const Color(0xFF334155),
+                        Text(
+                          i18n.t('toolbox.sound.triangle.right_brighter'),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: immersive
+                                    ? Colors.white70
+                                    : const Color(0xFF334155),
+                              ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );

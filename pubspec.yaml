@@ -112,16 +112,16 @@ flutter_launcher_icons:
   image_path: "assets/branding/logo.webp"
   web:
     generate: true
-    image_path: "assets/branding/logo.jpg"
+    image_path: "assets/branding/logo.webp"
     background_color: "#0F172A"
     theme_color: "#0F172A"
   windows:
     generate: true
-    image_path: "assets/branding/logo.jpg"
+    image_path: "assets/branding/logo.webp"
     icon_size: 256
   macos:
     generate: true
-    image_path: "assets/branding/logo.jpg"
+    image_path: "assets/branding/logo.webp"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

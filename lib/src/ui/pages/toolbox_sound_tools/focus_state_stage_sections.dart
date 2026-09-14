@@ -1059,7 +1059,7 @@ extension _FocusBeatsToolStateStageSectionsX on _FocusBeatsToolState {
                 ),
               if (widget.fullScreen && immersiveSheet)
                 FilledButton.tonalIcon(
-                  onPressed: widget.onExitFullScreen,
+                  onPressed: _exitImmersiveView,
                   icon: const Icon(Icons.close_rounded),
                   label: Text(
                     controlI18n.t('toolbox.sound.focus.controlExitFull'),

@@ -7,6 +7,19 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
     return const Color(0xFFE5D8C8);
   }
 
+  Color _focusStageBorderColor(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Color.lerp(
+      scheme.outlineVariant,
+      scheme.onSurface.withValues(alpha: 0.22),
+      0.35,
+    )!;
+  }
+
+  Color _focusStageHighlightColor(BuildContext context) {
+    return Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08);
+  }
+
   _FocusVisualPalette _visualPalette(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final accent = _animationAccent(_animationKind);
@@ -87,7 +100,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: <Color>[
-                        Colors.white.withValues(alpha: 0.12),
+                        _focusStageHighlightColor(context),
                         Colors.transparent,
                         const Color(0xFF9E8D7C).withValues(alpha: 0.08),
                       ],
@@ -137,9 +150,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                   decoration: BoxDecoration(
                     color: _focusStagePalePanel.withValues(alpha: 0.70),
                     borderRadius: BorderRadius.circular(22),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.58),
-                    ),
+                    border: Border.all(color: _focusStageBorderColor(context)),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
@@ -191,9 +202,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                   decoration: BoxDecoration(
                     color: _focusStagePalePanel.withValues(alpha: 0.62),
                     borderRadius: BorderRadius.circular(22),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.54),
-                    ),
+                    border: Border.all(color: _focusStageBorderColor(context)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -568,7 +577,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: <Color>[
-                        Colors.white.withValues(alpha: 0.10),
+                        _focusStageHighlightColor(context),
                         Colors.transparent,
                         const Color(0xFF9E8D7C).withValues(alpha: 0.06),
                       ],
@@ -605,9 +614,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                   decoration: BoxDecoration(
                     color: _focusStagePalePanel.withValues(alpha: 0.64),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.54),
-                    ),
+                    border: Border.all(color: _focusStageBorderColor(context)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -861,13 +868,13 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                                 onPressed: _openImmersiveControlsSheet,
                                 icon: const Icon(Icons.tune_rounded),
                               ),
-                              if (widget.onExitFullScreen != null) ...<Widget>[
+                              if (widget.fullScreen) ...<Widget>[
                                 const SizedBox(width: 8),
                                 IconButton.filledTonal(
                                   tooltip: immersiveI18n.t(
                                     'toolbox.sound.focus.immersiveExitFull',
                                   ),
-                                  onPressed: widget.onExitFullScreen,
+                                  onPressed: _exitImmersiveView,
                                   icon: const Icon(Icons.close_rounded),
                                 ),
                               ],
@@ -889,7 +896,7 @@ extension _FocusBeatsToolStateStageVisualX on _FocusBeatsToolState {
                                 ),
                                 borderRadius: BorderRadius.circular(24),
                                 border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.58),
+                                  color: _focusStageBorderColor(context),
                                 ),
                               ),
                               child: Row(

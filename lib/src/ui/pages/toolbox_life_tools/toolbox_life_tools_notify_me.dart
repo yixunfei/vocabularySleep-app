@@ -211,7 +211,23 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
     try {
       final state = context.read<AppState>();
       final useAlarm = _presentationType == LifeNotifyPresentationType.alarm;
-      state.focusService.addTodo(
+      if (!state.focusService.initialized) {
+        try {
+          await state.focusService.init();
+        } catch (_) {
+          if (mounted) {
+            _showSnack(
+              _lifeI18nText(
+                context,
+                'toolbox.sleep.winddown.reminderUnavailable',
+              ),
+            );
+          }
+          return;
+        }
+      }
+      if (!mounted) return;
+      final created = state.focusService.addTodo(
         title,
         category: _notifyCategory,
         note: _buildMetadata().encode(),
@@ -223,6 +239,12 @@ class _NotifyMeToolPageState extends State<_NotifyMeToolPage> {
         systemCalendarAlarmEnabled: useAlarm,
         systemCalendarAlarmMinutesBefore: useAlarm ? _minutesBefore : 0,
       );
+      if (!created) {
+        _showSnack(
+          _lifeI18nText(context, 'toolbox.sleep.winddown.reminderUnavailable'),
+        );
+        return;
+      }
       _resetForm();
       _showSnack(
         _lifeI18nText(

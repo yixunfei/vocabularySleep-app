@@ -68,6 +68,7 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
   bool _autoPlayEnabled = false;
   bool _soundEnabled = true;
   bool _hapticsEnabled = true;
+  bool _reducedMotion = false;
   bool _pressing = false;
   int _playerBuildNonce = 0;
   bool _resumeAutoPlayAfterRebuild = false;
@@ -88,6 +89,23 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
     soundEnabled: _soundEnabled,
     hapticsEnabled: _hapticsEnabled,
   );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final reducedMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (_reducedMotion == reducedMotion) {
+      return;
+    }
+    _reducedMotion = reducedMotion;
+    if (reducedMotion) {
+      _ambientController.stop();
+      _ambientController.value = 0;
+    } else if (!_ambientController.isAnimating) {
+      _ambientController.repeat();
+    }
+  }
 
   @override
   void initState() {
@@ -304,7 +322,11 @@ class _SingingBowlsPracticeCardState extends State<SingingBowlsPracticeCard>
 
   Future<void> strikeBowl({bool fromAutoPlay = false}) async {
     _addBurst();
-    _strikeController.forward(from: 0);
+    if (!_reducedMotion) {
+      _strikeController.forward(from: 0);
+    } else {
+      _strikeController.value = 1;
+    }
     if (!fromAutoPlay && _hapticsEnabled) {
       HapticFeedback.lightImpact();
     }

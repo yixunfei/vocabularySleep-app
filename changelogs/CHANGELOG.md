@@ -1,3 +1,33 @@
+## [Unreleased-PLAN_442-逐模块稳健性与体验优化] - 2026-09-13
+
+### 原因
+- 延续 PLAN_441 的发布与启动稳健性工作，补齐已确认的 Focus/提醒页回归，并将 Toolbox 共享视觉基线与当前实现同步。
+
+### 修复
+- `scripts/build.sh` 与 PowerShell 构建契约统一：拒绝不支持的 Web 目标，支持逗号目标，Android APK/AAB 使用双 ARM 目标并输出按 ABI 的 APK。
+- 修复 Web/Windows/macOS launcher icon 配置引用不存在 `logo.jpg` 的问题，统一使用现有 `assets/branding/logo.webp`。
+- 通用提醒页现在等待 FocusService 初始化并检查 `addTodo` 返回值；创建失败时保留表单且不显示虚假成功反馈。
+- `ToolboxInfoPill`、`ToolboxIconPillButton` 改用主题 `ColorScheme` 的 surface/outline/shadow，降低暗色主题下绝对白/黑造成的对比度风险。
+- `ToolboxScrollLockSurface` 现在包住三角铁连续滚奏舞台，避免内嵌页面纵向滚动抢走 PointerMove，保持滚奏手势连续。
+- `AmbientService.syncPlayback()` 增加服务级串行/排队保护；快速切换环境音时不会重复创建并遗留后台 SeamlessAmbientLoop。
+- Focus 与音钵动画现在响应 `MediaQuery.disableAnimations`：减少动态环境脉动与脉冲播放，并在需要时保留静态状态反馈。
+- Focus 非沉浸舞台的高光和边框改用主题 `ColorScheme`，不再在浅色面板上叠加纯白边框；设计评审中的音钵 800ms/8s 记录已与实现同步。
+
+### 验证
+- `bash -n scripts/build.sh`
+- `bash scripts/build.sh --target web --no-pub-get`：按预期非零退出且不调用 Web 构建。
+- `node scripts/audit_i18n_placeholders.js`：`missing=0`、`placeholderMismatch=0`、`dart missingParams=0`、`dynamicParams=0`。
+- 全量 `flutter test --no-pub`：905 个测试通过；`flutter analyze --no-pub` 无 error/warning（108 条为既有 info lint）。
+- 构建脚本拒绝 Web、`all` 混用和空目标；Android dry-run 成功。
+
+### 风险变更
+- **SEC-01（运维阻塞，未修复）**：CSTCloud 客户端仍含静态 access key/secret；本轮按确认仅登记风险，不改变线上鉴权。需由运维轮换/吊销并切换匿名只读或服务端短期签名后，再进行代码侧收口。
+- Focus 全屏已明确为统一沉浸视图；退出按钮和沉浸控制 sheet 现在由页面自身处理，不再依赖外部 `onExitFullScreen` 回调。
+
+
+### 未处理项
+- 完整 catalog 文案迁移与动画 profile 测量留待后续独立切片；未将静态性能热点当作已确认卡顿修复。
+
 ## [Unreleased-PLAN_441-Android产物与启动分层] - 2026-09-13
 
 ### 原因
