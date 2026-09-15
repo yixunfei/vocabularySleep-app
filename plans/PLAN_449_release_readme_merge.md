@@ -2,7 +2,7 @@
 
 ## 基本信息
 - 创建日期：2026-09-15
-- 状态：进行中（已合并、推送，Release 产物上传中）
+- 状态：已完成（构建、合并、推送与 GitHub Release 发布完成）
 - 负责人：Codex
 - 用户已确认：v1.0.1+2；Android ARM64 / ARMv7 APK、AAB 与 Windows ZIP；提交当前工作区、合并 main、推送远端并发布 GitHub Release。
 - 用户已批准新 Android 证书，接受备份后卸载重装。
@@ -55,7 +55,7 @@
 - SHA256SUMS.txt：四个发布产物的 SHA256。
 
 ## 发布结果
-- 发布工程提交：789fba414999829efaa890488130df4d3b826bb1。
-- 已通过 fast-forward 将工作分支合入 main；main、工作分支和带注释 v1.0.1 标签已原子推送。
-- 远端 main 与 v1.0.1 解引用均核对为上述发布提交。
-- GitHub Release 草稿已创建，产物上传中；发布完成后补充 URL 与校验结果。
+- 最终发布提交：fa64389d4f2a52feabb7539271f20b6d083f2b6b；包含 README 运行库说明与本计划状态。
+- 已通过 fast-forward 将工作分支合入 main；main、工作分支和带注释 v1.0.1 标签已推送，远端 main 与标签解引用均指向最终提交。
+- GitHub Release 已公开：<https://github.com/yixunfei/vocabularySleep-app/releases/tag/v1.0.1>。
+- Release 包含 4 个安装产物和 SHA256SUMS.txt；远端状态、大小和 SHA256 均与本机一致。
