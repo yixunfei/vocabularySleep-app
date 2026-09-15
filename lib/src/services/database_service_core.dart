@@ -1,4 +1,4 @@
-part of 'database_service.dart';
+part of 'database_service_native.dart';
 
 extension AppDatabaseServiceCore on AppDatabaseService {
   T _runInTransaction<T>(T Function() action) {

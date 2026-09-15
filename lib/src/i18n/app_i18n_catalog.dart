@@ -1,9 +1,7 @@
-import 'dart:convert';
-import 'dart:isolate';
-
 import 'package:csv/csv.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+
+import 'app_i18n_catalog_worker.dart';
 
 enum AppI18nCatalogLoadStage { assetRead, parse }
 
@@ -66,11 +64,8 @@ class AppI18nCatalog {
       assetData.lengthInBytes,
     );
     try {
-      final nextTables = await compute(
-        _parseCatalogInWorker,
-        TransferableTypedData.fromList(<Uint8List>[bytes]),
-        debugLabel: 'app-i18n-catalog-parse',
-      );
+      final nextTables = await parseCatalogBytes(bytes);
+
       _tables = nextTables;
     } on Object catch (error, stackTrace) {
       throw AppI18nCatalogLoadException(
@@ -104,11 +99,7 @@ class AppI18nCatalog {
   }
 }
 
-Map<String, Map<String, String>> _parseCatalogInWorker(
-  TransferableTypedData encodedCatalog,
-) {
-  final bytes = encodedCatalog.materialize().asUint8List();
-  final raw = utf8.decode(bytes, allowMalformed: false);
+Map<String, Map<String, String>> parseCatalogText(String raw) {
   if (raw.trim().isEmpty) {
     throw const FormatException('The i18n catalog is empty.');
   }

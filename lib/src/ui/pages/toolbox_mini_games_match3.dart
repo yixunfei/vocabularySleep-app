@@ -80,6 +80,9 @@ class _MatchThreeGameState extends State<_MatchThreeGame> {
 
   late List<int> _tiles;
   Timer? _timer;
+  Timer? _resolveDelayTimer;
+  Completer<void>? _resolveDelayCompleter;
+  int _resolveGeneration = 0;
   int? _selected;
   int? _dragOrigin;
   Offset? _dragStart;
@@ -111,6 +114,7 @@ class _MatchThreeGameState extends State<_MatchThreeGame> {
   @override
   void dispose() {
     _timer?.cancel();
+    _resolveDelayTimer?.cancel();
     super.dispose();
   }
 
@@ -709,7 +713,7 @@ class _MatchThreeGameState extends State<_MatchThreeGame> {
           _tiles[creation.index] = _tileValue(creation.kind, creation.power);
         }
       });
-      await Future<void>.delayed(const Duration(milliseconds: 170));
+      await _waitForResolveDelay(const Duration(milliseconds: 170));
       if (!mounted) {
         return;
       }
@@ -720,12 +724,25 @@ class _MatchThreeGameState extends State<_MatchThreeGame> {
         _clearingTiles = <int>{};
       });
       setState(_dropAndFill);
-      await Future<void>.delayed(const Duration(milliseconds: 130));
+      await _waitForResolveDelay(const Duration(milliseconds: 130));
       currentRuns = _findRuns(_tiles);
       currentActivations = const <_MatchThreeActivation>[];
       currentCreationHints = const <int>[];
       chain += 1;
     }
+  }
+
+  Future<void> _waitForResolveDelay(Duration duration) {
+    _resolveDelayTimer?.cancel();
+    final completer = Completer<void>();
+    _resolveDelayCompleter = completer;
+    _resolveDelayTimer = Timer(duration, () {
+      if (identical(_resolveDelayCompleter, completer) &&
+          !completer.isCompleted) {
+        completer.complete();
+      }
+    });
+    return completer.future;
   }
 
   int _timeBonusFor(int clearedCount, int chain) {

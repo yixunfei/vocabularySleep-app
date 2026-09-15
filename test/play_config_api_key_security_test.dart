@@ -179,24 +179,25 @@ void main() {
       expect(blob, isNot(contains('asr-secret')));
     });
 
-    test('save degrades to plaintext row when secure storage fails', () async {
-      final store = _MemorySettingsStoreRepository();
-      final secure = _MemorySecureKeyValueStore()..throwOnWrite = true;
-      final settings = SettingsService.fromRepository(
-        store,
-        secureKeyValueStore: secure,
-      );
+    test(
+      'does not restore api keys to plaintext when secure storage fails',
+      () async {
+        final store = _MemorySettingsStoreRepository();
+        final secure = _MemorySecureKeyValueStore()..throwOnWrite = true;
+        final settings = SettingsService.fromRepository(
+          store,
+          secureKeyValueStore: secure,
+        );
 
-      settings.savePlayConfig(_configWithKeys());
-      // 等待异步降级回写完成。
-      await Future<void>.delayed(Duration.zero);
-      await Future<void>.delayed(Duration.zero);
+        settings.savePlayConfig(_configWithKeys());
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
 
-      final loaded = settings.loadPlayConfig();
-      expect(loaded.tts.apiKey, 'tts-secret');
-      final rawRow = store.getSetting('playConfig');
-      expect(rawRow, contains('tts-secret'));
-    });
+        final rawRow = store.getSetting('playConfig');
+        expect(rawRow, isNot(contains('tts-secret')));
+        expect(rawRow, isNot(contains('asr-secret')));
+      },
+    );
   });
 
   group('safety backup strips api keys', () {

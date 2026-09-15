@@ -1,4 +1,4 @@
-part of 'asr_service.dart';
+part of 'asr_service_native.dart';
 
 extension AsrServiceAudio on AsrService {
   List<double> _choosePreferredWaveSegment({

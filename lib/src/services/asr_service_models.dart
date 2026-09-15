@@ -1,4 +1,4 @@
-part of 'asr_service.dart';
+part of 'asr_service_native.dart';
 
 extension AsrServiceModels on AsrService {
   Future<void> _downloadAndExtractModel({

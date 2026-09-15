@@ -1,4 +1,4 @@
-part of 'database_service.dart';
+part of 'database_service_native.dart';
 
 const String _wordEntryLiteSelectColumns = '''
   id,

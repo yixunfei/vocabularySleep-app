@@ -28,6 +28,21 @@ class _Player implements SleepSoundPlayer {
   }
 }
 
+class _VolumeFailingPlayer extends _Player {
+  final volumeFailure = Completer<void>();
+  int _setVolumeCalls = 0;
+
+  @override
+  Future<void> setVolume(double volume) {
+    this.volume = volume;
+    _setVolumeCalls += 1;
+    if (_setVolumeCalls == 1) return Future<void>.value();
+    return volumeFailure.future.then<void>((_) {
+      throw StateError('old volume failed');
+    });
+  }
+}
+
 void main() {
   _replacementDeadlineTest();
   _preparationTests();
@@ -102,6 +117,23 @@ void _replacementTests() {
     expect(controller.sound, SleepSound.pink);
   });
 
+  test('volume failure cannot overwrite a newer playback', () async {
+    final first = _VolumeFailingPlayer();
+    final second = _Player()..ready.complete();
+    var calls = 0;
+    final controller = SleepSoundController(
+      playerFactory: () => calls++ == 0 ? first : second,
+    );
+    addTearDown(controller.dispose);
+    await controller.play(SleepSound.brown);
+    final volumeWork = controller.setVolume(0.2);
+    await Future<void>.delayed(Duration.zero);
+    await controller.play(SleepSound.pink);
+    first.volumeFailure.complete();
+    await volumeWork;
+    expect(controller.status, SleepSoundStatus.playing);
+    expect(controller.sound, SleepSound.pink);
+  });
   test('failure is retryable and has no playing status', () async {
     final first = _Player();
     final second = _Player();

@@ -237,9 +237,8 @@ class SeamlessAmbientLoop {
       );
       await firstPlayer.setReleaseMode(ReleaseMode.loop);
       await _syncVolumes();
-      // CRITICAL FIX: Wait for player to be ready before resuming
-      await _playerReady(firstPlayer);
-      if (!_isRunActive(runToken)) {
+      final ready = await _playerReady(firstPlayer);
+      if (!_isRunActive(runToken) || (duration != null && !ready)) {
         await firstPlayer.dispose();
         return;
       }
@@ -333,8 +332,26 @@ class SeamlessAmbientLoop {
     _trackDuration = null;
 
     for (final player in players) {
-      await player.stop();
-      await player.dispose();
+      // [风险] 单个播放器的平台异常不能中断其余播放器清理，
+      // 否则会遗留仍在播放的音频实例。
+      try {
+        await player.stop();
+      } catch (error) {
+        AppLogService.instance.w(
+          'ambient_audio',
+          'player stop failed while disposing',
+          data: <String, Object?>{'error': '$error'},
+        );
+      }
+      try {
+        await player.dispose();
+      } catch (error) {
+        AppLogService.instance.w(
+          'ambient_audio',
+          'player dispose failed while disposing',
+          data: <String, Object?>{'error': '$error'},
+        );
+      }
     }
     AppLogService.instance.d('ambient_audio', 'seamless loop dispose complete');
   }
@@ -409,16 +426,19 @@ class SeamlessAmbientLoop {
     _handoffTimer?.cancel();
     _handoffTimer = Timer(handoffDelay, () {
       try {
-        unawaited(_performHandoff(runToken).catchError(
-          (Object error, StackTrace stackTrace) {
+        unawaited(
+          _performHandoff(runToken).catchError((
+            Object error,
+            StackTrace stackTrace,
+          ) {
             AppLogService.instance.e(
               'ambient_audio',
               'handoff failed',
               error: error,
               stackTrace: stackTrace,
             );
-          },
-        ));
+          }),
+        );
       } catch (error, stackTrace) {
         AppLogService.instance.e(
           'ambient_audio',
@@ -476,29 +496,32 @@ class SeamlessAmbientLoop {
     _fadeTimer?.cancel();
     _fadeTimer = Timer.periodic(Duration(milliseconds: tickMs), (timer) {
       _fadeProgress = (_fadeProgress + step).clamp(0.0, 1.0);
-      unawaited(_syncVolumes().catchError(
-        (Object error, StackTrace stackTrace) {
+      unawaited(
+        _syncVolumes().catchError((Object error, StackTrace stackTrace) {
           AppLogService.instance.e(
             'ambient_audio',
             'volume sync failed during fade',
             error: error,
             stackTrace: stackTrace,
           );
-        },
-      ));
+        }),
+      );
       if (_fadeProgress >= 1) {
         timer.cancel();
         _fadeTimer = null;
-        unawaited(_completeFade(runToken).catchError(
-          (Object error, StackTrace stackTrace) {
-          AppLogService.instance.e(
-            'ambient_audio',
-            'complete fade failed',
-            error: error,
-            stackTrace: stackTrace,
-          );
-          },
-        ));
+        unawaited(
+          _completeFade(runToken).catchError((
+            Object error,
+            StackTrace stackTrace,
+          ) {
+            AppLogService.instance.e(
+              'ambient_audio',
+              'complete fade failed',
+              error: error,
+              stackTrace: stackTrace,
+            );
+          }),
+        );
       }
     });
   }
@@ -646,6 +669,7 @@ class AmbientService {
   double _masterVolume = 0.7;
   List<AmbientSource> _sources = <AmbientSource>[];
   bool _initialized = false;
+  int _syncGeneration = 0;
 
   Future<void> init() async {
     if (_initialized) {
@@ -667,11 +691,11 @@ class AmbientService {
       if (!hasDownloaded) {
         return;
       }
-      final ambientRoot = 'ambient/moodist/noise';
-      final noiseDir = Directory(await _getCachePath(ambientRoot));
-      if (await noiseDir.exists()) {
-        await for (final entity in noiseDir.list(
-          recursive: false,
+      final ambientRoot = 'ambient/moodist';
+      final ambientDir = Directory(await _getCachePath(ambientRoot));
+      if (await ambientDir.exists()) {
+        await for (final entity in ambientDir.list(
+          recursive: true,
           followLinks: false,
         )) {
           if (entity is! File) {
@@ -682,7 +706,14 @@ class AmbientService {
             continue;
           }
           final slug = fileName.replaceFirst(RegExp(r'\.(wav|mp3)$'), '');
-          final id = 'downloaded_noise_$slug';
+          final relativePath = p.relative(entity.path, from: ambientDir.path);
+          final relativeParts = relativePath.split(p.separator);
+          if (relativeParts.length < 2) {
+            continue;
+          }
+          final category = relativeParts.first;
+          final categoryKey = _categoryKeyForSlug(category);
+          final id = 'downloaded_${category}_$slug';
           if (_sources.any((s) => s.id == id)) {
             continue;
           }
@@ -694,7 +725,7 @@ class AmbientService {
               filePath: entity.path,
               enabled: false,
               volume: 0.5,
-              categoryKey: 'ambientCategoryNoise',
+              categoryKey: categoryKey,
             ),
           ];
         }
@@ -964,7 +995,25 @@ class AmbientService {
     }
   }
 
+  bool _isSyncActive(int generation) => generation == _syncGeneration;
+
+  String _categoryKeyForSlug(String category) {
+    return switch (category) {
+      'nature' => 'ambientCategoryNature',
+      'rain' => 'ambientCategoryRain',
+      'noise' => 'ambientCategoryNoise',
+      'animals' => 'ambientCategoryAnimals',
+      'urban' => 'ambientCategoryUrban',
+      'places' => 'ambientCategoryPlaces',
+      'transport' => 'ambientCategoryTransport',
+      'things' => 'ambientCategoryThings',
+      'binaural' => 'ambientCategoryBinaural',
+      _ => 'ambientCategoryFocus',
+    };
+  }
+
   Future<void> _syncPlaybackOnce() async {
+    final generation = _syncGeneration;
     if (!_enabled) {
       await stopAll();
       return;
@@ -982,6 +1031,11 @@ class AmbientService {
     }
 
     for (final source in enabledSources) {
+      if (!_isSyncActive(generation) ||
+          !_enabled ||
+          !_sources.any((item) => item.id == source.id && item.enabled)) {
+        return;
+      }
       final targetVolume = _resolvedVolume(source);
       final existingLoop = _loops[source.id];
       if (existingLoop != null) {
@@ -990,6 +1044,11 @@ class AmbientService {
       }
 
       final playbackSource = await _toPlaybackSource(source);
+      if (!_isSyncActive(generation) ||
+          !_enabled ||
+          !_sources.any((item) => item.id == source.id && item.enabled)) {
+        return;
+      }
       if (playbackSource == null) {
         _log.w(
           'ambient',
@@ -1021,9 +1080,23 @@ class AmbientService {
             );
           },
         );
+        if (!_enabled ||
+            !_sources.any((item) => item.id == source.id && item.enabled)) {
+          await loop.dispose().timeout(
+            const Duration(seconds: 2),
+            onTimeout: () {},
+          );
+          return;
+        }
         _loops[source.id] = loop;
       } on TimeoutException catch (error, stackTrace) {
-        await loop.dispose();
+        // A stuck volume write must not turn the start timeout into another
+        // unbounded wait. Cleanup remains best-effort after the bounded wait.
+        try {
+          await loop.dispose().timeout(const Duration(seconds: 2));
+        } catch (_) {
+          // Preserve the original start timeout for the caller and log below.
+        }
         _log.e(
           'ambient',
           'ambient source start timed out - file may be corrupted or incompatible',
@@ -1037,7 +1110,11 @@ class AmbientService {
           },
         );
       } catch (error, stackTrace) {
-        await loop.dispose();
+        try {
+          await loop.dispose().timeout(const Duration(seconds: 2));
+        } catch (_) {
+          // Preserve the original start failure for the caller and log below.
+        }
         _log.e(
           'ambient',
           'ambient source start failed',
@@ -1056,10 +1133,23 @@ class AmbientService {
   }
 
   Future<void> stopAll() async {
-    for (final loop in _loops.values) {
-      await loop.dispose();
-    }
+    _syncGeneration += 1;
+    final loops = _loops.values.toList(growable: false);
     _loops.clear();
+    for (final loop in loops) {
+      try {
+        await loop.dispose();
+      } catch (error, stackTrace) {
+        AppLogService.instance.w(
+          'ambient',
+          'ambient loop cleanup failed',
+          data: <String, Object?>{
+            'error': '$error',
+            'stackTrace': '$stackTrace',
+          },
+        );
+      }
+    }
   }
 
   Future<void> reset() async {

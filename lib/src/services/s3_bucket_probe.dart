@@ -173,6 +173,13 @@ class S3BucketProbeClient {
     required int start,
     required int end,
   }) async {
+    if (start < 0 || end < start) {
+      throw ArgumentError.value(
+        '$start-$end',
+        'range',
+        'Range must satisfy 0 <= start <= end.',
+      );
+    }
     final uri = _buildObjectUri(objectKey);
     final signed = _signRequest(uri);
     final request = await _httpClient.getUrl(uri);

@@ -141,20 +141,10 @@ class SettingsService {
       );
     } catch (error, stackTrace) {
       _logSecureStoreFailure('write', error, stackTrace);
-      // [风险] 降级：安全存储不可用时把密钥写回明文行，
-      // 保证用户凭据不因平台能力缺失而丢失（可用性优先）。
+      // 永不把密钥写回 settings 行：安全存储不可用时宁可不持久化，
+      // 也不能让数据库备份和导出重新携带明文凭据。
       if (generation == _secureApiKeysPersistGeneration) {
-        try {
-          final raw = _store.getSetting(playConfigSettingKey);
-          final decoded = decodePlayConfigJson(raw);
-          final cache = _secureApiKeysCache;
-          if (decoded != null && cache != null) {
-            injectPlayConfigApiKeys(decoded, cache);
-            _store.setSetting(playConfigSettingKey, jsonEncode(decoded));
-          }
-        } catch (_) {
-          // 恢复失败时保留剥离行；用户在设置页重新保存即可。
-        }
+        _secureApiKeysCache = null;
       }
     }
   }

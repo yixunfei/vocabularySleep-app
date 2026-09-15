@@ -14472,16 +14472,16 @@
   "reasons": [
    "en==ja long"
   ],
-  "zh": "65=KRYW55Y7E1817UJZZ6CDURMQO7/8QUX=6C1JJ",
-  "en": "65=KRYW55Y7E1817UJZZ6CDURMQO7/8QUX=6C1JJ"
+  "zh": "[REDACTED_STATIC_SECRET_REMOVED]",
+  "en": "[REDACTED_STATIC_SECRET_REMOVED]"
  },
  {
   "key": "literal.services.cstcloud_s3_compat_client.akiawacwclyja9jv9k4t_6728ad",
   "reasons": [
    "en==ja long"
   ],
-  "zh": "AKIAWACWCLYJA9JV9K4T",
-  "en": "AKIAWACWCLYJA9JV9K4T"
+  "zh": "[REDACTED_STATIC_ACCESS_KEY_REMOVED]",
+  "en": "[REDACTED_STATIC_ACCESS_KEY_REMOVED]"
  },
  {
   "key": "literal.services.cstcloud_s3_compat_client.s3_secret_access_key_ad9f3b",

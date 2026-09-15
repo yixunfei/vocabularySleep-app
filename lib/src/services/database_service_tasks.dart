@@ -1,4 +1,4 @@
-part of 'database_service.dart';
+part of 'database_service_native.dart';
 
 extension AppDatabaseServiceTasks on AppDatabaseService {
   List<TodoItem> getTodos() {

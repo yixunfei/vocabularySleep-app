@@ -292,12 +292,24 @@ extension AppStateAmbientDomain on AppState {
   /// ambient state changes into a single sync call.
   void _scheduleAmbientSync() {
     _ambientSyncDebounceTimer?.cancel();
-    _ambientSyncDebounceTimer = Timer(
-      const Duration(milliseconds: 200),
-      () async {
-        await _ambient.syncPlayback();
-      },
-    );
+    final generation = ++_ambientSyncGeneration;
+    _ambientSyncDebounceTimer = Timer(const Duration(milliseconds: 200), () {
+      unawaited(_runAmbientSync(generation));
+    });
+  }
+
+  Future<void> _runAmbientSync(int generation) async {
+    if (_disposed || generation != _ambientSyncGeneration) return;
+    try {
+      await _ambient.syncPlayback();
+    } catch (error, stackTrace) {
+      _log.e(
+        'app_state',
+        'ambient sync playback failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   /// Restore downloaded ambient sounds from database on app startup
@@ -306,7 +318,7 @@ extension AppStateAmbientDomain on AppState {
       final downloadedSounds = _ambientRepository.getDownloadedAmbientSounds();
       for (final sound in downloadedSounds) {
         final file = File(sound.filePath);
-        if (await file.exists()) {
+        if (await file.exists() && await file.length() > 0) {
           _ambient.addFileSourceWithMetadata(
             sound.filePath,
             id: 'downloaded_${sound.soundId}',

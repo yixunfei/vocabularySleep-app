@@ -1,4 +1,4 @@
-part of 'asr_service.dart';
+part of 'asr_service_native.dart';
 
 extension AsrServiceOffline on AsrService {
   Future<List<PronScoringMethod>> _resolveReadyScoringMethods(

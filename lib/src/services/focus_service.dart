@@ -18,6 +18,7 @@ import 'settings_service.dart';
 import 'system_calendar_service.dart';
 import 'todo_reminder_service.dart';
 import 'tts_service.dart';
+import 'app_log_service.dart';
 
 enum _PendingReminderFollowUp { none, startBreak, startFocus, completeSession }
 
@@ -76,10 +77,15 @@ class FocusService extends ChangeNotifier {
   final Future<void> Function(String text, TtsConfig config)? _ttsSpeakOverride;
   // [风险] 倒计时使用可注入时钟：fakeAsync 测试与挂起补偿都需要可控的墙钟。
   final DateTime Function() _now;
+  final AppLogService _log = AppLogService.instance;
 
   static DateTime _defaultNow() => clock.now();
 
   bool _initialized = false;
+  bool _disposed = false;
+  int _reminderGeneration = 0;
+  Future<void> _todoSyncQueue = Future<void>.value();
+  int _todoSyncGeneration = 0;
   bool _lockScreenActive = false;
   TomatoTimerConfig _timerConfig = const TomatoTimerConfig();
   TomatoTimerState _timerState = const TomatoTimerState();
@@ -290,6 +296,7 @@ class FocusService extends ChangeNotifier {
     int? rounds,
   }) {
     _timer?.cancel();
+    ++_reminderGeneration;
     _clearPendingReminder();
     unawaited(_stopActiveReminder());
     final config = _timerConfig.copyWith(
@@ -302,7 +309,7 @@ class FocusService extends ChangeNotifier {
       rounds: rounds,
     );
     _timerConfig = config;
-    _sessionStartTime = DateTime.now();
+    _sessionStartTime = _now();
     _sessionDurationSeconds = 0;
     _sessionFocusSeconds = 0;
     _sessionBreakSeconds = 0;
@@ -409,12 +416,18 @@ class FocusService extends ChangeNotifier {
         totalRounds: totalRounds,
       );
       _onPhaseComplete?.call(phase, round);
-      unawaited(_triggerReminder(phase, persistent: true));
+      unawaited(
+        _triggerReminder(
+          phase,
+          persistent: true,
+          generation: _reminderGeneration,
+        ),
+      );
       return;
     }
 
     if (triggerReminder) {
-      unawaited(_triggerReminder(phase));
+      unawaited(_triggerReminder(phase, generation: _reminderGeneration));
     }
     _onPhaseComplete?.call(phase, round);
     _applyCompletedPhase(phase: phase, round: round, totalRounds: totalRounds);
@@ -509,7 +522,9 @@ class FocusService extends ChangeNotifier {
   Future<void> _triggerReminder(
     TomatoTimerPhase phase, {
     bool persistent = false,
+    required int generation,
   }) async {
+    if (!_isReminderCurrent(generation)) return;
     final reminder = _timerConfig.reminder;
     final systemLanguageTag = _resolveSystemLanguageTag();
     final i18n = AppI18n(_resolveSystemI18nLanguageCode(systemLanguageTag));
@@ -522,6 +537,7 @@ class FocusService extends ChangeNotifier {
     if (reminder.pauseAmbient && _ambient != null) {
       try {
         await _ambient.stopAll();
+        if (!_isReminderCurrent(generation)) return;
       } catch (_) {
         // Best-effort reminder action.
       }
@@ -539,6 +555,7 @@ class FocusService extends ChangeNotifier {
           announcementLanguageTag: reminder.voice ? systemLanguageTag : null,
           duration: _reminderAlertTimeout,
         );
+        if (!_isReminderCurrent(generation)) return;
         handledPersistentAlert = true;
       } catch (_) {
         // Fall back to one-shot system feedback below.
@@ -548,6 +565,7 @@ class FocusService extends ChangeNotifier {
       if (reminder.haptic) {
         try {
           await HapticFeedback.mediumImpact();
+          if (!_isReminderCurrent(generation)) return;
         } catch (_) {
           // Not supported on all platforms.
         }
@@ -556,6 +574,7 @@ class FocusService extends ChangeNotifier {
       if (reminder.sound) {
         try {
           await SystemSound.play(SystemSoundType.alert);
+          if (!_isReminderCurrent(generation)) return;
         } catch (_) {
           // Not supported on all platforms.
         }
@@ -577,8 +596,10 @@ class FocusService extends ChangeNotifier {
         );
         if (_ttsSpeakOverride != null) {
           await _ttsSpeakOverride(voiceMessage, ttsConfig);
-        } else {
-          await _tts!.speak(voiceMessage, ttsConfig);
+          if (!_isReminderCurrent(generation)) return;
+        } else if (_tts != null) {
+          await _tts.speak(voiceMessage, ttsConfig);
+          if (!_isReminderCurrent(generation)) return;
         }
       } catch (_) {
         // Avoid breaking timer flow for reminder failures.
@@ -766,6 +787,7 @@ class FocusService extends ChangeNotifier {
 
   void stop({bool saveProgress = true}) {
     _timer?.cancel();
+    ++_reminderGeneration;
     if (saveProgress) {
       _saveCurrentSessionRecord(partial: true);
     }
@@ -779,6 +801,10 @@ class FocusService extends ChangeNotifier {
 
   @override
   void dispose() {
+    if (_disposed) return;
+    _disposed = true;
+    ++_reminderGeneration;
+    ++_todoSyncGeneration;
     _timer?.cancel();
     _timer = null;
     unawaited(_stopActiveReminder());
@@ -831,7 +857,7 @@ class FocusService extends ChangeNotifier {
             systemCalendarNotificationMinutesBefore,
         systemCalendarAlarmEnabled: systemCalendarAlarmEnabled,
         systemCalendarAlarmMinutesBefore: systemCalendarAlarmMinutesBefore,
-        createdAt: DateTime.now(),
+        createdAt: _now(),
       ),
     );
     return true;
@@ -843,7 +869,7 @@ class FocusService extends ChangeNotifier {
     TodoItem persisted = normalized;
     if (normalized.id == null) {
       final inserted = normalized.copyWith(
-        createdAt: normalized.createdAt ?? DateTime.now(),
+        createdAt: normalized.createdAt ?? _now(),
       );
       final insertedId = _repository.insertTodo(inserted);
       persisted = inserted.copyWith(id: insertedId);
@@ -874,7 +900,7 @@ class FocusService extends ChangeNotifier {
       item.copyWith(
         completed: !item.completed,
         deferred: false,
-        completedAt: !item.completed ? DateTime.now() : null,
+        completedAt: !item.completed ? _now() : null,
       ),
     );
     _repository.updateTodo(updated);
@@ -905,11 +931,7 @@ class FocusService extends ChangeNotifier {
     final item = _findTodoById(id);
     if (item == null || item.completed) return;
     final updated = _normalizeTodoItem(
-      item.copyWith(
-        completed: true,
-        deferred: false,
-        completedAt: DateTime.now(),
-      ),
+      item.copyWith(completed: true, deferred: false, completedAt: _now()),
     );
     _repository.updateTodo(updated);
     _invalidateTodosCache();
@@ -922,7 +944,7 @@ class FocusService extends ChangeNotifier {
     if (!_initialized) return;
     final item = _findTodoById(id);
     if (item == null || !item.hasReminder || item.completed) return;
-    final nextDueAt = DateTime.now().add(duration);
+    final nextDueAt = _now().add(duration);
     final updated = _normalizeTodoItem(
       item.copyWith(
         dueAt: nextDueAt,
@@ -982,7 +1004,7 @@ class FocusService extends ChangeNotifier {
 
   void addNote(String title, String? content, String? color) {
     if (!_initialized || title.trim().isEmpty) return;
-    final now = DateTime.now();
+    final now = _now();
     _repository.insertNote(
       PlanNote(
         title: title.trim(),
@@ -999,7 +1021,7 @@ class FocusService extends ChangeNotifier {
 
   void updateNote(PlanNote note) {
     if (!_initialized) return;
-    _repository.updateNote(note.copyWith(updatedAt: DateTime.now()));
+    _repository.updateNote(note.copyWith(updatedAt: _now()));
     _invalidateNotesCache();
     _bumpViewRevision();
     notifyListeners();
@@ -1101,60 +1123,80 @@ class FocusService extends ChangeNotifier {
     _viewRevision.value += 1;
   }
 
-  Future<void> _syncAllTodoReminders() async {
-    final systemCalendar = _systemCalendar;
-    if (!_initialized) {
-      return;
-    }
-    final localRemindersEnabled = todoSystemRemindersEnabled;
-    for (final todo in getTodos()) {
-      if (localRemindersEnabled) {
-        await _todoReminder.syncTodo(todo);
-      } else if (todo.id != null) {
-        await _todoReminder.removeTodoReminder(todo.id!);
+  void _enqueueTodoOperation(Future<void> Function(int generation) operation) {
+    final generation = ++_todoSyncGeneration;
+    _todoSyncQueue = _todoSyncQueue.then((_) async {
+      if (_disposed || generation != _todoSyncGeneration) return;
+      try {
+        await operation(generation);
+      } catch (error, stackTrace) {
+        _log.w(
+          'focus_todo_sync',
+          'todo reminder sync failed',
+          data: {
+            'error': error.toString(),
+            'stackTrace': stackTrace.toString(),
+          },
+        );
       }
-      await systemCalendar?.syncTodo(todo);
-    }
+    });
+    unawaited(_todoSyncQueue);
+  }
+
+  Future<void> _syncAllTodoReminders() async {
+    _enqueueTodoOperation((generation) async {
+      final systemCalendar = _systemCalendar;
+      if (!_initialized) return;
+      final localRemindersEnabled = todoSystemRemindersEnabled;
+      for (final todo in getTodos()) {
+        if (_disposed || generation != _todoSyncGeneration) return;
+        if (localRemindersEnabled) {
+          await _todoReminder.syncTodo(todo);
+        } else if (todo.id != null) {
+          await _todoReminder.removeTodoReminder(todo.id!);
+        }
+        if (_disposed || generation != _todoSyncGeneration) return;
+        await systemCalendar?.syncTodo(todo);
+      }
+    });
   }
 
   void _scheduleTodoReminderSync(TodoItem item) {
-    if (item.id == null) {
-      return;
-    }
-    if (todoSystemRemindersEnabled) {
-      unawaited(_todoReminder.syncTodo(item));
-    } else {
-      unawaited(_todoReminder.removeTodoReminder(item.id!));
-    }
-    final systemCalendar = _systemCalendar;
-    if (systemCalendar != null) {
-      unawaited(systemCalendar.syncTodo(item));
-    }
+    final todoId = item.id;
+    if (todoId == null) return;
+    _enqueueTodoOperation((generation) async {
+      if (todoSystemRemindersEnabled) {
+        await _todoReminder.syncTodo(item);
+      } else {
+        await _todoReminder.removeTodoReminder(todoId);
+      }
+      if (_disposed || generation != _todoSyncGeneration) return;
+      await _systemCalendar?.syncTodo(item);
+    });
   }
 
   void _scheduleTodoReminderRemoval(int todoId) {
-    unawaited(_todoReminder.removeTodoReminder(todoId));
-    final systemCalendar = _systemCalendar;
-    if (systemCalendar != null) {
-      unawaited(systemCalendar.removeTodoReminder(todoId));
-    }
+    _enqueueTodoOperation((generation) async {
+      await _todoReminder.removeTodoReminder(todoId);
+      if (_disposed || generation != _todoSyncGeneration) return;
+      await _systemCalendar?.removeTodoReminder(todoId);
+    });
   }
 
   Future<void> _removeAllLocalTodoReminders() async {
-    if (!_initialized) {
-      return;
-    }
-    for (final todo in getTodos()) {
-      final todoId = todo.id;
-      if (todoId == null) {
-        continue;
+    _enqueueTodoOperation((generation) async {
+      if (!_initialized) return;
+      for (final todo in getTodos()) {
+        final todoId = todo.id;
+        if (todoId == null) continue;
+        if (_disposed || generation != _todoSyncGeneration) return;
+        await _todoReminder.removeTodoReminder(todoId);
       }
-      await _todoReminder.removeTodoReminder(todoId);
-    }
+    });
   }
 
   _TodayStatsSnapshot _getTodayStatsSnapshot() {
-    final today = DateTime.now();
+    final today = _now();
     final dayKey = _dayKey(today);
     final cached = _todayStatsCache;
     if (!_initialized) {
@@ -1197,6 +1239,8 @@ class FocusService extends ChangeNotifier {
     _timerStateNotifier.value = _timerState;
   }
 
+  bool _isReminderCurrent(int generation) =>
+      !_disposed && generation == _reminderGeneration;
   Future<void> _stopActiveReminder() async {
     try {
       await _reminder?.stop();

@@ -63,7 +63,7 @@ class OnlineAmbientCatalogService {
       return Future<List<OnlineAmbientSoundOption>>.value(_cachedCatalog);
     }
     final existing = _catalogRequest;
-    if (existing != null && !forceRefresh) {
+    if (existing != null) {
       return existing;
     }
     final request = _fetchCatalogAndCache();

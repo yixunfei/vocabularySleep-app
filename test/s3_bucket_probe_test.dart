@@ -37,4 +37,25 @@ void main() {
     expect(result.objects.first.eTag, 'abc123');
     expect(result.objects.last.key, 'wordbooks/basic.csv');
   });
+
+  test('rejects invalid byte ranges before making a request', () {
+    final client = S3BucketProbeClient(
+      config: const S3BucketProbeConfig(
+        endpoint: 'example.com',
+        bucket: 'demo',
+        accessKeyId: 'test-key',
+        secretAccessKey: 'test-secret',
+      ),
+    );
+    addTearDown(client.close);
+
+    expect(
+      () => client.getObjectRange('audio/a.wav', start: -1, end: 2),
+      throwsArgumentError,
+    );
+    expect(
+      () => client.getObjectRange('audio/a.wav', start: 3, end: 2),
+      throwsArgumentError,
+    );
+  });
 }

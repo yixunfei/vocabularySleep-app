@@ -108,7 +108,7 @@ android {
 
     lint {
         disable += "LintVitalReport"
-        checkReleaseBuilds = false
+        checkReleaseBuilds = true
     }
 
     // [风险] PERF-01: ABI 取舍统一交给 Flutter 工具链：

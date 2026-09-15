@@ -739,6 +739,39 @@ void main() {
       },
     );
 
+    test(
+      'voice reminder without TTS does not break phase progression',
+      () async {
+        final repository = _MemoryFocusRepository();
+        final store = _MemorySettingsStoreRepository();
+        final reminder = _FakeReminderService();
+        final service = _createService(repository, store, reminder: reminder);
+        addTearDown(service.dispose);
+        await service.init();
+        service.saveConfig(
+          const TomatoTimerConfig(
+            focusDurationSeconds: 1,
+            breakDurationSeconds: 1,
+            rounds: 1,
+            autoStartBreak: true,
+            reminder: TimerReminderConfig(
+              haptic: false,
+              sound: false,
+              voice: true,
+              visual: false,
+            ),
+          ),
+        );
+
+        fakeAsync((async) {
+          service.start();
+          async.elapse(const Duration(seconds: 1));
+          async.flushMicrotasks();
+        });
+
+        expect(service.state.phase, TomatoTimerPhase.breakTime);
+      },
+    );
     test('voice reminders pass the system locale to TTS playback', () async {
       final binding = TestWidgetsFlutterBinding.ensureInitialized();
       binding.platformDispatcher.localeTestValue = const Locale('ja', 'JP');
@@ -781,6 +814,18 @@ void main() {
 
       expect(spokenText, isNotNull);
       expect(spokenLanguage, startsWith('ja'));
+    });
+
+    test('new todo timestamps use the injected clock', () async {
+      final repository = _MemoryFocusRepository();
+      final store = _MemorySettingsStoreRepository();
+      final createdAt = DateTime(2026, 3, 15, 8, 45);
+      final service = _createService(repository, store, now: () => createdAt);
+      await service.init();
+
+      service.addTodo('Clock controlled todo');
+
+      expect(service.getTodos().single.createdAt, createdAt);
     });
 
     test('saving a reminder todo syncs it to the system calendar', () async {

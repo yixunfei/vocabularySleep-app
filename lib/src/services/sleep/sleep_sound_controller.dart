@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../app_log_service.dart';
+
 enum SleepSound { brown, pink }
 
 enum SleepSoundStatus { silent, preparing, playing, failed }
@@ -19,6 +21,7 @@ class SleepSoundController extends ChangeNotifier {
 
   final SleepSoundPlayer Function() playerFactory;
   final DateTime Function() _now;
+  final AppLogService _log = AppLogService.instance;
   SleepSoundPlayer? _player;
   Timer? _stopTimer;
   DateTime? _stopAt;
@@ -104,9 +107,10 @@ class SleepSoundController extends ChangeNotifier {
         if (!_isCurrent(generation)) return;
         final stoppedGeneration = _generation + 1;
         await stop();
-        if (!_isCurrent(stoppedGeneration)) return;
-        _status = SleepSoundStatus.failed;
-        notifyListeners();
+        if (stoppedGeneration == _generation) {
+          _status = SleepSoundStatus.failed;
+          notifyListeners();
+        }
       }
     });
     return _volumeWork;
@@ -136,8 +140,15 @@ class SleepSoundController extends ChangeNotifier {
     if (player == null) return;
     try {
       await player.dispose();
-    } on Object {
-      // Platform teardown may race a source preparation cancelled by the user.
+    } on Object catch (error, stackTrace) {
+      _log.w(
+        'sleep_sound',
+        'player release failed',
+        data: <String, Object?>{
+          'error': error.toString(),
+          'stackTrace': stackTrace.toString(),
+        },
+      );
     }
   }
 

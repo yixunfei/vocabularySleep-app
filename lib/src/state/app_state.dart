@@ -234,6 +234,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   final LinkedHashMap<int, WordMemoryProgress?> _memoryProgressIndex =
       LinkedHashMap<int, WordMemoryProgress?>();
   bool _disposed = false;
+  int _ambientSyncGeneration = 0;
 
   FocusService get focusService => _focusService;
 
@@ -3672,7 +3673,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
 
   String _formatByteSize(int bytes) {
     if (bytes <= 0) {
-      return '0 KB';
+      return '0 B';
     }
     const units = <String>['B', 'KB', 'MB', 'GB'];
     var size = bytes.toDouble();
@@ -3737,6 +3738,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     _wordbookLoadBusyGeneration = null;
     _wordbookSearchStore.cancel();
     _flushDeferredPersistence();
+    _ambientSyncGeneration += 1;
     _ambientSyncDebounceTimer?.cancel();
     _playbackProgressPersistTimer?.cancel();
     _playbackProgressPersistTimer = null;
