@@ -55,7 +55,7 @@
 - SHA256SUMS.txt：四个发布产物的 SHA256。
 
 ## 发布结果
-- 最终发布提交：fa64389d4f2a52feabb7539271f20b6d083f2b6b；包含 README 运行库说明与本计划状态。
+- 最终发布提交为本计划关闭提交，远端 `main` 与 `v1.0.1` 标签保持一致。
 - 已通过 fast-forward 将工作分支合入 main；main、工作分支和带注释 v1.0.1 标签已推送，远端 main 与标签解引用均指向最终提交。
 - GitHub Release 已公开：<https://github.com/yixunfei/vocabularySleep-app/releases/tag/v1.0.1>。
 - Release 包含 4 个安装产物和 SHA256SUMS.txt；远端状态、大小和 SHA256 均与本机一致。
