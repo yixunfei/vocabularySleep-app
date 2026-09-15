@@ -327,6 +327,10 @@ class S3BucketProbeClient {
     Map<String, String> queryParameters = const <String, String>{},
     DateTime? now,
   }) {
+    if (config.accessKeyId.trim().isEmpty ||
+        config.secretAccessKey.trim().isEmpty) {
+      throw StateError('S3 signed requests require non-empty credentials.');
+    }
     final timestamp = (now ?? DateTime.now().toUtc());
     final amzDate = _formatAmzDate(timestamp);
     final dateStamp = _formatDateStamp(timestamp);

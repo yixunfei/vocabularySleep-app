@@ -7,7 +7,7 @@ import 's3_bucket_probe.dart';
 
 /// S3 兼容存储客户端 (CST Cloud)
 ///
-/// 支持环境变量配置，默认使用公开只读凭据
+/// 默认使用内置只读凭据签名，环境变量或构造参数可覆盖配置
 /// 配置项（可选）：
 /// - S3_ENDPOINT: 服务端点 (默认：s3.cstcloud.cn)
 /// - S3_BUCKET: 存储桶名称 (默认：32be744530ff4a4b9be7bf802bd959b8)
@@ -38,7 +38,8 @@ class CstCloudS3CompatClient {
              ),
            );
 
-  // 默认公开只读凭据
+  // 远端拒绝匿名读取，必须同时保留 SigV4 签名和 S3 Browser User-Agent。
+  // 用户确认此凭据仅有读权限，可随客户端分发；不得替换为具有写权限的凭据。
   static const String _endpoint = 's3.cstcloud.cn';
   static const String _bucket = '32be744530ff4a4b9be7bf802bd959b8';
   static const String _region = 'us-east-1';

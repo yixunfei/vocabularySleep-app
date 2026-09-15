@@ -146,7 +146,7 @@ Copy-Item .env.template .env
 - `APP_FLAVOR`
 - `API_BASE_URL`
 
-未提供 `.env` 时，应用会使用代码中的默认配置或公开只读资源配置。
+未提供 `.env` 时，应用会使用内置只读 S3 凭据进行 AWS SigV4 签名，并携带 `S3 browser 13.1.1` 请求头。远端不支持匿名读取，用户无需配置环境变量即可访问默认资源。内置凭据仅用于只读资源，不得替换为具有写入权限的凭据。
 
 工具链脚本读取当前 shell / 系统环境变量，不要求把本机路径写进 `.env`。多人协作时建议在本机 PowerShell profile、系统环境变量或 CI secret 中配置：
 

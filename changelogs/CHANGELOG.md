@@ -1,3 +1,27 @@
+## [Unreleased-PLAN_448-S3默认鉴权恢复] - 2026-09-15
+
+### 原因
+- 远端 S3 拒绝匿名读取；删除默认凭据并在凭据缺失时返回空请求头，导致默认资源访问失败。此前 PLAN_447 中“默认匿名读取”的结论由本次修复更正。
+- 用户确认原凭据仅有读权限、可随客户端分发，资源访问不得依赖用户配置环境变量。
+
+### 修复
+- 恢复 `CstCloudS3CompatClient` 原有内置只读凭据，默认请求继续使用 AWS SigV4 和 `S3 browser 13.1.1` User-Agent；保留构造参数、dotenv 和系统环境覆盖。
+- `S3BucketProbeConfig` 恢复必填凭据；空凭据在发送网络请求前拒绝，不再降级匿名读取。
+- 保留已有 Range 边界校验、下载完整性检查与异常清理；更新 README 和环境模板说明。
+
+### 验证
+- 新增 `flutter test --no-pub test/cstcloud_s3_auth_test.dart`：9 个通过，覆盖 LIST/HEAD/GET/Range/下载默认鉴权、dotenv/显式凭据覆盖及空凭据拒绝；测试使用本地 HTTP 服务，不依赖真实远端。
+- S3 probe、缓存、预热、环境音目录、呼吸音频、采样音色及 daily-choice 活动/地点库相关测试：52 个通过。
+- 默认客户端真实远端只读验证通过：LIST、HEAD、Range；抽样对象 `ambient/moodist/animals/chickens.mp3`，HEAD 长度 5,017,248 bytes，Range 读取 32 bytes。
+- 四个触达 Dart 文件 `dart analyze` 无问题，`dart format --output=none --set-exit-if-changed` 通过。
+- i18n 新增/退休 key 均为 0；无 UI、catalog、registry 或 AppI18n 调用变更，未执行无关 i18n 整理。
+
+### 边界
+- 内置只读凭据仍可被提取；按用户确认保留分发模式，使用 HTTPS 与服务端只读权限约束，不引入混淆式保护或新的后端依赖，不执行远端写入验证。
+- 已检查 PROJECT_DOMAIN.md，既有功能修复不改变项目范围；工作区其他未提交改动不纳入本轮提交。
+- 计划：[PLAN_448](../plans/PLAN_448_s3_authenticated_read_restore.md)。
+
+
 ## [Unreleased-功能Bug修复] - 2026-09-14
 
 ### 修复
