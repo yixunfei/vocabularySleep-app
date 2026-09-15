@@ -1,3 +1,40 @@
+# CHANGELOG
+
+## [1.0.1] - 2026-09-15
+
+### 原因
+- 汇总 v1.0.0 后的学习、专注、音频、资源、国际化与平台适配修复，整理当前分支并准备 Android / Windows 发行。
+
+### 修改
+- 重写 README：依据当前模块注册表补全生活实用、加密安全、声音和睡眠能力，说明平台限制、数据与凭据、七语言文案、开发和构建入口。
+- 版本更新为 1.0.1+2，同步 PROJECT_DOMAIN；将 Windows runner 源码纳入版本控制以支持复现桌面构建。
+- 汇总原生 / Web 日志、数据库、ASR、catalog 适配与回归测试；Web 只提供受限入口，不作为完整应用发行。
+- 保留当前菜谱库 7,051 条记录，纳入已有 923 条属性修订；未重新运行临时推断脚本。
+
+### 修复
+- 默认 S3 资源恢复内置只读凭据、AWS SigV4 与 S3 Browser 请求头，无需用户配置环境变量。
+- 修复环境音资源解析与禁用/销毁的竞态、目录刷新复用、各类别本地缓存识别、无效缓存过滤和播放超时清理。
+- 修复专注与待办时钟来源、睡眠声音异步切换及 Match-3 退出后的延迟回调。
+- 安全存储失败时不回落到明文 API key；继续保留缓存路径、Range 边界及下载完整性校验。
+
+### 验证
+- 已有全量 flutter test --no-pub：923 tests 通过；S3 默认真实远端 LIST / HEAD / Range 验证通过。
+- i18n audit：catalog 16,312 keys，missing / placeholderMismatch / missingParams 均为 0。
+- i18n maintenance：3,505 个潜在未引用 key、417 条旧来源、0 个活动退休项；本次发布整理新增 / 退休 key 均为 0，不扩大历史 catalog 清理。
+- 旧 helper 与 catalog Dart 插值扫描无匹配。
+- Windows release 构建成功，exe 文件与产品版本为 1.0.1+2。
+- flutter analyze --no-pub：0 error / warning，120 条既有 info lint。
+- 本轮发布全量回归再次通过：flutter test --no-pub，923 tests。
+- Windows 启动检查发现并修复标题栏编码：runner 按 UTF-8 编译；Android 原生构建补上与 Flutter NDK 对应的 Clang 标准头文件。
+- Android ARM64 / ARMv7 APK 与双架构 AAB 构建、签名及 ZIP CRC 校验通过；均包含 libapp.so、libflutter.so 和 libfjs.so。新增产物检查，防止 Cargokit 失败但 Gradle 成功时发布缺少原生库的包。
+- Android versionName 为 1.0.1，ARM64 / ARMv7 APK versionCode 分别为 2002 / 1002（Flutter 分包规则），AAB 使用基础 build 2。
+- Windows ZIP 的全部 87 个文件与构建目录一致；四个发布产物已生成 SHA256SUMS.txt。
+
+### 风险变更
+- 用户确认原证书密码遗失后，同意改用新证书；v1.0.1 Android APK 无法覆盖升级旧版，需要先备份数据再卸载重装。原 JKS 保留，新签名配置与备份仅保存在本机。
+- Web 数据仅存在会话内存，ASR unavailable；传感器等原生能力因设备而异。
+- 既有 info lint、第三方编译警告和历史文档模板不在本轮全面重构。
+
 ## [Unreleased-PLAN_448-S3默认鉴权恢复] - 2026-09-15
 
 ### 原因
@@ -22,13 +59,146 @@
 - 计划：[PLAN_448](../plans/PLAN_448_s3_authenticated_read_restore.md)。
 
 
-## [Unreleased-功能Bug修复] - 2026-09-14
+## [Unreleased-PLAN_447-项目全面审计跟进] - 2026-09-15
+
+> 以下保留阶段性审计记录。其中默认匿名 S3 / 删除内置凭据的方案已由 PLAN_448 撤回；当前发布行为以顶部 v1.0.1 与 PLAN_448 为准。
+
+### 追加修复
+- AmbientService 的异步播放同步增加代际校验，禁用环境音后不会因迟到的资源解析重新启动播放器。
+- AmbientService 释放播放器改为逐实例 best-effort 清理，启动超时释放增加 2 秒上限；缓存扫描覆盖 moodist 下所有分类。
+- OnlineAmbientCatalogService 的并发 force refresh 纳入 single-flight；AppState 恢复时拒绝零字节环境音。
+- SettingsService 安全存储写入失败时不再把 API key 回写到明文设置行。
+- 移除 `android/key.properties` 中的明文发布密码，release lint 改为阻断式检查；S3 range 参数增加边界校验。
+- 修复 Match-3 测试 teardown 时异步消除计时器残留，组件 dispose 会取消 resolve delay timer。
+
+### 追加验证
+- 全量 `flutter test --no-pub`：914 tests 通过；补充修复后 Match-3 定向测试 8 tests 通过。
+- `flutter build web --no-pub --no-wasm-dry-run`：成功。
+- i18n placeholder audit：所有缺失/不匹配/动态参数计数为 0。
+- `flutter analyze --no-pub`：新增代码无 error；当前完整分析仍包含既有 native/Web facade 兼容性诊断，需在后续 Web repository facade 切片中继续收口。
+
+
+### 修复
+- 修复 `FocusService.saveTodo` 新建 Todo 在 `createdAt` 缺失时绕过可注入时钟、直接读取系统墙钟的问题；现在统一使用服务的 `_now()`，保证测试时钟、会话统计和 Todo 时间来源一致。
+
+### 验证
+- `flutter analyze --no-pub`：无 error/warning；118 条既有 info lint 未在本轮无关清理。
+- `flutter test --no-pub`：912 个测试全部通过。
+- `flutter test --no-pub test/focus_service_test.dart test/sleep_sound_controller_test.dart test/web_platform_facade_test.dart test/web_resource_facade_test.dart test/cstcloud_resource_cache_service_test.dart test/cstcloud_resource_prewarm_service_test.dart`：48 个测试通过。
+- `flutter test --no-pub test/focus_service_test.dart`：17 个测试通过，包含新增注入时钟回归。
+- `dart format`：本轮触达 Dart 文件格式正确；仓库仍有 13 个既有 formatter-only 文件未纳入，避免无关大范围变更。
+
+### 剩余风险
+- Web 数据库仍为 session-memory adapter，Web ASR 明确 unavailable；完整 AppState/repository、TTS/音频上层和 native-only Toolbox 页面未宣称等价 Web 化。
+- S3 私有桶凭据轮换仍需运维执行；代码默认匿名读取，显式凭据仅由运行环境注入。
+- 既有 info lint 与第三方 Web WASM dry-run 提示未在本轮扩大处理范围。
+
+
+### 修复
+- i18n catalog 解析拆为平台 facade：原生通过 isolate worker 解析，Web 使用同步 UTF-8/CSV 解析，不再从 Web 入口引入 `dart:isolate`。
+- Web composition root 不再构造 `WordbookImportService`，避免 `dart:io` 文件/MDX importer 进入浏览器编译图；native database 仍保留原 importer。
+- 新增 `ResourceStore`/`WebResourceStore`，以 bytes、URL 和内存缓存语义隔离 native `File`/`Directory` 资源实现。
+- 新增 `WebAudioSourcePolicy`，明确 Web 只接受 asset、HTTP(S) URL 和非空 bytes，拒绝本地路径。
+- 移除 `built_in_wordbook_source.dart` 中不必要的原生导入耦合。
+
+### 测试与验证
+- Web facade、资源缓存、音频源策略和 catalog 定向测试：**13 个通过**。
+- `flutter analyze --no-pub`（新增/修改 facade）：**No issues found**。
+- `flutter test --no-pub`：**912 个通过**。
+- `flutter build web --no-pub`：成功生成 `build/web`。
+- Web reachable 目标扫描：默认入口不再包含 `dart:io`、`dart:isolate`、`dart:ffi`、`package:sqlite3` 或 native importer。
+
+### 平台边界
+- Web 数据库仍为 session-memory adapter，尚未提供 IndexedDB 跨刷新持久化。
+- Web ASR、完整 AppState/repository、缓存实际 HTTP 适配、TTS/音频上层和 Daily Choice SQLite stores 仍需后续独立实现。
+- Web 构建的 WASM dry-run 仍报告第三方依赖提示；JavaScript 构建成功，提示不代表 WASM 全兼容。
+
+### 新增
+- 新增 `app_log_service_native.dart` / `app_log_service_web.dart` 条件日志实现；Web 使用 console-only 日志并保持公共 API。
+- 新增 `asr_service_native.dart` / `asr_service_web.dart` 条件 ASR 实现；Web 提供完整 contract 的 unavailable 能力返回。
+- 新增 `database_service_native.dart` / `database_service_web.dart` 条件数据库实现；Web 不暴露 SQLite、FFI 或本地文件路径。
+- Web 入口现在加载语言 catalog、初始化浏览器数据库 facade 和 ASR facade，并显示能力状态。
+
+### 修改
+- `lib/main.dart` 使用条件入口：原生进入完整应用，Web 进入 Web composition root。
+- 原生日志、ASR 与数据库实现移入明确的 native 文件，避免被 Web 默认实现直接编译。
+
+### 验证
+- `flutter analyze --no-pub`（新增 Web facade、入口、契约测试）：无 issues。
+- `flutter test --no-pub test/web_platform_facade_test.dart`：通过（1 test）。
+- 原生数据库、ASR、日志和 AppState 启动回归：通过（52 tests）。
+- `flutter test --no-pub`：通过（910 tests）。
+- `flutter build web --no-pub`：成功生成 `build/web`。
+
+### 平台边界与剩余风险
+- Web 数据库当前为内存 session adapter，尚未提供 IndexedDB 跨刷新持久化，也未替代 native repository 全部业务 API。
+- Web ASR 当前明确返回 unavailable，不伪装离线 Sherpa、native 文件录音或声学评分。
+- 完整 AppState、repository、缓存、音频/TTS、daily-choice SQLite store 和 native-only toolbox 页面仍需后续独立切片；本阶段不宣称这些功能已等价 Web 化。
+- Web 构建会报告第三方依赖 WASM dry-run 提示，但 JavaScript Web 构建成功。
+
+
+### 修改
+- 新增原生日志实现与 Web console-only 日志实现的条件导出；Web 不再编译 `dart:io`、`path_provider` 或文件日志 writer。
+- 新增 ASR 条件 facade：原生平台继续使用 Sherpa/录音实现，Web 提供完整 `AsrService` contract 的安全 unavailable 实现。
+- 新增数据库条件 facade：Web 使用不暴露 native 文件路径的轻量 browser-session 存储适配器，原生 SQLite 实现保持独立。
+- Web 入口现在加载语言 catalog、初始化 Web 数据库和 ASR facade，并显示 capability 状态，不再是静态“不可用”占位入口。
+
+### 测试与构建
+- `flutter analyze --no-pub`：新增 Web facade、入口和数据库适配器无 issues。
+- `flutter test --no-pub test/web_platform_facade_test.dart`：通过（1 test）。
+- `flutter test --no-pub test/database_service_test.dart test/asr_service_test.dart test/app_log_service_test.dart test/app_state_startup_test.dart`：通过（52 tests）。
+- `flutter build web --no-pub`：成功生成 `build/web`；默认 `lib/main.dart` 已使用条件 Web 入口。
+
+### 平台边界
+- 当前 Web 数据库适配器是 session-memory 版本，尚未提供 IndexedDB 的跨刷新持久化；备份、SQLite worker、原生文件导入导出仍明确不在 Web 能力范围内。
+- 浏览器 ASR facade 返回 unavailable，不伪装离线 Sherpa 或 native 文件录音；后续可单独接入 Blob/远程 ASR。
+- 现有 Web 构建仍有第三方 WASM dry-run 提示（SQLite/Sherpa 依赖未进入默认 Web JS 代码路径，但依赖分析仍可报告提示）。
+- 全项目仍有历史 info lint，未在本阶段进行行为无关的大规模清理。
+
+
+### 修复
+- 移除 `CstCloudS3CompatClient` 内置的静态 access key/secret；公开读取默认使用匿名 S3 请求，私有桶凭据只能通过运行环境变量或显式依赖注入提供。
+- `S3BucketProbeConfig` 支持可选凭据，并在凭据缺失时跳过签名，避免发布包携带长期密钥。
+- 新增条件入口：`lib/main.dart` 在 Web 平台选择 `lib/main_web.dart` 安全入口，原生平台选择 `lib/main_native.dart`，避免 Web 构建编译原生数据库、ASR 和文件系统依赖；
+
+### 验证
+- S3 相关调用方测试：35 个通过。
+- `flutter build web --no-pub --target lib/main_web.dart`：成功，输出 `build/web`。
+- `flutter build web --no-pub`（默认 `lib/main.dart` 条件入口）：成功，输出 `build/web`。
+- Web 构建仅报告第三方依赖的 WASM dry-run 提示，不影响 JavaScript Web 构建。
+
+### 风险变更
+- 默认 Web 入口明确提示 native-only 功能不可用；完整 Web 功能仍需后续拆分数据库、ASR、日志和平台服务 facade。
+- 旧凭据已从源码删除，但若曾在生产或日志中使用，仍需运维侧吊销和轮换。
+
+
+### 修复
+- FocusService 的提醒触发加入会话代际校验，停止、重启或销毁后旧的环境音、提醒和 TTS 异步结果不会继续产生副作用。
+- FocusService 的 Todo/系统日历同步改为串行队列并统一捕获平台异常；快速变更和销毁期间不再让旧任务覆盖新状态。
+- FocusService 的会话、Todo、笔记和今日统计时间统一使用可注入时钟，修复测试时钟与真实墙钟分裂问题。
+- AppState 环境音 debounce 增加代际和错误边界，销毁后已排队同步不会继续访问环境音服务。
+- SleepSoundController 记录播放器释放失败，避免平台资源错误被完全静默吞掉。
+
+### 测试
+- 新增无 TTS 语音提醒回归测试。
+- 新增音量异步失败与新播放竞态回归测试。
+- 受影响 Focus、SleepSound、在线环境音目录和睡眠例程测试通过（35 tests）。
+- `dart format` 对受影响文件通过。
+
+### 风险变更
+- `android/key.properties` 已被 `.gitignore` 覆盖且未被 Git 跟踪；其中本地签名密码仍需由运维确认是否轮换。
+- CSTCloud 客户端仍包含静态只读凭据；未在缺少后端匿名访问方案时擅自删除，保留为 SEC-01 后续风险。
+- 全量静态分析/构建尚未完成：当前环境的 `flutter analyze` 在依赖解析后返回非零，需单独重新执行并保留完整诊断。
+
 
 ### 修复
 - 修复禅意沙盘双指变换接管时遗留未完成笔画、变换结束后脏笔画影响后续手势的问题。
 - 修复音钵移动端舞台和 burst 绘制层使用固定放大倍数导致窄屏布局越界的问题，所有舞台层现在受 LayoutBuilder 约束并裁剪。
 - 修复在线环境音目录服务在释放后继续回写缓存或访问已关闭资源的问题，并安全处理异步 cache close 异常。
 - 修复 AppState 销毁期间在线环境音下载完成后仍写入运行时环境音和数据库的问题。
+- 修复 FocusService 语音提醒在 TTS 服务未注入时崩溃：`_tts!.speak(...)` 在 `_tts` 为 null 时抛出空指针异常并打断定时器流程。现在先判断 `_tts != null` 再调用，未注入时静默跳过。
+- 修复 AppState `_formatByteSize` 在 0~1023 B 时错误返回 `0 KB`：现在按实际量级返回 `B`/`KB`/`MB`/`GB`，0 字节返回 `0 B`。
+- 修复 SleepSoundController `setVolume` 在 `stop()` 抛异常后仍把状态置为 `failed` 并通知监听者，导致下一次合法播放被过期状态阻塞：现在仅在 `stoppedGeneration == _generation` 时才更新状态。
 
 ### 验证
 - `dart format`：通过。

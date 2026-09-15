@@ -1,385 +1,165 @@
-# 咸鱼声息 / Vocabulary Sleep App
+<p align="center"><img src="assets/branding/logo.webp" width="112" alt="咸鱼声息标志"></p>
 
-一个以「词汇学习、练习巩固、专注管理、睡眠支持、工具箱」为核心的 Flutter 综合应用。项目不是单点工具，而是一个本地优先、移动端优先、可模块化启停、可逐步扩展的多域能力平台。
+# 咸鱼声息 · Vocabulary Sleep App
 
-## 项目定位
+把词汇学习、练习、专注、睡眠支持与日常工具放进一个本地优先的 Flutter 应用。你可以听词本、练习记忆、管理专注任务，也可以在工具箱里使用舒缓声音、呼吸训练、生活工具和加密工具；不需要的模块可以关闭。
 
-- **学习闭环**: 以词本、词条、播放、记忆进度和练习会话串起「学、听、练、复盘」。
-- **低摩擦日常辅助**: 提供专注计时、待办笔记、睡前流程、夜醒救援、舒缓声音和轻量决策工具。
-- **模块化平台**: 顶层功能和 toolbox 子工具都通过模块 ID、注册表和运行时守卫管理，支持按需启停。
-- **本地优先**: SQLite、JSON、本地资源和缓存优先；远端资源主要用于可延迟下载的大数据集或媒体资源。
-- **移动端优先**: 以 375dp 宽度为基础设计目标，控制首屏信息密度、触控热区和窄屏溢出。
+[下载最新版本](https://github.com/yixunfei/vocabularySleep-app/releases/latest) · [更新记录](changelogs/CHANGELOG.md) · [提交问题](https://github.com/yixunfei/vocabularySleep-app/issues)
 
-## 当前能力概览
+## 下载与平台
 
-| 顶层模块 | 模块 ID | 说明 |
-| --- | --- | --- |
-| 学习 | `study` | 词本浏览、词条详情、学习播放、字段播放配置、内置词本延迟加载 |
-| 练习 | `practice` | 多题型练习、练习会话、错题与历史、记忆进度追踪 |
-| 专注 | `focus` | 专注计时、待办、笔记、锁屏专注、提醒与环境音联动 |
-| 工具箱 | `toolbox` | 睡眠、声音、减压、小游戏、人类测试、每日决策等独立工具 |
-| 更多 | `more` | 设置、模块管理、数据管理、语言、语音、外观和辅助入口 |
+当前版本：**v1.0.1（build 2）**。本次发行提供 Android 与 Windows 安装产物。
 
-模块定义集中在 `lib/src/core/module_system/`：
+| 平台 / 文件 | 使用方式 |
+| --- | --- |
+| Android · `arm64-v8a.apk` | 大多数现代 Android 手机优先选择此包 |
+| Android · `armeabi-v7a.apk` | 适用于仍使用 32 位 ARM 系统的设备 |
+| Android · `.aab` | 应用商店分发用，不能直接点击安装 |
+| Windows x64 · `.zip` | 完整解压后运行 `xianyushengxi.exe`，保留同目录 DLL 和 `data` 文件夹 |
+| Web | 仅有受限的平台入口与适配验证，不是完整应用，本次不发布 |
+| iOS / macOS / Linux | 未纳入本次构建和发行验证 |
 
-- `module_id.dart`: 模块 ID 常量。
-- `module_registry.dart`: 模块分组、父子关系和可禁用性。
-- `module_runtime_guard.dart`: 运行时可访问性判断。
-- `lib/src/ui/module/module_access.dart`: UI 侧统一路由守卫与禁用态提示。
+**Android 升级注意：v1.0.1 已更换签名证书，无法直接覆盖旧版 APK。请先在旧版中导出数据备份，再卸载旧版、安装新版并恢复备份；未备份的本地数据可能随卸载丢失。Windows 不受此签名变更影响。**
 
-## Toolbox 子模块
+每次发布同时提供 `SHA256SUMS.txt`。升级前可在应用的数据管理中导出备份；语音模型、在线音频和部分工具数据需要联网下载。相机、定位、传感器、通知等功能取决于设备能力及系统权限。
 
-Toolbox 采用「模块注册 + 独立入口 + 页面守卫」组织。当前注册的子模块包括：
+## 可以做什么
 
-| 子模块 ID | 名称 | 主要能力 |
-| --- | --- | --- |
-| `toolbox.sleep_assistant` | 睡眠助手 | 睡眠评估、睡眠日志、睡前流程、夜醒救援、节律建议、报告 |
-| `toolbox.mini_games` | 小游戏中心 | 数独、扫雷、拼图、五子棋、2048、俄罗斯轮盘等轻量游戏 |
-| `toolbox.human_tests` | 人类测试中心 | 反应、记忆、视觉、手眼协调、时间感知、计算、持续注意力等趣味测试 |
-| `toolbox.soothing_music` | 舒缓音乐 | 本地舒缓曲目、沉浸式视觉舞台、播放意图管理 |
-| `toolbox.sound_deck` | 乐器工具集 | 竖琴、钢琴、吉他、长笛、鼓垫、小提琴、三角铁等声音工具 |
-| `toolbox.singing_bowls` | 疗愈音钵 | 音钵共振、移动端控制面板、宽窄屏布局 |
-| `toolbox.focus_beats` | 专注节拍 | 节拍训练、循环编排、可视化舞台 |
-| `toolbox.woodfish` | 电子木鱼 | 触发、计数、音效、反馈和轻仪式化重置 |
-| `toolbox.schulte_grid` | 舒尔特方格 | 视觉搜索与注意力训练 |
-| `toolbox.breathing` | 呼吸训练 | 专注、放松、睡前等呼吸节奏流程 |
-| `toolbox.prayer_beads` | 静心念珠 | 节奏化计数和减压反馈 |
-| `toolbox.zen_sand` | 禅意沙盘 | 触控绘制、沙纹反馈和环境音联动 |
-| `toolbox.daily_decision` | 每日决策 | 吃什么、穿什么、去哪儿、干什么、随机助手、决策助手 |
+| 主模块 | 当前能力 |
+| --- | --- |
+| 学习 | 词本浏览与导入、词条详情、字段播放配置、TTS 朗读、学习进度 |
+| 练习 | 多题型练习、练习会话、错题、历史记录与记忆进度 |
+| 专注 | 专注计时、待办、笔记、锁屏专注、提醒与环境音联动 |
+| 工具箱 | 睡眠支持、声音与乐器、轻量游戏、注意力测试、日常决策、生活实用、加密安全 |
+| 更多 | 模块启停、数据管理、语言、外观、语音和其他设置 |
 
-Toolbox UI 调整需要同步遵守：
+### 睡眠与声音
 
-- `docs/toolbox_design/TOOLBOX_DESIGN_REVIEW.md`
-- `docs/toolbox_design/TOOLBOX_ANIMATION_SPEC.md`
-- `docs/toolbox_design/TOOLBOX_UI_STYLE_GUIDE.md`
+- **睡眠助手**：睡眠评估与日志、睡前流程、夜醒支持、作息建议和报告。
+- **声音工具**：舒缓音乐、乐器工具集、自由风铃、疗愈音钵、专注节拍、电子木鱼。
+- **放松与注意力**：呼吸训练、静心念珠、禅意沙盘、舒尔特方格。
+- 环境音支持在线目录、按需下载和本地缓存；已下载的有效资源可重复使用。
 
-Toolbox 首页支持用户自定义布局：点击“编辑布局”或长按工具卡片进入编辑模式，可拖拽调整模块顺序、从首页隐藏入口、恢复隐藏入口或重置默认布局。该能力只影响工具箱首页展示，和“模块管理”中的全局启停相互独立；全局禁用仍会通过模块守卫阻断入口和路由访问。
+### 日常工具与互动
 
-## 近期进展
+- **小游戏与人类测试**：数独、扫雷、拼图、五子棋、2048、消除游戏，以及反应、记忆、视觉、手眼协调等趣味测试。
+- **每日决策**：吃什么、穿什么、去哪儿、干什么、随机助手与决策助手。
+- **生活实用**：高级计算器、单位换算、日期和房贷计算、世界时钟、文本处理、二维码、图片处理、带壳截图、思维导图、城市与 Offer 对比等。
+- **加密安全**：文本与文件加密、哈希校验、HMAC、非对称密码工具、密码生成与保管、OTP、秘密分享和媒体隐写。
 
-2026-05-11 的 toolbox / human tests 收口已完成，当前基线与历史变更继续由 `modules/toolbox/README.md` 和 `changelogs/CHANGELOG.md` 维护；计划与归档文件保留为本地工作流材料，不纳入版本控制。
+工具箱首页支持拖拽排序、隐藏和恢复入口；首页布局与全局模块启停分别管理。不同工具的离线能力和硬件要求以具体页面为准。
 
-## 技术栈
+### Windows 实机界面
 
-- **框架**: Flutter
-- **语言**: Dart，SDK 约束为 `^3.11.0`
-- **状态管理**: `ChangeNotifier`、`Provider`、`flutter_riverpod` 过渡共存
-- **本地数据库**: `sqlite3` + `sqlite3_flutter_libs`
-- **音频**: `audioplayers`，并使用本地 `third_party/audioplayers_android` override
-- **TTS**: `flutter_tts`，并使用本地 `third_party/flutter_tts` override
-- **ASR**: `sherpa_onnx`
-- **网络与资源**: `http`、S3 兼容资源探测、远端资源缓存
-- **地图与定位**: `geolocator`、`flutter_map`、`latlong2`、`url_launcher`
-- **测试**: `flutter_test`、`integration_test`、单元测试与 UI smoke test
+![v1.0.1 Windows 工具箱](screenshots/windows-toolbox.png)
 
-## 目录结构
+## v1.0.1 更新重点
 
-```text
-.
-├── lib/
-│   ├── main.dart
-│   └── src/
-│       ├── app/                 # 启动装配、依赖注入、应用身份
-│       ├── core/module_system/  # 模块 ID、注册表、启停守卫
-│       ├── i18n/                # 国际化入口
-│       ├── models/              # 数据模型
-│       ├── repositories/        # 仓储边界
-│       ├── services/            # 数据库、播放、TTS、ASR、提醒、天气、toolbox 服务
-│       ├── state/               # AppState 与各域状态
-│       ├── ui/                  # 页面、组件、主题、动效、文案
-│       └── utils/               # 搜索、语音、语言等工具
-├── assets/                      # 品牌、词本、toolbox 静态资源
-├── dict/                        # 词典与词本数据
-├── docs/                        # 工程文档与设计规范
-├── modules/                     # 模块说明和模块化推进记录
-├── plans/                       # 每轮改动计划
-├── records/                     # 过程记录、审计和回归记录
-├── changelogs/                  # 变更日志
-├── scripts/                     # 运行、构建、验证、数据生成脚本
-├── test/                        # 单元测试、Widget 测试、smoke test
-├── third_party/                 # 本地维护的依赖 override
-└── dist/                        # 构建产物输出目录
-```
+- 恢复默认 S3 资源的 **AWS SigV4 请求签名与 S3 Browser 请求头**，修复匿名访问被服务器拒绝的问题；普通用户无需配置环境变量。
+- 修复环境音异步播放、目录刷新、资源下载与销毁期间的竞态，处理无效缓存和睡眠声音切换问题。
+- 改进专注计时与待办时间来源、API key 安全存储及缓存路径校验。
+- Android 改为 ARM64 / ARMv7 分包，减少只使用一种架构时的下载体积。
+- 更新国际化文案、精简未使用 catalog key，并整理原生与 Web 平台入口。
 
-## 环境准备
+详细修复与验证记录见 [CHANGELOG](changelogs/CHANGELOG.md)。
 
-### 基础要求
+## 数据、联网与凭据
 
-- Flutter SDK，需满足 `pubspec.yaml` 中的 Dart SDK 约束。
-- Windows 桌面运行需要 Visual Studio C++ 桌面开发工具链、CMake、NuGet。
-- Android 构建需要 Android SDK、platform-tools 和 Gradle 环境。
-- iOS/macOS 构建需要 macOS、Xcode 和对应签名环境。
+原生应用以 SQLite、本地文件和缓存存储学习记录及工具数据。大体积音频、采样音色和部分数据集按需获取，首次使用相关功能时需要网络。在线 TTS / ASR、地图和第三方服务也需要相应网络或配置；离线 ASR 需要本地模型。
 
-### 工具链安装与路径解析
+默认资源服务器不支持匿名访问。客户端保留经资源所有者确认可分发的**只读凭据**，通过 HTTPS 和 SigV4 访问资源，不要求用户修改环境变量。客户端内置凭据可以被提取，服务端只读权限是实际权限边界；不能将写权限密钥放入客户端。
 
-项目脚本不再依赖固定盘符或个人目录。默认解析顺序为：
+开发者可通过构造参数、已加载的 dotenv 或进程环境覆盖 `S3_ENDPOINT`、`S3_BUCKET`、`S3_REGION`、`S3_ACCESS_KEY_ID`、`S3_SECRET_ACCESS_KEY`、`S3_USER_AGENT`。配置参考 [.env.template](.env.template)。`.env` 不在默认发布资源清单中，移动端自定义配置需显式接入加载或依赖注入。
 
-1. 显式环境变量，例如 `FLUTTER_BIN`、`FLUTTER_ROOT`、`CMAKE_BIN`、`CMAKE_ROOT`、`ANDROID_HOME`、`ANDROID_SDK_ROOT`。
-2. 当前 shell 的 `PATH`。
-3. 项目内可选目录，例如 `.fvm/flutter_sdk`、`.tooling/cmake`、`.tooling/android-sdk`。
-4. 系统环境变量派生目录，例如 Windows 的 `%LOCALAPPDATA%/Android/Sdk` 或 `%ProgramFiles%/CMake`。
+个人 TTS / ASR API key 使用系统安全存储，安全存储失败时不回落到明文设置；常规备份不会携带这些密钥。签名私钥和本机签名配置不进入版本控制。
 
-Windows 桌面构建需要 CMake 的原因是 Flutter Windows runner 和部分原生插件会通过 CMake 生成 Visual Studio 工程；`flutter_tts` 等插件还会在 CMake 阶段调用 NuGet。推荐安装：
+## 本地开发
 
-- Visual Studio Build Tools 或 Visual Studio Community，并勾选 Desktop development with C++。
-- CMake，可通过 Visual Studio Installer 组件、winget、Chocolatey 或 CMake 官网安装。
-- NuGet CLI。若 `nuget.exe` 不在 `PATH`，脚本会尝试下载到当前用户目录；也可用 `NUGET_BIN` 指向本机 `nuget.exe`。
-- FJS/QuickJS 首次 Windows 构建需要 x64 `libclang.dll`。项目脚本会优先验证 `LIBCLANG_PATH` 和常见安装位置；均不可用时，会明确提示并把固定版本 `libclang.runtime.win-x64 22.1.8` 引导到已忽略的 `.tooling/libclang`。
+本次发行工具链：Flutter **3.44.1**、Dart **3.12.1**；Dart SDK 约束为 `^3.12.0`。
 
-Android 构建需要 Android SDK。推荐安装 Android Studio 后配置 `ANDROID_HOME` 或 `ANDROID_SDK_ROOT`，并确保 `platform-tools` 可用。构建 `android-appbundle` 时还需要 Android SDK Command-line Tools，Flutter 会在 Gradle 完成后调用 `cmdline-tools/latest/bin/apkanalyzer` 检查 AAB 的 native debug symbols；若缺失，可在 Android Studio SDK Manager 安装 Command-line Tools，或安装官方 command-line tools zip 后运行 `flutter doctor --android-licenses`。
-
-### 可选环境变量
-
-项目支持可选 `.env` 文件，主要供应用运行配置使用。复制 `.env.template` 为 `.env` 后按需填写：
+- Android：Android SDK、Command-line Tools、JDK；本次 compile / target SDK 为 36，最低 API 24，主机构建工具为 Build Tools 37、Java 21。
+- Windows：Visual Studio 2022 的 C++ 桌面开发工作负载、Windows SDK、CMake、NuGet。
+- 高级计算器 FJS / QuickJS 的 Windows 主机构建需要 x64 `libclang.dll` 和 Rust stable / Cargo；Android 还需要 `armv7-linux-androideabi`、`aarch64-linux-android` Rust targets。项目脚本检查 libclang，必要时通过 NuGet 引导到 `.tooling/libclang`；Android 构建会临时使用当前 NDK 的 Clang 标准头文件。
 
 ```powershell
-Copy-Item .env.template .env
-```
-
-常见配置项：
-
-- `S3_ENDPOINT`
-- `S3_BUCKET`
-- `S3_REGION`
-- `S3_ACCESS_KEY_ID`
-- `S3_SECRET_ACCESS_KEY`
-- `APP_FLAVOR`
-- `API_BASE_URL`
-
-未提供 `.env` 时，应用会使用内置只读 S3 凭据进行 AWS SigV4 签名，并携带 `S3 browser 13.1.1` 请求头。远端不支持匿名读取，用户无需配置环境变量即可访问默认资源。内置凭据仅用于只读资源，不得替换为具有写入权限的凭据。
-
-工具链脚本读取当前 shell / 系统环境变量，不要求把本机路径写进 `.env`。多人协作时建议在本机 PowerShell profile、系统环境变量或 CI secret 中配置：
-
-- `FLUTTER_BIN` / `FLUTTER_ROOT`
-- `CMAKE_BIN` / `CMAKE_ROOT`
-- `ANDROID_HOME` / `ANDROID_SDK_ROOT`
-- `LIBCLANG_PATH`
-- `NUGET_BIN`
-- `OPENCODE_BIN`
-- `DAILY_CHOICE_RECIPE_SOURCE_DIR`
-- `DAILY_CHOICE_RECIPE_EXPORT_DIR`
-- `DAILY_CHOICE_HOWTOCOOK_DIR`
-- `DAILY_CHOICE_WEAR_SOURCE_DIR`
-- `DAILY_CHOICE_WEAR_OUTPUT_DIR`
-- `DAILY_CHOICE_PLACE_OUTPUT_DIR`
-- `DAILY_CHOICE_ACTIVITY_OUTPUT_DIR`
-
-## 快速开始
-
-安装依赖：
-
-```bash
+git clone https://github.com/yixunfei/vocabularySleep-app.git
+cd vocabularySleep-app
 flutter pub get
-```
+flutter doctor -v
 
-Windows 桌面运行：
-
-```bash
-flutter run -d windows
-```
-
-高级计算器的 FJS/QuickJS 原生依赖在首次 Windows 构建时需要 x64 `libclang.dll`。推荐使用下方项目脚本：它会验证 DLL 架构，并在本机没有有效安装时通过 NuGet 引导固定版本到 `.tooling/libclang`。首次引导需要访问 NuGet；离线环境可预先安装 x64 LLVM/libclang，并把包含 DLL 的目录配置到 `LIBCLANG_PATH`。
-
-直接执行 `flutter run` 会绕过项目预检。若用户级变量是在当前终端启动后才设置，先刷新当前 PowerShell 环境：
-
-```powershell
-$env:LIBCLANG_PATH = [Environment]::GetEnvironmentVariable('LIBCLANG_PATH', 'User')
-flutter run -d windows
-```
-
-下方项目脚本会主动读取当前进程、用户级和系统级配置，并提供项目本地回退，因此更适合作为日常入口。
-
-PowerShell 快捷运行脚本：
-
-```powershell
-.\scripts\dev-run.ps1
-```
-
-常用参数：
-
-```powershell
-.\scripts\dev-run.ps1 -Clean
-.\scripts\dev-run.ps1 -ResetAppState
-.\scripts\dev-run.ps1 -ResetBuildCache
+# 推荐入口：包含工具链和旧 CMake 路径缓存检查
 .\scripts\dev-run.ps1 -Device windows
-.\scripts\dev-run.ps1 -NoRun
+
+# Android：先连接设备或启动模拟器
+flutter devices
+flutter run -d <device-id>
 ```
 
-## 构建
+工具链优先从 `FLUTTER_BIN` / `FLUTTER_ROOT`、`ANDROID_HOME` / `ANDROID_SDK_ROOT`、`CMAKE_BIN` / `CMAKE_ROOT`、`LIBCLANG_PATH` 和 `NUGET_BIN` 等本机配置解析，再查找 PATH 与项目内工具目录。不需要在源码中硬编码个人路径。
 
-PowerShell 构建脚本会输出到 `dist/`：
+## 构建发行产物
 
 ```powershell
-.\scripts\build.ps1 -Target windows
-.\scripts\build.ps1 -Target android-apk
-.\scripts\build.ps1 -Target android-appbundle
-.\scripts\build.ps1 -Target android-apk,android-appbundle,windows
+.\scripts\build.ps1 -Target windows -BuildName 1.0.1 -BuildNumber 2
+.\scripts\build.ps1 -Target android-apk,android-appbundle -BuildName 1.0.1 -BuildNumber 2
 ```
 
-常用参数：
+产物目录为 `dist/windows/`、`dist/android-apk/` 和 `dist/android-appbundle/`。APK 使用 `--split-per-abi --target-platform android-arm,android-arm64`；Windows 发行需要压缩完整输出目录。
+
+Android release 必须配置正式签名。将以下配置保存在被 Git 忽略的 `android/key.properties` 中，其中 `storeFile` 相对 `android/app/` 解析：
+
+```properties
+storeFile=vocabularySleep-release-20260915.jks
+storePassword=<本机密钥库密码>
+keyAlias=<签名密钥别名>
+keyPassword=<私钥密码>
+```
+
+也可通过 Gradle properties 或环境变量提供 `RELEASE_STORE_FILE`、`RELEASE_STORE_PASSWORD`、`RELEASE_KEY_ALIAS`、`RELEASE_KEY_PASSWORD`。为保持已安装 APK 的覆盖升级能力，后续版本必须使用相同签名身份；保存好 JKS 和密码备份。
+
+Web 平台适配可以单独运行 `flutter build web --no-wasm-dry-run` 验证，但数据库仅在会话内存中保存，ASR 明确不可用，完整功能尚未迁移。发行脚本继续禁用 Web 目标。
+
+## 测试与国际化
 
 ```powershell
-.\scripts\build.ps1 -Target windows -Clean
-.\scripts\build.ps1 -Target windows -ResetBuildCache
-.\scripts\build.ps1 -Target android-apk -BuildName 1.0.0 -BuildNumber 1
-.\scripts\build.ps1 -Target windows -DryRun
-```
+flutter test --no-pub
+flutter analyze --no-pub
+node scripts/audit_i18n_placeholders.js
+node scripts/maintain_i18n_catalog.js --limit 20
 
-Bash 构建脚本：
-
-```bash
-./scripts/build.sh --target linux
-./scripts/build.sh --target android-apk
-./scripts/build.sh --target android-appbundle
-```
-
-注意事项：
-
-- `scripts/build.ps1` 已明确禁用 `web` target。当前应用依赖 `sqlite3`、`sherpa_onnx` 等 FFI 能力，不能直接作为 Flutter Web 构建。
-- `scripts/build.sh` 仍保留 `web` 分支，使用前请确认目标平台依赖已经具备 Web 替代实现。
-- Android 构建会使用项目局部 Gradle user home，减少用户全局 Gradle 缓存污染。
-- PowerShell 运行、验证和构建脚本会检测旧工作区残留的 `CMakeCache.txt`。当缓存中的构建目录或源目录不属于当前项目路径时，会自动清理对应的生成目录；需要强制清理时可加 `-ResetBuildCache`。
-
-## 验证与测试
-
-完整测试：
-
-```powershell
-.\scripts\test.ps1
+# 定向测试示例
+.\scripts\test.ps1 -Target test/cstcloud_s3_auth_test.dart
 .\scripts\test.ps1 -Target test/ui_smoke_test.dart
-.\scripts\test.ps1 -Target test/ui_smoke_test.dart -PlainName "toolbox page shows aggregated local tools"
 ```
 
-静态检查和格式检查：
+文案统一由 `lib/l10n/catalog/app_texts.csv` 与 `app_text_registry.json` 管理，运行时通过 `AppI18n.t(...)` 获取。维护语言为中文、英文、日文、德文、法文、西班牙文和俄文；动态参数使用 `{name}`。新增或调整 key 时同步七语言资源及 registry，并执行占位符审计；日常维护报告不会自动删除历史 key。
 
-```powershell
-.\scripts\verify-local-analysis.ps1
-```
-
-只检查指定目标：
-
-```powershell
-.\scripts\verify-local-analysis.ps1 -Task format-check,dart-analyze -Target lib/src/services
-.\scripts\verify-local-analysis.ps1 -Task flutter-analyze -Target lib test
-```
-
-单个测试示例：
-
-```powershell
-.\scripts\test.ps1 -Target test/ui_smoke_test.dart
-.\scripts\test.ps1 -Target test/toolbox_audio_bank_regression_test.dart
-```
-
-提交前建议至少完成：
-
-1. 文档改动：检查 Markdown 可读性和链接路径。
-2. Dart/Flutter 改动：运行定向 `dart format`、`dart analyze` 或 `flutter analyze`。
-3. 行为改动：补充或运行对应单元测试、Widget test、UI smoke test。
-4. Toolbox UI 改动：额外核对 toolbox 设计规范、移动端首屏、触控区域、状态可读性。
-
-## 数据与资源
-
-- 内置词本资源位于 `assets/en_zh_15000_wordbook.json` 和 `dict/`。
-- 运行期结构化数据以 SQLite 为主，仓储层位于 `lib/src/repositories/`。
-- 每日决策等 toolbox 数据存在本地 JSON、SQLite 缓存和可延迟下载远端资源混合路径。
-- 大资源默认不应随意加入安装包，优先考虑远端资源、懒加载、本地缓存和清晰的导入/导出边界。
-- 品牌与图标资源位于 `assets/branding/`，启动图标由 `flutter_launcher_icons` 配置管理。
-
-## 国际化与文案
-
-- ARB 文件位于 `lib/l10n/`，当前包含中文、英文、日文、德文、西班牙文、法文等入口。
-- 用户可见文本应优先进入统一文案或国际化管理，避免在 UI 中散落硬编码。
-- 页面级文案和辅助 copy 可参考 `lib/src/ui/ui_copy.dart` 及相关页面局部 copy 文件。
-
-## 开发规范
-
-本仓库遵循根目录 `AGENTS.md` 中的项目代理规范，重点包括：
-
-- 修改前先创建或更新 `plans/` 中的计划文档。
-- 完成后先更新 `changelogs/CHANGELOG.md`，再回看当前进度。
-- 文件编码使用 UTF-8，缩进 2 空格，Dart 命名遵循项目既有风格。
-- 页面文件负责结构编排，复杂 UI 优先拆成 header、section、panel、controls、tokens、copy 等子文件。
-- 涉及 toolbox UI 精修时，只动 UI 的任务不得混入播放、计时、持久化、状态机或数据模型逻辑。
-- 单文件超过 1000 行属于禁止项，接近风险线时优先拆分职责。
-
-## 文档索引
-
-- `AGENTS.md`: 项目协作、计划、文档、UI 和提交规范。
-- `PROJECT_DOMAIN.md`: 项目整体说明与领域边界。
-- `modules/README.md`: 模块文档总览。
-- `modules/module_system/README.md`: 模块系统说明。
-- `modules/practice/README.md`: 练习模块说明。
-- `modules/toolbox/README.md`: 工具箱模块说明。
-- `docs/toolbox_design/TOOLBOX_DESIGN_REVIEW.md`: Toolbox 设计评审。
-- `docs/toolbox_design/TOOLBOX_ANIMATION_SPEC.md`: Toolbox 动效规范。
-- `docs/toolbox_design/TOOLBOX_UI_STYLE_GUIDE.md`: Toolbox UI 风格基线。
-- `changelogs/CHANGELOG.md`: 项目变更日志。
-- `plans/PLAN_TEMPLATE.md`: 计划文档模板。
-- `decisions/DECISION_TEMPLATE.md`: 技术决策模板。
-
-## 常见问题
-
-### PowerShell 中中文显示乱码怎么办？
-
-仓库文档按 UTF-8 保存。如果 PowerShell 输出中文乱码，优先用支持 UTF-8 的终端，或显式指定：
-
-```powershell
-Get-Content -Raw -Encoding UTF8 README.md
-```
-
-### 为什么 Web 构建不可用？
-
-当前应用包含 SQLite FFI、离线 ASR、桌面/移动音频能力等依赖。它们没有完整 Web 替代实现前，Web 不是可靠目标。PowerShell 构建脚本已阻止 `web` target。
-
-### 复制项目后 Windows CMake 报旧盘符路径怎么办？
-
-优先使用脚本入口，它们会自动识别并清理旧路径缓存：
-
-```powershell
-.\scripts\dev-run.ps1 -NoRun
-.\scripts\build.ps1 -Target windows
-.\scripts\test.ps1 -NoPubGet
-```
-
-如果需要手动强制清理生成缓存：
-
-```powershell
-.\scripts\build.ps1 -Target windows -ResetBuildCache -NoPubGet
-```
-
-若 CMake 不在 PATH，可设置 `CMAKE_BIN` 指向本机 `cmake`/`cmake.exe`，或设置 `CMAKE_ROOT` 指向 CMake 安装根目录。请不要把个人机器的绝对路径写入仓库；把它们保留在本机 shell、系统环境变量或私有 `.env.local` 中。
-
-### 为什么有 `third_party` 依赖？
-
-项目对 `audioplayers_android` 和 `flutter_tts` 有本地修补，用于满足当前音频回调、平台线程、TTS 行为等稳定性要求。升级这些依赖前应先阅读相关测试和 changelog。
-
-### 可以直接提交全部未提交文件吗？
-
-不建议。仓库常有多轮并行改动，提交前应确认改动范围，只暂存当前计划相关文件，避免把无关业务改动混入文档或小修提交。
-
-## 协作流程
-
-推荐每轮改动按以下节奏推进：
-
-1. 阅读 `AGENTS.md`、相关模块 README、对应设计文档和现有代码。
-2. 在 `plans/` 中创建计划，写清目标、步骤、风险和依赖。
-3. 小步修改，优先复用现有模式和共享组件。
-4. 运行与改动范围匹配的格式化、分析和测试。
-5. 更新 `changelogs/CHANGELOG.md`。
-6. 只暂存本轮相关文件并提交。
-
-提交信息建议遵循：
+## 代码组织
 
 ```text
-feat: 新功能
-fix: 修复问题
-docs: 文档更新
-style: 代码格式调整
-refactor: 重构
-test: 测试相关
-chore: 构建或工具变更
+lib/
+  main.dart / main_native.dart / main_web.dart  平台入口
+  src/app/                                    启动装配与依赖注入
+  src/core/module_system/                     模块注册、启停与访问守卫
+  src/models/、repositories/                   数据模型和仓储
+  src/services/                               数据库、音频、TTS、ASR、缓存及工具服务
+  src/state/                                  应用与各领域状态
+  src/ui/                                     页面、组件与主题
+  src/i18n/、l10n/catalog/                     国际化入口与文案源
+assets/                                       品牌、词本与工具资源
+android/、windows/                            本次发行平台工程
+scripts/                                      开发、构建、校验和资源维护脚本
+test/                                         单元、Widget 与回归测试
+third_party/                                  本地维护的平台插件修补
+changelogs/                                    历史变更
 ```
 
-## License
+核心技术包括 Provider / ChangeNotifier、部分 Riverpod、SQLite、audioplayers、flutter_tts、sherpa_onnx、FJS / QuickJS、flutter_map 和 flutter_secure_storage。`third_party/` 中的音频、TTS、文件选择、MIDI 等 override 属于当前构建依赖，升级时需要保留或验证相应平台修补。
 
-See `LICENSE`.
+模块 ID 与父子关系集中在 `module_id.dart` / `module_registry.dart`；运行时及 UI 路由守卫统一执行禁用策略。新功能应按领域拆分服务、状态和展示，避免在页面中堆积业务逻辑。
+
+## 贡献与许可
+
+提交问题时请附应用版本、操作系统、复现步骤和脱敏日志。开发前阅读 [项目说明](PROJECT_DOMAIN.md)、[模块说明](modules/README.md) 和 [变更记录](changelogs/CHANGELOG.md)。本地协作规范、设计规范和计划记录分别保存在 `AGENTS.md`、`docs/`、`plans/`，部分为本地工作材料。
+
+项目源码采用 [MIT License](LICENSE)。第三方依赖、媒体与数据集保留各自的许可证和使用条件。

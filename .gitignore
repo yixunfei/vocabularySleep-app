@@ -56,6 +56,7 @@ run_windows_verbose.log
 # ------------------------------
 android/.gradle/
 android/.gradle-user-home/
+android/.kotlin/
 android/local.properties
 android/**/build/
 android/captures/
@@ -125,7 +126,7 @@ macos/
 plans/
 records/
 web/
-windows/
+# Windows runner sources are required to reproduce published desktop builds.
 !third_party/audioplayers_windows/windows/
 !third_party/audioplayers_windows/windows/**
 wordbooks/
@@ -135,6 +136,8 @@ wordbooks/
 # ------------------------------
 ASR/
 third_party/flutter_tts/example/
+third_party/file_picker/example/
+third_party/package_info_plus/example/
 models/
 # Dart domain models are source, not downloaded model artifacts.
 !lib/src/models/

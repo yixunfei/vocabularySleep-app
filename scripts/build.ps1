@@ -11,6 +11,8 @@ param(
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 . (Join-Path $PSScriptRoot 'tooling-env.ps1')
+. (Join-Path $PSScriptRoot 'android-native-env.ps1')
+. (Join-Path $PSScriptRoot 'android-artifact-check.ps1')
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $distRoot = Join-Path $projectRoot 'dist'
@@ -59,7 +61,7 @@ function Resolve-Targets {
 
   foreach ($item in $RequestedTargets) {
     if ($item -eq 'web') {
-      throw "Target 'web' is disabled because the current app depends on dart:ffi packages such as sherpa_onnx, sqlite3, and ffi, which do not compile to Flutter Web. Re-enable it only after adding web-specific implementations."
+      throw "Target 'web' is not a release target. Its limited platform entry uses session-memory storage and does not provide the complete native application."
     }
     if ($supportedTargets -notcontains $item) {
       throw "Target '$item' is not supported on host '$Platform'."
@@ -257,6 +259,12 @@ function Build-AndroidApk {
     'build', 'apk', '--release',
     '--split-per-abi',
     '--target-platform', 'android-arm,android-arm64'))
+  if (-not $DryRun) {
+    foreach ($abi in @('arm64-v8a', 'armeabi-v7a')) {
+      Assert-ProjectAndroidNativeLibraries -Abis @($abi) `
+        -ArchivePath (Join-Path $projectRoot "build/app/outputs/flutter-apk/app-$abi-release.apk")
+    }
+  }
   Copy-Artifact `
     -Source (Join-Path $projectRoot 'build\app\outputs\flutter-apk\app-arm64-v8a-release.apk') `
     -Destination (Join-Path $distRoot 'android-apk\xianyushengxi-arm64-v8a.apk')
@@ -269,6 +277,10 @@ function Build-AndroidAppBundle {
   Invoke-Flutter -Arguments (New-BuildArgumentList -BaseArguments @(
     'build', 'appbundle', '--release',
     '--target-platform', 'android-arm,android-arm64'))
+  if (-not $DryRun) {
+    Assert-ProjectAndroidNativeLibraries -Abis @('arm64-v8a', 'armeabi-v7a') -AppBundle `
+      -ArchivePath (Join-Path $projectRoot 'build/app/outputs/bundle/release/app-release.aab')
+  }
   Copy-Artifact `
     -Source (Join-Path $projectRoot 'build\app\outputs\bundle\release\app-release.aab') `
     -Destination (Join-Path $distRoot 'android-appbundle\xianyushengxi.aab')
@@ -344,8 +356,14 @@ try {
 
   foreach ($item in $resolvedTargets) {
     switch ($item) {
-      'android-apk' { Build-AndroidApk }
-      'android-appbundle' { Build-AndroidAppBundle }
+      'android-apk' {
+        Invoke-ProjectAndroidNativeBuild -ProjectRoot $projectRoot `
+          -FlutterCommand (Resolve-FlutterCommand) -Build { Build-AndroidApk }
+      }
+      'android-appbundle' {
+        Invoke-ProjectAndroidNativeBuild -ProjectRoot $projectRoot `
+          -FlutterCommand (Resolve-FlutterCommand) -Build { Build-AndroidAppBundle }
+      }
       'ios' { Build-Ios }
       'macos' { Build-Macos }
       'windows' { Build-Windows }
