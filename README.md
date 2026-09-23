@@ -8,7 +8,7 @@
 
 ## 下载与平台
 
-当前版本：**v1.0.1（build 2）**。本次发行提供 Android 与 Windows 安装产物。
+当前版本：**v1.0.2（build 3）**。本次发行提供 Android 与 Windows 安装产物。
 
 | 平台 / 文件 | 使用方式 |
 | --- | --- |
@@ -19,7 +19,7 @@
 | Web | 仅有受限的平台入口与适配验证，不是完整应用，本次不发布 |
 | iOS / macOS / Linux | 未纳入本次构建和发行验证 |
 
-**Android 升级注意：v1.0.1 已更换签名证书，无法直接覆盖旧版 APK。请先在旧版中导出数据备份，再卸载旧版、安装新版并恢复备份；未备份的本地数据可能随卸载丢失。Windows 不受此签名变更影响。**
+**Android 升级：v1.0.2 沿用 v1.0.1 的签名证书，可覆盖升级 v1.0.1。v1.0.0 及更早版本使用旧证书，需要先导出数据备份，再卸载旧版、安装新版并恢复备份；未备份的本地数据可能随卸载丢失。Windows 不受此签名差异影响。**
 
 Windows 需要 [Microsoft Visual C++ x64 运行库](https://aka.ms/vc14/vc_redist.x64.exe)。若启动提示缺少 `MSVCP140.dll` 或 `VCRUNTIME140.dll`，请安装运行库后重试。
 
@@ -55,13 +55,14 @@ Windows 需要 [Microsoft Visual C++ x64 运行库](https://aka.ms/vc14/vc_redis
 
 ![v1.0.1 Windows 工具箱](screenshots/windows-toolbox.png)
 
-## v1.0.1 更新重点
+## v1.0.2 更新重点
 
-- 恢复默认 S3 资源的 **AWS SigV4 请求签名与 S3 Browser 请求头**，修复匿名访问被服务器拒绝的问题；普通用户无需配置环境变量。
-- 修复环境音异步播放、目录刷新、资源下载与销毁期间的竞态，处理无效缓存和睡眠声音切换问题。
-- 改进专注计时与待办时间来源、API key 安全存储及缓存路径校验。
-- Android 改为 ARM64 / ARMv7 分包，减少只使用一种架构时的下载体积。
-- 更新国际化文案、精简未使用 catalog key，并整理原生与 Web 平台入口。
+- 修复消除游戏重新开局后被上一局动画回调改动棋盘，以及退出页面后的计时器残留。
+- 修复睡眠声音停止与启动完成交错时重复释放播放器的问题。
+- 补齐远程资源预热的取消和网络门控，切换网络后及时停止后续下载；缓存命中不再重复占用预算，过大文件不阻塞后续小文件。
+- 修复 S3 特殊字符签名、XML 文件名解码与目录分页，避免资源读取失败或列表不完整。
+- 整理源码仓库，移除未使用的词库副本、参考图与一次性翻译中间物；应用必需资源继续纳入构建，安装包通过 Release 附件分发。
+- 全量回归 **940 tests** 通过，新增 17 个边界测试；消除游戏按职责拆分，补齐质量评估与开发文档。
 
 详细修复与验证记录见 [CHANGELOG](changelogs/CHANGELOG.md)。
 
@@ -77,7 +78,7 @@ Windows 需要 [Microsoft Visual C++ x64 运行库](https://aka.ms/vc14/vc_redis
 
 ## 本地开发
 
-本次发行工具链：Flutter **3.44.1**、Dart **3.12.1**；Dart SDK 约束为 `^3.12.0`。
+当前发行工具链：Flutter **3.44.1**、Dart **3.12.1**；Dart SDK 约束为 `^3.12.0`。
 
 - Android：Android SDK、Command-line Tools、JDK；本次 compile / target SDK 为 36，最低 API 24，主机构建工具为 Build Tools 37、Java 21。
 - Windows：Visual Studio 2022 的 C++ 桌面开发工作负载、Windows SDK、CMake、NuGet。
@@ -102,11 +103,11 @@ flutter run -d <device-id>
 ## 构建发行产物
 
 ```powershell
-.\scripts\build.ps1 -Target windows -BuildName 1.0.1 -BuildNumber 2
-.\scripts\build.ps1 -Target android-apk,android-appbundle -BuildName 1.0.1 -BuildNumber 2
+.\scripts\build.ps1 -Target windows -BuildName 1.0.2 -BuildNumber 3
+.\scripts\build.ps1 -Target android-apk,android-appbundle -BuildName 1.0.2 -BuildNumber 3
 ```
 
-产物目录为 `dist/windows/`、`dist/android-apk/` 和 `dist/android-appbundle/`。APK 使用 `--split-per-abi --target-platform android-arm,android-arm64`；Windows 发行需要压缩完整输出目录。
+产物目录为 `dist/windows/`、`dist/android-apk/` 和 `dist/android-appbundle/`。v1.0.2 发布附件另汇总在本机 `dist/release-1.0.2/`，包含双 ABI APK、AAB、Windows ZIP 和 `SHA256SUMS.txt`；这些产物不提交到 Git。APK 使用 `--split-per-abi --target-platform android-arm,android-arm64`；Windows 发行需要压缩完整输出目录。
 
 Android release 必须配置正式签名。将以下配置保存在被 Git 忽略的 `android/key.properties` 中，其中 `storeFile` 相对 `android/app/` 解析：
 

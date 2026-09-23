@@ -1,5 +1,34 @@
 # CHANGELOG
 
+## [1.0.2] - 2026-09-23
+
+### 原因
+- 发布 PLAN_450 已验证的稳定性修复，并按用户要求同步 README、整理源码仓库、合并主分支与发布 Android / Windows 产物。
+
+### 修改
+- 版本更新为 1.0.2+3；README 同步修复重点、下载与覆盖升级说明、构建命令及源码/Release 附件边界，PROJECT_DOMAIN 同步版本。
+- 从 Git 当前源码树移出 63 个无运行引用的词库副本、根目录参考图、一次性翻译中间物和生成审计 JSON，合计 121,053,956 bytes；本地文件保留，加入忽略规则，不重写历史。
+- 实际运行资源、原生依赖、源码、构建/测试工具及必要开发文档仍在仓库。安装包与发布辅助文件仅位于 dist / GitHub Release。
+- 将会被 Flutter 目录资源声明带入包内的本地菜谱 .bak 备份移至 dist/local-work/release-1.0.2-input-backups，保留原内容。
+
+### 修复
+- 消除游戏跨局异步回调与计时器残留、睡眠声音重复释放、预热取消/网络/预算/缓存完整性、S3 签名/XML/目录分页；详细证据见下方 PLAN_450 记录。
+
+### 验证
+- 复用当前功能提交的 940 tests 全量通过及最后 17 tests 定向回归；本轮发布只修改版本、文档和 Git 跟踪范围，不升级依赖。
+- Windows release 成功，FileVersion / ProductVersion 为 1.0.2+3；ZIP 与完整输出目录的 86 个文件逐一核对，CRC 通过。
+- Android ARM64 / ARMv7 APK、AAB 构建成功；每个 ABI 均包含 libapp.so / libflutter.so / libfjs.so，全部归档 CRC 通过。
+- APK versionName 1.0.2，versionCode 2003 / 1003，最低 API 24 / target 36；AAB 合并 manifest 为 1.0.2 / build 3。
+- apksigner / jarsigner 验证通过；APK 与 AAB 使用同一证书，SHA256 为 `1e86ad982cd3e0a1a9662f382d4bace1348dc90c488eecf138a135bc7865bf6b`，与 v1.0.1 一致。
+- 包内无 .bak、密钥库、key.properties 或 .env；四个发布产物均已生成 SHA256SUMS.txt。
+- README 本地链接有效，声明的正式 Flutter 资源均纳入 Git；远端 main 同步前基线一致。
+
+### 风险变更
+- v1.0.2 可覆盖升级 v1.0.1；更早 Android 版本仍需备份后卸载重装。AAB 自签名/无时间戳提示属于现有 Android 本地签名方式。
+- 保留第三方 flutter_native_video_trimmer 的 KGP 构建提示；本轮不升级插件或重构构建依赖。
+- Web 不发行，未新增真机交互验收；旧 0.1/0.2/0.3 本地与远端标签冲突不属于本轮，未覆盖旧标签或强推历史。
+- 发布入口：[v1.0.2](https://github.com/yixunfei/vocabularySleep-app/releases/tag/v1.0.2)；发布计划：[PLAN_451](../plans/PLAN_451_release_1_0_2.md)。
+
 ## [Unreleased-PLAN_450-项目检查与遗留闭环] - 2026-09-23
 
 ### 原因

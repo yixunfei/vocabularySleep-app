@@ -180,3 +180,14 @@ records/record_0[3-9][0-9]_*.md
 records/record_024_阶段1续迁_*.md
 records/record_024_阶段234推进_*.md
 records/record_024_阶段门评估与阶段5启动.md
+
+# Unused local wordbook copies, visual references and one-off i18n intermediates.
+# Runtime assets and maintained generators stay under assets/, lib/ and scripts/.
+/dict/
+/image.png
+/image-*.png
+/logo.jpg
+/tool/r2_*
+/tool/r3_*
+/nul
+/records/*.json
