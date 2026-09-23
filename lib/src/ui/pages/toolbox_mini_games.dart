@@ -24,6 +24,9 @@ part 'toolbox_mini_games_jigsaw.dart';
 part 'toolbox_mini_games_gomoku.dart';
 part 'toolbox_mini_games_slide.dart';
 part 'toolbox_mini_games_match3.dart';
+part 'toolbox_mini_games_match3_resolution.dart';
+part 'toolbox_mini_games_match3_rules.dart';
+part 'toolbox_mini_games_match3_view.dart';
 part 'toolbox_mini_games_tetris.dart';
 part 'toolbox_mini_games_sokoban.dart';
 

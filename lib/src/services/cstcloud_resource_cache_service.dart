@@ -245,11 +245,25 @@ class CstCloudResourceCacheService {
       recursive: true,
       followLinks: false,
     )) {
-      if (entity is File && !entity.path.endsWith('.part')) {
+      if (entity is File &&
+          !entity.path.endsWith('.part') &&
+          await entity.length() > 0) {
         return true;
       }
     }
     return false;
+  }
+
+  /// Checks a complete cached object without downloading or deleting anything.
+  Future<bool> isFileCached(String remoteKey, {int? expectedBytes}) async {
+    final relativePath = _normalizedTargetPath(remoteKey, null);
+    final baseDir = await _cacheBaseDir();
+    try {
+      final size = await File(p.join(baseDir.path, relativePath)).length();
+      return size > 0 && (expectedBytes == null || size == expectedBytes);
+    } on FileSystemException {
+      return false;
+    }
   }
 
   /// Resolves the root directory used for all cached resources.

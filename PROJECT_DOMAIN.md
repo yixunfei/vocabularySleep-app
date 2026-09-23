@@ -2,9 +2,9 @@
 
 ## 文档版本
 - **版本**: v1.0.1
-- **更新日期**: 2026-09-15
+- **更新日期**: 2026-09-23
 - **代码版本**: 1.0.1+2
-- **状态**: 待完善
+- **状态**: 当前范围已核对；历史模块记录保留
 
 ---
 
@@ -17,7 +17,7 @@
 | 项目名称 | 咸鱼声息 / Vocabulary Sleep App |
 | 项目类型 | 本地优先的 Flutter 学习、专注、睡眠与工具应用 |
 | 目标平台 | 本次发行 Android / Windows x64；Web 仅受限入口 |
-| 最低版本 | (待填写) |
+| 最低版本 | Android API 24；Windows x64，需 VC++ 运行库 |
 | 当前版本 | v1.0.1（build 2） |
 
 ---
@@ -25,107 +25,60 @@
 ## 项目背景与目标
 
 ### 项目背景
-(待分析填写 - 请描述项目起源、核心需求来源)
+本地优先的词汇学习、专注和睡眠支持应用，辅以可按需启停的工具箱。产品能力与发行入口以 README 为准。
 
 ### 核心目标
-1. (待填写)
-2. (待填写)
-3. (待填写)
+1. 通过词本、TTS 与练习支持词汇学习。
+2. 提供专注计时、待办和低负担睡眠支持。
+3. 保持工具模块可启停，个人数据以本地存储为主。
 
 ### 目标用户
-- 主要用户群体: (待填写)
-- 用户场景: (待填写)
+- 使用场景：听词/练习、专注与任务管理、睡前/夜醒支持和日常工具。
+- 未定义特定人口画像；不以代码推断用户年龄或健康状况。
 
 ---
 
 ## 技术栈
 
 ### 框架与语言
-| 组件 | 版本 | 说明 |
-|------|------|------|
-| Flutter SDK | (待填写) | |
-| Dart | (待填写) | |
-| 状态管理 | (待选择) | flutter_bloc / riverpod / provider |
-| 路由管理 | (待选择) | go_router / auto_route |
-| 网络请求 | (待选择) | dio / http |
+| 组件 | 当前实现 | 依据 |
+| --- | --- | --- |
+| Flutter / Dart | 发行工具链 Flutter 3.44.1 / Dart 3.12.1，SDK 约束 ^3.12.0 | README / pubspec.yaml |
+| 状态管理 | ChangeNotifier、Provider 与 Riverpod | lib/src/app/app_dependencies.dart |
+| 路由 | Flutter Navigator 与模块访问守卫 | lib/src/ui/module/ |
+| 网络 | http，S3 通过 dart:io HttpClient / SigV4 | lib/src/services/ |
+| 本地存储 | sqlite3、独立 JSON 文件、系统安全存储 | repositories / services |
+| 音频 | audioplayers、flutter_tts、record、sherpa_onnx | pubspec.yaml |
 
 ### 主要依赖
-```yaml
-dependencies:
-  flutter:
-    sdk: flutter
-  flutter_localizations:
-    sdk: flutter
-  
-  # 状态管理 (选择其一)
-  flutter_bloc: ^8.1.3
-  riverpod: ^2.4.9
-  provider: ^6.1.1
-  
-  # 网络
-  dio: ^5.4.0
-  
-  # 本地存储
-  hive: ^2.2.3
-  sqflite: ^2.3.0
-  
-  # 图片
-  cached_network_image: ^3.3.0
-  
-  # UI组件
-  flutter_slidable: ^3.0.1
-```
+准确版本与本地第三方覆盖以 [pubspec.yaml](pubspec.yaml) / pubspec.lock 为准；不在领域文档复制另一份示例依赖表。
 
 ---
 
 ## 项目结构
 
 ### 目录结构
-```
+```text
 lib/
-├── main.dart                 # 应用入口
-├── app.dart                  # 应用配置
-├── core/                     # 核心模块
-│   ├── constants/            # 常量定义
-│   ├── theme/                # 主题配置
-│   ├── utils/                # 工具类
-│   └── extensions/           # 扩展方法
-├── l10n/                     # 国际化资源
-│   ├── app_en.arb
-│   └── app_zh.arb
-├── data/                     # 数据层
-│   ├── models/               # 数据模型
-│   ├── repositories/          # 数据仓库
-│   ├── providers/            # 数据提供者
-│   └── datasources/          # 数据源
-│       ├── local/            # 本地数据源
-│       └── remote/           # 远程数据源
-├── domain/                   # 业务域
-│   └── (按业务域组织)
-├── presentation/             # 表现层
-│   ├── pages/                # 页面
-│   ├── widgets/              # 组件
-│   └── blocs/                # 状态管理
-└── services/                 # 服务层
-    ├── navigation/           # 导航服务
-    ├── storage/              # 存储服务
-    └── network/              # 网络服务
-
-scripts/
-├── tooling-env.ps1                  # 共享工具链探测、PATH 注入与 CMake 缓存迁移清理
-├── build.ps1                        # PowerShell 打包入口，支持 Windows/Android 等目标
-├── dev-run.ps1                      # Windows 桌面快捷运行入口
-├── test.ps1                         # Flutter 测试运行入口，统一 pub get、reporter 与缓存修复
-├── verify-local-analysis.ps1         # 本地格式与 analyze 验证工具箱
-├── opencode-minimax-m27.ps1          # 固定调用 MiniMax-M2.7 的命令模板
-├── orchestrate-opencode-models.ps1   # 多模型 fan-out 调度脚本
-└── opencode-model-profiles.json      # 外部模型 profile 映射配置
+  main.dart / main_native.dart / main_web.dart
+  src/app/                     启动与依赖装配
+  src/core/module_system/       模块注册与启停
+  src/models/                  数据模型
+  src/repositories/            数据访问接口与实现
+  src/services/                数据库、声音、缓存和领域服务
+  src/state/                   应用与各领域状态
+  src/ui/                      页面、组件与主题
+  src/i18n/                    运行时国际化入口
+  l10n/catalog/                统一文案源、registry 与维护记录
+test/                          自动化测试
+scripts/                       构建、验证与维护脚本
 ```
 
 ### 架构模式
-- **状态管理**: (待选择: BLoC / Riverpod / Provider)
-- **数据流**: (单向数据流)
-- **依赖注入**: (待选择: get_it / riverpod / 手动)
+- **状态管理**：ChangeNotifier 与领域 Store；Provider/Riverpod 负责依赖暴露。
+- **依赖注入**：AppDependencies 集中装配服务和 repository；支持测试注入。
+- **当前限制**：AppState 与部分 Toolbox State 仍有较多共享私有状态，不能把 part 文件拆分等同于领域解耦。
+- **本轮核对**：[2026-09-23 质量评估](docs/PROJECT_QUALITY_REVIEW_2026-09-23.md)；既有产品范围、发行平台、数据格式与版本保持不变。
 
 ### 开发辅助工具
 - 当前仓库已内置本地验证脚本与 `opencode` 外部模型协作脚本，供开发期分析、方案草拟、并行对比和调度使用。
@@ -157,7 +110,11 @@ scripts/
 ### 核心功能清单
 | 模块 | 优先级 | 状态 | 备注 |
 |------|--------|------|------|
-| (待填写) | (待定) | 待开发 | |
+| 学习 / 练习 | 核心 | 已实现 | 词本、播放、练习与进度 |
+| 专注 | 核心 | 已实现 | 计时、待办、提醒 |
+| 睡眠支持 | 核心 | 已实现 | 夜间支持、日记、声音 |
+| 工具箱 | 扩展 | 已实现 | 具体能力见 README 与模块注册表 |
+| 完整 Web 应用 | 未纳入本次发行 | 未完成 | 当前仅受限平台入口 |
 
 ### 功能特性矩阵
 - 工具箱/每日抉择已从占位转盘升级为六模块基础版：

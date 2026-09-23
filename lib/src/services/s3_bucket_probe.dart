@@ -45,6 +45,7 @@ class S3ListBucketResult {
     required this.maxKeys,
     required this.isTruncated,
     required this.objects,
+    this.nextContinuationToken,
   });
 
   final String name;
@@ -52,6 +53,7 @@ class S3ListBucketResult {
   final int maxKeys;
   final bool isTruncated;
   final List<S3ObjectSummary> objects;
+  final String? nextContinuationToken;
 }
 
 class S3HeadObjectResult {
@@ -115,11 +117,13 @@ class S3BucketProbeClient {
   Future<S3ListBucketResult> listObjects({
     String prefix = '',
     int maxKeys = 20,
+    String? continuationToken,
   }) async {
     final queryParameters = <String, String>{
       'list-type': '2',
       'max-keys': '$maxKeys',
       if (prefix.trim().isNotEmpty) 'prefix': prefix.trim(),
+      'continuation-token': ?continuationToken,
     };
     final uri = _buildUri(queryParameters);
     final signed = _signRequest(uri, queryParameters: queryParameters);
@@ -349,18 +353,18 @@ class S3BucketProbeClient {
     final canonicalQueryString = canonicalQuery
         .map(
           (entry) =>
-              '${Uri.encodeQueryComponent(entry.key)}='
-              '${Uri.encodeQueryComponent(entry.value)}',
+              '${_encodeAwsComponent(entry.key)}='
+              '${_encodeAwsComponent(entry.value)}',
         )
         .join('&');
     final canonicalHeaders =
-        'host:${uri.host}\n'
+        'host:${uri.authority}\n'
         'x-amz-content-sha256:$payloadHash\n'
         'x-amz-date:$amzDate\n';
     const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
     final canonicalRequest =
         '$method\n'
-        '${uri.path}\n'
+        '/${uri.pathSegments.map(_encodeAwsComponent).join('/')}\n'
         '$canonicalQueryString\n'
         '$canonicalHeaders\n'
         '$signedHeaders\n'
@@ -397,6 +401,15 @@ class S3BucketProbeClient {
       },
     );
   }
+
+  // S3 signs each path segment once; form encoding (+ for spaces) and
+  // encodeComponent's unescaped !'()* characters are not valid SigV4 encoding.
+  static String _encodeAwsComponent(String value) =>
+      Uri.encodeComponent(value).replaceAllMapped(
+        RegExp(r"[!'()*]"),
+        (match) =>
+            '%${match[0]!.codeUnitAt(0).toRadixString(16).toUpperCase()}',
+      );
 
   static List<int> _deriveSigningKey({
     required String secretAccessKey,
@@ -477,16 +490,40 @@ class S3BucketProbeClient {
       maxKeys: int.tryParse(readSingle('MaxKeys', fallback: '0')) ?? 0,
       isTruncated: readSingle('IsTruncated').toLowerCase() == 'true',
       objects: objects,
+      nextContinuationToken: readSingle('NextContinuationToken').isEmpty
+          ? null
+          : readSingle('NextContinuationToken'),
     );
   }
 
   static String _decodeXml(String raw) {
-    return raw
-        .replaceAll('&amp;', '&')
-        .replaceAll('&lt;', '<')
-        .replaceAll('&gt;', '>')
-        .replaceAll('&quot;', '"')
-        .replaceAll('&apos;', "'");
+    // One pass preserves literal entity text such as &amp;lt; in object names.
+    return raw.replaceAllMapped(
+      RegExp(r'&(amp|lt|gt|quot|apos|#[0-9]+|#x[0-9a-fA-F]+);'),
+      (match) {
+        final entity = match[1]!;
+        const named = {
+          'amp': '&',
+          'lt': '<',
+          'gt': '>',
+          'quot': '"',
+          'apos': "'",
+        };
+        if (named.containsKey(entity)) return named[entity]!;
+        final hex = entity.startsWith('#x');
+        final code = int.tryParse(
+          entity.substring(hex ? 2 : 1),
+          radix: hex ? 16 : 10,
+        );
+        if (code == null ||
+            code <= 0 ||
+            code > 0x10ffff ||
+            (code >= 0xd800 && code <= 0xdfff)) {
+          return match[0]!;
+        }
+        return String.fromCharCode(code);
+      },
+    );
   }
 
   static DateTime? _tryParseHttpDate(String? raw) {

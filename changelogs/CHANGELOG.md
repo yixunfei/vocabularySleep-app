@@ -1,5 +1,35 @@
 # CHANGELOG
 
+## [Unreleased-PLAN_450-项目检查与遗留闭环] - 2026-09-23
+
+### 原因
+- 用户确认全项目检查与缺陷修复计划；基线 923 tests 通过，但定向边界测试复现跨局回调、声音重复释放、资源预热与 S3 请求缺陷。
+
+### 修复
+- 消除游戏接入局次校验，统一取消交换/消除等待；重开与退出不再残留旧 Timer 或修改新棋盘。
+- 睡眠声音按播放器实例共享释放 Future，避免 stop 与迟到的 play 重复 dispose；修正既有音量测试未完成准备、实际依赖 15 秒超时的问题。
+- 预热在列目录/下载边界响应取消与网络变化；VPN 不再单独放行，网络探测失败拒绝可选下载。
+- 预热缓存命中不重复消耗下载预算，超大对象不阻塞后续小文件；逐对象校验长度，避免零字节/部分缓存误判全部完成。
+- S3 修复空格/特殊字符的 RFC3986 签名、Host 端口、XML 二次解码及数字实体；补齐目录分页与重复/缺失 continuation token 防护。
+
+### 修改
+- 消除游戏按状态、异步流程、棋盘规则、展示拆为四个文件，原 1,863 行降至各文件不超过 570 行；布局、玩法和动效参数保持原有语义。
+- 补齐 PROJECT_DOMAIN 当前技术栈和功能概览，核对 PLAN_439/443/447 阶段状态；新增带验证边界的[质量评估](../docs/PROJECT_QUALITY_REVIEW_2026-09-23.md)。
+
+### 验证
+- `flutter test --no-pub --reporter expanded`：940 tests 全部通过（基线 923，新增 17）；最后的展示数值与 S3 定向回归 17 tests 通过。
+- `flutter analyze --no-pub`：0 error；4 warning 均来自用户原有未跟踪 `tool/list_s3_wordbooks.dart`，保留不改；124 条 info。项目 lib/test 无 error/warning。
+- 触达 Dart 文件格式检查通过；本轮新增/调整方法控制在 100 行内，未扩大既有超限文件。
+- i18n 新增 key 0、退休 key 0；`node scripts/audit_i18n_placeholders.js`：16,312 keys，missing/placeholderMismatch/missingParams/dynamicParams 均为 0。
+- `node scripts/maintain_i18n_catalog.js --limit 20`：3,505 个潜在未引用 key、417 条旧来源、0 活动退休项，fatal 项为 0；未新增维护风险。
+- 旧 helper 与 catalog Dart 插值扫描无匹配；rg 启动失败，使用 Python 等价扫描。
+
+### 风险变更与边界
+- 预热流量预算按对象长度统计新增内容，非含重试/协议开销的硬流量限额；取消不会主动中断在途请求。Wi-Fi/以太网识别不保证实际免费。
+- S3 默认只读凭据策略、发布版本与 Android 签名保持原样；新 S3 测试仅使用本地 HTTP/fake，无远端写操作。
+- 未执行原生发行构建与真机验收；Web 完整实现、压缩内容上限、缓存 LRU/TTL、校验器并发策略与全局大文件治理留为独立切片。
+- 保留工作区既有未跟踪词书脚本、数据和报告，不纳入本轮提交。计划：[PLAN_450](../plans/PLAN_450_project_audit_completion.md)。
+
 ## [1.0.1] - 2026-09-15
 
 ### 原因

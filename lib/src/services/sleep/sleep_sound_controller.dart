@@ -23,6 +23,7 @@ class SleepSoundController extends ChangeNotifier {
   final DateTime Function() _now;
   final AppLogService _log = AppLogService.instance;
   SleepSoundPlayer? _player;
+  final Expando<Future<void>> _releases = Expando<Future<void>>();
   Timer? _stopTimer;
   DateTime? _stopAt;
   int _generation = 0;
@@ -136,8 +137,14 @@ class SleepSoundController extends ChangeNotifier {
 
   bool _isCurrent(int generation) => !_disposed && generation == _generation;
 
-  Future<void> _release(SleepSoundPlayer? player) async {
-    if (player == null) return;
+  Future<void> _release(SleepSoundPlayer? player) {
+    if (player == null) return Future<void>.value();
+    // Stop, replacement and a late preparation result can own the same player.
+    // Keep the release future weakly keyed so each instance is disposed once.
+    return _releases[player] ??= _disposePlayer(player);
+  }
+
+  Future<void> _disposePlayer(SleepSoundPlayer player) async {
     try {
       await player.dispose();
     } on Object catch (error, stackTrace) {

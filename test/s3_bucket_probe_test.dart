@@ -2,6 +2,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vocabulary_sleep_app/src/services/s3_bucket_probe.dart';
 
 void main() {
+  test(
+    'XML object keys are decoded exactly once, including numeric entities',
+    () {
+      final result = S3BucketProbeClient.parseListBucketXml('''
+<ListBucketResult><Contents>
+<Key>music/&amp;lt; &#32;&#x4E2D; &apos; &quot;.mp3</Key>
+<Size>12</Size></Contents></ListBucketResult>
+''');
+      expect(result.objects.single.key, 'music/&lt;  中 \' ".mp3');
+    },
+  );
+
   test('S3BucketProbeClient parses list bucket xml payload', () {
     const xml = '''
 <?xml version="1.0" encoding="UTF-8"?>

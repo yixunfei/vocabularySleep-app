@@ -51,8 +51,12 @@ class CstCloudResourcePrewarmResult {
 
   final CstCloudResourcePrewarmStopReason stopReason;
   final int plannedCount;
+
+  /// Completed objects, including those already present in the cache.
   final int downloadedCount;
   final int plannedBytes;
+
+  /// Bytes newly downloaded by this run; cache hits do not consume its budget.
   final int downloadedBytes;
 
   bool get fullyDownloaded =>
@@ -83,7 +87,6 @@ class CstCloudResourcePrewarmService {
     const allowed = <ConnectivityResult>{
       ConnectivityResult.wifi,
       ConnectivityResult.ethernet,
-      ConnectivityResult.vpn,
     };
     return results.any(allowed.contains);
   }
@@ -91,15 +94,12 @@ class CstCloudResourcePrewarmService {
   Future<bool> isPrewarmNetworkAllowed({
     Future<bool> Function()? networkGate,
   }) async {
-    if (networkGate != null) {
-      return networkGate();
-    }
     try {
+      if (networkGate != null) return await networkGate();
       return isNetworkResultAllowed(await _connectivity.checkConnectivity());
     } catch (_) {
-      // 网络状态不可知时保守放行：预热是幂等可重试的缓存行为，
-      // 真正的失败由下载层兜底。
-      return true;
+      // Unknown network cost must not trigger optional background downloads.
+      return false;
     }
   }
 
@@ -113,11 +113,13 @@ class CstCloudResourcePrewarmService {
       if (remoteTargets.isEmpty) {
         continue;
       }
-      final hasLocal = await _cacheService.hasCachedFilesUnderPrefix(
-        prefix.replaceFirst(RegExp(r'/$'), ''),
-      );
-      if (!hasLocal) {
-        return true;
+      for (final target in remoteTargets.where((item) => item.size > 0)) {
+        if (!await _cacheService.isFileCached(
+          target.key,
+          expectedBytes: target.size,
+        )) {
+          return true;
+        }
       }
     }
     return false;
@@ -129,21 +131,17 @@ class CstCloudResourcePrewarmService {
     int maxTotalBytes = defaultMaxTotalBytes,
     Future<bool> Function()? networkGate,
   }) async {
-    if (!await isPrewarmNetworkAllowed(networkGate: networkGate)) {
-      return const CstCloudResourcePrewarmResult(
-        stopReason: CstCloudResourcePrewarmStopReason.skippedByNetworkGate,
-        plannedCount: 0,
-        downloadedCount: 0,
-        plannedBytes: 0,
-        downloadedBytes: 0,
-      );
-    }
-
+    if (maxTotalBytes < 0) throw ArgumentError.value(maxTotalBytes);
     final targets = <_PrewarmTarget>[];
+    var stopReason = CstCloudResourcePrewarmStopReason.none;
     for (final prefix in _resourcePrefixes) {
+      stopReason = await _stopReason(cancellation, networkGate);
+      if (stopReason != CstCloudResourcePrewarmStopReason.none) break;
       final objects = await _cacheService.listObjects(prefix);
       for (final item in objects) {
-        if (item.key.endsWith('/') || item.size <= 0) {
+        if (!item.key.startsWith(prefix) ||
+            item.key.endsWith('/') ||
+            item.size <= 0) {
           continue;
         }
         targets.add(_PrewarmTarget(key: item.key, size: item.size));
@@ -153,15 +151,18 @@ class CstCloudResourcePrewarmService {
 
     var downloadedCount = 0;
     var downloadedBytes = 0;
-    var stopReason = CstCloudResourcePrewarmStopReason.none;
+    var capped = false;
     for (final target in targets) {
-      if (cancellation?.isCancelled ?? false) {
-        stopReason = CstCloudResourcePrewarmStopReason.cancelled;
-        break;
-      }
-      if (downloadedBytes + target.size > maxTotalBytes) {
-        stopReason = CstCloudResourcePrewarmStopReason.capped;
-        break;
+      if (stopReason != CstCloudResourcePrewarmStopReason.none) break;
+      stopReason = await _stopReason(cancellation, networkGate);
+      if (stopReason != CstCloudResourcePrewarmStopReason.none) break;
+      final cached = await _cacheService.isFileCached(
+        target.key,
+        expectedBytes: target.size,
+      );
+      if (!cached && downloadedBytes + target.size > maxTotalBytes) {
+        capped = true;
+        continue;
       }
       onProgress(
         CstCloudResourcePrewarmProgress(
@@ -170,12 +171,19 @@ class CstCloudResourcePrewarmService {
           currentLabel: target.key,
         ),
       );
-      await _cacheService.ensureFileDownloaded(
-        target.key,
-        cacheRelativePath: target.key,
-      );
+      if (cancellation?.isCancelled ?? false) {
+        stopReason = CstCloudResourcePrewarmStopReason.cancelled;
+        break;
+      }
+      if (!cached) {
+        await _cacheService.ensureValidFileDownloaded(
+          target.key,
+          cacheRelativePath: target.key,
+          validator: (file) async => await file.length() == target.size,
+        );
+        downloadedBytes += target.size;
+      }
       downloadedCount += 1;
-      downloadedBytes += target.size;
       onProgress(
         CstCloudResourcePrewarmProgress(
           completed: downloadedCount,
@@ -185,6 +193,11 @@ class CstCloudResourcePrewarmService {
       );
     }
 
+    if (cancellation?.isCancelled ?? false) {
+      stopReason = CstCloudResourcePrewarmStopReason.cancelled;
+    } else if (capped && stopReason == CstCloudResourcePrewarmStopReason.none) {
+      stopReason = CstCloudResourcePrewarmStopReason.capped;
+    }
     return CstCloudResourcePrewarmResult(
       stopReason: stopReason,
       plannedCount: targets.length,
@@ -192,6 +205,22 @@ class CstCloudResourcePrewarmService {
       plannedBytes: plannedBytes,
       downloadedBytes: downloadedBytes,
     );
+  }
+
+  Future<CstCloudResourcePrewarmStopReason> _stopReason(
+    CstCloudResourcePrewarmCancellation? cancellation,
+    Future<bool> Function()? networkGate,
+  ) async {
+    if (cancellation?.isCancelled ?? false) {
+      return CstCloudResourcePrewarmStopReason.cancelled;
+    }
+    final allowed = await isPrewarmNetworkAllowed(networkGate: networkGate);
+    if (cancellation?.isCancelled ?? false) {
+      return CstCloudResourcePrewarmStopReason.cancelled;
+    }
+    return allowed
+        ? CstCloudResourcePrewarmStopReason.none
+        : CstCloudResourcePrewarmStopReason.skippedByNetworkGate;
   }
 }
 

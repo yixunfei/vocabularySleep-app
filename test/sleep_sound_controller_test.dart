@@ -9,6 +9,7 @@ class _Player implements SleepSoundPlayer {
   final ready = Completer<void>();
   int playCalls = 0;
   bool disposed = false;
+  int disposeCalls = 0;
   double? volume;
   @override
   Future<void> play(SleepSound sound, double volume) {
@@ -24,6 +25,7 @@ class _Player implements SleepSoundPlayer {
 
   @override
   Future<void> dispose() async {
+    disposeCalls++;
     disposed = true;
   }
 }
@@ -93,6 +95,7 @@ void _preparationTests() {
     await playing;
     expect(controller.status, SleepSoundStatus.silent);
     expect(player.disposed, isTrue);
+    expect(player.disposeCalls, 1);
   });
 }
 
@@ -118,7 +121,7 @@ void _replacementTests() {
   });
 
   test('volume failure cannot overwrite a newer playback', () async {
-    final first = _VolumeFailingPlayer();
+    final first = _VolumeFailingPlayer()..ready.complete();
     final second = _Player()..ready.complete();
     var calls = 0;
     final controller = SleepSoundController(

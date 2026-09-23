@@ -71,16 +71,29 @@ class CstCloudS3CompatClient {
 
   final S3BucketProbeClient _probeClient;
 
-  /// 列出指定前缀的对象
+  /// Lists every page under a prefix; [maxKeys] is the per-request page size.
   Future<List<S3ObjectSummary>> listPrefix(
     String prefix, {
     int maxKeys = 1000,
   }) async {
-    final result = await _probeClient.listObjects(
-      prefix: prefix,
-      maxKeys: maxKeys,
-    );
-    return result.objects;
+    final objects = <S3ObjectSummary>[];
+    final seenTokens = <String>{};
+    String? token;
+    do {
+      final result = await _probeClient.listObjects(
+        prefix: prefix,
+        maxKeys: maxKeys,
+        continuationToken: token,
+      );
+      objects.addAll(result.objects);
+      if (!result.isTruncated) return objects;
+      token = result.nextContinuationToken;
+      if (token == null || token.isEmpty || !seenTokens.add(token)) {
+        throw StateError(
+          'Truncated S3 listing has no advancing continuation token.',
+        );
+      }
+    } while (true);
   }
 
   /// 获取对象元数据

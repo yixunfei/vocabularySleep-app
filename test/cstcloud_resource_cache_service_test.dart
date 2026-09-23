@@ -292,6 +292,27 @@ void main() {
   });
 
   test(
+    'empty and mismatched files are not complete cached resources',
+    () async {
+      final target = File(p.join(tempDir.path, 'audio', 'cue.bin'));
+      await target.parent.create(recursive: true);
+      await target.writeAsBytes([]);
+      final service = CstCloudResourceCacheService(cacheDirectory: tempDir);
+      expect(await service.hasCachedFilesUnderPrefix('audio'), isFalse);
+      expect(await service.isFileCached('audio/cue.bin'), isFalse);
+      await target.writeAsBytes([1, 2]);
+      expect(
+        await service.isFileCached('audio/cue.bin', expectedBytes: 3),
+        isFalse,
+      );
+      expect(
+        await service.isFileCached('audio/cue.bin', expectedBytes: 2),
+        isTrue,
+      );
+    },
+  );
+
+  test(
     'S3 client removes a file when the reported write count is wrong',
     () async {
       final target = File(p.join(tempDir.path, 'audio', 'cue.bin'));
